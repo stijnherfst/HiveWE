@@ -1,9 +1,9 @@
 #pragma once
 
 struct cameraStruct {
-	double x = 10;
+	double x = 0;
 	double y = 0;
-	double z = 20;
+	double z = 10;
 	double fov = 45;
 	double aspectRatio = 16.0 / 9.0;
 	glm::mat4 projection = glm::perspective(fov, aspectRatio, 0.1, 100.0);

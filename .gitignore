@@ -37,3 +37,5 @@
 *.pdb
 *.ilk
 *.tlog
+/HiveWE/khrplatform.h
+.vs/

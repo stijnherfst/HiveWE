@@ -1,13 +1,9 @@
 #include "stdafx.h"
 
-float vertices[] = {
-	-1.0f, -1.0f, 0.0f,
-	1.0f, -1.0f, 0.0f,
-	0.0f,  1.0f, 0.0f,
-};
+QOpenGLFunctions_4_2_Core* gl;
 
 const char* vertexSource =  R"glsl(
-	#version 330 
+	#version 330
 
 	layout (location = 0) in vec3 vPosition;
 
@@ -37,77 +33,80 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 GLWidget::~GLWidget() {
 }
 
-GLuint vbo;
+Terrain terrain;
 GLuint shader;
 
 void GLWidget::initializeGL() {
-	initializeOpenGLFunctions();
-	glClearColor(0, 0, 0, 1);
+	gl = new QOpenGLFunctions_4_2_Core;
+	gl->initializeOpenGLFunctions();
+
+	gl->glClearColor(0, 0, 0, 1);
 
 	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	gl->glGenVertexArrays(1, &vao);
+	gl->glBindVertexArray(vao);
 
 	shader = compileShader(vertexSource, fragmentSource);
 
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+	terrain.create();
 }
 
 void GLWidget::resizeGL(int w, int h) {
-	glViewport(0, 0, w, h);
+	gl->glViewport(0, 0, w, h);
 }
 
 
 void GLWidget::paintGL() {
-	glClearColor(0, 0, 0, 1);
+	gl->glClearColor(0, 0, 0, 1);
 
-	glUseProgram(shader);
-
+	gl->glUseProgram(shader);
+	
 	glm::mat4 Model = glm::mat4(1.0f);
 	Model = glm::translate(Model, glm::vec3(0, 0, 0));
 	glm::mat4 MVP = camera.projection * camera.view * Model;
-	glUniformMatrix4fv(glGetUniformLocation(shader, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	gl->glUniformMatrix4fv(gl->glGetUniformLocation(shader, "MVP"), 1, GL_FALSE, &MVP[0][0]);
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	terrain.render();
 }
 
 GLuint GLWidget::compileShader(const char* vertexShader, const char* fragmentShader) {
 	char buffer[512];
 	GLint status;
 
-	GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint vertex = gl->glCreateShader(GL_VERTEX_SHADER);
+	GLuint fragment = gl->glCreateShader(GL_FRAGMENT_SHADER);
 
 	// Vertex Shader
-	glShaderSource(vertex, 1, &vertexShader, NULL);
-	glCompileShader(vertex);
+	gl->glShaderSource(vertex, 1, &vertexShader, NULL);
+	gl->glCompileShader(vertex);
 
 	
-	glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
-	glGetShaderInfoLog(vertex, 512, NULL, buffer);
+	gl->glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
+	gl->glGetShaderInfoLog(vertex, 512, NULL, buffer);
 	std::cout << buffer << std::endl;
 
 	// Fragment Shader
-	glShaderSource(fragment, 1, &fragmentShader, NULL);
-	glCompileShader(fragment);
+	gl->glShaderSource(fragment, 1, &fragmentShader, NULL);
+	gl->glCompileShader(fragment);
 
-	glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
-	glGetShaderInfoLog(fragment, 512, NULL, buffer);
+	gl->glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
+	gl->glGetShaderInfoLog(fragment, 512, NULL, buffer);
 	std::cout << buffer << std::endl;
 
 	// Link
-	GLuint shader = glCreateProgram();
-	glAttachShader(shader, vertex);
-	glAttachShader(shader, fragment);
+	GLuint shader = gl->glCreateProgram();
+	gl->glAttachShader(shader, vertex);
+	gl->glAttachShader(shader, fragment);
+	gl->glLinkProgram(shader);
 
-	glLinkProgram(shader);
+	gl->glGetProgramiv(shader, GL_LINK_STATUS, &status);
+	if (!status) {
+		gl->glGetProgramInfoLog(shader, 512, NULL, buffer);
+		std::cout << buffer << std::endl;
+	}
+
+	gl->glDeleteShader(vertex);
+	gl->glDeleteShader(fragment);
 
 	return shader;
 }

@@ -2,7 +2,7 @@
 
 #include <QObject>
 
-class GLWidget : public QOpenGLWidget, protected QOpenGLFunctions_3_3_Core {
+class GLWidget : public QOpenGLWidget {
 	Q_OBJECT
 
 public:
@@ -15,3 +15,5 @@ public:
 
 	GLuint compileShader(const char* vertexShader, const char* fragmentShader);
 };
+
+extern QOpenGLFunctions_4_2_Core* gl;
