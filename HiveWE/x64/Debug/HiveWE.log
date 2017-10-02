@@ -1,0 +1,9 @@
+﻿  stdafx.cpp
+  GLWidget.cpp
+  moc_GLWidget.cpp
+  moc_HiveWE.cpp
+  HiveWE.cpp
+  main.cpp
+  Generating Code...
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.pdb (Full PDB)
