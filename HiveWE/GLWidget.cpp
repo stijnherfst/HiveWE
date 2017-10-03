@@ -35,7 +35,9 @@ const char* fragmentSource = R"glsl(
 cameraStruct camera;
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-
+	QTimer *timer = new QTimer;
+	connect(timer, &QTimer::timeout, this, &GLWidget::paintGL);
+	timer->start(30);
 }
 
 GLWidget::~GLWidget() {
@@ -49,6 +51,7 @@ void GLWidget::initializeGL() {
 	gl->initializeOpenGLFunctions();
 
 	gl->glClearColor(0, 0, 0, 1);
+	//gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	GLuint vao;
 	gl->glGenVertexArrays(1, &vao);
