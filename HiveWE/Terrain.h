@@ -14,9 +14,11 @@ public:
 	int textureHeight = 512;
 
 	GLuint vertexBuffer;
+	GLuint uvBuffer;
 	GLuint indexBuffer;
 
 	std::vector <glm::vec3> vertices;
+	std::vector <glm::vec3> uvs;
 	std::vector <index> indices;
 
 	GLuint textureArray;
