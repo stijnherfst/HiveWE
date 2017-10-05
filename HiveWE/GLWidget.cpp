@@ -28,7 +28,7 @@ const char* fragmentSource = R"glsl(
 	out vec4 outColor;
 
 	void main() {
-		outColor = texture(textureArray, UVW);
+		outColor =texture(textureArray, UVW);
 	}
 )glsl";
 
@@ -36,8 +36,12 @@ cameraStruct camera;
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	QTimer *timer = new QTimer;
-	connect(timer, &QTimer::timeout, this, &GLWidget::paintGL);
+	connect(timer, &QTimer::timeout, this, &GLWidget::updateScene);
 	timer->start(30);
+
+	grabMouse();
+	setMouseTracking(true);
+	setFocus();
 }
 
 GLWidget::~GLWidget() {
@@ -49,6 +53,11 @@ GLuint shader;
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_2_Core;
 	gl->initializeOpenGLFunctions();
+
+	gl->glEnable(GL_DEPTH_TEST);
+	gl->glDepthFunc(GL_LEQUAL);
+	gl->glEnable(GL_BLEND);
+	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl->glClearColor(0, 0, 0, 1);
 	//gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -64,8 +73,44 @@ void GLWidget::initializeGL() {
 
 void GLWidget::resizeGL(int w, int h) {
 	gl->glViewport(0, 0, w, h);
+	camera.aspectRatio = (float)w / h;
+	camera.update();
 }
 
+void GLWidget::updateScene() {
+	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
+	elapsedTimer.start();
+
+	float speed = 5;
+	if (keysPressed.count(Qt::Key::Key_W)) {
+		camera.position += camera.direction * speed * (float)delta;
+	} else if (keysPressed.count(Qt::Key::Key_S)) {
+		camera.position -= camera.direction * speed * (float)delta;
+	}
+
+	if (keysPressed.count(Qt::Key::Key_A)) {
+		camera.position -= glm::normalize(glm::cross(camera.direction, camera.up)) * speed * (float)delta;
+	} else if (keysPressed.count(Qt::Key::Key_D)) {
+		camera.position += glm::normalize(glm::cross(camera.direction, camera.up)) * speed * (float)delta;
+	}
+
+	if (keysPressed.count(Qt::Key::Key_Space)) {
+		camera.position.z += 1 * speed * (float)delta;
+	} else if (keysPressed.count(Qt::Key::Key_Control)) {
+		camera.position.z -= 1 * speed * (float)delta;
+	}
+
+	
+	int diffx = mapFromGlobal(QCursor::pos()).x() - previousMouseX;
+	int diffy = previousMouseY - mapFromGlobal(QCursor::pos()).y();
+	previousMouseX = mapFromGlobal(QCursor::pos()).x();
+	previousMouseY = mapFromGlobal(QCursor::pos()).y();
+	camera.horizontalAngle += diffx * 0.1 * speed * (float)delta;
+	camera.verticalAngle += diffy * 0.1 * speed * (float)delta;
+	camera.update();
+
+	update();
+}
 
 void GLWidget::paintGL() {
 	gl->glClearColor(0, 0, 0, 1);
@@ -79,6 +124,20 @@ void GLWidget::paintGL() {
 
 	terrain.render();
 }
+
+void GLWidget::keyPressEvent(QKeyEvent *e) {
+	keysPressed.emplace(e->key());
+	switch (e->key()) {
+		case Qt::Key::Key_Escape:
+			exit(0);
+			break;
+	}
+}
+
+void GLWidget::keyReleaseEvent(QKeyEvent *e) {
+	keysPressed.erase(e->key());
+}
+
 
 GLuint GLWidget::compileShader(const char* vertexShader, const char* fragmentShader) {
 	char buffer[512];

@@ -1,5 +1,8 @@
 #include <iostream>
 #include <vector>
+#include <unordered_set>
+#include <bitset>
+#include <set>
 
 #include <QtWidgets>
 #include <QOpenGLWidget>
