@@ -11,6 +11,12 @@ struct Corner {
 	unsigned char cliffType = 0;
 };
 
+struct TerrainTexture {
+	bool extended;
+	
+	// icon?
+};
+
 class Terrain {
 public:
 	int width = 3;
@@ -30,11 +36,12 @@ public:
 	std::vector <glm::vec3> uvs;
 	std::vector <Index> indices;
 
+	std::vector<bool> textureExtended;
 	GLuint textureArray;
 
 	void create();
 	void render();
 
-	glm::vec2 getTileVariation(unsigned char variation, bool extended);
-	std::vector<std::tuple<int, int, int>> getCornerVariation(unsigned char topLeft, unsigned char topRight, unsigned char bottomLeft, unsigned char bottomRight);
+	std::tuple<int, int> get_tile_variation(unsigned char variation, bool extended);
+	std::vector<std::tuple<int, int, int>> get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight);
 };

@@ -21,14 +21,14 @@ const char* vertexSource =  R"glsl(
 const char* fragmentSource = R"glsl(
 	#version 420 core
 
-	layout (binding=0) uniform sampler2DArray textureArray;
+	layout (binding = 0) uniform sampler2DArray textureArray;
 
 	in vec3 UVW;
 
 	out vec4 outColor;
 
 	void main() {
-		outColor =texture(textureArray, UVW);
+		outColor = texture(textureArray, UVW);
 	}
 )glsl";
 
@@ -47,7 +47,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 GLWidget::~GLWidget() {
 }
 
-Terrain terrain;
+Map map;
 GLuint shader;
 
 void GLWidget::initializeGL() {
@@ -68,7 +68,7 @@ void GLWidget::initializeGL() {
 
 	shader = compileShader(vertexSource, fragmentSource);
 
-	terrain.create();
+	map.load(L"Data/t.w3x");
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -122,7 +122,7 @@ void GLWidget::paintGL() {
 	glm::mat4 MVP = camera.projection * camera.view * Model;
 	gl->glUniformMatrix4fv(gl->glGetUniformLocation(shader, "MVP"), 1, GL_FALSE, &MVP[0][0]);
 
-	terrain.render();
+	map.terrain.render();
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {

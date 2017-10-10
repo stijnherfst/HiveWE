@@ -1,35 +1,39 @@
 #include "stdafx.h"
 
-//glm::vec2 Terrain::getTileVariation(unsigned char variation, bool extended) {
-//	if (extended) {
-//		if (variation <= 15) {
-//			return glm::vec2(4 + (variation % 4), variation / 4);
-//		} else if (variation == 16) {
-//			return glm::vec2(3, 3);
-//		} else {
-//			return glm::vec2(0, 0);
-//		}
-//	} else {
-//		if (variation == 0) {
-//			return glm::vec2(0, 0);
-//		} else {
-//			return glm::vec2(3, 3);
-//		}
-//	}
-//}
+std::tuple<int, int> Terrain::get_tile_variation(unsigned char variation, bool extended) {
+	if (extended) {
+		if (variation <= 15) {
+			return { 4 + (variation % 4), variation / 4 };
+		} else if (variation == 16) {
+			return { 3, 3 };
+		} else {
+			return { 0, 0 };
+		}
+	} else {
+		if (variation == 0) {
+			return { 0, 0 };
+		} else {
+			return { 3, 3 };
+		}
+	}
+}
 
-// TODO extended textures
-std::vector<std::tuple<int, int, int>> Terrain::getCornerVariation(unsigned char topLeft, unsigned char topRight, unsigned char bottomLeft, unsigned char bottomRight) {
+std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight) {
 	std::vector<std::tuple<int, int, int>> tileVariations;
 
-	std::bitset<4> var;
-	for (auto&& texture : std::set<int>({ topLeft, topRight, bottomLeft, bottomRight })) {
-		var[0] = bottomRight == texture;
-		var[1] = bottomLeft == texture;
-		var[2] = topRight == texture;
-		var[3] = topLeft == texture;
+	std::bitset<4> index;
+	for (auto&& texture : std::set<int>({ topLeft.texture, topRight.texture, bottomLeft.texture, bottomRight.texture })) {
+		index[0] = bottomRight.texture == texture;
+		index[1] = bottomLeft.texture == texture;
+		index[2] = topRight.texture == texture;
+		index[3] = topLeft.texture == texture;
 
-		tileVariations.push_back({ var.to_ulong() % 4, std::floor(var.to_ulong() / 4), texture });
+		if (index.all()) { // Only bottom left variation matters
+			auto [x, y] = get_tile_variation(bottomLeft.variation, textureExtended[texture]);
+			tileVariations.push_back({ x, y, texture });
+		} else {
+			tileVariations.push_back({ index.to_ulong() % 4, std::floor(index.to_ulong() / 4), texture });
+		}
 	}
 	return tileVariations;
 }
@@ -39,43 +43,24 @@ void Terrain::create() {
 	uvs.reserve(width * height * 4);
 	indices.reserve((width - 1) * (height - 1) * 2);
 
-	corners.resize(width * height);
-	corners[0].texture = 0; 
-	corners[1].texture = 0;
-	corners[2].texture = 0;
-
-	corners[3].texture = 1;
-	corners[4].texture = 1;
-	corners[5].texture = 0;
-
-	corners[6].texture = 0;
-	corners[7].texture = 0;
-	corners[8].texture = 0;
-
-	// Becomes
-	// 000
-	// 110
-	// 000
-
 	for (int i = 0; i < width - 1; i++) {
 		for (int j = 0; j < height - 1; j++) {
-			unsigned char bottomLeft = corners[j * width + i].texture;
-			unsigned char bottomRight = corners[j * width + (i + 1)].texture;
-			unsigned char topLeft = corners[(j + 1) * width + i].texture;
-			unsigned char topRight = corners[(j + 1) * width + (i + 1)].texture;
+			Corner& bottomLeft = corners[j * width + i];
+			Corner& bottomRight = corners[j * width + (i + 1)];
+			Corner& topLeft = corners[(j + 1) * width + i];
+			Corner& topRight = corners[(j + 1) * width + (i + 1)];
 
-			auto variations = getCornerVariation(bottomLeft, bottomRight, topLeft, topRight);
-
+			auto variations = get_texture_variations(bottomLeft, bottomRight, topLeft, topRight); // TODO Bottom and top reversed, fix
 			for (auto&& [x, y, texture] : variations) {
-				vertices.push_back({ i + 1, j + 1,	0 });
-				vertices.push_back({ i, j + 1,		0 });
-				vertices.push_back({ i, j,			0 });
-				vertices.push_back({ i + 1, j,		0 });
+				vertices.push_back({ i + 1, j + 1,	(topRight.height - 0x2000) / 512.0 });
+				vertices.push_back({ i, j + 1,		(topLeft.height - 0x2000) / 512.0 });
+				vertices.push_back({ i, j,			(bottomLeft.height - 0x2000) / 512.0 });
+				vertices.push_back({ i + 1, j,		(bottomRight.height - 0x2000) / 512.0 });
 
-				uvs.push_back({ 0.125 * (x + 1), 0.125 * (y + 1),	texture });
-				uvs.push_back({ 0.125 * x, 0.125 * (y + 1),			texture });
-				uvs.push_back({ 0.125 * x, 0.125 * y,				texture });
-				uvs.push_back({ 0.125 * (x + 1), 0.125 * y,			texture });
+				uvs.push_back({ 0.125 * (x + 1), 0.125 * (y + 1), texture });
+				uvs.push_back({ 0.125 * x, 0.125 * (y + 1), texture });
+				uvs.push_back({ 0.125 * x, 0.125 * y, texture });
+				uvs.push_back({ 0.125 * (x + 1), 0.125 * y, texture });
 
 				unsigned int index = vertices.size() - 4;
 				indices.push_back({ index + 0, index + 1, index + 2 });
@@ -104,9 +89,12 @@ void Terrain::create() {
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+	auto texture = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
+	auto texture2 = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
+
 	int imgWidth, imgHeight, imgChannels;
-	unsigned char* image = SOIL_load_image("Data/Images/Village_Dirt.png", &imgWidth, &imgHeight, &imgChannels, SOIL_LOAD_AUTO);
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, imgWidth, imgHeight, 1, GL_RGBA, GL_UNSIGNED_BYTE, image);
+	//unsigned char* image = SOIL_load_image("Data/Images/Village_Dirt.png", &imgWidth, &imgHeight, &imgChannels, SOIL_LOAD_AUTO);
+	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, texture.width, texture.height, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture.data);
 
 	unsigned char* image2 = SOIL_load_image("Data/Images/Village_CobblePath.png", &imgWidth, &imgHeight, &imgChannels, SOIL_LOAD_AUTO);
 	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, imgWidth, imgHeight, 1, GL_RGBA, GL_UNSIGNED_BYTE, image2);

@@ -39,3 +39,4 @@
 *.tlog
 /HiveWE/khrplatform.h
 .vs/
+*.mpq
