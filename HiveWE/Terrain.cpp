@@ -32,7 +32,7 @@ std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& t
 			auto [x, y] = get_tile_variation(bottomLeft.variation, textureExtended[texture]);
 			tileVariations.push_back({ x, y, texture });
 		} else {
-			tileVariations.push_back({ index.to_ulong() % 4, std::floor(index.to_ulong() / 4), texture });
+			tileVariations.push_back({ index.to_ulong() % 4, (unsigned)std::floor(index.to_ulong() / 4ul), texture });
 		}
 	}
 	return tileVariations;
@@ -89,19 +89,12 @@ void Terrain::create() {
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	auto texture = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
-	auto texture2 = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
+	auto dirt = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
+	auto cobble = resource_manager.load<Texture>("Data/Images/Village_CobblePath.png");
 
-	int imgWidth, imgHeight, imgChannels;
-	//unsigned char* image = SOIL_load_image("Data/Images/Village_Dirt.png", &imgWidth, &imgHeight, &imgChannels, SOIL_LOAD_AUTO);
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, texture.width, texture.height, 1, GL_RGBA, GL_UNSIGNED_BYTE, texture.data);
-
-	unsigned char* image2 = SOIL_load_image("Data/Images/Village_CobblePath.png", &imgWidth, &imgHeight, &imgChannels, SOIL_LOAD_AUTO);
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, imgWidth, imgHeight, 1, GL_RGBA, GL_UNSIGNED_BYTE, image2);
-
+	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, dirt.get()->width, dirt.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, dirt.get()->data);
+	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, cobble.get()->width, cobble.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, cobble.get()->data);
 	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-
-	std::cout << gl->glGetError() << std::endl;
 }
 
 void Terrain::render() {

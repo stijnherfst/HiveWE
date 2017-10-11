@@ -5,6 +5,8 @@
 #include <unordered_set>
 #include <bitset>
 #include <set>
+#include <memory>
+#include <unordered_map>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;

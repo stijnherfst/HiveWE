@@ -81,6 +81,9 @@
     <ClCompile Include="ResourceManager.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="BLP.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -108,6 +111,9 @@
       <Filter>Header Files\Base</Filter>
     </ClInclude>
     <ClInclude Include="ResourceManager.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="BLP.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>

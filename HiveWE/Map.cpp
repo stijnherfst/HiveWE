@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 void Map::load(std::wstring path) {
-	mpq::MPQ mpq(L"Data/t3.w3x");
+	mpq::MPQ mpq(L"Data/t2.w3x");
 
 	mpq::File file = mpq.file_open("war3map.w3e");
 
@@ -72,7 +72,7 @@ void Map::load(std::wstring path) {
 
  	for (size_t i = 0; i < width; i++) {
 		for (size_t j = 0; j < height; j++) {
-			terrain.corners[j * width + i].texture = 0;
+			terrain.corners[j * width + i].texture = rand() % 2;
 			terrain.corners[j * width + i].height = tiles[j * width + i].height;
 			//terrain.corners[j * width + i].cliffType = tiles[j * width + i].textureDetails;
 		}
