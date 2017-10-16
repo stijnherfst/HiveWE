@@ -7,6 +7,7 @@
 #include <set>
 #include <memory>
 #include <unordered_map>
+#include <sstream>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;
@@ -19,13 +20,19 @@ namespace fs = std::experimental::filesystem;
 #define GLM_FORCE_RADIANS
 #include <gtc/matrix_transform.hpp>
 #include <soil2.h>
+#include <turbojpeg.h>
 
 #undef _DLL
 #include <StormLib.h>
 
-
 #include "Utilities.h"
+#include "BinaryReader.h"
+
+// File formats
 #include "MPQ.h"
+#include "BLP.h"
+#include "SLK.h"
+
 #include "Hierarchy.h"
 #include "ResourceManager.h"
 

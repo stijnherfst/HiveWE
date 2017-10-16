@@ -21,3 +21,13 @@ unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *he
 	return image;
 }
 
+std::vector<std::string> split(const std::string& string, char delimiter) {
+	std::vector<std::string> elems;
+	std::stringstream ss(string);
+
+	std::string item;
+	while (std::getline(ss, item, delimiter)) {
+		elems.push_back(item);
+	}
+	return elems;
+}

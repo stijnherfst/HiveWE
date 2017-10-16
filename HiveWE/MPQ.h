@@ -16,15 +16,15 @@ namespace mpq {
 		HANDLE handle;
 
 		MPQ() {}
-		MPQ(std::wstring path);
+		MPQ(const std::wstring path);
 		MPQ(File archive);
 
-		void open(std::wstring path);
+		void open(const std::wstring path);
 		void open(File archive);
 		void close();
 
-		File file_open(std::string path);
-		bool file_exists(std::string path);
+		File file_open(const std::string path);
+		bool file_exists(const std::string path);
 	};
 
 }

@@ -84,6 +84,9 @@
     <ClCompile Include="BLP.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="SLK.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -114,6 +117,12 @@
       <Filter>Header Files\Base</Filter>
     </ClInclude>
     <ClInclude Include="BLP.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryReader.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="SLK.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>

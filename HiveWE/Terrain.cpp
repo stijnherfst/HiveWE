@@ -91,8 +91,9 @@ void Terrain::create() {
 
 	auto dirt = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
 	auto cobble = resource_manager.load<Texture>("Data/Images/Village_CobblePath.png");
+	auto grass = resource_manager.load<Texture>("TerrainArt\\Ashenvale\\Ashen_Grass.blp");
 
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, dirt.get()->width, dirt.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, dirt.get()->data);
+	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, grass.get()->width, grass.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass.get()->data);
 	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, cobble.get()->width, cobble.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, cobble.get()->data);
 	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
