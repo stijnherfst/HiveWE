@@ -42,6 +42,10 @@ bool Hierarchy::init(char tileset_code) {
 }
 
 std::vector<uint8_t> Hierarchy::open_file(std::string path) {
+	if (tileset.handle == nullptr) {
+		std::cout << "Hierarchy has not been initialised" << std::endl;
+	}
+
 	mpq::File file;
 	if (tileset.file_exists(path)) {
 		file = tileset.file_open(path);
@@ -56,7 +60,6 @@ std::vector<uint8_t> Hierarchy::open_file(std::string path) {
 	} else if (war3.file_exists(path)) {
 		file = war3.file_open(path);
 	} else {
-		//return false;
 		std::cout << "Unable to find file in hierarchy";
 		return std::vector<uint8_t>();
 	}

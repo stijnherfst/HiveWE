@@ -12,7 +12,7 @@ namespace blp {
 
 		}
 
-		static uint8_t* load(const std::string& path);
+		static std::tuple<uint8_t*, uint32_t, uint32_t> load(const std::string& path);
 	};
 
 }

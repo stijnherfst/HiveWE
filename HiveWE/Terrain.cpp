@@ -83,18 +83,17 @@ void Terrain::create() {
 
 	gl->glGenTextures(1, &textureArray);
 	gl->glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, textureWidth, textureHeight, 2);
+	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, textureWidth, textureHeight, 13);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	auto dirt = resource_manager.load<Texture>("Data/Images/Village_Dirt.png");
-	auto cobble = resource_manager.load<Texture>("Data/Images/Village_CobblePath.png");
-	auto grass = resource_manager.load<Texture>("TerrainArt\\Ashenvale\\Ashen_Grass.blp");
+	for (size_t i = 0; i < texturess.size(); i++) {
 
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, grass.get()->width, grass.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, grass.get()->data);
-	gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, cobble.get()->width, cobble.get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, cobble.get()->data);
+		gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, texturess[i].get()->width, texturess[i].get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, texturess[i].get()->data);
+	}
+
 	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 

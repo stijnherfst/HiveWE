@@ -82,6 +82,10 @@ void GLWidget::updateScene() {
 	elapsedTimer.start();
 
 	float speed = 5;
+	if (keysPressed.count(Qt::Key::Key_Shift)) {
+		speed = 20;
+	}
+
 	if (keysPressed.count(Qt::Key::Key_W)) {
 		camera.position += camera.direction * speed * (float)delta;
 	} else if (keysPressed.count(Qt::Key::Key_S)) {

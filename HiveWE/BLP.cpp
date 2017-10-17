@@ -1,13 +1,14 @@
 #include "stdafx.h"
 
 namespace blp {
-	uint8_t* BLP::load(const std::string& path) {
+	std::tuple<uint8_t*, uint32_t, uint32_t> BLP::load(const std::string& path) {
 		BinaryReader reader(hierarchy.open_file(path));
 
 		std::string version = reader.readString(4);
 
 		if (version != "BLP1") {
 			std::cout << "Could not load file as it is not a BLP1 file. Maybe it is BLP0 or BLP2." << std::endl;
+			return { nullptr, 0, 0 };
 		}
 
 		uint32_t content = reader.read<uint32_t>();
@@ -33,8 +34,12 @@ namespace blp {
 			// Decode JPEG content
 			tjhandle handle = tjInitDecompress();
 			buffer = new unsigned char[width * height * tjPixelSize[TJPF_CMYK]];
-			tjDecompress2(handle, &header[0], header.size(), buffer, width, 0, height, TJPF_CMYK, 0);
+			int success = tjDecompress2(handle, &header[0], header.size(), buffer, width, 0, height, TJPF_CMYK, 0);
 			tjDestroy(handle);
+
+			if (success == -1) {
+				std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
+			}
 
 			// BGRA to RGBA
 			for (size_t i = 0; i < width * height; i++) {
@@ -42,9 +47,11 @@ namespace blp {
 				buffer[i * 4] = buffer[i * 4 + 2];
 				buffer[i * 4 + 2] = temp;
 			}
+		} else if (content == CONTENT_DIRECT) {
+			std::cout << "Direct content for blp loading not yet implemented" << std::endl;
 		}
 
-		return buffer;
+		return { buffer, width, height };
 	}
 }
 

@@ -39,6 +39,8 @@ public:
 	std::vector<bool> textureExtended;
 	GLuint textureArray;
 
+	std::vector<std::shared_ptr<Texture>> texturess;
+
 	void create();
 	void render();
 
