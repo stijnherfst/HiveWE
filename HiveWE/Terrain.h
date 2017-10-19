@@ -5,10 +5,22 @@ struct Index {
 };
 
 struct Corner {
-	short height = 0;
-	unsigned char texture = 0;
-	unsigned char variation = 0;
-	unsigned char cliffType = 0;
+	int ground_height;
+	int water_height;
+	int map_edge;
+
+	int ground_texture;
+	
+	bool ramp;
+	bool blight;
+	bool water;
+	bool boundary;
+
+	int ground_variation;
+	int cliff_variation;
+
+	int cliff_texture;
+	int layer_height;
 };
 
 struct TerrainTexture {
@@ -19,14 +31,23 @@ struct TerrainTexture {
 
 class Terrain {
 public:
+	char tileset;
+	std::vector<std::string> tileset_ids;
+	std::vector<std::string> cliffset_ids;
+
 	int width = 3;
 	int height = 3;
 
-	int textures = 16;
-	int textureWidth = 512;
-	int textureHeight = 512;
+	float offset_x;
+	float offset_y;
 
 	std::vector <Corner> corners;
+	
+
+	std::vector<std::shared_ptr<Texture>> textures;
+	int textureWidth = 512;
+	int textureHeight = 256;
+	const int blight_texture = 17;
 
 	GLuint vertexBuffer;
 	GLuint uvBuffer;
@@ -36,14 +57,13 @@ public:
 	std::vector <glm::vec3> uvs;
 	std::vector <Index> indices;
 
-	std::vector<bool> textureExtended;
 	GLuint textureArray;
 
-	std::vector<std::shared_ptr<Texture>> texturess;
 
 	void create();
+	bool load(std::vector<uint8_t> data);
 	void render();
 
-	std::tuple<int, int> get_tile_variation(unsigned char variation, bool extended);
+	std::tuple<int, int> get_tile_variation(Corner& tile_corner);
 	std::vector<std::tuple<int, int, int>> get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight);
 };

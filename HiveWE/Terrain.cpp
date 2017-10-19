@@ -1,16 +1,17 @@
 #include "stdafx.h"
 
-std::tuple<int, int> Terrain::get_tile_variation(unsigned char variation, bool extended) {
+std::tuple<int, int> Terrain::get_tile_variation(Corner& tile_corner) {
+	bool extended = textures[tile_corner.ground_texture].get()->width == textures[tile_corner.ground_texture].get()->height * 2;
 	if (extended) {
-		if (variation <= 15) {
-			return { 4 + (variation % 4), variation / 4 };
-		} else if (variation == 16) {
+		if (tile_corner.ground_variation <= 15) {
+			return { 4 + (tile_corner.ground_variation % 4), tile_corner.ground_variation / 4 };
+		} else if (tile_corner.ground_variation == 16) {
 			return { 3, 3 };
 		} else {
 			return { 0, 0 };
 		}
 	} else {
-		if (variation == 0) {
+		if (tile_corner.ground_variation == 0) {
 			return { 0, 0 };
 		} else {
 			return { 3, 3 };
@@ -18,22 +19,26 @@ std::tuple<int, int> Terrain::get_tile_variation(unsigned char variation, bool e
 	}
 }
 
-std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight) {
+std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& topL, Corner& topR, Corner& bottomL, Corner& bottomR) {
 	std::vector<std::tuple<int, int, int>> tileVariations;
+	
+	auto comp = [&](Corner l, Corner r) { return (l.blight ? blight_texture : l.ground_texture) < (r.blight ? blight_texture : r.ground_texture); };
+	std::set<Corner, decltype(comp)> set({ topL, topR, bottomL, bottomR }, comp);
+
+	Corner first = *set.begin();
+	auto[x, y] = get_tile_variation(first);
+	tileVariations.push_back({ x, y, first.blight ? blight_texture : first.ground_texture });
+	set.erase(set.begin());
 
 	std::bitset<4> index;
-	for (auto&& texture : std::set<int>({ topLeft.texture, topRight.texture, bottomLeft.texture, bottomRight.texture })) {
-		index[0] = bottomRight.texture == texture;
-		index[1] = bottomLeft.texture == texture;
-		index[2] = topRight.texture == texture;
-		index[3] = topLeft.texture == texture;
+	for (auto&& corner : set) {
+		int texture = corner.blight ? blight_texture : corner.ground_texture;
+		index[0] = (bottomR.blight ? blight_texture : bottomR.ground_texture) == texture;
+		index[1] = (bottomL.blight ? blight_texture : bottomL.ground_texture) == texture;
+		index[2] = (topR.blight ? blight_texture : topR.ground_texture) == texture;
+		index[3] = (topL.blight ? blight_texture : topL.ground_texture) == texture;
 
-		if (index.all()) { // Only bottom left variation matters
-			auto [x, y] = get_tile_variation(bottomLeft.variation, textureExtended[texture]);
-			tileVariations.push_back({ x, y, texture });
-		} else {
-			tileVariations.push_back({ index.to_ulong() % 4, (unsigned)std::floor(index.to_ulong() / 4ul), texture });
-		}
+		tileVariations.push_back({ index.to_ulong() % 4, index.to_ulong() / 4ul, texture });
 	}
 	return tileVariations;
 }
@@ -52,15 +57,15 @@ void Terrain::create() {
 
 			auto variations = get_texture_variations(bottomLeft, bottomRight, topLeft, topRight); // TODO Bottom and top reversed, fix
 			for (auto&& [x, y, texture] : variations) {
-				vertices.push_back({ i + 1, j + 1,	(topRight.height - 0x2000) / 512.0 });
-				vertices.push_back({ i, j + 1,		(topLeft.height - 0x2000) / 512.0 });
-				vertices.push_back({ i, j,			(bottomLeft.height - 0x2000) / 512.0 });
-				vertices.push_back({ i + 1, j,		(bottomRight.height - 0x2000) / 512.0 });
+				vertices.push_back({ i + 1, j + 1,	(topRight.ground_height - 0x2000) / 512.0 });
+				vertices.push_back({ i,		j + 1,	(topLeft.ground_height - 0x2000) / 512.0 });
+				vertices.push_back({ i,		j,		(bottomLeft.ground_height - 0x2000) / 512.0 });
+				vertices.push_back({ i + 1, j,		(bottomRight.ground_height - 0x2000) / 512.0 });
 
-				uvs.push_back({ 0.125 * (x + 1), 0.125 * (y + 1), texture });
-				uvs.push_back({ 0.125 * x, 0.125 * (y + 1), texture });
-				uvs.push_back({ 0.125 * x, 0.125 * y, texture });
-				uvs.push_back({ 0.125 * (x + 1), 0.125 * y, texture });
+				uvs.push_back({ 0.125 * (x + 1),	0.25 * (y + 1),	texture });
+				uvs.push_back({ 0.125 * x,			0.25 * (y + 1),	texture });
+				uvs.push_back({ 0.125 * x,			0.25 * y,			texture });
+				uvs.push_back({ 0.125 * (x + 1),	0.25 * y,			texture });
 
 				unsigned int index = vertices.size() - 4;
 				indices.push_back({ index + 0, index + 1, index + 2 });
@@ -83,18 +88,100 @@ void Terrain::create() {
 
 	gl->glGenTextures(1, &textureArray);
 	gl->glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, textureWidth, textureHeight, 13);
+	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, textureWidth, textureHeight, textures.size());
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	for (size_t i = 0; i < texturess.size(); i++) {
-
-		gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, texturess[i].get()->width, texturess[i].get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, texturess[i].get()->data);
+	for (size_t i = 0; i < textures.size(); i++) {
+		gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, textures[i].get()->width, textures[i].get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, textures[i].get()->data);
 	}
 
-	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	//gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+}
+
+bool Terrain::load(std::vector<uint8_t> data) {
+	BinaryReader reader(data);
+
+	std::string magic_number = reader.readString(4);
+	if (magic_number != "W3E!") {
+		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
+		return false;
+	}
+	uint32_t version = reader.read<uint32_t>();
+
+	char tileset = reader.read<char>();
+	bool custom_tileset = reader.read<uint32_t>() == 1 ? true : false; // 0 for not default, 1 for custom
+
+	uint32_t tileset_textures = reader.read<uint32_t>();
+	if (tileset_textures > 16) {
+		std::cout << "Invalid war3map.w3e file: More than 16 textures" << std::endl;
+		return false;
+	}
+	for (size_t i = 0; i < tileset_textures; i++) {
+		tileset_ids.push_back(reader.readString(4));
+	}
+
+	int cliffset_textures = reader.read<uint32_t>();
+	for (size_t i = 0; i < cliffset_textures; i++) {
+		cliffset_ids.push_back(reader.readString(4));
+	}
+
+
+	width = reader.read<uint32_t>();
+	height = reader.read<uint32_t>();
+
+	offset_x = reader.read<float>();
+	offset_y = reader.read<float>();
+
+	Corner corner;
+	for (size_t j = 0; j < height; j++) {
+		for (size_t i = 0; i < width; i++) {
+			corner.ground_height = reader.read<int16_t>();
+
+			int16_t water_and_edge = reader.read<int16_t>();
+			corner.water_height = water_and_edge & 0x3FFF;
+			corner.map_edge = water_and_edge & 0xC000;
+
+			int8_t texture_and_flags = reader.read<int8_t>();
+			corner.ground_texture = texture_and_flags & 0x0F;
+
+			int8_t flags = texture_and_flags & 0xF0;
+			corner.ramp = flags & 0X0010;
+			corner.blight = flags & 0x0020;
+			corner.water = flags & 0x0040;
+			corner.boundary = flags & 0x4000;
+
+			int8_t variation = reader.read<int8_t>();
+			corner.ground_variation = variation & 31;
+			corner.cliff_variation = (variation & 224) >> 5;
+
+			int8_t misc = reader.read<int8_t>();
+			corner.cliff_texture = (misc & 0xF0) >> 4;
+			corner.layer_height = misc & 0x0F;
+
+			corners.push_back(corner);
+		}
+	}
+	// Done parsing
+
+	hierarchy.init(tileset);
+
+	slk::SLK slk("TerrainArt\\Terrain.slk");
+
+	for (size_t i = 0; i < tileset_ids.size(); i++) {
+		for (size_t j = 0; j < slk.data[0].size(); j++) {
+			if (slk.data[0][j] == tileset_ids[i]) {
+				textures.push_back(resource_manager.load<Texture>(slk.data[2][j] + "\\" + slk.data[3][j] + ".blp"));
+			}
+		}
+	}
+	textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
+
+	create();
+
+	return true;
 }
 
 void Terrain::render() {

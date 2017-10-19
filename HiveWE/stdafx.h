@@ -8,6 +8,7 @@
 #include <memory>
 #include <unordered_map>
 #include <sstream>
+#include <queue>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;
