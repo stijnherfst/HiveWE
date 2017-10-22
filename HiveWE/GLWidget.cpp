@@ -37,7 +37,7 @@ cameraStruct camera;
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	QTimer *timer = new QTimer;
 	connect(timer, &QTimer::timeout, this, &GLWidget::updateScene);
-	timer->start(30);
+	timer->start(16);
 
 	grabMouse();
 	setMouseTracking(true);

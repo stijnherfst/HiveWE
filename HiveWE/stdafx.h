@@ -33,9 +33,12 @@ namespace fs = std::experimental::filesystem;
 #include "MPQ.h"
 #include "BLP.h"
 #include "SLK.h"
+#include "MDX.h"
 
 #include "Hierarchy.h"
 #include "ResourceManager.h"
+#include "Texture.h"
+#include "StaticMesh.h"
 
 #include "Camera.h"
 #include "HiveWE.h"

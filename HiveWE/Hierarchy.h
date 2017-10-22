@@ -8,9 +8,6 @@ public:
 	mpq::MPQ war3x;
 	mpq::MPQ war3Local;
 	mpq::MPQ war3;
-
-	Hierarchy() {};
-	~Hierarchy();
 	
 	bool init(char tileset_code);
 	std::vector<uint8_t> open_file(std::string path);

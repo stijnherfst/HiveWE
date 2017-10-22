@@ -4,9 +4,8 @@ namespace blp {
 	std::tuple<uint8_t*, uint32_t, uint32_t> BLP::load(const std::string& path) {
 		BinaryReader reader(hierarchy.open_file(path));
 
-		std::string version = reader.readString(4);
-
-		if (version != "BLP1") {
+		std::string magic_number = reader.readString(4);
+		if (magic_number != "BLP1") {
 			std::cout << "Could not load file as it is not a BLP1 file. Maybe it is BLP0 or BLP2." << std::endl;
 			return { nullptr, 0, 0 };
 		}

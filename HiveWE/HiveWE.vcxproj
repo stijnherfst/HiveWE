@@ -76,6 +76,7 @@
       <AdditionalLibraryDirectories>$(QTDIR)\lib;Dependencies\glew-2.1.0;Dependencies\soil2\release;Dependencies\stormlib-9.21\release;Dependencies\libjpeg-turbo-1.5.2\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>glew32.lib;qtmain.lib;Qt5Core.lib;Qt5Gui.lib;Qt5OpenGL.lib;opengl32.lib;glu32.lib;Qt5Widgets.lib;soil2.lib;StormLibRUS.lib;turbojpeg-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -103,14 +104,17 @@
     <ClCompile Include="HiveWE.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
+    <ClCompile Include="MDX.cpp" />
     <ClCompile Include="MPQ.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="SLK.cpp" />
+    <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -120,10 +124,13 @@
     <ClInclude Include="GeneratedFiles\ui_HiveWE.h" />
     <ClInclude Include="Hierarchy.h" />
     <ClInclude Include="Map.h" />
+    <ClInclude Include="MDX.h" />
     <ClInclude Include="MPQ.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="SLK.h" />
+    <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Utilities.h" />
     <CustomBuild Include="GLWidget.h">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing GLWidget.h...</Message>

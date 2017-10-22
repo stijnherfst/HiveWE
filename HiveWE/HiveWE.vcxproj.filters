@@ -34,6 +34,12 @@
     <Filter Include="Header Files\Base">
       <UniqueIdentifier>{dddc58bd-4bc0-4bd4-819c-b5d3e22dc9c8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Base\Resources">
+      <UniqueIdentifier>{fb049598-cff6-43dd-bbf6-39079133a48c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Base\Resources">
+      <UniqueIdentifier>{927210ec-7417-4833-b30e-20021684cc2d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -87,6 +93,15 @@
     <ClCompile Include="SLK.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="MDX.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -124,6 +139,15 @@
     </ClInclude>
     <ClInclude Include="SLK.h">
       <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MDX.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

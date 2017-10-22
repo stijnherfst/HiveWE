@@ -5,7 +5,21 @@ namespace mpq {
 
 	class File {
 	public:
-		HANDLE handle;
+		~File();
+		File() {}
+		File(File&& move) {
+			handle = move.handle;
+			move.handle = nullptr;
+		}
+		File(const File&) = default;
+		File& operator=(const File&) = default;
+		File& operator=(File&& move) {
+			handle = move.handle;
+			move.handle = nullptr;
+			return *this;
+		}
+
+		HANDLE handle = nullptr;
 
 		std::vector<uint8_t> read();
 		void close();
@@ -18,6 +32,7 @@ namespace mpq {
 		MPQ() {}
 		MPQ(const std::wstring path);
 		MPQ(File archive);
+		~MPQ();
 
 		void open(const std::wstring path);
 		void open(File archive);

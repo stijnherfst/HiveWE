@@ -18,6 +18,10 @@ namespace mpq {
 		SFileCloseFile(handle);
 	}
 
+	File::~File() {
+		close();
+	}
+
 	// MPQ
 
 	MPQ::MPQ(const std::wstring path) {
@@ -26,6 +30,10 @@ namespace mpq {
 
 	MPQ::MPQ(File archive) {
 		open(archive);
+	}
+
+	MPQ::~MPQ() {
+		SFileCloseArchive(handle);
 	}
 
 	void MPQ::open(const std::wstring path) {

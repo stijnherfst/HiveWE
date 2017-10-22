@@ -1,33 +1,33 @@
 #include "stdafx.h"
 
-std::tuple<int, int> Terrain::get_tile_variation(Corner& tile_corner) {
+int Terrain::get_tile_variation(Corner& tile_corner) {
 	bool extended = textures[tile_corner.ground_texture].get()->width == textures[tile_corner.ground_texture].get()->height * 2;
 	if (extended) {
 		if (tile_corner.ground_variation <= 15) {
-			return { 4 + (tile_corner.ground_variation % 4), tile_corner.ground_variation / 4 };
+			return 16 + tile_corner.ground_variation;
 		} else if (tile_corner.ground_variation == 16) {
-			return { 3, 3 };
+			return 15;
 		} else {
-			return { 0, 0 };
+			return 0;
 		}
 	} else {
 		if (tile_corner.ground_variation == 0) {
-			return { 0, 0 };
+			return 0;
 		} else {
-			return { 3, 3 };
+			return 15;
 		}
 	}
 }
 
-std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& topL, Corner& topR, Corner& bottomL, Corner& bottomR) {
-	std::vector<std::tuple<int, int, int>> tileVariations;
+std::vector<std::tuple<int, int>> Terrain::get_texture_variations(Corner& topL, Corner& topR, Corner& bottomL, Corner& bottomR) {
+	std::vector<std::tuple<int, int>> tileVariations;
 	
 	auto comp = [&](Corner l, Corner r) { return (l.blight ? blight_texture : l.ground_texture) < (r.blight ? blight_texture : r.ground_texture); };
 	std::set<Corner, decltype(comp)> set({ topL, topR, bottomL, bottomR }, comp);
 
 	Corner first = *set.begin();
-	auto[x, y] = get_tile_variation(first);
-	tileVariations.push_back({ x, y, first.blight ? blight_texture : first.ground_texture });
+	int variation = get_tile_variation(first);
+	tileVariations.push_back({ variation, first.blight ? blight_texture : first.ground_texture });
 	set.erase(set.begin());
 
 	std::bitset<4> index;
@@ -38,7 +38,7 @@ std::vector<std::tuple<int, int, int>> Terrain::get_texture_variations(Corner& t
 		index[2] = (topR.blight ? blight_texture : topR.ground_texture) == texture;
 		index[3] = (topL.blight ? blight_texture : topL.ground_texture) == texture;
 
-		tileVariations.push_back({ index.to_ulong() % 4, index.to_ulong() / 4ul, texture });
+		tileVariations.push_back({ index.to_ulong(), texture });
 	}
 	return tileVariations;
 }
@@ -56,16 +56,16 @@ void Terrain::create() {
 			Corner& topRight = corners[(j + 1) * width + (i + 1)];
 
 			auto variations = get_texture_variations(bottomLeft, bottomRight, topLeft, topRight); // TODO Bottom and top reversed, fix
-			for (auto&& [x, y, texture] : variations) {
+			for (auto&& [variation, texture] : variations) {
 				vertices.push_back({ i + 1, j + 1,	(topRight.ground_height - 0x2000) / 512.0 });
 				vertices.push_back({ i,		j + 1,	(topLeft.ground_height - 0x2000) / 512.0 });
 				vertices.push_back({ i,		j,		(bottomLeft.ground_height - 0x2000) / 512.0 });
 				vertices.push_back({ i + 1, j,		(bottomRight.ground_height - 0x2000) / 512.0 });
 
-				uvs.push_back({ 0.125 * (x + 1),	0.25 * (y + 1),	texture });
-				uvs.push_back({ 0.125 * x,			0.25 * (y + 1),	texture });
-				uvs.push_back({ 0.125 * x,			0.25 * y,			texture });
-				uvs.push_back({ 0.125 * (x + 1),	0.25 * y,			texture });
+				uvs.push_back({ 1, 1, texture * 32 + variation });
+				uvs.push_back({ 0, 1, texture * 32 + variation });
+				uvs.push_back({ 0, 0, texture * 32 + variation });
+				uvs.push_back({ 1, 0, texture * 32 + variation });
 
 				unsigned int index = vertices.size() - 4;
 				indices.push_back({ index + 0, index + 1, index + 2 });
@@ -88,17 +88,29 @@ void Terrain::create() {
 
 	gl->glGenTextures(1, &textureArray);
 	gl->glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
-	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, textureWidth, textureHeight, textures.size());
+	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, variation_width, variation_height, textures.size() * 32);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+
 	for (size_t i = 0; i < textures.size(); i++) {
-		gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, textures[i].get()->width, textures[i].get()->height, 1, GL_RGBA, GL_UNSIGNED_BYTE, textures[i].get()->data);
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, textures[i].get()->width);
+		for (size_t y = 0; y < 4; y++) {
+			for (size_t x = 0; x < 4; x++) {
+				int sub_image = i * 32 + y * 4 + x;
+				gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, sub_image, variation_width, variation_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, textures[i].get()->data + (y * variation_height * textures[i].get()->width + x * variation_width) * 4);
+
+				// If extended
+				if (textures[i].get()->width == textures[i].get()->height * 2) {
+					gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, sub_image + 16, variation_width, variation_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, textures[i].get()->data + (y * variation_height * textures[i].get()->width + (x + 4) * variation_width) * 4);
+				}
+			}
+		}
 	}
 
-	//gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
 bool Terrain::load(std::vector<uint8_t> data) {
@@ -178,6 +190,9 @@ bool Terrain::load(std::vector<uint8_t> data) {
 		}
 	}
 	textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
+	blight_texture = textures.size() - 1;
+
+	auto t = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 
 	create();
 

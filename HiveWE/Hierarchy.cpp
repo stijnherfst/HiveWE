@@ -3,15 +3,6 @@
 Hierarchy hierarchy;
 const std::wstring warcraftDirectory = L"C:/Program Files (x86)/Warcraft III/";
 
-Hierarchy::~Hierarchy() {
-	tileset.close();
-	war3Patch.close();
-	war3xLocal.close();
-	war3x.close();
-	war3Local.close();
-	war3.close();
-}
-
 bool Hierarchy::init(char tileset_code) {
 	war3Patch.open(warcraftDirectory + L"War3Patch.mpq");
 	war3xLocal.open(warcraftDirectory + L"War3xlocal.mpq");

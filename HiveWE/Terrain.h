@@ -45,9 +45,9 @@ public:
 	
 
 	std::vector<std::shared_ptr<Texture>> textures;
-	int textureWidth = 512;
-	int textureHeight = 256;
-	const int blight_texture = 17;
+	int variation_width = 64;
+	int variation_height = 64;
+	int blight_texture;
 
 	GLuint vertexBuffer;
 	GLuint uvBuffer;
@@ -64,6 +64,6 @@ public:
 	bool load(std::vector<uint8_t> data);
 	void render();
 
-	std::tuple<int, int> get_tile_variation(Corner& tile_corner);
-	std::vector<std::tuple<int, int, int>> get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight);
+	int get_tile_variation(Corner& tile_corner);
+	std::vector<std::tuple<int, int>> get_texture_variations(Corner& topLeft, Corner& topRight, Corner& bottomLeft, Corner& bottomRight);
 };
