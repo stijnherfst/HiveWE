@@ -1,20 +1,3 @@
-﻿  stdafx.cpp
-  BLP.cpp
-  GLWidget.cpp
-  moc_GLWidget.cpp
-  moc_HiveWE.cpp
-  Hierarchy.cpp
-  HiveWE.cpp
-  MDX.cpp
-  MPQ.cpp
-  Map.cpp
-  ResourceManager.cpp
-  SLK.cpp
-  StaticMesh.cpp
-  Terrain.cpp
-  Texture.cpp
-  Utilities.cpp
-  main.cpp
-  Generating Code...
-  HiveWE.vcxproj -> C:\Users\User\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
-  HiveWE.vcxproj -> C:\Users\User\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.pdb (Full PDB)
+﻿  Terrain.cpp
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.pdb (Full PDB)

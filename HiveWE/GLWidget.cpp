@@ -32,6 +32,38 @@ const char* fragmentSource = R"glsl(
 	}
 )glsl";
 
+
+const char* vertexSource2 = R"glsl(
+	#version 420 core
+
+	layout (location = 0) in vec3 vPosition;
+	layout (location = 1) in vec2 vUV;
+
+	uniform mat4 MVP;
+
+	out vec2 UV;
+
+	void main() { 
+		gl_Position = MVP * vec4(vPosition, 1);
+		UV = vUV;
+	}
+)glsl";
+
+const char* fragmentSource2 = R"glsl(
+	#version 420 core
+
+	layout (binding = 0) uniform sampler2D image;
+
+	in vec2 UV;
+	
+	out vec4 outColor;
+
+	void main() {
+		outColor = texture(image, UV);
+	}
+)glsl";
+
+
 cameraStruct camera;
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
@@ -49,6 +81,8 @@ GLWidget::~GLWidget() {
 
 Map map;
 GLuint shader;
+GLuint shader2;
+std::shared_ptr<StaticMesh> mesh;
 
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_2_Core;
@@ -67,8 +101,10 @@ void GLWidget::initializeGL() {
 	gl->glBindVertexArray(vao);
 
 	shader = compileShader(vertexSource, fragmentSource);
+	shader2 = compileShader(vertexSource2, fragmentSource2);
 
 	map.load(L"Data/t.w3x");
+	mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -127,6 +163,14 @@ void GLWidget::paintGL() {
 	gl->glUniformMatrix4fv(gl->glGetUniformLocation(shader, "MVP"), 1, GL_FALSE, &MVP[0][0]);
 
 	map.terrain.render();
+	gl->glUseProgram(shader2);
+
+	Model = glm::mat4(1.0f);
+	Model = glm::translate(Model, glm::vec3(0, 0, 0));
+	MVP = camera.projection * camera.view * Model;
+	gl->glUniformMatrix4fv(gl->glGetUniformLocation(shader2, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	mesh.get()->render();
+
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {

@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <sstream>
 #include <queue>
+#include <string>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;
@@ -35,10 +36,12 @@ namespace fs = std::experimental::filesystem;
 #include "SLK.h"
 #include "MDX.h"
 
+// Resource types
 #include "Hierarchy.h"
 #include "ResourceManager.h"
 #include "Texture.h"
 #include "StaticMesh.h"
+#include "Shader.h"
 
 #include "Camera.h"
 #include "HiveWE.h"

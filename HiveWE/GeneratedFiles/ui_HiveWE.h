@@ -15,6 +15,8 @@
 #include <QtWidgets/QButtonGroup>
 #include <QtWidgets/QHeaderView>
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
+#include <QtWidgets/QMenuBar>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include "glwidget.h"
@@ -24,15 +26,21 @@ QT_BEGIN_NAMESPACE
 class Ui_HiveWEClass
 {
 public:
+    QAction *actionConvert_Blockers_to_Pathmap;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
+    QMenuBar *menuBar;
+    QMenu *menuTools;
+    QMenu *menuPathing;
 
     void setupUi(QMainWindow *HiveWEClass)
     {
         if (HiveWEClass->objectName().isEmpty())
             HiveWEClass->setObjectName(QStringLiteral("HiveWEClass"));
         HiveWEClass->resize(600, 400);
+        actionConvert_Blockers_to_Pathmap = new QAction(HiveWEClass);
+        actionConvert_Blockers_to_Pathmap->setObjectName(QStringLiteral("actionConvert_Blockers_to_Pathmap"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -45,6 +53,18 @@ public:
         verticalLayout->addWidget(widget);
 
         HiveWEClass->setCentralWidget(centralWidget);
+        menuBar = new QMenuBar(HiveWEClass);
+        menuBar->setObjectName(QStringLiteral("menuBar"));
+        menuBar->setGeometry(QRect(0, 0, 600, 21));
+        menuTools = new QMenu(menuBar);
+        menuTools->setObjectName(QStringLiteral("menuTools"));
+        menuPathing = new QMenu(menuTools);
+        menuPathing->setObjectName(QStringLiteral("menuPathing"));
+        HiveWEClass->setMenuBar(menuBar);
+
+        menuBar->addAction(menuTools->menuAction());
+        menuTools->addAction(menuPathing->menuAction());
+        menuPathing->addAction(actionConvert_Blockers_to_Pathmap);
 
         retranslateUi(HiveWEClass);
 
@@ -54,6 +74,9 @@ public:
     void retranslateUi(QMainWindow *HiveWEClass)
     {
         HiveWEClass->setWindowTitle(QApplication::translate("HiveWEClass", "HiveWE", Q_NULLPTR));
+        actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathmap", Q_NULLPTR));
+        menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", Q_NULLPTR));
+        menuPathing->setTitle(QApplication::translate("HiveWEClass", "Pathing", Q_NULLPTR));
     } // retranslateUi
 
 };

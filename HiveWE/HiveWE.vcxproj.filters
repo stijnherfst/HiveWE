@@ -102,6 +102,9 @@
     <ClCompile Include="StaticMesh.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -147,6 +150,9 @@
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
     <ClInclude Include="StaticMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
   </ItemGroup>

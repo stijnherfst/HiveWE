@@ -50,6 +50,10 @@ void Terrain::create() {
 
 	for (int i = 0; i < width - 1; i++) {
 		for (int j = 0; j < height - 1; j++) {
+			//if (corners[j * width + i].cliff_texture != 0) {
+			//	continue;
+			//}
+
 			Corner& bottomLeft = corners[j * width + i];
 			Corner& bottomRight = corners[j * width + (i + 1)];
 			Corner& topLeft = corners[(j + 1) * width + i];
@@ -109,7 +113,7 @@ void Terrain::create() {
 			}
 		}
 	}
-
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
@@ -191,8 +195,6 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	}
 	textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
 	blight_texture = textures.size() - 1;
-
-	auto t = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 
 	create();
 

@@ -41,7 +41,7 @@ namespace blp {
 			}
 
 			// BGRA to RGBA
-			for (size_t i = 0; i < width * height; i++) {
+ 			for (size_t i = 0; i < width * height; i++) {
 				unsigned char temp = buffer[i * 4];
 				buffer[i * 4] = buffer[i * 4 + 2];
 				buffer[i * 4 + 2] = temp;

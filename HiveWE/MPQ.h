@@ -5,6 +5,8 @@ namespace mpq {
 
 	class File {
 	public:
+		HANDLE handle = nullptr;
+		
 		~File();
 		File() {}
 		File(File&& move) {
@@ -19,7 +21,6 @@ namespace mpq {
 			return *this;
 		}
 
-		HANDLE handle = nullptr;
 
 		std::vector<uint8_t> read();
 		void close();

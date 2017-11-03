@@ -107,6 +107,7 @@
     <ClCompile Include="MDX.cpp" />
     <ClCompile Include="MPQ.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SLK.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -127,6 +128,7 @@
     <ClInclude Include="MDX.h" />
     <ClInclude Include="MPQ.h" />
     <ClInclude Include="ResourceManager.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="SLK.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="Terrain.h" />
