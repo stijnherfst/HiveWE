@@ -95,9 +95,27 @@ void Terrain::create() {
 				indices.push_back({ index + 0, index + 1, index + 2 });
 				indices.push_back({ index + 0, index + 2, index + 3 });
 			}
+
+			// Water
+			if (bottomLeft.water) {
+				water_vertices.push_back({ i + 1,	j + 1,	topRight.height_water() });
+				water_vertices.push_back({ i,		j + 1,	topLeft.height_water() });
+				water_vertices.push_back({ i,		j,		bottomLeft.height_water() });
+				water_vertices.push_back({ i + 1,	j,		bottomRight.height_water() });
+
+				water_uvs.push_back({ 1, 1 });
+				water_uvs.push_back({ 0, 1 });
+				water_uvs.push_back({ 0, 0 });
+				water_uvs.push_back({ 1, 0 });
+
+				unsigned int index = water_vertices.size() - 4;
+				water_indices.push_back({ index + 0, index + 1, index + 2 });
+				water_indices.push_back({ index + 0, index + 2, index + 3 });
+			}
 		}
 	}
 
+	// Ground
 	gl->glGenBuffers(1, &vertexBuffer);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	gl->glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
@@ -109,6 +127,19 @@ void Terrain::create() {
 	gl->glGenBuffers(1, &indexBuffer);
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int) * 3, indices.data(), GL_STATIC_DRAW);
+
+	// Water
+	gl->glGenBuffers(1, &water_vertexBuffer);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, water_vertexBuffer);
+	gl->glBufferData(GL_ARRAY_BUFFER, water_vertices.size() * sizeof(glm::vec3), water_vertices.data(), GL_STATIC_DRAW);
+
+	gl->glGenBuffers(1, &water_uvBuffer);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, water_uvBuffer);
+	gl->glBufferData(GL_ARRAY_BUFFER, water_uvs.size() * sizeof(glm::vec2), water_uvs.data(), GL_STATIC_DRAW);
+
+	gl->glGenBuffers(1, &water_indexBuffer);
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_indexBuffer);
+	gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
 
 	// Ground textures
 	gl->glGenTextures(1, &ground_texture_array);
@@ -154,6 +185,24 @@ void Terrain::create() {
 	for (auto&& i : cliff_meshes) {
 		i->texture = cliff_texture_list[0];
 	}
+
+	// Water textures
+	gl->glGenTextures(1, &water_texture_array);
+	gl->glBindTexture(GL_TEXTURE_2D_ARRAY, water_texture_array);
+	gl->glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, 128, 128, water_textures_nr);
+	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	for (size_t i = 0; i < water_textures.size(); i++) {
+		if (water_textures[i]->width > 128 || water_textures[i]->height > 128) {
+			std::cout << "Odd water texture size detected of " << water_textures[i]->width << " wide and " << water_textures[i]->height << " high\n";
+			continue;
+		}
+		gl->glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_RGBA, GL_UNSIGNED_BYTE, water_textures[i]->data);
+	}
+	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
 bool Terrain::load(std::vector<uint8_t> data) {
@@ -271,8 +320,14 @@ bool Terrain::load(std::vector<uint8_t> data) {
 		}
 	}
 
+	// Water textures
+	for (size_t i = 0; i < water_textures_nr; i++) {
+		water_textures.push_back(resource_manager.load<Texture>("ReplaceableTextures\\Water\\Water" + (i < 10 ? "0" + std::to_string(i) : std::to_string(i)) + ".blp"));
+	}
+
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/staticmesh.vs", "Data/Shaders/staticmesh.fs" });
+	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
 
 	create();
 
@@ -317,4 +372,33 @@ void Terrain::render() {
 
 		cliff_meshes[i.z]->render();
 	}
+
+	// Render water
+	water_shader->use();
+
+	Model = glm::mat4(1.0f);
+	Model = glm::translate(Model, glm::vec3(0, 0, 0));
+	MVP = camera.projection * camera.view * Model;
+
+	current_texture = current_texture >= 44 ? 0 : current_texture + 1;
+
+	gl->glUniformMatrix4fv(gl->glGetUniformLocation(water_shader->program, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	gl->glUniform1i(gl->glGetUniformLocation(water_shader->program, "current_texture"), current_texture);
+
+	gl->glActiveTexture(GL_TEXTURE0);
+	gl->glBindTexture(GL_TEXTURE_2D_ARRAY, water_texture_array);
+
+	gl->glEnableVertexAttribArray(0);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, water_vertexBuffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	gl->glEnableVertexAttribArray(1);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, water_uvBuffer);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_indexBuffer);
+	gl->glDrawElements(GL_TRIANGLES, water_indices.size() * 3, GL_UNSIGNED_INT, NULL);
+
+	gl->glDisableVertexAttribArray(0);
+	gl->glDisableVertexAttribArray(1);
 }

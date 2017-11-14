@@ -22,6 +22,10 @@ struct Corner {
 	float height() {
 		return (ground_height - 0x2000 + (layer_height - 2) * 0x0200) / 512.0;
 	}
+
+	float height_water() {
+		return (water_height - 0x2000 + (layer_height - 2) * 0x0200) / 512.0;
+	}
 };
 
 class Terrain {
@@ -30,23 +34,15 @@ public:
 	std::vector<std::string> tileset_ids;
 	std::vector<std::string> cliffset_ids;
 
-	int width = 3;
-	int height = 3;
+	int width;
+	int height;
 
 	float offset_x;
 	float offset_y;
 
 	std::vector <Corner> corners;
-	
-	std::vector<std::shared_ptr<Texture>> ground_textures;
-	std::vector<std::shared_ptr<Texture>> cliff_textures;
 
-	int variation_width = 64;
-	int variation_height = 64;
-	int blight_texture;
-
-	int cliff_texture_size = 256;
-
+	// Ground
 	GLuint vertexBuffer;
 	GLuint uvBuffer;
 	GLuint indexBuffer;
@@ -55,16 +51,42 @@ public:
 	std::vector <glm::vec3> uvs;
 	std::vector <glm::ivec3> indices;
 
-	std::vector<std::shared_ptr<StaticMesh>> cliff_meshes;
-	std::vector <glm::ivec3> cliffs;
-	std::map<std::string, int> path_to_cliff;
-
+	std::vector<std::shared_ptr<Texture>> ground_textures;
 	std::shared_ptr<Shader> ground_shader;
-	std::shared_ptr<Shader> cliff_shader;
 
 	GLuint ground_texture_array;
-	std::vector<GLuint> cliff_texture_list;
 
+	int variation_width = 64;
+	int variation_height = 64;
+	int blight_texture;
+
+	// Cliffs
+	std::vector <glm::ivec3> cliffs;
+	std::map<std::string, int> path_to_cliff;
+	
+	std::vector<std::shared_ptr<Texture>> cliff_textures;
+	std::vector<std::shared_ptr<StaticMesh>> cliff_meshes;
+	std::shared_ptr<Shader> cliff_shader;
+
+	std::vector<GLuint> cliff_texture_list;
+	
+	int cliff_texture_size = 256;
+
+	// Water
+	GLuint water_vertexBuffer;
+	GLuint water_uvBuffer;
+	GLuint water_indexBuffer;
+
+	std::vector <glm::vec3> water_vertices;
+	std::vector <glm::vec2> water_uvs;
+	std::vector <glm::ivec3> water_indices;
+
+	const int water_textures_nr = 45;
+	std::vector<std::shared_ptr<Texture>> water_textures;
+	std::shared_ptr<Shader> water_shader;
+
+	int current_texture = 0;
+	GLuint water_texture_array;
 
 	void create();
 	bool load(std::vector<uint8_t> data);
