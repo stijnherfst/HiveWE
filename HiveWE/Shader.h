@@ -1,18 +1,16 @@
 #pragma once
 
-//class Shader : public Resource {
-//public:
-//	GLuint program;
-//
-//	Shader(const std::string& path) : Resource(path) {
-//		load(path);
-//	}
-//
-//	virtual ~Shader() {
-//		unload();
-//	}
-//protected:
-//	void load(const std::string& path);
-//
-//	void unload();
-//};
+class Shader : public Resource {
+public:
+	GLuint program;
+
+	Shader(const std::initializer_list<std::string> paths);
+
+	virtual ~Shader() {
+
+	}
+
+	void use() {
+		gl->glUseProgram(program);
+	}
+};

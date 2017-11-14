@@ -22,8 +22,4 @@ public:
 
 	void keyPressEvent(QKeyEvent *e);
 	void keyReleaseEvent(QKeyEvent *e);
-
-	GLuint compileShader(const char* vertexShader, const char* fragmentShader);
 };
-
-extern QOpenGLFunctions_4_2_Core* gl;

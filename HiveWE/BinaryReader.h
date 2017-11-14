@@ -22,6 +22,11 @@ public:
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
 		std::string result = { reinterpret_cast<char*>(&buffer[position]), size };
+
+		if (int pos = result.find_first_of('\0', 0); pos != std::string::npos) {
+			result.resize(pos);
+		}
+
 		position += size;
 		return result;
 	}

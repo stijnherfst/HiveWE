@@ -7,15 +7,9 @@ public:
 	int channels;
 	uint8_t* data;
 
-	Texture(const std::string& path) : Resource(path) {
-		load(path);
-	}
+	Texture(const std::string& path);
 
 	virtual ~Texture() {
-		unload();
+		delete[] data;
 	}
-protected:
-	void load(const std::string& path);
-
-	void unload();
 };

@@ -1,10 +1,9 @@
 #include "stdafx.h"
 
-void StaticMesh::load(const std::string& path) {
+StaticMesh::StaticMesh(const std::string& path) {
 	auto t = fs::path(path).extension();
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
 		mdx::MDX model = mdx::MDX(path);
-
 
 		auto set = dynamic_cast<mdx::GEOS*>(model.chunks[mdx::ChunkTag::GEOS])->geosets.front();
 		vertices = set.vertices.size();
@@ -26,16 +25,18 @@ void StaticMesh::load(const std::string& path) {
 		gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, set.faces.size() * sizeof(uint16_t), set.faces.data(), GL_STATIC_DRAW);
 
 		auto texs = dynamic_cast<mdx::TEXS*>(model.chunks[mdx::ChunkTag::TEXS])->textures.front();
-		auto tex = resource_manager.load<Texture>(texs.file_name);
 
-		gl->glGenTextures(1, &texture);
-		gl->glBindTexture(GL_TEXTURE_2D, texture);
-		gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex.get()->width, tex.get()->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex.get()->data);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		gl->glGenerateMipmap(GL_TEXTURE_2D);
+		if (texs.file_name != "") {
+			auto tex = resource_manager.load<Texture>(texs.file_name);
+			gl->glGenTextures(1, &texture);
+			gl->glBindTexture(GL_TEXTURE_2D, texture);
+			gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tex->width, tex->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
+			gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			gl->glGenerateMipmap(GL_TEXTURE_2D);
+		}
 	} else {
 
 	}
@@ -58,8 +59,4 @@ void StaticMesh::render() {
 
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
-}
-
-void StaticMesh::unload() {
-
 }
