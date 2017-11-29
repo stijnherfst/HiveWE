@@ -36,6 +36,7 @@ void GLWidget::initializeGL() {
 
 	map.load(L"Data/t.w3x");
 	mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
+
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -80,13 +81,21 @@ void GLWidget::updateScene() {
 	camera.verticalAngle += diffy * 0.1 * speed * (float)delta;
 	camera.update();
 
+	map.terrain.current_texture += std::max(0.f, map.terrain.animation_rate * (float)delta);
+	if (map.terrain.current_texture >= map.terrain.water_textures_nr) {
+		map.terrain.current_texture = 0;
+	}
+
 	update();
 }
 
 void GLWidget::paintGL() {
+
 	gl->glClearColor(0, 0, 0, 1);
 	
 	map.terrain.render();
+
+
 	//gl->glUseProgram(shader2);
 
 	//Model = glm::mat4(1.0f);

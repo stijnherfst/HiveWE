@@ -3,11 +3,20 @@
 namespace slk {
 	class SLK {
 	public:
+		size_t rows;
+		size_t columns;
+
+
 		std::map<std::string, size_t> header_to_column;
-		std::vector<std::vector<std::string>> data;
+		std::map<std::string, size_t> header_to_row;
 
-		SLK(std::string path);
+		std::vector<std::vector<std::string>> table_data;
 
-		void load(std::string path);
+		SLK(std::string path, bool local = false);
+
+		void load(std::string path, bool local = false);
+
+		std::string data(std::string column_header, size_t row);
+		std::string data(std::string column_header, std::string row_header);
 	};
 }

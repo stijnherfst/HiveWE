@@ -1,13 +1,21 @@
 #include "stdafx.h"
 
 namespace slk {
-	SLK::SLK(std::string path) {
-		load(path);
+	SLK::SLK(std::string path, bool local) {
+		load(path, local);
 	}
 
-	void SLK::load(std::string path) {
+	void SLK::load(std::string path, bool local) {
 		std::stringstream file;
-		file << hierarchy.open_file(path).data();
+		if (local) {
+			std::ifstream stream(path);
+			if (stream) {
+				file << stream.rdbuf();
+			}
+			stream.close();
+		} else {
+			file << hierarchy.open_file(path).data();
+		}
 
 		int row = 1;
 
@@ -25,7 +33,6 @@ namespace slk {
 		}
 
 		while (std::getline(file, line)) {
-			//std::cout << line << std::endl;
 			if (line.back() == '\r') {
 				line.erase(line.end() - 1);
 			}
@@ -36,18 +43,26 @@ namespace slk {
 				break;
 			}
 
-			if (parts[0] == "B") {
-				if (parts.size() < 4) {
+			if (parts.front() == "B") {
+				if (parts.size() < 3) {
 					std::cout << "Invalid B record: " << line << std::endl;
 					break;
 				}
-				parts[1].erase(parts[1].begin());
-				parts[2].erase(parts[2].begin());
-				int columns = std::stoi(parts[1]);
-				int rows = std::stoi(parts[2]);
-				data.resize(columns, std::vector<std::string>(rows));
+				for (auto&& part : parts) {
+					switch (part.front()) {
+						case 'X':
+							part.erase(part.begin());
+							columns = std::stoi(part);
+							break;
+						case 'Y':
+							part.erase(part.begin());
+							rows = std::stoi(part);
+							break;
+					}
+				}
+				table_data.resize(columns, std::vector<std::string>(rows));
 				continue;
-			} else if (parts[0] == "C") {
+			} else if (parts.front() == "C") {
 				if (parts.size() < 3) {
 					std::cout << "Invalid C record: " << line << std::endl;
 					break;
@@ -55,21 +70,32 @@ namespace slk {
 
 				int column = 0;
 				for (auto&& part : parts) {
-					switch (part.front()) {
+					char front = part.front();
+					part.erase(part.begin());
+					switch (front) {
 						case 'X':
-							part.erase(part.begin());
 							column = std::stoi(part);
 							break;
 						case 'Y':
-							part.erase(part.begin());
 							row = std::stoi(part);
 							break;
 						case 'K':
-							part.erase(part.begin());
 							if (part.front() == '\"') {
-								data[column - 1][row - 1] = part.substr(1, part.size() - 2);
+								if (row == 1) {
+									header_to_column.emplace(part.substr(1, part.size() - 2), column - 1);
+								}
+								if (column == 1) {
+									header_to_row.emplace(part.substr(1, part.size() - 2), row - 1);
+								}
+								table_data[column - 1][row - 1] = part.substr(1, part.size() - 2);
 							} else {
-								data[column - 1][row - 1] = part;
+								if (row == 1) {
+									header_to_column.emplace(part, column - 1);
+								}
+								if (column == 1) {
+									header_to_row.emplace(part, row - 1);
+								}
+								table_data[column - 1][row - 1] = part;
 							}
 							break;
 					}
@@ -82,5 +108,13 @@ namespace slk {
 				continue;
 			}
 		}
+	}
+
+	std::string SLK::data(std::string column_header, size_t row) {
+		return table_data[header_to_column[column_header]][row];
+	}
+
+	std::string SLK::data(std::string column_header, std::string row_header) {
+		return table_data[header_to_column[column_header]][header_to_row[row_header]];
 	}
 }
