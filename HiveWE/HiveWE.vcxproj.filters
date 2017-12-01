@@ -128,22 +128,10 @@
     <ClInclude Include="Hierarchy.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="MPQ.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
     <ClInclude Include="ResourceManager.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="BLP.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
     <ClInclude Include="BinaryReader.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="SLK.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="MDX.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
     <ClInclude Include="Texture.h">
@@ -154,6 +142,18 @@
     </ClInclude>
     <ClInclude Include="Shader.h">
       <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="BLP.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MPQ.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="MDX.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="SLK.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -85,12 +85,12 @@ namespace mdx {
 		}
 	}
 
-	MDX::MDX(std::string path) {
-		load(path);
+	MDX::MDX(BinaryReader& reader) {
+		load(reader);
 	}
 
-	void MDX::load(const std::string& path) {
-		BinaryReader reader(hierarchy.open_file(path));
+	void MDX::load(BinaryReader& reader) {
+		//BinaryReader reader(hierarchy.open_file(path));
 
 		std::string magic_number = reader.readString(4);
 		if (magic_number != "MDLX") {
@@ -99,18 +99,8 @@ namespace mdx {
 		}
 
 		uint32_t header;
-		uint32_t size;
 		while (reader.remaining() > 0) {
 			header = reader.read<uint32_t>();
-			size = reader.read<uint32_t>();
-			reader.position -= 4;
-
-			//uint32_t headerr = reader.read<uint32_t>();
-			//reader.position -= 4;
-			//std::string header = reader.readString(4);
-			//uint32_t size = reader.read<uint32_t>();
-			//std::cout << header << " " << headerr << std::endl;
-			//reader.position += size;
 
 			switch (static_cast<ChunkTag>(header)) {
 				case ChunkTag::GEOS:
@@ -119,10 +109,8 @@ namespace mdx {
 				case ChunkTag::TEXS:
 					chunks[ChunkTag::TEXS] = new TEXS(reader);
 					break;
-				//case ChunkTag::MTLS:
-				//	break;
 				default:
-					reader.position += size + 4;
+					reader.position += reader.read<uint32_t>();
 					continue;
 			}
 		}

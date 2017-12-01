@@ -1,4 +1,19 @@
-﻿  Terrain.cpp
+﻿  stdafx.cpp
+  BLP.cpp
+  moc_GLWidget.cpp
+  moc_HiveWE.cpp
+  GLWidget.cpp
+  Hierarchy.cpp
+  HiveWE.cpp
+  main.cpp
+  Map.cpp
+  MDX.cpp
+  MPQ.cpp
+  ResourceManager.cpp
+  Shader.cpp
+  SLK.cpp
+  StaticMesh.cpp
+  Terrain.cpp
 C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\utility(188): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xmemory0(856): note: see reference to function template instantiation 'std::pair<const _Kty,_Ty>::pair<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64,void,0>(_Other1,_Other2 &&) noexcept(false)' being compiled
           with
@@ -60,4 +75,7 @@ C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.
               _Pr=std::less<std::string>,
               _Alloc=std::allocator<std::pair<const std::string,int>>
           ]
+  Texture.cpp
+  Utilities.cpp
+  Generating Code...
   HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe

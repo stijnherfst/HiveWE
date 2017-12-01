@@ -92,7 +92,7 @@ namespace mdx {
 	public:
 		std::map<ChunkTag, Chunk*> chunks;
 
-		MDX(std::string path);
-		void load(const std::string& path);
+		MDX(BinaryReader& reader);
+		void load(BinaryReader& reader);
 	};
 }

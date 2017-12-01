@@ -1,9 +1,8 @@
 #include "stdafx.h"
 
 StaticMesh::StaticMesh(const std::string& path) {
-	auto t = fs::path(path).extension();
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
-		mdx::MDX model = mdx::MDX(path);
+		mdx::MDX model = mdx::MDX(BinaryReader(hierarchy.open_file(path)));
 
 		auto set = dynamic_cast<mdx::GEOS*>(model.chunks[mdx::ChunkTag::GEOS])->geosets.front();
 		vertices = set.vertices.size();
