@@ -44,6 +44,7 @@ public:
 	std::vector <glm::vec3> uvs;
 	std::vector <glm::ivec3> indices;
 
+	std::map<std::string, int> ground_texture_to_id;
 	std::vector<std::shared_ptr<Texture>> ground_textures;
 	std::shared_ptr<Shader> ground_shader;
 
@@ -56,6 +57,8 @@ public:
 	// Cliffs
 	std::vector <glm::ivec3> cliffs;
 	std::map<std::string, int> path_to_cliff;
+	std::vector<int> cliff_to_ground_texture;
+	std::map<std::string, int> cliff_variations;
 	
 	std::vector<std::shared_ptr<Texture>> cliff_textures;
 	std::vector<std::shared_ptr<StaticMesh>> cliff_meshes;
@@ -66,14 +69,14 @@ public:
 	int cliff_texture_size = 256;
 
 	// Water
-	int min_depth = 10;
-	int deeplevel = 64;
-	int maxdepth = 72;
+	float min_depth = 10.f / 128;
+	float deeplevel = 64.f / 128;
+	float maxdepth = 72.f / 128;
 
-	glm::vec4 shallow_color_min;// = { 100, 100, 100, 10 };
-	glm::vec4 shallow_color_max;// = { 150, 150, 255, 150 };
-	glm::vec4 deep_color_min;// = { 200, 255, 255, 219 };
-	glm::vec4 deep_color_max;// = { 150, 150, 150, 250 };
+	glm::vec4 shallow_color_min;
+	glm::vec4 shallow_color_max;
+	glm::vec4 deep_color_min;
+	glm::vec4 deep_color_max;
 
 	float height_offset;
 	int water_textures_nr;

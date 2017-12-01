@@ -27,12 +27,14 @@ class Ui_HiveWEClass
 {
 public:
     QAction *actionConvert_Blockers_to_Pathmap;
+    QAction *actionOpen;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
     QMenuBar *menuBar;
     QMenu *menuTools;
     QMenu *menuPathing;
+    QMenu *menuFile;
 
     void setupUi(QMainWindow *HiveWEClass)
     {
@@ -41,6 +43,8 @@ public:
         HiveWEClass->resize(600, 400);
         actionConvert_Blockers_to_Pathmap = new QAction(HiveWEClass);
         actionConvert_Blockers_to_Pathmap->setObjectName(QStringLiteral("actionConvert_Blockers_to_Pathmap"));
+        actionOpen = new QAction(HiveWEClass);
+        actionOpen->setObjectName(QStringLiteral("actionOpen"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -60,11 +64,15 @@ public:
         menuTools->setObjectName(QStringLiteral("menuTools"));
         menuPathing = new QMenu(menuTools);
         menuPathing->setObjectName(QStringLiteral("menuPathing"));
+        menuFile = new QMenu(menuBar);
+        menuFile->setObjectName(QStringLiteral("menuFile"));
         HiveWEClass->setMenuBar(menuBar);
 
+        menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuTools->menuAction());
         menuTools->addAction(menuPathing->menuAction());
         menuPathing->addAction(actionConvert_Blockers_to_Pathmap);
+        menuFile->addAction(actionOpen);
 
         retranslateUi(HiveWEClass);
 
@@ -75,8 +83,10 @@ public:
     {
         HiveWEClass->setWindowTitle(QApplication::translate("HiveWEClass", "HiveWE", Q_NULLPTR));
         actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathmap", Q_NULLPTR));
+        actionOpen->setText(QApplication::translate("HiveWEClass", "Open", Q_NULLPTR));
         menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", Q_NULLPTR));
         menuPathing->setTitle(QApplication::translate("HiveWEClass", "Pathing", Q_NULLPTR));
+        menuFile->setTitle(QApplication::translate("HiveWEClass", "File", Q_NULLPTR));
     } // retranslateUi
 
 };

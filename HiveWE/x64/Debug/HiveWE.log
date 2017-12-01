@@ -1,2 +1,63 @@
-﻿  GLWidget.cpp
+﻿  Terrain.cpp
+C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\utility(188): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xmemory0(856): note: see reference to function template instantiation 'std::pair<const _Kty,_Ty>::pair<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64,void,0>(_Other1,_Other2 &&) noexcept(false)' being compiled
+          with
+          [
+              _Kty=std::string,
+              _Ty=int,
+              _Other1=std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,
+              _Other2=unsigned __int64
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xmemory0(856): note: see reference to function template instantiation 'std::pair<const _Kty,_Ty>::pair<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64,void,0>(_Other1,_Other2 &&) noexcept(false)' being compiled
+          with
+          [
+              _Kty=std::string,
+              _Ty=int,
+              _Other1=std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,
+              _Other2=unsigned __int64
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xtree(773): note: see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(_Alloc &,_Objty *const ,std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const std::string,int>,std::_Default_allocator_traits<std::allocator<std::pair<const std::string,int>>>::void_pointer>>,
+              _Ty=std::pair<const std::string,int>,
+              _Objty=std::pair<const std::string,int>
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xtree(772): note: see reference to function template instantiation 'void std::_Default_allocator_traits<_Alloc>::construct<_Ty,std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(_Alloc &,_Objty *const ,std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Alloc=std::allocator<std::_Tree_node<std::pair<const std::string,int>,std::_Default_allocator_traits<std::allocator<std::pair<const std::string,int>>>::void_pointer>>,
+              _Ty=std::pair<const std::string,int>,
+              _Objty=std::pair<const std::string,int>
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xtree(961): note: see reference to function template instantiation 'std::_Tree_node<_Ty,std::_Default_allocator_traits<_Alloc>::void_pointer> *std::_Tree_comp_alloc<_Traits>::_Buynode<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Ty=std::pair<const std::string,int>,
+              _Alloc=std::allocator<std::pair<const std::string,int>>,
+              _Traits=std::_Tmap_traits<std::string,int,std::less<std::string>,std::allocator<std::pair<const std::string,int>>,false>
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\xtree(961): note: see reference to function template instantiation 'std::_Tree_node<_Ty,std::_Default_allocator_traits<_Alloc>::void_pointer> *std::_Tree_comp_alloc<_Traits>::_Buynode<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Ty=std::pair<const std::string,int>,
+              _Alloc=std::allocator<std::pair<const std::string,int>>,
+              _Traits=std::_Tmap_traits<std::string,int,std::less<std::string>,std::allocator<std::pair<const std::string,int>>,false>
+          ]
+  Terrain.cpp(347): note: see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<_Ty>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,int,_Pr,_Alloc,false>>::emplace<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Ty=std::pair<const std::string,int>,
+              _Kty=std::string,
+              _Pr=std::less<std::string>,
+              _Alloc=std::allocator<std::pair<const std::string,int>>
+          ]
+  Terrain.cpp(347): note: see reference to function template instantiation 'std::pair<std::_Tree_iterator<std::_Tree_val<std::_Tree_simple_types<_Ty>>>,bool> std::_Tree<std::_Tmap_traits<_Kty,int,_Pr,_Alloc,false>>::emplace<std::basic_string<char,std::char_traits<char>,std::allocator<char>>&,unsigned __int64>(std::basic_string<char,std::char_traits<char>,std::allocator<char>> &,unsigned __int64 &&)' being compiled
+          with
+          [
+              _Ty=std::pair<const std::string,int>,
+              _Kty=std::string,
+              _Pr=std::less<std::string>,
+              _Alloc=std::allocator<std::pair<const std::string,int>>
+          ]
   HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe

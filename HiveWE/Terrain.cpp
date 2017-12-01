@@ -15,9 +15,14 @@ float Terrain::corner_cliff_height(Corner corner) const {
 int Terrain::real_tile_texture(int x, int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
-			if (x + i > 0 && x + i < width && y + j > 0 && y + j < height) {
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
 				if (corners[(y + j) * width + (x + i)].cliff) {
-					return corners[(y + j) * width + (x + i)].cliff_texture;
+					int texture = corners[(y + j) * width + (x + i)].cliff_texture;
+					// Number 15 seems to be both grass and dirt ramp? How to distinguish?
+					if (texture == 15) {
+						texture -= 14;
+					}
+					return cliff_to_ground_texture[texture];
 				}
 			}
 		}
@@ -106,8 +111,8 @@ void Terrain::create() {
 					continue;
 				}
 
-				//int t = 
-				file_name += "0";// std::to_string(bottomLeft.cliff_variation);
+				// Clamp to within max variations
+				file_name += std::to_string(std::clamp(bottomLeft.cliff_variation, 0, cliff_variations[file_name]));
 
 				cliffs.push_back({ i, j, path_to_cliff[file_name] });
 			}
@@ -144,16 +149,16 @@ void Terrain::create() {
 				water_uvs.push_back({ 0, 0 });
 				water_uvs.push_back({ 1, 0 });
 
-				// Calculate water color based on distance to the terrain
+				// Calculate water colour based on distance to the terrain
 				glm::vec4 color;
 				for (auto&& corner : { topRight, topLeft, bottomLeft, bottomRight }) {
-					float value = corner_water_height(corner) - corner_height(corner);
-					if (value <= 0.5) {
-						value = std::clamp(value * 2, 0.078125f, 0.5f); // Runs from height (10/128) to (64/128)
+					float value = std::clamp(corner_water_height(corner) - corner_height(corner), 0.f, 1.f);
+					if (value <= deeplevel) {
+						value = std::max(0.f, value - min_depth) / (deeplevel - min_depth);
 						color = shallow_color_min * (1.f - value) + shallow_color_max * value;
 					} else {
-						value = (std::clamp(value, 0.f, 0.5625f) - 0.5f) * 10.666f; // Runs from height (64/128) to (72/128)
-						color = deep_color_min * (1.f - value) + deep_color_max * (value);
+						value = std::clamp(value - deeplevel, 0.f, maxdepth - deeplevel) / (maxdepth - deeplevel);
+						color = deep_color_min * (1.f - value) + deep_color_max * value;
 					}
 					water_colors.push_back(color / glm::vec4(255, 255, 255, 255));
 				}
@@ -234,11 +239,6 @@ void Terrain::create() {
 		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cliff_textures[i]->width, cliff_textures[i]->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cliff_textures[i]->data);
 		gl->glGenerateMipmap(GL_TEXTURE_2D);
-	}
-
-	// Fix
-	for (auto&& i : cliff_meshes) {
-		i->texture = cliff_texture_list[0];
 	}
 
 	// Water textures
@@ -344,6 +344,7 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	slk::SLK slk("TerrainArt\\Terrain.slk");
 	for (auto&& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<Texture>(slk.data("dir", tile_id) + "\\" + slk.data("file", tile_id) + ".blp"));
+		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
 	blight_texture = ground_textures.size() - 1;
@@ -352,6 +353,7 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	slk::SLK cliff_slk("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
 	// Water Textures and Colours
@@ -402,6 +404,7 @@ bool Terrain::load(std::vector<uint8_t> data) {
 			cliff_meshes.push_back(resource_manager.load<StaticMesh>(file_name));
 			path_to_cliff.emplace(cliffs.data("cliffID", i) + std::to_string(j), (int)cliff_meshes.size() - 1);
 		}
+		cliff_variations.emplace(cliffs.data("cliffID", i), std::stoi(cliffs.data("variations", i)));
 	}
 
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
@@ -450,6 +453,7 @@ void Terrain::render() {
 		MVP = camera.projection * camera.view * Model;
 		gl->glUniformMatrix4fv(gl->glGetUniformLocation(cliff_shader->program, "MVP"), 1, GL_FALSE, &MVP[0][0]);
 
+		cliff_meshes[i.z]->texture = cliff_texture_list[std::clamp(corners[i.y * width + i.x].cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();
 	}
 

@@ -41,11 +41,23 @@
     </widget>
     <addaction name="menuPathing"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuTools"/>
   </widget>
   <action name="actionConvert_Blockers_to_Pathmap">
    <property name="text">
     <string>Convert Blockers to Pathmap</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
    </property>
   </action>
  </widget>
