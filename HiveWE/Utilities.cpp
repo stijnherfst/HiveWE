@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-QOpenGLFunctions_4_2_Core* gl;
+QOpenGLFunctions_4_5_Core* gl;
 
 unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *height, int *channels, int force_channels) {
 	unsigned char* image = SOIL_load_image(filename, width, height, channels, force_channels);
@@ -41,7 +41,6 @@ GLuint compile_shader(const fs::path vertex_shader, const fs::path fragment_shad
 GLuint compile_shader(const std::string vertexShader, std::string fragmentShader) {
 	char buffer[512];
 	GLint status;
-
 
 	GLuint vertex = gl->glCreateShader(GL_VERTEX_SHADER);
 	GLuint fragment = gl->glCreateShader(GL_FRAGMENT_SHADER);

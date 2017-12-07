@@ -19,7 +19,7 @@ Map map;
 std::shared_ptr<StaticMesh> mesh;
 
 void GLWidget::initializeGL() {
-	gl = new QOpenGLFunctions_4_2_Core;
+	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
 
 	gl->glEnable(GL_DEPTH_TEST);

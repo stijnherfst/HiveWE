@@ -6,7 +6,6 @@ namespace slk {
 		size_t rows;
 		size_t columns;
 
-
 		std::map<std::string, size_t> header_to_column;
 		std::map<std::string, size_t> header_to_row;
 

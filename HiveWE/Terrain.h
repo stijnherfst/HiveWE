@@ -1,8 +1,8 @@
 #pragma once
 
 struct Corner {
-	int ground_height;
-	int water_height;
+	float ground_height;
+	float water_height;
 	int map_edge;
 
 	int ground_texture;

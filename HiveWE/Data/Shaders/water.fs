@@ -1,8 +1,8 @@
-#version 420 core
+#version 450 core
 
 layout (binding = 0) uniform sampler2DArray textureArray;
 
-uniform int current_texture;
+layout (location = 4) uniform int current_texture;
 
 in vec2 UV;
 in vec4 Color;

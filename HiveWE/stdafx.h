@@ -16,7 +16,7 @@ namespace fs = std::experimental::filesystem;
 
 #include <QtWidgets>
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions_4_2_Core>
+#include <QOpenGLFunctions_4_5_Core>
 
 #include <glm.hpp>
 #define GLM_FORCE_RADIANS

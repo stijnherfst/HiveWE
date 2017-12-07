@@ -1,6 +1,7 @@
 #pragma once
 
-extern QOpenGLFunctions_4_2_Core* gl;
+extern QOpenGLFunctions_4_5_Core* gl;
+
 
 unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *height, int *channels, int force_channels);
 
