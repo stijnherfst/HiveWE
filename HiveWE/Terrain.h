@@ -44,7 +44,7 @@ public:
 	std::vector <glm::vec3> uvs;
 	std::vector <glm::ivec3> indices;
 
-	std::map<std::string, int> ground_texture_to_id;
+	std::map<std::string, size_t> ground_texture_to_id;
 	std::vector<std::shared_ptr<Texture>> ground_textures;
 	std::shared_ptr<Shader> ground_shader;
 
@@ -105,7 +105,6 @@ public:
 	int real_tile_texture(int x, int y);
 	float corner_height(Corner corner) const;
 	float corner_water_height(Corner corner) const;
-	float corner_cliff_height(Corner corner) const;
 
 	int get_tile_variation(const Corner& tile_corner);
 	std::vector<std::tuple<int, int>> get_texture_variations(int x, int y);

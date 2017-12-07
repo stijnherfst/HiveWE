@@ -1,16 +1,13 @@
 #include "stdafx.h"
 
 float Terrain::corner_height(Corner corner) const {
-	return (corner.ground_height - 8192.0 + (corner.layer_height - 2.0) * 512.0) / 512.0;
+	return corner.ground_height + corner.layer_height - 2.0;
 }
 
 float Terrain::corner_water_height(Corner corner) const {
-	return (corner.water_height - 8192.0 + (height_offset * 512.0)) / 512.0;
+	return corner.water_height + height_offset;
 }
 
-float Terrain::corner_cliff_height(Corner corner) const {
-	return (corner.ground_height - 8192.0) / 512.0;
-}
 
 int Terrain::real_tile_texture(int x, int y) {
 	for (int i = -1; i < 1; i++) {
@@ -18,7 +15,7 @@ int Terrain::real_tile_texture(int x, int y) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
 				if (corners[(y + j) * width + (x + i)].cliff) {
 					int texture = corners[(y + j) * width + (x + i)].cliff_texture;
-					// Number 15 seems to be both grass and dirt ramp? How to distinguish?
+					// Number 15 seems to be both something
 					if (texture == 15) {
 						texture -= 14;
 					}
@@ -98,10 +95,6 @@ void Terrain::create() {
 			Corner& topLeft = corners[(j + 1) * width + i];
 			Corner& topRight = corners[(j + 1) * width + (i + 1)];
 
-			// Cliffs
-			//if (bottomLeft.cliff_texture == 15) {
-			//	continue;
-			//}
 			if (bottomLeft.cliff) {
 				// Cliff model path
 				int base = std::min({ bottomLeft.layer_height, bottomRight.layer_height, topLeft.layer_height, topRight.layer_height });
@@ -289,10 +282,10 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	Corner corner;
 	for (size_t j = 0; j < height; j++) {
 		for (size_t i = 0; i < width; i++) {
-			corner.ground_height = reader.read<int16_t>();
+			corner.ground_height = (reader.read<int16_t>() - 8192.f) / 512.f;
 
 			int16_t water_and_edge = reader.read<int16_t>();
-			corner.water_height = water_and_edge & 0x3FFF;
+			corner.water_height = ((water_and_edge & 0x3FFF) - 8192.f)/ 512.f;
 			corner.map_edge = water_and_edge & 0xC000;
 
 			int8_t texture_and_flags = reader.read<int8_t>();
@@ -445,15 +438,15 @@ void Terrain::render() {
 		Corner& topLeft = corners[(i.y + 1) * width + i.x];
 		Corner& topRight = corners[(i.y + 1) * width + (i.x + 1)];
 
-		float min = std::min({ bottomLeft.layer_height - 2,	bottomRight.layer_height - 2,
-			topLeft.layer_height - 2,		topRight.layer_height - 2 });
+		float min = std::min({	bottomLeft.layer_height - 2,bottomRight.layer_height - 2,
+								topLeft.layer_height - 2,	topRight.layer_height - 2 });
 
 		Model = glm::translate(glm::mat4(1.0f), glm::vec3(i.x + 1, i.y, min));
 		Model = glm::scale(Model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f));
 		MVP = camera.projection * camera.view * Model;
 
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
-		gl->glUniform4f(3, corner_cliff_height(bottomLeft), corner_cliff_height(bottomRight), corner_cliff_height(topLeft), corner_cliff_height(topRight));
+		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
 
 		cliff_meshes[i.z]->texture = cliff_texture_list[std::clamp(corners[i.y * width + i.x].cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();

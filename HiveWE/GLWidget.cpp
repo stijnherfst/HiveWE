@@ -98,10 +98,10 @@ void GLWidget::paintGL() {
 
 	//gl->glUseProgram(shader2);
 
-	//Model = glm::mat4(1.0f);
+	//glm::mat4 Model = glm::mat4(1.0f);
 	//Model = glm::translate(Model, glm::vec3(0, 0, 0));
 	//MVP = camera.projection * camera.view * Model;
-	//gl->glUniformMatrix4fv(gl->glGetUniformLocation(shader2, "MVP"), 1, GL_FALSE, &MVP[0][0]);
+	//gl->glUniformMatrix4fv(2, "MVP"), 1, GL_FALSE, &MVP[0][0]);
 	//mesh.get()->render();
 
 }
