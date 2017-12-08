@@ -7,4 +7,10 @@ void Map::load(std::wstring path) {
 	if (!success) {
 		return;
 	}
+
+	mpq::File war3map_wpm = mpq.file_open("war3map.wpm");
+	success = pathing_map.load(BinaryReader(war3map_wpm.read()));
+	if (!success) {
+		return;
+	}
 }

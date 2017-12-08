@@ -105,6 +105,9 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="PathingMap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -154,6 +157,9 @@
     </ClInclude>
     <ClInclude Include="SLK.h">
       <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="PathingMap.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

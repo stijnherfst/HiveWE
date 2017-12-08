@@ -107,6 +107,7 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MDX.cpp" />
     <ClCompile Include="MPQ.cpp" />
+    <ClCompile Include="PathingMap.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SLK.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="Map.h" />
     <ClInclude Include="MDX.h" />
     <ClInclude Include="MPQ.h" />
+    <ClInclude Include="PathingMap.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SLK.h" />

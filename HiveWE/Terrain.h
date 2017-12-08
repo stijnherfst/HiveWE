@@ -33,7 +33,7 @@ public:
 	float offset_x;
 	float offset_y;
 
-	std::vector <Corner> corners;
+	std::vector<std::vector<Corner>> corners;
 
 	// Ground
 	GLuint vertex_buffer;
@@ -103,6 +103,7 @@ public:
 	void render();
 
 	int real_tile_texture(int x, int y);
+
 	float corner_height(Corner corner) const;
 	float corner_water_height(Corner corner) const;
 

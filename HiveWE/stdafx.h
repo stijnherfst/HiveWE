@@ -47,4 +47,5 @@ namespace fs = std::experimental::filesystem;
 #include "HiveWE.h"
 #include "GLWidget.h"
 #include "Terrain.h"
+#include "PathingMap.h"
 #include "Map.h"

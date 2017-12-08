@@ -13,9 +13,9 @@ int Terrain::real_tile_texture(int x, int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
-				if (corners[(y + j) * width + (x + i)].cliff) {
-					int texture = corners[(y + j) * width + (x + i)].cliff_texture;
-					// Number 15 seems to be both something
+				if (corners[x + i][y + j].cliff) {
+					int texture = corners[x + i][y + j].cliff_texture;
+					// Number 15 seems to be something
 					if (texture == 15) {
 						texture -= 14;
 					}
@@ -24,11 +24,11 @@ int Terrain::real_tile_texture(int x, int y) {
 			}
 		}
 	}
-	if (corners[y * width + x].blight) {
+	if (corners[x][y].blight) {
 		 return blight_texture;
 	}
 		
-	return corners[y * width + x].ground_texture;
+	return corners[x][y].ground_texture;
 }
 
 int Terrain::get_tile_variation(const Corner& tile_corner) {
@@ -54,10 +54,10 @@ std::vector<std::tuple<int, int>> Terrain::get_texture_variations(int x, int y) 
 	std::vector<std::tuple<int, int>> tileVariations;
 
 	// Bottom and top reversed
-	auto bottomL = std::make_tuple(real_tile_texture(x, y + 1), corners[(y + 1) * width + x]);
-	auto bottomR = std::make_tuple(real_tile_texture(x + 1, y + 1), corners[(y + 1) * width + x + 1]);
-	auto topL = std::make_tuple(real_tile_texture(x, y), corners[y * width + x]);
-	auto topR = std::make_tuple(real_tile_texture(x + 1, y), corners[y * width + x + 1]);
+	auto bottomL = std::make_tuple(real_tile_texture(x, y + 1), corners[x][y + 1]);
+	auto bottomR = std::make_tuple(real_tile_texture(x + 1, y + 1), corners[x + 1][y + 1]);
+	auto topL = std::make_tuple(real_tile_texture(x, y), corners[x][y]);
+	auto topR = std::make_tuple(real_tile_texture(x + 1, y), corners[x + 1][y]);
 		
 	auto comp = [&](std::tuple<int, Corner> l, std::tuple<int, Corner> r) {
 		return std::get<0>(l) < std::get<0>(r);
@@ -83,17 +83,29 @@ std::vector<std::tuple<int, int>> Terrain::get_texture_variations(int x, int y) 
 }
 
 void Terrain::create() {
-	// Reserve the minimum guaranteed amount
-	vertices.reserve(width * height * 4);
-	uvs.reserve(width * height * 4);
-	indices.reserve((width - 1) * (height - 1) * 2);
+	// Reserve the minimum guaranteed amount plus a little buffer
+	vertices.reserve(width * height * 4 * 1.5);
+	uvs.reserve(width * height * 4 * 1.5);
+	indices.reserve((width - 1) * (height - 1) * 2 * 1.5);
 
 	for (int i = 0; i < width - 1; i++) {
 		for (int j = 0; j < height - 1; j++) {
-			Corner& bottomLeft = corners[j * width + i];
-			Corner& bottomRight = corners[j * width + (i + 1)];
-			Corner& topLeft = corners[(j + 1) * width + i];
-			Corner& topRight = corners[(j + 1) * width + (i + 1)];
+			Corner& bottomLeft = corners[i][j];
+			Corner& bottomRight = corners[i + 1][j];
+			Corner& topLeft = corners[i][j + 1];
+			Corner& topRight = corners[i + 1][j + 1];
+			
+
+
+			//if (bottomLeft.cliff || bottomRight.cliff || topLeft.cliff || topRight.cliff) {
+				//if (bottomLeft.ramp || bottomRight.ramp || topLeft.ramp || topRight.ramp) {
+					//if (bottomLeft.layer_height == bottomRight.layer_height && bottomRight.layer_height == topLeft.layer_height && topLeft.layer_height == topRight.layer_height) {
+
+				//	} else {
+						//continue;
+					//}
+				//}
+			//}
 
 			if (bottomLeft.cliff) {
 				// Cliff model path
@@ -279,9 +291,11 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	offset_y = reader.read<float>();
 
 	// Parse all tilepoints
-	Corner corner;
+	corners.resize(width, std::vector<Corner>(height));
 	for (size_t j = 0; j < height; j++) {
 		for (size_t i = 0; i < width; i++) {
+			Corner& corner = corners[i][j];
+
 			corner.ground_height = (reader.read<int16_t>() - 8192.f) / 512.f;
 
 			int16_t water_and_edge = reader.read<int16_t>();
@@ -304,18 +318,16 @@ bool Terrain::load(std::vector<uint8_t> data) {
 			int8_t misc = reader.read<int8_t>();
 			corner.cliff_texture = (misc & 0xF0) >> 4;
 			corner.layer_height = misc & 0x0F;
-
-			corners.push_back(corner);
 		}
 	}
 
 	// Determine if cliff
 	for (size_t i = 0; i < width - 1; i++) {
 		for (size_t j = 0; j < height - 1; j++) {
-			Corner& bottomLeft = corners[j * width + i];
-			Corner& bottomRight = corners[j * width + (i + 1)];
-			Corner& topLeft = corners[(j + 1) * width + i];
-			Corner& topRight = corners[(j + 1) * width + (i + 1)];
+			Corner& bottomLeft = corners[i][j];
+			Corner& bottomRight = corners[i + 1][j];
+			Corner& topLeft = corners[i][j + 1];
+			Corner& topRight = corners[i + 1][j + 1];
 
 			if (bottomLeft.layer_height != bottomRight.layer_height
 				|| bottomLeft.layer_height != topLeft.layer_height
@@ -433,10 +445,10 @@ void Terrain::render() {
 	cliff_shader->use();
 	// Render cliffs
 	for (auto&& i : cliffs) {
-		Corner& bottomLeft = corners[i.y * width + i.x];
-		Corner& bottomRight = corners[i.y * width + (i.x + 1)];
-		Corner& topLeft = corners[(i.y + 1) * width + i.x];
-		Corner& topRight = corners[(i.y + 1) * width + (i.x + 1)];
+		Corner& bottomLeft = corners[i.x][i.y];
+		Corner& bottomRight = corners[i.x + 1][i.y];
+		Corner& topLeft = corners[i.x][i.y + 1];
+		Corner& topRight = corners[i.x + 1][i.y + 1];
 
 		float min = std::min({	bottomLeft.layer_height - 2,bottomRight.layer_height - 2,
 								topLeft.layer_height - 2,	topRight.layer_height - 2 });
@@ -448,7 +460,7 @@ void Terrain::render() {
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
 
-		cliff_meshes[i.z]->texture = cliff_texture_list[std::clamp(corners[i.y * width + i.x].cliff_texture, 0, 1)];
+		cliff_meshes[i.z]->texture = cliff_texture_list[std::clamp(bottomLeft.cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();
 	}
 
