@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool PathingMap::load(BinaryReader& reader) {
+bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 	std::string magic_number = reader.readString(4);
 	if (magic_number != "MP3W") {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
@@ -12,72 +12,102 @@ bool PathingMap::load(BinaryReader& reader) {
 		std::cout << "Unknown Pathmap version. Attempting to load, but may crash.";
 	}
 
-	width = reader.read<uint32_t>();
-	height = reader.read<uint32_t>();
+	width = reader.read<int32_t>();
+	height = reader.read<int32_t>();
 
-	pathing_map = reader.readVector<uint8_t>(width * height);
+	pathing_map.resize(width * height);
+	auto pathing_cells = reader.readVector<uint8_t>(width * height);
+	for (int i = 0; i < width * height; i++) {
+		pathing_map[i].walkable = !(pathing_cells[i] & 2);
+		pathing_map[i].flyable = !(pathing_cells[i] & 4);
+		pathing_map[i].buildable = !(pathing_cells[i] & 8);
+		pathing_map[i].blight = !(pathing_cells[i] & 20);
+		pathing_map[i].water = !(pathing_cells[i] & 40);
+	}
+
+	shader = resource_manager.load<Shader>({ "Data/Shaders/pathing.vs", "Data/Shaders/pathing.fs" });
+
+	create(terrain);
+
+	return true;
 }
 
-void PathingMap::create() {
-	//vertices.reserve(width * height * 4 * 1.5);
-	//uvs.reserve(width * height * 4 * 1.5);
-	//indices.reserve((width - 1) * (height - 1) * 2 * 1.5);
+// Use half float types to use less memory?
+void PathingMap::create(Terrain& terrain) {
+	vertices.reserve(width * height * 4);
+	colors.reserve(width * height * 4);
+	indices.reserve((width - 1) * (height - 1) * 2);
 
-	//for (int i = 0; i < width - 1; i++) {
-	//	for (int j = 0; j < height - 1; j++) {
-	//		// Water
-	//		if (bottomLeft.water || bottomRight.water || topLeft.water || topRight.water) {
-	//			water_vertices.push_back({ i + 1,	j + 1,	corner_water_height(bottomLeft) });
-	//			water_vertices.push_back({ i,		j + 1,	corner_water_height(bottomLeft) });
-	//			water_vertices.push_back({ i,		j,		corner_water_height(bottomLeft) });
-	//			water_vertices.push_back({ i + 1,	j,		corner_water_height(bottomLeft) });
+	auto mix = [](float min, float max, float value) {
+		return min * value + max * (1.f - value); 
+	};
 
-	//			water_uvs.push_back({ 1, 1 });
-	//			water_uvs.push_back({ 0, 1 });
-	//			water_uvs.push_back({ 0, 0 });
-	//			water_uvs.push_back({ 1, 0 });
+	for (int i = 0; i < width - 1; i++) {
+		for (int j = 0; j < height - 1; j++) {
+			if (pathing_map[j * width + i].walkable && pathing_map[j * width + i].flyable && pathing_map[j * width + i].buildable) {
+				continue;
+			}
 
-	//			// Calculate water colour based on distance to the terrain
-	//			glm::vec4 color;
-	//			for (auto&& corner : { topRight, topLeft, bottomLeft, bottomRight }) {
-	//				float value = std::clamp(corner_water_height(corner) - corner_height(corner), 0.f, 1.f);
-	//				if (value <= deeplevel) {
-	//					value = std::max(0.f, value - min_depth) / (deeplevel - min_depth);
-	//					color = shallow_color_min * (1.f - value) + shallow_color_max * value;
-	//				} else {
-	//					value = std::clamp(value - deeplevel, 0.f, maxdepth - deeplevel) / (maxdepth - deeplevel);
-	//					color = deep_color_min * (1.f - value) + deep_color_max * value;
-	//				}
-	//				water_colors.push_back(color / glm::vec4(255, 255, 255, 255));
-	//			}
+			int x = std::floor(i * 0.25);
+			int y = std::floor(j * 0.25);
 
-	//			unsigned int index = water_vertices.size() - 4;
-	//			water_indices.push_back({ index + 0, index + 3, index + 1 });
-	//			water_indices.push_back({ index + 1, index + 3, index + 2 });
-	//		}
-	//	}
-	//}
+			float botLeft = terrain.corner_height(x, y);
+			float botRight = terrain.corner_height(x + 1, y);
+			float topLeft = terrain.corner_height(x, y + 1);
+			float topRight = terrain.corner_height(x + 1, y + 1);
 
-	//// Ground
-	//gl->glCreateBuffers(1, &vertex_buffer);
-	//gl->glNamedBufferData(vertex_buffer, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+			auto terrain_height = [&](float i, float j) {
+				float z = mix(botRight, botLeft, i - x);
+				float zz = mix(topRight, topLeft, i - x);
 
-	//gl->glCreateBuffers(1, &uv_buffer);
-	//gl->glNamedBufferData(uv_buffer, uvs.size() * sizeof(glm::vec3), uvs.data(), GL_STATIC_DRAW);
+				return mix(zz, z, j - y) + 0.01;
+			};
 
-	//gl->glCreateBuffers(1, &index_buffer);
-	//gl->glNamedBufferData(index_buffer, indices.size() * sizeof(unsigned int) * 3, indices.data(), GL_STATIC_DRAW);
+			vertices.push_back({ i * 0.25 + 0.25,	j * 0.25 + 0.25,	terrain_height(i * 0.25 + 0.25,	j * 0.25 + 0.25) });
+			vertices.push_back({ i * 0.25,			j * 0.25 + 0.25,	terrain_height(i * 0.25,		j * 0.25 + 0.25) });
+			vertices.push_back({ i * 0.25,			j * 0.25,			terrain_height(i * 0.25,		j * 0.25) });
+			vertices.push_back({ i * 0.25 + 0.25,	j * 0.25,			terrain_height(i * 0.25 + 0.25,	j * 0.25) });
 
-	//// Water
-	//gl->glCreateBuffers(1, &water_vertex_buffer);
-	//gl->glNamedBufferData(water_vertex_buffer, water_vertices.size() * sizeof(glm::vec3), water_vertices.data(), GL_STATIC_DRAW);
+			colors.push_back(pathing_map[j * width + i].color());
+			colors.push_back(pathing_map[j * width + i].color());
+			colors.push_back(pathing_map[j * width + i].color());
+			colors.push_back(pathing_map[j * width + i].color());
 
-	//gl->glCreateBuffers(1, &water_uv_buffer);
-	//gl->glNamedBufferData(water_uv_buffer, water_uvs.size() * sizeof(glm::vec2), water_uvs.data(), GL_STATIC_DRAW);
+			unsigned int index = vertices.size() - 4;
+			indices.push_back({ index + 0, index + 3, index + 1 });
+			indices.push_back({ index + 1, index + 3, index + 2 });
+		}
+	}
 
-	//gl->glCreateBuffers(1, &water_color_buffer);
-	//gl->glNamedBufferData(water_color_buffer, water_colors.size() * sizeof(glm::vec4), water_colors.data(), GL_STATIC_DRAW);
+	gl->glCreateBuffers(1, &vertex_buffer);
+	gl->glNamedBufferData(vertex_buffer, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
 
-	//gl->glCreateBuffers(1, &water_index_buffer);
-	//gl->glNamedBufferData(water_index_buffer, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
+	gl->glCreateBuffers(1, &color_buffer);
+	gl->glNamedBufferData(color_buffer, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+
+	gl->glCreateBuffers(1, &index_buffer);
+	gl->glNamedBufferData(index_buffer, indices.size() * sizeof(unsigned int) * 3, indices.data(), GL_STATIC_DRAW);
+}
+
+void PathingMap::render() {
+	shader->use();
+
+	glm::mat4 Model = glm::mat4(1.0f);
+	glm::mat4 MVP = camera.projection * camera.view * Model;
+
+	gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
+
+	gl->glEnableVertexAttribArray(0);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	gl->glEnableVertexAttribArray(1);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+	gl->glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	gl->glDrawElements(GL_TRIANGLES, indices.size() * 3, GL_UNSIGNED_INT, NULL);
+
+	gl->glDisableVertexAttribArray(0);
+	gl->glDisableVertexAttribArray(1);
 }

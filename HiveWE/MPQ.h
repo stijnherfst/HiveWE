@@ -36,7 +36,7 @@ namespace mpq {
 		~MPQ();
 
 		void open(const std::wstring path);
-		void open(File archive);
+		void open(File& archive);
 		void close();
 
 		File file_open(const std::string path);

@@ -105,6 +105,7 @@ public:
 	int real_tile_texture(int x, int y);
 
 	float corner_height(Corner corner) const;
+	float corner_height(const int x, const int y) const;
 	float corner_water_height(Corner corner) const;
 
 	int get_tile_variation(const Corner& tile_corner);

@@ -1,2 +1,8 @@
-﻿  stdafx.cpp
-c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\MDX.h(5): error C2061: syntax error: identifier 'StaticMesh'
+﻿  MPQ.cpp
+LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
+  Generating code
+  3 of 181 functions ( 1.7%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    2 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Release\HiveWE.exe

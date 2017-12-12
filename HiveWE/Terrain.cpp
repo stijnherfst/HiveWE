@@ -4,6 +4,10 @@ float Terrain::corner_height(Corner corner) const {
 	return corner.ground_height + corner.layer_height - 2.0;
 }
 
+float Terrain::corner_height(const int x, const int y) const {
+	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
+}
+
 float Terrain::corner_water_height(Corner corner) const {
 	return corner.water_height + height_offset;
 }
@@ -271,7 +275,7 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	}
 	uint32_t version = reader.read<uint32_t>();
 
-	char tileset = reader.read<char>();
+	tileset = reader.read<char>();
 	bool custom_tileset = reader.read<uint32_t>() == 1 ? true : false; // 0 for not default, 1 for custom
 
 	uint32_t tileset_textures = reader.read<uint32_t>();
@@ -398,14 +402,14 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	deep_color_max = { red, green, blue, alpha };
 
 	// Cliff Meshes
-	slk::SLK cliffs("Data/Warcraft Data/Cliffs.slk", true);
-	for (size_t i = 1; i < cliffs.rows; i++) {
-		for (size_t j = 0; j < std::stoi(cliffs.data("variations", i)) + 1; j++) {
-			std::string file_name = "Doodads\\Terrain\\Cliffs\\Cliffs" + cliffs.data("cliffID", i) + std::to_string(j) + ".mdx";
+	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
+	for (size_t i = 1; i < cliffs_slk.rows; i++) {
+		for (size_t j = 0; j < std::stoi(cliffs_slk.data("variations", i)) + 1; j++) {
+			file_name = "Doodads\\Terrain\\Cliffs\\Cliffs" + cliffs_slk.data("cliffID", i) + std::to_string(j) + ".mdx";
 			cliff_meshes.push_back(resource_manager.load<StaticMesh>(file_name));
-			path_to_cliff.emplace(cliffs.data("cliffID", i) + std::to_string(j), (int)cliff_meshes.size() - 1);
+			path_to_cliff.emplace(cliffs_slk.data("cliffID", i) + std::to_string(j), (int)cliff_meshes.size() - 1);
 		}
-		cliff_variations.emplace(cliffs.data("cliffID", i), std::stoi(cliffs.data("variations", i)));
+		cliff_variations.emplace(cliffs_slk.data("cliffID", i), std::stoi(cliffs_slk.data("variations", i)));
 	}
 
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });

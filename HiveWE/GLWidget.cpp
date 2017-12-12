@@ -94,6 +94,7 @@ void GLWidget::paintGL() {
 	gl->glClearColor(0, 0, 0, 1);
 	
 	map.terrain.render();
+	map.pathing_map.render();
 
 
 	//gl->glUseProgram(shader2);

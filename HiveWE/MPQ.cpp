@@ -43,7 +43,7 @@ namespace mpq {
 		}
 	}
 	
-	void MPQ::open(File archive) {
+	void MPQ::open(File& archive) {
 		const std::vector<uint8_t> buffer = archive.read();
 
 		std::ofstream output("Data/Temporary/temp.mpq", std::ofstream::binary);

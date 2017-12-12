@@ -40,3 +40,6 @@
 /HiveWE/khrplatform.h
 .vs/
 *.mpq
+*.ipdb
+*.iobj
+*.log

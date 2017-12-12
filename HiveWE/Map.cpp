@@ -9,7 +9,7 @@ void Map::load(std::wstring path) {
 	}
 
 	mpq::File war3map_wpm = mpq.file_open("war3map.wpm");
-	success = pathing_map.load(BinaryReader(war3map_wpm.read()));
+	success = pathing_map.load(BinaryReader(war3map_wpm.read()), terrain);
 	if (!success) {
 		return;
 	}
