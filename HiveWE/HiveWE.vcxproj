@@ -122,6 +122,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="BLP.cpp" />
+    <ClCompile Include="Doodads.cpp" />
     <ClCompile Include="GeneratedFiles\Debug\moc_GLWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseDeb|x64'">true</ExcludedFromBuild>
@@ -140,7 +141,6 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\ReleaseDeb\moc_GLWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\ReleaseDeb\moc_HiveWE.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -179,6 +179,7 @@
     <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="BLP.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Doodads.h" />
     <ClInclude Include="GeneratedFiles\ui_HiveWE.h" />
     <ClInclude Include="Hierarchy.h" />
     <ClInclude Include="Map.h" />

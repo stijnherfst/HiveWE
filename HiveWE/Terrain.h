@@ -30,8 +30,7 @@ public:
 	int width;
 	int height;
 
-	float offset_x;
-	float offset_y;
+	glm::vec2 offset;
 
 	std::vector<std::vector<Corner>> corners;
 
@@ -99,7 +98,7 @@ public:
 	GLuint water_texture_array;
 
 	void create();
-	bool load(std::vector<uint8_t> data);
+	bool load(BinaryReader& reader);
 	void render();
 
 	int real_tile_texture(int x, int y);

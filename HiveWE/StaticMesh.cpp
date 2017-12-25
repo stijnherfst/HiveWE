@@ -27,8 +27,8 @@ StaticMesh::StaticMesh(const std::string& path) {
 			gl->glTextureSubImage2D(texture, 0, 0, 0, tex->width, tex->height, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
 			gl->glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			gl->glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_S, (texs.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_T, (texs.flags & 2) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			gl->glGenerateMipmap(GL_TEXTURE_2D);
 		}
 	}

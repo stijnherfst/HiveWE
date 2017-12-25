@@ -9,23 +9,7 @@ class PathingMap {
 		bool water;
 
 		glm::vec3 color() {
-			if (!buildable && !walkable && !flyable) {
-				return { 255, 255, 255 };
-			} else if (buildable && !walkable && flyable) {
-				return { 255, 0, 0 };
-			} else if (buildable && !walkable && !flyable) {
-				return { 255, 255, 0 };
-			} else if (buildable && walkable && !flyable) {
-				return { 0, 255, 0 };
-			} else if (!buildable && walkable && !flyable) {
-				return { 0, 255, 255 };
-			} else if (!buildable && walkable && flyable) {
-				return { 0, 0, 255 };
-			} else if (!buildable && !walkable && flyable) {
-				return { 255, 0, 255 };
-			} else {
-				return { 0, 0, 0 };
-			}
+			return { walkable ? 0 : 255, flyable ? 0 : 255,  buildable ? 0 : 255 };
 		}
 	};
 

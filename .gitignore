@@ -43,3 +43,4 @@
 *.ipdb
 *.iobj
 *.log
+/x64/Release/HiveWE.zip

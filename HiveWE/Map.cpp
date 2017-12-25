@@ -1,16 +1,19 @@
 #include "stdafx.h"
 
 void Map::load(std::wstring path) {
-	mpq::MPQ mpq(L"Data/t2.w3x");
-	mpq::File war3map_w3e = mpq.file_open("war3map.w3e");
-	bool success = terrain.load(war3map_w3e.read());
+	mpq::MPQ mpq(path);
+	BinaryReader war3map_w3e = BinaryReader(mpq.file_open("war3map.w3e").read());
+	bool success = terrain.load(war3map_w3e);
 	if (!success) {
 		return;
 	}
 
-	mpq::File war3map_wpm = mpq.file_open("war3map.wpm");
-	success = pathing_map.load(BinaryReader(war3map_wpm.read()), terrain);
+	BinaryReader war3map_wpm = BinaryReader(mpq.file_open("war3map.wpm").read());
+	success = pathing_map.load(war3map_wpm, terrain);
 	if (!success) {
 		return;
 	}
+
+	BinaryReader war3map_doo = BinaryReader(mpq.file_open("war3map.doo").read());
+	success = doodads.load(war3map_doo, terrain);
 }

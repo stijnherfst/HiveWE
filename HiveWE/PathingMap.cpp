@@ -12,8 +12,8 @@ bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 		std::cout << "Unknown Pathmap version. Attempting to load, but may crash.";
 	}
 
-	width = reader.read<int32_t>();
-	height = reader.read<int32_t>();
+	width = reader.read<uint32_t>();
+	height = reader.read<uint32_t>();
 
 	pathing_map.resize(width * height);
 	auto pathing_cells = reader.readVector<uint8_t>(width * height);
@@ -34,9 +34,9 @@ bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 
 // Use half float types to use less memory?
 void PathingMap::create(Terrain& terrain) {
-	vertices.reserve(width * height * 4);
-	colors.reserve(width * height * 4);
-	indices.reserve((width - 1) * (height - 1) * 2);
+	vertices.resize(width * height * 4);
+	colors.resize(width * height * 4);
+	indices.resize((width - 1) * (height - 1) * 2);
 
 	auto mix = [](float min, float max, float value) {
 		return min * value + max * (1.f - value); 
@@ -68,10 +68,11 @@ void PathingMap::create(Terrain& terrain) {
 			vertices.push_back({ i * 0.25,			j * 0.25,			terrain_height(i * 0.25,		j * 0.25) });
 			vertices.push_back({ i * 0.25 + 0.25,	j * 0.25,			terrain_height(i * 0.25 + 0.25,	j * 0.25) });
 
-			colors.push_back(pathing_map[j * width + i].color());
-			colors.push_back(pathing_map[j * width + i].color());
-			colors.push_back(pathing_map[j * width + i].color());
-			colors.push_back(pathing_map[j * width + i].color());
+			glm::vec3 color = pathing_map[j * width + i].color();
+			colors.push_back(color);
+			colors.push_back(color);
+			colors.push_back(color);
+			colors.push_back(color);
 
 			unsigned int index = vertices.size() - 4;
 			indices.push_back({ index + 0, index + 3, index + 1 });

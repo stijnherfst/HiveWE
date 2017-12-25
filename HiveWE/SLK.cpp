@@ -111,10 +111,37 @@ namespace slk {
 	}
 
 	std::string SLK::data(std::string column_header, size_t row) {
-		return table_data[header_to_column[column_header]][row];
+		if (header_to_column.find(column_header) == header_to_column.end()) {
+			return "";
+		}
+
+		int column = header_to_column[column_header];
+
+		if (column > columns || row > rows) {
+			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
+			return "";
+		}
+
+		return table_data[column][row];
 	}
 
 	std::string SLK::data(std::string column_header, std::string row_header) {
-		return table_data[header_to_column[column_header]][header_to_row[row_header]];
+		if (header_to_column.find(column_header) == header_to_column.end()) {
+			return "";
+		}
+
+		if (header_to_row.find(row_header) == header_to_row.end()) {
+			return "";
+		}
+
+		int column = header_to_column[column_header];
+		int row = header_to_row[row_header];
+
+		if (column > columns || row > rows) {
+			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
+			return "";
+		}
+
+		return table_data[column][row];
 	}
 }

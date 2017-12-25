@@ -114,6 +114,9 @@
     <ClCompile Include="GeneratedFiles\ReleaseDeb\moc_GLWidget.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="Doodads.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="PathingMap.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Doodads.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

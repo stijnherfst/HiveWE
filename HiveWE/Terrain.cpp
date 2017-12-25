@@ -204,12 +204,10 @@ void Terrain::create() {
 
 	gl->glCreateBuffers(1, &water_index_buffer);
 	gl->glNamedBufferData(water_index_buffer, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
-
-
 	// Ground textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
-	gl->glTextureStorage3D(ground_texture_array, 1, GL_RGBA8, variation_width, variation_height, ground_textures.size() * 32);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTextureStorage3D(ground_texture_array, std::log(std::max(variation_width, variation_height)) + 1, GL_RGBA8, variation_width, variation_height, ground_textures.size() * 32);
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -231,7 +229,7 @@ void Terrain::create() {
 		sub += 1;
 	}
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	gl->glGenerateTextureMipmap(ground_texture_array);
 
 	// Cliff textures
 	cliff_texture_list.resize(cliff_textures.size());
@@ -239,7 +237,7 @@ void Terrain::create() {
 
 	for (size_t i = 0; i < cliff_textures.size(); i++) {
 		gl->glBindTexture(GL_TEXTURE_2D, cliff_texture_list[i]);
-		gl->glTextureParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -249,8 +247,8 @@ void Terrain::create() {
 
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
-	gl->glTextureStorage3D(water_texture_array, 1, GL_RGBA8, 128, 128, water_textures_nr);
-	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	gl->glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
+	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -262,12 +260,10 @@ void Terrain::create() {
 		}
 		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_RGBA, GL_UNSIGNED_BYTE, water_textures[i]->data);
 	}
-	gl->glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+	gl->glGenerateTextureMipmap(water_texture_array);
 }
 
-bool Terrain::load(std::vector<uint8_t> data) {
-	BinaryReader reader(data);
-
+bool Terrain::load(BinaryReader& reader) {
 	std::string magic_number = reader.readString(4);
 	if (magic_number != "W3E!") {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
@@ -291,8 +287,7 @@ bool Terrain::load(std::vector<uint8_t> data) {
 	width = reader.read<uint32_t>();
 	height = reader.read<uint32_t>();
 
-	offset_x = reader.read<float>();
-	offset_y = reader.read<float>();
+	offset = reader.read<glm::vec2>();
 
 	// Parse all tilepoints
 	corners.resize(width, std::vector<Corner>(height));
@@ -426,7 +421,7 @@ void Terrain::render() {
 	ground_shader->use();
 
 	glm::mat4 Model = glm::mat4(1.0f);
-	glm::mat4 MVP = camera.projection * camera.view * Model;
+	glm::mat4 MVP = camera.projection_view * Model;
 
 	gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 
@@ -448,6 +443,7 @@ void Terrain::render() {
 
 	cliff_shader->use();
 	// Render cliffs
+
 	for (auto&& i : cliffs) {
 		Corner& bottomLeft = corners[i.x][i.y];
 		Corner& bottomRight = corners[i.x + 1][i.y];
@@ -459,7 +455,7 @@ void Terrain::render() {
 
 		Model = glm::translate(glm::mat4(1.0f), glm::vec3(i.x + 1, i.y, min));
 		Model = glm::scale(Model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f));
-		MVP = camera.projection * camera.view * Model;
+		MVP = camera.projection_view * Model;
 
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
@@ -472,7 +468,7 @@ void Terrain::render() {
 	water_shader->use();
 
 	Model = glm::mat4(1.0f);
-	MVP = camera.projection * camera.view * Model;
+	MVP = camera.projection_view * Model;
 
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &MVP[0][0]);
 	gl->glUniform1i(4, current_texture);
@@ -494,7 +490,7 @@ void Terrain::render() {
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_index_buffer);
 	gl->glDrawElements(GL_TRIANGLES, water_indices.size() * 3, GL_UNSIGNED_INT, NULL);
 
-	gl->glDisableVertexAttribArray(2);
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
+	gl->glDisableVertexAttribArray(2);
 }

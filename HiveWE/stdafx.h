@@ -48,4 +48,5 @@ namespace fs = std::experimental::filesystem;
 #include "GLWidget.h"
 #include "Terrain.h"
 #include "PathingMap.h"
+#include "Doodads.h"
 #include "Map.h"

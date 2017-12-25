@@ -8,6 +8,7 @@ public:
 	GLuint normalBuffer;
 	GLuint indexBuffer;
 
+
 	int vertices;
 	int indices;
 

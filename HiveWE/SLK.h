@@ -6,11 +6,12 @@ namespace slk {
 		size_t rows;
 		size_t columns;
 
-		std::map<std::string, size_t> header_to_column;
-		std::map<std::string, size_t> header_to_row;
+		std::unordered_map<std::string, size_t> header_to_column;
+		std::unordered_map<std::string, size_t> header_to_row;
 
 		std::vector<std::vector<std::string>> table_data;
 
+		SLK() {}
 		SLK(std::string path, bool local = false);
 
 		void load(std::string path, bool local = false);
