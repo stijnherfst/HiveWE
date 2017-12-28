@@ -1,25 +1,6 @@
 #pragma once
 
 namespace mdx {
-
-	//std::unordered_map<int, std::string> replaceable_textures{ { 1, }  };
-
-
-
-
-	//1 = TeamColor / TeamColor00
-	//	2 = TeamGlow / TeamGlow00
-	//	11 = Cliff / Cliff0
-	//	21 = ?
-	//	31 = LordaeronTree / LordaeronSummerTree
-	//	32 = AshenvaleTree / AshenTree
-	//	33 = BarrensTree / BarrensTree
-	//	34 = NorthrendTree / NorthTree
-	//	35 = Mushroom / MushroomTree
-	//	36 = RuinsTree / RuinsTree
-	//	37 = OutlandMushroomTree / MushroomTree
-
-
 	struct Extent {
 		float bounds_radius;
 		float minimum[3];
@@ -32,9 +13,38 @@ namespace mdx {
 	struct TextureCoordinateSet {
 		TextureCoordinateSet() {};
 		TextureCoordinateSet(BinaryReader& reader);
-		std::vector<float> coordinates;
-
+		std::vector<glm::vec2> coordinates;
 	};
+
+	struct Layer {
+		uint32_t blend_mode; // 0: none
+							// 1: transparent
+							// 2: blend
+							// 3: additive
+							// 4: add alpha
+							// 5: modulate
+							// 6: modulate 2x
+		uint32_t shading_flags; // 0x1: unshaded
+							// 0x2: sphere environment map
+							// 0x4: ?
+							// 0x8: ?
+							// 0x10: two sided
+							// 0x20: unfogged
+							// 0x30: no depth test
+							// 0x40: no depth set
+		uint32_t texture_id;
+		uint32_t texture_animation_id;
+		uint32_t coord_id;
+		float alpha;
+		//(KMTF)
+		//(KMTA)
+
+		Layer() {};
+		Layer(BinaryReader& reader);
+	};
+
+//KMTF: uint32 textureId
+//	KMTA : float alpha
 
 	struct Texture {
 		Texture(BinaryReader& reader);
@@ -44,8 +54,7 @@ namespace mdx {
 	};
 
 	struct Geoset {
-		uint32_t inclusive_size;
-		std::vector<float> vertices;
+		std::vector<glm::vec3> vertices;
 		std::vector<float> normals;
 		std::vector<uint32_t> face_type_groups;
 		std::vector<uint32_t> face_groups;
@@ -61,6 +70,12 @@ namespace mdx {
 
 		std::vector<Extent> extents;
 		std::vector<TextureCoordinateSet> texture_coordinate_sets;
+	};
+
+	struct Material {
+		uint32_t priority_plane;
+		uint32_t flags;
+		std::vector<Layer> layers;
 	};
 
 	enum class ChunkTag {
@@ -86,32 +101,47 @@ namespace mdx {
 	class VERS : public Chunk {
 		uint32_t version;
 		~VERS() {}
+
+		static const ChunkTag tag = ChunkTag::VERS;
 	};
 
-	class GEOS : public Chunk {
-	public:
+	struct GEOS : public Chunk {
 		GEOS(BinaryReader& reader);
 		~GEOS() {}
+
+		static const ChunkTag tag = ChunkTag::GEOS;
 		std::vector<Geoset> geosets;
 	};
 
-	class TEXS : public Chunk {
-	public:
+	struct TEXS : public Chunk {
 		TEXS(BinaryReader& reader);
 		~TEXS() {}
+
+		static const ChunkTag tag = ChunkTag::TEXS;
 		std::vector<Texture> textures;
 	};
 
-	class MTLS : public Chunk {
+	struct MTLS : public Chunk {
+		MTLS(BinaryReader& reader);
 		~MTLS() {}
-		//std::vector<Material> materials;
+
+		static const ChunkTag tag = ChunkTag::MTLS;
+		std::vector<Material> materials;
 	};
 
 	class MDX {
+		std::map<ChunkTag, std::shared_ptr<Chunk>> chunks;
+	
 	public:
-		std::map<ChunkTag, Chunk*> chunks;
-
 		MDX(BinaryReader& reader);
+		~MDX();
 		void load(BinaryReader& reader);
+
+		template<typename T>
+		std::shared_ptr<T> chunk() {
+			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
+
+			return std::dynamic_pointer_cast<T>(chunks[T::tag]);
+		}
 	};
 }

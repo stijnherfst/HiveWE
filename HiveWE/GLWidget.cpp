@@ -34,7 +34,7 @@ void GLWidget::initializeGL() {
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
-	map.load(L"Data/sa.w3x");
+	map.load(L"Data/t2.w3x");
 
 	mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 }
@@ -93,9 +93,10 @@ void GLWidget::paintGL() {
 
 	gl->glClearColor(0, 0, 0, 1);
 	
+	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	map.terrain.render();
 	map.pathing_map.render();
-	map.doodads.render();
+	//map.doodads.render();
 
 
 	//gl->glUseProgram(shader2);

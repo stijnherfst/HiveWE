@@ -16,7 +16,19 @@ namespace mdx {
 	TextureCoordinateSet::TextureCoordinateSet(BinaryReader& reader) {
 		reader.position += 4;
 		uint32_t texture_coordinates_count = reader.read<uint32_t>();
-		coordinates = reader.readVector<float>(texture_coordinates_count * 2);
+		coordinates = reader.readVector<glm::vec2>(texture_coordinates_count);
+	}
+
+	Layer::Layer(BinaryReader& reader) {
+		uint32_t size = reader.read<uint32_t>();
+		blend_mode = reader.read<uint32_t>();
+		shading_flags = reader.read<uint32_t>();
+		texture_id = reader.read<uint32_t>();
+		texture_animation_id = reader.read<uint32_t>();
+		coord_id = reader.read<uint32_t>();
+		alpha = reader.read<float>();
+
+		reader.position += size - 28;
 	}
 
 	Texture::Texture(BinaryReader& reader) {
@@ -27,15 +39,15 @@ namespace mdx {
 
 	GEOS::GEOS(BinaryReader& reader) {
 		uint32_t size = reader.read<uint32_t>();
-
 		uint32_t total_size = 0;
 
 		while (total_size < size) {
+			total_size += reader.read<uint32_t>();
+
 			Geoset geoset;
-			geoset.inclusive_size = reader.read<uint32_t>();
 			reader.position += 4;
 			uint32_t vertex_count = reader.read<uint32_t>();
-			geoset.vertices = reader.readVector<float>(vertex_count * 3);
+			geoset.vertices = reader.readVector<glm::vec3>(vertex_count);
 			reader.position += 4;
 			uint32_t normal_count = reader.read<uint32_t>();
 			geoset.normals = reader.readVector<float>(normal_count * 3);
@@ -73,15 +85,36 @@ namespace mdx {
 			}
 
 			geosets.push_back(geoset);
-			total_size += geoset.inclusive_size;
 		}
 	}
 
 	TEXS::TEXS(BinaryReader& reader) {
 		uint32_t size = reader.read<uint32_t>();
 
+		// ToDo use resource_manager
 		for (size_t i = 0; i < size / 268; i++) {
 			textures.push_back(Texture(reader));
+		}
+	}
+
+	MTLS::MTLS(BinaryReader& reader) {
+		uint32_t size = reader.read<uint32_t>();
+		uint32_t total_size = 0;
+
+		while (total_size < size) {
+			total_size += reader.read<uint32_t>();
+			
+			Material material;
+			material.priority_plane = reader.read<uint32_t>();
+			material.flags = reader.read<uint32_t>();
+			reader.position += 4;
+			uint32_t layers_count = reader.read<uint32_t>();
+
+			for (int i = 0; i < layers_count; i++) {
+				material.layers.push_back(Layer(reader));
+			}
+
+			materials.push_back(material);
 		}
 	}
 
@@ -89,25 +122,29 @@ namespace mdx {
 		load(reader);
 	}
 
-	void MDX::load(BinaryReader& reader) {
-		//BinaryReader reader(hierarchy.open_file(path));
+	MDX::~MDX() {
 
+	}
+
+	void MDX::load(BinaryReader& reader) {
 		std::string magic_number = reader.readString(4);
 		if (magic_number != "MDLX") {
 			std::cout << "The files magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
 			return;
 		}
 
-		uint32_t header;
 		while (reader.remaining() > 0) {
-			header = reader.read<uint32_t>();
+			uint32_t header = reader.read<uint32_t>();
 
 			switch (static_cast<ChunkTag>(header)) {
 				case ChunkTag::GEOS:
-					chunks[ChunkTag::GEOS] = new GEOS(reader);
+					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader);
 					break;
 				case ChunkTag::TEXS:
-					chunks[ChunkTag::TEXS] = new TEXS(reader);
+					chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
+					break;
+				case ChunkTag::MTLS:
+					chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader);
 					break;
 				default:
 					reader.position += reader.read<uint32_t>();

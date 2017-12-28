@@ -26,11 +26,11 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		
 		uint8_t flag = reader.read<uint8_t>();
 		if (flag & 0) {
-			doodads[i].state = TreeState::invisible_non_solid;
+			doodads[i].state = DoodadState::invisible_non_solid;
 		} else if (flag & 1) {
-			doodads[i].state = TreeState::visible_non_solid;
+			doodads[i].state = DoodadState::visible_non_solid;
 		} else {
-			doodads[i].state = TreeState::visible_solid;
+			doodads[i].state = DoodadState::visible_solid;
 		}
 
 		doodads[i].life = reader.read<uint8_t>();
@@ -72,7 +72,6 @@ void Doodads::create() {
 			std::string variations = doodads_slk.data("numVar", i.id);
 			std::string texture_name;
 
-
 			if (file_name == "") {
 				file_name = destructibles_slk.data("file", i.id);
 				texture_name = destructibles_slk.data("texFile", i.id) + ".blp";
@@ -82,14 +81,21 @@ void Doodads::create() {
 				variations = destructibles_slk.data("numVar", i.id);
 			}
 
+			std::string full_id = i.id + std::to_string(i.variation);
 			file_name += (variations == "1" ? "" : std::to_string(i.variation)) + ".mdx";
 
-			doodad_meshes.push_back(resource_manager.load<StaticMesh>(file_name));
+			if (id_to_mesh.find(full_id) == id_to_mesh.end()) {
+				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(file_name));
+			}
 
 			if (texture_name != "_.blp") {
 				auto tex = resource_manager.load<Texture>(texture_name);
 
-				//SOIL_save_image("Data/test.png", SOIL_SAVE_TYPE_PNG, tex->width, tex->height, 4, tex->data);
+				//
+				//
+				// Probably uploads the same texture multiple times to the gpu!!
+				//
+				//
 				GLuint texture;
 				gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 				gl->glTextureStorage2D(texture, 1, GL_RGBA8, tex->width, tex->height);
@@ -100,10 +106,8 @@ void Doodads::create() {
 				gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 				gl->glGenerateTextureMipmap(texture);
 
-				doodad_meshes.back()->texture = texture;// SOIL_load_OGL_texture("Data/test.png", 0, SOIL_CREATE_NEW_ID, 0);;
+				id_to_mesh[full_id]->texture = texture;
 			}
-
-			id_to_mesh.emplace(i.id + std::to_string(i.variation), doodad_meshes.size() - 1);
 		}
 	}
 
@@ -120,6 +124,6 @@ void Doodads::render() {
 		MVP = camera.projection_view * Model;
 
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
-		doodad_meshes[id_to_mesh[i.id]]->render();
+		id_to_mesh[i.id + std::to_string(i.variation)]->render();
 	}
 }

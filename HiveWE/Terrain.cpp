@@ -295,28 +295,27 @@ bool Terrain::load(BinaryReader& reader) {
 		for (size_t i = 0; i < width; i++) {
 			Corner& corner = corners[i][j];
 
-			corner.ground_height = (reader.read<int16_t>() - 8192.f) / 512.f;
+			corner.ground_height = (reader.read<uint16_t>() - 8192.f) / 512.f;
 
-			int16_t water_and_edge = reader.read<int16_t>();
+			uint16_t water_and_edge = reader.read<uint16_t>();
 			corner.water_height = ((water_and_edge & 0x3FFF) - 8192.f)/ 512.f;
 			corner.map_edge = water_and_edge & 0xC000;
 
-			int8_t texture_and_flags = reader.read<int8_t>();
-			corner.ground_texture = texture_and_flags & 0x0F;
+			uint8_t texture_and_flags = reader.read<uint8_t>();
+			corner.ground_texture = texture_and_flags & 0b00001111;
+			 
+			corner.ramp = texture_and_flags & 0b00010000;
+			corner.blight = texture_and_flags & 0b00100000;
+			corner.water = texture_and_flags & 0b01000000;
+			corner.boundary = texture_and_flags & 0b10000000;
 
-			int8_t flags = texture_and_flags & 0xF0;
-			corner.ramp = flags & 0X0010;
-			corner.blight = flags & 0x0020;
-			corner.water = flags & 0x0040;
-			corner.boundary = flags & 0x4000;
+			uint8_t variation = reader.read<uint8_t>();
+			corner.ground_variation = variation & 0b00011111;
+			corner.cliff_variation = (variation & 0b11100000) >> 5;
 
-			int8_t variation = reader.read<int8_t>();
-			corner.ground_variation = variation & 31;
-			corner.cliff_variation = (variation & 224) >> 5;
-
-			int8_t misc = reader.read<int8_t>();
-			corner.cliff_texture = (misc & 0xF0) >> 4;
-			corner.layer_height = misc & 0x0F;
+			uint8_t misc = reader.read<uint8_t>();
+			corner.cliff_texture = (misc & 0b11110000) >> 4;
+			corner.layer_height = misc & 0b00001111;
 		}
 	}
 

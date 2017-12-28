@@ -18,11 +18,11 @@ bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 	pathing_map.resize(width * height);
 	auto pathing_cells = reader.readVector<uint8_t>(width * height);
 	for (int i = 0; i < width * height; i++) {
-		pathing_map[i].walkable = !(pathing_cells[i] & 2);
-		pathing_map[i].flyable = !(pathing_cells[i] & 4);
-		pathing_map[i].buildable = !(pathing_cells[i] & 8);
-		pathing_map[i].blight = !(pathing_cells[i] & 20);
-		pathing_map[i].water = !(pathing_cells[i] & 40);
+		pathing_map[i].walkable = !(pathing_cells[i] &	0b00000010);
+		pathing_map[i].flyable = !(pathing_cells[i] &	0b00000100);
+		pathing_map[i].buildable = !(pathing_cells[i] & 0b00001000);
+		pathing_map[i].blight = !(pathing_cells[i] &	0b00100000);
+		pathing_map[i].water = !(pathing_cells[i] &		0b01000000);
 	}
 
 	shader = resource_manager.load<Shader>({ "Data/Shaders/pathing.vs", "Data/Shaders/pathing.fs" });
