@@ -23,7 +23,7 @@ public:
 		}
 		std::string result = { reinterpret_cast<char*>(&buffer[position]), size };
 
-		if (int pos = result.find_first_of('\0', 0); pos != std::string::npos) {
+		if (size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
 			result.resize(pos);
 		}
 

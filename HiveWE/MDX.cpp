@@ -110,7 +110,7 @@ namespace mdx {
 			reader.position += 4;
 			uint32_t layers_count = reader.read<uint32_t>();
 
-			for (int i = 0; i < layers_count; i++) {
+			for (size_t i = 0; i < layers_count; i++) {
 				material.layers.push_back(Layer(reader));
 			}
 

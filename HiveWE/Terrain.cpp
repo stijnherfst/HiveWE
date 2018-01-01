@@ -218,11 +218,11 @@ void Terrain::create() {
 		for (size_t y = 0; y < 4; y++) {
 			for (size_t x = 0; x < 4; x++) {
 				int sub_image = sub * 32 + y * 4 + x;
-				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image, variation_width, variation_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + x * variation_width) * 4);
+				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image, variation_width, variation_height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + x * variation_width) * 4);
 
 				// If extended
 				if (i->width == i->height * 2) {
-					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 16, variation_width, variation_height, 1, GL_RGBA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + (x + 4) * variation_width) * 4);
+					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 16, variation_width, variation_height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + (x + 4) * variation_width) * 4);
 				}
 			}
 		}
@@ -230,20 +230,6 @@ void Terrain::create() {
 	}
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	gl->glGenerateTextureMipmap(ground_texture_array);
-
-	// Cliff textures
-	cliff_texture_list.resize(cliff_textures.size());
-	gl->glCreateTextures(GL_TEXTURE_2D, cliff_texture_list.size(), cliff_texture_list.data());
-
-	for (size_t i = 0; i < cliff_textures.size(); i++) {
-		gl->glBindTexture(GL_TEXTURE_2D, cliff_texture_list[i]);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cliff_textures[i]->width, cliff_textures[i]->height, 0, GL_RGBA, GL_UNSIGNED_BYTE, cliff_textures[i]->data);
-		gl->glGenerateMipmap(GL_TEXTURE_2D);
-	}
 
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -258,7 +244,7 @@ void Terrain::create() {
 			std::cout << "Odd water texture size detected of " << water_textures[i]->width << " wide and " << water_textures[i]->height << " high\n";
 			continue;
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_RGBA, GL_UNSIGNED_BYTE, water_textures[i]->data);
+		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data);
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 }
@@ -299,7 +285,7 @@ bool Terrain::load(BinaryReader& reader) {
 
 			uint16_t water_and_edge = reader.read<uint16_t>();
 			corner.water_height = ((water_and_edge & 0x3FFF) - 8192.f)/ 512.f;
-			corner.map_edge = water_and_edge & 0xC000;
+			corner.map_edge = water_and_edge & 0x4000;
 
 			uint8_t texture_and_flags = reader.read<uint8_t>();
 			corner.ground_texture = texture_and_flags & 0b00001111;
@@ -351,7 +337,7 @@ bool Terrain::load(BinaryReader& reader) {
 	// Cliff Textures
 	slk::SLK cliff_slk("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_textures.push_back(resource_manager.load<GPUTexture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
@@ -459,7 +445,7 @@ void Terrain::render() {
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
 
-		cliff_meshes[i.z]->texture = cliff_texture_list[std::clamp(bottomLeft.cliff_texture, 0, 1)];
+		cliff_meshes[i.z]->texture = cliff_textures[std::clamp(bottomLeft.cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();
 	}
 

@@ -115,7 +115,7 @@ namespace slk {
 			return "";
 		}
 
-		int column = header_to_column[column_header];
+		size_t column = header_to_column[column_header];
 
 		if (column > columns || row > rows) {
 			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
@@ -134,8 +134,8 @@ namespace slk {
 			return "";
 		}
 
-		int column = header_to_column[column_header];
-		int row = header_to_row[row_header];
+		size_t column = header_to_column[column_header];
+		size_t row = header_to_row[row_header];
 
 		if (column > columns || row > rows) {
 			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;

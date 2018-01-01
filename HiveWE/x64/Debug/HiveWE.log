@@ -1,9 +1,121 @@
-﻿  Terrain.cpp
+﻿  stdafx.cpp
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(206): note: see reference to class template instantiation 'glm::tvec2<T,P>' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(227): note: see reference to class template instantiation 'glm::tvec3<T,P>' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(272): note: see reference to class template instantiation 'glm::tvec4<T,P>' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(334): warning C4127: conditional expression is constant
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(334): note: consider using 'if constexpr' statement instead
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(333): note: while compiling class template member function 'void QVector<int>::copyConstruct(const T *,const T *,T *)'
+          with
+          [
+              T=int
+          ]
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(517): note: see reference to function template instantiation 'void QVector<int>::copyConstruct(const T *,const T *,T *)' being compiled
+          with
+          [
+              T=int
+          ]
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(511): note: while compiling class template member function 'QVector<int>::QVector(std::initializer_list<T>)'
+          with
+          [
+              T=int
+          ]
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qversionnumber.h(149): note: see reference to function template instantiation 'QVector<int>::QVector(std::initializer_list<T>)' being compiled
+          with
+          [
+              T=int
+          ]
+  c:\qt\5.9.1\msvc2017_64\include\qtcore\qabstractitemmodel.h(254): note: see reference to class template instantiation 'QVector<int>' being compiled
+C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(318): warning C4127: conditional expression is constant
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(318): note: consider using 'if constexpr' statement instead
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(317): note: while compiling class template member function 'void QVector<int>::defaultConstruct(T *,T *)'
+          with
+          [
+              T=int
+          ]
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(574): note: see reference to function template instantiation 'void QVector<int>::defaultConstruct(T *,T *)' being compiled
+          with
+          [
+              T=int
+          ]
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(534): note: while compiling class template member function 'void QVector<int>::reallocData(const int,const int,QArrayData::AllocationOptions)'
+  C:\Qt\5.9.1\msvc2017_64\include\QtCore/qvector.h(423): note: see reference to function template instantiation 'void QVector<int>::reallocData(const int,const int,QArrayData::AllocationOptions)' being compiled
+  BLP.cpp
+BLP.cpp(21): warning C4189: 'extra': local variable is initialized but not referenced
+BLP.cpp(15): warning C4189: 'alpha_bits': local variable is initialized but not referenced
+BLP.cpp(22): warning C4189: 'has_mipmaps': local variable is initialized but not referenced
+  Doodads.cpp
+Doodads.cpp(45): warning C4189: 'world_editor_id': local variable is initialized but not referenced
+Doodads.cpp(38): warning C4189: 'item_table_pointer': local variable is initialized but not referenced
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
+  Doodads.cpp(88): note: see reference to function template instantiation 'std::shared_ptr<StaticMesh> ResourceManager::load<StaticMesh>(const std::string,bool)' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(30): warning C4100: 'local': unreferenced formal parameter
+  Doodads.cpp(97): note: see reference to function template instantiation 'std::shared_ptr<Shader> ResourceManager::load<Shader>(const std::initializer_list<std::string>,bool)' being compiled
+  GLWidget.cpp
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\include\vector(1939): note: see reference to class template instantiation 'glm::tvec3<int,0>' being compiled
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\include\vector(1938): note: while compiling class template member function 'void std::vector<glm::ivec3,std::allocator<_Ty>>::_Destroy(glm::tvec3<int,0> *,glm::tvec3<int,0> *)'
+          with
+          [
+              _Ty=glm::ivec3
+          ]
+  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.12.25827\include\vector(2005): note: see reference to function template instantiation 'void std::vector<glm::ivec3,std::allocator<_Ty>>::_Destroy(glm::tvec3<int,0> *,glm::tvec3<int,0> *)' being compiled
+          with
+          [
+              _Ty=glm::ivec3
+          ]
+  c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\Terrain.h(44): note: see reference to class template instantiation 'std::vector<glm::ivec3,std::allocator<_Ty>>' being compiled
+          with
+          [
+              _Ty=glm::ivec3
+          ]
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
+  GLWidget.cpp(39): note: see reference to function template instantiation 'std::shared_ptr<StaticMesh> ResourceManager::load<StaticMesh>(const std::string,bool)' being compiled
+  moc_GLWidget.cpp
+  moc_HiveWE.cpp
+  Hierarchy.cpp
+  HiveWE.cpp
+  MDX.cpp
+  MPQ.cpp
+  Map.cpp
+  PathingMap.cpp
+PathingMap.cpp(77): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  PathingMap.cpp(78): note: see reference to class template instantiation 'glm::tvec3<int,0>' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+PathingMap.cpp(84): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+PathingMap.cpp(87): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+PathingMap.cpp(90): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+PathingMap.cpp(110): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(30): warning C4100: 'local': unreferenced formal parameter
+  PathingMap.cpp(28): note: see reference to function template instantiation 'std::shared_ptr<Shader> ResourceManager::load<Shader>(const std::initializer_list<std::string>,bool)' being compiled
+  ResourceManager.cpp
+  SLK.cpp
+  Shader.cpp
+  StaticMesh.cpp
+StaticMesh.cpp(9): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+StaticMesh.cpp(10): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+StaticMesh.cpp(28): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+StaticMesh.cpp(31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
+  StaticMesh.cpp(49): note: see reference to function template instantiation 'std::shared_ptr<GPUTexture> ResourceManager::load<GPUTexture>(const std::string,bool)' being compiled
+  Terrain.cpp
 Terrain.cpp(77): warning C4101: 'corner': unreferenced local variable
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
   Terrain.cpp(129): note: see reference to class template instantiation 'glm::tvec3<int,0>' being compiled
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
 Terrain.cpp(146): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
 Terrain.cpp(178): warning C4267: 'initializing': conversion from 'size_t' to 'unsigned int', possible loss of data
 Terrain.cpp(187): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
@@ -15,16 +127,19 @@ Terrain.cpp(203): warning C4267: 'argument': conversion from 'size_t' to 'GLsize
 Terrain.cpp(206): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
 Terrain.cpp(209): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
 Terrain.cpp(220): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
-Terrain.cpp(236): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-Terrain.cpp(261): warning C4267: 'argument': conversion from 'size_t' to 'GLint', possible loss of data
-Terrain.cpp(349): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
-Terrain.cpp(355): warning C4267: 'argument': conversion from 'size_t' to 'const int', possible loss of data
-Terrain.cpp(275): warning C4189: 'custom_tileset': local variable is initialized but not referenced
-Terrain.cpp(272): warning C4189: 'version': local variable is initialized but not referenced
-Terrain.cpp(438): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-Terrain.cpp(490): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
-  Terrain.cpp(345): note: see reference to function template instantiation 'std::shared_ptr<Texture> ResourceManager::load<Texture>(const std::string,bool)' being compiled
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(30): warning C4100: 'local': unreferenced formal parameter
-  Terrain.cpp(409): note: see reference to function template instantiation 'std::shared_ptr<Shader> ResourceManager::load<Shader>(const std::initializer_list<std::string>,bool)' being compiled
-  HiveWE.vcxproj -> C:\Users\User\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
+Terrain.cpp(247): warning C4267: 'argument': conversion from 'size_t' to 'GLint', possible loss of data
+Terrain.cpp(335): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+Terrain.cpp(341): warning C4267: 'argument': conversion from 'size_t' to 'const int', possible loss of data
+Terrain.cpp(261): warning C4189: 'custom_tileset': local variable is initialized but not referenced
+Terrain.cpp(258): warning C4189: 'version': local variable is initialized but not referenced
+Terrain.cpp(424): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+Terrain.cpp(476): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
+  Terrain.cpp(331): note: see reference to function template instantiation 'std::shared_ptr<Texture> ResourceManager::load<Texture>(const std::string,bool)' being compiled
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(30): warning C4100: 'local': unreferenced formal parameter
+  Terrain.cpp(395): note: see reference to function template instantiation 'std::shared_ptr<Shader> ResourceManager::load<Shader>(const std::initializer_list<std::string>,bool)' being compiled
+  Texture.cpp
+  Utilities.cpp
+  main.cpp
+  Generating Code...
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe

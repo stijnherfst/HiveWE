@@ -2,7 +2,8 @@
 
 StaticMesh::StaticMesh(const std::string& path) {
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
-		mdx::MDX model = mdx::MDX(BinaryReader(hierarchy.open_file(path)));
+		BinaryReader reader(hierarchy.open_file(path));
+		mdx::MDX model = mdx::MDX(reader);
 
 		for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
 			vertices += i.vertices.size();
@@ -45,16 +46,7 @@ StaticMesh::StaticMesh(const std::string& path) {
 		auto texs = model.chunk<mdx::TEXS>()->textures.front();
 
 		if (texs.file_name != "") {
-			auto tex = resource_manager.load<Texture>(texs.file_name);
-
-			gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-			gl->glTextureStorage2D(texture, 0, GL_RGBA, tex->width, tex->height);
-			gl->glTextureSubImage2D(texture, 0, 0, 0, tex->width, tex->height, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
-			gl->glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			gl->glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_S, (texs.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_T, (texs.flags & 2) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			gl->glGenerateMipmap(GL_TEXTURE_2D);
+			texture = resource_manager.load<GPUTexture>(texs.file_name);
 		}
 
 		mtls = model.chunk<mdx::MTLS>();
@@ -65,7 +57,7 @@ void StaticMesh::render() {
 	gl->glEnableVertexAttribArray(0);
 	gl->glEnableVertexAttribArray(1);
 
-	gl->glBindTextureUnit(0, texture);
+	gl->glBindTextureUnit(0, texture->id);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -78,12 +70,13 @@ void StaticMesh::render() {
 	for (auto&& i : entries) {
 		for (auto&& j : mtls->materials[i.material_id].layers) {
 			gl->glEnable(GL_BLEND);
+			gl->glUniform1f(3, 0.75);
 			switch (j.blend_mode) {
 				case 0:
 					gl->glDisable(GL_BLEND);
 					break;
 				case 1:
-					gl->glDisable(GL_BLEND);
+					gl->glUniform1f(3, 0.75);
 					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

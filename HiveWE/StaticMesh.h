@@ -23,7 +23,7 @@ public:
 	int vertices = 0;
 	int indices = 0;
 
-	GLuint texture;
+	std::shared_ptr<GPUTexture> texture;
 
 	std::shared_ptr<mdx::MTLS> mtls;
 

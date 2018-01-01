@@ -59,11 +59,9 @@ public:
 	std::vector<int> cliff_to_ground_texture;
 	std::map<std::string, int> cliff_variations;
 	
-	std::vector<std::shared_ptr<Texture>> cliff_textures;
+	std::vector<std::shared_ptr<GPUTexture>> cliff_textures;
 	std::vector<std::shared_ptr<StaticMesh>> cliff_meshes;
 	std::shared_ptr<Shader> cliff_shader;
-
-	std::vector<GLuint> cliff_texture_list;
 	
 	int cliff_texture_size = 256;
 

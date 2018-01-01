@@ -13,3 +13,14 @@ public:
 		delete[] data;
 	}
 };
+
+class GPUTexture : public Resource {
+public:
+	GLuint id;
+
+	GPUTexture(const std::string& path);
+
+	virtual ~GPUTexture() {
+		//delete[] data;
+	}
+};

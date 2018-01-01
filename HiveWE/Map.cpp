@@ -14,6 +14,6 @@ void Map::load(std::wstring path) {
 		return;
 	}
 
-	//BinaryReader war3map_doo = BinaryReader(mpq.file_open("war3map.doo").read());
-	//success = doodads.load(war3map_doo, terrain);
+	BinaryReader war3map_doo = BinaryReader(mpq.file_open("war3map.doo").read());
+	success = doodads.load(war3map_doo, terrain);
 }

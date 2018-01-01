@@ -89,24 +89,7 @@ void Doodads::create() {
 			}
 
 			if (texture_name != "_.blp") {
-				auto tex = resource_manager.load<Texture>(texture_name);
-
-				//
-				//
-				// Probably uploads the same texture multiple times to the gpu!!
-				//
-				//
-				GLuint texture;
-				gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-				gl->glTextureStorage2D(texture, 1, GL_RGBA8, tex->width, tex->height);
-				gl->glTextureSubImage2D(texture, 0, 0, 0, tex->width, tex->height, GL_RGBA, GL_UNSIGNED_BYTE, tex->data);
-				gl->glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-				gl->glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-				gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-				gl->glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-				gl->glGenerateTextureMipmap(texture);
-
-				id_to_mesh[full_id]->texture = texture;
+				id_to_mesh[full_id]->texture = resource_manager.load<GPUTexture>(texture_name);
 			}
 		}
 	}
