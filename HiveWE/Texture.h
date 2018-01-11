@@ -7,6 +7,8 @@ public:
 	int channels;
 	uint8_t* data;
 
+	static constexpr const char* name = "Texture";
+
 	Texture(const std::string& path);
 
 	virtual ~Texture() {
@@ -16,7 +18,9 @@ public:
 
 class GPUTexture : public Resource {
 public:
-	GLuint id;
+	GLuint id = 0;
+
+	static constexpr const char* name = "GPUTexture";
 
 	GPUTexture(const std::string& path);
 

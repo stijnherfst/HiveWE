@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'HiveWE.ui'
 **
-** Created by: Qt User Interface Compiler version 5.9.1
+** Created by: Qt User Interface Compiler version 5.10.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -81,12 +81,12 @@ public:
 
     void retranslateUi(QMainWindow *HiveWEClass)
     {
-        HiveWEClass->setWindowTitle(QApplication::translate("HiveWEClass", "HiveWE", Q_NULLPTR));
-        actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathmap", Q_NULLPTR));
-        actionOpen->setText(QApplication::translate("HiveWEClass", "Open", Q_NULLPTR));
-        menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", Q_NULLPTR));
-        menuPathing->setTitle(QApplication::translate("HiveWEClass", "Pathing", Q_NULLPTR));
-        menuFile->setTitle(QApplication::translate("HiveWEClass", "File", Q_NULLPTR));
+        HiveWEClass->setWindowTitle(QApplication::translate("HiveWEClass", "HiveWE", nullptr));
+        actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathmap", nullptr));
+        actionOpen->setText(QApplication::translate("HiveWEClass", "Open", nullptr));
+        menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", nullptr));
+        menuPathing->setTitle(QApplication::translate("HiveWEClass", "Pathing", nullptr));
+        menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
     } // retranslateUi
 
 };

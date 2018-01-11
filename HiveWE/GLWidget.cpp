@@ -36,7 +36,7 @@ void GLWidget::initializeGL() {
 
 	map.load(L"Data/sa.w3x");
 
-	mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
+	//mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -95,8 +95,8 @@ void GLWidget::paintGL() {
 	
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	map.terrain.render();
-	map.pathing_map.render();
 	map.doodads.render();
+	map.pathing_map.render();
 
 
 	//gl->glUseProgram(shader2);

@@ -32,7 +32,7 @@ bool Hierarchy::init(char tileset_code) {
 	return true;
 }
 
-std::vector<uint8_t> Hierarchy::open_file(std::string path) {
+BinaryReader Hierarchy::open_file(std::string path) {
 	if (tileset.handle == nullptr) {
 		std::cout << "Hierarchy has not been initialised" << std::endl;
 	}
@@ -40,6 +40,8 @@ std::vector<uint8_t> Hierarchy::open_file(std::string path) {
 	mpq::File file;
 	if (tileset.file_exists(path)) {
 		file = tileset.file_open(path);
+	} else if (map.file_exists(path)) {
+		file = map.file_open(path);
 	} else if (war3Patch.file_exists(path)) {
 		file = war3Patch.file_open(path);
 	} else if (war3xLocal.file_exists(path)) {
@@ -55,5 +57,5 @@ std::vector<uint8_t> Hierarchy::open_file(std::string path) {
 		return std::vector<uint8_t>();
 	}
 
-	return file.read();
+	return BinaryReader(file.read());
 }

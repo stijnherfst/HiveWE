@@ -134,7 +134,6 @@ namespace mdx {
 	
 	public:
 		MDX(BinaryReader& reader);
-		~MDX();
 		void load(BinaryReader& reader);
 
 		template<typename T>
@@ -142,6 +141,13 @@ namespace mdx {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
 			return std::dynamic_pointer_cast<T>(chunks[T::tag]);
+		}
+
+		template<typename T>
+		bool has_chunk() {
+			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
+
+			return chunks.find(T::tag) != chunks.end();
 		}
 	};
 }

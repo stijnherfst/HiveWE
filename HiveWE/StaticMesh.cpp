@@ -2,51 +2,61 @@
 
 StaticMesh::StaticMesh(const std::string& path) {
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
-		BinaryReader reader(hierarchy.open_file(path));
+		BinaryReader reader = hierarchy.open_file(path);
+
+		//if (path == "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx") {
+		//	std::cout << "a ";
+		//}
+
 		mdx::MDX model = mdx::MDX(reader);
 
-		for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
-			vertices += i.vertices.size();
-			indices += i.faces.size();
-		}
+		if (model.has_chunk<mdx::GEOS>()) {
+			for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
+				vertices += i.vertices.size();
+				indices += i.faces.size();
+			}
 
-		// Allocate space
-		gl->glCreateBuffers(1, &vertexBuffer);
-		gl->glNamedBufferData(vertexBuffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+			// Allocate space
+			gl->glCreateBuffers(1, &vertexBuffer);
+			gl->glNamedBufferData(vertexBuffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &uvBuffer);
-		gl->glNamedBufferData(uvBuffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+			gl->glCreateBuffers(1, &uvBuffer);
+			gl->glNamedBufferData(uvBuffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &indexBuffer);
-		gl->glNamedBufferData(indexBuffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+			gl->glCreateBuffers(1, &indexBuffer);
+			gl->glNamedBufferData(indexBuffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
 
-		// Buffer Data
-		int base_vertex = 0;
-		int base_index = 0;
-		for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
-			MeshEntry entry;
-			entry.vertices = i.vertices.size();
-			entry.base_vertex = base_vertex;
+			// Buffer Data
+			int base_vertex = 0;
+			int base_index = 0;
+			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
+				MeshEntry entry;
+				entry.vertices = i.vertices.size();
+				entry.base_vertex = base_vertex;
 
-			entry.indices = i.faces.size();
-			entry.base_index = base_index;
+				entry.indices = i.faces.size();
+				entry.base_index = base_index;
 
-			entry.material_id = i.material_id;
+				entry.material_id = i.material_id;
 
-			entries.push_back(entry);
+				entries.push_back(entry);
 
-			gl->glNamedBufferSubData(vertexBuffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-			gl->glNamedBufferSubData(uvBuffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
-			gl->glNamedBufferSubData(indexBuffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+				gl->glNamedBufferSubData(vertexBuffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
+				gl->glNamedBufferSubData(uvBuffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
+				gl->glNamedBufferSubData(indexBuffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 			
-			base_vertex += entry.vertices;
-			base_index += entry.indices;
+				base_vertex += entry.vertices;
+				base_index += entry.indices;
+			}
 		}
 
-		auto texs = model.chunk<mdx::TEXS>()->textures.front();
-
-		if (texs.file_name != "") {
-			texture = resource_manager.load<GPUTexture>(texs.file_name);
+		for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
+			if (i.file_name == "") {
+				textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\AshenvaleTree\\AshenTree.blp"));
+				textures.back()->id = 0;
+			} else {
+				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+			}
 		}
 
 		mtls = model.chunk<mdx::MTLS>();
@@ -56,8 +66,6 @@ StaticMesh::StaticMesh(const std::string& path) {
 void StaticMesh::render() {
 	gl->glEnableVertexAttribArray(0);
 	gl->glEnableVertexAttribArray(1);
-
-	gl->glBindTextureUnit(0, texture->id);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -69,14 +77,17 @@ void StaticMesh::render() {
 
 	for (auto&& i : entries) {
 		for (auto&& j : mtls->materials[i.material_id].layers) {
+			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+
 			gl->glEnable(GL_BLEND);
-			gl->glUniform1f(3, 0.75);
+			gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			gl->glUniform1f(3, -1);
 			switch (j.blend_mode) {
 				case 0:
 					gl->glDisable(GL_BLEND);
 					break;
 				case 1:
-					gl->glUniform1f(3, 0.75);
+					gl->glUniform1f(3, 0.75); // Alpha test
 					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

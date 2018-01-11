@@ -14,7 +14,7 @@ namespace slk {
 			}
 			stream.close();
 		} else {
-			file << hierarchy.open_file(path).data();
+			file << hierarchy.open_file(path).buffer.data();
 		}
 
 		int row = 1;
@@ -60,7 +60,8 @@ namespace slk {
 							break;
 					}
 				}
-				table_data.resize(columns, std::vector<std::string>(rows));
+				table_data.resize(rows, std::vector<std::string>(columns));
+				shadow_data.resize(rows, std::vector<std::string>(columns));
 				continue;
 			} else if (parts.front() == "C") {
 				if (parts.size() < 3) {
@@ -74,28 +75,28 @@ namespace slk {
 					part.erase(part.begin());
 					switch (front) {
 						case 'X':
-							column = std::stoi(part);
+							column = std::stoi(part) - 1;
 							break;
 						case 'Y':
-							row = std::stoi(part);
+							row = std::stoi(part) - 1;
 							break;
 						case 'K':
 							if (part.front() == '\"') {
-								if (row == 1) {
-									header_to_column.emplace(part.substr(1, part.size() - 2), column - 1);
+								if (row == 0) {
+									header_to_column.emplace(part.substr(1, part.size() - 2), column);
 								}
-								if (column == 1) {
-									header_to_row.emplace(part.substr(1, part.size() - 2), row - 1);
+								if (column == 0) {
+									header_to_row.emplace(part.substr(1, part.size() - 2), row);
 								}
-								table_data[column - 1][row - 1] = part.substr(1, part.size() - 2);
+								table_data[row][column] = part.substr(1, part.size() - 2);
 							} else {
-								if (row == 1) {
-									header_to_column.emplace(part, column - 1);
+								if (row == 0) {
+									header_to_column.emplace(part, column);
 								}
-								if (column == 1) {
-									header_to_row.emplace(part, row - 1);
+								if (column == 0) {
+									header_to_row.emplace(part, row);
 								}
-								table_data[column - 1][row - 1] = part;
+								table_data[row][column] = part;
 							}
 							break;
 					}
@@ -117,12 +118,21 @@ namespace slk {
 
 		size_t column = header_to_column[column_header];
 
-		if (column > columns || row > rows) {
-			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
+		//if (column > columns || row > rows) {
+		//	std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
+		//	return "";
+		//}
+
+		if (row >= rows) {
+			std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
 			return "";
 		}
 
-		return table_data[column][row];
+		if (shadow_data[row][column] != "") {
+			return shadow_data[row][column];
+		}
+
+		return table_data[row][column];
 	}
 
 	std::string SLK::data(std::string column_header, std::string row_header) {
@@ -137,11 +147,46 @@ namespace slk {
 		size_t column = header_to_column[column_header];
 		size_t row = header_to_row[row_header];
 
-		if (column > columns || row > rows) {
-			std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
-			return "";
+		//if (column > columns || row > rows) {
+		//	std::cout << "Reading invalid column/row: " << column << "/" << columns << " " << row << "/" << rows;
+		//	return "";
+		//}
+
+		if (shadow_data[row][column] != "") {
+			return shadow_data[row][column];
 		}
 
-		return table_data[column][row];
+		return table_data[row][column];
+	}
+
+	void SLK::copy_row(std::string row_header, std::string new_row_header) {
+		if (header_to_row.find(row_header) == header_to_row.end()) {
+			std::cout << "Uknown row header: " << row_header << "\n";
+			return;
+		}
+
+		size_t row = header_to_row[row_header];
+
+		table_data.emplace_back(table_data[row]);
+		table_data[table_data.size() - 1][0] = new_row_header;
+		shadow_data.push_back(std::vector<std::string>(columns));
+		header_to_row.emplace(new_row_header, table_data.size() - 1);
+	}
+
+	void SLK::set_shadow_data(std::string column_header, std::string row_header, std::string data) {
+		if (header_to_column.find(column_header) == header_to_column.end()) {
+			std::cout << "Uknown column header: " << column_header << "\n";
+			return;
+		}
+
+		if (header_to_row.find(row_header) == header_to_row.end()) {
+			std::cout << "Uknown row header: " << row_header << "\n";
+			return;
+		}
+
+		size_t column = header_to_column[column_header];
+		size_t row = header_to_row[row_header];
+
+		shadow_data[row][column] = data;
 	}
 }

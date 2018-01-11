@@ -18,17 +18,20 @@ struct Doodad {
 
 class Doodads {
 	slk::SLK doodads_slk;
+	slk::SLK doodads_meta_slk;
 	slk::SLK destructibles_slk;
+	slk::SLK destructibles_meta_slk;
 
 	std::vector<Doodad> doodads;
 
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
-	//std::vector<std::shared_ptr<StaticMesh>> doodad_meshes;
 
 	std::shared_ptr<Shader> shader;
 
 public:
 	bool load(BinaryReader& reader, Terrain& terrain);
+	void load_destructible_modifications(BinaryReader& reader);
+	void load_doodad_modifications(BinaryReader& reader);
 	void create();
 	void render();
 };

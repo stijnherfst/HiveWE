@@ -2,7 +2,6 @@
 
 class StaticMesh : public Resource {
 public:
-
 	struct MeshEntry {
 		int vertices = 0;
 		int indices = 0;
@@ -23,7 +22,9 @@ public:
 	int vertices = 0;
 	int indices = 0;
 
-	std::shared_ptr<GPUTexture> texture;
+	static constexpr const char* name = "Mesh";
+
+	std::vector<std::shared_ptr<GPUTexture>> textures;
 
 	std::shared_ptr<mdx::MTLS> mtls;
 

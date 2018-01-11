@@ -17,7 +17,7 @@ public:
 		return result;
 	}
 
-	std::string readString(size_t size) {
+	std::string read_string(size_t size) {
 		if (position + size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
@@ -31,8 +31,15 @@ public:
 		return result;
 	}
 
+	std::string read_c_string() {
+		std::string string(reinterpret_cast<char*>(buffer.data() + position));
+		position += string.size();
+
+		return string;
+	}
+
 	template<typename T>
-	std::vector<T> readVector(size_t size) {
+	std::vector<T> read_vector(size_t size) {
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}

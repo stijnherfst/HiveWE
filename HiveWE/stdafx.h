@@ -10,6 +10,7 @@
 #include <sstream>
 #include <queue>
 #include <string>
+#include <variant>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;

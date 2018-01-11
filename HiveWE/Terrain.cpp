@@ -250,7 +250,7 @@ void Terrain::create() {
 }
 
 bool Terrain::load(BinaryReader& reader) {
-	std::string magic_number = reader.readString(4);
+	std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3E!") {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
 		return false;
@@ -262,12 +262,12 @@ bool Terrain::load(BinaryReader& reader) {
 
 	uint32_t tileset_textures = reader.read<uint32_t>();
 	for (size_t i = 0; i < tileset_textures; i++) {
-		tileset_ids.push_back(reader.readString(4));
+		tileset_ids.push_back(reader.read_string(4));
 	}
 
 	int cliffset_textures = reader.read<uint32_t>();
 	for (size_t i = 0; i < cliffset_textures; i++) {
-		cliffset_ids.push_back(reader.readString(4));
+		cliffset_ids.push_back(reader.read_string(4));
 	}
 
 	width = reader.read<uint32_t>();
@@ -445,7 +445,7 @@ void Terrain::render() {
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
 
-		cliff_meshes[i.z]->texture = cliff_textures[std::clamp(bottomLeft.cliff_texture, 0, 1)];
+		cliff_meshes[i.z]->textures[0] = cliff_textures[std::clamp(bottomLeft.cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();
 	}
 

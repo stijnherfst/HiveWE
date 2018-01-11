@@ -16,7 +16,7 @@ namespace mdx {
 	TextureCoordinateSet::TextureCoordinateSet(BinaryReader& reader) {
 		reader.position += 4;
 		uint32_t texture_coordinates_count = reader.read<uint32_t>();
-		coordinates = reader.readVector<glm::vec2>(texture_coordinates_count);
+		coordinates = reader.read_vector<glm::vec2>(texture_coordinates_count);
 	}
 
 	Layer::Layer(BinaryReader& reader) {
@@ -33,7 +33,7 @@ namespace mdx {
 
 	Texture::Texture(BinaryReader& reader) {
 		replaceable_id = reader.read<uint32_t>();
-		file_name = reader.readString(260);
+		file_name = reader.read_string(260);
 		flags = reader.read<uint32_t>();
 	}
 
@@ -47,28 +47,28 @@ namespace mdx {
 			Geoset geoset;
 			reader.position += 4;
 			uint32_t vertex_count = reader.read<uint32_t>();
-			geoset.vertices = reader.readVector<glm::vec3>(vertex_count);
+			geoset.vertices = reader.read_vector<glm::vec3>(vertex_count);
 			reader.position += 4;
 			uint32_t normal_count = reader.read<uint32_t>();
-			geoset.normals = reader.readVector<float>(normal_count * 3);
+			geoset.normals = reader.read_vector<float>(normal_count * 3);
 			reader.position += 4;
 			uint32_t face_type_groups_count = reader.read<uint32_t>();
-			geoset.face_type_groups = reader.readVector<uint32_t>(face_type_groups_count);
+			geoset.face_type_groups = reader.read_vector<uint32_t>(face_type_groups_count);
 			reader.position += 4;
 			uint32_t face_groups_count = reader.read<uint32_t>();
-			geoset.face_groups = reader.readVector<uint32_t>(face_groups_count);
+			geoset.face_groups = reader.read_vector<uint32_t>(face_groups_count);
 			reader.position += 4;
 			uint32_t faces_count = reader.read<uint32_t>();
-			geoset.faces = reader.readVector<uint16_t>(faces_count);
+			geoset.faces = reader.read_vector<uint16_t>(faces_count);
 			reader.position += 4;
 			uint32_t vertex_groups_count = reader.read<uint32_t>();
-			geoset.vertex_groups = reader.readVector<uint8_t>(vertex_groups_count);
+			geoset.vertex_groups = reader.read_vector<uint8_t>(vertex_groups_count);
 			reader.position += 4;
 			uint32_t matrix_group_count = reader.read<uint32_t>();
-			geoset.matrix_groups = reader.readVector<uint32_t>(matrix_group_count);
+			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
 			reader.position += 4;
 			uint32_t matrix_indices_count = reader.read<uint32_t>();
-			geoset.matrix_indices = reader.readVector<uint32_t>(matrix_indices_count);
+			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
@@ -91,7 +91,6 @@ namespace mdx {
 	TEXS::TEXS(BinaryReader& reader) {
 		uint32_t size = reader.read<uint32_t>();
 
-		// ToDo use resource_manager
 		for (size_t i = 0; i < size / 268; i++) {
 			textures.push_back(Texture(reader));
 		}
@@ -122,12 +121,8 @@ namespace mdx {
 		load(reader);
 	}
 
-	MDX::~MDX() {
-
-	}
-
 	void MDX::load(BinaryReader& reader) {
-		std::string magic_number = reader.readString(4);
+		std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
 			std::cout << "The files magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
 			return;

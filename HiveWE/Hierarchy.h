@@ -3,6 +3,7 @@
 class Hierarchy {
 public:
 	mpq::MPQ tileset;
+	mpq::MPQ map;
 	mpq::MPQ war3Patch;
 	mpq::MPQ war3xLocal;
 	mpq::MPQ war3x;
@@ -10,7 +11,7 @@ public:
 	mpq::MPQ war3;
 	
 	bool init(char tileset_code);
-	std::vector<uint8_t> open_file(std::string path);
+	BinaryReader open_file(std::string path);
 };
 
 extern Hierarchy hierarchy;
