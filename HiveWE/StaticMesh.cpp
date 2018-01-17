@@ -1,16 +1,15 @@
 #include "stdafx.h"
 
 StaticMesh::StaticMesh(const std::string& path) {
+	pathu = path;
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
-
-		//if (path == "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx") {
-		//	std::cout << "a ";
-		//}
 
 		mdx::MDX model = mdx::MDX(reader);
 
 		if (model.has_chunk<mdx::GEOS>()) {
+			has_mesh = true;
+
 			for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
@@ -48,12 +47,20 @@ StaticMesh::StaticMesh(const std::string& path) {
 				base_vertex += entry.vertices;
 				base_index += entry.indices;
 			}
+		} else {
+			has_mesh = false;
 		}
 
 		for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
 			if (i.file_name == "") {
-				textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\AshenvaleTree\\AshenTree.blp"));
-				textures.back()->id = 0;
+				if (i.replaceable_id == 1) {
+					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\TeamColor\\TeamColor00.blp"));
+				} else if (i.replaceable_id == 2) {
+					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"));
+				} else {
+					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\AshenvaleTree\\AshenTree.blp"));
+					textures.back()->id = 0;
+				}
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
 			}
@@ -64,30 +71,32 @@ StaticMesh::StaticMesh(const std::string& path) {
 }
 
 void StaticMesh::render() {
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
+	// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
+	if (has_mesh) {
+		gl->glEnableVertexAttribArray(0);
+		gl->glEnableVertexAttribArray(1);
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+		gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		gl->glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+		gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+		gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
-	for (auto&& i : entries) {
-		for (auto&& j : mtls->materials[i.material_id].layers) {
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+		for (auto&& i : entries) {
+			for (auto&& j : mtls->materials[i.material_id].layers) {
+				gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
-			gl->glEnable(GL_BLEND);
-			gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			gl->glUniform1f(3, -1);
-			switch (j.blend_mode) {
+				gl->glEnable(GL_BLEND);
+				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				gl->glUniform1f(3, -1.f);
+				switch (j.blend_mode) {
 				case 0:
 					gl->glDisable(GL_BLEND);
 					break;
 				case 1:
-					gl->glUniform1f(3, 0.75); // Alpha test
+					gl->glUniform1f(3, 0.75f); // Alpha test
 					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -104,13 +113,14 @@ void StaticMesh::render() {
 				case 6:
 					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 					break;
+				}
+
+				gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, (void*)(i.base_index * sizeof(uint16_t)), i.base_vertex);
 			}
-
-			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, (void*) (i.base_index * sizeof(uint16_t)), i.base_vertex);
 		}
-	}
 
-	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-	gl->glEnable(GL_BLEND);
+		gl->glDisableVertexAttribArray(0);
+		gl->glDisableVertexAttribArray(1);
+		gl->glEnable(GL_BLEND);
+	}
 }

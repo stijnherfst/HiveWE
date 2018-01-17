@@ -1,11 +1,56 @@
 #include "stdafx.h"
 
-cameraStruct camera;
+void APIENTRY glDebugOutput(GLenum source,
+	GLenum type,
+	GLuint id,
+	GLenum severity,
+	GLsizei length,
+	const GLchar *message,
+	void *userParam)
+{
+	// ignore non-significant error/warning codes
+	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
+
+	std::cout << "---------------" << std::endl;
+	std::cout << "Debug message (" << id << "): " << message << std::endl;
+
+	switch (source) {
+		case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+		case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+		case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+		case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+		case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+		case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+	} 
+	std::cout << std::endl;
+
+	switch (type) {
+		case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+		case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+		case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
+		case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+		case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+		case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+		case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+		case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+		case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+	} 
+	std::cout << std::endl;
+
+	switch (severity) {
+		case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+		case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+		case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+	} 
+	std::cout << std::endl;
+	//std::cout << id << "\n";
+}
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	QTimer *timer = new QTimer;
 	connect(timer, &QTimer::timeout, this, &GLWidget::updateScene);
-	timer->start(16);
+	timer->start(15);
 
 	grabMouse();
 	setMouseTracking(true);
@@ -22,6 +67,13 @@ void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
 
+	gl->glEnable(GL_DEBUG_OUTPUT);
+	gl->glEnable(GL_DEBUG_OUTPUT);
+	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	gl->glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
+	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+
+
 	gl->glEnable(GL_DEPTH_TEST);
 	gl->glDepthFunc(GL_LEQUAL);
 	gl->glEnable(GL_BLEND);
@@ -36,52 +88,25 @@ void GLWidget::initializeGL() {
 
 	map.load(L"Data/sa.w3x");
 
+	camera.position = glm::vec3(map.terrain.width / 2, map.terrain.height / 2, 2);
 	//mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 }
 
 void GLWidget::resizeGL(int w, int h) {
 	gl->glViewport(0, 0, w, h);
-	camera.aspectRatio = (float)w / h;
-	camera.update();
+
+	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
+	camera.aspectRatio = (double) w / h;
+	camera.update(delta);
 }
 
 void GLWidget::updateScene() {
 	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
 	elapsedTimer.start();
 
-	float speed = 5;
-	if (keysPressed.count(Qt::Key::Key_Shift)) {
-		speed = 20;
-	}
+	camera.update(delta);
 
-	if (keysPressed.count(Qt::Key::Key_W)) {
-		camera.position += camera.direction * speed * (float)delta;
-	} else if (keysPressed.count(Qt::Key::Key_S)) {
-		camera.position -= camera.direction * speed * (float)delta;
-	}
-
-	if (keysPressed.count(Qt::Key::Key_A)) {
-		camera.position -= glm::normalize(glm::cross(camera.direction, camera.up)) * speed * (float)delta;
-	} else if (keysPressed.count(Qt::Key::Key_D)) {
-		camera.position += glm::normalize(glm::cross(camera.direction, camera.up)) * speed * (float)delta;
-	}
-
-	if (keysPressed.count(Qt::Key::Key_Space)) {
-		camera.position.z += 1 * speed * (float)delta;
-	} else if (keysPressed.count(Qt::Key::Key_Control)) {
-		camera.position.z -= 1 * speed * (float)delta;
-	}
-
-	
-	int diffx = mapFromGlobal(QCursor::pos()).x() - previousMouseX;
-	int diffy = previousMouseY - mapFromGlobal(QCursor::pos()).y();
-	previousMouseX = mapFromGlobal(QCursor::pos()).x();
-	previousMouseY = mapFromGlobal(QCursor::pos()).y();
-	camera.horizontalAngle += diffx * 0.1 * speed * (float)delta;
-	camera.verticalAngle += diffy * 0.1 * speed * (float)delta;
-	camera.update();
-
-	map.terrain.current_texture += std::max(0.f, map.terrain.animation_rate * (float)delta);
+	map.terrain.current_texture += std::max(0.0, map.terrain.animation_rate * delta);
 	if (map.terrain.current_texture >= map.terrain.water_textures_nr) {
 		map.terrain.current_texture = 0;
 	}
@@ -90,27 +115,15 @@ void GLWidget::updateScene() {
 }
 
 void GLWidget::paintGL() {
-
 	gl->glClearColor(0, 0, 0, 1);
-	
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	map.terrain.render();
 	map.doodads.render();
-	map.pathing_map.render();
-
-
-	//gl->glUseProgram(shader2);
-
-	//glm::mat4 Model = glm::mat4(1.0f);
-	//Model = glm::translate(Model, glm::vec3(0, 0, 0));
-	//MVP = camera.projection * camera.view * Model;
-	//gl->glUniformMatrix4fv(2, "MVP"), 1, GL_FALSE, &MVP[0][0]);
-	//mesh.get()->render();
-
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {
-	keysPressed.emplace(e->key());
+	input_handler.keys_pressed.emplace(e->key());
 	switch (e->key()) {
 		case Qt::Key::Key_Escape:
 			exit(0);
@@ -119,5 +132,10 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent *e) {
-	keysPressed.erase(e->key());
+	input_handler.keys_pressed.erase(e->key());
+}
+
+void GLWidget::mouseMoveEvent(QMouseEvent *event) {
+	input_handler.mouse_move_event(event);
+	camera.mouse_move_event(event);
 }

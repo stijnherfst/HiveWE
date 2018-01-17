@@ -35,19 +35,34 @@ public:
 	std::vector<std::vector<Corner>> corners;
 
 	// Ground
-	GLuint vertex_buffer;
-	GLuint uv_buffer;
-	GLuint index_buffer;
-
-	std::vector <glm::vec3> vertices;
-	std::vector <glm::vec3> uvs;
-	std::vector <glm::ivec3> indices;
-
 	std::map<std::string, size_t> ground_texture_to_id;
 	std::vector<std::shared_ptr<Texture>> ground_textures;
 	std::shared_ptr<Shader> ground_shader;
 
 	GLuint ground_texture_array;
+	GLuint ground_height_texture;
+	GLuint ground_texture_data;
+	GLuint pathing_map_texture;
+
+	bool show_pathing_map = true;
+
+	std::vector<float> ground_heights;
+	std::vector<glm::u16vec4> ground_texture_list;
+
+	GLuint vertex_buffer;
+	GLuint index_buffer;
+
+	std::vector<glm::vec2> quad_vertices = { 
+		{ 1, 1 },
+		{ 0, 1 },
+		{ 0, 0 },
+		{ 1, 0 }
+	};
+
+	std::vector<glm::uvec3> quad_indices = {
+		{ 0, 3, 1 },
+		{ 1, 3, 2 }
+	};
 
 	int variation_width = 64;
 	int variation_height = 64;
@@ -60,7 +75,7 @@ public:
 	std::map<std::string, int> cliff_variations;
 	
 	std::vector<std::shared_ptr<GPUTexture>> cliff_textures;
-	std::vector<std::shared_ptr<StaticMesh>> cliff_meshes;
+	std::vector<std::shared_ptr<CliffMesh>> cliff_meshes;
 	std::shared_ptr<Shader> cliff_shader;
 	
 	int cliff_texture_size = 256;
@@ -106,5 +121,5 @@ public:
 	float corner_water_height(Corner corner) const;
 
 	int get_tile_variation(const Corner& tile_corner);
-	std::vector<std::tuple<int, int>> get_texture_variations(int x, int y);
+	glm::u16vec4 get_texture_variations(int x, int y);
 };

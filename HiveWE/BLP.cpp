@@ -48,7 +48,7 @@ namespace blp {
 			//}
 
 			buffer = new uint8_t[width * height * 4];
-
+			// ToDo handle alpha content
 			for (int i = 0; i < data.size(); i++) {
 				reinterpret_cast<uint32_t*>(buffer)[i] = header[data[i]];
 				buffer[i * 4 + 3] = 255;

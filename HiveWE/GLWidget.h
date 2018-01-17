@@ -6,10 +6,6 @@ class GLWidget : public QOpenGLWidget {
 	Q_OBJECT
 
 public:
-	int previousMouseX = 0;
-	int previousMouseY = 0;
-
-	std::unordered_set<int> keysPressed;
 	QElapsedTimer elapsedTimer;
 
 	GLWidget(QWidget* parent);
@@ -20,6 +16,7 @@ public:
 	void updateScene();
 	void paintGL() override;
 
-	void keyPressEvent(QKeyEvent *e);
-	void keyReleaseEvent(QKeyEvent *e);
+	void keyPressEvent(QKeyEvent *e) override;
+	void keyReleaseEvent(QKeyEvent *e) override;
+	void mouseMoveEvent(QMouseEvent *event) override;
 };

@@ -57,12 +57,6 @@
     <ClCompile Include="GLWidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Terrain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Map.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,16 +87,13 @@
     <ClCompile Include="Shader.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="PathingMap.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Doodads.cpp">
+      <Filter>Source Files\Base</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_HiveWE.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_HiveWE.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseDeb\moc_HiveWE.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_GLWidget.cpp">
@@ -111,11 +102,23 @@
     <ClCompile Include="GeneratedFiles\Release\moc_GLWidget.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseDeb\moc_GLWidget.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="CliffMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="Doodads.cpp">
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PathingMap.cpp">
       <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Map.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -126,12 +129,6 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Terrain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utilities.h">
@@ -167,11 +164,23 @@
     <ClInclude Include="SLK.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="PathingMap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Doodads.h">
       <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="CliffMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="PathingMap.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Map.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandler.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

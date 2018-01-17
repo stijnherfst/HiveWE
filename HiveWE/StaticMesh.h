@@ -11,22 +11,22 @@ public:
 		int material_id;
 	};
 
+	std::string pathu; // ToDo remove when done debugging
 	std::vector<MeshEntry> entries;
+	bool has_mesh; // ToDo remove when added support for meshless
 
 	GLuint vertexBuffer;
 	GLuint uvBuffer;
 	GLuint normalBuffer;
 	GLuint indexBuffer;
 
-
 	int vertices = 0;
 	int indices = 0;
 
-	static constexpr const char* name = "Mesh";
-
 	std::vector<std::shared_ptr<GPUTexture>> textures;
-
 	std::shared_ptr<mdx::MTLS> mtls;
+
+	static constexpr const char* name = "Mesh";
 
 	StaticMesh(const std::string& path);
 

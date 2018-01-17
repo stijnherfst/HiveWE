@@ -30,6 +30,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "Utilities.h"
 #include "BinaryReader.h"
+#include "InputHandler.h"
 
 // File formats
 #include "MPQ.h"
@@ -41,6 +42,7 @@ namespace fs = std::experimental::filesystem;
 #include "Hierarchy.h"
 #include "ResourceManager.h"
 #include "Texture.h"
+#include "CliffMesh.h"
 #include "StaticMesh.h"
 #include "Shader.h"
 

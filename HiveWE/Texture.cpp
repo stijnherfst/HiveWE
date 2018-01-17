@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 Texture::Texture(const std::string& path) {
-	if (fs::path(path).extension() == ".blp") {
+	if (fs::path(path).extension() == ".blp" || fs::path(path).extension() == ".BLP") {
 		auto [texture_data, w, h] = blp::BLP::load(path);
 		data = texture_data;
 		width = w;
@@ -12,7 +12,7 @@ Texture::Texture(const std::string& path) {
 }
 
 GPUTexture::GPUTexture(const std::string& path) {
-	if (fs::path(path).extension() == ".blp") {
+	if (fs::path(path).extension() == ".blp" || fs::path(path).extension() == ".BLP") {
 		auto[data, width, height] = blp::BLP::load(path);
 
 		gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);

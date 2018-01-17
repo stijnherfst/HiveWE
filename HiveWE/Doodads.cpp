@@ -247,6 +247,7 @@ void Doodads::create() {
 				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
 			}
 
+			// ToDo support multiple replacable ids
 			if (!texture_name.empty() && texture_name != "_") {
 				if (id_to_mesh[full_id]->textures.size() > 0 && id_to_mesh[full_id]->textures[0]->id == 0) {
 					texture_name.replace_extension(".blp");
