@@ -1,4 +1,14 @@
-﻿  Camera.cpp
-Camera.cpp(48): warning C4100: 'event': unreferenced formal parameter
-Camera.cpp(53): warning C4100: 'delta': unreferenced formal parameter
-  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (HiveWE_conflict-20180108-222506.vcxproj).  This can lead to incorrect clean and rebuild behavior.
+  Brush.cpp
+Brush.cpp(32): warning C4458: declaration of 'position' hides class member
+  c:\users\user\stack\projects\hivewe\hivewe\hivewe\Brush.h(10): note: see declaration of 'Brush::position'
+c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
+  Brush.cpp(33): note: see reference to class template instantiation 'glm::tvec2<int,0>' being compiled
+c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
+c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec2.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
+Brush.cpp(37): warning C4458: declaration of 'size' hides class member
+  c:\users\user\stack\projects\hivewe\hivewe\hivewe\Brush.h(12): note: see declaration of 'Brush::size'
+Brush.cpp(70): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+c:\users\user\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(30): warning C4100: 'local': unreferenced formal parameter
+  Brush.cpp(29): note: see reference to function template instantiation 'std::shared_ptr<Shader> ResourceManager::load<Shader>(const std::initializer_list<std::string>,bool)' being compiled
+  HiveWE.vcxproj -> C:\Users\User\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe

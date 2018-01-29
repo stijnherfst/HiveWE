@@ -29,35 +29,51 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>Tools</string>
-    </property>
-    <widget class="QMenu" name="menuPathing">
-     <property name="title">
-      <string>Pathing</string>
-     </property>
-     <addaction name="actionConvert_Blockers_to_Pathmap"/>
-    </widget>
-    <addaction name="menuPathing"/>
-   </widget>
    <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>File</string>
     </property>
     <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+   </widget>
+   <widget class="QMenu" name="menuWindow">
+    <property name="title">
+     <string>Window</string>
+    </property>
+    <widget class="QMenu" name="menuNew_Pallete">
+     <property name="title">
+      <string>New Pallete</string>
+     </property>
+     <addaction name="actionPathing_Pallete"/>
+    </widget>
+    <addaction name="menuNew_Pallete"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuTools"/>
+   <addaction name="menuWindow"/>
   </widget>
   <action name="actionConvert_Blockers_to_Pathmap">
    <property name="text">
-    <string>Convert Blockers to Pathmap</string>
+    <string>Convert Blockers to Pathing Map</string>
    </property>
   </action>
   <action name="actionOpen">
    <property name="text">
     <string>Open</string>
+   </property>
+  </action>
+  <action name="actionConvert_Tile_Type_to_PathMap">
+   <property name="text">
+    <string>Convert Tile Type to Pathing Map</string>
+   </property>
+  </action>
+  <action name="actionPathing_Pallete">
+   <property name="text">
+    <string>Pathing</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
    </property>
   </action>
  </widget>

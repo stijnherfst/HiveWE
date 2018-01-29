@@ -52,4 +52,7 @@ namespace fs = std::experimental::filesystem;
 #include "Terrain.h"
 #include "PathingMap.h"
 #include "Doodads.h"
+#include "Brush.h"
 #include "Map.h"
+
+#include "PathingPallete.h"

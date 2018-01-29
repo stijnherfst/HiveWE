@@ -1,14 +1,13 @@
 #include "stdafx.h"
 
 Hierarchy hierarchy;
-const std::wstring warcraftDirectory = L"C:/Program Files (x86)/Warcraft III/";
 
 bool Hierarchy::init(char tileset_code) {
-	war3Patch.open(warcraftDirectory + L"War3Patch.mpq");
-	war3xLocal.open(warcraftDirectory + L"War3xlocal.mpq");
-	war3x.open(warcraftDirectory + L"War3x.mpq");
-	war3Local.open(warcraftDirectory + L"War3local.mpq");
-	war3.open(warcraftDirectory + L"War3.mpq");
+	war3Patch.open(warcraft_directory / L"War3Patch.mpq");
+	war3xLocal.open(warcraft_directory / L"War3xlocal.mpq");
+	war3x.open(warcraft_directory / L"War3x.mpq");
+	war3Local.open(warcraft_directory / L"War3local.mpq");
+	war3.open(warcraft_directory / L"War3.mpq");
 
 	std::string file_name = tileset_code + ".mpq"s;
 	

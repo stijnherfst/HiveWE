@@ -8,7 +8,7 @@ void APIENTRY glDebugOutput(GLenum source,
 	const GLchar *message,
 	void *userParam)
 {
-	// ignore non-significant error/warning codes
+	// Ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
 
 	std::cout << "---------------" << std::endl;
@@ -52,7 +52,6 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	connect(timer, &QTimer::timeout, this, &GLWidget::updateScene);
 	timer->start(15);
 
-	grabMouse();
 	setMouseTracking(true);
 	setFocus();
 }
@@ -68,11 +67,9 @@ void GLWidget::initializeGL() {
 	gl->initializeOpenGLFunctions();
 
 	gl->glEnable(GL_DEBUG_OUTPUT);
-	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	gl->glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
 	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-
 
 	gl->glEnable(GL_DEPTH_TEST);
 	gl->glDepthFunc(GL_LEQUAL);
@@ -86,17 +83,18 @@ void GLWidget::initializeGL() {
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
-	map.load(L"Data/sa.w3x");
+	shapes.init();
+
+	map.load(L"Data/t2.w3x");
 
 	camera.position = glm::vec3(map.terrain.width / 2, map.terrain.height / 2, 2);
-	//mesh = resource_manager.load<StaticMesh>("Units\\Human\\Footman\\Footman.mdx");
 }
 
 void GLWidget::resizeGL(int w, int h) {
 	gl->glViewport(0, 0, w, h);
 
 	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
-	camera.aspectRatio = (double) w / h;
+	camera.aspect_ratio = (double) w / h;
 	camera.update(delta);
 }
 
@@ -118,15 +116,28 @@ void GLWidget::paintGL() {
 	gl->glClearColor(0, 0, 0, 1);
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	map.terrain.render();
-	map.doodads.render();
+	map.render();
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {
 	input_handler.keys_pressed.emplace(e->key());
 	switch (e->key()) {
-		case Qt::Key::Key_Escape:
+		case Qt::Key_Escape:
 			exit(0);
+			break;
+		case Qt::Key_P:
+			map.terrain.show_pathing_map = !map.terrain.show_pathing_map;
+			break;
+		case Qt::Key_Alt:
+			input_handler.drag_start = input_handler.mouse_world;
+		case Qt::Key_Plus:
+			map.brush->set_size(map.brush->size + 1);
+			break;
+		case Qt::Key_Minus:
+			map.brush->set_size(map.brush->size - 1);
+			break;
+		case Qt::Key_D:
+			map.render_doodads = !map.render_doodads;
 			break;
 	}
 }
@@ -138,4 +149,27 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	input_handler.mouse_move_event(event);
 	camera.mouse_move_event(event);
+
+	makeCurrent();
+	QPoint cursor_position = mapFromGlobal(QCursor::pos());
+	
+	float z;
+	gl->glReadPixels(cursor_position.x(), height() - cursor_position.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
+	glm::vec3 window = glm::vec3(cursor_position.x(), height() - cursor_position.y(), z);
+
+	input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width(), height()));
+
+	if (input_handler.key_pressed(Qt::Key_Alt)) {
+		map.brush->set_size(map.brush->size + (input_handler.mouse_world - input_handler.drag_start).x);
+	} else {
+		map.brush->set_position(input_handler.mouse_world);
+
+		if (event->buttons() == Qt::LeftButton) {
+			map.brush->apply(map.terrain);
+		}
+	}
+}
+
+void GLWidget::wheelEvent(QWheelEvent* event) {
+	camera.mouse_scroll_event(event);
 }

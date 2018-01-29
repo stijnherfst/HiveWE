@@ -49,21 +49,6 @@ public:
 	std::vector<float> ground_heights;
 	std::vector<glm::u16vec4> ground_texture_list;
 
-	GLuint vertex_buffer;
-	GLuint index_buffer;
-
-	std::vector<glm::vec2> quad_vertices = { 
-		{ 1, 1 },
-		{ 0, 1 },
-		{ 0, 0 },
-		{ 1, 0 }
-	};
-
-	std::vector<glm::uvec3> quad_indices = {
-		{ 0, 3, 1 },
-		{ 1, 3, 2 }
-	};
-
 	int variation_width = 64;
 	int variation_height = 64;
 	int blight_texture;

@@ -21,5 +21,5 @@ void main() {
 	pathing_map_uv = (vPosition + pos) * 4;	
 
 	// Cliff culling
-	gl_Position = ((texture_indices & 32768) == 0) ? MVP * vec4(vPosition + pos, height.r, 1) : vec4(2.0, 0.0, 0.0, 1.0);
+	gl_Position = ((texture_indices.a & 32768) == 0) ? MVP * vec4(vPosition + pos, height.r, 1) : vec4(2.0, 0.0, 0.0, 1.0);
 }

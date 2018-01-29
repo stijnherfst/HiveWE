@@ -1,10 +1,8 @@
 #include "stdafx.h"
 
 void Map::load(std::wstring path) {
-	//mpq::MPQ mpq(path);
 	hierarchy.map = mpq::MPQ(path);
 
-	
 	// Terrain
 	BinaryReader war3map_w3e = BinaryReader(hierarchy.map.file_open("war3map.w3e").read());
 	bool success = terrain.load(war3map_w3e);
@@ -34,4 +32,20 @@ void Map::load(std::wstring path) {
 	}
 
 	doodads.create();
+
+	brush = new PathingBrush;
+	brush->create();
+	brush->set_size(1);
+}
+
+void Map::render() {
+	terrain.render();
+
+	if (render_doodads) {
+		doodads.render();
+	}
+
+	if (render_brush) {
+		brush->render(terrain);
+	}
 }
