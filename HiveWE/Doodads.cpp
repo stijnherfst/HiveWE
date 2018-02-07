@@ -7,8 +7,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		return false;
 	}
 	uint32_t version = reader.read<uint32_t>();
-	if (version != 8) {
-		std::cout << "Unknown war3map.doo version. Attempting to load but may crash\n";
+	if (version != 7 && version != 8) {
+		std::cout << "Unknown war3map.doo version: " << version << " Attempting to load but may crash\nPlease send this map to eejin\n";
 	}
 
 	// Subversion
@@ -35,11 +35,13 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 
 		doodads[i].life = reader.read<uint8_t>();
 
-		int item_table_pointer = reader.read<uint32_t>();
-		int item_sets_count = reader.read<uint32_t>();
-		for (int j = 0; j < item_sets_count; j++) {
-			int set_items = reader.read<uint32_t>();
-			reader.position += set_items * 8;
+		if (version >= 8) {
+			int item_table_pointer = reader.read<uint32_t>();
+			int item_sets_count = reader.read<uint32_t>();
+			for (int j = 0; j < item_sets_count; j++) {
+				int set_items = reader.read<uint32_t>();
+				reader.position += set_items * 8;
+			}
 		}
 
 		int world_editor_id = reader.read<uint32_t>();
@@ -237,12 +239,23 @@ void Doodads::create() {
 			}
 			std::string full_id = i.id + std::to_string(i.variation);
 
-			if (!mesh_path.has_extension()) {
-				mesh_path += (variations == "1" ? "" : std::to_string(i.variation)) + ".mdx";
-			} else {
-				mesh_path.replace_extension(".mdx");
+			std::string stem = mesh_path.stem().string();
+			mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(i.variation)));
+			mesh_path.replace_extension(".mdx");
+
+			// Use base model when variation doesn't exist
+			if (!hierarchy.file_exists(mesh_path)) {
+				mesh_path.remove_filename() /= stem +".mdx";
 			}
-			
+
+			// Mesh doesnt exist at all
+			if (!hierarchy.file_exists(mesh_path)) {
+				std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
+				// Load something random to visualise
+				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Doodads\\Ashenvale\\Props\\AshenObilisk\\AshenObilisk.mdx"));
+				continue;
+			}
+
 			if (id_to_mesh.find(full_id) == id_to_mesh.end()) {
 				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
 			}

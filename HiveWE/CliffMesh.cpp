@@ -19,6 +19,12 @@ CliffMesh::CliffMesh(const std::string& path) {
 	}
 }
 
+CliffMesh::~CliffMesh() {
+	gl->glDeleteBuffers(1, &vertexBuffer);
+	gl->glDeleteBuffers(1, &uvBuffer);
+	gl->glDeleteBuffers(1, &indexBuffer);
+}
+
 void CliffMesh::render() {
 	gl->glBindTextureUnit(0, texture->id);
 

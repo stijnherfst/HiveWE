@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 StaticMesh::StaticMesh(const std::string& path) {
-	pathu = path;
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
 
@@ -10,6 +9,7 @@ StaticMesh::StaticMesh(const std::string& path) {
 		if (model.has_chunk<mdx::GEOS>()) {
 			has_mesh = true;
 
+			// Calculate required space
 			for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
@@ -68,6 +68,12 @@ StaticMesh::StaticMesh(const std::string& path) {
 
 		mtls = model.chunk<mdx::MTLS>();
 	}
+}
+
+StaticMesh::~StaticMesh() {
+	gl->glDeleteBuffers(1, &vertexBuffer);
+	gl->glDeleteBuffers(1, &uvBuffer);
+	gl->glDeleteBuffers(1, &indexBuffer);
 }
 
 void StaticMesh::render() {

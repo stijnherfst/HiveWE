@@ -25,6 +25,6 @@ public:
 	GPUTexture(const std::string& path);
 
 	virtual ~GPUTexture() {
-		//delete[] data;
+		gl->glDeleteTextures(1, &id);
 	}
 };

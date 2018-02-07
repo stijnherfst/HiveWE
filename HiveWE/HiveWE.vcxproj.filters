@@ -200,6 +200,9 @@
     <ClInclude Include="GeneratedFiles\ui_PathingPallete.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="BinaryWriter.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">

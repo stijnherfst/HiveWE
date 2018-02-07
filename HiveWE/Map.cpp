@@ -1,7 +1,8 @@
 #include "stdafx.h"
 
-void Map::load(std::wstring path) {
+void Map::load(fs::path path) {
 	hierarchy.map = mpq::MPQ(path);
+	filesystem_path = fs::system_complete(path);
 
 	// Terrain
 	BinaryReader war3map_w3e = BinaryReader(hierarchy.map.file_open("war3map.w3e").read());
@@ -33,9 +34,50 @@ void Map::load(std::wstring path) {
 
 	doodads.create();
 
-	brush = new PathingBrush;
-	brush->create();
-	brush->set_size(1);
+	brush.create();
+}
+
+void Map::close() {
+	hierarchy.tileset.close();
+	hierarchy.map.close();
+}
+
+bool Map::save(fs::path path) {
+	fs::path complete_path = fs::system_complete(path);
+	if (complete_path != filesystem_path) {
+		try {
+			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);
+		} catch (fs::filesystem_error& e) {
+			QMessageBox Msgbox;
+			Msgbox.setText(e.what());
+			Msgbox.exec();
+			return false;
+		}
+
+		mpq::MPQ new_map(complete_path);
+
+		std::swap(new_map, hierarchy.map);
+
+		pathing_map.save();
+
+		std::swap(new_map, hierarchy.map);
+	} else {
+		pathing_map.save();
+	}
+	return true;
+}
+
+void Map::play_test() {
+	if (!save("Data/Temporary/temp.w3x")) {
+		return;
+	}
+
+	QProcess* warcraft = new QProcess;
+	QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
+	QStringList arguments;
+	arguments << "-loadfile" << QString::fromStdString(fs::system_complete("Data/Temporary/temp.w3x").string());
+
+	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
 void Map::render() {
@@ -46,6 +88,6 @@ void Map::render() {
 	}
 
 	if (render_brush) {
-		brush->render(terrain);
+		brush.render(terrain);
 	}
 }

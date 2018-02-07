@@ -2,7 +2,6 @@
 
 // A thin wrapper around StormLib https://github.com/ladislav-zezula/StormLib
 namespace mpq {
-
 	class File {
 	public:
 		HANDLE handle = nullptr;
@@ -31,27 +30,27 @@ namespace mpq {
 		HANDLE handle;
 
 		MPQ() {}
-		MPQ(const std::wstring path);
-		MPQ(File archive);
+		MPQ(const std::wstring path, unsigned long flags = 0);
+		MPQ(File archive, unsigned long flags = 0);
 		~MPQ();
 		MPQ(MPQ&& move) {
 			handle = move.handle;
 			move.handle = nullptr;
 		}
 		MPQ(const MPQ&) = default;
-		MPQ& operator=(const MPQ&) = default;
+		MPQ& operator=(const MPQ&) = delete;
 		MPQ& operator=(MPQ&& move) {
 			handle = move.handle;
 			move.handle = nullptr;
 			return *this;
 		}
 
-		void open(const std::wstring path);
-		void open(File& archive);
+		void open(const std::wstring path, unsigned long flags = 0);
+		void open(File& archive, unsigned long flags = 0);
 		void close();
 
 		File file_open(const std::string path);
-		bool file_exists(const std::string path);
+		bool file_exists(const fs::path path);
 	};
 
 }

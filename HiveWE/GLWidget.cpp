@@ -59,7 +59,6 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 GLWidget::~GLWidget() {
 }
 
-Map map;
 std::shared_ptr<StaticMesh> mesh;
 
 void GLWidget::initializeGL() {
@@ -85,7 +84,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/t2.w3x");
+	map.load(L"Data/Test.w3x");
 
 	camera.position = glm::vec3(map.terrain.width / 2, map.terrain.height / 2, 2);
 }
@@ -125,19 +124,13 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 		case Qt::Key_Escape:
 			exit(0);
 			break;
-		case Qt::Key_P:
-			map.terrain.show_pathing_map = !map.terrain.show_pathing_map;
-			break;
 		case Qt::Key_Alt:
-			input_handler.drag_start = input_handler.mouse_world;
-		case Qt::Key_Plus:
-			map.brush->set_size(map.brush->size + 1);
+			//input_handler.drag_start = input_handler.mouse_world;
+		case Qt::Key_Equal:
+			map.brush.set_size(map.brush.size + 1);
 			break;
 		case Qt::Key_Minus:
-			map.brush->set_size(map.brush->size - 1);
-			break;
-		case Qt::Key_D:
-			map.render_doodads = !map.render_doodads;
+			map.brush.set_size(map.brush.size - 1);
 			break;
 	}
 }
@@ -159,15 +152,15 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 
 	input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width(), height()));
 
-	if (input_handler.key_pressed(Qt::Key_Alt)) {
-		map.brush->set_size(map.brush->size + (input_handler.mouse_world - input_handler.drag_start).x);
-	} else {
-		map.brush->set_position(input_handler.mouse_world);
+	//if (input_handler.key_pressed(Qt::Key_Alt)) {
+	//	map.brush.set_size(map.brush.size + (input_handler.mouse_world - input_handler.drag_start).x);
+	//} else {
+		map.brush.set_position(input_handler.mouse_world);
 
 		if (event->buttons() == Qt::LeftButton) {
-			map.brush->apply(map.terrain);
+			map.brush.apply(map.pathing_map);
 		}
-	}
+	//}
 }
 
 void GLWidget::wheelEvent(QWheelEvent* event) {

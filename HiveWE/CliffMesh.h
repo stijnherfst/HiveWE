@@ -15,6 +15,7 @@ public:
 	static constexpr const char* name = "CliffMesh";
 
 	CliffMesh(const std::string& path);
+	virtual ~CliffMesh();
 
 	void render();
 };

@@ -137,6 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinaryReader.h" />
+    <ClInclude Include="BinaryWriter.h" />
     <ClInclude Include="BLP.h" />
     <ClInclude Include="Brush.h" />
     <ClInclude Include="Camera.h" />

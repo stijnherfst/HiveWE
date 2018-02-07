@@ -44,8 +44,6 @@ public:
 	GLuint ground_texture_data;
 	GLuint pathing_map_texture;
 
-	bool show_pathing_map = true;
-
 	std::vector<float> ground_heights;
 	std::vector<glm::u16vec4> ground_texture_list;
 
@@ -95,16 +93,17 @@ public:
 	float current_texture = 1.f;
 	GLuint water_texture_array;
 
+	~Terrain();
+
 	void create();
 	bool load(BinaryReader& reader);
 	void render();
-
-	int real_tile_texture(int x, int y);
 
 	float corner_height(Corner corner) const;
 	float corner_height(const int x, const int y) const;
 	float corner_water_height(Corner corner) const;
 
+	int real_tile_texture(int x, int y);
 	int get_tile_variation(const Corner& tile_corner);
 	glm::u16vec4 get_texture_variations(int x, int y);
 };

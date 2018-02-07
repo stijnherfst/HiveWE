@@ -1,99 +1,16 @@
 #include "stdafx.h"
 
-float Terrain::corner_height(Corner corner) const {
-	return corner.ground_height + corner.layer_height - 2.0;
-}
+Terrain::~Terrain() {
+	gl->glDeleteTextures(1, &ground_texture_data);
+	gl->glDeleteTextures(1, &ground_height_texture);
 
-float Terrain::corner_height(const int x, const int y) const {
-	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
-}
+	gl->glDeleteBuffers(1, &water_vertex_buffer);
+	gl->glDeleteBuffers(1, &water_uv_buffer);
+	gl->glDeleteBuffers(1, &water_color_buffer);
+	gl->glDeleteBuffers(1, &water_index_buffer);
 
-float Terrain::corner_water_height(Corner corner) const {
-	return corner.water_height + height_offset;
-}
-
-int Terrain::real_tile_texture(int x, int y) {
-	for (int i = -1; i < 1; i++) {
-		for (int j = -1; j < 1; j++) {
-			if (x + i >= 0 && x + i <= width && y + j >= 0 && y + j <= height) {
-				if (corners[x + i][y + j].cliff) {
-					int texture = corners[x + i][y + j].cliff_texture;
-					// Number 15 seems to be something
-					if (texture == 15) {
-						texture -= 14;
-					}
-					return cliff_to_ground_texture[texture];
-				}
-			}
-		}
-	}
-	if (corners[x][y].blight) {
-		 return blight_texture;
-	}
-		
-	return corners[x][y].ground_texture;
-}
-
-int Terrain::get_tile_variation(const Corner& tile_corner) {
-	bool extended = ground_textures[tile_corner.ground_texture].get()->width == ground_textures[tile_corner.ground_texture].get()->height * 2;
-	if (extended) {
-		if (tile_corner.ground_variation <= 15) {
-			return 16 + tile_corner.ground_variation;
-		} else if (tile_corner.ground_variation == 16) {
-			return 15;
-		} else {
-			return 0;
-		}
-	} else {
-		if (tile_corner.ground_variation == 0) {
-			return 0;
-		} else {
-			return 15;
-		}
-	}
-}
-
-glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
-	glm::u16vec4 tiles;
-	// Bottom and top reversed
-	auto bottomL = std::make_tuple(real_tile_texture(x, y + 1), corners[x][y + 1]);
-	auto bottomR = std::make_tuple(real_tile_texture(x + 1, y + 1), corners[x + 1][y + 1]);
-	auto topL = std::make_tuple(real_tile_texture(x, y), corners[x][y]);
-	auto topR = std::make_tuple(real_tile_texture(x + 1, y), corners[x + 1][y]);
-		
-	auto comp = [&](std::tuple<int, Corner> l, std::tuple<int, Corner> r) {
-		return std::get<0>(l) < std::get<0>(r);
-	};
-
-	std::set<std::tuple<int, Corner>, decltype(comp)> set({ topL, topR, bottomL, bottomR }, comp);
-
-	auto [texture, corner] = *set.begin();
-	tiles.x = texture * 32 + get_tile_variation(corner) + 1; // Texture 0 is black and fully transparant
-	set.erase(set.begin());
-
-	int component = 1;
-	std::bitset<4> index;
-	for (auto [texture, corner] : set) {
-		// Bottom and top reversed
-		index[0] = real_tile_texture(x + 1, y + 1) == texture;
-		index[1] = real_tile_texture(x, y + 1) == texture;
-		index[2] = real_tile_texture(x + 1, y) == texture;
-		index[3] = real_tile_texture(x, y) == texture;
-
-		switch (component) {
-			case 1:
-				tiles.y = texture * 32 + index.to_ulong() + 1;
-				break;
-			case 2:
-				tiles.z = texture * 32 + index.to_ulong() + 1;
-				break;
-			case 3:
-				tiles.w = texture * 32 + index.to_ulong() + 1;
-				break;
-		}
-		component += 1;
-	}
-	return tiles;
+	gl->glDeleteTextures(1, &ground_texture_array);
+	gl->glDeleteTextures(1, &water_texture_array);
 }
 
 void Terrain::create() {
@@ -242,7 +159,8 @@ bool Terrain::load(BinaryReader& reader) {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
 		return false;
 	}
-	uint32_t version = reader.read<uint32_t>();
+	// Version
+	reader.read<uint32_t>();
 
 	tileset = reader.read<char>();
 	bool custom_tileset = reader.read<uint32_t>() == 1 ? true : false; // 0 for not default, 1 for custom
@@ -310,7 +228,7 @@ bool Terrain::load(BinaryReader& reader) {
 	}
 	// Done parsing
 
-	hierarchy.init(tileset);
+	hierarchy.load_tileset(tileset);
 
 	// Ground Textures
 	slk::SLK slk("TerrainArt\\Terrain.slk");
@@ -395,7 +313,7 @@ void Terrain::render() {
 	gl->glDisable(GL_BLEND);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-	gl->glUniform1i(2, show_pathing_map);
+	gl->glUniform1i(2, map.render_pathing);
 
 	gl->glBindTextureUnit(0, ground_texture_array);
 	gl->glBindTextureUnit(1, ground_height_texture);
@@ -432,6 +350,7 @@ void Terrain::render() {
 		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
 		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
 
+		int ii = i.z;
 		cliff_meshes[i.z]->texture = cliff_textures[std::clamp(bottomLeft.cliff_texture, 0, 1)];
 		cliff_meshes[i.z]->render();
 	}
@@ -462,4 +381,100 @@ void Terrain::render() {
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
+}
+
+float Terrain::corner_height(Corner corner) const {
+	return corner.ground_height + corner.layer_height - 2.0;
+}
+
+float Terrain::corner_height(const int x, const int y) const {
+	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
+}
+
+float Terrain::corner_water_height(Corner corner) const {
+	return corner.water_height + height_offset;
+}
+
+int Terrain::real_tile_texture(int x, int y) {
+	for (int i = -1; i < 1; i++) {
+		for (int j = -1; j < 1; j++) {
+			if (x + i >= 0 && x + i <= width && y + j >= 0 && y + j <= height) {
+				if (corners[x + i][y + j].cliff) {
+					int texture = corners[x + i][y + j].cliff_texture;
+					// Number 15 seems to be something
+					if (texture == 15) {
+						texture -= 14;
+					}
+					return cliff_to_ground_texture[texture];
+				}
+			}
+		}
+	}
+	if (corners[x][y].blight) {
+		return blight_texture;
+	}
+
+	return corners[x][y].ground_texture;
+}
+
+int Terrain::get_tile_variation(const Corner& tile_corner) {
+	bool extended = ground_textures[tile_corner.ground_texture].get()->width == ground_textures[tile_corner.ground_texture].get()->height * 2;
+	if (extended) {
+		if (tile_corner.ground_variation <= 15) {
+			return 16 + tile_corner.ground_variation;
+		} else if (tile_corner.ground_variation == 16) {
+			return 15;
+		} else {
+			return 0;
+		}
+	} else {
+		if (tile_corner.ground_variation == 0) {
+			return 0;
+		} else {
+			return 15;
+		}
+	}
+}
+
+glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
+	glm::u16vec4 tiles;
+	// Bottom and top reversed
+	auto bottomL = std::make_tuple(real_tile_texture(x, y + 1), corners[x][y + 1]);
+	auto bottomR = std::make_tuple(real_tile_texture(x + 1, y + 1), corners[x + 1][y + 1]);
+	auto topL = std::make_tuple(real_tile_texture(x, y), corners[x][y]);
+	auto topR = std::make_tuple(real_tile_texture(x + 1, y), corners[x + 1][y]);
+
+	auto comp = [&](std::tuple<int, Corner> l, std::tuple<int, Corner> r) {
+		return std::get<0>(l) < std::get<0>(r);
+	};
+
+	std::set<std::tuple<int, Corner>, decltype(comp)> set({ topL, topR, bottomL, bottomR }, comp);
+
+	auto[texture, corner] = *set.begin();
+	tiles.x = texture * 32 + get_tile_variation(corner) + 1; // Texture 0 is black and fully transparant
+	set.erase(set.begin());
+
+	int component = 1;
+	std::bitset<4> index;
+	for (auto[texture, corner] : set) {
+		// Bottom and top reversed
+		index[0] = real_tile_texture(x + 1, y + 1) == texture;
+		index[1] = real_tile_texture(x, y + 1) == texture;
+		index[2] = real_tile_texture(x + 1, y) == texture;
+		index[3] = real_tile_texture(x, y) == texture;
+
+		switch (component) {
+		case 1:
+			tiles.y = texture * 32 + index.to_ulong() + 1;
+			break;
+		case 2:
+			tiles.z = texture * 32 + index.to_ulong() + 1;
+			break;
+		case 3:
+			tiles.w = texture * 32 + index.to_ulong() + 1;
+			break;
+		}
+		component += 1;
+	}
+	return tiles;
 }

@@ -30,6 +30,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "Utilities.h"
 #include "BinaryReader.h"
+#include "BinaryWriter.h"
 #include "InputHandler.h"
 
 // File formats
@@ -46,13 +47,15 @@ namespace fs = std::experimental::filesystem;
 #include "StaticMesh.h"
 #include "Shader.h"
 
-#include "Camera.h"
-#include "HiveWE.h"
-#include "GLWidget.h"
 #include "Terrain.h"
 #include "PathingMap.h"
 #include "Doodads.h"
 #include "Brush.h"
 #include "Map.h"
+
+
+#include "Camera.h"
+#include "HiveWE.h"
+#include "GLWidget.h"
 
 #include "PathingPallete.h"

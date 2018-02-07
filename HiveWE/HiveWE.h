@@ -10,6 +10,11 @@ class HiveWE : public QMainWindow
 public:
 	HiveWE(QWidget *parent = Q_NULLPTR);
 
+	void load();
+	void save_as();
+
 private:
 	Ui::HiveWEClass ui;
 };
+
+extern Map map;

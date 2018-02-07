@@ -11,9 +11,12 @@ public:
 	mpq::MPQ war3;
 
 	fs::path warcraft_directory;
-	
-	bool init(char tileset_code);
-	BinaryReader open_file(std::string path);
+
+	void init();
+	void load_tileset(char tileset_code);
+
+	BinaryReader open_file(const std::string path);
+	bool file_exists(const fs::path path);
 };
 
 extern Hierarchy hierarchy;

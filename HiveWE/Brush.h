@@ -7,14 +7,15 @@ public:
 		terrain
 	};
 	
-	glm::vec2 position;
-	glm::vec2 uv_offset;
+	glm::ivec2 position;
+	glm::ivec2 uv_offset;
 	int size = 0;
 	int granularity = 4;
 	Type type = Type::terrain;
 
 	std::vector<glm::u8vec4> brush;
 	GLuint brush_texture;
+	uint8_t brush_mask;
 
 	std::shared_ptr<Shader> shader;
 
@@ -24,10 +25,11 @@ public:
 
 	void render(Terrain& terrain);
 
-	virtual void apply(Terrain& terrain) = 0;
+	virtual void apply(PathingMap& pathing) = 0;
 };
 
 class PathingBrush : public Brush {
+public:
 	enum class Operation {
 		replace,
 		add,
@@ -36,5 +38,5 @@ class PathingBrush : public Brush {
 
 	Operation operation = Operation::replace;
 
-	void apply(Terrain& terrain) override;
+	void apply(PathingMap& pathing) override;
 };

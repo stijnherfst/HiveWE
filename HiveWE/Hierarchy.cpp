@@ -2,38 +2,36 @@
 
 Hierarchy hierarchy;
 
-bool Hierarchy::init(char tileset_code) {
-	war3Patch.open(warcraft_directory / L"War3Patch.mpq");
-	war3xLocal.open(warcraft_directory / L"War3xlocal.mpq");
-	war3x.open(warcraft_directory / L"War3x.mpq");
-	war3Local.open(warcraft_directory / L"War3local.mpq");
-	war3.open(warcraft_directory / L"War3.mpq");
+void Hierarchy::init() {
+	war3Patch.open(warcraft_directory / L"War3Patch.mpq", STREAM_FLAG_READ_ONLY);
+	war3xLocal.open(warcraft_directory / L"War3xlocal.mpq", STREAM_FLAG_READ_ONLY);
+	war3x.open(warcraft_directory / L"War3x.mpq", STREAM_FLAG_READ_ONLY);
+	war3Local.open(warcraft_directory / L"War3local.mpq", STREAM_FLAG_READ_ONLY);
+	war3.open(warcraft_directory / L"War3.mpq", STREAM_FLAG_READ_ONLY);
+}
 
+void Hierarchy::load_tileset(char tileset_code) {
 	std::string file_name = tileset_code + ".mpq"s;
-	
+
 	mpq::File tileset_mpq;
 	if (war3Patch.file_exists(file_name)) {
 		tileset_mpq = war3Patch.file_open(file_name);
 	} else if (war3xLocal.file_exists(file_name)) {
 		tileset_mpq = war3xLocal.file_open(file_name);
-	} else if(war3x.file_exists(file_name)) {
+	} else if (war3x.file_exists(file_name)) {
 		tileset_mpq = war3x.file_open(file_name);
 	} else if (war3Local.file_exists(file_name)) {
 		tileset_mpq = war3Local.file_open(file_name);
 	} else if (war3.file_exists(file_name)) {
 		tileset_mpq = war3.file_open(file_name);
-	} else {
-		return false;
 	}
 
 	tileset.open(tileset_mpq);
-
-	return true;
 }
 
-BinaryReader Hierarchy::open_file(std::string path) {
+BinaryReader Hierarchy::open_file(const std::string path) {
 	if (tileset.handle == nullptr) {
-		std::cout << "Hierarchy has not been initialised" << std::endl;
+		std::cout << "Hierarchy tileset has not been initialised" << std::endl;
 	}
 
 	mpq::File file;
@@ -57,4 +55,14 @@ BinaryReader Hierarchy::open_file(std::string path) {
 	}
 
 	return BinaryReader(file.read());
+}
+
+bool Hierarchy::file_exists(const fs::path path) {
+	return tileset.file_exists(path)
+		|| map.file_exists(path)
+		|| war3Patch.file_exists(path)
+		|| war3xLocal.file_exists(path)
+		|| war3x.file_exists(path)
+		|| war3Local.file_exists(path)
+		|| war3.file_exists(path);
 }

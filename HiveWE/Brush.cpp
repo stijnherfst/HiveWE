@@ -30,8 +30,8 @@ void Brush::create() {
 }
 
 void Brush::set_position(const glm::vec2 position) {
-	this->position = glm::ivec2(position);
-	uv_offset = glm::ivec2((position - this->position) * 4.f);
+	this->position = position;
+	uv_offset = (position - glm::vec2(this->position)) * 4.f;
 }
 
 void Brush::set_size(const int size) {
@@ -75,24 +75,38 @@ void Brush::render(Terrain& terrain) {
 	gl->glEnable(GL_DEPTH_TEST);
 }
 
-void PathingBrush::apply(Terrain& terrain) {
-	//int x = std::clamp((int)position.x - size, 0, terrain.width);
-	//int y = std::k((int)position.y - size, 0, terrain.height);
-	//int width = std::clamp((int)position.x + size, 0, terrain.width);
-	//int height = std::clamp((int)position.x + size, 0, terrain.width);
+void PathingBrush::apply(PathingMap& pathing) {
+	int y = position.y * 4 + uv_offset.y;
+	int x = position.x * 4 + uv_offset.x;
+	if (x < 0 || x >= pathing.width || y < 0 || y >= pathing.height) {
+		return;
+	}
 
-	//for (int i = x; i < )
+	int cells = this->size * 2 + 1;
+	int offset = y * pathing.width + x;
 
-	//uint8_t byte = reader.read<uint8_t>();
-	//walkable = !(byte & 0b00000010);
-	//flyable = !(byte & 0b00000100);
-	//buildable = !(byte & 0b00001000);
-	//blight = !(byte & 0b00100000);
-	//water = !(byte & 0b01000000);
-	//unknown = !(byte & 0b10000000);
+	int width = std::clamp(cells, 0, pathing.width - x);
+	int height = std::clamp(cells, 0, pathing.height - y);
 
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			int index = offset + j * pathing.width + i;
+			switch (operation) {
+				case Operation::replace:
+					pathing.pathing_cells[index] &= ~0b00001110;
+					pathing.pathing_cells[index] |= brush_mask;
+					break;
+				case Operation::add:
+					pathing.pathing_cells[index] |= brush_mask;
+					break;
+				case Operation::remove:
+					pathing.pathing_cells[index] &= ~brush_mask;
+					break;
+			}
+		}
+	}
 
-	unsigned char dataa = 0b11111111;
-	gl->glTextureSubImage2D(terrain.pathing_map_texture, 0, position.x * 4 + uv_offset.x, position.y * 4 + uv_offset.y, 1, 1, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &dataa);
-
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, pathing.width);
+	gl->glTextureSubImage2D(pathing.pathing_texture, 0, x, y, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data() + offset);
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

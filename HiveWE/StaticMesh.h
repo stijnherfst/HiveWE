@@ -11,7 +11,6 @@ public:
 		int material_id;
 	};
 
-	std::string pathu; // ToDo remove when done debugging
 	std::vector<MeshEntry> entries;
 	bool has_mesh; // ToDo remove when added support for meshless
 
@@ -29,6 +28,7 @@ public:
 	static constexpr const char* name = "Mesh";
 
 	StaticMesh(const std::string& path);
+	virtual ~StaticMesh();
 
 	void render();
 };
