@@ -63,6 +63,9 @@ StaticMesh::StaticMesh(const std::string& path) {
 				}
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+				// ToDo Same texture on different model with different flags?
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			}
 		}
 

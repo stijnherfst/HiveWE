@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-
-
 namespace mdx {
 	Extent::Extent(BinaryReader& reader) {
 		bounds_radius = reader.read<float>();
@@ -28,6 +26,7 @@ namespace mdx {
 		coord_id = reader.read<uint32_t>();
 		alpha = reader.read<float>();
 
+		// Skip tags
 		reader.position += size - 28;
 	}
 
