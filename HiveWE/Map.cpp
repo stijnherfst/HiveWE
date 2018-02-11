@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+Map::~Map() {
+	hierarchy.tileset.close();
+	hierarchy.map.close();
+}
+
 void Map::load(fs::path path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::system_complete(path);
@@ -35,11 +40,10 @@ void Map::load(fs::path path) {
 	doodads.create();
 
 	brush.create();
-}
 
-void Map::close() {
-	hierarchy.tileset.close();
-	hierarchy.map.close();
+	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
+
+	meshes.clear(); // ToDo
 }
 
 bool Map::save(fs::path path) {
@@ -81,13 +85,36 @@ void Map::play_test() {
 }
 
 void Map::render() {
+	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	auto begin = std::chrono::high_resolution_clock::now();
+
 	terrain.render();
+
+	auto end = std::chrono::high_resolution_clock::now();
+	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
+	begin = std::chrono::high_resolution_clock::now();
 
 	if (render_doodads) {
 		doodads.render();
 	}
 
+	end = std::chrono::high_resolution_clock::now();
+	queue_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
 	if (render_brush) {
 		brush.render(terrain);
 	}
+
+	begin = std::chrono::high_resolution_clock::now();
+
+	for (auto&& i : meshes) {
+		i->render();
+	}
+
+	end = std::chrono::high_resolution_clock::now();
+	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
+	meshes.clear();
 }

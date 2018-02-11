@@ -1,13 +1,6 @@
 #include "stdafx.h"
 
-void APIENTRY glDebugOutput(GLenum source,
-	GLenum type,
-	GLuint id,
-	GLenum severity,
-	GLsizei length,
-	const GLchar *message,
-	void *userParam)
-{
+void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, void *userParam) {
 	// Ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
 
@@ -59,8 +52,6 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 GLWidget::~GLWidget() {
 }
 
-std::shared_ptr<StaticMesh> mesh;
-
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
@@ -78,15 +69,12 @@ void GLWidget::initializeGL() {
 	gl->glClearColor(0, 0, 0, 1);
 	//gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	GLuint vao;
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
 	shapes.init();
 
 	map.load(L"Data/Test.w3x");
-
-	camera.position = glm::vec3(map.terrain.width / 2, map.terrain.height / 2, 2);
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -113,9 +101,23 @@ void GLWidget::updateScene() {
 
 void GLWidget::paintGL() {
 	gl->glClearColor(0, 0, 0, 1);
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	gl->glBindVertexArray(vao);
 	map.render();
+
+	gl->glBindVertexArray(0);
+
+	// QPainter does some wonky stuff with OpenGL state.
+	//QPainter p(this);
+	//p.setFont(QFont("Arial", 10, 100, false));
+	//p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
+	//	p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
+	//	p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
+	//	p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map.terrain_water_time)));
+	//p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.queue_time)));
+	//p.drawText(10, 95, QString::fromStdString("Doodad Drawing: " + std::to_string(map.doodad_time)));
+
+	gl->glBindVertexArray(vao);
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {

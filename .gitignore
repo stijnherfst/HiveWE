@@ -11,20 +11,9 @@
 *.gch
 *.pch
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
 # Fortran module files
 *.mod
 *.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
 
 # Executables
 *.exe
@@ -44,3 +33,4 @@
 *.iobj
 *.log
 /x64/Release/HiveWE.zip
+/x64/Debug

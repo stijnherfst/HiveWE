@@ -1,11 +1,11 @@
 #version 450 core
 
-layout (binding = 0) uniform sampler2D image;
+layout (binding = 0) uniform sampler2DArray texture;
 
-in vec2 UV;
+in vec3 UV;
 
 out vec4 outColor;
 
 void main() {
-	outColor = texture(image, UV);
+	outColor = texture(texture, UV);
 }

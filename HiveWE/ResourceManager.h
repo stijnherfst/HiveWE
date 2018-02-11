@@ -36,8 +36,9 @@ public:
 			resources[resource] = res = std::make_shared<T>(paths);
 		}
 
-		return return_value = std::dynamic_pointer_cast<T>(res);
+		return std::dynamic_pointer_cast<T>(res);
 	}
+
 private:
 	std::unordered_map<std::string, std::weak_ptr<Resource>> resources;
 };

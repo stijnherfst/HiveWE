@@ -6,16 +6,19 @@ public:
 	GLuint uvBuffer;
 	GLuint normalBuffer;
 	GLuint indexBuffer;
+	GLuint instanceBuffer;
 
 	int vertices;
 	int indices;
 
-	std::shared_ptr<GPUTexture> texture;
-
 	static constexpr const char* name = "CliffMesh";
+
+	std::vector<glm::vec4> render_jobs;
 
 	CliffMesh(const std::string& path);
 	virtual ~CliffMesh();
+
+	void render_queue(glm::vec4 position);
 
 	void render();
 };

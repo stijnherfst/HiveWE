@@ -3,10 +3,10 @@
 namespace mdx {
 	struct Extent {
 		float bounds_radius;
-		float minimum[3];
-		float maximum[3];
+		glm::vec3 minimum;
+		glm::vec3 maximum;
 
-		Extent() {};
+		Extent() = default;
 		Extent(BinaryReader& reader);
 	};
 

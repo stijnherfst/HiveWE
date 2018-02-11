@@ -31,7 +31,6 @@ void HiveWE::load() {
 	if (file_name != "") {
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
-			map.close();
 			std::swap(new_map, map);
 		}
 		map.load(file_name.toStdString());

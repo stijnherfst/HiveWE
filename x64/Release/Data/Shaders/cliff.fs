@@ -8,4 +8,5 @@ out vec4 outColor;
 
 void main() {
 	outColor = texture(image, UV);
+	//outColor = vec4(1, 1, 1, 1);
 }

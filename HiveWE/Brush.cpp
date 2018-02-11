@@ -61,7 +61,7 @@ void Brush::render(Terrain& terrain) {
 	gl->glUniform2f(2, position.x, position.y);
 	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
 
-	gl->glBindTextureUnit(0, terrain.ground_height_texture);
+	gl->glBindTextureUnit(0, terrain.ground_corner_height);
 	gl->glBindTextureUnit(1, brush_texture);
 
 	gl->glEnableVertexAttribArray(0);

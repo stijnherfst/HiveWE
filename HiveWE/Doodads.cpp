@@ -269,21 +269,15 @@ void Doodads::create() {
 			}
 		}
 	}
-
-	shader = resource_manager.load<Shader>({ "Data/Shaders/staticmesh.vs", "Data/Shaders/staticmesh.fs" });
 }
 
 void Doodads::render() {
-	shader->use();
 	glm::mat4 model;
-	glm::mat4 MVP;
 	for (auto&& i : doodads) {
 		model = glm::translate(glm::mat4(1.0f), i.position / 128.f);
 		model = glm::scale(model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f) * i.scale);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
-		MVP = camera.projection_view * model;
 
-		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
-		id_to_mesh[i.id + std::to_string(i.variation)]->render();
+		id_to_mesh[i.id + std::to_string(i.variation)]->render_queue(camera.projection_view * model);
 	}
 }

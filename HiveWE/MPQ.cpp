@@ -1,12 +1,16 @@
 #include "stdafx.h"
 
 namespace mpq {
+	File::~File() {
+		close();
+	}
+
 	std::vector<uint8_t> File::read() {
 		uint32_t size = SFileGetFileSize(handle, nullptr);
 		std::vector<uint8_t> buffer(size);
 
-		unsigned long dwBytes;
-		bool success = SFileReadFile(handle, &buffer[0], size, &dwBytes, NULL);
+		unsigned long bytes_read;
+		bool success = SFileReadFile(handle, &buffer[0], size, &bytes_read, nullptr);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;
 		}
@@ -15,10 +19,6 @@ namespace mpq {
 
 	void File::close() {
 		SFileCloseFile(handle);
-	}
-
-	File::~File() {
-		close();
 	}
 
 	// MPQ
@@ -32,7 +32,7 @@ namespace mpq {
 	}
 
 	MPQ::~MPQ() {
-		SFileCloseArchive(handle);
+		close();
 	}
 
 	void MPQ::open(const std::wstring path, unsigned long flags) {

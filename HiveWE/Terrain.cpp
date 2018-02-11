@@ -1,8 +1,9 @@
 #include "stdafx.h"
 
 Terrain::~Terrain() {
+	gl->glDeleteTextures(1, &ground_height);
+	gl->glDeleteTextures(1, &ground_corner_height);
 	gl->glDeleteTextures(1, &ground_texture_data);
-	gl->glDeleteTextures(1, &ground_height_texture);
 
 	gl->glDeleteBuffers(1, &water_vertex_buffer);
 	gl->glDeleteBuffers(1, &water_uv_buffer);
@@ -10,11 +11,13 @@ Terrain::~Terrain() {
 	gl->glDeleteBuffers(1, &water_index_buffer);
 
 	gl->glDeleteTextures(1, &ground_texture_array);
+	gl->glDeleteTextures(1, &cliff_texture_array);
 	gl->glDeleteTextures(1, &water_texture_array);
 }
 
 void Terrain::create() {
 	ground_heights.resize(width * height);
+	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize(width * height);
 
 	for (int i = 0; i < width; i++) {
@@ -25,11 +28,12 @@ void Terrain::create() {
 			Corner& topRight = corners[i + 1][j + 1];
 
 			// Ground tiles
-			ground_heights[j * (width)+i] = corner_height(bottomLeft);
-			ground_texture_list[j * (width)+i] = get_texture_variations(i, j);
+			ground_heights[j * width + i] = bottomLeft.ground_height;
+			ground_corner_heights[j * width + i] = corner_height(bottomLeft);
+			ground_texture_list[j * width + i] = get_texture_variations(i, j);
 
 			if (bottomLeft.cliff) {
-				ground_texture_list[j * (width)+i].a |= 0b1000000000000000;
+				ground_texture_list[j * width + i].a |= 0b1000000000000000;
 
 				// Cliff model path
 				int base = std::min({ bottomLeft.layer_height, bottomRight.layer_height, topLeft.layer_height, topRight.layer_height });
@@ -88,9 +92,50 @@ void Terrain::create() {
 	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height_texture);
-	gl->glTextureStorage2D(ground_height_texture, 1, GL_R16F, width, height);
-	gl->glTextureSubImage2D(ground_height_texture, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
+	gl->glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
+	gl->glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+
+	// Ground textures
+	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
+	gl->glTextureStorage3D(ground_texture_array, std::log(variation_size) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
+
+	// Create a transparant black texture
+	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+
+	int sub = 0;
+	for (auto&& i : ground_textures) {
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, i->width);
+		for (size_t y = 0; y < 4; y++) {
+			for (size_t x = 0; x < 4; x++) {
+				int sub_image = sub * 32 + y * 4 + x;
+				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + x * variation_size) * 4);
+
+				// If extended
+				if (i->width == i->height * 2) {
+					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1 + 16, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + (x + 4) * variation_size) * 4);
+				}
+			}
+		}
+		sub += 1;
+	}
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	gl->glGenerateTextureMipmap(ground_texture_array);
+
+	// Cliff
+	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
+	gl->glTextureStorage3D(cliff_texture_array, std::log(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
+
+	sub = 0;
+	for (auto&& i : cliff_textures) {
+		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data);
+		sub += 1;
+	}
+	gl->glGenerateTextureMipmap(cliff_texture_array);
 
 	// Water
 	gl->glCreateBuffers(1, &water_vertex_buffer);
@@ -104,36 +149,6 @@ void Terrain::create() {
 
 	gl->glCreateBuffers(1, &water_index_buffer);
 	gl->glNamedBufferData(water_index_buffer, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
-
-	// Ground textures
-	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
-	gl->glTextureStorage3D(ground_texture_array, std::log(std::max(variation_width, variation_height)) + 1, GL_RGBA8, variation_width, variation_height, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	// Create a transparant black texture
-	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_width, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-
-	int sub = 0;
-	for (auto&& i : ground_textures) {
-		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, i->width);
-		for (size_t y = 0; y < 4; y++) {
-			for (size_t x = 0; x < 4; x++) {
-				int sub_image = sub * 32 + y * 4 + x;
-				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1, variation_width, variation_height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + x * variation_width) * 4);
-
-				// If extended
-				if (i->width == i->height * 2) {
-					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1 + 16, variation_width, variation_height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_height * i->width + (x + 4) * variation_width) * 4);
-				}
-			}
-		}
-		sub += 1;
-	}
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	gl->glGenerateTextureMipmap(ground_texture_array);
 
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -242,7 +257,7 @@ bool Terrain::load(BinaryReader& reader) {
 	// Cliff Textures
 	slk::SLK cliff_slk("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<GPUTexture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
@@ -308,6 +323,9 @@ bool Terrain::load(BinaryReader& reader) {
 
 void Terrain::render() {
 	// Render tiles
+
+	auto begin = std::chrono::high_resolution_clock::now();
+
 	ground_shader->use();
 
 	gl->glDisable(GL_BLEND);
@@ -316,7 +334,7 @@ void Terrain::render() {
 	gl->glUniform1i(2, map.render_pathing);
 
 	gl->glBindTextureUnit(0, ground_texture_array);
-	gl->glBindTextureUnit(1, ground_height_texture);
+	gl->glBindTextureUnit(1, ground_corner_height);
 	gl->glBindTextureUnit(2, ground_texture_data);
 	gl->glBindTextureUnit(3, pathing_map_texture);
 
@@ -331,8 +349,11 @@ void Terrain::render() {
 
 	gl->glEnable(GL_BLEND);
 
+	auto end = std::chrono::high_resolution_clock::now();
+	map.terrain_tiles_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
 	// Render cliffs
-	cliff_shader->use();
+	begin = std::chrono::high_resolution_clock::now();
 
 	for (auto&& i : cliffs) {
 		Corner& bottomLeft = corners[i.x][i.y];
@@ -343,19 +364,25 @@ void Terrain::render() {
 		float min = std::min({	bottomLeft.layer_height - 2,bottomRight.layer_height - 2,
 								topLeft.layer_height - 2,	topRight.layer_height - 2 });
 
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(i.x + 1, i.y, min));
-		model = glm::scale(model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f));
-		glm::mat4 MVP = camera.projection_view * model;
+		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottomLeft.cliff_texture });
+	}
+	
+	cliff_shader->use();
+	glm::mat4 MVP = glm::scale(camera.projection_view, glm::vec3(1.f / 128.f));
+	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &MVP[0][0]);
 
-		gl->glUniformMatrix4fv(2, 1, GL_FALSE, &MVP[0][0]);
-		gl->glUniform4f(3, bottomLeft.ground_height, bottomRight.ground_height, topLeft.ground_height, topRight.ground_height);
-
-		int ii = i.z;
-		cliff_meshes[i.z]->texture = cliff_textures[std::clamp(bottomLeft.cliff_texture, 0, 1)];
-		cliff_meshes[i.z]->render();
+	gl->glBindTextureUnit(0, cliff_texture_array);
+	gl->glBindTextureUnit(1, ground_height);
+	for (auto&& i : cliff_meshes) {
+		i->render();
 	}
 
+	end = std::chrono::high_resolution_clock::now();
+	map.terrain_cliff_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
 	// Render water
+	begin = std::chrono::high_resolution_clock::now();
+
 	water_shader->use();
 
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &camera.projection_view[0][0]);
@@ -381,6 +408,9 @@ void Terrain::render() {
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
+
+	end = std::chrono::high_resolution_clock::now();
+	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 }
 
 float Terrain::corner_height(Corner corner) const {

@@ -3,12 +3,8 @@
 namespace mdx {
 	Extent::Extent(BinaryReader& reader) {
 		bounds_radius = reader.read<float>();
-		minimum[0] = reader.read<float>();
-		minimum[1] = reader.read<float>();
-		minimum[2] = reader.read<float>();
-		maximum[0] = reader.read<float>();
-		maximum[1] = reader.read<float>();
-		maximum[2] = reader.read<float>();
+		minimum = reader.read<glm::vec3>();
+		maximum = reader.read<glm::vec3>();
 	}
 
 	TextureCoordinateSet::TextureCoordinateSet(BinaryReader& reader) {

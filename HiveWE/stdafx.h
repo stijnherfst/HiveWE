@@ -44,15 +44,14 @@ namespace fs = std::experimental::filesystem;
 #include "ResourceManager.h"
 #include "Texture.h"
 #include "CliffMesh.h"
-#include "StaticMesh.h"
 #include "Shader.h"
+#include "StaticMesh.h"
 
 #include "Terrain.h"
 #include "PathingMap.h"
 #include "Doodads.h"
 #include "Brush.h"
 #include "Map.h"
-
 
 #include "Camera.h"
 #include "HiveWE.h"

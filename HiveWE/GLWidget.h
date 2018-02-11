@@ -7,6 +7,7 @@ class GLWidget : public QOpenGLWidget {
 
 public:
 	QElapsedTimer elapsedTimer;
+	GLuint vao;
 
 	GLWidget(QWidget* parent);
 	~GLWidget();
