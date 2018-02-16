@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-StaticMesh::StaticMesh(const std::string& path) {
-	shader = resource_manager.load<Shader>({ "Data/Shaders/staticmesh.vs", "Data/Shaders/staticmesh.fs" });
-	shader2 = resource_manager.load<Shader>({ "Data/Shaders/staticmesh2.vs", "Data/Shaders/staticmesh2.fs" });
+StaticMesh::StaticMesh(const fs::path& path) {
+	shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
+	shader_instanced = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
 
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
@@ -110,7 +110,7 @@ void StaticMesh::render() {
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
 	if (render_jobs.size() < 10) {
-		shader2->use();
+		shader->use();
 
 		for (auto&& j : render_jobs) {
 			gl->glUniformMatrix4fv(2, 1, GL_FALSE, &j[0][0]);
@@ -153,7 +153,7 @@ void StaticMesh::render() {
 	} else {
 		// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
 
-		shader->use();
+		shader_instanced->use();
 		gl->glNamedBufferData(instanceBuffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
 		// Since a mat4 is 4 vec4's

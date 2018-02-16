@@ -6,6 +6,7 @@ class GLWidget : public QOpenGLWidget {
 	Q_OBJECT
 
 public:
+	QTimer timer;
 	QElapsedTimer elapsedTimer;
 	GLuint vao;
 

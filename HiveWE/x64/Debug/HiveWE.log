@@ -1,41 +1,5 @@
-﻿C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\Common7\IDE\VC\VCTargets\Microsoft.CppBuild.targets(387,5): warning MSB8028: The intermediate directory (x64\Debug\) contains files shared from another project (HiveWE_conflict-20180108-222506.vcxproj).  This can lead to incorrect clean and rebuild behavior.
-  HiveWE.cpp
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(1940): note: see reference to class template instantiation 'glm::tvec3<int,0>' being compiled
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(1939): note: while compiling class template member function 'void std::vector<glm::ivec3,std::allocator<_Ty>>::_Destroy(glm::tvec3<int,0> *,glm::tvec3<int,0> *)'
-          with
-          [
-              _Ty=glm::ivec3
-          ]
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(2006): note: see reference to function template instantiation 'void std::vector<glm::ivec3,std::allocator<_Ty>>::_Destroy(glm::tvec3<int,0> *,glm::tvec3<int,0> *)' being compiled
-          with
-          [
-              _Ty=glm::ivec3
-          ]
-  c:\users\user\stack\projects\hivewe\hivewe\hivewe\Terrain.h(56): note: see reference to class template instantiation 'std::vector<glm::ivec3,std::allocator<_Ty>>' being compiled
-          with
-          [
-              _Ty=glm::ivec3
-          ]
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec3.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(45): warning C4201: nonstandard extension used: nameless struct/union
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(1940): note: see reference to class template instantiation 'glm::tvec4<glm::u16,0>' being compiled
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(1939): note: while compiling class template member function 'void std::vector<glm::u16vec4,std::allocator<_Ty>>::_Destroy(glm::tvec4<glm::u16,0> *,glm::tvec4<glm::u16,0> *)'
-          with
-          [
-              _Ty=glm::u16vec4
-          ]
-  C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Tools\MSVC\14.11.25503\include\vector(2006): note: see reference to function template instantiation 'void std::vector<glm::u16vec4,std::allocator<_Ty>>::_Destroy(glm::tvec4<glm::u16,0> *,glm::tvec4<glm::u16,0> *)' being compiled
-          with
-          [
-              _Ty=glm::u16vec4
-          ]
-  c:\users\user\stack\projects\hivewe\hivewe\hivewe\Terrain.h(50): note: see reference to class template instantiation 'std::vector<glm::u16vec4,std::allocator<_Ty>>' being compiled
-          with
-          [
-              _Ty=glm::u16vec4
-          ]
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(46): warning C4201: nonstandard extension used: nameless struct/union
-c:\users\user\stack\projects\hivewe\hivewe\hivewe\dependencies\glm-0.9.8.5\detail/type_vec4.hpp(47): warning C4201: nonstandard extension used: nameless struct/union
-  HiveWE.vcxproj -> C:\Users\User\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe
+﻿  TileSetter.cpp
+TileSetter.cpp(82): warning C4101: 'value': unreferenced local variable
+c:\users\stijn\stack\projects\hivewe\hivewe\hivewe\ResourceManager.h(11): warning C4100: 'local': unreferenced formal parameter
+  TileSetter.cpp(33): note: see reference to function template instantiation 'std::shared_ptr<Texture> ResourceManager::load<Texture>(const std::experimental::filesystem::v1::path,bool)' being compiled
+  HiveWE.vcxproj -> C:\Users\stijn\stack\Projects\HiveWE\HiveWE\x64\Debug\HiveWE.exe

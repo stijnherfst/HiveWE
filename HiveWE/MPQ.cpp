@@ -23,7 +23,7 @@ namespace mpq {
 
 	// MPQ
 
-	MPQ::MPQ(const std::wstring path, unsigned long flags) {
+	MPQ::MPQ(const fs::path& path, unsigned long flags) {
 		open(path, flags);
 	}
 
@@ -35,7 +35,7 @@ namespace mpq {
 		close();
 	}
 
-	void MPQ::open(const std::wstring path, unsigned long flags) {
+	void MPQ::open(const fs::path& path, unsigned long flags) {
 		bool opened = SFileOpenArchive(path.c_str(), 0, flags, &handle);
 		if (!opened) {
 			std::wcout << "Error opening " << path << " with error:" << GetLastError() << std::endl;
@@ -56,16 +56,16 @@ namespace mpq {
 		open(L"Data/Temporary/temp.mpq", flags);
 	}
 
-	File MPQ::file_open(const std::string path) {
+	File MPQ::file_open(const fs::path& path) {
 		File file;
-		bool opened = SFileOpenFileEx(handle, path.c_str(), 0, &file.handle);
+		bool opened = SFileOpenFileEx(handle, path.string().c_str(), 0, &file.handle);
 		if (!opened) {
 			std::cout << "Error opening file " << path << " with error: " << GetLastError() << std::endl;
 		}
 		return file;
 	}
 
-	bool MPQ::file_exists(const fs::path path) {
+	bool MPQ::file_exists(const fs::path& path) {
 		return SFileHasFile(handle, path.string().c_str());
 	}
 

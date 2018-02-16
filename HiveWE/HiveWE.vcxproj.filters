@@ -132,6 +132,21 @@
     <ClCompile Include="PathingPallete.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TileSetter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TileSetter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TileSetter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="INI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FlowLayout.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -203,6 +218,12 @@
     <ClInclude Include="BinaryWriter.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TileSetter.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="INI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -222,6 +243,15 @@
     </CustomBuild>
     <CustomBuild Include="PathingPallete.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TileSetter.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TileSetter.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="FlowLayout.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

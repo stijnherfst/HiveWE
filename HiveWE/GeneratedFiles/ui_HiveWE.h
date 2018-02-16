@@ -36,6 +36,7 @@ public:
     QAction *actionDoodads;
     QAction *actionPathing;
     QAction *actionBrush;
+    QAction *actionTilesetter;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -44,6 +45,7 @@ public:
     QMenu *menuWindow;
     QMenu *menuNew_Pallete;
     QMenu *menuView;
+    QMenu *menuTools;
 
     void setupUi(QMainWindow *HiveWEClass)
     {
@@ -76,6 +78,8 @@ public:
         actionBrush->setObjectName(QStringLiteral("actionBrush"));
         actionBrush->setCheckable(true);
         actionBrush->setChecked(true);
+        actionTilesetter = new QAction(HiveWEClass);
+        actionTilesetter->setObjectName(QStringLiteral("actionTilesetter"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -99,10 +103,13 @@ public:
         menuNew_Pallete->setObjectName(QStringLiteral("menuNew_Pallete"));
         menuView = new QMenu(menuBar);
         menuView->setObjectName(QStringLiteral("menuView"));
+        menuTools = new QMenu(menuBar);
+        menuTools->setObjectName(QStringLiteral("menuTools"));
         HiveWEClass->setMenuBar(menuBar);
 
         menuBar->addAction(menuFile->menuAction());
         menuBar->addAction(menuView->menuAction());
+        menuBar->addAction(menuTools->menuAction());
         menuBar->addAction(menuWindow->menuAction());
         menuFile->addAction(actionOpen);
         menuFile->addAction(actionSave);
@@ -113,6 +120,7 @@ public:
         menuView->addAction(actionDoodads);
         menuView->addAction(actionPathing);
         menuView->addAction(actionBrush);
+        menuTools->addAction(actionTilesetter);
 
         retranslateUi(HiveWEClass);
 
@@ -123,12 +131,12 @@ public:
     {
         HiveWEClass->setWindowTitle(QApplication::translate("HiveWEClass", "HiveWE", nullptr));
         actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathing Map", nullptr));
-        actionOpen->setText(QApplication::translate("HiveWEClass", "Open", nullptr));
+        actionOpen->setText(QApplication::translate("HiveWEClass", "Open Map...", nullptr));
         actionConvert_Tile_Type_to_PathMap->setText(QApplication::translate("HiveWEClass", "Convert Tile Type to Pathing Map", nullptr));
         actionPathing_Pallete->setText(QApplication::translate("HiveWEClass", "Pathing", nullptr));
-        actionSave->setText(QApplication::translate("HiveWEClass", "Save", nullptr));
+        actionSave->setText(QApplication::translate("HiveWEClass", "Save Map", nullptr));
         actionTest_Map->setText(QApplication::translate("HiveWEClass", "Test Map", nullptr));
-        actionSave_As->setText(QApplication::translate("HiveWEClass", "Save As", nullptr));
+        actionSave_As->setText(QApplication::translate("HiveWEClass", "Save Map As...", nullptr));
         actionDoodads->setText(QApplication::translate("HiveWEClass", "Doodads", nullptr));
 #ifndef QT_NO_SHORTCUT
         actionDoodads->setShortcut(QApplication::translate("HiveWEClass", "D", nullptr));
@@ -138,10 +146,12 @@ public:
         actionPathing->setShortcut(QApplication::translate("HiveWEClass", "P", nullptr));
 #endif // QT_NO_SHORTCUT
         actionBrush->setText(QApplication::translate("HiveWEClass", "Brush", nullptr));
+        actionTilesetter->setText(QApplication::translate("HiveWEClass", "Tilesetter...", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));
         menuView->setTitle(QApplication::translate("HiveWEClass", "View", nullptr));
+        menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", nullptr));
     } // retranslateUi
 
 };

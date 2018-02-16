@@ -41,9 +41,8 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severi
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	QTimer *timer = new QTimer;
-	connect(timer, &QTimer::timeout, this, &GLWidget::updateScene);
-	timer->start(15);
+	connect(&timer, &QTimer::timeout, this, &GLWidget::updateScene);
+	timer.start(15);
 
 	setMouseTracking(true);
 	setFocus();
@@ -101,6 +100,7 @@ void GLWidget::updateScene() {
 
 void GLWidget::paintGL() {
 	gl->glClearColor(0, 0, 0, 1);
+	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
 	map.render();

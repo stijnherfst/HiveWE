@@ -50,9 +50,9 @@ public:
     QHBoxLayout *horizontalLayout_3;
     QSpinBox *brushSize;
     QSlider *brushSizeSlider;
+    QButtonGroup *brushSizeGroup;
     QButtonGroup *brushTypeGroup;
     QButtonGroup *toolTypeGroup;
-    QButtonGroup *brushSizeGroup;
 
     void setupUi(QWidget *PathingPallete)
     {
@@ -265,21 +265,72 @@ public:
     void retranslateUi(QWidget *PathingPallete)
     {
         PathingPallete->setWindowTitle(QApplication::translate("PathingPallete", "Pathing Pallete", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushOperationLabel->setToolTip(QApplication::translate("PathingPallete", "The type of operation the brush will apply.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushOperationLabel->setText(QApplication::translate("PathingPallete", "Brush Operation Type", nullptr));
+#ifndef QT_NO_TOOLTIP
+        replaceType->setToolTip(QApplication::translate("PathingPallete", "Replaces the existing pathing when the brush is used.", nullptr));
+#endif // QT_NO_TOOLTIP
         replaceType->setText(QApplication::translate("PathingPallete", "Replace", nullptr));
+#ifndef QT_NO_TOOLTIP
+        addType->setToolTip(QApplication::translate("PathingPallete", "Adds to the existing pathing any brush types that are selected.", nullptr));
+#endif // QT_NO_TOOLTIP
         addType->setText(QApplication::translate("PathingPallete", "Add", nullptr));
+#ifndef QT_NO_TOOLTIP
+        removeType->setToolTip(QApplication::translate("PathingPallete", "Removes from the existing pathing all the brush types selected.", nullptr));
+#endif // QT_NO_TOOLTIP
         removeType->setText(QApplication::translate("PathingPallete", "Remove", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushTypeLabel->setToolTip(QApplication::translate("PathingPallete", "Which pathing type will be applied by the brush.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushTypeLabel->setText(QApplication::translate("PathingPallete", "Brush Type", nullptr));
+#ifndef QT_NO_TOOLTIP
+        walkable->setToolTip(QApplication::translate("PathingPallete", "Whether the brush will apply unwalkable.", nullptr));
+#endif // QT_NO_TOOLTIP
         walkable->setText(QString());
+#ifndef QT_NO_TOOLTIP
+        flyable->setToolTip(QApplication::translate("PathingPallete", "Whether the brush will apply unflyable.", nullptr));
+#endif // QT_NO_TOOLTIP
         flyable->setText(QString());
+#ifndef QT_NO_TOOLTIP
+        buildable->setToolTip(QApplication::translate("PathingPallete", "Whether the brush will aply unbuildable", nullptr));
+#endif // QT_NO_TOOLTIP
         buildable->setText(QString());
+#ifndef QT_NO_TOOLTIP
+        brushSizeLabel->setToolTip(QApplication::translate("PathingPallete", "The brush size that will be applied on the terrain. The final dimensions are: (size-1)*2+1 x (size-1)*2+1.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSizeLabel->setText(QApplication::translate("PathingPallete", "Brush Size", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize1->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 1x1.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize1->setText(QApplication::translate("PathingPallete", "1", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize3->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 3x3.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize3->setText(QApplication::translate("PathingPallete", "2", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize5->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 5x5.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize5->setText(QApplication::translate("PathingPallete", "3", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize7->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 9x9.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize7->setText(QApplication::translate("PathingPallete", "5", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize9->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 15x15.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize9->setText(QApplication::translate("PathingPallete", "8", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize11->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size to 21x21.", nullptr));
+#endif // QT_NO_TOOLTIP
         brushSize11->setText(QApplication::translate("PathingPallete", "11", nullptr));
+#ifndef QT_NO_TOOLTIP
+        brushSize->setToolTip(QApplication::translate("PathingPallete", "The current brush size", nullptr));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        brushSizeSlider->setToolTip(QApplication::translate("PathingPallete", "Sets the brush size.", nullptr));
+#endif // QT_NO_TOOLTIP
     } // retranslateUi
 
 };

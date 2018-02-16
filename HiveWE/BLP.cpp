@@ -2,7 +2,7 @@
 
 namespace blp {
 	// Does not handle mipmaps, or extra
-	std::tuple<uint8_t*, uint32_t, uint32_t> BLP::load(const std::string& path) {
+	std::tuple<uint8_t*, uint32_t, uint32_t> BLP::load(const fs::path& path) {
 		BinaryReader reader = hierarchy.open_file(path);
 
 		std::string magic_number = reader.read_string(4);

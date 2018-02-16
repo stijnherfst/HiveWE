@@ -103,6 +103,8 @@ void Terrain::create() {
 	// Ground textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
 	gl->glTextureStorage3D(ground_texture_array, std::log(variation_size) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Create a transparant black texture
 	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
@@ -153,8 +155,6 @@ void Terrain::create() {
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
 	gl->glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
-	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -246,9 +246,9 @@ bool Terrain::load(BinaryReader& reader) {
 	hierarchy.load_tileset(tileset);
 
 	// Ground Textures
-	slk::SLK slk("TerrainArt\\Terrain.slk");
+	terrain_slk = slk::SLK("TerrainArt\\Terrain.slk");
 	for (auto&& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<Texture>(slk.data("dir", tile_id) + "\\" + slk.data("file", tile_id) + ".blp"));
+		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "\\" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));

@@ -11,7 +11,7 @@ namespace mdx {
 	};
 
 	struct TextureCoordinateSet {
-		TextureCoordinateSet() {};
+		TextureCoordinateSet() = default;
 		TextureCoordinateSet(BinaryReader& reader);
 		std::vector<glm::vec2> coordinates;
 	};
@@ -39,7 +39,7 @@ namespace mdx {
 		//(KMTF)
 		//(KMTA)
 
-		Layer() {};
+		Layer() = default;
 		Layer(BinaryReader& reader);
 	};
 
@@ -95,19 +95,17 @@ namespace mdx {
 	};
 
 	struct Chunk {
-		virtual ~Chunk() {};
+		virtual ~Chunk() = default;
 	};
 
 	class VERS : public Chunk {
 		uint32_t version;
-		~VERS() {}
 
 		static const ChunkTag tag = ChunkTag::VERS;
 	};
 
 	struct GEOS : public Chunk {
 		GEOS(BinaryReader& reader);
-		~GEOS() {}
 
 		static const ChunkTag tag = ChunkTag::GEOS;
 		std::vector<Geoset> geosets;
@@ -115,7 +113,6 @@ namespace mdx {
 
 	struct TEXS : public Chunk {
 		TEXS(BinaryReader& reader);
-		~TEXS() {}
 
 		static const ChunkTag tag = ChunkTag::TEXS;
 		std::vector<Texture> textures;
@@ -123,7 +120,6 @@ namespace mdx {
 
 	struct MTLS : public Chunk {
 		MTLS(BinaryReader& reader);
-		~MTLS() {}
 
 		static const ChunkTag tag = ChunkTag::MTLS;
 		std::vector<Material> materials;

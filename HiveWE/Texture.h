@@ -9,7 +9,7 @@ public:
 
 	static constexpr const char* name = "Texture";
 
-	Texture(const std::string& path);
+	Texture(const fs::path& path);
 
 	virtual ~Texture() {
 		delete[] data;
@@ -22,7 +22,7 @@ public:
 
 	static constexpr const char* name = "GPUTexture";
 
-	GPUTexture(const std::string& path);
+	GPUTexture(const fs::path& path);
 
 	virtual ~GPUTexture() {
 		gl->glDeleteTextures(1, &id);

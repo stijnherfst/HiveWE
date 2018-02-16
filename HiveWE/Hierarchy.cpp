@@ -29,7 +29,7 @@ void Hierarchy::load_tileset(char tileset_code) {
 	tileset.open(tileset_mpq);
 }
 
-BinaryReader Hierarchy::open_file(const std::string path) {
+BinaryReader Hierarchy::open_file(const fs::path path) {
 	if (tileset.handle == nullptr) {
 		std::cout << "Hierarchy tileset has not been initialised" << std::endl;
 	}

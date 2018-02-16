@@ -18,6 +18,7 @@ namespace fs = std::experimental::filesystem;
 #include <QtWidgets>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions_4_5_Core>
+#include <FlowLayout.h>
 
 #include <glm.hpp>
 #define GLM_FORCE_RADIANS
@@ -37,6 +38,7 @@ namespace fs = std::experimental::filesystem;
 #include "MPQ.h"
 #include "BLP.h"
 #include "SLK.h"
+#include "INI.h"
 #include "MDX.h"
 
 // Resource types
@@ -58,3 +60,4 @@ namespace fs = std::experimental::filesystem;
 #include "GLWidget.h"
 
 #include "PathingPallete.h"
+#include "TileSetter.h"

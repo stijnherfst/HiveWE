@@ -52,6 +52,8 @@ public:
 	int variation_size = 64;
 	int blight_texture;
 
+	slk::SLK terrain_slk;
+
 	// Cliffs
 	std::vector <glm::ivec3> cliffs;
 	std::map<std::string, int> path_to_cliff;

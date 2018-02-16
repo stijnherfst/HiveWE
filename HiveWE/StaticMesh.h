@@ -25,14 +25,14 @@ public:
 
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::shared_ptr<mdx::MTLS> mtls;
-	std::shared_ptr<Shader> shader;
-	std::shared_ptr<Shader> shader2;
+	std::shared_ptr<Shader> shader; // ToDo only needed one for class
+	std::shared_ptr<Shader> shader_instanced; // ToDo the same as above
 	
 	static constexpr const char* name = "Mesh";
 
 	std::vector<glm::mat4> render_jobs;
 
-	StaticMesh(const std::string& path);
+	StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
 	void render_queue(glm::mat4 mvp);

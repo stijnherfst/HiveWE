@@ -15,7 +15,7 @@ public:
 
 	std::vector<glm::vec4> render_jobs;
 
-	CliffMesh(const std::string& path);
+	CliffMesh(const fs::path& path);
 	virtual ~CliffMesh();
 
 	void render_queue(glm::vec4 position);

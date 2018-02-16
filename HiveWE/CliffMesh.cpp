@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-CliffMesh::CliffMesh(const std::string& path) {
-	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
+CliffMesh::CliffMesh(const fs::path& path) {
+	if (path.extension() == ".mdx" || path.extension() == ".MDX") {
 		mdx::MDX model = mdx::MDX(BinaryReader(hierarchy.open_file(path)));
 
 		auto set = model.chunk<mdx::GEOS>()->geosets.front();

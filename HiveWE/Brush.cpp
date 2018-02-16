@@ -30,11 +30,14 @@ void Brush::create() {
 }
 
 void Brush::set_position(const glm::vec2 position) {
-	this->position = position;
-	uv_offset = (position - glm::vec2(this->position)) * 4.f;
+	glm::vec2 center_position = position - size * 0.25f;
+	this->position = glm::floor(center_position);
+	uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
 }
 
 void Brush::set_size(const int size) {
+	int change = size - this->size;
+
 	this->size = std::clamp(size, 0, 240);
 	int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
 	brush.clear();
@@ -48,13 +51,21 @@ void Brush::set_size(const int size) {
 
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
 	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+
+	set_position(glm::vec2(position) + glm::vec2(uv_offset + size - change) * 0.25f);
 }
 
 void Brush::render(Terrain& terrain) {
+	glm::ivec2 center_position = position + (size + uv_offset) / 4;
+	if (center_position.x < 0 || center_position.y < 0 || center_position.x > terrain.width || center_position.y > terrain.height) {
+		return;
+	}
+
 	gl->glDisable(GL_DEPTH_TEST);
 
 	shader->use();
 
+	// +3 for uv_offset so it can move sub terrain cell
 	int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
@@ -78,18 +89,18 @@ void Brush::render(Terrain& terrain) {
 void PathingBrush::apply(PathingMap& pathing) {
 	int y = position.y * 4 + uv_offset.y;
 	int x = position.x * 4 + uv_offset.x;
-	if (x < 0 || x >= pathing.width || y < 0 || y >= pathing.height) {
+	int cells = this->size * 2 + 1;
+
+	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, pathing.width, pathing.height });
+
+	if (area.width() <= 0 || area.height() <= 0) {
 		return;
 	}
 
-	int cells = this->size * 2 + 1;
-	int offset = y * pathing.width + x;
-
-	int width = std::clamp(cells, 0, pathing.width - x);
-	int height = std::clamp(cells, 0, pathing.height - y);
-
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
+	int offset = area.y() * pathing.width + area.x();
+	
+	for (int i = 0; i < area.width(); i++) {
+		for (int j = 0; j < area.height(); j++) {
 			int index = offset + j * pathing.width + i;
 			switch (operation) {
 				case Operation::replace:
@@ -107,6 +118,6 @@ void PathingBrush::apply(PathingMap& pathing) {
 	}
 
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, pathing.width);
-	gl->glTextureSubImage2D(pathing.pathing_texture, 0, x, y, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data() + offset);
+	gl->glTextureSubImage2D(pathing.pathing_texture, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

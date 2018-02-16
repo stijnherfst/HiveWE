@@ -6,11 +6,9 @@ public:
 
 	static constexpr const char* name = "Shader";
 
-	Shader(const std::initializer_list<std::string> paths);
+	Shader(const std::initializer_list<fs::path> paths);
 
-	virtual ~Shader() {
-
-	}
+	virtual ~Shader() = default;
 
 	void use() {
 		gl->glUseProgram(program);

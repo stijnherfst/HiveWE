@@ -6,7 +6,7 @@ namespace mpq {
 	public:
 		HANDLE handle = nullptr;
 		
-		File() {}
+		File() = default;
 		~File();
 		File(File&& move) {
 			handle = move.handle;
@@ -29,8 +29,8 @@ namespace mpq {
 	public:
 		HANDLE handle;
 
-		MPQ() {}
-		MPQ(const std::wstring path, unsigned long flags = 0);
+		MPQ() = default;
+		MPQ(const fs::path& path, unsigned long flags = 0);
 		MPQ(File archive, unsigned long flags = 0);
 		~MPQ();
 		MPQ(MPQ&& move) {
@@ -45,12 +45,12 @@ namespace mpq {
 			return *this;
 		}
 
-		void open(const std::wstring path, unsigned long flags = 0);
+		void open(const fs::path& path, unsigned long flags = 0);
 		void open(File& archive, unsigned long flags = 0);
 		void close();
 
-		File file_open(const std::string path);
-		bool file_exists(const fs::path path);
+		File file_open(const fs::path& path);
+		bool file_exists(const fs::path& path);
 	};
 
 }

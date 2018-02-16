@@ -4,11 +4,11 @@
 // It's not pretty
 
 namespace slk {
-	SLK::SLK(std::string path, bool local) {
+	SLK::SLK(fs::path path, bool local) {
 		load(path, local);
 	}
 
-	void SLK::load(std::string path, bool local) {
+	void SLK::load(fs::path path, bool local) {
 		std::stringstream file;
 		if (local) {
 			std::ifstream stream(path);

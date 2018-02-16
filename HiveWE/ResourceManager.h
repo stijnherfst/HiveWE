@@ -2,16 +2,16 @@
 
 class Resource {
 public:
-	virtual ~Resource() {};
+	virtual ~Resource() = default;
 };
 
 class ResourceManager {
 public:
 	template<typename T>
-	std::shared_ptr<T> load(const std::string path, bool local = false) {
-		std::string resource = path + " "s + T::name;
-
+	std::shared_ptr<T> load(const fs::path path, bool local = false) {
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
+		
+		std::string resource = path.string() + T::name;
 
 		auto res = resources[resource].lock();
 		if (!res) {
@@ -22,14 +22,14 @@ public:
 	}
 
 	template<typename T>
-	std::shared_ptr<T> load(const std::initializer_list<std::string> paths, bool local = false) {
+	std::shared_ptr<T> load(const std::initializer_list<fs::path> paths, bool local = false) {
+		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
+		
 		std::string resource;
 		for (auto&& path : paths) {
-			resource += path;
+			resource += path.string();
 		}
-		resource += " "s + T::name;
-
-		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
+		resource += T::name;
 
 		auto res = resources[resource].lock();
 		if (!res) {

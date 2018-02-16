@@ -20,7 +20,14 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
-	connect(ui.actionPathing_Pallete, &QAction::triggered, [&]() { new PathingPallete; });
+	connect(ui.actionTilesetter, &QAction::triggered, [this]() { 
+		TileSetter* tilesetter = new TileSetter(this); 
+		dynamic_cast<GLWidget*>(ui.widget)->timer.stop(); 
+		connect(tilesetter, &QDialog::finished, [this]() { 
+			dynamic_cast<GLWidget*>(ui.widget)->timer.start(16);
+		});
+	});
+	connect(ui.actionPathing_Pallete, &QAction::triggered, []() { new PathingPallete; });
 }
 
 void HiveWE::load() {
