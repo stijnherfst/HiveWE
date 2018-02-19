@@ -101,38 +101,13 @@ void Terrain::create() {
 	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
 
 	// Ground textures
-	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
-	gl->glTextureStorage3D(ground_texture_array, std::log(variation_size) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	// Create a transparant black texture
-	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
-
-	int sub = 0;
-	for (auto&& i : ground_textures) {
-		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, i->width);
-		for (size_t y = 0; y < 4; y++) {
-			for (size_t x = 0; x < 4; x++) {
-				int sub_image = sub * 32 + y * 4 + x;
-				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + x * variation_size) * 4);
-
-				// If extended
-				if (i->width == i->height * 2) {
-					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1 + 16, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + (x + 4) * variation_size) * 4);
-				}
-			}
-		}
-		sub += 1;
-	}
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	gl->glGenerateTextureMipmap(ground_texture_array);
+	create_tile_textures();
 
 	// Cliff
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
 	gl->glTextureStorage3D(cliff_texture_array, std::log(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
 
-	sub = 0;
+	int sub = 0;
 	for (auto&& i : cliff_textures) {
 		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data);
 		sub += 1;
@@ -166,6 +141,37 @@ void Terrain::create() {
 		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data);
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
+}
+
+void Terrain::create_tile_textures() {
+	gl->glDeleteTextures(1, &ground_texture_array);
+	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
+	gl->glTextureStorage3D(ground_texture_array, std::log(variation_size) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// Create a transparant black texture
+	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+
+	int sub = 0;
+	for (auto&& i : ground_textures) {
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, i->width);
+		for (size_t y = 0; y < 4; y++) {
+			for (size_t x = 0; x < 4; x++) {
+				int sub_image = sub * 32 + y * 4 + x;
+				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + x * variation_size) * 4);
+
+				// If extended
+				if (i->width == i->height * 2) {
+					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1 + 16, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + (x + 4) * variation_size) * 4);
+				}
+			}
+		}
+		sub += 1;
+	}
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	gl->glGenerateTextureMipmap(ground_texture_array);
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -255,7 +261,7 @@ bool Terrain::load(BinaryReader& reader) {
 	blight_texture = ground_textures.size() - 1;
 
 	// Cliff Textures
-	slk::SLK cliff_slk("TerrainArt\\CliffTypes.slk");
+	cliff_slk = slk::SLK("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
@@ -319,6 +325,57 @@ bool Terrain::load(BinaryReader& reader) {
 	create();
 
 	return true;
+}
+
+void Terrain::save() {
+	BinaryWriter writer;
+	writer.write_string("W3E!");
+	writer.write(11);
+	writer.write(tileset);
+	writer.write(1);
+	writer.write<uint32_t>(tileset_ids.size());
+	writer.write_vector(tileset_ids);
+	writer.write<uint32_t>(cliffset_ids.size());
+	writer.write_vector(cliffset_ids);
+	writer.write(width + 1);
+	writer.write(height + 1);
+	writer.write(offset);
+
+	for (size_t j = 0; j < height + 1; j++) {
+		for (size_t i = 0; i < width + 1; i++) {
+			Corner& corner = corners[i][j];
+
+			writer.write<uint16_t>(corner.ground_height * 512.f + 8192.f);
+
+			uint16_t water_and_edge = corner.water_height * 512.f + 8192.f;
+			water_and_edge += corner.map_edge << 14;
+			writer.write(water_and_edge);
+
+			uint8_t texture_and_flags = corner.ground_texture;
+			texture_and_flags |= corner.ramp << 4;
+			texture_and_flags |= corner.blight << 5;
+			texture_and_flags |= corner.water << 6;
+			texture_and_flags |= corner.boundary << 7;
+			writer.write(texture_and_flags);
+
+			uint8_t variation = corner.ground_variation;
+			variation += corner.cliff_variation << 5;
+			writer.write(variation);
+
+			uint8_t misc = corner.cliff_texture << 4;
+			misc += corner.layer_height;
+			writer.write(misc);
+		}
+	}
+
+	HANDLE handle;
+	bool success = SFileCreateFile(hierarchy.map.handle, "war3map.w3e", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+
+	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	SFileFinishFile(handle);
 }
 
 void Terrain::render() {
@@ -409,8 +466,52 @@ void Terrain::render() {
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
 
-	end = std::chrono::high_resolution_clock::now();
-	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	//end = std::chrono::high_resolution_clock::now();
+	//map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+}
+
+void Terrain::change_tileset(std::vector<std::string> new_tileset_ids, std::vector<int> new_to_old) {
+	tileset_ids = new_tileset_ids;
+
+	// Map old ids to the new ids
+	for (auto&& i : corners) {
+		for (auto&& j : i) {
+			j.ground_texture = new_to_old[j.ground_texture];
+		}
+	}
+	
+	// Reload tile textures
+	ground_textures.clear();	// ToDo Clear them after loading new ones?
+	ground_texture_to_id.clear();
+
+	for (auto&& tile_id : tileset_ids) {
+		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "\\" + terrain_slk.data("file", tile_id) + ".blp"));
+		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
+	}
+	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
+	blight_texture = ground_textures.size() - 1;
+
+	cliff_to_ground_texture.clear();
+	for (auto&& cliff_id : cliffset_ids) {
+		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
+	}
+
+	// Update textures
+	create_tile_textures();
+
+	// Update texture usage information
+	for (size_t i = 0; i < width; i++) {
+		for (size_t j = 0; j < height; j++) {
+			ground_texture_list[j * width + i] = get_texture_variations(i, j);
+
+
+			if (corners[i][j].cliff) {
+				ground_texture_list[j * width + i].a |= 0b1000000000000000;
+			}
+		}
+	}
+
+	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
 float Terrain::corner_height(Corner corner) const {

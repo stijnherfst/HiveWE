@@ -60,4 +60,5 @@ namespace fs = std::experimental::filesystem;
 #include "GLWidget.h"
 
 #include "PathingPallete.h"
+#include "TilePicker.h"
 #include "TileSetter.h"

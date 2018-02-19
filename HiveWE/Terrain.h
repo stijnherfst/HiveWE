@@ -3,7 +3,7 @@
 struct Corner {
 	float ground_height;
 	float water_height;
-	int map_edge;
+	bool map_edge;
 
 	int ground_texture;
 
@@ -53,6 +53,7 @@ public:
 	int blight_texture;
 
 	slk::SLK terrain_slk;
+	slk::SLK cliff_slk;
 
 	// Cliffs
 	std::vector <glm::ivec3> cliffs;
@@ -101,8 +102,13 @@ public:
 	~Terrain();
 
 	void create();
+	void create_tile_textures();
 	bool load(BinaryReader& reader);
+	void save();
 	void render();
+
+
+	void change_tileset(std::vector<std::string> new_tileset_ids, std::vector<int> new_to_old);
 
 	float corner_height(Corner corner) const;
 	float corner_height(const int x, const int y) const;

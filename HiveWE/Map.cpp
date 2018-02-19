@@ -63,10 +63,12 @@ bool Map::save(fs::path path) {
 		std::swap(new_map, hierarchy.map);
 
 		pathing_map.save();
+		terrain.save();
 
 		std::swap(new_map, hierarchy.map);
 	} else {
 		pathing_map.save();
+		terrain.save();
 	}
 	return true;
 }

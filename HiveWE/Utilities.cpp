@@ -115,3 +115,21 @@ fs::path find_warcraft_directory() {
 		return L"";
 	}
 }
+
+QIcon texture_to_icon(uint8_t* data, int width, int height) {
+	QImage temp_image = QImage(data, width, height, QImage::Format::Format_ARGB32);
+	int size = height / 4;
+
+	auto pix = QPixmap::fromImage(temp_image.copy(0, 0, size, size));
+
+	QIcon icon;
+	icon.addPixmap(pix, QIcon::Normal, QIcon::Off);
+
+	QPainter painter(&pix);
+	painter.fillRect(0, 0, size, size, QColor(255, 255, 0, 64));
+	painter.end();
+
+	icon.addPixmap(pix, QIcon::Normal, QIcon::On);
+
+	return icon;
+};

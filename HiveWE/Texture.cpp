@@ -18,7 +18,7 @@ GPUTexture::GPUTexture(const fs::path& path) {
 		gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
 		gl->glTextureStorage2D(id, std::log(std::max(width, height)) + 1, GL_RGBA8, width, height);
 		gl->glTextureSubImage2D(id, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, data);
-		gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+		gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		gl->glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

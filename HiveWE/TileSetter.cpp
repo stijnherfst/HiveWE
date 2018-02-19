@@ -1,23 +1,5 @@
 #include "stdafx.h"
 
-auto texture_to_icon = [](std::shared_ptr<Texture> image) {
-	QImage temp_image = QImage(image->data, image->width, image->height, QImage::Format::Format_ARGB32);
-	int size = image->height / 4;
-
-	auto pix = QPixmap::fromImage(temp_image.copy(0, 0, size, size));
-
-	QIcon icon;
-	icon.addPixmap(pix, QIcon::Normal, QIcon::Off);
-
-	QPainter painter(&pix);
-	painter.fillRect(0, 0, size, size, QColor(255, 255, 0, 64));
-	painter.end();
-
-	icon.addPixmap(pix, QIcon::Normal, QIcon::On);
-
-	return icon;
-};
-
 TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 	show();
@@ -31,7 +13,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	slk::SLK& slk = map.terrain.terrain_slk;
 	for (auto&& i : map.terrain.tileset_ids) {
 		auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
-		auto icon = texture_to_icon(image);
+		auto icon = texture_to_icon(image->data, image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -55,9 +37,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	update_available_tiles();
 
 	connect(ui.tileset, &QComboBox::currentTextChanged, this, &TileSetter::update_available_tiles);
-	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
-		ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
-	});
+	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::to_tile_clicked);
 	connect(available_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.additionalTileLabel->setText("Tile: " + button->property("tileName").toString());
 	});
@@ -73,33 +53,6 @@ TileSetter::~TileSetter() {
 	deleteLater();
 }
 
-void TileSetter::update_available_tiles() {
-	available_layout->clear();
-
-	std::string tileset = ui.tileset->currentData().toString().toStdString();
-
-	slk::SLK& slk = map.terrain.terrain_slk;
-	for (auto&& [key, value] : map.terrain.terrain_slk.header_to_row) {
-		if (key.front() != tileset.front()) {
-			continue;
-		}
-
-		auto image = resource_manager.load<Texture>(slk.data("dir", key) + "\\" + slk.data("file", key) + ".blp");
-		auto icon = texture_to_icon(image);
-
-		QPushButton* button = new QPushButton;
-		button->setIcon(icon);
-		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
-		button->setCheckable(true);
-		button->setProperty("tileID", QString::fromStdString(key));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", key)));
-			
-		available_layout->addWidget(button);
-		available_group->addButton(button);
-	}
-	resize(sizeHint());
-}
 
 void TileSetter::add_tile() {
 	auto available_button = available_group->checkedButton();
@@ -108,7 +61,7 @@ void TileSetter::add_tile() {
 	}
 
 	// if the tile is already added
-	for (auto&& i : selected_group->buttons()) {// selected_layout->children()) {
+	for (auto&& i : selected_group->buttons()) {
 		if (i->property("tileID") == available_button->property("tileID")) {
 			return;
 		}
@@ -128,6 +81,7 @@ void TileSetter::add_tile() {
 	if (selected_group->buttons().size() >= 16) {
 		ui.additionalAdd->setDisabled(true);
 	}
+//	adjustSize();
 }
 
 void TileSetter::remove_tile() {
@@ -139,7 +93,55 @@ void TileSetter::remove_tile() {
 	selected_layout->removeWidget(selected_button);
 	selected_group->removeButton(selected_button);
 	selected_button->deleteLater();
+
+	ui.additionalAdd->setEnabled(true);
 }
+
+void TileSetter::update_available_tiles() {
+	available_layout->clear();
+
+	std::string tileset = ui.tileset->currentData().toString().toStdString();
+
+	slk::SLK& slk = map.terrain.terrain_slk;
+	for (auto&&[key, value] : map.terrain.terrain_slk.header_to_row) {
+		if (key.front() != tileset.front()) {
+			continue;
+		}
+
+		auto image = resource_manager.load<Texture>(slk.data("dir", key) + "\\" + slk.data("file", key) + ".blp");
+		auto icon = texture_to_icon(image->data, image->width, image->height);
+
+		QPushButton* button = new QPushButton;
+		button->setIcon(icon);
+		button->setFixedSize(64, 64);
+		button->setIconSize({ 64, 64 });
+		button->setCheckable(true);
+		button->setProperty("tileID", QString::fromStdString(key));
+		button->setProperty("tileName", QString::fromStdString(slk.data("comment", key)));
+
+		available_layout->addWidget(button);
+		available_group->addButton(button);
+	}
+	//	adjustSize();
+}
+
+void TileSetter::to_tile_clicked(QAbstractButton* button) {
+	ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
+
+	int index = selected_layout->indexOf(button);
+	ui.selectedShiftLeft->setEnabled(index != 0);
+	ui.selectedShiftRight->setEnabled(index != selected_layout->count() - 1);
+
+	// Check if cliff tile
+	std::string tile_id = button->property("tileID").toString().toStdString();
+	auto& cliff_tiles = map.terrain.cliff_to_ground_texture;
+	if (map.terrain.ground_texture_to_id.count(tile_id)) {
+		auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map.terrain.ground_texture_to_id[tile_id]);
+
+		ui.selectedRemove->setEnabled(is_cliff_tile == cliff_tiles.end());
+	}
+}
+
 
 void TileSetter::shift_left() {
 	auto selected_button = selected_group->checkedButton();
@@ -149,6 +151,12 @@ void TileSetter::shift_left() {
 
 	int index = selected_layout->indexOf(selected_button);
 	selected_layout->moveWidget(index - 1, selected_button);
+
+	if (index - 1 == 0) {
+		ui.selectedShiftLeft->setEnabled(false);
+	}
+
+	ui.selectedShiftRight->setEnabled(true);
 }
 
 void TileSetter::shift_right() {
@@ -159,8 +167,38 @@ void TileSetter::shift_right() {
 
 	int index = selected_layout->indexOf(selected_button);
 	selected_layout->moveWidget(index + 1, selected_button);
+
+	if (index + 1 == selected_layout->count() - 1) {
+		ui.selectedShiftRight->setEnabled(false);
+	}
+
+	ui.selectedShiftLeft->setEnabled(true);
 }
 
 void TileSetter::save_tiles() {
+	std::vector<std::string> to_ids;
+	for (auto&& j : selected_layout->items()) {
+		to_ids.push_back(j->widget()->property("tileID").toString().toStdString());
+	}
 
+	from_to_id.resize(map.terrain.tileset_ids.size());
+	for (int i = 0; i < map.terrain.tileset_ids.size(); i++) {
+		std::string from_id = map.terrain.tileset_ids[i];
+
+		auto found = std::find(to_ids.begin(), to_ids.end(), from_id);
+		if (found != to_ids.end()) {
+			from_to_id[i] =  found - to_ids.begin();
+		} else {
+			TilePicker replace_dialog(nullptr, { from_id }, to_ids);
+			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string from_id, std::string to_id) {
+				auto found = std::find(to_ids.begin(), to_ids.end(), to_id);
+				from_to_id[i] = found - to_ids.begin();
+			});
+			replace_dialog.exec();
+		}
+	}
+
+	map.terrain.change_tileset(to_ids, from_to_id);
+	close();
+	deleteLater();
 }

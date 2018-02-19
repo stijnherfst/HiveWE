@@ -26,7 +26,7 @@ void Hierarchy::load_tileset(char tileset_code) {
 		tileset_mpq = war3.file_open(file_name);
 	}
 
-	tileset.open(tileset_mpq);
+	tileset.open(tileset_mpq, STREAM_FLAG_READ_ONLY);
 }
 
 BinaryReader Hierarchy::open_file(const fs::path path) {

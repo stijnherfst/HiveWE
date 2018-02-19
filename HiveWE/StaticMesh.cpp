@@ -85,7 +85,7 @@ StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &indexBuffer);
 }
 
-void StaticMesh::render_queue(glm::mat4 mvp){//, std::shared_ptr<StaticMesh> ptr) {
+void StaticMesh::render_queue(glm::mat4 mvp){
 	render_jobs.push_back(mvp);
 
 	if (render_jobs.size() == 1) {
@@ -200,6 +200,10 @@ void StaticMesh::render() {
 			}
 		}
 		gl->glDisableVertexAttribArray(2);
+
+		for (int i = 0; i < 4; i++) {
+			gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+		}
 	}
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);

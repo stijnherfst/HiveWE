@@ -31,5 +31,8 @@ std::string read_text_file(std::string path);
 
 fs::path find_warcraft_directory();
 
+// Convert a Texture into an QIcon with two states
+QIcon texture_to_icon(uint8_t* data, int width, int height);
+
 extern QOpenGLFunctions_4_5_Core* gl;
 extern Shapes shapes;

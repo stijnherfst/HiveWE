@@ -52,7 +52,7 @@ public:
         if (TileSetter->objectName().isEmpty())
             TileSetter->setObjectName(QStringLiteral("TileSetter"));
         TileSetter->setWindowModality(Qt::WindowModal);
-        TileSetter->resize(579, 329);
+        TileSetter->resize(579, 207);
         QSizePolicy sizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -66,11 +66,18 @@ public:
         verticalLayout->setSizeConstraint(QLayout::SetDefaultConstraint);
         selectedTilesLabel = new QLabel(TileSetter);
         selectedTilesLabel->setObjectName(QStringLiteral("selectedTilesLabel"));
+        QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Fixed);
+        sizePolicy1.setHorizontalStretch(0);
+        sizePolicy1.setVerticalStretch(0);
+        sizePolicy1.setHeightForWidth(selectedTilesLabel->sizePolicy().hasHeightForWidth());
+        selectedTilesLabel->setSizePolicy(sizePolicy1);
 
         verticalLayout->addWidget(selectedTilesLabel);
 
         selectedTileLabel = new QLabel(TileSetter);
         selectedTileLabel->setObjectName(QStringLiteral("selectedTileLabel"));
+        sizePolicy1.setHeightForWidth(selectedTileLabel->sizePolicy().hasHeightForWidth());
+        selectedTileLabel->setSizePolicy(sizePolicy1);
 
         verticalLayout->addWidget(selectedTileLabel);
 
@@ -111,6 +118,8 @@ public:
         horizontalLayout_3->setObjectName(QStringLiteral("horizontalLayout_3"));
         additionalTilesLabel = new QLabel(TileSetter);
         additionalTilesLabel->setObjectName(QStringLiteral("additionalTilesLabel"));
+        sizePolicy1.setHeightForWidth(additionalTilesLabel->sizePolicy().hasHeightForWidth());
+        additionalTilesLabel->setSizePolicy(sizePolicy1);
 
         horizontalLayout_3->addWidget(additionalTilesLabel);
 
@@ -125,6 +134,8 @@ public:
 
         additionalTileLabel = new QLabel(TileSetter);
         additionalTileLabel->setObjectName(QStringLiteral("additionalTileLabel"));
+        sizePolicy1.setHeightForWidth(additionalTileLabel->sizePolicy().hasHeightForWidth());
+        additionalTileLabel->setSizePolicy(sizePolicy1);
 
         verticalLayout->addWidget(additionalTileLabel);
 
@@ -140,11 +151,11 @@ public:
         horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
         additionalAdd = new QPushButton(TileSetter);
         additionalAdd->setObjectName(QStringLiteral("additionalAdd"));
-        QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
-        sizePolicy1.setHorizontalStretch(0);
-        sizePolicy1.setVerticalStretch(0);
-        sizePolicy1.setHeightForWidth(additionalAdd->sizePolicy().hasHeightForWidth());
-        additionalAdd->setSizePolicy(sizePolicy1);
+        QSizePolicy sizePolicy2(QSizePolicy::Minimum, QSizePolicy::Fixed);
+        sizePolicy2.setHorizontalStretch(0);
+        sizePolicy2.setVerticalStretch(0);
+        sizePolicy2.setHeightForWidth(additionalAdd->sizePolicy().hasHeightForWidth());
+        additionalAdd->setSizePolicy(sizePolicy2);
 
         horizontalLayout_2->addWidget(additionalAdd);
 

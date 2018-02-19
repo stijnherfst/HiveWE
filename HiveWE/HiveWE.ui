@@ -62,7 +62,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionTilesetter"/>
+    <addaction name="actionTileSetter"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -143,9 +143,14 @@
     <string>Brush</string>
    </property>
   </action>
-  <action name="actionTilesetter">
+  <action name="actionTileSetter">
    <property name="text">
-    <string>Tilesetter...</string>
+    <string>Modify Tileset...</string>
+   </property>
+  </action>
+  <action name="actionTileReplace">
+   <property name="text">
+    <string>Replace Tile...</string>
    </property>
   </action>
  </widget>

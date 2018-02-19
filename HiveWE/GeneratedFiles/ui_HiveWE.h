@@ -36,7 +36,8 @@ public:
     QAction *actionDoodads;
     QAction *actionPathing;
     QAction *actionBrush;
-    QAction *actionTilesetter;
+    QAction *actionTileSetter;
+    QAction *actionTileReplace;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -78,8 +79,10 @@ public:
         actionBrush->setObjectName(QStringLiteral("actionBrush"));
         actionBrush->setCheckable(true);
         actionBrush->setChecked(true);
-        actionTilesetter = new QAction(HiveWEClass);
-        actionTilesetter->setObjectName(QStringLiteral("actionTilesetter"));
+        actionTileSetter = new QAction(HiveWEClass);
+        actionTileSetter->setObjectName(QStringLiteral("actionTileSetter"));
+        actionTileReplace = new QAction(HiveWEClass);
+        actionTileReplace->setObjectName(QStringLiteral("actionTileReplace"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -120,7 +123,7 @@ public:
         menuView->addAction(actionDoodads);
         menuView->addAction(actionPathing);
         menuView->addAction(actionBrush);
-        menuTools->addAction(actionTilesetter);
+        menuTools->addAction(actionTileSetter);
 
         retranslateUi(HiveWEClass);
 
@@ -146,7 +149,8 @@ public:
         actionPathing->setShortcut(QApplication::translate("HiveWEClass", "P", nullptr));
 #endif // QT_NO_SHORTCUT
         actionBrush->setText(QApplication::translate("HiveWEClass", "Brush", nullptr));
-        actionTilesetter->setText(QApplication::translate("HiveWEClass", "Tilesetter...", nullptr));
+        actionTileSetter->setText(QApplication::translate("HiveWEClass", "Modify Tileset...", nullptr));
+        actionTileReplace->setText(QApplication::translate("HiveWEClass", "Replace Tile...", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));

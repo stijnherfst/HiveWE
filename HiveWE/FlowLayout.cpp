@@ -96,6 +96,10 @@ QSize FlowLayout::minimumSize() const {
 	return size;
 }
 
+QList<QLayoutItem*> FlowLayout::items() {
+	return itemList;
+}
+
 void FlowLayout::clear() {
 	for (auto&& i : itemList) {
 		i->widget()->deleteLater();

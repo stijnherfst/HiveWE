@@ -34,3 +34,4 @@
 *.log
 /x64/Release/HiveWE.zip
 /x64/Debug
+/packages/Microsoft.Gsl.0.1.2.1

@@ -55,6 +55,7 @@ void CliffMesh::render() {
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl->glDrawElementsInstanced(GL_TRIANGLES, indices, GL_UNSIGNED_SHORT, nullptr, render_jobs.size());
 
+	gl->glVertexAttribDivisor(2, 0); // ToDo use vao
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
