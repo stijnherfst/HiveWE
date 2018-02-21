@@ -548,18 +548,19 @@ int Terrain::real_tile_texture(int x, int y) {
 	return corners[x][y].ground_texture;
 }
 
-int Terrain::get_tile_variation(const Corner& tile_corner) {
-	bool extended = ground_textures[tile_corner.ground_texture].get()->width == ground_textures[tile_corner.ground_texture].get()->height * 2;
+int Terrain::get_tile_variation(int ground_texture, int variation) {
+	bool extended = ground_textures[ground_texture]->width == ground_textures[ground_texture]->height * 2;
+
 	if (extended) {
-		if (tile_corner.ground_variation <= 15) {
-			return 16 + tile_corner.ground_variation;
-		} else if (tile_corner.ground_variation == 16) {
+		if (variation <= 15) {
+			return 16 + variation;
+		} else if (variation == 16) {
 			return 15;
 		} else {
 			return 0;
 		}
 	} else {
-		if (tile_corner.ground_variation == 0) {
+		if (variation == 0) {
 			return 0;
 		} else {
 			return 15;
@@ -568,44 +569,26 @@ int Terrain::get_tile_variation(const Corner& tile_corner) {
 }
 
 glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
+	int bottomL = real_tile_texture(x, y);
+	int bottomR = real_tile_texture(x + 1, y);
+	int topL = real_tile_texture(x, y + 1);
+	int topR = real_tile_texture(x + 1, y + 1);
+
+	std::set<int> set({ bottomL, bottomR, topL, topR });
 	glm::u16vec4 tiles;
-	// Bottom and top reversed
-	auto bottomL = std::make_tuple(real_tile_texture(x, y + 1), corners[x][y + 1]);
-	auto bottomR = std::make_tuple(real_tile_texture(x + 1, y + 1), corners[x + 1][y + 1]);
-	auto topL = std::make_tuple(real_tile_texture(x, y), corners[x][y]);
-	auto topR = std::make_tuple(real_tile_texture(x + 1, y), corners[x + 1][y]);
+	int component = 1;
 
-	auto comp = [&](std::tuple<int, Corner> l, std::tuple<int, Corner> r) {
-		return std::get<0>(l) < std::get<0>(r);
-	};
-
-	std::set<std::tuple<int, Corner>, decltype(comp)> set({ topL, topR, bottomL, bottomR }, comp);
-
-	auto[texture, corner] = *set.begin();
-	tiles.x = texture * 32 + get_tile_variation(corner) + 1; // Texture 0 is black and fully transparant
+	tiles.x = *set.begin() * 32 + get_tile_variation(*set.begin(), corners[x][y].ground_variation) + 1; // Texture 0 is black and fully transparant
 	set.erase(set.begin());
 
-	int component = 1;
 	std::bitset<4> index;
-	for (auto[texture, corner] : set) {
-		// Bottom and top reversed
-		index[0] = real_tile_texture(x + 1, y + 1) == texture;
-		index[1] = real_tile_texture(x, y + 1) == texture;
-		index[2] = real_tile_texture(x + 1, y) == texture;
-		index[3] = real_tile_texture(x, y) == texture;
+	for (auto&& texture : set) {
+		index[0] = bottomR == texture;
+		index[1] = bottomL == texture;
+		index[2] = topR	== texture;
+		index[3] = topL	== texture;
 
-		switch (component) {
-		case 1:
-			tiles.y = texture * 32 + index.to_ulong() + 1;
-			break;
-		case 2:
-			tiles.z = texture * 32 + index.to_ulong() + 1;
-			break;
-		case 3:
-			tiles.w = texture * 32 + index.to_ulong() + 1;
-			break;
-		}
-		component += 1;
+		tiles[component++] = texture * 32 + index.to_ulong() + 1;
 	}
 	return tiles;
 }

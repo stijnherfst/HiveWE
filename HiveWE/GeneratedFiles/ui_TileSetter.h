@@ -181,13 +181,40 @@ public:
     void retranslateUi(QWidget *TileSetter)
     {
         TileSetter->setWindowTitle(QApplication::translate("TileSetter", "TileSetter", nullptr));
+#ifndef QT_NO_TOOLTIP
+        selectedTilesLabel->setToolTip(QApplication::translate("TileSetter", "The tiles in the map tileset.", nullptr));
+#endif // QT_NO_TOOLTIP
         selectedTilesLabel->setText(QApplication::translate("TileSetter", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Selected Tiles</span></p></body></html>", nullptr));
+#ifndef QT_NO_TOOLTIP
+        selectedTileLabel->setToolTip(QApplication::translate("TileSetter", "The current tilename.", nullptr));
+#endif // QT_NO_TOOLTIP
         selectedTileLabel->setText(QApplication::translate("TileSetter", "Tile: ", nullptr));
+#ifndef QT_NO_TOOLTIP
+        selectedShiftLeft->setToolTip(QApplication::translate("TileSetter", "Shifts the selected tile left.", nullptr));
+#endif // QT_NO_TOOLTIP
         selectedShiftLeft->setText(QApplication::translate("TileSetter", "Shift Left", nullptr));
+#ifndef QT_NO_TOOLTIP
+        selectedShiftRight->setToolTip(QApplication::translate("TileSetter", "Shift the selected tile right.", nullptr));
+#endif // QT_NO_TOOLTIP
         selectedShiftRight->setText(QApplication::translate("TileSetter", "Shift Right", nullptr));
+#ifndef QT_NO_TOOLTIP
+        selectedRemove->setToolTip(QApplication::translate("TileSetter", "Removes the selected tile from the tleset.", nullptr));
+#endif // QT_NO_TOOLTIP
         selectedRemove->setText(QApplication::translate("TileSetter", "Remove", nullptr));
+#ifndef QT_NO_TOOLTIP
+        additionalTilesLabel->setToolTip(QApplication::translate("TileSetter", "Tiles you can add to the map tileset.", nullptr));
+#endif // QT_NO_TOOLTIP
         additionalTilesLabel->setText(QApplication::translate("TileSetter", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Additonal Tiles</span></p></body></html>", nullptr));
+#ifndef QT_NO_TOOLTIP
+        tileset->setToolTip(QApplication::translate("TileSetter", "The tileset to choose additional tiles from.", nullptr));
+#endif // QT_NO_TOOLTIP
+#ifndef QT_NO_TOOLTIP
+        additionalTileLabel->setToolTip(QApplication::translate("TileSetter", "The current tilename.", nullptr));
+#endif // QT_NO_TOOLTIP
         additionalTileLabel->setText(QApplication::translate("TileSetter", "Tile:", nullptr));
+#ifndef QT_NO_TOOLTIP
+        additionalAdd->setToolTip(QApplication::translate("TileSetter", "Adds the selected additional tile to the map tileset.", nullptr));
+#endif // QT_NO_TOOLTIP
         additionalAdd->setText(QApplication::translate("TileSetter", "Add", nullptr));
     } // retranslateUi
 

@@ -28,6 +28,7 @@ namespace mpq {
 	class MPQ {
 	public:
 		HANDLE handle;
+		fs::path local_path;
 
 		MPQ() = default;
 		MPQ(const fs::path& path, unsigned long flags = 0);

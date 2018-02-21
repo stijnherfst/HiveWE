@@ -45,15 +45,17 @@ namespace mpq {
 	void MPQ::open(File& archive, unsigned long flags) {
 		const std::vector<uint8_t> buffer = archive.read();
 
-		std::ofstream output("Data/Temporary/temp.mpq", std::ofstream::binary);
+		// Create unique name for local file
+		local_path = "Data/Temporary/" + std::to_string(time(nullptr)) + ".mpq";
+		std::ofstream output(local_path, std::ofstream::binary);
 		if (!output) {
-			std::cout << "Opening/Creating failed for-: Data/Temporary/temp.mpq" << std::endl;
+			std::cout << "Opening/Creation failed for: " << local_path << std::endl;
 		}
 
 		output.write(reinterpret_cast<const char*>(buffer.data()), buffer.size() * sizeof(uint8_t));
 		output.close();
 
-		open(L"Data/Temporary/temp.mpq", flags);
+		open(local_path, flags);
 	}
 
 	File MPQ::file_open(const fs::path& path) {
@@ -72,5 +74,6 @@ namespace mpq {
 	void MPQ::close() {
 		SFileCloseArchive(handle);
 		handle = nullptr;
+		fs::remove(local_path);
 	}
 }

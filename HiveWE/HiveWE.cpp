@@ -10,7 +10,6 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 
-
 	ui.setupUi(this);
 
 	connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);

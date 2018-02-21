@@ -7,9 +7,9 @@ layout (binding = 0) uniform sampler2DArray ground_textures;
 layout (binding = 3) uniform usampler2D pathing_map_static;
 //layout (binding = 3) uniform usampler2D pathing_map_dynamic;
 
-in vec2 UV;
-in flat uvec4 texture_indices;
-in vec2 pathing_map_uv;
+layout (location = 0) in vec2 UV;
+layout (location = 1) in flat uvec4 texture_indices;
+layout (location = 2) in vec2 pathing_map_uv;
 
 out vec4 color;
 

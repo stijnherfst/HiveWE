@@ -115,6 +115,6 @@ public:
 	float corner_water_height(Corner corner) const;
 
 	int real_tile_texture(int x, int y);
-	int get_tile_variation(const Corner& tile_corner);
+	int get_tile_variation(int ground_texture, int variation);
 	glm::u16vec4 get_texture_variations(int x, int y);
 };

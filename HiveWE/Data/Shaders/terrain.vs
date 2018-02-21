@@ -6,9 +6,9 @@ layout (location = 1) uniform mat4 MVP;
 layout (binding = 1) uniform sampler2D height_texture;
 layout (binding = 2) uniform usampler2D terrain_texture_list;
 
-out vec2 UV;
-out flat uvec4 texture_indices;
-out vec2 pathing_map_uv;
+layout (location = 0) out vec2 UV;
+layout (location = 1) out flat uvec4 texture_indices;
+layout (location = 2) out vec2 pathing_map_uv;
 
 void main() { 
 	ivec2 size = textureSize(height_texture, 0);
@@ -16,7 +16,7 @@ void main() {
 
 	vec4 height = texelFetch(height_texture, ivec2(vPosition + pos), 0);
 
-	UV = vPosition;
+	UV = vec2(vPosition.x, 1 - vPosition.y);
 	texture_indices = texelFetch(terrain_texture_list, pos, 0);
 	pathing_map_uv = (vPosition + pos) * 4;	
 
