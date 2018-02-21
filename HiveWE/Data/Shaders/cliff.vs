@@ -1,5 +1,7 @@
 #version 330 core
 #extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 
 layout (location = 0) in vec3 vPosition;
 layout (location = 1) in vec2 vUV;
@@ -7,7 +9,7 @@ layout (location = 2) in vec4 vOffset;
 
 layout (location = 3) uniform mat4 MVP;
 
-uniform sampler2D ground_height;
+layout (binding = 1) uniform sampler2D ground_height;
 
 out vec3 UV;
 

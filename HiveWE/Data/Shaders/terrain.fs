@@ -1,15 +1,17 @@
 #version 330 core
 #extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 
 layout (location = 2) uniform bool show_pathing_map_static;
 //layout (location = 3) uniform bool show_pathing_map_dynamic;
 
-uniform sampler2DArray ground_textures;
-uniform usampler2D pathing_map_static;
-//uniform usampler2D pathing_map_dynamic;
+layout (binding = 0) uniform sampler2DArray ground_textures;
+layout (binding = 3) uniform usampler2D pathing_map_static;
+//layout (binding = 3) uniform usampler2D pathing_map_dynamic;
 
 in vec2 UV;
-flat in uvec4 texture_indices;
+in flat uvec4 texture_indices;
 in vec2 pathing_map_uv;
 
 out vec4 color;

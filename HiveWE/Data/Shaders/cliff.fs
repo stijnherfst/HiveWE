@@ -1,6 +1,9 @@
 #version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_shading_language_420pack : enable
 
-uniform sampler2DArray cliff_textures;
+
+layout (binding = 0) uniform sampler2DArray cliff_textures;
 
 in vec3 UV;
 
