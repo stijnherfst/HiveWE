@@ -19,7 +19,7 @@ namespace fs = std::experimental::filesystem;
 #include <QOpenGLWidget>
 
 
-#include <qopenglextrafunctions.h>
+#include <qopenglfunctions_3_3_core.h>
 #include <FlowLayout.h>
 
 #include <glm.hpp>
