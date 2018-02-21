@@ -19,16 +19,20 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			}
 
 			// Allocate space
-			gl->glCreateBuffers(1, &vertexBuffer);
-			gl->glNamedBufferData(vertexBuffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+			gl->glGenBuffers( 1, &vertexBuffer );
+			gl->glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+			gl->glBufferData( GL_ARRAY_BUFFER, vertices * sizeof( glm::vec3 ), nullptr, GL_DYNAMIC_DRAW );
 
-			gl->glCreateBuffers(1, &uvBuffer);
-			gl->glNamedBufferData(uvBuffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+			gl->glGenBuffers( 1, &uvBuffer );
+			gl->glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+			gl->glBufferData( GL_ARRAY_BUFFER, vertices * sizeof( glm::vec2 ), nullptr, GL_DYNAMIC_DRAW );
 
-			gl->glCreateBuffers(1, &instanceBuffer);
+			gl->glGenBuffers( 1, &instanceBuffer );
+			gl->glBindBuffer( GL_ARRAY_BUFFER, instanceBuffer );
 			
-			gl->glCreateBuffers(1, &indexBuffer);
-			gl->glNamedBufferData(indexBuffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+			gl->glGenBuffers( 1, &indexBuffer );
+			gl->glBindBuffer( GL_ARRAY_BUFFER, indexBuffer );
+			gl->glBufferData( GL_ARRAY_BUFFER, indices * sizeof( uint16_t ), nullptr, GL_DYNAMIC_DRAW );
 
 			// Buffer Data
 			int base_vertex = 0;
@@ -45,9 +49,12 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 				entries.push_back(entry);
 
-				gl->glNamedBufferSubData(vertexBuffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-				gl->glNamedBufferSubData(uvBuffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
-				gl->glNamedBufferSubData(indexBuffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+				gl->glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+				gl->glBufferSubData( GL_ARRAY_BUFFER, base_vertex * sizeof( glm::vec3 ), entry.vertices * sizeof( glm::vec3 ), i.vertices.data( ) );
+				gl->glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+				gl->glBufferSubData( GL_ARRAY_BUFFER, base_vertex * sizeof( glm::vec2 ), entry.vertices * sizeof( glm::vec2 ), i.texture_coordinate_sets.front( ).coordinates.data( ) );
+				gl->glBindBuffer( GL_ARRAY_BUFFER, indexBuffer );
+				gl->glBufferSubData( GL_ARRAY_BUFFER, base_index * sizeof( uint16_t ), entry.indices * sizeof( uint16_t ), i.faces.data( ) );
 			
 				base_vertex += entry.vertices;
 				base_index += entry.indices;
@@ -69,8 +76,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
 				// ToDo Same texture on different model with different flags?
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+				gl->glBindTexture( GL_TEXTURE_2D, textures.back( )->id );
+				gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, ( i.flags & 1 ) ? GL_REPEAT : GL_CLAMP_TO_EDGE );
+				gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, ( i.flags & 1 ) ? GL_REPEAT : GL_CLAMP_TO_EDGE );
 			}
 		}
 
@@ -117,7 +125,8 @@ void StaticMesh::render() {
 
 			for (auto&& i : entries) {
 				for (auto&& j : mtls->materials[i.material_id].layers) {
-					gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+					gl->glActiveTexture( GL_TEXTURE0 + 0 );
+					gl->glBindTexture( GL_TEXTURE_2D, textures[ j.texture_id ]->id );
 
 					gl->glEnable(GL_BLEND);
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
@@ -154,7 +163,8 @@ void StaticMesh::render() {
 		// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
 
 		shader_instanced->use();
-		gl->glNamedBufferData(instanceBuffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+		gl->glBindBuffer( GL_ARRAY_BUFFER, instanceBuffer );
+		gl->glBufferData( GL_ARRAY_BUFFER, render_jobs.size( ) * sizeof( glm::mat4 ), render_jobs.data( ), GL_STATIC_DRAW );
 
 		// Since a mat4 is 4 vec4's
 		gl->glEnableVertexAttribArray(2);
@@ -167,7 +177,8 @@ void StaticMesh::render() {
 
 		for (auto&& i : entries) {
 			for (auto&& j : mtls->materials[i.material_id].layers) {
-				gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+				gl->glActiveTexture( GL_TEXTURE0 + 0 );
+				gl->glBindTexture( GL_TEXTURE_2D, textures[ j.texture_id ]->id );
 
 				gl->glEnable(GL_BLEND);
 				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?

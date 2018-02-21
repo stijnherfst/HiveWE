@@ -7,17 +7,21 @@ CliffMesh::CliffMesh(const fs::path& path) {
 		auto set = model.chunk<mdx::GEOS>()->geosets.front();
 		vertices = set.vertices.size();
 
-		gl->glCreateBuffers(1, &vertexBuffer);
-		gl->glNamedBufferData(vertexBuffer, set.vertices.size() * sizeof(glm::vec3), set.vertices.data(), GL_STATIC_DRAW);
+		gl->glGenBuffers( 1, &vertexBuffer );
+		gl->glBindBuffer( GL_ARRAY_BUFFER, vertexBuffer );
+		gl->glBufferData( GL_ARRAY_BUFFER, set.vertices.size( ) * sizeof( glm::vec3 ), set.vertices.data( ), GL_STATIC_DRAW );
 
-		gl->glCreateBuffers(1, &uvBuffer);
-		gl->glNamedBufferData(uvBuffer, set.texture_coordinate_sets.front().coordinates.size() * sizeof(glm::vec2), set.texture_coordinate_sets.front().coordinates.data(), GL_STATIC_DRAW);
+		gl->glGenBuffers( 1, &uvBuffer );
+		gl->glBindBuffer( GL_ARRAY_BUFFER, uvBuffer );
+		gl->glBufferData( GL_ARRAY_BUFFER, set.texture_coordinate_sets.front( ).coordinates.size( ) * sizeof( glm::vec2 ), set.texture_coordinate_sets.front( ).coordinates.data( ), GL_STATIC_DRAW );
 
 		indices = set.faces.size();
-		gl->glCreateBuffers(1, &indexBuffer);
-		gl->glNamedBufferData(indexBuffer, set.faces.size() * sizeof(uint16_t), set.faces.data(), GL_STATIC_DRAW);
+		gl->glGenBuffers( 1, &indexBuffer );
+		gl->glBindBuffer( GL_ARRAY_BUFFER, indexBuffer );
+		gl->glBufferData( GL_ARRAY_BUFFER, set.faces.size( ) * sizeof( uint16_t ), set.faces.data( ), GL_STATIC_DRAW );
 
-		gl->glCreateBuffers(1, &instanceBuffer);
+		gl->glGenBuffers( 1, &instanceBuffer );
+		gl->glBindBuffer( GL_ARRAY_BUFFER, instanceBuffer );
 	}
 }
 
@@ -37,7 +41,8 @@ void CliffMesh::render() {
 		return;
 	}
 
-	gl->glNamedBufferData(instanceBuffer, render_jobs.size() * sizeof(glm::vec4), render_jobs.data(), GL_STATIC_DRAW);
+	gl->glBindBuffer( GL_ARRAY_BUFFER, instanceBuffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, render_jobs.size( ) * sizeof( glm::vec4 ), render_jobs.data( ), GL_STATIC_DRAW );
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
