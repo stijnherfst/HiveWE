@@ -3,6 +3,10 @@
 Map map;
 
 HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
+	if (!fs::exists(QDir::current().path() + "\\Temporary")) {
+		fs::create_directory(QDir::current().path() + "\\Temporary");
+	}
+	
 	fs::path directory = find_warcraft_directory();
 	while (!fs::exists(directory / "War3Patch.mpq")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
