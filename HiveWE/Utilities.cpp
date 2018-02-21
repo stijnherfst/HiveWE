@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-QOpenGLFunctions_4_5_Core* gl;
+QOpenGLExtraFunctions* gl;
 Shapes shapes;
 
 //unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *height, int *channels, int force_channels) {
@@ -25,11 +25,13 @@ Shapes shapes;
 //}
 
 void Shapes::init() {
-	gl->glCreateBuffers(1, &vertex_buffer);
-	gl->glNamedBufferData(vertex_buffer, quad_vertices.size() * sizeof(glm::vec2), quad_vertices.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &vertex_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, vertex_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, quad_vertices.size( ) * sizeof( glm::vec2 ), quad_vertices.data( ), GL_STATIC_DRAW );
 
-	gl->glCreateBuffers(1, &index_buffer);
-	gl->glNamedBufferData(index_buffer, quad_indices.size() * sizeof(unsigned int) * 3, quad_indices.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &index_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, index_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, quad_indices.size( ) * sizeof( unsigned int ) * 3, quad_indices.data( ), GL_STATIC_DRAW );
 }
 
 std::vector<std::string> split(const std::string& string, char delimiter) {
@@ -62,7 +64,17 @@ GLuint compile_shader(const std::string vertexShader, std::string fragmentShader
 
 	gl->glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
 	gl->glGetShaderInfoLog(vertex, 512, NULL, buffer);
+
+	if ( buffer[ 0 ] != '\0' )
+	{
+		std::cout << "Error!" << std::endl;
 	std::cout << buffer << std::endl;
+		std::cout << "Start shader source:" << std::endl;
+
+		std::cout << source << std::endl;
+
+		std::cout << "End shader source" << std::endl;
+	}
 
 	// Fragment Shader
 	source = fragmentShader.c_str();

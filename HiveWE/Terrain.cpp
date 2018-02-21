@@ -86,70 +86,89 @@ void Terrain::create() {
 	}
 
 	// Ground
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width, height);
-	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
-	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	gl->glGenTextures( 1, &ground_texture_data );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_texture_data );
+	gl->glTexStorage2D( GL_TEXTURE_2D, 1, GL_RGBA16UI, width, height );
+	gl->glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data( ) );
+	gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
-	gl->glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
-	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	gl->glGenTextures( 1, &ground_height );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_height );
+	gl->glTexStorage2D( GL_TEXTURE_2D, 1, GL_R16F, width, height );
+	gl->glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data( ) );
 
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
-	gl->glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
-	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+	gl->glGenTextures( 1, &ground_corner_height );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_corner_height );
+	gl->glTexStorage2D( GL_TEXTURE_2D, 1, GL_R16F, width, height );
+	gl->glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data( ) );
 
 	// Ground textures
 	create_tile_textures();
 
 	// Cliff
-	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
-	gl->glTextureStorage3D(cliff_texture_array, std::log(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
+
+	gl->glGenTextures( 1, &cliff_texture_array );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, cliff_texture_array );
+
+	gl->glTexStorage3D( GL_TEXTURE_2D_ARRAY, std::log( cliff_texture_size ) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size( ) );
 
 	int sub = 0;
 	for (auto&& i : cliff_textures) {
-		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data);
+		gl->glBindTexture( GL_TEXTURE_2D_ARRAY, cliff_texture_array );
+		gl->glTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data );
 		sub += 1;
 	}
-	gl->glGenerateTextureMipmap(cliff_texture_array);
+
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, cliff_texture_array );
+	gl->glGenerateMipmap( GL_TEXTURE_2D_ARRAY );
 
 	// Water
-	gl->glCreateBuffers(1, &water_vertex_buffer);
-	gl->glNamedBufferData(water_vertex_buffer, water_vertices.size() * sizeof(glm::vec3), water_vertices.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &water_vertex_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, water_vertex_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, water_vertices.size( ) * sizeof( glm::vec3 ), water_vertices.data( ), GL_STATIC_DRAW );
 
-	gl->glCreateBuffers(1, &water_uv_buffer);
-	gl->glNamedBufferData(water_uv_buffer, water_uvs.size() * sizeof(glm::vec2), water_uvs.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &water_uv_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, water_uv_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, water_uvs.size( ) * sizeof( glm::vec2 ), water_uvs.data( ), GL_STATIC_DRAW );
 
-	gl->glCreateBuffers(1, &water_color_buffer);
-	gl->glNamedBufferData(water_color_buffer, water_colors.size() * sizeof(glm::vec4), water_colors.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &water_color_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, water_color_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, water_colors.size( ) * sizeof( glm::vec4 ), water_colors.data( ), GL_STATIC_DRAW );
 
-	gl->glCreateBuffers(1, &water_index_buffer);
-	gl->glNamedBufferData(water_index_buffer, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
+	gl->glGenBuffers( 1, &water_index_buffer );
+	gl->glBindBuffer( GL_ARRAY_BUFFER, water_index_buffer );
+	gl->glBufferData( GL_ARRAY_BUFFER, water_indices.size( ) * sizeof( unsigned int ) * 3, water_indices.data( ), GL_STATIC_DRAW );
 
 	// Water textures
-	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
-	gl->glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
-	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl->glGenTextures( 1, &water_texture_array );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, water_texture_array );
+	gl->glTexStorage3D( GL_TEXTURE_2D_ARRAY, std::log( 128 ) + 1, GL_RGBA8, 128, 128, water_textures_nr );
+	gl->glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	gl->glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
 	for (size_t i = 0; i < water_textures.size(); i++) {
 		if (water_textures[i]->width > 128 || water_textures[i]->height > 128) {
 			std::cout << "Odd water texture size detected of " << water_textures[i]->width << " wide and " << water_textures[i]->height << " high\n";
 			continue;
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data);
+		gl->glBindTexture( GL_TEXTURE_2D_ARRAY, water_texture_array );
+		gl->glTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, 128, 128, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[ i ]->data );
 	}
-	gl->glGenerateTextureMipmap(water_texture_array);
+
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, water_texture_array );
+	gl->glGenerateMipmap( GL_TEXTURE_2D_ARRAY );
+
 }
 
 void Terrain::create_tile_textures() {
 	gl->glDeleteTextures(1, &ground_texture_array);
-	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &ground_texture_array);
-	gl->glTextureStorage3D(ground_texture_array, std::log(variation_size) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size() * 32 + 1); // Index 0 is a transparant black texture
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	gl->glGenTextures( 1, &ground_texture_array );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, ground_texture_array );
+	gl->glTexStorage3D( GL_TEXTURE_2D_ARRAY, std::log( variation_size ) + 1, GL_RGBA8, variation_size, variation_size, ground_textures.size( ) * 32 + 1 ); // Index 0 is a transparant black texture
+	gl->glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+	gl->glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	gl->glTexParameteri( GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 
 	// Create a transparant black texture
 	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
@@ -160,18 +179,21 @@ void Terrain::create_tile_textures() {
 		for (size_t y = 0; y < 4; y++) {
 			for (size_t x = 0; x < 4; x++) {
 				int sub_image = sub * 32 + y * 4 + x;
-				gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + x * variation_size) * 4);
+				gl->glBindTexture( GL_TEXTURE_2D_ARRAY, ground_texture_array );
+				gl->glTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, 0, 0, sub_image + 1, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + ( y * variation_size * i->width + x * variation_size ) * 4 );
 
 				// If extended
 				if (i->width == i->height * 2) {
-					gl->glTextureSubImage3D(ground_texture_array, 0, 0, 0, sub_image + 1 + 16, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + (y * variation_size * i->width + (x + 4) * variation_size) * 4);
+					gl->glBindTexture( GL_TEXTURE_2D_ARRAY, ground_texture_array );
+					gl->glTexSubImage3D( GL_TEXTURE_2D_ARRAY, 0, 0, 0, sub_image + 1 + 16, variation_size, variation_size, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data + ( y * variation_size * i->width + ( x + 4 ) * variation_size ) * 4 );
 				}
 			}
 		}
 		sub += 1;
 	}
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	gl->glGenerateTextureMipmap(ground_texture_array);
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, ground_texture_array );
+	gl->glGenerateMipmap( GL_TEXTURE_2D_ARRAY );
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -390,10 +412,14 @@ void Terrain::render() {
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform1i(2, map.render_pathing);
 
-	gl->glBindTextureUnit(0, ground_texture_array);
-	gl->glBindTextureUnit(1, ground_corner_height);
-	gl->glBindTextureUnit(2, ground_texture_data);
-	gl->glBindTextureUnit(3, pathing_map_texture);
+	gl->glActiveTexture( GL_TEXTURE0 + 0 );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, ground_texture_array );
+	gl->glActiveTexture( GL_TEXTURE0 + 1 );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_corner_height );
+	gl->glActiveTexture( GL_TEXTURE0 + 2 );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_texture_data );
+	gl->glActiveTexture( GL_TEXTURE0 + 3 );
+	gl->glBindTexture( GL_TEXTURE_2D, pathing_map_texture );
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
@@ -428,8 +454,13 @@ void Terrain::render() {
 	glm::mat4 MVP = glm::scale(camera.projection_view, glm::vec3(1.f / 128.f));
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &MVP[0][0]);
 
-	gl->glBindTextureUnit(0, cliff_texture_array);
-	gl->glBindTextureUnit(1, ground_height);
+
+	gl->glActiveTexture( GL_TEXTURE0 + 0 );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, cliff_texture_array );
+	gl->glActiveTexture( GL_TEXTURE0 + 1 );
+	gl->glBindTexture( GL_TEXTURE_2D, ground_height );
+
+
 	for (auto&& i : cliff_meshes) {
 		i->render();
 	}
@@ -445,7 +476,8 @@ void Terrain::render() {
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform1i(4, current_texture);
 
-	gl->glBindTextureUnit(0, water_texture_array);
+	gl->glActiveTexture( GL_TEXTURE0 + 0 );
+	gl->glBindTexture( GL_TEXTURE_2D_ARRAY, water_texture_array );
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, water_vertex_buffer);
@@ -511,7 +543,8 @@ void Terrain::change_tileset(std::vector<std::string> new_tileset_ids, std::vect
 		}
 	}
 
-	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
+	gl->glBindTexture( GL_TEXTURE_2D, ground_texture_data );
+	gl->glTexSubImage2D( ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data( ) );
 }
 
 float Terrain::corner_height(Corner corner) const {

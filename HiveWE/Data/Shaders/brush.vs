@@ -1,4 +1,7 @@
-#version 450 core
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 
 layout (location = 0) in vec2 vPosition;
 layout (location = 1) uniform mat4 MVP;
