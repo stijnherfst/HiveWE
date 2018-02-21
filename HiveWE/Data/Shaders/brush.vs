@@ -1,12 +1,13 @@
-#version 450 core
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
 
 layout (location = 0) in vec2 vPosition;
 layout (location = 1) uniform mat4 MVP;
 layout (location = 2) uniform vec2 offset;
 layout (location = 3) uniform vec2 uv_offset;
 
-layout (binding = 0) uniform sampler2D height_texture;
-layout (binding = 1) uniform sampler2D brush;
+uniform sampler2D height_texture;
+uniform sampler2D brush;
 
 out vec2 UV;
 

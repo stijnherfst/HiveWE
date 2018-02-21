@@ -1,6 +1,6 @@
-#version 450 core
+#version 330 core
 
-layout (binding = 0) uniform sampler2DArray cliff_textures;
+uniform sampler2DArray cliff_textures;
 
 in vec3 UV;
 

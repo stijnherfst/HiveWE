@@ -1,6 +1,7 @@
-#version 450 core
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
 
-layout (binding = 0) uniform sampler2DArray textureArray;
+uniform sampler2DArray textureArray;
 
 layout (location = 4) uniform int current_texture;
 

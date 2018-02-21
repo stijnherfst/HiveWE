@@ -1,6 +1,6 @@
-#version 450 core
+#version 330 core
 
-layout (binding = 1) uniform sampler2D brush;
+uniform sampler2D brush;
 
 in vec2 UV;
 
