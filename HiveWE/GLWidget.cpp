@@ -52,7 +52,7 @@ GLWidget::~GLWidget() {
 }
 
 void GLWidget::initializeGL() {
-	gl = new QOpenGLFunctions_4_5_Core;
+	gl = new QOpenGLExtraFunctions;
 	gl->initializeOpenGLFunctions();
 
 	gl->glEnable(GL_DEBUG_OUTPUT);

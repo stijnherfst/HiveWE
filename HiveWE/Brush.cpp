@@ -20,11 +20,12 @@ void Brush::create() {
 		}
 	}
 
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
+	gl->glGenTextures( 1, &brush_texture );
+	gl->glBindTexture( GL_TEXTURE_2D, brush_texture );
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
 	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 
 	shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
@@ -72,8 +73,10 @@ void Brush::render(Terrain& terrain) {
 	gl->glUniform2f(2, position.x, position.y);
 	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
 
-	gl->glBindTextureUnit(0, terrain.ground_corner_height);
-	gl->glBindTextureUnit(1, brush_texture);
+	gl->glActiveTexture( GL_TEXTURE0 + 0 );
+	gl->glBindTexture( GL_TEXTURE_2D, terrain.ground_corner_height );
+	gl->glActiveTexture( GL_TEXTURE0 + 1 );
+	gl->glBindTexture( GL_TEXTURE_2D, brush_texture );
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
@@ -118,6 +121,7 @@ void PathingBrush::apply(PathingMap& pathing) {
 	}
 
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, pathing.width);
-	gl->glTextureSubImage2D(pathing.pathing_texture, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data() + offset);
+	gl->glBindTexture( GL_TEXTURE_2D, pathing.pathing_texture );
+	gl->glTexSubImage2D( GL_TEXTURE_2D, 0, area.x( ), area.y( ), area.width( ), area.height( ), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data( ) + offset );
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

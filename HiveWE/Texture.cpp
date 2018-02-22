@@ -15,14 +15,15 @@ GPUTexture::GPUTexture(const fs::path& path) {
 	if (path.extension() == ".blp" || path.extension() == ".BLP") {
 		auto[data, width, height] = blp::BLP::load(path); // ToDo use resource manager here too?
 
-		gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
-		gl->glTextureStorage2D(id, std::log(std::max(width, height)) + 1, GL_RGBA8, width, height);
-		gl->glTextureSubImage2D(id, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, data);
-		gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		gl->glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		gl->glGenerateTextureMipmap(id);
+		gl->glGenTextures( 1, &id );
+		gl->glBindTexture( GL_TEXTURE_2D, id );
+		gl->glTexStorage2D( GL_TEXTURE_2D, std::log( std::max( width, height ) ) + 1, GL_RGBA8, width, height );
+		gl->glTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, data );
+		gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR );
+		gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		gl->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		gl->glGenerateMipmap( GL_TEXTURE_2D );
 
 		delete data;
 	} else {

@@ -1,4 +1,7 @@
-#version 450 core
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_shading_language_420pack : enable
+
 
 layout (location = 0) in vec2 vPosition;
 layout (location = 1) uniform mat4 MVP;
@@ -21,5 +24,13 @@ void main() {
 	pathing_map_uv = (vPosition + pos) * 4;	
 
 	// Cliff culling
-	gl_Position = ((texture_indices.a & 32768) == 0) ? MVP * vec4(vPosition + pos, height.r, 1) : vec4(2.0, 0.0, 0.0, 1.0);
+	uint flag = 32768u;
+	uint text_ind = texture_indices.a;
+	flag = text_ind & flag;
+	
+	if (flag == 0u){
+		gl_Position = MVP * vec4(vPosition + pos, height.r, 1);
+	} else {
+	    gl_Position = vec4(2.0, 0.0, 0.0, 1.0);
+	}
 }
