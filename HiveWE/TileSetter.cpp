@@ -8,7 +8,9 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
 	ini::INI world_edit_data("UI/WorldEditData.txt");
-	ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
+	const ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
+
+	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	slk::SLK& slk = map.terrain.terrain_slk;
 	for (auto&& i : map.terrain.tileset_ids) {
@@ -29,9 +31,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
 		const std::string tileset_key = split(value, ',').front();
-		const std::string name = world_edit_strings.data("WorldEditStrings", tileset_key);
-
-		ui.tileset->addItem(QString::fromStdString(name), QString::fromStdString(key));
+		ui.tileset->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 
 	update_available_tiles();

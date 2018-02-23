@@ -252,7 +252,7 @@ bool Terrain::load(BinaryReader& reader) {
 	hierarchy.load_tileset(tileset);
 
 	// Ground Textures
-	terrain_slk = slk::SLK("TerrainArt\\Terrain.slk");
+	terrain_slk.load("TerrainArt\\Terrain.slk");
 	for (auto&& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "\\" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
@@ -261,7 +261,7 @@ bool Terrain::load(BinaryReader& reader) {
 	blight_texture = ground_textures.size() - 1;
 
 	// Cliff Textures
-	cliff_slk = slk::SLK("TerrainArt\\CliffTypes.slk");
+	cliff_slk.load("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
