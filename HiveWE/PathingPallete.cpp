@@ -3,8 +3,7 @@
 PathingPallete::PathingPallete(QWidget *parent) : QWidget(parent) {
 	ui.setupUi(this);
 
-	Qt::WindowFlags flags = windowFlags();
-	setWindowFlags(flags | Qt::WindowStaysOnTopHint);
+	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
 
 	show();
 

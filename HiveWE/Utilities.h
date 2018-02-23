@@ -24,10 +24,9 @@ public:
 
 std::vector<std::string> split(const std::string& string, char delimiter);
 
-GLuint compile_shader(const fs::path vertex_shader, const fs::path fragment_shader);
-GLuint compile_shader(const std::string vertexShader, const std::string fragmentShader);
+GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_shader);
 
-std::string read_text_file(std::string path);
+std::string read_text_file(const std::string& path);
 
 fs::path find_warcraft_directory();
 

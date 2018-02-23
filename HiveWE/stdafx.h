@@ -1,3 +1,5 @@
+#pragma once
+
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -23,7 +25,7 @@ namespace fs = std::experimental::filesystem;
 #include <glm.hpp>
 #define GLM_FORCE_RADIANS
 #include <gtc/matrix_transform.hpp>
-#include <soil2.h>
+#include <SOIL2.h>
 #include <turbojpeg.h>
 
 #undef _DLL

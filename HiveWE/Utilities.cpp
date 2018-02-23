@@ -43,45 +43,44 @@ std::vector<std::string> split(const std::string& string, char delimiter) {
 	return elems;
 }
 
-GLuint compile_shader(const fs::path vertex_shader, const fs::path fragment_shader) {
-	return compile_shader(read_text_file(vertex_shader.string()), read_text_file(fragment_shader.string()));
-}
-
-GLuint compile_shader(const std::string vertexShader, std::string fragmentShader) {
+GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_shader) {
 	char buffer[512];
 	GLint status;
 
-	GLuint vertex = gl->glCreateShader(GL_VERTEX_SHADER);
-	GLuint fragment = gl->glCreateShader(GL_FRAGMENT_SHADER);
+	std::string vertex_source = read_text_file(vertex_shader.string());
+	std::string fragment_source = read_text_file(fragment_shader.string());
+
+	const GLuint vertex = gl->glCreateShader(GL_VERTEX_SHADER);
+	const GLuint fragment = gl->glCreateShader(GL_FRAGMENT_SHADER);
 
 	// Vertex Shader
-	const char* source = vertexShader.c_str();
-	gl->glShaderSource(vertex, 1, &source, NULL);
+	const char* source = vertex_source.c_str();
+	gl->glShaderSource(vertex, 1, &source, nullptr);
 	gl->glCompileShader(vertex);
 
 
 	gl->glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
-	gl->glGetShaderInfoLog(vertex, 512, NULL, buffer);
+	gl->glGetShaderInfoLog(vertex, 512, nullptr, buffer);
 	std::cout << buffer << std::endl;
 
 	// Fragment Shader
-	source = fragmentShader.c_str();
-	gl->glShaderSource(fragment, 1, &source, NULL);
+	source = fragment_source.c_str();
+	gl->glShaderSource(fragment, 1, &source, nullptr);
 	gl->glCompileShader(fragment);
 
 	gl->glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
-	gl->glGetShaderInfoLog(fragment, 512, NULL, buffer);
+	gl->glGetShaderInfoLog(fragment, 512, nullptr, buffer);
 	std::cout << buffer << std::endl;
 
 	// Link
-	GLuint shader = gl->glCreateProgram();
+	const GLuint shader = gl->glCreateProgram();
 	gl->glAttachShader(shader, vertex);
 	gl->glAttachShader(shader, fragment);
 	gl->glLinkProgram(shader);
 
 	gl->glGetProgramiv(shader, GL_LINK_STATUS, &status);
 	if (!status) {
-		gl->glGetProgramInfoLog(shader, 512, NULL, buffer);
+		gl->glGetProgramInfoLog(shader, 512, nullptr, buffer);
 		std::cout << buffer << std::endl;
 	}
 
@@ -91,7 +90,7 @@ GLuint compile_shader(const std::string vertexShader, std::string fragmentShader
 	return shader;
 }
 
-std::string read_text_file(std::string path) {
+std::string read_text_file(const std::string& path) {
 	std::ifstream textfile(path.c_str());
 	std::string line;
 	std::string text;
@@ -118,7 +117,7 @@ fs::path find_warcraft_directory() {
 
 QIcon texture_to_icon(uint8_t* data, int width, int height) {
 	QImage temp_image = QImage(data, width, height, QImage::Format::Format_ARGB32);
-	int size = height / 4;
+	const int size = height / 4;
 
 	auto pix = QPixmap::fromImage(temp_image.copy(0, 0, size, size));
 

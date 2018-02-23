@@ -10,12 +10,12 @@ public:
 	~TileSetter();
 
 private:
-	void add_tile();
-	void remove_tile();
-	void update_available_tiles();
-	void to_tile_clicked(QAbstractButton* button);
-	void shift_left();
-	void shift_right();
+	void add_tile() const;
+	void remove_tile() const;
+	void update_available_tiles() const;
+	void to_tile_clicked(QAbstractButton* button) const;
+	void shift_left() const;
+	void shift_right() const;
 	void save_tiles();
 
 	Ui::TileSetter ui;

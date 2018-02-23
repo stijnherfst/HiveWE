@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 namespace ini {
-	INI::INI(fs::path path) {
+	INI::INI(const fs::path& path) {
 		load(path);
 	}
 	
@@ -10,15 +10,15 @@ namespace ini {
 		file << hierarchy.open_file(path).buffer.data();
 
 		std::string line;
-		std::string current_section = "";
+		std::string current_section;
 		while (std::getline(file, line)) {
 			// Normaly ini files use ; for comments, but Blizzard uses //
-			if (line.substr(0, 2) == "//" || line.size() == 0 || line.front() == ';') {
+			if (line.substr(0, 2) == "//" || line.empty() || line.front() == ';') {
 				continue;
 			}
 
 			if (line.front() == '[') {
-				std::string key = line.substr(1, line.size() - 3);
+				const std::string key = line.substr(1, line.size() - 3);
 				// If the segment already exists
 				if (ini_data.count(key)) {
 					continue;

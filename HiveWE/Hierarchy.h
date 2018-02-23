@@ -15,8 +15,8 @@ public:
 	void init();
 	void load_tileset(char tileset_code);
 
-	BinaryReader open_file(const fs::path path);
-	bool file_exists(const fs::path path);
+	BinaryReader open_file(const fs::path& path) const;
+	bool file_exists(const fs::path& path) const;
 };
 
 extern Hierarchy hierarchy;

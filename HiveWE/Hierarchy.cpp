@@ -11,7 +11,7 @@ void Hierarchy::init() {
 }
 
 void Hierarchy::load_tileset(char tileset_code) {
-	std::string file_name = tileset_code + ".mpq"s;
+	const std::string file_name = tileset_code + ".mpq"s;
 
 	mpq::File tileset_mpq;
 	if (war3Patch.file_exists(file_name)) {
@@ -29,7 +29,7 @@ void Hierarchy::load_tileset(char tileset_code) {
 	tileset.open(tileset_mpq, STREAM_FLAG_READ_ONLY);
 }
 
-BinaryReader Hierarchy::open_file(const fs::path path) {
+BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	if (tileset.handle == nullptr) {
 		std::cout << "Hierarchy tileset has not been initialised" << std::endl;
 	}
@@ -51,13 +51,13 @@ BinaryReader Hierarchy::open_file(const fs::path path) {
 		file = war3.file_open(path);
 	} else {
 		std::cout << "Unable to find file in hierarchy";
-		return std::vector<uint8_t>();
+		return BinaryReader(std::vector<uint8_t>());
 	}
 
 	return BinaryReader(file.read());
 }
 
-bool Hierarchy::file_exists(const fs::path path) {
+bool Hierarchy::file_exists(const fs::path& path) const {
 	return tileset.file_exists(path)
 		|| map.file_exists(path)
 		|| war3Patch.file_exists(path)

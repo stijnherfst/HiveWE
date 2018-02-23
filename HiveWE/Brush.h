@@ -20,10 +20,10 @@ public:
 	std::shared_ptr<Shader> shader;
 
 	void create();
-	void set_position(const glm::vec2 position);
-	void set_size(const int size);
+	void set_position(const glm::vec2& position);
+	void set_size(int size);
 
-	void render(Terrain& terrain);
+	void render(Terrain& terrain) const;
 
 	virtual void apply(PathingMap& pathing) = 0;
 };

@@ -41,14 +41,11 @@ void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severi
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	connect(&timer, &QTimer::timeout, this, &GLWidget::updateScene);
+	connect(&timer, &QTimer::timeout, this, &GLWidget::update_scene);
 	timer.start(15);
 
 	setMouseTracking(true);
 	setFocus();
-}
-
-GLWidget::~GLWidget() {
 }
 
 void GLWidget::initializeGL() {
@@ -57,7 +54,7 @@ void GLWidget::initializeGL() {
 
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	gl->glDebugMessageCallback((GLDEBUGPROC)glDebugOutput, nullptr);
+	gl->glDebugMessageCallback(GLDEBUGPROC(glDebugOutput), nullptr);
 	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 	gl->glEnable(GL_DEPTH_TEST);
@@ -79,13 +76,13 @@ void GLWidget::initializeGL() {
 void GLWidget::resizeGL(int w, int h) {
 	gl->glViewport(0, 0, w, h);
 
-	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
-	camera.aspect_ratio = (double) w / h;
+	const double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
+	camera.aspect_ratio = double(w) / h;
 	camera.update(delta);
 }
 
-void GLWidget::updateScene() {
-	double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
+void GLWidget::update_scene() {
+	const double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
 	elapsedTimer.start();
 
 	camera.update(delta);
@@ -125,8 +122,7 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		case Qt::Key_Escape:
 			exit(0);
-			break;
-		case Qt::Key_Alt:
+	case Qt::Key_Alt:
 			//input_handler.drag_start = input_handler.mouse_world;
 		case Qt::Key_Equal:
 			map.brush.set_size(map.brush.size + 1);
@@ -150,7 +146,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	
 	float z;
 	gl->glReadPixels(cursor_position.x(), height() - cursor_position.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
-	glm::vec3 window = glm::vec3(cursor_position.x(), height() - cursor_position.y(), z);
+	const glm::vec3 window = glm::vec3(cursor_position.x(), height() - cursor_position.y(), z);
 
 	input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width(), height()));
 

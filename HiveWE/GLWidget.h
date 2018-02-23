@@ -11,11 +11,11 @@ public:
 	GLuint vao;
 
 	GLWidget(QWidget* parent);
-	~GLWidget();
+	~GLWidget() = default;
 
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
-	void updateScene();
+	void update_scene();
 	void paintGL() override;
 
 	void keyPressEvent(QKeyEvent* e) override;

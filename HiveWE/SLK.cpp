@@ -4,11 +4,11 @@
 // It's not pretty
 
 namespace slk {
-	SLK::SLK(fs::path path, bool local) {
+	SLK::SLK(const fs::path& path, bool local) {
 		load(path, local);
 	}
 
-	void SLK::load(fs::path path, bool local) {
+	void SLK::load(const fs::path& path, bool local) {
 		std::stringstream file;
 		if (local) {
 			std::ifstream stream(path);
@@ -26,7 +26,7 @@ namespace slk {
 		if (std::getline(file, line)) {
 			auto parts = split(line, ';');
 
-			std::string id = parts[0];
+			const std::string id = parts[0];
 			if (id != "ID") {
 				std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
 				return;
@@ -41,7 +41,7 @@ namespace slk {
 			}
 
 			auto parts = split(line, ';');
-			if (!parts.size()) {
+			if (parts.empty()) {
 				std::cout << "Invalid SLK file" << std::endl;
 				break;
 			}
@@ -65,7 +65,6 @@ namespace slk {
 				}
 				table_data.resize(rows, std::vector<std::string>(columns));
 				shadow_data.resize(rows, std::vector<std::string>(columns));
-				continue;
 			} else if (parts.front() == "C") {
 				if (parts.size() < 3) {
 					std::cout << "Invalid C record: " << line << std::endl;
@@ -74,7 +73,7 @@ namespace slk {
 
 				int column = 0;
 				for (auto&& part : parts) {
-					char front = part.front();
+					const char front = part.front();
 					part.erase(part.begin());
 					switch (front) {
 						case 'X':
@@ -104,12 +103,10 @@ namespace slk {
 							break;
 					}
 				}
-				continue;
 			} else if (line == "E") {
 				break;
 			} else {
 				std::cout << "Invalid or unknown record: " << line << std::endl;
-				continue;
 			}
 		}
 	}
@@ -119,14 +116,14 @@ namespace slk {
 			return "";
 		}
 
-		size_t column = header_to_column[column_header];
+		const size_t column = header_to_column[column_header];
 
 		if (row >= rows) {
 			std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
 			return "";
 		}
 
-		if (shadow_data[row][column] != "") {
+		if (!shadow_data[row][column].empty()) {
 			return shadow_data[row][column];
 		}
 
@@ -142,31 +139,31 @@ namespace slk {
 			return "";
 		}
 
-		size_t column = header_to_column[column_header];
-		size_t row = header_to_row[row_header];
+		const size_t column = header_to_column[column_header];
+		const size_t row = header_to_row[row_header];
 
-		if (shadow_data[row][column] != "") {
+		if (!shadow_data[row][column].empty()) {
 			return shadow_data[row][column];
 		}
 
 		return table_data[row][column];
 	}
 
-	void SLK::copy_row(std::string row_header, std::string new_row_header) {
+	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
 			std::cout << "Uknown row header: " << row_header << "\n";
 			return;
 		}
 
-		size_t row = header_to_row[row_header];
+		const size_t row = header_to_row[row_header];
 
 		table_data.emplace_back(table_data[row]);
 		table_data[table_data.size() - 1][0] = new_row_header;
-		shadow_data.push_back(std::vector<std::string>(columns));
+		shadow_data.emplace_back(std::vector<std::string>(columns));
 		header_to_row.emplace(new_row_header, table_data.size() - 1);
 	}
 
-	void SLK::set_shadow_data(std::string column_header, std::string row_header, std::string data) {
+	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			std::cout << "Uknown column header: " << column_header << "\n";
 			return;
@@ -177,8 +174,8 @@ namespace slk {
 			return;
 		}
 
-		size_t column = header_to_column[column_header];
-		size_t row = header_to_row[row_header];
+		const size_t column = header_to_column[column_header];
+		const size_t row = header_to_row[row_header];
 
 		shadow_data[row][column] = data;
 	}

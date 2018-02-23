@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-bool InputHandler::key_pressed(Qt::Key key) {
+bool InputHandler::key_pressed(Qt::Key key) const {
 	return keys_pressed.count(key);
 }
 

@@ -5,7 +5,7 @@ public:
 	std::vector<uint8_t> buffer;
 	size_t position = 0;
 
-	BinaryReader(std::vector<uint8_t> buffer) : buffer(buffer) {}
+	explicit BinaryReader(const std::vector<uint8_t>& buffer) : buffer(buffer) {}
 
 	template<typename T>
 	T read() {
@@ -23,7 +23,7 @@ public:
 		}
 		std::string result = { reinterpret_cast<char*>(&buffer[position]), size };
 
-		if (size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
+		if (const size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
 			result.resize(pos);
 		}
 
@@ -48,7 +48,7 @@ public:
 		return result;
 	}
 
-	size_t remaining() {
+	size_t remaining() const {
 		return buffer.size() - position;
 	}
 };

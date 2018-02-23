@@ -13,15 +13,15 @@ namespace slk {
 		std::vector<std::vector<std::string>> shadow_data;
 
 		SLK() = default;
-		SLK(fs::path path, bool local = false);
+		SLK(const fs::path& path, bool local = false);
 
-		void load(fs::path, bool local = false);
+		void load(const fs::path&, bool local = false);
 
 		std::string data(std::string column_header, size_t row);
 		std::string data(std::string column_header, std::string row_header);
 
-		void copy_row(std::string row_header, std::string new_row_header);
+		void copy_row(const std::string& row_header, const std::string& new_row_header);
 
-		void set_shadow_data(std::string column_header, std::string row_header, std::string data);
+		void set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data);
 	};
 }

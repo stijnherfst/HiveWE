@@ -13,7 +13,7 @@ public:
 
 	void mouse_move_event(QMouseEvent* event);
 
-	bool key_pressed(Qt::Key key);
+	bool key_pressed(Qt::Key key) const;
 };
 
 extern InputHandler input_handler;

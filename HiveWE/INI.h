@@ -8,7 +8,7 @@ namespace ini {
 
 	public:
 		INI() = default;
-		INI(fs::path path);
+		INI(const fs::path& path);
 
 		void load(fs::path path);
 

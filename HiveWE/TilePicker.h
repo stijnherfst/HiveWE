@@ -6,8 +6,8 @@ class TilePicker : public QDialog {
 	Q_OBJECT
 
 public:
-	TilePicker(QWidget* parent, std::vector<std::string> from_id, std::vector<std::string> to_ids);
-	~TilePicker();
+	TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids);
+	~TilePicker() = default;
 
 signals:
 	void tile_chosen(std::string from_id, std::string to_id);

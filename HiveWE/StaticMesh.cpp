@@ -57,7 +57,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		}
 
 		for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
-			if (i.file_name == "") {
+			if (i.file_name.empty()) {
 				if (i.replaceable_id == 1) {
 					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\TeamColor\\TeamColor00.blp"));
 				} else if (i.replaceable_id == 2) {
@@ -101,28 +101,28 @@ void StaticMesh::render() {
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glEnableVertexAttribArray(1);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
 	if (render_jobs.size() < 10) {
 		shader->use();
 
-		for (auto&& j : render_jobs) {
-			gl->glUniformMatrix4fv(2, 1, GL_FALSE, &j[0][0]);
+		for (auto&& i : render_jobs) {
+			gl->glUniformMatrix4fv(2, 1, GL_FALSE, &i[0][0]);
 
-			for (auto&& i : entries) {
-				for (auto&& j : mtls->materials[i.material_id].layers) {
-					gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			for (auto&& j : entries) {
+				for (auto&& k : mtls->materials[j.material_id].layers) {
+					gl->glBindTextureUnit(0, textures[k.texture_id]->id);
 
 					gl->glEnable(GL_BLEND);
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
 					gl->glUniform1f(3, -1.f);
-					switch (j.blend_mode) {
+					switch (k.blend_mode) {
 					case 0:
 						gl->glDisable(GL_BLEND);
 						break;
@@ -146,7 +146,7 @@ void StaticMesh::render() {
 						break;
 					}
 
-					gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, (void*)(i.base_index * sizeof(uint16_t)), i.base_vertex);
+					gl->glDrawElementsBaseVertex(GL_TRIANGLES, j.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(j.base_index * sizeof(uint16_t)), j.base_vertex);
 				}
 			}
 		}
@@ -161,7 +161,7 @@ void StaticMesh::render() {
 		gl->glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
 		for (int i = 0; i < 4; i++) {
 			gl->glEnableVertexAttribArray(2 + i);
-			gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (const void*)(sizeof(glm::vec4) * i));
+			gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
 			gl->glVertexAttribDivisor(2 + i, 1);
 		}
 
@@ -196,7 +196,7 @@ void StaticMesh::render() {
 					break;
 				}
 
-				gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, (void*)(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+				gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 			}
 		}
 		gl->glDisableVertexAttribArray(2);
