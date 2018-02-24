@@ -319,4 +319,7 @@ ASALocalRun/
 
 # MSBuild Binary and Structured Log
 *.binlog
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2d1fababe9c6bf3d7d82f6bb521193d8fb5ab529
