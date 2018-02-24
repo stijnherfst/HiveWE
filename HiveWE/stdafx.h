@@ -20,11 +20,7 @@ namespace fs = std::experimental::filesystem;
 
 #include <QtWidgets>
 #include <QOpenGLWidget>
-<<<<<<< HEAD
-=======
 
-
->>>>>>> 2d1fababe9c6bf3d7d82f6bb521193d8fb5ab529
 #include <qopenglfunctions_3_3_core.h>
 #include <FlowLayout.h>
 
