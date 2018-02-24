@@ -582,6 +582,7 @@ int Terrain::real_tile_texture(int x, int y) {
 }
 
 int Terrain::get_tile_variation(int ground_texture, int variation) {
+
 	const bool extended = ground_textures[ground_texture]->width == ground_textures[ground_texture]->height * 2;
 
 	if (extended) {
@@ -602,12 +603,14 @@ int Terrain::get_tile_variation(int ground_texture, int variation) {
 }
 
 glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
+
 	const int bottom_left = real_tile_texture(x, y);
 	const int bottom_right = real_tile_texture(x + 1, y);
 	const int top_left = real_tile_texture(x, y + 1);
 	const int top_right = real_tile_texture(x + 1, y + 1);
 
 	std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
+
 	glm::u16vec4 tiles;
 	int component = 1;
 
@@ -616,10 +619,12 @@ glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
 
 	std::bitset<4> index;
 	for (auto&& texture : set) {
+
 		index[0] = bottom_right == texture;
 		index[1] = bottom_left == texture;
 		index[2] = top_right == texture;
 		index[3] = top_left	== texture;
+
 
 		tiles[component++] = texture * 32 + index.to_ulong() + 1;
 	}

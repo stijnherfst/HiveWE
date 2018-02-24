@@ -4,6 +4,9 @@
 
 int main(int argc, char *argv[]) {
 	QApplication a(argc, argv);
+	a.setApplicationName("HiveWE");
+	a.setOrganizationName("HiveWE");
+	a.setOrganizationDomain("hiveworkshop.com");
 
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
