@@ -7,12 +7,12 @@ void FPSCamera::update(double delta) {
 	}
 
 	if (input_handler.key_pressed(Qt::Key_W)) {
-		position += direction * speed * (float)delta;
+		position += direction * speed * float(delta);
 	} else if (input_handler.key_pressed(Qt::Key_S)) {
-		position -= direction * speed * (float)delta;
+		position -= direction * speed * float(delta);
 	}
 
-	glm::vec3 displacement = glm::normalize(glm::cross(direction, up)) * speed * (float)delta;
+	const glm::vec3 displacement = glm::normalize(glm::cross(direction, up)) * speed * float(delta);
 	if (input_handler.key_pressed(Qt::Key_A)) {
 		position -= displacement;
 	} else if (input_handler.key_pressed(Qt::Key_D)) {
@@ -20,9 +20,9 @@ void FPSCamera::update(double delta) {
 	}
 
 	if (input_handler.key_pressed(Qt::Key_Space)) {
-		position.z += 1 * speed * (float)delta;
+		position.z += 1 * speed * float(delta);
 	} else if (input_handler.key_pressed(Qt::Key_Control)) {
-		position.z -= 1 * speed * (float)delta;
+		position.z -= 1 * speed * float(delta);
 	}
 	
 	direction = glm::vec3(
@@ -39,8 +39,8 @@ void FPSCamera::update(double delta) {
 }
 
 void FPSCamera::mouse_move_event(QMouseEvent* event) {
-	int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
-	int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
+	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
+	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
 	horizontal_angle += diffx * 0.025;
 	vertical_angle += diffy * 0.025;
@@ -71,8 +71,8 @@ void TPSCamera::update(double delta) {
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	if (event->buttons() == Qt::RightButton) {
-		int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
-		int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
+		const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
+		const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
 		position += glm::vec3(-diffx * 0.025, diffy * 0.025, 0);
 

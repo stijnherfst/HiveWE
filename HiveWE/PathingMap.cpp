@@ -1,13 +1,13 @@
 #include "stdafx.h"
 
 bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
-	std::string magic_number = reader.read_string(4);
+	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "MP3W") {
 		std::cout << "Invalid war3map.w3e file: Magic number is not MP3W" << std::endl;
 		return false;
 	}
 
-	int version = reader.read<uint32_t>();
+	const int version = reader.read<uint32_t>();
 	if (version != 0) {
 		std::cout << "Unknown Pathmap version. Attempting to load, but may crash.";
 	}
@@ -31,7 +31,7 @@ bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 	return true;
 }
 
-void PathingMap::save() {
+void PathingMap::save() const {
 	BinaryWriter writer;
 	writer.write_string("MP3W");
 	writer.write(0);
@@ -40,7 +40,7 @@ void PathingMap::save() {
 	writer.write_vector(pathing_cells);
 	
 	HANDLE handle;
-	bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wpm", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wpm", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
 	if (!success) {
 		std::cout << GetLastError() << "\n";
 	}

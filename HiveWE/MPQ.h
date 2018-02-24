@@ -8,38 +8,40 @@ namespace mpq {
 		
 		File() = default;
 		~File();
-		File(File&& move) {
+		File(File&& move) noexcept {
 			handle = move.handle;
 			move.handle = nullptr;
 		}
 		File(const File&) = default;
 		File& operator=(const File&) = default;
-		File& operator=(File&& move) {
+		File& operator=(File&& move) noexcept {
 			handle = move.handle;
 			move.handle = nullptr;
 			return *this;
 		}
 
 
-		std::vector<uint8_t> read();
-		void close();
+		std::vector<uint8_t> read() const;
+		void close() const;
 	};
 
 	class MPQ {
 	public:
 		HANDLE handle;
+		fs::path local_path;
 
 		MPQ() = default;
-		MPQ(const fs::path& path, unsigned long flags = 0);
-		MPQ(File archive, unsigned long flags = 0);
+
+		explicit MPQ(const fs::path& path, unsigned long flags = 0);
+		explicit MPQ(File archive, unsigned long flags = 0);
 		~MPQ();
-		MPQ(MPQ&& move) {
+		MPQ(MPQ&& move) noexcept {
 			handle = move.handle;
 			move.handle = nullptr;
 		}
 		MPQ(const MPQ&) = default;
 		MPQ& operator=(const MPQ&) = delete;
-		MPQ& operator=(MPQ&& move) {
+		MPQ& operator=(MPQ&& move) noexcept {
 			handle = move.handle;
 			move.handle = nullptr;
 			return *this;
@@ -49,8 +51,8 @@ namespace mpq {
 		void open(File& archive, unsigned long flags = 0);
 		void close();
 
-		File file_open(const fs::path& path);
-		bool file_exists(const fs::path& path);
+		File file_open(const fs::path& path) const;
+		bool file_exists(const fs::path& path) const;
 	};
 
 }

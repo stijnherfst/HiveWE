@@ -47,14 +47,14 @@ void Map::load(fs::path path) {
 }
 
 bool Map::save(fs::path path) {
-	fs::path complete_path = fs::system_complete(path);
+	const fs::path complete_path = fs::system_complete(path);
 	if (complete_path != filesystem_path) {
 		try {
 			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);
 		} catch (fs::filesystem_error& e) {
-			QMessageBox Msgbox;
-			Msgbox.setText(e.what());
-			Msgbox.exec();
+			QMessageBox msgbox;
+			msgbox.setText(e.what());
+			msgbox.exec();
 			return false;
 		}
 
@@ -79,7 +79,7 @@ void Map::play_test() {
 	}
 
 	QProcess* warcraft = new QProcess;
-	QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
+	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
 	arguments << "-loadfile" << QString::fromStdString(fs::system_complete("Data/Temporary/temp.w3x").string());
 

@@ -22,7 +22,7 @@ public:
 	void setGeometry(const QRect &rect) override;
 	QSize sizeHint() const override;
 	QLayoutItem *takeAt(int index) override;
-	QList<QLayoutItem*> items();
+	QList<QLayoutItem*> items() const;
 	void clear();
 
 private:

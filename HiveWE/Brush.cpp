@@ -11,7 +11,7 @@ void Brush::create() {
 	//	}
 	//}
 
-	int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
+	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
 	for (int i = 0; i < this->size * 2 + 1; i++) {
@@ -30,17 +30,17 @@ void Brush::create() {
 	shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 
-void Brush::set_position(const glm::vec2 position) {
-	glm::vec2 center_position = position - size * 0.25f;
+void Brush::set_position(const glm::vec2& position) {
+	const glm::vec2 center_position = position - size * 0.25f;
 	this->position = glm::floor(center_position);
 	uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
 }
 
-void Brush::set_size(const int size) {
-	int change = size - this->size;
+void Brush::set_size(int size) {
+	const int change = size - this->size;
 
 	this->size = std::clamp(size, 0, 240);
-	int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
+	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
 	brush.clear();
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
@@ -56,8 +56,8 @@ void Brush::set_size(const int size) {
 	set_position(glm::vec2(position) + glm::vec2(uv_offset + size - change) * 0.25f);
 }
 
-void Brush::render(Terrain& terrain) {
-	glm::ivec2 center_position = position + (size + uv_offset) / 4;
+void Brush::render(Terrain& terrain) const {
+	const glm::ivec2 center_position = position + (size + uv_offset) / 4;
 	if (center_position.x < 0 || center_position.y < 0 || center_position.x > terrain.width || center_position.y > terrain.height) {
 		return;
 	}
@@ -67,7 +67,7 @@ void Brush::render(Terrain& terrain) {
 	shader->use();
 
 	// +3 for uv_offset so it can move sub terrain cell
-	int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
+	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform2f(2, position.x, position.y);
@@ -80,7 +80,7 @@ void Brush::render(Terrain& terrain) {
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
 	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
@@ -90,9 +90,9 @@ void Brush::render(Terrain& terrain) {
 }
 
 void PathingBrush::apply(PathingMap& pathing) {
-	int y = position.y * 4 + uv_offset.y;
-	int x = position.x * 4 + uv_offset.x;
-	int cells = this->size * 2 + 1;
+	const int y = position.y * 4 + uv_offset.y;
+	const int x = position.x * 4 + uv_offset.x;
+	const int cells = this->size * 2 + 1;
 
 	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, pathing.width, pathing.height });
 
@@ -100,11 +100,11 @@ void PathingBrush::apply(PathingMap& pathing) {
 		return;
 	}
 
-	int offset = area.y() * pathing.width + area.x();
+	const int offset = area.y() * pathing.width + area.x();
 	
 	for (int i = 0; i < area.width(); i++) {
 		for (int j = 0; j < area.height(); j++) {
-			int index = offset + j * pathing.width + i;
+			const int index = offset + j * pathing.width + i;
 			switch (operation) {
 				case Operation::replace:
 					pathing.pathing_cells[index] &= ~0b00001110;

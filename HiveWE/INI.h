@@ -2,17 +2,17 @@
 
 namespace ini {
 	class INI {
-	
 		// header to items to content
 		std::map<std::string, std::map<std::string, std::string>> ini_data;
 
 	public:
 		INI() = default;
-		INI(fs::path path);
+		INI(const fs::path& path);
 
-		void load(fs::path path);
+		void load(const fs::path& path);
+		void substitute(const INI& ini, const std::string& section);
 
-		std::map<std::string, std::string> section(std::string section);
-		std::string data(std::string section, std::string key);
+		std::map<std::string, std::string> section(const std::string& section) const;
+		std::string data(const std::string& section, const std::string& key) const;
 	};
 }

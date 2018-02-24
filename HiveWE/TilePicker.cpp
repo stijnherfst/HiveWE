@@ -8,8 +8,8 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 
 	slk::SLK& slk = map.terrain.terrain_slk;
 	for (auto&& i : from_ids) {
-		auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
-		auto icon = texture_to_icon(image->data, image->width, image->height);
+		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
+		const auto icon = texture_to_icon(image->data, image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -24,8 +24,8 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	}
 
 	for (auto&& i : to_ids) {
-		auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
-		auto icon = texture_to_icon(image->data, image->width, image->height);
+		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
+		const auto icon = texture_to_icon(image->data, image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -46,12 +46,9 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-TilePicker::~TilePicker() {
-}
-
 void TilePicker::accepted() {
-	std::string from_tile = from_group->checkedButton()->property("tileID").toString().toStdString();
-	std::string to_tile = to_group->checkedButton()->property("tileID").toString().toStdString();
+	const std::string from_tile = from_group->checkedButton()->property("tileID").toString().toStdString();
+	const std::string to_tile = to_group->checkedButton()->property("tileID").toString().toStdString();
 	emit tile_chosen(from_tile, to_tile);
 	close();
 	deleteLater();

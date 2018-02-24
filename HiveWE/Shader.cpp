@@ -1,5 +1,5 @@
 #include "stdafx.h"
 
-Shader::Shader(const std::initializer_list<fs::path> paths) {
+Shader::Shader(std::initializer_list<fs::path> paths) {
 	program = compile_shader(*paths.begin(), *(paths.begin() + 1));
 }

@@ -108,13 +108,13 @@ public:
 	void render();
 
 
-	void change_tileset(std::vector<std::string> new_tileset_ids, std::vector<int> new_to_old);
+	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
 
-	float corner_height(Corner corner) const;
-	float corner_height(const int x, const int y) const;
+	static float corner_height(Corner corner);
+	float corner_height(int x, int y) const;
 	float corner_water_height(Corner corner) const;
 
 	int real_tile_texture(int x, int y);
-	int get_tile_variation(const Corner& tile_corner);
+	int get_tile_variation(int ground_texture, int variation);
 	glm::u16vec4 get_texture_variations(int x, int y);
 };

@@ -8,12 +8,14 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
 	ini::INI world_edit_data("UI/WorldEditData.txt");
-	ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
+	const ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
+
+	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	slk::SLK& slk = map.terrain.terrain_slk;
 	for (auto&& i : map.terrain.tileset_ids) {
-		auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
-		auto icon = texture_to_icon(image->data, image->width, image->height);
+		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
+		const auto icon = texture_to_icon(image->data, image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -28,10 +30,8 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	}
 
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
-		std::string tileset_key = split(value, ',').front();
-		std::string name = world_edit_strings.data("WorldEditStrings", tileset_key);
-
-		ui.tileset->addItem(QString::fromStdString(name), QString::fromStdString(key));
+		const std::string tileset_key = split(value, ',').front();
+		ui.tileset->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 
 	update_available_tiles();
@@ -54,8 +54,8 @@ TileSetter::~TileSetter() {
 }
 
 
-void TileSetter::add_tile() {
-	auto available_button = available_group->checkedButton();
+void TileSetter::add_tile() const {
+	const auto available_button = available_group->checkedButton();
 	if (!available_button) {
 		return;
 	}
@@ -84,7 +84,7 @@ void TileSetter::add_tile() {
 //	adjustSize();
 }
 
-void TileSetter::remove_tile() {
+void TileSetter::remove_tile() const {
 	auto selected_button = selected_group->checkedButton();
 	if (!selected_button) {
 		return;
@@ -97,7 +97,7 @@ void TileSetter::remove_tile() {
 	ui.additionalAdd->setEnabled(true);
 }
 
-void TileSetter::update_available_tiles() {
+void TileSetter::update_available_tiles() const {
 	available_layout->clear();
 
 	std::string tileset = ui.tileset->currentData().toString().toStdString();
@@ -108,8 +108,8 @@ void TileSetter::update_available_tiles() {
 			continue;
 		}
 
-		auto image = resource_manager.load<Texture>(slk.data("dir", key) + "\\" + slk.data("file", key) + ".blp");
-		auto icon = texture_to_icon(image->data, image->width, image->height);
+		const auto image = resource_manager.load<Texture>(slk.data("dir", key) + "\\" + slk.data("file", key) + ".blp");
+		const auto icon = texture_to_icon(image->data, image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -125,31 +125,31 @@ void TileSetter::update_available_tiles() {
 	//	adjustSize();
 }
 
-void TileSetter::to_tile_clicked(QAbstractButton* button) {
+void TileSetter::to_tile_clicked(QAbstractButton* button) const {
 	ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
 
-	int index = selected_layout->indexOf(button);
+	const int index = selected_layout->indexOf(button);
 	ui.selectedShiftLeft->setEnabled(index != 0);
 	ui.selectedShiftRight->setEnabled(index != selected_layout->count() - 1);
 
 	// Check if cliff tile
-	std::string tile_id = button->property("tileID").toString().toStdString();
+	const std::string tile_id = button->property("tileID").toString().toStdString();
 	auto& cliff_tiles = map.terrain.cliff_to_ground_texture;
 	if (map.terrain.ground_texture_to_id.count(tile_id)) {
-		auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map.terrain.ground_texture_to_id[tile_id]);
+		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map.terrain.ground_texture_to_id[tile_id]);
 
 		ui.selectedRemove->setEnabled(is_cliff_tile == cliff_tiles.end());
 	}
 }
 
 
-void TileSetter::shift_left() {
-	auto selected_button = selected_group->checkedButton();
+void TileSetter::shift_left() const {
+	const auto selected_button = selected_group->checkedButton();
 	if (!selected_button) {
 		return;
 	}
 
-	int index = selected_layout->indexOf(selected_button);
+	const int index = selected_layout->indexOf(selected_button);
 	selected_layout->moveWidget(index - 1, selected_button);
 
 	if (index - 1 == 0) {
@@ -159,13 +159,13 @@ void TileSetter::shift_left() {
 	ui.selectedShiftRight->setEnabled(true);
 }
 
-void TileSetter::shift_right() {
-	auto selected_button = selected_group->checkedButton();
+void TileSetter::shift_right() const {
+	const auto selected_button = selected_group->checkedButton();
 	if (!selected_button) {
 		return;
 	}
 
-	int index = selected_layout->indexOf(selected_button);
+	const int index = selected_layout->indexOf(selected_button);
 	selected_layout->moveWidget(index + 1, selected_button);
 
 	if (index + 1 == selected_layout->count() - 1) {
@@ -182,10 +182,10 @@ void TileSetter::save_tiles() {
 	}
 
 	from_to_id.resize(map.terrain.tileset_ids.size());
-	for (int i = 0; i < map.terrain.tileset_ids.size(); i++) {
-		std::string from_id = map.terrain.tileset_ids[i];
+	for (size_t i = 0; i < map.terrain.tileset_ids.size(); i++) {
+		const std::string from_id = map.terrain.tileset_ids[i];
 
-		auto found = std::find(to_ids.begin(), to_ids.end(), from_id);
+		const auto found = std::find(to_ids.begin(), to_ids.end(), from_id);
 		if (found != to_ids.end()) {
 			from_to_id[i] =  found - to_ids.begin();
 		} else {

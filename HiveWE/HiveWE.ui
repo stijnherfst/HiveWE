@@ -159,7 +159,7 @@
   <customwidget>
    <class>GLWidget</class>
    <extends>QWidget</extends>
-   <header>glwidget.h</header>
+   <header>GLWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
