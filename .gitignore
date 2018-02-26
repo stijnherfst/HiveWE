@@ -1,6 +1,7 @@
 ![Dd]ependencies/
 
 .mpq
+.w3x
 
 # User-specific files
 *.suo
@@ -320,3 +321,4 @@ ASALocalRun/
 # MSBuild Binary and Structured Log
 *.binlog
 
+/HiveWE/Data/Temporary

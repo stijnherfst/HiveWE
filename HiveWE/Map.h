@@ -5,10 +5,12 @@ public:
 	Terrain terrain;
 	PathingMap pathing_map;
 	Doodads doodads;
+	Units units;
 
 	PathingBrush brush;
 
 	bool render_doodads = true;
+	bool render_units = true;
 	bool render_pathing = true;
 	bool render_brush = true;
 
@@ -20,8 +22,9 @@ public:
 	double terrain_tiles_time;
 	double terrain_water_time;
 	double terrain_cliff_time;
-	double queue_time;
 	double doodad_time;
+	double unit_time;
+	double render_time;
 
 	~Map();
 

@@ -38,6 +38,7 @@ public:
     QAction *actionBrush;
     QAction *actionTileSetter;
     QAction *actionTileReplace;
+    QAction *actionUnits;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -83,6 +84,10 @@ public:
         actionTileSetter->setObjectName(QStringLiteral("actionTileSetter"));
         actionTileReplace = new QAction(HiveWEClass);
         actionTileReplace->setObjectName(QStringLiteral("actionTileReplace"));
+        actionUnits = new QAction(HiveWEClass);
+        actionUnits->setObjectName(QStringLiteral("actionUnits"));
+        actionUnits->setCheckable(true);
+        actionUnits->setChecked(true);
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -120,6 +125,7 @@ public:
         menuFile->addAction(actionTest_Map);
         menuWindow->addAction(menuNew_Pallete->menuAction());
         menuNew_Pallete->addAction(actionPathing_Pallete);
+        menuView->addAction(actionUnits);
         menuView->addAction(actionDoodads);
         menuView->addAction(actionPathing);
         menuView->addAction(actionBrush);
@@ -151,6 +157,10 @@ public:
         actionBrush->setText(QApplication::translate("HiveWEClass", "Brush", nullptr));
         actionTileSetter->setText(QApplication::translate("HiveWEClass", "Modify Tileset...", nullptr));
         actionTileReplace->setText(QApplication::translate("HiveWEClass", "Replace Tile...", nullptr));
+        actionUnits->setText(QApplication::translate("HiveWEClass", "Units", nullptr));
+#ifndef QT_NO_SHORTCUT
+        actionUnits->setShortcut(QApplication::translate("HiveWEClass", "P", nullptr));
+#endif // QT_NO_SHORTCUT
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));

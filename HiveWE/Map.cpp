@@ -10,21 +10,21 @@ void Map::load(fs::path path) {
 	filesystem_path = fs::system_complete(path);
 
 	// Terrain
-	BinaryReader war3map_w3e = BinaryReader(hierarchy.map.file_open("war3map.w3e").read());
+	BinaryReader war3map_w3e(hierarchy.map.file_open("war3map.w3e").read());
 	bool success = terrain.load(war3map_w3e);
 	if (!success) {
 		return;
 	}
 
 	// Pathing Map
-	BinaryReader war3map_wpm = BinaryReader(hierarchy.map.file_open("war3map.wpm").read());
+	BinaryReader war3map_wpm(hierarchy.map.file_open("war3map.wpm").read());
 	success = pathing_map.load(war3map_wpm, terrain);
 	if (!success) {
 		return;
 	}
 
 	// Doodads
-	BinaryReader war3map_doo = BinaryReader(hierarchy.map.file_open("war3map.doo").read());
+	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
 	success = doodads.load(war3map_doo, terrain);
 
 	if (hierarchy.map.file_exists("war3map.w3d")) {
@@ -38,6 +38,18 @@ void Map::load(fs::path path) {
 	}
 
 	doodads.create();
+
+	// Units
+	BinaryReader war3mapUnits_doo(hierarchy.map.file_open("war3mapUnits.doo").read());
+	success = units.load(war3mapUnits_doo, terrain);
+
+	if (hierarchy.map.file_exists("war3map.w3u")) {
+		BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
+		units.load_modifications(war3map_w3u);
+	}
+
+	units.create();
+
 
 	brush.create();
 
@@ -103,7 +115,14 @@ void Map::render() {
 	}
 
 	end = std::chrono::high_resolution_clock::now();
-	queue_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+
+	begin = std::chrono::high_resolution_clock::now();
+	if (render_units) {
+		units.render();
+	}
+	end = std::chrono::high_resolution_clock::now();
+	unit_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	if (render_brush) {
 		brush.render(terrain);
@@ -116,7 +135,7 @@ void Map::render() {
 	}
 
 	end = std::chrono::high_resolution_clock::now();
-	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	render_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	meshes.clear();
 }

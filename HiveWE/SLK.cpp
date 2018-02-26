@@ -149,6 +149,23 @@ namespace slk {
 		return table_data[row][column];
 	}
 
+	void SLK::merge(const slk::SLK& slk) {
+		if (rows != slk.rows) {
+			std::cout << "The two slk files have an incompatible amount of rows. Rows will be skipped. " << rows << " vs " << slk.rows << "\n";
+		}
+
+		for (int i = 1; i < slk.columns; i++) {
+			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
+		}
+		columns = columns + slk.columns - 1;
+
+		// We skip the ID column
+		for (int i = 0; i < std::min(rows, slk.rows); i++) {
+			table_data[i].insert(table_data[i].end(), slk.table_data[i].begin() + 1, slk.table_data[i].end());
+			shadow_data[i].resize(columns);
+		}
+	}
+
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
 			std::cout << "Uknown row header: " << row_header << "\n";

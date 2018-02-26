@@ -70,7 +70,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/Test.w3x");
+	map.load(L"Data/MCFC7.0.w3x");
 }
 
 void GLWidget::resizeGL(int w, int h) {
@@ -111,8 +111,9 @@ void GLWidget::paintGL() {
 	//	p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
 	//	p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
 	//	p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map.terrain_water_time)));
-	//p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.queue_time)));
-	//p.drawText(10, 95, QString::fromStdString("Doodad Drawing: " + std::to_string(map.doodad_time)));
+	//p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.doodad_time)));
+	//p.drawText(10, 95, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
+	//p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
 
 	gl->glBindVertexArray(vao);
 }

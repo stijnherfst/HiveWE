@@ -12,10 +12,10 @@ namespace blp {
 		}
 
 		const uint32_t content = reader.read<uint32_t>();
-		uint32_t alpha_bits = reader.read<uint32_t>();
+		const uint32_t alpha_bits = reader.read<uint32_t>();
 
-		uint32_t width = reader.read<uint32_t>();
-		uint32_t height = reader.read<uint32_t>();
+		const uint32_t width = reader.read<uint32_t>();
+		const uint32_t height = reader.read<uint32_t>();
 
 		// Mipmaplocator
 		uint32_t extra = reader.read<uint32_t>();
@@ -31,7 +31,7 @@ namespace blp {
 			std::copy(position, position + header_size, reader.buffer.begin() + mipmap_offsets[0] - header_size);
 
 			// Decode JPEG content
-			tjhandle handle = tjInitDecompress();
+			const tjhandle handle = tjInitDecompress();
 			buffer = new uint8_t[width * height * tjPixelSize[TJPF_CMYK]];
 			const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[0] - header_size, header_size + mipmap_sizes[0], buffer, width, 0, height, TJPF_CMYK, 0); // Actually BGRA
 			tjDestroy(handle);
@@ -54,8 +54,6 @@ namespace blp {
 				buffer[i * 4 + 3] = 255;
 			}
 		}
-
-		
 
 		return { buffer, width, height };
 	}

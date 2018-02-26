@@ -32,7 +32,6 @@ namespace fs = std::experimental::filesystem;
 #undef _DLL
 #include <StormLib.h>
 
-#include "Utilities.h"
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
 #include "InputHandler.h"
@@ -43,6 +42,8 @@ namespace fs = std::experimental::filesystem;
 #include "SLK.h"
 #include "INI.h"
 #include "MDX.h"
+
+#include "Utilities.h"
 
 // Resource types
 #include "Hierarchy.h"
@@ -55,6 +56,7 @@ namespace fs = std::experimental::filesystem;
 #include "Terrain.h"
 #include "PathingMap.h"
 #include "Doodads.h"
+#include "Units.h"
 #include "Brush.h"
 #include "Map.h"
 

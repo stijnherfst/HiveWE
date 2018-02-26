@@ -3,7 +3,7 @@
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!\n";
+		std::cout << "Invalid war3map.w3e file: Magic number is not W3do\n";
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
@@ -56,10 +56,10 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	//	std::cout << "\n";
 	//}
 
-	doodads_slk = slk::SLK("Doodads\\Doodads.slk");
-	doodads_meta_slk = slk::SLK("Doodads\\DoodadMetaData.slk");
-	destructibles_slk = slk::SLK("Units\\DestructableData.slk");
-	destructibles_meta_slk = slk::SLK("Units\\DestructableMetaData.slk");
+	doodads_slk = slk::SLK("Doodads/Doodads.slk");
+	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
+	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
 }
@@ -218,54 +218,52 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		if (id_to_mesh.find(i.id) == id_to_mesh.end()) {
-			if (id_to_mesh.find(i.id + std::to_string(i.variation)) != id_to_mesh.end()) {
-				continue;
-			}
+		if (id_to_mesh.find(i.id + std::to_string(i.variation)) != id_to_mesh.end()) {
+			continue;
+		}
 
-			fs::path mesh_path = doodads_slk.data("file", i.id);
-			std::string variations = doodads_slk.data("numVar", i.id);
-			//std::string replacable_id;
-			fs::path texture_name;
+		fs::path mesh_path = doodads_slk.data("file", i.id);
+		std::string variations = doodads_slk.data("numVar", i.id);
+		//std::string replacable_id;
+		fs::path texture_name;
 
-			if (mesh_path.empty()) {
-				mesh_path = destructibles_slk.data("file", i.id);
-				texture_name = destructibles_slk.data("texFile", i.id);
-				//replacable_id = destructibles_slk.data("texID", i.id);
-			}
+		if (mesh_path.empty()) {
+			mesh_path = destructibles_slk.data("file", i.id);
+			texture_name = destructibles_slk.data("texFile", i.id);
+			//replacable_id = destructibles_slk.data("texID", i.id);
+		}
 
-			if (variations.empty()) {
-				variations = destructibles_slk.data("numVar", i.id);
-			}
-			std::string full_id = i.id + std::to_string(i.variation);
+		if (variations.empty()) {
+			variations = destructibles_slk.data("numVar", i.id);
+		}
+		std::string full_id = i.id + std::to_string(i.variation);
 
-			const std::string stem = mesh_path.stem().string();
-			mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(i.variation)));
-			mesh_path.replace_extension(".mdx");
+		const std::string stem = mesh_path.stem().string();
+		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(i.variation)));
+		mesh_path.replace_extension(".mdx");
 
-			// Use base model when variation doesn't exist
-			if (!hierarchy.file_exists(mesh_path)) {
-				mesh_path.remove_filename() /= stem +".mdx";
-			}
+		// Use base model when variation doesn't exist
+		if (!hierarchy.file_exists(mesh_path)) {
+			mesh_path.remove_filename() /= stem +".mdx";
+		}
 
-			// Mesh doesnt exist at all
-			if (!hierarchy.file_exists(mesh_path)) {
-				std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
-				// Load something random to visualise
-				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Doodads/Ashenvale/Props/AshenObilisk/AshenObilisk.mdx"));
-				continue;
-			}
+		// Mesh doesnt exist at all
+		if (!hierarchy.file_exists(mesh_path)) {
+			std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
+			// Load something random to visualise
+			id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Doodads/Ashenvale/Props/AshenObilisk/AshenObilisk.mdx"));
+			continue;
+		}
 
-			if (id_to_mesh.find(full_id) == id_to_mesh.end()) {
-				id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
-			}
+		if (id_to_mesh.find(full_id) == id_to_mesh.end()) {
+			id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
+		}
 
-			// ToDo support multiple replacable ids
-			if (!texture_name.empty() && texture_name != "_") {
-				if (!id_to_mesh[full_id]->textures.empty() && id_to_mesh[full_id]->textures[0]->id == 0) {
-					texture_name.replace_extension(".blp");
-					id_to_mesh[full_id]->textures[0] = resource_manager.load<GPUTexture>(texture_name.string());
-				}
+		// ToDo support multiple replacable ids
+		if (!texture_name.empty() && texture_name != "_") {
+			if (!id_to_mesh[full_id]->textures.empty() && id_to_mesh[full_id]->textures[0]->id == 0) {
+				texture_name.replace_extension(".blp");
+				id_to_mesh[full_id]->textures[0] = resource_manager.load<GPUTexture>(texture_name.string());
 			}
 		}
 	}

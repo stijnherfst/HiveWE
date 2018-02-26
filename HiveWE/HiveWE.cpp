@@ -16,6 +16,7 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
 	connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
 	connect(ui.actionTest_Map, &QAction::triggered, [&]() { map.play_test(); });
+	connect(ui.actionUnits, &QAction::triggered, [&](bool checked) { map.render_units = checked; });
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });

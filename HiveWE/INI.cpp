@@ -39,15 +39,12 @@ namespace ini {
 
 	/// Replaces all values (not keys) which match one of the keys in substitution INI
 	void INI::substitute(const INI& ini, const std::string& section) {
-		for (auto&&[section_key, section_value] : ini_data) {
+		for (auto&& [section_key, section_value] : ini_data) {
 			for (auto&& [key, value] : section_value) {
-				if (value.find(',')) {
-					auto parts = split(value, ',');
-					for(auto&& i : parts) {
-						std::string b = ini.data(section, i);
-						if (!b.empty()) {
-							value = b;
-						}
+				for (auto&& part : split(value, ',')) {
+					std::string westring = ini.data(section, part);
+					if (!westring.empty()) {
+						ini_data[section_key][key] = westring;
 					}
 				}
 			}

@@ -115,6 +115,50 @@ fs::path find_warcraft_directory() {
 	}
 }
 
+void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, bool modification) {
+	const uint32_t objects = reader.read<uint32_t>();
+	for (size_t i = 0; i < objects; i++) {
+		const std::string original_id = reader.read_string(4);
+		const std::string modified_id = reader.read_string(4);
+
+		if (modification) {
+			base_data.copy_row(original_id, modified_id);
+		}
+
+		const uint32_t modifications = reader.read<uint32_t>();
+
+		for (size_t j = 0; j < modifications; j++) {
+			const std::string modification_id = reader.read_string(4);
+			const uint32_t type = reader.read<uint32_t>();
+
+			const std::string column_header = meta_data.data("field", modification_id);
+
+			std::string data;
+			switch (type) {
+				case 0:
+					data = std::to_string(reader.read<int>());
+					break;
+				case 1:
+				case 2:
+					data = std::to_string(reader.read<float>());
+					break;
+				case 3:
+					data = reader.read_c_string();
+					reader.position += 1;
+					break;
+				default: 
+					std::cout << "Unknown data type " << type << " while loading modification table.";
+			}
+			reader.position += 4;
+			if (modification) {
+				base_data.set_shadow_data(column_header, modified_id, data);
+			} else {
+				base_data.set_shadow_data(column_header, original_id, data);
+			}
+		}
+	}
+}
+
 QIcon texture_to_icon(uint8_t* data, int width, int height) {
 	QImage temp_image = QImage(data, width, height, QImage::Format::Format_ARGB32);
 	const int size = height / 4;

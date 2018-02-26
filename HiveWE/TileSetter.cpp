@@ -9,7 +9,6 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 
 	ini::INI world_edit_data("UI/WorldEditData.txt");
 	const ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
-
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	slk::SLK& slk = map.terrain.terrain_slk;
@@ -54,7 +53,7 @@ TileSetter::~TileSetter() {
 }
 
 
-void TileSetter::add_tile() const {
+void TileSetter::add_tile() {
 	const auto available_button = available_group->checkedButton();
 	if (!available_button) {
 		return;
@@ -81,7 +80,6 @@ void TileSetter::add_tile() const {
 	if (selected_group->buttons().size() >= 16) {
 		ui.additionalAdd->setDisabled(true);
 	}
-//	adjustSize();
 }
 
 void TileSetter::remove_tile() const {

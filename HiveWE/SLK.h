@@ -20,6 +20,7 @@ namespace slk {
 		std::string data(std::string column_header, size_t row);
 		std::string data(std::string column_header, std::string row_header);
 
+		void merge(const slk::SLK& slk);
 		void copy_row(const std::string& row_header, const std::string& new_row_header);
 
 		void set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data);
