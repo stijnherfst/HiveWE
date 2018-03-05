@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
@@ -14,6 +15,7 @@
 #include <string>
 #include <variant>
 #include <regex>
+#include <cctype>
 
 using namespace std::literals::string_literals;
 namespace fs = std::experimental::filesystem;
@@ -39,8 +41,8 @@ namespace fs = std::experimental::filesystem;
 // File formats
 #include "MPQ.h"
 #include "BLP.h"
-#include "SLK.h"
 #include "INI.h"
+#include "SLK.h"
 #include "MDX.h"
 
 #include "Utilities.h"

@@ -3,27 +3,6 @@
 QOpenGLFunctions_4_5_Core* gl;
 Shapes shapes;
 
-//unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *height, int *channels, int force_channels) {
-//	unsigned char* image = SOIL_load_image(filename, width, height, channels, force_channels);
-//
-//	int i, j;
-//	for (j = 0; j * 2 < *height; ++j)
-//	{
-//		int index1 = j * *width * *channels;
-//		int index2 = (*height - 1 - j) * *width * *channels;
-//		for (i = *width * *channels; i > 0; --i)
-//		{
-//			unsigned char temp = image[index1];
-//			image[index1] = image[index2];
-//			image[index2] = temp;
-//			++index1;
-//			++index2;
-//		}
-//	}
-//
-//	return image;
-//}
-
 void Shapes::init() {
 	gl->glCreateBuffers(1, &vertex_buffer);
 	gl->glNamedBufferData(vertex_buffer, quad_vertices.size() * sizeof(glm::vec2), quad_vertices.data(), GL_STATIC_DRAW);
@@ -32,7 +11,7 @@ void Shapes::init() {
 	gl->glNamedBufferData(index_buffer, quad_indices.size() * sizeof(unsigned int) * 3, quad_indices.data(), GL_STATIC_DRAW);
 }
 
-std::vector<std::string> split(const std::string& string, char delimiter) {
+std::vector<std::string> split(const std::string& string, const char delimiter) {
 	std::vector<std::string> elems;
 	std::stringstream ss(string);
 
@@ -41,6 +20,10 @@ std::vector<std::string> split(const std::string& string, char delimiter) {
 		elems.push_back(item);
 	}
 	return elems;
+}
+
+bool is_number(const std::string& s) {
+	return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
 
 GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_shader) {
@@ -106,16 +89,16 @@ std::string read_text_file(const std::string& path) {
 }
 
 fs::path find_warcraft_directory() {
-	if (fs::exists(L"C:/Program Files (x86)/Warcraft III/War3Patch.mpq")) {
+	if (fs::exists(L"C:/Program Files (x86)/Warcraft III/War3x.mpq")) {
 		return L"C:/Program Files (x86)/Warcraft III/";
-	} else if (fs::exists(L"D:/Program Files (x86)/Warcraft III/War3Patch.mpq")) {
+	} else if (fs::exists(L"D:/Program Files (x86)/Warcraft III/War3x.mpq")) {
 		return L"D:/Program Files (x86)/Warcraft III/";
 	} else {
 		return L"";
 	}
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, bool modification) {
+void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, const bool modification) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -159,7 +142,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 	}
 }
 
-QIcon texture_to_icon(uint8_t* data, int width, int height) {
+QIcon texture_to_icon(uint8_t* data, const int width, const int height) {
 	QImage temp_image = QImage(data, width, height, QImage::Format::Format_ARGB32);
 	const int size = height / 4;
 
@@ -175,4 +158,4 @@ QIcon texture_to_icon(uint8_t* data, int width, int height) {
 	icon.addPixmap(pix, QIcon::Normal, QIcon::On);
 
 	return icon;
-};
+}

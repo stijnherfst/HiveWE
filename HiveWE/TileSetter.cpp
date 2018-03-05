@@ -53,7 +53,7 @@ TileSetter::~TileSetter() {
 }
 
 
-void TileSetter::add_tile() {
+void TileSetter::add_tile() const {
 	const auto available_button = available_group->checkedButton();
 	if (!available_button) {
 		return;
@@ -148,7 +148,7 @@ void TileSetter::shift_left() const {
 	}
 
 	const int index = selected_layout->indexOf(selected_button);
-	selected_layout->moveWidget(index - 1, selected_button);
+	selected_layout->move_widget(index - 1, selected_button);
 
 	if (index - 1 == 0) {
 		ui.selectedShiftLeft->setEnabled(false);
@@ -164,7 +164,7 @@ void TileSetter::shift_right() const {
 	}
 
 	const int index = selected_layout->indexOf(selected_button);
-	selected_layout->moveWidget(index + 1, selected_button);
+	selected_layout->move_widget(index + 1, selected_button);
 
 	if (index + 1 == selected_layout->count() - 1) {
 		ui.selectedShiftRight->setEnabled(false);
@@ -188,9 +188,9 @@ void TileSetter::save_tiles() {
 			from_to_id[i] =  found - to_ids.begin();
 		} else {
 			TilePicker replace_dialog(nullptr, { from_id }, to_ids);
-			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string from_id, std::string to_id) {
-				auto found = std::find(to_ids.begin(), to_ids.end(), to_id);
-				from_to_id[i] = found - to_ids.begin();
+			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string id, std::string to_id) {
+				auto tile_found = std::find(to_ids.begin(), to_ids.end(), to_id);
+				from_to_id[i] = tile_found - to_ids.begin();
 			});
 			replace_dialog.exec();
 		}

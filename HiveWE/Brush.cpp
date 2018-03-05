@@ -35,7 +35,7 @@ void Brush::set_position(const glm::vec2& position) {
 	uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
 }
 
-void Brush::set_size(int size) {
+void Brush::set_size(const int size) {
 	const int change = size - this->size;
 
 	this->size = std::clamp(size, 0, 240);

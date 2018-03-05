@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void APIENTRY glDebugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, void *userParam) {
+void APIENTRY glDebugOutput(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei length, const GLchar *message, void *) {
 	// Ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
 
@@ -70,20 +70,20 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/MCFC7.0.w3x");
+	map.load(L"Data/Test.w3x");
 }
 
-void GLWidget::resizeGL(int w, int h) {
+void GLWidget::resizeGL(const int w, const int h) {
 	gl->glViewport(0, 0, w, h);
 
-	const double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
+	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	camera.aspect_ratio = double(w) / h;
 	camera.update(delta);
 }
 
 void GLWidget::update_scene() {
-	const double delta = elapsedTimer.nsecsElapsed() / 1'000'000'000.0;
-	elapsedTimer.start();
+	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
+	elapsed_timer.start();
 
 	camera.update(delta);
 
@@ -123,14 +123,14 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		case Qt::Key_Escape:
 			exit(0);
-	case Qt::Key_Alt:
+	//case Qt::Key_Alt:
 			//input_handler.drag_start = input_handler.mouse_world;
-		case Qt::Key_Equal:
-			map.brush.set_size(map.brush.size + 1);
-			break;
-		case Qt::Key_Minus:
-			map.brush.set_size(map.brush.size - 1);
-			break;
+	case Qt::Key_Equal:
+		map.brush.set_size(map.brush.size + 1);
+		break;
+	case Qt::Key_Minus:
+		map.brush.set_size(map.brush.size - 1);
+		break;
 	}
 }
 

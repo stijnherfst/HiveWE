@@ -522,11 +522,11 @@ float Terrain::corner_height(const int x, const int y) const {
 	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
 }
 
-float Terrain::corner_water_height(Corner corner) const {
+float Terrain::corner_water_height(const Corner corner) const {
 	return corner.water_height + height_offset;
 }
 
-int Terrain::real_tile_texture(int x, int y) {
+int Terrain::real_tile_texture(const int x, const int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
 			if (x + i >= 0 && x + i <= width && y + j >= 0 && y + j <= height) {
@@ -548,7 +548,7 @@ int Terrain::real_tile_texture(int x, int y) {
 	return corners[x][y].ground_texture;
 }
 
-int Terrain::get_tile_variation(int ground_texture, int variation) {
+int Terrain::get_tile_variation(const int ground_texture, const int variation) {
 	const bool extended = ground_textures[ground_texture]->width == ground_textures[ground_texture]->height * 2;
 
 	if (extended) {
@@ -568,7 +568,7 @@ int Terrain::get_tile_variation(int ground_texture, int variation) {
 	}
 }
 
-glm::u16vec4 Terrain::get_texture_variations(int x, int y) {
+glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) {
 	const int bottom_left = real_tile_texture(x, y);
 	const int bottom_right = real_tile_texture(x + 1, y);
 	const int top_left = real_tile_texture(x, y + 1);

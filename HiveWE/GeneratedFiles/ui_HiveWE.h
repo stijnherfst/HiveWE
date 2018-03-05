@@ -159,7 +159,7 @@ public:
         actionTileReplace->setText(QApplication::translate("HiveWEClass", "Replace Tile...", nullptr));
         actionUnits->setText(QApplication::translate("HiveWEClass", "Units", nullptr));
 #ifndef QT_NO_SHORTCUT
-        actionUnits->setShortcut(QApplication::translate("HiveWEClass", "P", nullptr));
+        actionUnits->setShortcut(QApplication::translate("HiveWEClass", "U", nullptr));
 #endif // QT_NO_SHORTCUT
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));

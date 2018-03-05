@@ -29,7 +29,7 @@ CliffMesh::~CliffMesh() {
 	gl->glDeleteBuffers(1, &instance_buffer);
 }
 
-void CliffMesh::render_queue(glm::vec4 position) {
+void CliffMesh::render_queue(const glm::vec4 position) {
 	render_jobs.push_back(position);
 }
 

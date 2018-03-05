@@ -6,29 +6,32 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
+		this->path = path;
 
+		if (path == "units\\nightelf\\HeroKeeperoftheGrove\\HeroKeeperoftheGrove.mdx") {
+			std::cout << "\n";
+		}
 		mdx::MDX model = mdx::MDX(reader);
 
-		if (model.has_chunk<mdx::GEOS>()) {
-			has_mesh = true;
-
+		has_mesh = model.has_chunk<mdx::GEOS>();
+		if (has_mesh) {
 			// Calculate required space
-			for (auto&& i : model.chunk<mdx::GEOS>()->geosets ) {
+			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
 			}
 
 			// Allocate space
-			gl->glCreateBuffers(1, &vertexBuffer);
-			gl->glNamedBufferData(vertexBuffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+			gl->glCreateBuffers(1, &vertex_buffer);
+			gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
-			gl->glCreateBuffers(1, &uvBuffer);
-			gl->glNamedBufferData(uvBuffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+			gl->glCreateBuffers(1, &uv_buffer);
+			gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
 
-			gl->glCreateBuffers(1, &instanceBuffer);
-			
-			gl->glCreateBuffers(1, &indexBuffer);
-			gl->glNamedBufferData(indexBuffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+			gl->glCreateBuffers(1, &instance_buffer);
+
+			gl->glCreateBuffers(1, &index_buffer);
+			gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
 
 			// Buffer Data
 			int base_vertex = 0;
@@ -45,32 +48,57 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 				entries.push_back(entry);
 
-				gl->glNamedBufferSubData(vertexBuffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-				gl->glNamedBufferSubData(uvBuffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
-				gl->glNamedBufferSubData(indexBuffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
-			
+				gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
+				gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
+				gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+
 				base_vertex += entry.vertices;
 				base_index += entry.indices;
 			}
-		} else {
-			has_mesh = false;
+		}
+
+		if (model.has_chunk<mdx::SEQS>()) {
+			for (auto&& i : model.chunk<mdx::SEQS>()->sequences) {
+				Animation animation;
+				animation.interval_start = i.interval_start;
+				animation.interval_end = i.interval_end;
+				animation.movespeed = i.movespeed;
+				animation.flags = i.flags;
+				animation.rarity = i.rarity;
+				animation.sync_point = i.sync_point;
+				animation.extent = i.extent;
+
+				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower); // Support unicode? Unless these are always ASCII
+
+				animations.emplace( i.name, animation);
+			}
+		}
+
+		if (model.has_chunk<mdx::GEOA>()) {
+			if (animations.find("stand") != animations.end()) {
+				for (auto&& i : model.chunk<mdx::GEOA>()->animations) {
+					if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
+						for (auto&& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
+							if (j.frame >= animations["stand"].interval_start && j.frame <= animations["stand"].interval_end) {
+								entries[i.geoset_id].visible = j.value > 0.75;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
-			if (i.file_name.empty()) {
-				if (i.replaceable_id == 1) {
-					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\TeamColor\\TeamColor00.blp"));
-				} else if (i.replaceable_id == 2) {
-					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\TeamGlow\\TeamGlow00.blp"));
-				} else {
-					textures.push_back(resource_manager.load<GPUTexture>("ReplaceableTextures\\AshenvaleTree\\AshenTree.blp"));
-					textures.back()->id = 0;
+			if (i.replaceable_id != 0) {
+				if (mdx::replacable_id_to_texture.find(i.replaceable_id) == mdx::replacable_id_to_texture.end()) {
+					std::cout << "Unknown replacable ID found\n";
 				}
+				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
 				// ToDo Same texture on different model with different flags?
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, (i.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			}
 		}
 
@@ -79,13 +107,13 @@ StaticMesh::StaticMesh(const fs::path& path) {
 }
 
 StaticMesh::~StaticMesh() {
-	gl->glDeleteBuffers(1, &vertexBuffer);
-	gl->glDeleteBuffers(1, &uvBuffer);
-	gl->glDeleteBuffers(1, &instanceBuffer);
-	gl->glDeleteBuffers(1, &indexBuffer);
+	gl->glDeleteBuffers(1, &vertex_buffer);
+	gl->glDeleteBuffers(1, &uv_buffer);
+	gl->glDeleteBuffers(1, &instance_buffer);
+	gl->glDeleteBuffers(1, &index_buffer);
 }
 
-void StaticMesh::render_queue(glm::mat4 mvp){
+void StaticMesh::render_queue(const glm::mat4& mvp){
 	render_jobs.push_back(mvp);
 
 	if (render_jobs.size() == 1) {
@@ -100,14 +128,14 @@ void StaticMesh::render() {
 	}
 
 	gl->glEnableVertexAttribArray(0);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glEnableVertexAttribArray(1);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uvBuffer);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
 	if (render_jobs.size() < 10) {
 		shader->use();
@@ -116,6 +144,9 @@ void StaticMesh::render() {
 			gl->glUniformMatrix4fv(2, 1, GL_FALSE, &i[0][0]);
 
 			for (auto&& j : entries) {
+				if (!j.visible) {
+					continue;
+				}
 				for (auto&& k : mtls->materials[j.material_id].layers) {
 					gl->glBindTextureUnit(0, textures[k.texture_id]->id);
 
@@ -154,11 +185,11 @@ void StaticMesh::render() {
 		// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
 
 		shader_instanced->use();
-		gl->glNamedBufferData(instanceBuffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
 		// Since a mat4 is 4 vec4's
 		gl->glEnableVertexAttribArray(2);
-		gl->glBindBuffer(GL_ARRAY_BUFFER, instanceBuffer);
+		gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 		for (int i = 0; i < 4; i++) {
 			gl->glEnableVertexAttribArray(2 + i);
 			gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));

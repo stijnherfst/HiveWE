@@ -42,11 +42,11 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	to_group->buttons().first()->setChecked(true);
 	from_group->buttons().first()->setChecked(true);
 
-	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePicker::accepted);
+	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePicker::completed);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
 
-void TilePicker::accepted() {
+void TilePicker::completed() {
 	const std::string from_tile = from_group->checkedButton()->property("tileID").toString().toStdString();
 	const std::string to_tile = to_group->checkedButton()->property("tileID").toString().toStdString();
 	emit tile_chosen(from_tile, to_tile);

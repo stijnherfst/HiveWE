@@ -20,7 +20,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	for (int i = 0; i < unit_count; i++) {
 		units[i].id = reader.read_string(4);
 		units[i].variation = reader.read<uint32_t>();
-		units[i].position = reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0);;
+		units[i].position = reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0);
 		units[i].angle = reader.read<float>();
 		units[i].scale = reader.read<glm::vec3>();
 		
@@ -113,6 +113,19 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
 	units_slk.merge(slk::SLK("Units/unitUI.slk"));
 	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
+	units_slk.merge(slk::SLK("Units/UnitAbilities.slk"));
+
+	units_slk.merge(ini::INI("Units/HumanUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"));
+
+	units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/OrcUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
 
 	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
 

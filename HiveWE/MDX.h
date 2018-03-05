@@ -1,6 +1,129 @@
 #pragma once
 
 namespace mdx {
+	extern std::map<int, std::string> replacable_id_to_texture;
+
+	enum class TrackTag {
+		KMTF = 0x46544d4b,
+		KMTA = 0x41544d4b,
+		KTAT = 0x5441544b,
+		KTAR = 0x5241544b,
+		KTAS = 0x5341544b,
+		KGAO = 0x4f41474b,
+		KGAC = 0x4341474b,
+		KLAS = 0x53414c4b,
+		KLAE = 0x45414c4b,
+		KLAC = 0x43414c4b,
+		KLAI = 0x49414c4b,
+		KLBI = 0x49424c4b,
+		KLBC = 0x43424c4b,
+		KLAV = 0x56414c4b,
+		KATV = 0x5654414b,
+		KPEE = 0x4545504b,
+		KPEG = 0x4745504b,
+		KPLN = 0x4e4c504b,
+		KPLT = 0x544c504b,
+		KPEL = 0x4c45504b,
+		KPES = 0x5345504b,
+		KPEV = 0x5645504b,
+		KP2S = 0x5332504b,
+		KP2R = 0x5232504b,
+		KP2L = 0x4c32504b,
+		KP2G = 0x4732504b,
+		KP2E = 0x4532504b,
+		KP2N = 0x4e32504b,
+		KP2W = 0x5732504b,
+		KP2V = 0x5632504b,
+		KRHA = 0x4148524b,
+		KRHB = 0x4248524b,
+		KRAL = 0x4c41524b,
+		KRCO = 0x4f43524b,
+		KRTX = 0x5854524b,
+		KRVS = 0x5356524b,
+		KCTR = 0x5254434b,
+		KTTR = 0x5254544b,
+		KCRL = 0x4c52434b,
+		KGTR = 0x5254474b,
+		KGRT = 0x5452474b,
+		KGSC = 0x4353474b
+	};
+
+	enum class ChunkTag {
+		VERS = 1397900630,
+		MODL = 1279545165,
+		SEQS = 1397835091,
+		MTLS = 1397511245,
+		TEXS = 1398293844,
+		GEOS = 1397704007,
+		GEOA = 1095714119,
+		BONE = 1162760002,
+		HELP = 1347175752,
+		ATCH = 1212372033,
+		PIVT = 1414941008,
+		EVTS = 1398036037,
+		CLID = 1145654339
+	};
+
+	template <typename T>
+	struct Track {
+		int32_t frame;
+		T value;
+		T inTan;
+		T outTan;
+	};
+
+	struct TrackHeaderBase {
+		int32_t interpolation_type;
+		int32_t global_sequence_ID;
+
+		virtual ~TrackHeaderBase() {
+
+		}
+	};
+
+	template <typename T>
+	struct TrackHeader : TrackHeaderBase {
+		std::vector<Track<T>> tracks;
+
+		TrackHeader(BinaryReader& reader) {
+			const int tracks_count = reader.read<int32_t>();
+			interpolation_type = reader.read<int32_t>();
+			global_sequence_ID = reader.read<int32_t>();
+
+			for (int i = 0; i < tracks_count; i++) {
+				Track<T> track;
+				track.frame = reader.read<int32_t>();
+				track.value = reader.read<T>();
+				if (interpolation_type > 1) {
+					track.inTan = reader.read<T>();
+					track.outTan = reader.read<T>();
+				}
+				tracks.push_back(track);
+			}
+		}
+
+		~TrackHeader() {}
+	};
+
+	struct AnimatedData {
+		std::unordered_map<TrackTag, std::shared_ptr<TrackHeaderBase>> tracks;
+		
+		void load_tracks(BinaryReader& reader);
+
+		AnimatedData() = default;
+		AnimatedData(AnimatedData&&) = default;
+
+		template<typename T>
+		std::shared_ptr<TrackHeader<T>> track(TrackTag track) {
+			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks[track]);
+		}
+
+		bool has_track(TrackTag track) {
+			return tracks.find(track) != tracks.end();
+		}
+		
+	};
+
 	struct Extent {
 		float bounds_radius;
 		glm::vec3 minimum;
@@ -17,6 +140,9 @@ namespace mdx {
 	};
 
 	struct Layer {
+		Layer() = default;
+		Layer(BinaryReader& reader);
+
 		uint32_t blend_mode; // 0: none
 							// 1: transparent
 							// 2: blend
@@ -36,21 +162,27 @@ namespace mdx {
 		uint32_t texture_animation_id;
 		uint32_t coord_id;
 		float alpha;
-		//(KMTF)
-		//(KMTA)
-
-		Layer() = default;
-		Layer(BinaryReader& reader);
 	};
-
-//KMTF: uint32 textureId
-//	KMTA : float alpha
 
 	struct Texture {
 		Texture(BinaryReader& reader);
 		uint32_t replaceable_id;
 		std::string file_name;
 		uint32_t flags;
+	};
+
+	struct Sequence {
+		Sequence(BinaryReader& reader);
+
+		std::string name;
+		uint32_t interval_start;
+		uint32_t interval_end;
+		float movespeed;
+		uint32_t flags; // 0: looping
+						// 1: non looping
+		float rarity;
+		uint32_t sync_point;
+		Extent extent;
 	};
 
 	struct Geoset {
@@ -78,21 +210,15 @@ namespace mdx {
 		std::vector<Layer> layers;
 	};
 
-	enum class ChunkTag {
-		VERS = 1397900630,
-		MODL = 1279545165,
-		SEQS = 1397835091,
-		MTLS = 1397511245,
-		TEXS = 1398293844,
-		GEOS = 1397704007,
-		GEOA = 1095714119,
-		BONE = 1162760002,
-		HELP = 1347175752,
-		ATCH = 1212372033,
-		PIVT = 1414941008,
-		EVTS = 1398036037,
-		CLID = 1145654339
+
+	struct GeosetAnimation {
+		float alpha;
+		uint32_t flags;
+		glm::vec3 color;
+		uint32_t geoset_id;
+		AnimatedData animated_data;
 	};
+
 
 	struct Chunk {
 		virtual ~Chunk() = default;
@@ -104,21 +230,35 @@ namespace mdx {
 		static const ChunkTag tag = ChunkTag::VERS;
 	};
 
-	struct GEOS : public Chunk {
+	struct SEQS : Chunk {
+		SEQS(BinaryReader& reader);
+
+		static const ChunkTag tag = ChunkTag::SEQS;
+		std::vector<Sequence> sequences;
+	};
+
+	struct GEOS : Chunk {
 		GEOS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::GEOS;
 		std::vector<Geoset> geosets;
 	};
 
-	struct TEXS : public Chunk {
+	struct GEOA : Chunk {
+		GEOA(BinaryReader& reader);
+
+		static const ChunkTag tag = ChunkTag::GEOA;
+		std::vector<GeosetAnimation> animations;
+	};
+
+	struct TEXS : Chunk {
 		TEXS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::TEXS;
 		std::vector<Texture> textures;
 	};
 
-	struct MTLS : public Chunk {
+	struct MTLS : Chunk {
 		MTLS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::MTLS;
@@ -147,3 +287,4 @@ namespace mdx {
 		}
 	};
 }
+

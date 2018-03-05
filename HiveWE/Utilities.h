@@ -1,7 +1,5 @@
 #pragma once
 
-//unsigned char* SOIL_load_image_flipped(const char *filename, int *width, int *height, int *channels, int force_channels);
-
 class Shapes {
 public:
 	void init();
@@ -22,7 +20,9 @@ public:
 	};
 };
 
+// String functions
 std::vector<std::string> split(const std::string& string, char delimiter);
+bool is_number(const std::string& s);
 
 GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_shader);
 

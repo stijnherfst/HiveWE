@@ -10,7 +10,7 @@ void Hierarchy::init() {
 	war3.open(warcraft_directory / L"War3.mpq", STREAM_FLAG_READ_ONLY);
 }
 
-void Hierarchy::load_tileset(char tileset_code) {
+void Hierarchy::load_tileset(const char tileset_code) {
 	const std::string file_name = tileset_code + ".mpq"s;
 
 	mpq::File tileset_mpq;

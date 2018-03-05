@@ -9,6 +9,8 @@ public:
 
 	PathingBrush brush;
 
+	bool units_loaded = false;
+
 	bool render_doodads = true;
 	bool render_units = true;
 	bool render_pathing = true;
@@ -28,9 +30,9 @@ public:
 
 	~Map();
 
-	void load(fs::path path);
+	void load(const fs::path& path);
 
-	bool save(fs::path path);
+	bool save(const fs::path& path);
 
 	void play_test();
 

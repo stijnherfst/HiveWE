@@ -111,7 +111,7 @@ namespace slk {
 		}
 	}
 
-	std::string SLK::data(std::string column_header, size_t row) {
+	std::string SLK::data(const std::string& column_header, const size_t row) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			return "";
 		}
@@ -130,7 +130,7 @@ namespace slk {
 		return table_data[row][column];
 	}
 
-	std::string SLK::data(std::string column_header, std::string row_header) {
+	std::string SLK::data(const std::string& column_header, const std::string& row_header) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			return "";
 		}
@@ -150,19 +150,34 @@ namespace slk {
 	}
 
 	void SLK::merge(const slk::SLK& slk) {
-		if (rows != slk.rows) {
-			std::cout << "The two slk files have an incompatible amount of rows. Rows will be skipped. " << rows << " vs " << slk.rows << "\n";
-		}
-
-		for (int i = 1; i < slk.columns; i++) {
+		for (size_t i = 1; i < slk.columns; i++) {
 			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
 		}
 		columns = columns + slk.columns - 1;
 
-		// We skip the ID column
-		for (int i = 0; i < std::min(rows, slk.rows); i++) {
-			table_data[i].insert(table_data[i].end(), slk.table_data[i].begin() + 1, slk.table_data[i].end());
+		for (auto&& i : slk.table_data) {
+			const int index = header_to_row[i.front()];
+			table_data[index].insert(table_data[index].end(), i.begin() + 1, i.end());
+		}
+
+		for (size_t i = 0; i < rows; i++) {
+			table_data[i].resize(columns);
 			shadow_data[i].resize(columns);
+		}
+	}
+
+	void SLK::merge(const ini::INI & ini) {
+		for (auto&& [section_key, section_value] : ini.ini_data) {
+			// If id does not exist
+			if (header_to_row.find(section_key) == header_to_row.end()) {
+				continue;
+			}
+			for (auto&& [key, value] : section_value) {
+				if (header_to_column.find(key) == header_to_column.end()) {
+					add_column(key);
+				}
+				table_data[header_to_row[section_key]][header_to_column[key]] = value;
+			}
 		}
 	}
 
@@ -178,6 +193,17 @@ namespace slk {
 		table_data[table_data.size() - 1][0] = new_row_header;
 		shadow_data.emplace_back(std::vector<std::string>(columns));
 		header_to_row.emplace(new_row_header, table_data.size() - 1);
+	}
+
+	void SLK::add_column(const std::string& header) {
+		columns += 1;
+		for(auto&& i : table_data) {
+			i.resize(columns);
+		}
+		for (auto&& i : shadow_data) {
+			i.resize(columns);
+		}
+		header_to_column.emplace(header, columns - 1);
 	}
 
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {

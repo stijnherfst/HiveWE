@@ -17,11 +17,14 @@ namespace slk {
 
 		void load(const fs::path&, bool local = false);
 
-		std::string data(std::string column_header, size_t row);
-		std::string data(std::string column_header, std::string row_header);
+		std::string data(const std::string& column_header, size_t row);
+		std::string data(const std::string& column_header, const std::string& row_header);
 
-		void merge(const slk::SLK& slk);
+
+		void merge(const SLK& slk);
+		void merge(const ini::INI& ini);
 		void copy_row(const std::string& row_header, const std::string& new_row_header);
+		void add_column(const std::string& header);
 
 		void set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data);
 	};

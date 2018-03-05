@@ -4,7 +4,7 @@ Map map;
 
 HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "War3Patch.mpq")) {
+	while (!fs::exists(directory / "War3x.mpq")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 	}
 	hierarchy.warcraft_directory = directory;
@@ -16,10 +16,12 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
 	connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
 	connect(ui.actionTest_Map, &QAction::triggered, [&]() { map.play_test(); });
+
 	connect(ui.actionUnits, &QAction::triggered, [&](bool checked) { map.render_units = checked; });
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
+
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { 
 		TileSetter* tilesetter = new TileSetter(this); 
 		dynamic_cast<GLWidget*>(ui.widget)->timer.stop(); 

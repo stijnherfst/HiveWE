@@ -2,10 +2,10 @@
 
 namespace ini {
 	class INI {
+	public:
 		// header to items to content
 		std::map<std::string, std::map<std::string, std::string>> ini_data;
 
-	public:
 		INI() = default;
 		INI(const fs::path& path);
 

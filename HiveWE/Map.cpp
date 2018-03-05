@@ -5,7 +5,7 @@ Map::~Map() {
 	hierarchy.map.close();
 }
 
-void Map::load(fs::path path) {
+void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::system_complete(path);
 
@@ -40,25 +40,27 @@ void Map::load(fs::path path) {
 	doodads.create();
 
 	// Units
-	BinaryReader war3mapUnits_doo(hierarchy.map.file_open("war3mapUnits.doo").read());
-	success = units.load(war3mapUnits_doo, terrain);
+	if (hierarchy.map.file_exists("war3mapUnits.doo")) {
+		BinaryReader war3mapUnits_doo(hierarchy.map.file_open("war3mapUnits.doo").read());
+		units_loaded = units.load(war3mapUnits_doo, terrain);
 
-	if (hierarchy.map.file_exists("war3map.w3u")) {
-		BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
-		units.load_modifications(war3map_w3u);
+		if (units_loaded) {
+			if (hierarchy.map.file_exists("war3map.w3u")) {
+				BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
+				units.load_modifications(war3map_w3u);
+			}
+			units.create();
+		}
 	}
-
-	units.create();
-
 
 	brush.create();
 
 	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
 
-	meshes.clear(); // ToDo
+	meshes.clear(); // ToDo this is not a nice way to do this
 }
 
-bool Map::save(fs::path path) {
+bool Map::save(const fs::path& path) {
 	const fs::path complete_path = fs::system_complete(path);
 	if (complete_path != filesystem_path) {
 		try {
@@ -96,6 +98,7 @@ void Map::play_test() {
 	arguments << "-loadfile" << QString::fromStdString(fs::system_complete("Data/Temporary/temp.w3x").string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
+	delete warcraft;
 }
 
 void Map::render() {
@@ -117,12 +120,14 @@ void Map::render() {
 	end = std::chrono::high_resolution_clock::now();
 	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
-	begin = std::chrono::high_resolution_clock::now();
-	if (render_units) {
-		units.render();
+	if (units_loaded) {
+		begin = std::chrono::high_resolution_clock::now();
+		if (render_units) {
+			units.render();
+		}
+		end = std::chrono::high_resolution_clock::now();
+		unit_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	}
-	end = std::chrono::high_resolution_clock::now();
-	unit_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	if (render_brush) {
 		brush.render(terrain);

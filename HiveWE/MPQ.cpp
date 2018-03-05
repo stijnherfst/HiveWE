@@ -23,11 +23,11 @@ namespace mpq {
 
 	// MPQ
 
-	MPQ::MPQ(const fs::path& path, unsigned long flags) {
+	MPQ::MPQ(const fs::path& path, const unsigned long flags) {
 		open(path, flags);
 	}
 
-	MPQ::MPQ(File archive, unsigned long flags) {
+	MPQ::MPQ(File archive, const unsigned long flags) {
 		open(archive, flags);
 	}
 
@@ -35,14 +35,14 @@ namespace mpq {
 		close();
 	}
 
-	void MPQ::open(const fs::path& path, unsigned long flags) {
+	void MPQ::open(const fs::path& path, const unsigned long flags) {
 		const bool opened = SFileOpenArchive(path.c_str(), 0, flags, &handle);
 		if (!opened) {
 			std::wcout << "Error opening " << path << " with error:" << GetLastError() << std::endl;
 		}
 	}
 	
-	void MPQ::open(File& archive, unsigned long flags) {
+	void MPQ::open(File& archive, const unsigned long flags) {
 		const std::vector<uint8_t> buffer = archive.read();
 
 		// Create unique name for local file

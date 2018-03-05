@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void FPSCamera::update(double delta) {
+void FPSCamera::update(const double delta) {
 	float speed = 5;
 	if (input_handler.key_pressed(Qt::Key_Shift)) {
 		speed = 20;
@@ -67,7 +67,7 @@ void TPSCamera::update(double delta) {
 	projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
 	view = glm::lookAt(position + direction * distance, position, up);
 	projection_view = projection * view;
-};
+}
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	if (event->buttons() == Qt::RightButton) {

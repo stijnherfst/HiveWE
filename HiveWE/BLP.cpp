@@ -31,8 +31,9 @@ namespace blp {
 			std::copy(position, position + header_size, reader.buffer.begin() + mipmap_offsets[0] - header_size);
 
 			// Decode JPEG content
-			const tjhandle handle = tjInitDecompress();
+			tjhandle handle = tjInitDecompress();
 			buffer = new uint8_t[width * height * tjPixelSize[TJPF_CMYK]];
+
 			const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[0] - header_size, header_size + mipmap_sizes[0], buffer, width, 0, height, TJPF_CMYK, 0); // Actually BGRA
 			tjDestroy(handle);
 

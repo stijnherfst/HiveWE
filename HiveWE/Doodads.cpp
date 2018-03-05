@@ -218,25 +218,29 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		if (id_to_mesh.find(i.id + std::to_string(i.variation)) != id_to_mesh.end()) {
+		std::string full_id = i.id + std::to_string(i.variation);
+		if (id_to_mesh.find(full_id) != id_to_mesh.end()) {
 			continue;
 		}
 
-		fs::path mesh_path = doodads_slk.data("file", i.id);
-		std::string variations = doodads_slk.data("numVar", i.id);
-		//std::string replacable_id;
+		fs::path mesh_path;
+		std::string variations;
+		std::string replaceable_id;
 		fs::path texture_name;
 
-		if (mesh_path.empty()) {
+		if (doodads_slk.header_to_row.find(i.id) != doodads_slk.header_to_row.end()) {
+			// Is doodad
+			mesh_path = doodads_slk.data("file", i.id);
+			variations = doodads_slk.data("numVar", i.id);
+		} else {
+			// Is destructible
 			mesh_path = destructibles_slk.data("file", i.id);
-			texture_name = destructibles_slk.data("texFile", i.id);
-			//replacable_id = destructibles_slk.data("texID", i.id);
-		}
-
-		if (variations.empty()) {
 			variations = destructibles_slk.data("numVar", i.id);
+
+			replaceable_id = destructibles_slk.data("texID", i.id);
+			texture_name = destructibles_slk.data("texFile", i.id);
+			texture_name.replace_extension(".blp");
 		}
-		std::string full_id = i.id + std::to_string(i.variation);
 
 		const std::string stem = mesh_path.stem().string();
 		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(i.variation)));
@@ -255,16 +259,18 @@ void Doodads::create() {
 			continue;
 		}
 
-		if (id_to_mesh.find(full_id) == id_to_mesh.end()) {
-			id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
+		// Switch around the texture in the replaceable_id table
+		std::string replaceable_texture;
+		if (is_number(replaceable_id) && texture_name != "_.blp") {
+			replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
+			mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string();
 		}
 
-		// ToDo support multiple replacable ids
-		if (!texture_name.empty() && texture_name != "_") {
-			if (!id_to_mesh[full_id]->textures.empty() && id_to_mesh[full_id]->textures[0]->id == 0) {
-				texture_name.replace_extension(".blp");
-				id_to_mesh[full_id]->textures[0] = resource_manager.load<GPUTexture>(texture_name.string());
-			}
+		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
+
+		// Switch it back
+		if (is_number(replaceable_id) && texture_name != "_.blp") {
+			mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = replaceable_texture;
 		}
 	}
 }

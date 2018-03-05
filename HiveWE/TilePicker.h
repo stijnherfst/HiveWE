@@ -13,7 +13,7 @@ signals:
 	void tile_chosen(std::string from_id, std::string to_id);
 
 private:
-	void accepted();
+	void completed();
 
 	Ui::TilePicker ui;
 

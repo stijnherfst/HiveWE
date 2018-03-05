@@ -8,7 +8,7 @@ public:
 class ResourceManager {
 public:
 	template<typename T>
-	std::shared_ptr<T> load(const fs::path path, bool local = false) {
+	std::shared_ptr<T> load(const fs::path& path, bool local = false) {
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
 
 		const std::string resource = path.string() + T::name;
