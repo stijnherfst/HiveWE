@@ -39,6 +39,8 @@ public:
     QAction *actionTileSetter;
     QAction *actionTileReplace;
     QAction *actionUnits;
+    QAction *actionChange_tile_pathing;
+    QAction *actionChange_Cliff_Pathing;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -48,6 +50,7 @@ public:
     QMenu *menuNew_Pallete;
     QMenu *menuView;
     QMenu *menuTools;
+    QMenu *menuPathing_Map;
 
     void setupUi(QMainWindow *HiveWEClass)
     {
@@ -88,6 +91,10 @@ public:
         actionUnits->setObjectName(QStringLiteral("actionUnits"));
         actionUnits->setCheckable(true);
         actionUnits->setChecked(true);
+        actionChange_tile_pathing = new QAction(HiveWEClass);
+        actionChange_tile_pathing->setObjectName(QStringLiteral("actionChange_tile_pathing"));
+        actionChange_Cliff_Pathing = new QAction(HiveWEClass);
+        actionChange_Cliff_Pathing->setObjectName(QStringLiteral("actionChange_Cliff_Pathing"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -113,6 +120,8 @@ public:
         menuView->setObjectName(QStringLiteral("menuView"));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QStringLiteral("menuTools"));
+        menuPathing_Map = new QMenu(menuTools);
+        menuPathing_Map->setObjectName(QStringLiteral("menuPathing_Map"));
         HiveWEClass->setMenuBar(menuBar);
 
         menuBar->addAction(menuFile->menuAction());
@@ -130,6 +139,9 @@ public:
         menuView->addAction(actionPathing);
         menuView->addAction(actionBrush);
         menuTools->addAction(actionTileSetter);
+        menuTools->addAction(menuPathing_Map->menuAction());
+        menuPathing_Map->addAction(actionChange_tile_pathing);
+        menuPathing_Map->addAction(actionChange_Cliff_Pathing);
 
         retranslateUi(HiveWEClass);
 
@@ -161,11 +173,14 @@ public:
 #ifndef QT_NO_SHORTCUT
         actionUnits->setShortcut(QApplication::translate("HiveWEClass", "U", nullptr));
 #endif // QT_NO_SHORTCUT
+        actionChange_tile_pathing->setText(QApplication::translate("HiveWEClass", "Change Tile Pathing...", nullptr));
+        actionChange_Cliff_Pathing->setText(QApplication::translate("HiveWEClass", "Change Cliff Pathing...", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));
         menuView->setTitle(QApplication::translate("HiveWEClass", "View", nullptr));
         menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", nullptr));
+        menuPathing_Map->setTitle(QApplication::translate("HiveWEClass", "Pathing Map", nullptr));
     } // retranslateUi
 
 };

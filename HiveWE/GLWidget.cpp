@@ -70,7 +70,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/Test.w3x");
+	map.load(L"Data/Kingdom.w3x");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {

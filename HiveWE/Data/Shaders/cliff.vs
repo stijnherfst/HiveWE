@@ -8,9 +8,13 @@ layout (location = 3) uniform mat4 MVP;
 
 layout (binding = 1) uniform sampler2D ground_height;
 
-out vec3 UV;
+// out
+layout (location = 0) out vec3 UV;
+layout (location = 1) out vec2 pathing_map_uv;
 
 void main() {
+	pathing_map_uv = (vec2(vPosition.x + 128, vPosition.y) / 128 + vOffset.xy) * 4;
+
 	vec4 bottom_left = texelFetch(ground_height, ivec2(vOffset) + ivec2(0, 0), 0);
 	vec4 bottom_right = texelFetch(ground_height, ivec2(vOffset) + ivec2(1, 0), 0);
 	vec4 top_left = texelFetch(ground_height, ivec2(vOffset) + ivec2(0, 1), 0);

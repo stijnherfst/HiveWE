@@ -263,7 +263,8 @@ bool Terrain::load(BinaryReader& reader) {
 	// Cliff Textures
 	cliff_slk.load("TerrainArt\\CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "\\" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		auto t = cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp";
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp"));
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
@@ -425,11 +426,14 @@ void Terrain::render() {
 	}
 	
 	cliff_shader->use();
+
 	glm::mat4 MVP = glm::scale(camera.projection_view, glm::vec3(1.f / 128.f));
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &MVP[0][0]);
+	gl->glUniform1i(4, map.render_pathing);
 
 	gl->glBindTextureUnit(0, cliff_texture_array);
 	gl->glBindTextureUnit(1, ground_height);
+	gl->glBindTextureUnit(2, pathing_map_texture);
 	for (auto&& i : cliff_meshes) {
 		i->render();
 	}
@@ -466,8 +470,8 @@ void Terrain::render() {
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
 
-	//end = std::chrono::high_resolution_clock::now();
-	//map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	end = std::chrono::high_resolution_clock::now();
+	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 }
 
 void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old) {

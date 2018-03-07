@@ -6,6 +6,7 @@ Texture::Texture(const fs::path& path) {
 		data = texture_data;
 		width = w;
 		height = h;
+		channels = 4;
 	} else {
 		data = SOIL_load_image(path.string().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
 	}

@@ -2,9 +2,8 @@
 
 class Hierarchy {
 public:
-	mpq::MPQ tileset;
 	mpq::MPQ map;
-	mpq::MPQ war3Patch;
+	mpq::MPQ tileset;
 	mpq::MPQ war3xLocal;
 	mpq::MPQ war3x;
 	mpq::MPQ war3Local;

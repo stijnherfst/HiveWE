@@ -159,6 +159,15 @@
     <ClCompile Include="Units.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TilePathing.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TilePathing.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TilePathing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -242,6 +251,9 @@
     <ClInclude Include="Units.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TilePathing.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -275,6 +287,12 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="TilePicker.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TilePathing.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TilePathing.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
