@@ -178,7 +178,7 @@ namespace mdx {
 		uint32_t total_size = 0;
 
 		while (total_size < size) {
-			int reader_pos = reader.position;
+			const int reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			total_size += inclusive_size;
 

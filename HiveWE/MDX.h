@@ -76,16 +76,14 @@ namespace mdx {
 		int32_t interpolation_type;
 		int32_t global_sequence_ID;
 
-		virtual ~TrackHeaderBase() {
-
-		}
+		virtual ~TrackHeaderBase() = default;
 	};
 
 	template <typename T>
 	struct TrackHeader : TrackHeaderBase {
 		std::vector<Track<T>> tracks;
 
-		TrackHeader(BinaryReader& reader) {
+		explicit TrackHeader(BinaryReader& reader) {
 			const int tracks_count = reader.read<int32_t>();
 			interpolation_type = reader.read<int32_t>();
 			global_sequence_ID = reader.read<int32_t>();
@@ -102,7 +100,7 @@ namespace mdx {
 			}
 		}
 
-		~TrackHeader() {}
+		~TrackHeader() = default;
 	};
 
 	struct AnimatedData {
@@ -114,11 +112,11 @@ namespace mdx {
 		AnimatedData(AnimatedData&&) = default;
 
 		template<typename T>
-		std::shared_ptr<TrackHeader<T>> track(TrackTag track) {
+		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) {
 			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks[track]);
 		}
 
-		bool has_track(TrackTag track) {
+		bool has_track(const TrackTag track) {
 			return tracks.find(track) != tracks.end();
 		}
 		
@@ -130,18 +128,18 @@ namespace mdx {
 		glm::vec3 maximum;
 
 		Extent() = default;
-		Extent(BinaryReader& reader);
+		explicit Extent(BinaryReader& reader);
 	};
 
 	struct TextureCoordinateSet {
 		TextureCoordinateSet() = default;
-		TextureCoordinateSet(BinaryReader& reader);
+		explicit TextureCoordinateSet(BinaryReader& reader);
 		std::vector<glm::vec2> coordinates;
 	};
 
 	struct Layer {
 		Layer() = default;
-		Layer(BinaryReader& reader);
+		explicit Layer(BinaryReader& reader);
 
 		uint32_t blend_mode; // 0: none
 							// 1: transparent
@@ -165,14 +163,14 @@ namespace mdx {
 	};
 
 	struct Texture {
-		Texture(BinaryReader& reader);
+		explicit Texture(BinaryReader& reader);
 		uint32_t replaceable_id;
 		std::string file_name;
 		uint32_t flags;
 	};
 
 	struct Sequence {
-		Sequence(BinaryReader& reader);
+		explicit Sequence(BinaryReader& reader);
 
 		std::string name;
 		uint32_t interval_start;
@@ -231,35 +229,35 @@ namespace mdx {
 	};
 
 	struct SEQS : Chunk {
-		SEQS(BinaryReader& reader);
+		explicit SEQS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::SEQS;
 		std::vector<Sequence> sequences;
 	};
 
 	struct GEOS : Chunk {
-		GEOS(BinaryReader& reader);
+		explicit GEOS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::GEOS;
 		std::vector<Geoset> geosets;
 	};
 
 	struct GEOA : Chunk {
-		GEOA(BinaryReader& reader);
+		explicit GEOA(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::GEOA;
 		std::vector<GeosetAnimation> animations;
 	};
 
 	struct TEXS : Chunk {
-		TEXS(BinaryReader& reader);
+		explicit TEXS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::TEXS;
 		std::vector<Texture> textures;
 	};
 
 	struct MTLS : Chunk {
-		MTLS(BinaryReader& reader);
+		explicit MTLS(BinaryReader& reader);
 
 		static const ChunkTag tag = ChunkTag::MTLS;
 		std::vector<Material> materials;
@@ -269,7 +267,7 @@ namespace mdx {
 		std::map<ChunkTag, std::shared_ptr<Chunk>> chunks;
 	
 	public:
-		MDX(BinaryReader& reader);
+		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
 
 		template<typename T>

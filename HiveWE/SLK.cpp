@@ -4,11 +4,13 @@
 // It's not pretty
 
 namespace slk {
-	SLK::SLK(const fs::path& path, bool local) {
+	SLK::SLK(const fs::path& path, const bool local) {
 		load(path, local);
 	}
 
-	void SLK::load(const fs::path& path, bool local) {
+	void SLK::load(const fs::path& path, const bool local) {
+		//auto begin = std::chrono::high_resolution_clock::now();
+
 		std::stringstream file;
 		if (local) {
 			std::ifstream stream(path);
@@ -20,14 +22,24 @@ namespace slk {
 			file << hierarchy.open_file(path).buffer.data();
 		}
 
-		int row = 1;
 
 		std::string line;
-		if (std::getline(file, line)) {
-			auto parts = split(line, ';');
+		
+		size_t position = 0;
+		size_t length = 0;
 
-			const std::string id = parts[0];
-			if (id != "ID") {
+		size_t column = 0;
+		size_t row = 0;
+
+		const auto parse_int_part = [&]() {
+			position++;
+			length = line.find_first_of(';', position) - position;
+			position += length;
+			return std::stoi(line.substr(position - length, length));
+		};
+
+		if (std::getline(file, line)) {
+			if (line.substr(0, 2) != "ID") {
 				std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
 				return;
 			}
@@ -36,79 +48,70 @@ namespace slk {
 		}
 
 		while (std::getline(file, line)) {
-			if (line.back() == '\r') {
-				line.erase(line.end() - 1);
-			}
+			position = 2;
 
-			auto parts = split(line, ';');
-			if (parts.empty()) {
-				std::cout << "Invalid SLK file" << std::endl;
-				break;
-			}
-
-			if (parts.front() == "B") {
-				if (parts.size() < 3) {
-					std::cout << "Invalid B record: " << line << std::endl;
-					break;
-				}
-				for (auto&& part : parts) {
-					switch (part.front()) {
-						case 'X':
-							part.erase(part.begin());
-							columns = std::stoi(part);
-							break;
-						case 'Y':
-							part.erase(part.begin());
-							rows = std::stoi(part);
-							break;
+			switch (line.front()) {
+				case 'B':
+					while (true) {
+						switch (line[position]) {
+							case 'X':
+								columns = parse_int_part();
+								break;
+							case 'Y':
+								rows = parse_int_part();
+								break;
+							default:
+								table_data.resize(rows, std::vector<std::string>(columns));
+								shadow_data.resize(rows, std::vector<std::string>(columns));
+								goto nextline;
+						}
+						if (position < line.size() - 1) {
+							position++;
+						}
 					}
-				}
-				table_data.resize(rows, std::vector<std::string>(columns));
-				shadow_data.resize(rows, std::vector<std::string>(columns));
-			} else if (parts.front() == "C") {
-				if (parts.size() < 3) {
-					std::cout << "Invalid C record: " << line << std::endl;
-					break;
-				}
+				case 'C':
+					while (true) {
+						switch (line[position]) {
+							case 'X':
+								column = parse_int_part() - 1;
+								break;
+							case 'Y':
+								row = parse_int_part() - 1;
+								break;
+							case 'K': {
+								position++;
+								if (line[position] == '\"') {
+									position++;
+								}
 
-				int column = 0;
-				for (auto&& part : parts) {
-					const char front = part.front();
-					part.erase(part.begin());
-					switch (front) {
-						case 'X':
-							column = std::stoi(part) - 1;
-							break;
-						case 'Y':
-							row = std::stoi(part) - 1;
-							break;
-						case 'K':
-							if (part.front() == '\"') {
-								if (row == 0) {
-									header_to_column.emplace(part.substr(1, part.size() - 2), column);
-								}
-								if (column == 0) {
-									header_to_row.emplace(part.substr(1, part.size() - 2), row);
-								}
-								table_data[row][column] = part.substr(1, part.size() - 2);
-							} else {
+								length = line.size() - position - ((line.back() == '\r') ? 1 : 0);
+								const std::string part = line.substr(position, length - ((line[position + length - 1] == '\"') ? 1 : 0) );
+
 								if (row == 0) {
 									header_to_column.emplace(part, column);
 								}
+
 								if (column == 0) {
 									header_to_row.emplace(part, row);
 								}
 								table_data[row][column] = part;
+								goto nextline;
 							}
-							break;
+						}
+						if (position < line.size() - 1) {
+							position++;
+						}
 					}
-				}
-			} else if (line == "E") {
-				break;
-			} else {
-				std::cout << "Invalid or unknown record: " << line << std::endl;
+				case 'E':
+					goto exitloop;
 			}
+			nextline:
+			position = 2;
 		}
+	exitloop:;
+
+		//auto end = std::chrono::high_resolution_clock::now();
+		//std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0 << "\n";
 	}
 
 	std::string SLK::data(const std::string& column_header, const size_t row) {

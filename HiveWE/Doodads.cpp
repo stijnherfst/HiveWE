@@ -85,17 +85,17 @@ void Doodads::load_destructible_modifications(BinaryReader& reader) {
 
 			std::string data;
 			switch (type) {
-			case 0:
-				data = std::to_string(reader.read<int>());
-				break;
-			case 1:
-			case 2:
-				data = std::to_string(reader.read<float>());
-				break;
-			case 3:
-				data = reader.read_c_string();
-				reader.position += 1;
-				break;
+				case 0:
+					data = std::to_string(reader.read<int>());
+					break;
+				case 1:
+				case 2:
+					data = std::to_string(reader.read<float>());
+					break;
+				case 3:
+					data = reader.read_c_string();
+					reader.position += 1;
+					break;
 			}
 			reader.position += 4;
 			destructibles_slk.set_shadow_data(column_header, original_id, data);
@@ -120,17 +120,17 @@ void Doodads::load_destructible_modifications(BinaryReader& reader) {
 
 			std::string data;
 			switch (type) {
-			case 0:
-				data = std::to_string(reader.read<int>());
-				break;
-			case 1:
-			case 2:
-				data = std::to_string(reader.read<float>());
-				break;
-			case 3:
-				data = reader.read_c_string();
-				reader.position += 1;
-				break;
+				case 0:
+					data = std::to_string(reader.read<int>());
+					break;
+				case 1:
+				case 2:
+					data = std::to_string(reader.read<float>());
+					break;
+				case 3:
+					data = reader.read_c_string();
+					reader.position += 1;
+					break;
 			}
 			reader.position += 4;
 			destructibles_slk.set_shadow_data(column_header, modified_id, data);

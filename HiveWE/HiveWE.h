@@ -8,7 +8,7 @@ class HiveWE : public QMainWindow
 	Q_OBJECT
 
 public:
-	HiveWE(QWidget *parent = Q_NULLPTR);
+	explicit HiveWE(QWidget *parent = Q_NULLPTR);
 
 	void load();
 	void save_as();

@@ -1,6 +1,8 @@
 # HiveWE
 A Warcraft III world editor.
 
+![HiveWE Screenshot](http://g2f.nl/0scv6qu)
+
 ## Features
 
 - Directly edit the pathing map  

@@ -39,8 +39,8 @@ public:
     QAction *actionTileSetter;
     QAction *actionTileReplace;
     QAction *actionUnits;
-    QAction *actionChange_tile_pathing;
-    QAction *actionChange_Cliff_Pathing;
+    QAction *actionChangeTilePathing;
+    QAction *actionChangeCliffPathing;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -91,10 +91,10 @@ public:
         actionUnits->setObjectName(QStringLiteral("actionUnits"));
         actionUnits->setCheckable(true);
         actionUnits->setChecked(true);
-        actionChange_tile_pathing = new QAction(HiveWEClass);
-        actionChange_tile_pathing->setObjectName(QStringLiteral("actionChange_tile_pathing"));
-        actionChange_Cliff_Pathing = new QAction(HiveWEClass);
-        actionChange_Cliff_Pathing->setObjectName(QStringLiteral("actionChange_Cliff_Pathing"));
+        actionChangeTilePathing = new QAction(HiveWEClass);
+        actionChangeTilePathing->setObjectName(QStringLiteral("actionChangeTilePathing"));
+        actionChangeCliffPathing = new QAction(HiveWEClass);
+        actionChangeCliffPathing->setObjectName(QStringLiteral("actionChangeCliffPathing"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -140,8 +140,8 @@ public:
         menuView->addAction(actionBrush);
         menuTools->addAction(actionTileSetter);
         menuTools->addAction(menuPathing_Map->menuAction());
-        menuPathing_Map->addAction(actionChange_tile_pathing);
-        menuPathing_Map->addAction(actionChange_Cliff_Pathing);
+        menuPathing_Map->addAction(actionChangeTilePathing);
+        menuPathing_Map->addAction(actionChangeCliffPathing);
 
         retranslateUi(HiveWEClass);
 
@@ -173,8 +173,8 @@ public:
 #ifndef QT_NO_SHORTCUT
         actionUnits->setShortcut(QApplication::translate("HiveWEClass", "U", nullptr));
 #endif // QT_NO_SHORTCUT
-        actionChange_tile_pathing->setText(QApplication::translate("HiveWEClass", "Change Tile Pathing...", nullptr));
-        actionChange_Cliff_Pathing->setText(QApplication::translate("HiveWEClass", "Change Cliff Pathing...", nullptr));
+        actionChangeTilePathing->setText(QApplication::translate("HiveWEClass", "Change Tile Pathing...", nullptr));
+        actionChangeCliffPathing->setText(QApplication::translate("HiveWEClass", "Change Cliff Pathing...", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));

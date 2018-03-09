@@ -26,10 +26,10 @@ public:
 	void clear();
 
 private:
-	int do_layout(const QRect &rect, bool test_only, QSize* pMinSize) const;
+	int do_layout(const QRect &rect, bool test_only, QSize* p_min_size) const;
 	int smart_spacing(QStyle::PixelMetric pm) const;
 
-	QSize minSize;
+	QSize min_size;
 	QList<QLayoutItem *> item_list;
 	int h_space;
 	int v_space;

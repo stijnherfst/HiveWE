@@ -3,8 +3,8 @@
 namespace slk {
 	class SLK {
 	public:
-		size_t rows;
-		size_t columns;
+		size_t rows = 0;
+		size_t columns = 0;
 
 		std::unordered_map<std::string, size_t> header_to_column;
 		std::unordered_map<std::string, size_t> header_to_row;
@@ -13,7 +13,7 @@ namespace slk {
 		std::vector<std::vector<std::string>> shadow_data;
 
 		SLK() = default;
-		SLK(const fs::path& path, bool local = false);
+		explicit SLK(const fs::path& path, bool local = false);
 
 		void load(const fs::path&, bool local = false);
 

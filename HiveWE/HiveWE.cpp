@@ -30,6 +30,7 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 		});
 	});
 	connect(ui.actionPathing_Pallete, &QAction::triggered, []() { new PathingPallete; });
+	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePathing; });
 }
 
 void HiveWE::load() {

@@ -69,3 +69,4 @@ namespace fs = std::experimental::filesystem;
 #include "PathingPallete.h"
 #include "TilePicker.h"
 #include "TileSetter.h"
+#include "TilePathing.h"

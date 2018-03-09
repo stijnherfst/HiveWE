@@ -48,7 +48,7 @@ public:
 	static constexpr const char* name = "Mesh";
 
 
-	StaticMesh(const fs::path& path);
+	explicit StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
 	void render_queue(const glm::mat4& mvp);

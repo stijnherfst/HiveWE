@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>246</width>
+    <width>242</width>
     <height>217</height>
    </rect>
   </property>
@@ -428,12 +428,12 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="toolTypeGroup"/>
   <buttongroup name="brushSizeGroup"/>
   <buttongroup name="brushTypeGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
-  <buttongroup name="toolTypeGroup"/>
  </buttongroups>
 </ui>

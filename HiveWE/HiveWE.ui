@@ -67,8 +67,8 @@
      <property name="title">
       <string>Pathing Map</string>
      </property>
-     <addaction name="actionChange_tile_pathing"/>
-     <addaction name="actionChange_Cliff_Pathing"/>
+     <addaction name="actionChangeTilePathing"/>
+     <addaction name="actionChangeCliffPathing"/>
     </widget>
     <addaction name="actionTileSetter"/>
     <addaction name="menuPathing_Map"/>
@@ -176,12 +176,12 @@
     <string>U</string>
    </property>
   </action>
-  <action name="actionChange_tile_pathing">
+  <action name="actionChangeTilePathing">
    <property name="text">
     <string>Change Tile Pathing...</string>
    </property>
   </action>
-  <action name="actionChange_Cliff_Pathing">
+  <action name="actionChangeCliffPathing">
    <property name="text">
     <string>Change Cliff Pathing...</string>
    </property>

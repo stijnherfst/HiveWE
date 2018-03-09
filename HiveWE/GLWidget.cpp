@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-void APIENTRY glDebugOutput(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei length, const GLchar *message, void *) {
+void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei length, const GLchar *message, void *) {
 	// Ignore non-significant error/warning codes
 	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
 
@@ -14,6 +14,7 @@ void APIENTRY glDebugOutput(const GLenum source, const GLenum type, const GLuint
 		case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
 		case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
 		case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+		default: break;
 	} 
 	std::cout << std::endl;
 
@@ -27,6 +28,7 @@ void APIENTRY glDebugOutput(const GLenum source, const GLenum type, const GLuint
 		case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
 		case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
 		case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+		default: break;
 	} 
 	std::cout << std::endl;
 
@@ -35,6 +37,7 @@ void APIENTRY glDebugOutput(const GLenum source, const GLenum type, const GLuint
 		case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
 		case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
 		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+		default: break;
 	} 
 	std::cout << std::endl;
 	//std::cout << id << "\n";
@@ -54,7 +57,7 @@ void GLWidget::initializeGL() {
 
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	gl->glDebugMessageCallback(GLDEBUGPROC(glDebugOutput), nullptr);
+	gl->glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
 	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 	gl->glEnable(GL_DEPTH_TEST);
@@ -70,7 +73,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/Kingdom.w3x");
+	map.load(L"Data/Test.w3x");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
@@ -125,12 +128,12 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 			exit(0);
 	//case Qt::Key_Alt:
 			//input_handler.drag_start = input_handler.mouse_world;
-	case Qt::Key_Equal:
-		map.brush.set_size(map.brush.size + 1);
-		break;
-	case Qt::Key_Minus:
-		map.brush.set_size(map.brush.size - 1);
-		break;
+		case Qt::Key_Equal:
+			map.brush.set_size(map.brush.size + 1);
+			break;
+		case Qt::Key_Minus:
+			map.brush.set_size(map.brush.size - 1);
+			break;
 	}
 }
 

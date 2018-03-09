@@ -7,7 +7,7 @@ namespace ini {
 		std::map<std::string, std::map<std::string, std::string>> ini_data;
 
 		INI() = default;
-		INI(const fs::path& path);
+		explicit INI(const fs::path& path);
 
 		void load(const fs::path& path);
 		void substitute(const INI& ini, const std::string& section);

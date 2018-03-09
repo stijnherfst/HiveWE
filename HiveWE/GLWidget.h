@@ -10,7 +10,7 @@ public:
 	QElapsedTimer elapsed_timer;
 	GLuint vao;
 
-	GLWidget(QWidget* parent);
+	explicit GLWidget(QWidget* parent);
 	~GLWidget() = default;
 
 	void initializeGL() override;

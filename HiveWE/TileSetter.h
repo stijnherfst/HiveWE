@@ -6,7 +6,7 @@ class TileSetter : public QDialog {
 	Q_OBJECT
 
 public:
-	TileSetter(QWidget *parent = Q_NULLPTR);
+	explicit TileSetter(QWidget *parent = nullptr);
 	~TileSetter();
 
 private:

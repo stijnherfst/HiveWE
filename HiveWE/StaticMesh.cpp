@@ -8,9 +8,6 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		BinaryReader reader = hierarchy.open_file(path);
 		this->path = path;
 
-		if (path == "units\\nightelf\\HeroKeeperoftheGrove\\HeroKeeperoftheGrove.mdx") {
-			std::cout << "\n";
-		}
 		mdx::MDX model = mdx::MDX(reader);
 
 		has_mesh = model.has_chunk<mdx::GEOS>();
@@ -154,27 +151,27 @@ void StaticMesh::render() {
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
 					gl->glUniform1f(3, -1.f);
 					switch (k.blend_mode) {
-					case 0:
-						gl->glDisable(GL_BLEND);
-						break;
-					case 1:
-						gl->glUniform1f(3, 0.75f); // Alpha test
-						break;
-					case 2:
-						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-						break;
-					case 3:
-						gl->glBlendFunc(GL_ONE, GL_ONE);
-						break;
-					case 4:
-						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-						break;
-					case 5:
-						gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-						break;
-					case 6:
-						gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-						break;
+						case 0:
+							gl->glDisable(GL_BLEND);
+							break;
+						case 1:
+							gl->glUniform1f(3, 0.75f); // Alpha test
+							break;
+						case 2:
+							gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+							break;
+						case 3:
+							gl->glBlendFunc(GL_ONE, GL_ONE);
+							break;
+						case 4:
+							gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+							break;
+						case 5:
+							gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+							break;
+						case 6:
+							gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+							break;
 					}
 
 					gl->glDrawElementsBaseVertex(GL_TRIANGLES, j.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(j.base_index * sizeof(uint16_t)), j.base_vertex);
@@ -204,27 +201,27 @@ void StaticMesh::render() {
 				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
 				gl->glUniform1f(3, -1.f);
 				switch (j.blend_mode) {
-				case 0:
-					gl->glDisable(GL_BLEND);
-					break;
-				case 1:
-					gl->glUniform1f(3, 0.75f); // Alpha test
-					break;
-				case 2:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					break;
-				case 3:
-					gl->glBlendFunc(GL_ONE, GL_ONE);
-					break;
-				case 4:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-					break;
-				case 5:
-					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-					break;
-				case 6:
-					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-					break;
+					case 0:
+						gl->glDisable(GL_BLEND);
+						break;
+					case 1:
+						gl->glUniform1f(3, 0.75f); // Alpha test
+						break;
+					case 2:
+						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+						break;
+					case 3:
+						gl->glBlendFunc(GL_ONE, GL_ONE);
+						break;
+					case 4:
+						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+						break;
+					case 5:
+						gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+						break;
+					case 6:
+						gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+						break;
 				}
 
 				gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);

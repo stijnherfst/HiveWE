@@ -56,7 +56,7 @@ public:
 		return buffer.size() - position;
 	}
 
-	void advance(size_t amount) {
+	void advance(const size_t amount) {
 		if (amount > 9999999) {
 			throw std::invalid_argument("Amount is very large");
 		}

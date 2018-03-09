@@ -50,16 +50,16 @@ public:
     QHBoxLayout *horizontalLayout_3;
     QSpinBox *brushSize;
     QSlider *brushSizeSlider;
+    QButtonGroup *toolTypeGroup;
     QButtonGroup *brushSizeGroup;
     QButtonGroup *brushTypeGroup;
-    QButtonGroup *toolTypeGroup;
 
     void setupUi(QWidget *PathingPallete)
     {
         if (PathingPallete->objectName().isEmpty())
             PathingPallete->setObjectName(QStringLiteral("PathingPallete"));
         PathingPallete->setWindowModality(Qt::NonModal);
-        PathingPallete->resize(246, 217);
+        PathingPallete->resize(242, 217);
         PathingPallete->setWindowOpacity(1);
         verticalLayout = new QVBoxLayout(PathingPallete);
         verticalLayout->setSpacing(6);

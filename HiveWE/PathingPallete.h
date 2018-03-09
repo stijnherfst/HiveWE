@@ -6,7 +6,7 @@ class PathingPallete : public QWidget {
 	Q_OBJECT
 
 public:
-	PathingPallete(QWidget *parent = Q_NULLPTR);
+	explicit PathingPallete(QWidget *parent = Q_NULLPTR);
 	~PathingPallete();
 
 private:

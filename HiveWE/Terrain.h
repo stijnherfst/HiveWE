@@ -21,7 +21,6 @@ struct Corner {
 };
 
 class Terrain {
-
 public:
 	char tileset;
 	std::vector<std::string> tileset_ids;

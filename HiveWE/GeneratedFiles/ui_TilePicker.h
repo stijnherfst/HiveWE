@@ -27,8 +27,10 @@ class Ui_TilePicker
 public:
     QVBoxLayout *verticalLayout;
     QLabel *label;
+    QLabel *selectedTileLabel;
     QHBoxLayout *flowlayout_placeholder_1;
     QLabel *availableTilesLabel;
+    QLabel *replacingTileLabel;
     QHBoxLayout *flowlayout_placeholder_2;
     QDialogButtonBox *buttonBox;
 
@@ -36,7 +38,7 @@ public:
     {
         if (TilePicker->objectName().isEmpty())
             TilePicker->setObjectName(QStringLiteral("TilePicker"));
-        TilePicker->resize(400, 196);
+        TilePicker->resize(579, 153);
         verticalLayout = new QVBoxLayout(TilePicker);
         verticalLayout->setSpacing(6);
         verticalLayout->setContentsMargins(11, 11, 11, 11);
@@ -45,6 +47,11 @@ public:
         label->setObjectName(QStringLiteral("label"));
 
         verticalLayout->addWidget(label);
+
+        selectedTileLabel = new QLabel(TilePicker);
+        selectedTileLabel->setObjectName(QStringLiteral("selectedTileLabel"));
+
+        verticalLayout->addWidget(selectedTileLabel);
 
         flowlayout_placeholder_1 = new QHBoxLayout();
         flowlayout_placeholder_1->setSpacing(6);
@@ -56,6 +63,11 @@ public:
         availableTilesLabel->setObjectName(QStringLiteral("availableTilesLabel"));
 
         verticalLayout->addWidget(availableTilesLabel);
+
+        replacingTileLabel = new QLabel(TilePicker);
+        replacingTileLabel->setObjectName(QStringLiteral("replacingTileLabel"));
+
+        verticalLayout->addWidget(replacingTileLabel);
 
         flowlayout_placeholder_2 = new QHBoxLayout();
         flowlayout_placeholder_2->setSpacing(6);
@@ -79,7 +91,9 @@ public:
     {
         TilePicker->setWindowTitle(QApplication::translate("TilePicker", "TilePicker", nullptr));
         label->setText(QApplication::translate("TilePicker", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Replace Tile:</span></p></body></html>", nullptr));
+        selectedTileLabel->setText(QApplication::translate("TilePicker", "Tile:", nullptr));
         availableTilesLabel->setText(QApplication::translate("TilePicker", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">By Tile:</span></p></body></html>", nullptr));
+        replacingTileLabel->setText(QApplication::translate("TilePicker", "Tile:", nullptr));
     } // retranslateUi
 
 };

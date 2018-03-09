@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>196</height>
+    <width>579</width>
+    <height>153</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,12 +22,26 @@
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="selectedTileLabel">
+     <property name="text">
+      <string>Tile:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="flowlayout_placeholder_1"/>
    </item>
    <item>
     <widget class="QLabel" name="availableTilesLabel">
      <property name="text">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;By Tile:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="replacingTileLabel">
+     <property name="text">
+      <string>Tile:</string>
      </property>
     </widget>
    </item>
