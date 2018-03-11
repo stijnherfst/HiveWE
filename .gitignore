@@ -1,4 +1,5 @@
 ![Dd]ependencies/
+!HiveWE/[Dd]ependencies/*
 
 .mpq
 .w3x
@@ -11,6 +12,8 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+
+!
 
 # Build results
 [Dd]ebug/

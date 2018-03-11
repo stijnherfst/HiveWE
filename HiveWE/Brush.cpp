@@ -91,7 +91,7 @@ void PathingBrush::apply(PathingMap& pathing) {
 	const int x = position.x * 4 + uv_offset.x;
 	const int cells = this->size * 2 + 1;
 
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, pathing.width, pathing.height });
+	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, int(pathing.width), int(pathing.height) });
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;

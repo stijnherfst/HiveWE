@@ -2,8 +2,8 @@
 
 class PathingMap {
 	public:
-	int width;
-	int height;
+	size_t width;
+	size_t height;
 
 	GLuint pathing_texture;
 	std::vector<uint8_t> pathing_cells;

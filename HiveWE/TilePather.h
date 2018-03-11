@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ui_TilePathing.h"
+#include "ui_TilePather.h"
 
 struct PathingOptions {
-	bool walkable = true;
-	bool flyable = true;
-	bool buildable = true;
+	bool unwalkable = false;
+	bool unflyable = false;
+	bool unbuildable = false;
 
 	enum class Operation {
 		replace,
@@ -13,23 +13,25 @@ struct PathingOptions {
 		remove
 	};
 	Operation operation = Operation::replace;
+
+	bool apply_retroactively = false;
 };
 
-class TilePathing : public QDialog {
+class TilePather : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit TilePathing(QWidget *parent = Q_NULLPTR);
-	~TilePathing();
+	explicit TilePather(QWidget *parent = Q_NULLPTR);
+	~TilePather();
 
 private:
 	void changed_tile(QAbstractButton* button);
 	void save_tiles();
 
-	Ui::TilePathing ui;
+	Ui::TilePather ui;
 	QButtonGroup* selected_group = new QButtonGroup;
 	FlowLayout* selected_layout = new FlowLayout;
 
 	std::string current_tile;
-	std::map<std::string, PathingOptions> pathing_options;
+	std::unordered_map<std::string, PathingOptions> pathing_options;
 };

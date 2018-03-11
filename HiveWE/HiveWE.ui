@@ -54,10 +54,19 @@
     <property name="title">
      <string>View</string>
     </property>
+    <widget class="QMenu" name="menuCamera">
+     <property name="title">
+      <string>Camera</string>
+     </property>
+     <addaction name="actionBirds_Eye"/>
+     <addaction name="actionFirst_Person"/>
+    </widget>
     <addaction name="actionUnits"/>
     <addaction name="actionDoodads"/>
     <addaction name="actionPathing"/>
     <addaction name="actionBrush"/>
+    <addaction name="separator"/>
+    <addaction name="menuCamera"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -184,6 +193,22 @@
   <action name="actionChangeCliffPathing">
    <property name="text">
     <string>Change Cliff Pathing...</string>
+   </property>
+  </action>
+  <action name="actionBirds_Eye">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Bird's-eye</string>
+   </property>
+  </action>
+  <action name="actionFirst_Person">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>First-person</string>
    </property>
   </action>
  </widget>

@@ -508,7 +508,6 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 		for (int j = 0; j < height; j++) {
 			ground_texture_list[j * width + i] = get_texture_variations(i, j);
 
-
 			if (corners[i][j].cliff) {
 				ground_texture_list[j * width + i].a |= 0b1000000000000000;
 			}

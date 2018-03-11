@@ -135,9 +135,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="PathingPallete.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_TileSetter.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -159,20 +156,23 @@
     <ClCompile Include="Units.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TilePathing.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TilePathing.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TilePathing.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
     <ClCompile Include="TilePicker.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
     <ClCompile Include="TileSetter.cpp">
       <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="PathingPallete.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TilePather.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TilePather.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TilePather.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -257,7 +257,7 @@
     <ClInclude Include="Units.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TilePathing.h">
+    <ClInclude Include="GeneratedFiles\ui_TilePather.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -274,9 +274,6 @@
     <CustomBuild Include="GLWidget.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="PathingPallete.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="PathingPallete.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
@@ -289,17 +286,20 @@
     <CustomBuild Include="TilePicker.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="TilePathing.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TilePathing.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
     <CustomBuild Include="TilePicker.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
     <CustomBuild Include="TileSetter.h">
       <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="PathingPallete.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TilePather.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TilePather.ui">
+      <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

@@ -20,6 +20,12 @@ struct Corner {
 	int layer_height;
 };
 
+struct TilePathingg {
+	bool unwalkable = false;
+	bool unflyable = false;
+	bool unbuildable = false;
+};
+
 class Terrain {
 public:
 	char tileset;
@@ -37,6 +43,7 @@ public:
 	std::shared_ptr<Shader> ground_shader;
 	std::map<std::string, size_t> ground_texture_to_id;
 	std::vector<std::shared_ptr<Texture>> ground_textures;
+	std::unordered_map<std::string, TilePathingg> pathing_options;
 
 	GLuint ground_height;
 	GLuint ground_corner_height;
@@ -105,7 +112,6 @@ public:
 	bool load(BinaryReader& reader);
 	void save();
 	void render();
-
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
 

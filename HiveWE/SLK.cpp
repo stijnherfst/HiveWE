@@ -1,8 +1,5 @@
 #include "stdafx.h"
 
-// Don't look at this code
-// It's not pretty
-
 namespace slk {
 	SLK::SLK(const fs::path& path, const bool local) {
 		load(path, local);
@@ -22,7 +19,6 @@ namespace slk {
 			file << hierarchy.open_file(path).buffer.data();
 		}
 
-
 		std::string line;
 		
 		size_t position = 0;
@@ -34,8 +30,8 @@ namespace slk {
 		const auto parse_int_part = [&]() {
 			position++;
 			length = line.find_first_of(';', position) - position;
-			position += length;
-			return std::stoi(line.substr(position - length, length));
+			position += length + 1;
+			return std::stoi(line.substr(position - 1 - length, length));
 		};
 
 		if (std::getline(file, line)) {
@@ -52,63 +48,61 @@ namespace slk {
 
 			switch (line.front()) {
 				case 'B':
-					while (true) {
-						switch (line[position]) {
-							case 'X':
-								columns = parse_int_part();
-								break;
-							case 'Y':
-								rows = parse_int_part();
-								break;
-							default:
-								table_data.resize(rows, std::vector<std::string>(columns));
-								shadow_data.resize(rows, std::vector<std::string>(columns));
-								goto nextline;
-						}
-						if (position < line.size() - 1) {
-							position++;
-						}
+					switch (line[position]) {
+						case 'X':
+							columns = parse_int_part();
+							rows = parse_int_part();
+							break;
+						case 'Y':
+							rows = parse_int_part();
+							columns = parse_int_part();
+							break;
+						default:
+							std::cout << "Bad B row in .slk\n";
+							return;
 					}
+					table_data.resize(rows, std::vector<std::string>(columns));
+					shadow_data.resize(rows, std::vector<std::string>(columns));
+					break;
 				case 'C':
-					while (true) {
-						switch (line[position]) {
-							case 'X':
-								column = parse_int_part() - 1;
-								break;
-							case 'Y':
-								row = parse_int_part() - 1;
-								break;
-							case 'K': {
-								position++;
-								if (line[position] == '\"') {
-									position++;
-								}
+					if (line[position] == 'X') {
+						column = parse_int_part() - 1;
 
-								length = line.size() - position - ((line.back() == '\r') ? 1 : 0);
-								const std::string part = line.substr(position, length - ((line[position + length - 1] == '\"') ? 1 : 0) );
-
-								if (row == 0) {
-									header_to_column.emplace(part, column);
-								}
-
-								if (column == 0) {
-									header_to_row.emplace(part, row);
-								}
-								table_data[row][column] = part;
-								goto nextline;
-							}
+						if (line[position] == 'Y') {
+							row = parse_int_part() - 1;
 						}
-						if (position < line.size() - 1) {
+					} else {
+						row = parse_int_part() - 1;
+						column = parse_int_part() - 1;
+					}
+
+					position++;
+
+					{
+						std::string part;
+						if (line[position] == '\"') {
 							position++;
+							part = line.substr(position, line.find('"', position) - position);
+						} else {
+							part = line.substr(position, line.size() - position - (line.back() == '\r' ? 1 : 0));
+						}
+
+						table_data[row][column] = part;
+						
+						if (row == 0) {
+							header_to_column.emplace(part, column);
+						}
+
+						if (column == 0) {
+							header_to_row.emplace(part, row);
 						}
 					}
+					break;
 				case 'E':
 					goto exitloop;
 			}
-			nextline:
-			position = 2;
 		}
-	exitloop:;
+		exitloop:;
 
 		//auto end = std::chrono::high_resolution_clock::now();
 		//std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0 << "\n";

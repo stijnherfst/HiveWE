@@ -41,6 +41,8 @@ public:
     QAction *actionUnits;
     QAction *actionChangeTilePathing;
     QAction *actionChangeCliffPathing;
+    QAction *actionBirds_Eye;
+    QAction *actionFirst_Person;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -49,6 +51,7 @@ public:
     QMenu *menuWindow;
     QMenu *menuNew_Pallete;
     QMenu *menuView;
+    QMenu *menuCamera;
     QMenu *menuTools;
     QMenu *menuPathing_Map;
 
@@ -95,6 +98,12 @@ public:
         actionChangeTilePathing->setObjectName(QStringLiteral("actionChangeTilePathing"));
         actionChangeCliffPathing = new QAction(HiveWEClass);
         actionChangeCliffPathing->setObjectName(QStringLiteral("actionChangeCliffPathing"));
+        actionBirds_Eye = new QAction(HiveWEClass);
+        actionBirds_Eye->setObjectName(QStringLiteral("actionBirds_Eye"));
+        actionBirds_Eye->setCheckable(true);
+        actionFirst_Person = new QAction(HiveWEClass);
+        actionFirst_Person->setObjectName(QStringLiteral("actionFirst_Person"));
+        actionFirst_Person->setCheckable(true);
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -118,6 +127,8 @@ public:
         menuNew_Pallete->setObjectName(QStringLiteral("menuNew_Pallete"));
         menuView = new QMenu(menuBar);
         menuView->setObjectName(QStringLiteral("menuView"));
+        menuCamera = new QMenu(menuView);
+        menuCamera->setObjectName(QStringLiteral("menuCamera"));
         menuTools = new QMenu(menuBar);
         menuTools->setObjectName(QStringLiteral("menuTools"));
         menuPathing_Map = new QMenu(menuTools);
@@ -138,6 +149,10 @@ public:
         menuView->addAction(actionDoodads);
         menuView->addAction(actionPathing);
         menuView->addAction(actionBrush);
+        menuView->addSeparator();
+        menuView->addAction(menuCamera->menuAction());
+        menuCamera->addAction(actionBirds_Eye);
+        menuCamera->addAction(actionFirst_Person);
         menuTools->addAction(actionTileSetter);
         menuTools->addAction(menuPathing_Map->menuAction());
         menuPathing_Map->addAction(actionChangeTilePathing);
@@ -175,10 +190,13 @@ public:
 #endif // QT_NO_SHORTCUT
         actionChangeTilePathing->setText(QApplication::translate("HiveWEClass", "Change Tile Pathing...", nullptr));
         actionChangeCliffPathing->setText(QApplication::translate("HiveWEClass", "Change Cliff Pathing...", nullptr));
+        actionBirds_Eye->setText(QApplication::translate("HiveWEClass", "Bird's-eye", nullptr));
+        actionFirst_Person->setText(QApplication::translate("HiveWEClass", "First-person", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));
         menuView->setTitle(QApplication::translate("HiveWEClass", "View", nullptr));
+        menuCamera->setTitle(QApplication::translate("HiveWEClass", "Camera", nullptr));
         menuTools->setTitle(QApplication::translate("HiveWEClass", "Tools", nullptr));
         menuPathing_Map->setTitle(QApplication::translate("HiveWEClass", "Pathing Map", nullptr));
     } // retranslateUi
