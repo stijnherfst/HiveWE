@@ -17,3 +17,13 @@ A Warcraft III world editor.
 4. Set up the Qt Visual Studio Tools from inside Visual Studio (add a version and point to the Qt binaries)  
 5. Set this version as the project its main version.
 5. Done  
+
+## Possible Contributions
+
+Want to help with the development of HiveWE? Below is a list of features that you could implement. You can try one of these or just add something else you feel like HiveWE should have. Any contributions are welcome!
+
+- A trigger editor for (an improved?) GUI
+- An object editor
+- An import manager
+- Being able to change forces/teams
+- Changing map sizes/camera bound
