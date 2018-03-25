@@ -33,17 +33,23 @@ bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 void PathingMap::save() const {
 	BinaryWriter writer;
 	writer.write_string("MP3W");
-	writer.write(0);
-	writer.write(width);
-	writer.write(height);
-	writer.write_vector(pathing_cells);
+	writer.write<uint32_t>(0);
+	writer.write<uint32_t>(width);
+	writer.write<uint32_t>(height);
+	writer.write_vector<uint8_t>(pathing_cells);
 	
 	HANDLE handle;
-	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wpm", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wpm", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
 	if (!success) {
 		std::cout << GetLastError() << "\n";
 	}
 
-	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	SFileFinishFile(handle);
+	success = SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	if (!success) {
+		std::cout << "Writing to file failed: " << GetLastError() << "\n";
+	}
+	success = SFileFinishFile(handle);
+	if (!success) {
+		std::cout << "Finishing write failed: " << GetLastError() << "\n";
+	}
 }

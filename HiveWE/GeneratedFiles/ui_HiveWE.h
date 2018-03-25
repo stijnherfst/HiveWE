@@ -29,7 +29,7 @@ public:
     QAction *actionConvert_Blockers_to_Pathmap;
     QAction *actionOpen;
     QAction *actionConvert_Tile_Type_to_PathMap;
-    QAction *actionPathing_Pallete;
+    QAction *actionPathing_Palette;
     QAction *actionSave;
     QAction *actionTest_Map;
     QAction *actionSave_As;
@@ -43,6 +43,7 @@ public:
     QAction *actionChangeCliffPathing;
     QAction *actionBirds_Eye;
     QAction *actionFirst_Person;
+    QAction *actionTerrain_Palette;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout;
     GLWidget *widget;
@@ -66,8 +67,8 @@ public:
         actionOpen->setObjectName(QStringLiteral("actionOpen"));
         actionConvert_Tile_Type_to_PathMap = new QAction(HiveWEClass);
         actionConvert_Tile_Type_to_PathMap->setObjectName(QStringLiteral("actionConvert_Tile_Type_to_PathMap"));
-        actionPathing_Pallete = new QAction(HiveWEClass);
-        actionPathing_Pallete->setObjectName(QStringLiteral("actionPathing_Pallete"));
+        actionPathing_Palette = new QAction(HiveWEClass);
+        actionPathing_Palette->setObjectName(QStringLiteral("actionPathing_Palette"));
         actionSave = new QAction(HiveWEClass);
         actionSave->setObjectName(QStringLiteral("actionSave"));
         actionTest_Map = new QAction(HiveWEClass);
@@ -104,6 +105,8 @@ public:
         actionFirst_Person = new QAction(HiveWEClass);
         actionFirst_Person->setObjectName(QStringLiteral("actionFirst_Person"));
         actionFirst_Person->setCheckable(true);
+        actionTerrain_Palette = new QAction(HiveWEClass);
+        actionTerrain_Palette->setObjectName(QStringLiteral("actionTerrain_Palette"));
         centralWidget = new QWidget(HiveWEClass);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout = new QVBoxLayout(centralWidget);
@@ -144,7 +147,8 @@ public:
         menuFile->addAction(actionSave_As);
         menuFile->addAction(actionTest_Map);
         menuWindow->addAction(menuNew_Pallete->menuAction());
-        menuNew_Pallete->addAction(actionPathing_Pallete);
+        menuNew_Pallete->addAction(actionPathing_Palette);
+        menuNew_Pallete->addAction(actionTerrain_Palette);
         menuView->addAction(actionUnits);
         menuView->addAction(actionDoodads);
         menuView->addAction(actionPathing);
@@ -169,7 +173,7 @@ public:
         actionConvert_Blockers_to_Pathmap->setText(QApplication::translate("HiveWEClass", "Convert Blockers to Pathing Map", nullptr));
         actionOpen->setText(QApplication::translate("HiveWEClass", "Open Map...", nullptr));
         actionConvert_Tile_Type_to_PathMap->setText(QApplication::translate("HiveWEClass", "Convert Tile Type to Pathing Map", nullptr));
-        actionPathing_Pallete->setText(QApplication::translate("HiveWEClass", "Pathing", nullptr));
+        actionPathing_Palette->setText(QApplication::translate("HiveWEClass", "Pathing", nullptr));
         actionSave->setText(QApplication::translate("HiveWEClass", "Save Map", nullptr));
         actionTest_Map->setText(QApplication::translate("HiveWEClass", "Test Map", nullptr));
         actionSave_As->setText(QApplication::translate("HiveWEClass", "Save Map As...", nullptr));
@@ -192,6 +196,7 @@ public:
         actionChangeCliffPathing->setText(QApplication::translate("HiveWEClass", "Change Cliff Pathing...", nullptr));
         actionBirds_Eye->setText(QApplication::translate("HiveWEClass", "Bird's-eye", nullptr));
         actionFirst_Person->setText(QApplication::translate("HiveWEClass", "First-person", nullptr));
+        actionTerrain_Palette->setText(QApplication::translate("HiveWEClass", "Terrain", nullptr));
         menuFile->setTitle(QApplication::translate("HiveWEClass", "File", nullptr));
         menuWindow->setTitle(QApplication::translate("HiveWEClass", "Window", nullptr));
         menuNew_Pallete->setTitle(QApplication::translate("HiveWEClass", "New Pallete", nullptr));

@@ -4,6 +4,9 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 	show();
 
+	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
@@ -47,11 +50,6 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TileSetter::save_tiles);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 }
-
-TileSetter::~TileSetter() {
-	deleteLater();
-}
-
 
 void TileSetter::add_tile() const {
 	const auto available_button = available_group->checkedButton();
@@ -198,5 +196,4 @@ void TileSetter::save_tiles() {
 
 	map.terrain.change_tileset(to_ids, from_to_id);
 	close();
-	deleteLater();
 }

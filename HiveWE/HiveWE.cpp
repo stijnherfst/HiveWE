@@ -29,8 +29,11 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 			dynamic_cast<GLWidget*>(ui.widget)->timer.start(16);
 		});
 	});
-	connect(ui.actionPathing_Pallete, &QAction::triggered, []() { new PathingPallete; });
 	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePather; });
+
+	connect(ui.actionPathing_Palette, &QAction::triggered, []() { new PathingPallete; });
+	connect(ui.actionTerrain_Palette, &QAction::triggered, []() { new TerrainPalette; });
+
 }
 
 void HiveWE::load() {

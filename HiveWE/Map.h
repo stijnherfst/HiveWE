@@ -7,7 +7,7 @@ public:
 	Doodads doodads;
 	Units units;
 
-	PathingBrush brush;
+	Brush* brush;
 
 	bool units_loaded = false;
 

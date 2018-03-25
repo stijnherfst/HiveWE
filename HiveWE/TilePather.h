@@ -22,7 +22,6 @@ class TilePather : public QDialog {
 
 public:
 	explicit TilePather(QWidget *parent = Q_NULLPTR);
-	~TilePather();
 
 private:
 	void changed_tile(QAbstractButton* button);

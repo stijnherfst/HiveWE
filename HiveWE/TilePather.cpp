@@ -2,6 +2,9 @@
 
 TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
+
+	setAttribute(Qt::WA_DeleteOnClose);
+	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
 	show();
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
@@ -46,10 +49,6 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	connect(ui.removeType, &QPushButton::clicked, [&]() { pathing_options[current_tile].operation = PathingOptions::Operation::remove; });
 
 	connect(ui.applyRetroactively, &QCheckBox::clicked, [&](bool checked) { pathing_options[current_tile].apply_retroactively = checked; });
-}
-
-TilePather::~TilePather() {
-	deleteLater();
 }
 
 void TilePather::changed_tile(QAbstractButton* button) {
@@ -138,5 +137,4 @@ void TilePather::save_tiles() {
 	gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, 0, 0, map.pathing_map.width, map.pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data());
 
 	close();
-	deleteLater();
 }

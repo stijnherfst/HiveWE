@@ -129,10 +129,14 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 	//case Qt::Key_Alt:
 			//input_handler.drag_start = input_handler.mouse_world;
 		case Qt::Key_Equal:
-			map.brush.set_size(map.brush.size + 1);
+			if (map.brush) {
+				map.brush->increase_size(1);
+			}
 			break;
 		case Qt::Key_Minus:
-			map.brush.set_size(map.brush.size - 1);
+			if (map.brush) {
+				map.brush->decrease_size(1);
+			}
 			break;
 	}
 }
@@ -157,11 +161,14 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	//if (input_handler.key_pressed(Qt::Key_Alt)) {
 	//	map.brush.set_size(map.brush.size + (input_handler.mouse_world - input_handler.drag_start).x);
 	//} else {
-		map.brush.set_position(input_handler.mouse_world);
+
+	if (map.brush) {
+		map.brush->set_position(input_handler.mouse_world);
 
 		if (event->buttons() == Qt::LeftButton) {
-			map.brush.apply(map.pathing_map);
+			map.brush->apply();
 		}
+	}
 	//}
 }
 

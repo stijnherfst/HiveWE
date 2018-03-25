@@ -11,7 +11,6 @@ layout (binding = 1) uniform sampler2D brush;
 out vec2 UV;
 
 void main() {
-	ivec2 size = textureSize(height_texture, 0);
 	ivec2 size_brush = textureSize(brush, 0) / 4;
 
 	vec2 local_pos = vec2(gl_InstanceID % size_brush.x, gl_InstanceID / size_brush.x);

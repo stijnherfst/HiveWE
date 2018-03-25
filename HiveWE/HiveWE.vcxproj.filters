@@ -46,6 +46,12 @@
     <Filter Include="Header Files\Menus">
       <UniqueIdentifier>{a37a5b9b-a01d-4576-bd72-202106d92354}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Base\Brush">
+      <UniqueIdentifier>{71d355c1-bfdf-4c94-979a-7f837c149191}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Base\Brush">
+      <UniqueIdentifier>{eddb50f5-eef5-4f42-ad13-4f05ee7d2438}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -126,9 +132,6 @@
     <ClCompile Include="InputHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Brush.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_PathingPallete.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -140,9 +143,6 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_TileSetter.cpp">
       <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="INI.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FlowLayout.cpp">
       <Filter>Source Files</Filter>
@@ -171,8 +171,32 @@
     <ClCompile Include="GeneratedFiles\Release\moc_TilePather.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TerrainPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TerrainPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
     <ClCompile Include="TilePather.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainPalette.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="INI.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Brush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="PathingBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUTexture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,9 +260,6 @@
     <ClInclude Include="InputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Brush.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_PathingPallete.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
@@ -248,9 +269,6 @@
     <ClInclude Include="GeneratedFiles\ui_TileSetter.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="INI.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_TilePicker.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
@@ -259,6 +277,24 @@
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_TilePather.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TerrainPalette.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="INI.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Brush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="PathingBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUTexture.h">
+      <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -295,11 +331,17 @@
     <CustomBuild Include="PathingPallete.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="TilePather.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="TilePather.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TerrainPalette.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TerrainPalette.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="TilePather.h">
+      <Filter>Header Files\Menus</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

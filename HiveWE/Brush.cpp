@@ -11,48 +11,53 @@ void Brush::create() {
 	//	}
 	//}
 
-	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
-	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
-
-	for (int i = 0; i < this->size * 2 + 1; i++) {
-		for (int j = 0; j < this->size * 2 + 1; j++) {
-			brush[j * cells * 4 + i] = { 0, 255, 0, 128 };
-		}
-	}
 
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
-	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	set_size(size);
 
 	shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 
 void Brush::set_position(const glm::vec2& position) {
-	const glm::vec2 center_position = position - size * 0.25f;
-	this->position = glm::floor(center_position);
-	uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
+	const glm::vec2 center_position = (position + brush_offset) - size * granularity * 0.25f;
+	this->position = glm::floor(center_position) - glm::ceil(brush_offset);
+	if (!uv_offset_locked) {
+		uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
+	}
 }
 
 void Brush::set_size(const int size) {
 	const int change = size - this->size;
 
 	this->size = std::clamp(size, 0, 240);
-	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
+	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
 	brush.clear();
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
 	for (int i = 0; i < this->size * 2 + 1; i++) {
 		for (int j = 0; j < this->size * 2 + 1; j++) {
-			brush[j * cells * 4 + i] = { 0, 255, 0, 128 };
+			for (int k = 0; k < granularity; k++) {
+				for (int l = 0; l < granularity; l++) {
+					brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 255, 0, 128 };
+				}
+			}
 		}
 	}
 
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
 	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset + size - change) * 0.25f);
+	set_position(glm::vec2(position) + glm::vec2(uv_offset + size * granularity - change * granularity) * 0.25f);
+}
+
+void Brush::increase_size(const int size) {
+	set_size(this->size + size);
+}
+void Brush::decrease_size(const int size) {
+	set_size(this->size - size);
 }
 
 void Brush::render(Terrain& terrain) const {
@@ -66,7 +71,7 @@ void Brush::render(Terrain& terrain) const {
 	shader->use();
 
 	// +3 for uv_offset so it can move sub terrain cell
-	const int cells = std::ceil((this->size * 2 + 1 + 3) / 4.f);
+	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform2f(2, position.x, position.y);
@@ -84,40 +89,4 @@ void Brush::render(Terrain& terrain) const {
 
 	gl->glDisableVertexAttribArray(0);
 	gl->glEnable(GL_DEPTH_TEST);
-}
-
-void PathingBrush::apply(PathingMap& pathing) {
-	const int y = position.y * 4 + uv_offset.y;
-	const int x = position.x * 4 + uv_offset.x;
-	const int cells = this->size * 2 + 1;
-
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, int(pathing.width), int(pathing.height) });
-
-	if (area.width() <= 0 || area.height() <= 0) {
-		return;
-	}
-
-	const int offset = area.y() * pathing.width + area.x();
-	
-	for (int i = 0; i < area.width(); i++) {
-		for (int j = 0; j < area.height(); j++) {
-			const int index = offset + j * pathing.width + i;
-			switch (operation) {
-				case Operation::replace:
-					pathing.pathing_cells[index] &= ~0b00001110;
-					pathing.pathing_cells[index] |= brush_mask;
-					break;
-				case Operation::add:
-					pathing.pathing_cells[index] |= brush_mask;
-					break;
-				case Operation::remove:
-					pathing.pathing_cells[index] &= ~brush_mask;
-					break;
-			}
-		}
-	}
-
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, pathing.width);
-	gl->glTextureSubImage2D(pathing.pathing_texture, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing.pathing_cells.data() + offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

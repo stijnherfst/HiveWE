@@ -100,6 +100,9 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_PathingPallete.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TerrainPalette.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_TilePather.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -124,6 +127,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TerrainPalette.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_TilePather.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
@@ -134,6 +140,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GLWidget.cpp" />
+    <ClCompile Include="GPUTexture.cpp" />
     <ClCompile Include="Hierarchy.cpp" />
     <ClCompile Include="HiveWE.cpp" />
     <ClCompile Include="INI.cpp" />
@@ -142,6 +149,7 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MDX.cpp" />
     <ClCompile Include="MPQ.cpp" />
+    <ClCompile Include="PathingBrush.cpp" />
     <ClCompile Include="PathingMap.cpp" />
     <ClCompile Include="PathingPallete.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
@@ -153,6 +161,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="TerrainBrush.cpp" />
+    <ClCompile Include="TerrainPalette.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TilePather.cpp" />
     <ClCompile Include="TilePicker.cpp" />
@@ -184,15 +194,18 @@
     </CustomBuild>
     <ClInclude Include="GeneratedFiles\ui_HiveWE.h" />
     <ClInclude Include="GeneratedFiles\ui_PathingPallete.h" />
+    <ClInclude Include="GeneratedFiles\ui_TerrainPalette.h" />
     <ClInclude Include="GeneratedFiles\ui_TilePather.h" />
     <ClInclude Include="GeneratedFiles\ui_TilePicker.h" />
     <ClInclude Include="GeneratedFiles\ui_TileSetter.h" />
+    <ClInclude Include="GPUTexture.h" />
     <ClInclude Include="Hierarchy.h" />
     <ClInclude Include="INI.h" />
     <ClInclude Include="InputHandler.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MDX.h" />
     <ClInclude Include="MPQ.h" />
+    <ClInclude Include="PathingBrush.h" />
     <ClInclude Include="PathingMap.h" />
     <CustomBuild Include="PathingPallete.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
@@ -209,6 +222,17 @@
     <ClInclude Include="SLK.h" />
     <ClInclude Include="StaticMesh.h" />
     <ClInclude Include="Terrain.h" />
+    <CustomBuild Include="TerrainPalette.h">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../%(Filename)%(Extension)"  -DUNICODE -DWIN32 -DWIN64 -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets" "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\glew-2.1.0\include" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../%(Filename)%(Extension)"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets" "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\glew-2.1.0\include" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include"</Command>
+    </CustomBuild>
+    <ClInclude Include="TerrainBrush.h" />
     <ClInclude Include="Texture.h" />
     <CustomBuild Include="TileSetter.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
@@ -326,6 +350,18 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="TilePather.ui">
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Uic%27ing %(Identity)...</Message>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="TerrainPalette.ui">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\uic.exe;%(AdditionalInputs)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Uic%27ing %(Identity)...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h;%(Outputs)</Outputs>

@@ -46,7 +46,8 @@
      <property name="title">
       <string>New Pallete</string>
      </property>
-     <addaction name="actionPathing_Pallete"/>
+     <addaction name="actionPathing_Palette"/>
+     <addaction name="actionTerrain_Palette"/>
     </widget>
     <addaction name="menuNew_Pallete"/>
    </widget>
@@ -102,7 +103,7 @@
     <string>Convert Tile Type to Pathing Map</string>
    </property>
   </action>
-  <action name="actionPathing_Pallete">
+  <action name="actionPathing_Palette">
    <property name="text">
     <string>Pathing</string>
    </property>
@@ -209,6 +210,11 @@
    </property>
    <property name="text">
     <string>First-person</string>
+   </property>
+  </action>
+  <action name="actionTerrain_Palette">
+   <property name="text">
+    <string>Terrain</string>
    </property>
   </action>
  </widget>

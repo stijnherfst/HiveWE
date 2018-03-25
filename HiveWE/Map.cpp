@@ -53,8 +53,6 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-	brush.create();
-
 	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
 
 	meshes.clear(); // ToDo this is not a nice way to do this
@@ -129,8 +127,8 @@ void Map::render() {
 		unit_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	}
 
-	if (render_brush) {
-		brush.render(terrain);
+	if (render_brush && brush) {
+		brush->render(terrain);
 	}
 
 	begin = std::chrono::high_resolution_clock::now();

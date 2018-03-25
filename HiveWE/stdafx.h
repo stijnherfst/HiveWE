@@ -51,6 +51,7 @@ namespace fs = std::experimental::filesystem;
 #include "Hierarchy.h"
 #include "ResourceManager.h"
 #include "Texture.h"
+#include "GPUTexture.h"
 #include "CliffMesh.h"
 #include "Shader.h"
 #include "StaticMesh.h"
@@ -60,6 +61,8 @@ namespace fs = std::experimental::filesystem;
 #include "Doodads.h"
 #include "Units.h"
 #include "Brush.h"
+#include "PathingBrush.h"
+#include "TerrainBrush.h"
 #include "Map.h"
 
 #include "Camera.h"
@@ -67,6 +70,7 @@ namespace fs = std::experimental::filesystem;
 #include "GLWidget.h"
 
 #include "PathingPallete.h"
+#include "TerrainPalette.h"
 #include "TilePicker.h"
 #include "TileSetter.h"
 #include "TilePather.h"

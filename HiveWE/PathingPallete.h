@@ -10,5 +10,8 @@ public:
 	~PathingPallete();
 
 private:
+	bool event(QEvent *e) override;
+
 	Ui::PathingPallete ui;
+	PathingBrush brush;
 };
