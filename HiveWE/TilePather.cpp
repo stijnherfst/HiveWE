@@ -4,7 +4,6 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
 	show();
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
@@ -97,18 +96,18 @@ void TilePather::save_tiles() {
 			mask |= 0b00001000;
 		}
 
-		int id = map.terrain.ground_texture_to_id.at(tile_id);
-		for (size_t i = 0; i <= map.terrain.width; i++) {
-			for (size_t j = 0; j <= map.terrain.height; j++) {
+		const int id = map.terrain.ground_texture_to_id.at(tile_id);
+		for (int i = 0; i <= map.terrain.width; i++) {
+			for (int j = 0; j <= map.terrain.height; j++) {
 				if (map.terrain.real_tile_texture(i, j) != id) {
 					continue;
 				}
 
-				size_t left = std::max((long long)i * 4 - 2, 0ll);
-				size_t bottom = std::max((long long)j * 4 - 2, 0ll);
+				const int left = std::max(i * 4 - 2, 0);
+				const int bottom = std::max(j * 4 - 2, 0);
 
-				size_t right = std::min(i * 4 + 2, map.pathing_map.width);
-				size_t top = std::min(j * 4 + 2, map.pathing_map.height);
+				const int right = std::min(i * 4 + 2, map.pathing_map.width);
+				const int top = std::min(j * 4 + 2, map.pathing_map.height);
 
 				for (size_t x = left; x < right; x++) {
 					for (size_t y = bottom; y < top; y++) {

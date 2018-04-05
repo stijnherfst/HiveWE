@@ -1,10 +1,9 @@
 #include "stdafx.h"
 
-PathingPallete::PathingPallete(QWidget *parent) : QWidget(parent) {
+PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
 	show();
 
 	brush.create();

@@ -3,11 +3,11 @@
 #include <QWidget>
 #include "ui_TerrainPalette.h"
 
-class TerrainPalette : public QWidget {
+class TerrainPalette : public QDialog {
 	Q_OBJECT
 
 public:
-	TerrainPalette(QWidget *parent = Q_NULLPTR);
+	TerrainPalette(QWidget* parent = nullptr);
 	~TerrainPalette();
 
 private:

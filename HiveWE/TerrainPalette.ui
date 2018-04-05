@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>284</width>
+    <width>286</width>
     <height>584</height>
    </rect>
   </property>
@@ -1211,8 +1211,8 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushSizeButtonGroup"/>
   <buttongroup name="brushShapeButtonGroup"/>
   <buttongroup name="cliffButtonGroup"/>
+  <buttongroup name="brushSizeButtonGroup"/>
  </buttongroups>
 </ui>

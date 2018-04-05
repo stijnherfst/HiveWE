@@ -6,7 +6,7 @@ class TileSetter : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit TileSetter(QWidget *parent = nullptr);
+	explicit TileSetter(QWidget* parent = nullptr);
 
 private:
 	void add_tile() const;

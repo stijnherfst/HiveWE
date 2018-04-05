@@ -152,7 +152,7 @@ void Terrain::create_tile_textures() {
 	gl->glTextureParameteri(ground_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Create a transparant black texture
-	//gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_height, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+	gl->glClearTexSubImage(ground_texture_array, 0, 0, 0, 0, variation_size, variation_size, 0, GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
 
 	int sub = 0;
 	for (auto&& i : ground_textures) {
@@ -252,16 +252,17 @@ bool Terrain::load(BinaryReader& reader) {
 	hierarchy.load_tileset(tileset);
 
 	// Ground Textures
-	terrain_slk.load("TerrainArt\\Terrain.slk");
+	terrain_slk.load("TerrainArt/Terrain.slk");
 	for (auto&& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "\\" + terrain_slk.data("file", tile_id) + ".blp"));
+		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
-	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
-	blight_texture = ground_textures.size() - 1;
+	blight_texture = ground_textures.size();
+	ground_texture_to_id.emplace("blight", blight_texture);
+	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.blp"));
 
 	// Cliff Textures
-	cliff_slk.load("TerrainArt\\CliffTypes.slk");
+	cliff_slk.load("TerrainArt/CliffTypes.slk");
 	for (auto&& cliff_id : cliffset_ids) {
 		auto t = cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp";
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp"));
@@ -269,7 +270,7 @@ bool Terrain::load(BinaryReader& reader) {
 	}
 
 	// Water Textures and Colours
-	slk::SLK water_slk("TerrainArt\\Water.slk");
+	slk::SLK water_slk("TerrainArt/Water.slk");
 
 	height_offset = std::stof(water_slk.data("height", tileset + "Sha"s));
 	water_textures_nr = std::stoi(water_slk.data("numTex", tileset + "Sha"s));
@@ -354,6 +355,7 @@ void Terrain::save() {
 
 			uint8_t texture_and_flags = corner.ground_texture;
 			texture_and_flags |= corner.ramp << 4;
+
 			texture_and_flags |= corner.blight << 5;
 			texture_and_flags |= corner.water << 6;
 			texture_and_flags |= corner.boundary << 7;
@@ -489,10 +491,10 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 	ground_texture_to_id.clear();
 
 	for (auto&& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "\\" + terrain_slk.data("file", tile_id) + ".blp"));
+		ground_textures.push_back(resource_manager.load<Texture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
-	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt\\Blight\\Ashen_Blight.blp"));
+	ground_textures.push_back(resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.blp"));
 	blight_texture = ground_textures.size() - 1;
 
 	cliff_to_ground_texture.clear();
@@ -517,6 +519,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
+// ToDo only 1 of this is really needed to be here
 float Terrain::corner_height(const Corner corner) {
 	return corner.ground_height + corner.layer_height - 2.0;
 }

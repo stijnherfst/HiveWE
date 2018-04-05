@@ -38,6 +38,7 @@ public:
     {
         if (TilePicker->objectName().isEmpty())
             TilePicker->setObjectName(QStringLiteral("TilePicker"));
+        TilePicker->setWindowModality(Qt::ApplicationModal);
         TilePicker->resize(579, 153);
         verticalLayout = new QVBoxLayout(TilePicker);
         verticalLayout->setSpacing(6);

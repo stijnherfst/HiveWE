@@ -2,11 +2,11 @@
 
 #include "ui_PathingPallete.h"
 
-class PathingPallete : public QWidget {
+class PathingPallete : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit PathingPallete(QWidget *parent = Q_NULLPTR);
+	explicit PathingPallete(QWidget* parent = nullptr);
 	~PathingPallete();
 
 private:

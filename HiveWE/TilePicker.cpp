@@ -3,9 +3,6 @@
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);
 
-	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-
 	ui.flowlayout_placeholder_1->addLayout(from_layout);
 	ui.flowlayout_placeholder_2->addLayout(to_layout);
 

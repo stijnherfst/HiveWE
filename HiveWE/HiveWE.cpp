@@ -31,8 +31,8 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	});
 	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePather; });
 
-	connect(ui.actionPathing_Palette, &QAction::triggered, []() { new PathingPallete; });
-	connect(ui.actionTerrain_Palette, &QAction::triggered, []() { new TerrainPalette; });
+	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() { new PathingPallete(this); });
+	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
 
 }
 

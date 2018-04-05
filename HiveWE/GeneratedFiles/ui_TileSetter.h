@@ -51,7 +51,7 @@ public:
     {
         if (TileSetter->objectName().isEmpty())
             TileSetter->setObjectName(QStringLiteral("TileSetter"));
-        TileSetter->setWindowModality(Qt::WindowModal);
+        TileSetter->setWindowModality(Qt::ApplicationModal);
         TileSetter->resize(579, 207);
         QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
         sizePolicy.setHorizontalStretch(0);

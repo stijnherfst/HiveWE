@@ -2,10 +2,9 @@
 
 TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
-	show();
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+	show();
 
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
@@ -185,7 +184,7 @@ void TileSetter::save_tiles() {
 		if (found != to_ids.end()) {
 			from_to_id[i] =  found - to_ids.begin();
 		} else {
-			TilePicker replace_dialog(nullptr, { from_id }, to_ids);
+			TilePicker replace_dialog(this, { from_id }, to_ids);
 			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string id, std::string to_id) {
 				auto tile_found = std::find(to_ids.begin(), to_ids.end(), to_id);
 				from_to_id[i] = tile_found - to_ids.begin();
