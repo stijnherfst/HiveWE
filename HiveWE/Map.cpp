@@ -47,7 +47,11 @@ void Map::load(const fs::path& path) {
 		if (units_loaded) {
 			if (hierarchy.map.file_exists("war3map.w3u")) {
 				BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
-				units.load_modifications(war3map_w3u);
+				units.load_unit_modifications(war3map_w3u);
+			}
+			if (hierarchy.map.file_exists("war3map.w3t")) {
+				BinaryReader war3map_w3t = BinaryReader(hierarchy.map.file_open("war3map.w3t").read());
+				units.load_item_modifications(war3map_w3t);
 			}
 			units.create();
 		}

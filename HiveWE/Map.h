@@ -7,7 +7,7 @@ public:
 	Doodads doodads;
 	Units units;
 
-	Brush* brush;
+	Brush* brush = nullptr;
 
 	bool units_loaded = false;
 

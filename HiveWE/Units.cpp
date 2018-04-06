@@ -129,17 +129,31 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 
 	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
 
+	items_slk = slk::SLK("Units/ItemData.slk");
+	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
+	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
+	
 	return true;
 }
 
-void Units::load_modifications(BinaryReader& reader) {
+void Units::load_unit_modifications(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 	if (version != 1 && version != 2) {
-		std::cout << "Unknown modification table version of " << version << " detected. Attempting to load, but may crash.\n";
+		std::cout << "Unknown unit modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
 	load_modification_table(reader, units_slk, units_meta_slk, false);
 	load_modification_table(reader, units_slk, units_meta_slk, true);
+}
+
+void Units::load_item_modifications(BinaryReader& reader) {
+	const int version = reader.read<uint32_t>();
+	if (version != 1 && version != 2) {
+		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
+	}
+
+	load_modification_table(reader, items_slk, units_meta_slk, false);
+	load_modification_table(reader, items_slk, units_meta_slk, true);
 }
 
 void Units::create() {
@@ -152,17 +166,19 @@ void Units::create() {
 		}
 
 		fs::path mesh_path = units_slk.data("file", i.id);
+		if (mesh_path.empty()) {
+			mesh_path = items_slk.data("file", i.id);
+		}
 		mesh_path.replace_extension(".mdx");
 
 		// Mesh doesnt exist at all
 		if (!hierarchy.file_exists(mesh_path)) {
 			std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
-			// Load something random to visualise
-			id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>("Doodads/Ashenvale/Props/AshenObilisk/AshenObilisk.mdx"));
+			id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
 			continue;
 		}
 
-		id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>(mesh_path.string()));
+		id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>(mesh_path));
 	}
 }
 

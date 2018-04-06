@@ -17,13 +17,15 @@ struct Unit {
 class Units {
 	slk::SLK units_slk;
 	slk::SLK units_meta_slk;
+	slk::SLK items_slk;
 
 	std::vector<Unit> units;
 
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
 public:
 	bool load(BinaryReader& reader, Terrain& terrain);
-	void load_modifications(BinaryReader& reader);
+	void load_unit_modifications(BinaryReader& reader);
+	void load_item_modifications(BinaryReader& reader);
 	void create();
 	void render();
 };
