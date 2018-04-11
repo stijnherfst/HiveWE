@@ -7,8 +7,8 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
-	if (version != 8) {
-		std::cout << "Unknown war3map.doo version: " << version << " Attempting to load but may crash\nPlease send this map to eejin\n";
+	if (version != 7 && version != 8) {
+		std::cout << "Unknown war3mapUnits.doo version: " << version << " Attempting to load but may crash\nPlease send this map to eejin\n";
 	}
 
 	// Subversion
@@ -37,7 +37,9 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		units[i].mana = reader.read<uint32_t>();
 
 		// map item table pointer
-		reader.read<uint32_t>();
+		if (version >= 8) {
+			reader.read<uint32_t>();
+		}
 
 		const int item_sets = reader.read<uint32_t>();
 
@@ -60,14 +62,17 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		// Hero lvl
 		reader.read<uint32_t>();
 
-		// Strength
-		reader.read<uint32_t>();
 
-		// Agility
-		reader.read<uint32_t>();
+		if (version >= 8) {
+			// Strength
+			reader.read<uint32_t>();
 
-		// Intelligence
-		reader.read<uint32_t>();
+			// Agility
+			reader.read<uint32_t>();
+
+			// Intelligence
+			reader.read<uint32_t>();
+		}
 
 		const int items = reader.read<uint32_t>();
 		for (int j = 0; j < items; j++) {

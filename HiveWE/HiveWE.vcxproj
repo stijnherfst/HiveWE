@@ -141,6 +141,7 @@
     </ClCompile>
     <ClCompile Include="GLWidget.cpp" />
     <ClCompile Include="GPUTexture.cpp" />
+    <ClCompile Include="GroundTexture.cpp" />
     <ClCompile Include="Hierarchy.cpp" />
     <ClCompile Include="HiveWE.cpp" />
     <ClCompile Include="INI.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="GeneratedFiles\ui_TilePicker.h" />
     <ClInclude Include="GeneratedFiles\ui_TileSetter.h" />
     <ClInclude Include="GPUTexture.h" />
+    <ClInclude Include="GroundTexture.h" />
     <ClInclude Include="Hierarchy.h" />
     <ClInclude Include="INI.h" />
     <ClInclude Include="InputHandler.h" />

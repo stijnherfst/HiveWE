@@ -78,7 +78,6 @@
       <string>Pathing Map</string>
      </property>
      <addaction name="actionChangeTilePathing"/>
-     <addaction name="actionChangeCliffPathing"/>
     </widget>
     <addaction name="actionTileSetter"/>
     <addaction name="menuPathing_Map"/>

@@ -73,7 +73,10 @@ namespace slk {
 						}
 					} else {
 						row = parse_int_part() - 1;
-						column = parse_int_part() - 1;
+
+						if (line[position] == 'X') {
+							column = parse_int_part() - 1;
+						}
 					}
 
 					position++;

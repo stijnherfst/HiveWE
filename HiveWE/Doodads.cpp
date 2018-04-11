@@ -223,6 +223,10 @@ void Doodads::create() {
 			continue;
 		}
 
+		if (i.id == "D00E") {
+			std::cout << "\n";
+		}
+
 		fs::path mesh_path;
 		std::string variations;
 		std::string replaceable_id;
@@ -254,8 +258,7 @@ void Doodads::create() {
 		// Mesh doesnt exist at all
 		if (!hierarchy.file_exists(mesh_path)) {
 			std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
-			// Load something random to visualise
-			id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Doodads/Ashenvale/Props/AshenObilisk/AshenObilisk.mdx"));
+			id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
 			continue;
 		}
 

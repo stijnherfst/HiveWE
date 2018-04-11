@@ -42,12 +42,12 @@ public:
 	// Ground
 	std::shared_ptr<Shader> ground_shader;
 	std::map<std::string, size_t> ground_texture_to_id;
-	std::vector<std::shared_ptr<Texture>> ground_textures;
+	std::vector<std::shared_ptr<GroundTexture>> ground_textures;
 	std::unordered_map<std::string, TilePathingg> pathing_options;
 
 	GLuint ground_height;
 	GLuint ground_corner_height;
-	GLuint ground_texture_array;
+	//GLuint ground_texture_array;
 	GLuint ground_texture_data;
 	GLuint pathing_map_texture;
 
@@ -108,7 +108,7 @@ public:
 	~Terrain();
 
 	void create();
-	void create_tile_textures();
+	//void create_tile_textures();
 	bool load(BinaryReader& reader);
 	void save();
 	void render();

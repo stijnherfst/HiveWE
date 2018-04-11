@@ -100,7 +100,6 @@ void Map::play_test() {
 	arguments << "-loadfile" << QString::fromStdString(fs::system_complete("Data/Temporary/temp.w3x").string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
-	delete warcraft;
 }
 
 void Map::render() {

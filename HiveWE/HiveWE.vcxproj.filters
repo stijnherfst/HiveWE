@@ -198,6 +198,9 @@
     <ClCompile Include="GPUTexture.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="GroundTexture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -294,6 +297,9 @@
       <Filter>Header Files\Base\Brush</Filter>
     </ClInclude>
     <ClInclude Include="GPUTexture.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="GroundTexture.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
   </ItemGroup>

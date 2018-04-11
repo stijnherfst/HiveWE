@@ -52,6 +52,7 @@ namespace fs = std::experimental::filesystem;
 #include "ResourceManager.h"
 #include "Texture.h"
 #include "GPUTexture.h"
+#include "GroundTexture.h"
 #include "CliffMesh.h"
 #include "Shader.h"
 #include "StaticMesh.h"

@@ -2,6 +2,10 @@
 
 class TerrainBrush : public Brush {
 public:
+	bool apply_texture = true;
+	bool apply_height = true;
+	bool apply_cliff = true;
+
 	std::string tile_id;
 	void apply() override;
 	int get_random_variation() const;

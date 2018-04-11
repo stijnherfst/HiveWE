@@ -8,6 +8,7 @@ public:
 	mpq::MPQ war3x;
 	mpq::MPQ war3Local;
 	mpq::MPQ war3;
+	mpq::MPQ deprecated;
 
 	fs::path warcraft_directory;
 
