@@ -5,6 +5,9 @@
 int main(int argc, char *argv[]) {
 	QApplication a(argc, argv);
 
+	QCoreApplication::setOrganizationName("HiveWE");
+	QCoreApplication::setApplicationName("HiveWE");
+
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);

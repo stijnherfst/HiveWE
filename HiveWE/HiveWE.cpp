@@ -37,11 +37,15 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 }
 
 void HiveWE::load() {
+	QSettings settings;
+
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
-		QDir::current().path(),
+		settings.value("openDirectory", QDir::current().path()).toString(),
 		"Warcraft III Scenario (*.w3x)");
 
 	if (file_name != "") {
+		settings.setValue("openDirectory", file_name);
+
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
 			std::swap(new_map, map);
@@ -51,8 +55,11 @@ void HiveWE::load() {
 }
 
 void HiveWE::save_as() {
+	QSettings settings;
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map.filesystem_path.filename().string());
+
 	QString file_name = QFileDialog::getSaveFileName(this, "Save File",
-		QDir::current().path() + "\\" + QString::fromStdString(map.filesystem_path.filename().string()),
+		directory,
 		"Warcraft III Scenario (*.w3x)");
 
 	if (file_name != "") {
