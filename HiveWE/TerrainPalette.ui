@@ -655,7 +655,7 @@
    <item>
     <layout class="QHBoxLayout" name="deformationLayout">
      <item>
-      <widget class="QPushButton" name="terrainPlateau">
+      <widget class="QPushButton" name="terrainLower">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -681,7 +681,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Plateau/flatten terrain.</string>
+        <string>Raise the terrain.</string>
        </property>
        <property name="text">
         <string/>
@@ -728,7 +728,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Raise terrain.</string>
+        <string>Lower the terrain.</string>
        </property>
        <property name="text">
         <string/>
@@ -796,7 +796,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="terrainLower">
+      <widget class="QPushButton" name="terrainPlateau">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -822,7 +822,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Lower terrain.</string>
+        <string>Plateau/flatten terrain.</string>
        </property>
        <property name="text">
         <string/>
@@ -1211,8 +1211,8 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushShapeButtonGroup"/>
-  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="brushSizeButtonGroup"/>
+  <buttongroup name="cliffButtonGroup"/>
+  <buttongroup name="brushShapeButtonGroup"/>
  </buttongroups>
 </ui>

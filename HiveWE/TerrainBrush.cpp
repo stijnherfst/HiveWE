@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+
+
 void TerrainBrush::apply() {
 	const int x = position.x + brush_offset.x + 1;
 	const int y = position.y + brush_offset.y + 1;
@@ -87,21 +89,83 @@ void TerrainBrush::apply() {
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 	if (apply_height) {
-		for (int i = area.x(); i < area.x() + area.width(); i++) {
-			for (int j = area.y(); j < area.y() + area.height(); j++) {
-				map.terrain.corners[i][j].ground_height = std::clamp(map.terrain.corners[i][j].ground_height + 0.125f, -16.f, 16.f);
-				map.terrain.ground_corner_heights[j * map.terrain.width + i] = std::clamp(map.terrain.ground_corner_heights[j * map.terrain.width + i] + 0.125f, -16.f, 16.f);
-				map.terrain.ground_heights[j * map.terrain.width + i] = std::clamp(map.terrain.ground_heights[j * map.terrain.width + i] + 0.125f, -16.f, 16.f);
+		switch (deformation_type) {
+			case deformation::raise:
+				//new_height += 0.125f;
+				break;
+			case deformation::lower:
+				//new_height -= 0.125f;
+				break;
+			case deformation::plateau: {
+				//const int center_x = area.x() + area.width() * 0.5f;
+				//const int center_y = area.y() + area.height() * 0.5f;
 
-				const int offset = area.y() * map.terrain.width + area.x();
-				gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
-				gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
-				gl->glTextureSubImage2D(map.terrain.ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_heights.data() + offset);
-				gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+				//new_height = map.terrain.corners[center_x][center_y].ground_height;
+
+				break;
+			}
+			case deformation::ripple:
+				break;
+			case deformation::smooth: {
+				std::vector< std::vector <float> > heights(area.width(), std::vector<float>(area.height()));
+
+				for (int i = area.x(); i < area.x() + area.width(); i++) {
+					for (int j = area.y(); j < area.y() + area.height(); j++) {
+						heights[i - area.x()][j - area.y()] = map.terrain.corners[i][j].ground_height;
+
+						int counts = 0;
+						float accumulate = 0;
+						for (int k = -1; k < 1; k++) {
+							if (i + x < 0 || i + x > map.terrain.width) {
+								continue;
+							}
+							for (int l = -1; l < 1; l++) {
+								if (l + y < 0 || l + y > map.terrain.height || (i == 0 && l == 0)) {
+									continue;
+								}
+
+								counts++;
+								if ((i == -1 || l == -1) && i - area.x() > 0 && j - area.y() > 0) {
+									int t = i - area.x();
+									accumulate += heights[i - area.x() + k][j - area.y() + l];
+								} else {
+									accumulate += map.terrain.corners[i][j].ground_height;
+								}
+							}
+						}
+						map.terrain.corners[i][j].ground_height += accumulate / counts;
+						map.terrain.corners[i][j].ground_height *= 0.5;
+
+						map.terrain.ground_heights[j * map.terrain.width + i] = map.terrain.corners[i][j].ground_height;
+						map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
+					}
+				}
+
+				break;
 			}
 		}
+
+		/*for (int i = area.x(); i < area.x() + area.width(); i++) {
+			for (int j = area.y(); j < area.y() + area.height(); j++) {
+
+				
+
+				map.terrain.corners[i][j].ground_height = std::clamp(new_height, -16.f, 16.f);
+				map.terrain.ground_heights[j * map.terrain.width + i] = std::clamp(new_height, -16.f, 16.f);
+				map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
+			}
+		}*/
+		const int offset = area.y() * map.terrain.width + area.x();
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
+		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
+		gl->glTextureSubImage2D(map.terrain.ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_heights.data() + offset);
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 }
+
+//void TerrainBrush::apply_texture() {
+
+//}
 
 int TerrainBrush::get_random_variation() const {
 	std::random_device rd;

@@ -7,7 +7,20 @@ public:
 	bool apply_cliff = true;
 
 	std::string tile_id;
+
+	enum class deformation {
+		raise,
+		lower,
+		plateau,
+		ripple,
+		smooth
+	};
+	deformation deformation_type;
+
 	void apply() override;
+//	void apply_texture();
+//	void apply_deformation();
+
 	int get_random_variation() const;
 private:
 	// Total sum 570
@@ -31,5 +44,4 @@ private:
 		{ 14, 4 },
 		{ 15, 1 }
 	};
-
 };

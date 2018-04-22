@@ -48,6 +48,8 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 
 	connect(textures_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		brush.tile_id = button->property("tileID").toString().toStdString();
+		brush.apply_texture = true;
+		ui.textureGroupBox->setChecked(true);
 	});
 
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
@@ -58,6 +60,17 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 		brush.set_size(value - 1);
 		ui.brushSize->setValue(value);
 	});
+
+	connect(ui.textureGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_texture = checked; });
+	connect(ui.cliffGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_cliff = checked; });
+	connect(ui.deformationGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_height = checked; });
+
+	connect(ui.terrainRaise, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::raise; });
+	connect(ui.terrainLower, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::lower; });
+	connect(ui.terrainPlateau, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::plateau; });
+	connect(ui.terrainRipple, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::ripple; });
+	connect(ui.terrainSmooth, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::smooth; });
+
 }
 
 TerrainPalette::~TerrainPalette() {
