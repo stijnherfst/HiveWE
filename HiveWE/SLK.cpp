@@ -111,6 +111,20 @@ namespace slk {
 		//std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0 << "\n";
 	}
 
+	void SLK::save(const fs::path& path) const {
+		std::ofstream output(path);
+
+		output << "ID;PWXL;N;E\n";
+		output << "B;X" << columns << ";Y" << rows << ";D0\n";
+
+		for(int i = 0; i < table_data.size(); i++) {
+			for (int j = 0; j < table_data[i].size(); j++) {
+				output << "C;X" << j + 1 << ";Y" << i + 1 << ";K\"" << table_data[i][j] << "\"\n";
+			}
+		}
+		output << "E";
+	}
+
 	std::string SLK::data(const std::string& column_header, const size_t row) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			return "";

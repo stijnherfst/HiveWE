@@ -16,6 +16,7 @@ namespace slk {
 		explicit SLK(const fs::path& path, bool local = false);
 
 		void load(const fs::path&, bool local = false);
+		void save(const fs::path& path) const;
 
 		std::string data(const std::string& column_header, size_t row);
 		std::string data(const std::string& column_header, const std::string& row_header);
