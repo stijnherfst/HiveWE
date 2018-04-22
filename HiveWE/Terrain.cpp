@@ -10,7 +10,6 @@ Terrain::~Terrain() {
 	gl->glDeleteBuffers(1, &water_color_buffer);
 	gl->glDeleteBuffers(1, &water_index_buffer);
 
-	//gl->glDeleteTextures(1, &ground_texture_array);
 	gl->glDeleteTextures(1, &cliff_texture_array);
 	gl->glDeleteTextures(1, &water_texture_array);
 }
@@ -360,13 +359,12 @@ void Terrain::render() {
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform1i(2, map.render_pathing);
 
-	//gl->glBindTextureUnit(0, ground_texture_array);
-	gl->glBindTextureUnit(1, ground_corner_height);
-	gl->glBindTextureUnit(2, ground_texture_data);
-	gl->glBindTextureUnit(3, pathing_map_texture);
+	gl->glBindTextureUnit(0, ground_corner_height);
+	gl->glBindTextureUnit(1, ground_texture_data);
+	gl->glBindTextureUnit(2, pathing_map_texture);
 
-	for (int i = 0; i < ground_textures.size(); i++) {
-		gl->glBindTextureUnit(4 + i, ground_textures[i]->id);
+	for (size_t i = 0; i < ground_textures.size(); i++) {
+		gl->glBindTextureUnit(3 + i, ground_textures[i]->id);
 	}
 
 	gl->glEnableVertexAttribArray(0);
@@ -473,9 +471,6 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
-	// Update textures
-	//create_tile_textures();
-
 	// Update texture usage information
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
@@ -550,7 +545,7 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) {
 	const int top_right = real_tile_texture(x + 1, y + 1);
 
 	std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
-	glm::u16vec4 tiles(16); // 16 means black transparant texture
+	glm::u16vec4 tiles(16); // 16 means black transparent texture
 	int component = 1;
 
 	tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 5);

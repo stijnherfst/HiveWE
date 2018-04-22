@@ -3,8 +3,8 @@
 layout (location = 0) in vec2 vPosition;
 layout (location = 1) uniform mat4 MVP;
 
-layout (binding = 1) uniform sampler2D height_texture;
-layout (binding = 2) uniform usampler2D terrain_texture_list;
+layout (binding = 0) uniform sampler2D height_texture;
+layout (binding = 1) uniform usampler2D terrain_texture_list;
 
 layout (location = 0) out vec2 UV;
 layout (location = 1) out flat uvec4 texture_indices;
