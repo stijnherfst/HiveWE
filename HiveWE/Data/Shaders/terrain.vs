@@ -11,7 +11,7 @@ layout (location = 1) out flat uvec4 texture_indices;
 layout (location = 2) out vec2 pathing_map_uv;
 
 void main() { 
-	ivec2 size = textureSize(height_texture, 0);
+	ivec2 size = textureSize(terrain_texture_list, 0);
 	ivec2 pos = ivec2(gl_InstanceID % size.x, gl_InstanceID / size.x);
 
 	vec4 height = texelFetch(height_texture, ivec2(vPosition + pos), 0);

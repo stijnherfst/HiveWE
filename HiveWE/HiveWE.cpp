@@ -21,6 +21,7 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
+	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
 
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { 
 		TileSetter* tilesetter = new TileSetter(this); 

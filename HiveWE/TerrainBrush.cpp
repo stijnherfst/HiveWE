@@ -7,8 +7,8 @@ void TerrainBrush::apply() {
 	const int y = position.y + brush_offset.y + 1;
 	const int cells = size * 2 + 1;
 
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, map.terrain.width + 1, map.terrain.height + 1 });
-	QRect area2 = QRect(x - 1, y - 1, cells + 1, cells + 1).intersected({ 0, 0, map.terrain.width, map.terrain.height});
+	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, map.terrain.width, map.terrain.height });
+	QRect area2 = QRect(x - 1, y - 1, cells + 1, cells + 1).intersected({ 0, 0, map.terrain.width - 1, map.terrain.height - 1});
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -45,9 +45,9 @@ void TerrainBrush::apply() {
 		// Update texture variations
 		for (int i = area2.x(); i < area2.x() + area2.width(); i++) {
 			for (int j = area2.y(); j < area2.y() + area2.height(); j++) {
-				map.terrain.ground_texture_list[j * map.terrain.width + i] = map.terrain.get_texture_variations(i, j);
+				map.terrain.ground_texture_list[j * (map.terrain.width - 1) + i] = map.terrain.get_texture_variations(i, j);
 				if (map.terrain.corners[i][j].cliff) {
-					map.terrain.ground_texture_list[j * map.terrain.width + i] |= 0b1000000000000000;
+					map.terrain.ground_texture_list[j * (map.terrain.width - 1) + i] |= 0b1000000000000000;
 				}
 			}
 		}
@@ -83,49 +83,47 @@ void TerrainBrush::apply() {
 		gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
 
 		// Update ground texture data
-		offset = area2.y() * map.terrain.width + area2.x();
-		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
+		offset = area2.y() * (map.terrain.width - 1) + area2.x();
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width - 1);
 		gl->glTextureSubImage2D(map.terrain.ground_texture_data, 0, area2.x(), area2.y(), area2.width(), area2.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map.terrain.ground_texture_list.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 	if (apply_height) {
-		switch (deformation_type) {
-			case deformation::raise:
-				//new_height += 0.125f;
-				break;
-			case deformation::lower:
-				//new_height -= 0.125f;
-				break;
-			case deformation::plateau: {
-				//const int center_x = area.x() + area.width() * 0.5f;
-				//const int center_y = area.y() + area.height() * 0.5f;
+		std::vector< std::vector <float> > heights(area.width(), std::vector<float>(area.height()));
 
-				//new_height = map.terrain.corners[center_x][center_y].ground_height;
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
+			for (int j = area.y(); j < area.y() + area.height(); j++) {
+				heights[i - area.x()][j - area.y()] = map.terrain.corners[i][j].ground_height;
+				switch (deformation_type) {
+					case deformation::raise:
+						map.terrain.corners[i][j].ground_height += 0.125f;
+						break;
+					case deformation::lower:
+						map.terrain.corners[i][j].ground_height -= 0.125f;
+						break;
+					case deformation::plateau: {
+						const int center_x = area.x() + area.width() * 0.5f;
+						const int center_y = area.y() + area.height() * 0.5f;
 
-				break;
-			}
-			case deformation::ripple:
-				break;
-			case deformation::smooth: {
-				std::vector< std::vector <float> > heights(area.width(), std::vector<float>(area.height()));
-
-				for (int i = area.x(); i < area.x() + area.width(); i++) {
-					for (int j = area.y(); j < area.y() + area.height(); j++) {
-						heights[i - area.x()][j - area.y()] = map.terrain.corners[i][j].ground_height;
-
+						map.terrain.corners[i][j].ground_height = map.terrain.corners[center_x][center_y].ground_height;
+						break;
+					}
+					case deformation::ripple:
+						break;
+					case deformation::smooth: {
 						int counts = 0;
 						float accumulate = 0;
 						for (int k = -1; k < 1; k++) {
-							if (i + x < 0 || i + x > map.terrain.width) {
+							if (i + k < 0 || i + k > map.terrain.width) {
 								continue;
 							}
 							for (int l = -1; l < 1; l++) {
-								if (l + y < 0 || l + y > map.terrain.height || (i == 0 && l == 0)) {
+								if (j + l < 0 || j + l > map.terrain.height || (k == 0 && l == 0)) {
 									continue;
 								}
 
 								counts++;
-								if ((i == -1 || l == -1) && i - area.x() > 0 && j - area.y() > 0) {
+								if ((k == -1 || l == -1) && i - area.x() > 0 && j - area.y() > 0) {
 									int t = i - area.x();
 									accumulate += heights[i - area.x() + k][j - area.y() + l];
 								} else {
@@ -133,28 +131,17 @@ void TerrainBrush::apply() {
 								}
 							}
 						}
+						
 						map.terrain.corners[i][j].ground_height += accumulate / counts;
 						map.terrain.corners[i][j].ground_height *= 0.5;
-
-						map.terrain.ground_heights[j * map.terrain.width + i] = map.terrain.corners[i][j].ground_height;
-						map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
+						break;
 					}
 				}
-
-				break;
+				map.terrain.ground_heights[j * map.terrain.width + i] = map.terrain.corners[i][j].ground_height;
+				map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
 			}
 		}
 
-		/*for (int i = area.x(); i < area.x() + area.width(); i++) {
-			for (int j = area.y(); j < area.y() + area.height(); j++) {
-
-				
-
-				map.terrain.corners[i][j].ground_height = std::clamp(new_height, -16.f, 16.f);
-				map.terrain.ground_heights[j * map.terrain.width + i] = std::clamp(new_height, -16.f, 16.f);
-				map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
-			}
-		}*/
 		const int offset = area.y() * map.terrain.width + area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
 		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);

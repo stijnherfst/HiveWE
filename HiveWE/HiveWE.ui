@@ -66,6 +66,7 @@
     <addaction name="actionDoodads"/>
     <addaction name="actionPathing"/>
     <addaction name="actionBrush"/>
+    <addaction name="actionFrame_Times"/>
     <addaction name="separator"/>
     <addaction name="menuCamera"/>
    </widget>
@@ -214,6 +215,17 @@
   <action name="actionTerrain_Palette">
    <property name="text">
     <string>Terrain</string>
+   </property>
+  </action>
+  <action name="actionFrame_Times">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Frame Times</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

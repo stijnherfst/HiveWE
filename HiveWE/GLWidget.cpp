@@ -103,22 +103,23 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map.render();
-
+	map.render(width(), height());
 	gl->glBindVertexArray(0);
 
-	// QPainter does some wonky stuff with OpenGL state.
-	//QPainter p(this);
-	//p.setFont(QFont("Arial", 10, 100, false));
-	//p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
-	//	p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
-	//	p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
-	//	p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map.terrain_water_time)));
-	//p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.doodad_time)));
-	//p.drawText(10, 95, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
-	//p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
+	gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	gl->glBindVertexArray(vao);
+	// QPainter does some wonky stuff with OpenGL state.
+	if (map.show_timings) {
+		QPainter p(this);
+		p.setFont(QFont("Arial", 10, 100, false));
+		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
+			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
+			p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
+			p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map.terrain_water_time)));
+		p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.doodad_time)));
+		p.drawText(10, 95, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
+		p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
+	}
 }
 
 void GLWidget::keyPressEvent(QKeyEvent *e) {
@@ -146,17 +147,9 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
+	//std::cout << event->pos
 	input_handler.mouse_move_event(event);
 	camera.mouse_move_event(event);
-
-	makeCurrent();
-	QPoint cursor_position = mapFromGlobal(QCursor::pos());
-	
-	float z;
-	gl->glReadPixels(cursor_position.x(), height() - cursor_position.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &z);
-	const glm::vec3 window = glm::vec3(cursor_position.x(), height() - cursor_position.y(), z);
-
-	input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width(), height()));
 
 	//if (input_handler.key_pressed(Qt::Key_Alt)) {
 	//	map.brush.set_size(map.brush.size + (input_handler.mouse_world - input_handler.drag_start).x);

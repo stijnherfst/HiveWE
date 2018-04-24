@@ -102,16 +102,26 @@ void Map::play_test() {
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
-void Map::render() {
+void Map::render(int width, int height) {
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// Render Terrain
 	auto begin = std::chrono::high_resolution_clock::now();
 
 	terrain.render();
 
+
 	auto end = std::chrono::high_resolution_clock::now();
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	
+	// Map mouse coordinates to world coordinates
+	if (input_handler.mouse != input_handler.previous_mouse) {
+		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
+		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
+		input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));
+	}
 
+	// Render Doodads
 	begin = std::chrono::high_resolution_clock::now();
 
 	if (render_doodads) {
@@ -121,6 +131,7 @@ void Map::render() {
 	end = std::chrono::high_resolution_clock::now();
 	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
+	// Render units
 	if (units_loaded) {
 		begin = std::chrono::high_resolution_clock::now();
 		if (render_units) {
@@ -134,6 +145,7 @@ void Map::render() {
 		brush->render(terrain);
 	}
 
+	// Render all meshes
 	begin = std::chrono::high_resolution_clock::now();
 
 	for (auto&& i : meshes) {

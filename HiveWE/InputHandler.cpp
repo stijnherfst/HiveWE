@@ -6,7 +6,7 @@ bool InputHandler::key_pressed(const Qt::Key key) const {
 
 void InputHandler::mouse_move_event(QMouseEvent* event) {
 	previous_mouse = mouse;
-	mouse = event->globalPos();
+	mouse = event->pos();
 }
 
 InputHandler input_handler; 
