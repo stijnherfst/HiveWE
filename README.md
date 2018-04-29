@@ -1,5 +1,5 @@
 # HiveWE
-A Warcraft III world editor.
+A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threads/introducing-hivewe.303183/)
 
 ![HiveWE Screenshot](http://g2f.nl/0scv6qu)
 
