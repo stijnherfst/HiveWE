@@ -21,6 +21,7 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
+	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
 
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { 
 		TileSetter* tilesetter = new TileSetter(this); 
@@ -34,6 +35,9 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() { new PathingPallete(this); });
 	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
 
+
+	// Do we supply the parent since vanilla WE doesn't ?
+	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {new ImportManager(this); });
 }
 
 void HiveWE::load() {

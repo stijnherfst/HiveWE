@@ -33,22 +33,27 @@ void Terrain::create() {
 
 	ground_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
-	ground_texture_list.resize(width * height);
+	ground_texture_list.resize((width - 1) * (height - 1));
 
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
+
+			// Ground tiles
+			ground_heights[j * width + i] = corners[i][j].ground_height;
+			ground_corner_heights[j * width + i] = corner_height(corners[i][j]);
+
+			if (i == width - 1 || j == height - 1) {
+				continue;
+			}
+
+			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
+
 			Corner& bottom_left = corners[i][j];
 			Corner& bottom_right = corners[i + 1][j];
 			Corner& top_left = corners[i][j + 1];
 			Corner& top_right = corners[i + 1][j + 1];
-
-			// Ground tiles
-			ground_heights[j * width + i] = bottom_left.ground_height;
-			ground_corner_heights[j * width + i] = corner_height(bottom_left);
-			ground_texture_list[j * width + i] = get_texture_variations(i, j);
-
 			if (bottom_left.cliff) {
-				ground_texture_list[j * width + i].a |= 0b1000000000000000;
+				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
 
 				// Cliff model path
 				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
@@ -102,8 +107,8 @@ void Terrain::create() {
 
 	// Ground
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width, height);
-	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
+	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
+	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
@@ -177,15 +182,15 @@ bool Terrain::load(BinaryReader& reader) {
 		cliffset_ids.push_back(reader.read_string(4));
 	}
 
-	width = reader.read<uint32_t>() - 1;
-	height = reader.read<uint32_t>() - 1;
+	width = reader.read<uint32_t>();
+	height = reader.read<uint32_t>();
 
 	offset = reader.read<glm::vec2>();
 
 	// Parse all tilepoints
-	corners.resize(width + 1, std::vector<Corner>(height + 1));
-	for (int j = 0; j < height + 1; j++) {
-		for (int i = 0; i < width + 1; i++) {
+	corners.resize(width, std::vector<Corner>(height));
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
 			Corner& corner = corners[i][j];
 
 			corner.ground_height = (reader.read<uint16_t>() - 8192.f) / 512.f;
@@ -213,8 +218,8 @@ bool Terrain::load(BinaryReader& reader) {
 	}
 
 	// Determine if cliff
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
+	for (int i = 0; i < width - 1; i++) {
+		for (int j = 0; j < height - 1; j++) {
 			Corner& bottom_left = corners[i][j];
 			Corner& bottom_right = corners[i + 1][j];
 			Corner& top_left = corners[i][j + 1];
@@ -305,12 +310,12 @@ void Terrain::save() {
 	writer.write_vector(tileset_ids);
 	writer.write<uint32_t>(cliffset_ids.size());
 	writer.write_vector(cliffset_ids);
-	writer.write(width + 1);
-	writer.write(height + 1);
+	writer.write(width);
+	writer.write(height);
 	writer.write(offset);
 
-	for (int j = 0; j < height + 1; j++) {
-		for (int i = 0; i < width + 1; i++) {
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
 			Corner& corner = corners[i][j];
 
 			writer.write<uint16_t>(corner.ground_height * 512.f + 8192.f);
@@ -372,7 +377,7 @@ void Terrain::render() {
 	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, width * height);
+	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
 
 	gl->glDisableVertexAttribArray(0);
 
@@ -501,7 +506,12 @@ float Terrain::corner_water_height(const Corner corner) const {
 int Terrain::real_tile_texture(const int x, const int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
-			if (x + i >= 0 && x + i <= width && y + j >= 0 && y + j <= height) {
+			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
+
+				//if (x + i < 0 || x + i > width || y + j < 0 || y + j > height) {
+				//	continue;
+				//}
+
 				if (corners[x + i][y + j].cliff) {
 					int texture = corners[x + i][y + j].cliff_texture;
 					// Number 15 seems to be something

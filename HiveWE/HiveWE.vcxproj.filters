@@ -201,6 +201,18 @@
     <ClCompile Include="GroundTexture.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Imports.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="ImportManager.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -302,6 +314,12 @@
     <ClInclude Include="GroundTexture.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="ui_ImportManager.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Imports.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -349,5 +367,13 @@
     <CustomBuild Include="TilePather.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
+    <CustomBuild Include="ImportManager.h">
+      <Filter>Header Files\Base</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ImportManager.ui">
+      <Filter>Form Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

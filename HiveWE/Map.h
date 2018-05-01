@@ -6,6 +6,7 @@ public:
 	PathingMap pathing_map;
 	Doodads doodads;
 	Units units;
+	Imports allImports;
 
 	Brush* brush = nullptr;
 
@@ -20,6 +21,7 @@ public:
 
 	// Temporary for instancing. Replace by some kind of scenenode
 	std::vector<StaticMesh*> meshes;
+
 	double terrain_time;
 	double terrain_tiles_time;
 	double terrain_water_time;
@@ -28,13 +30,12 @@ public:
 	double unit_time;
 	double render_time;
 
+	bool show_timings = false;
+
 	~Map();
 
 	void load(const fs::path& path);
-
 	bool save(const fs::path& path);
-
 	void play_test();
-
-	void render();
+	void render(int width, int height);
 };
