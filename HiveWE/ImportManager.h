@@ -4,33 +4,33 @@
 #pragma once
 
 namespace Ui {
-class ImportManager;
+	class ImportManager;
 }
 
 class ImportManager : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
-    QList<QString> importedFiles;
+	QList<QString> importedFiles;
 	QTreeWidgetItem * CreateDir(QString name);
 
-    void AddChildItem(QTreeWidgetItem * itm,QString name,QString itmType,QString itmSize,QString fullPath);
-    void CustomMenuPopup(const QPoint & pos);
-    void RenameDir(QTreeWidgetItem * itm,int row);
-    void ImportFiles(QTreeWidgetItem * itm, int row);
-    void ExportFiles();
-    void CreateEmptyDir();
-    void RemoveItem(QTreeWidgetItem * itm,int row);
+	void AddChildItem(QTreeWidgetItem * itm, QString name, QString itmType, QString itmSize, QString fullPath);
+	void CustomMenuPopup(const QPoint & pos);
+	void RenameDir(QTreeWidgetItem * itm, int row);
+	void ImportFiles(QTreeWidgetItem * itm, int row);
+	void ExportFiles();
+	QTreeWidgetItem * CreateEmptyDir();
+	void RemoveItem(QTreeWidgetItem * itm);
 
-	void LoadFiles(std::vector<std::string> &dirEntries);
+	void LoadFiles(std::map<std::string,std::vector<std::string>> &dirEntries,std::vector<Import> &imports);
 
-    QString GenerateFullPath(QString fileName);
+	QString GenerateFullPath(QString fileName);
 public:
-    explicit ImportManager(QWidget *parent = 0);
-    ~ImportManager();
+	explicit ImportManager(QWidget *parent = 0);
+	~ImportManager();
 
 private:
-    Ui::ImportManager *ui;
+	Ui::ImportManager *ui;
 };
 
 #endif // IMPORTMANAGER_H

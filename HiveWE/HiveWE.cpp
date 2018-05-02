@@ -37,7 +37,11 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 
 
 	// Do we supply the parent since vanilla WE doesn't ?
-	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {new ImportManager(this); });
+	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {
+		if (!this->findChild<ImportManager*>()) {
+			new ImportManager(this);
+		}
+		}); 
 }
 
 void HiveWE::load() {
