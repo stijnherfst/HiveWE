@@ -93,6 +93,7 @@ bool Map::save(const fs::path& path) {
 		terrain.save();
 		all_imports.save();
 		all_imports.saveDirectoryFile();
+		all_imports.save_imports();
 
 		std::swap(new_map, hierarchy.map);
 	} else {
@@ -100,6 +101,7 @@ bool Map::save(const fs::path& path) {
 		terrain.save();
 		all_imports.save();
 		all_imports.saveDirectoryFile();
+		all_imports.save_imports();
 	}
 	return true;
 }

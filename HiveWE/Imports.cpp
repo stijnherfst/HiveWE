@@ -8,7 +8,7 @@ void Imports::load(BinaryReader& reader) {
 		int is_custom = reader.read<uint8_t>();
 		std::string path = reader.read_c_string();
 		reader.advance(1);
-		imports.emplace_back(is_custom ==  10 || is_custom == 13 , path);
+		imports.emplace_back(is_custom ==  5 || is_custom == 13 , path,"");
 	}
 
 }
@@ -18,12 +18,12 @@ void Imports::save() {
 	// Remove the item if it exists.
 	imports.erase(std::remove_if(imports.begin(), imports.end(), [&](const Import &imp) { return imp.path == "war3map.dir"; }), imports.end());
 	// Re add the item to the end of the vector.
-	imports.emplace_back(false, "war3map.dir");
+	imports.emplace_back(false, "war3map.dir","");
 	
 	writer.write<uint32_t>(version);
 	writer.write<uint32_t>(imports.size());
 	for (auto&& i : imports) {
-		writer.write<uint8_t>(i.custom ? 8: 13);
+		writer.write<uint8_t>(i.custom ? 5: 0);
 		writer.write_string(i.path);
 		writer.write('\0');
 	}
@@ -91,4 +91,11 @@ void Imports::saveDirectoryFile() {
 
 	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
 	SFileFinishFile(handle);
+}
+
+void Imports::save_imports() {
+	for (auto&& imp : imports) {
+		SFileAddFileEx(hierarchy.map.handle, imp.file_path.c_str(), imp.path.c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+
+	}
 }

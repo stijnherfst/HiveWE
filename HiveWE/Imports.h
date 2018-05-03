@@ -4,8 +4,9 @@
 struct Import {
 	bool custom;
 	std::string path;
+	fs::path file_path;
 	
-	Import(bool c, std::string p) : custom(c), path(p) {};
+	Import(bool c, std::string p, fs::path f) : custom(c), path(p), file_path(f) {};
 };
 
 class Imports {
@@ -19,5 +20,7 @@ public:
 
 	void loadDirectoryFile(BinaryReader &reader);
 	void saveDirectoryFile();
+
+	void save_imports();
 
 };

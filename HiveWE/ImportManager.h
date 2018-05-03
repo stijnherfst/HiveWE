@@ -11,13 +11,12 @@ class ImportManager : public QMainWindow
 {
 	Q_OBJECT
 
-	QList<QString> importedFiles;
 	QTreeWidgetItem * CreateDir(QString name);
 
 	void AddChildItem(QTreeWidgetItem * itm, QString name, QString itmType, QString itmSize, QString fullPath);
 	void CustomMenuPopup(const QPoint & pos);
-	void RenameDir(QTreeWidgetItem * itm, int row);
-	void ImportFiles(QTreeWidgetItem * itm, int row);
+	void RenameDir(QTreeWidgetItem * itm);
+	void ImportFiles(QTreeWidgetItem * itm);
 	void ExportFiles();
 	QTreeWidgetItem * CreateEmptyDir();
 	void RemoveItem(QTreeWidgetItem * itm);
