@@ -201,14 +201,14 @@
     <ClCompile Include="GroundTexture.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Imports.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_ImportManager.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_ImportManager.cpp">
       <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Imports.cpp">
-      <Filter>Source Files\Base</Filter>
     </ClCompile>
     <ClCompile Include="ImportManager.cpp">
       <Filter>Source Files\Base</Filter>

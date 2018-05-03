@@ -1,6 +1,3 @@
-#ifndef IMPORTMANAGER_H
-#define IMPORTMANAGER_H
-
 #pragma once
 
 namespace Ui {
@@ -31,5 +28,3 @@ public:
 private:
 	Ui::ImportManager *ui;
 };
-
-#endif // IMPORTMANAGER_H
