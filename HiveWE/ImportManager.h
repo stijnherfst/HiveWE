@@ -8,7 +8,7 @@ class ImportManager : public QMainWindow
 {
 	Q_OBJECT
 
-	QTreeWidgetItem * CreateDir(QString name);
+		QTreeWidgetItem * CreateDir(QString name);
 
 	void AddChildItem(QTreeWidgetItem * itm, QString name, QString itmType, QString itmSize, QString fullPath);
 	void CustomMenuPopup(const QPoint & pos);
@@ -18,7 +18,7 @@ class ImportManager : public QMainWindow
 	QTreeWidgetItem * CreateEmptyDir();
 	void RemoveItem(QTreeWidgetItem * itm);
 
-	void LoadFiles(std::map<std::string,std::vector<std::string>> &dirEntries,std::vector<Import> &imports);
+	void LoadFiles(std::map<std::string, std::vector<std::string>> &dirEntries, std::vector<Import> &imports);
 
 	QString GenerateFullPath(QString fileName);
 public:

@@ -275,9 +275,6 @@
     <ClInclude Include="InputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_PathingPallete.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="BinaryWriter.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
@@ -314,9 +311,6 @@
     <ClInclude Include="GroundTexture.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="ui_ImportManager.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="Imports.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
@@ -327,9 +321,6 @@
     </CustomBuild>
     <CustomBuild Include="HiveWE.ui">
       <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="HiveWE.qrc">
-      <Filter>Resource Files</Filter>
     </CustomBuild>
     <CustomBuild Include="GLWidget.h">
       <Filter>Header Files</Filter>
@@ -367,13 +358,14 @@
     <CustomBuild Include="TilePather.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
+    <CustomBuild Include="HiveWE.qrc">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
     <CustomBuild Include="ImportManager.h">
       <Filter>Header Files\Base</Filter>
     </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ImportManager.ui">
+    <CustomBuild Include="ImportManager.ui">
       <Filter>Form Files</Filter>
-    </None>
+    </CustomBuild>
   </ItemGroup>
 </Project>
