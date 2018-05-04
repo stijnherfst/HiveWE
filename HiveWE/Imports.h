@@ -13,7 +13,7 @@ class Imports {
 	int version = 1;
 public:
 	std::vector<Import> imports;
-	std::map<std::string,std::vector<std::string>> dirEntries;
+	std::map<std::string,std::vector<std::string>> directories;
 
 	void load(BinaryReader &reader);
 	void save();
@@ -22,5 +22,7 @@ public:
 	void saveDirectoryFile();
 
 	void save_imports();
+	void remove_import(std::string path);
 
+	void export_file(std::string path,std::string file);
 };

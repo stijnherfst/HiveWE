@@ -14,13 +14,15 @@ class ImportManager : public QMainWindow
 	void CustomMenuPopup(const QPoint & pos);
 	void RenameDir(QTreeWidgetItem * itm);
 	void ImportFiles(QTreeWidgetItem * itm);
-	void ExportFiles();
+	void ExportFiles(QTreeWidgetItem * itm);
 	QTreeWidgetItem * CreateEmptyDir();
 	void RemoveItem(QTreeWidgetItem * itm);
 
-	void LoadFiles(std::map<std::string, std::vector<std::string>> &dirEntries, std::vector<Import> &imports);
-
+	void LoadFiles(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports);
+	bool RemoveMessageBox(QString msg);
 	QString GenerateFullPath(QString fileName);
+protected:
+	bool eventFilter(QObject *obj, QEvent *event);
 public:
 	explicit ImportManager(QWidget *parent = 0);
 	~ImportManager();

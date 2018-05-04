@@ -31,11 +31,11 @@ void Map::load(const fs::path& path) {
 	// Imported Files
 	if (hierarchy.map.file_exists("war3map.imp")) {
 		BinaryReader war3map_imp = BinaryReader(hierarchy.map.file_open("war3map.imp").read());
-		all_imports.load(war3map_imp);
+		imports.load(war3map_imp);
 	}
 	if (hierarchy.map.file_exists("war3map.dir")) {
 		BinaryReader war3map_dir = BinaryReader(hierarchy.map.file_open("war3map.dir").read());
-		all_imports.loadDirectoryFile(war3map_dir);
+		imports.loadDirectoryFile(war3map_dir);
 	}
 
 	if (hierarchy.map.file_exists("war3map.w3d")) {
@@ -91,17 +91,17 @@ bool Map::save(const fs::path& path) {
 
 		pathing_map.save();
 		terrain.save();
-		all_imports.save();
-		all_imports.saveDirectoryFile();
-		all_imports.save_imports();
+		imports.save();
+		imports.saveDirectoryFile();
+		imports.save_imports();
 
 		std::swap(new_map, hierarchy.map);
 	} else {
 		pathing_map.save();
 		terrain.save();
-		all_imports.save();
-		all_imports.saveDirectoryFile();
-		all_imports.save_imports();
+		imports.save();
+		imports.saveDirectoryFile();
+		imports.save_imports();
 	}
 	return true;
 }

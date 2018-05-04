@@ -7,15 +7,21 @@ ImportManager::ImportManager(QWidget *parent) :
 	ui(new Ui::ImportManager)
 {
 	ui->setupUi(this);
-	this->setAttribute(Qt::WA_DeleteOnClose);
+	setAttribute(Qt::WA_DeleteOnClose);
 	ui->treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
 	ui->treeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->treeWidget->header()->sortIndicatorOrder();
+	ui->treeWidget->setDragDropMode(QAbstractItemView::InternalMove);
+
+	ui->treeWidget->setFocusPolicy(Qt::ClickFocus);
+	ui->treeWidget->setFocus();
+	ui->treeWidget->nativeParentWidget()->installEventFilter(this);
+	ui->treeWidget->installEventFilter(this);
+	ui->treeWidget->setUniformRowHeights(true);
 	ui->treeWidget->header()->resizeSection(0, 220);
 	connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::CustomMenuPopup);
 
 
-	this->LoadFiles(map.all_imports.dirEntries, map.all_imports.imports); // Loads pre-existing files if any.
+	LoadFiles(map.imports.directories, map.imports.imports); // Loads pre-existing files if any.
 
 	show();
 }
@@ -28,7 +34,7 @@ ImportManager::~ImportManager()
 
 QTreeWidgetItem * ImportManager::CreateDir(QString name) {
 	QTreeWidgetItem * itm = new QTreeWidgetItem();
-	itm->setFlags(Qt::ItemIsEditable | Qt::ItemIsEnabled | Qt::ItemIsDropEnabled);
+	itm->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDropEnabled);
 	itm->setText(0, name);
 	itm->setText(1, "Directory");
 
@@ -42,13 +48,13 @@ void ImportManager::AddChildItem(QTreeWidgetItem * itm, QString name, QString it
 	childitm->setText(1, itmType);
 	childitm->setData(2, Qt::DisplayRole, itmSize);
 	childitm->setText(3, fullPath);
+
 	itm->addChild(childitm);
 }
 
 void ImportManager::CustomMenuPopup(const QPoint & pos) {
 	QTreeWidgetItem * itm = ui->treeWidget->itemAt(pos);
 	int column = ui->treeWidget->currentIndex().column();
-	int row = ui->treeWidget->currentIndex().row();
 
 	QMenu * menu = new QMenu(this);
 	QAction * b = new QAction("Import Files");
@@ -62,6 +68,9 @@ void ImportManager::CustomMenuPopup(const QPoint & pos) {
 	connect(f, &QAction::triggered, [&]() { ui->treeWidget->addTopLevelItem(CreateEmptyDir()); });
 	connect(c, &QAction::triggered, [&]() { RemoveItem(itm);  });
 	connect(g, &QAction::triggered, [&]() { RenameDir(itm);  });
+	connect(e, &QAction::triggered, [&]() { ExportFiles(itm); });
+	connect(d, &QAction::triggered, [&]() { ExportFiles(itm); });
+
 	// Imported File
 	if (!itm) {
 		menu->addAction(f);
@@ -88,12 +97,12 @@ void ImportManager::CustomMenuPopup(const QPoint & pos) {
 
 
 QTreeWidgetItem * ImportManager::CreateEmptyDir() {
-	std::string name = "Untitled Directory" + std::to_string(map.all_imports.dirEntries.size());
+	std::string name = "Untitled Directory" + std::to_string(map.imports.directories.size());
 
 	// Maybe an error message box  ?
-	for (int i = 0; i < map.all_imports.dirEntries.size(); i++) {
+	for (size_t i = 0; i < map.imports.directories.size(); i++) {
 		std::string s = "Untitled Directory" + std::to_string(i);
-		if (map.all_imports.dirEntries.find(s + ".dir") == map.all_imports.dirEntries.end()) {
+		if (map.imports.directories.find(s + ".dir") == map.imports.directories.end()) {
 			std::cout << s << std::endl;
 			name.swap(s);
 			break;
@@ -101,7 +110,7 @@ QTreeWidgetItem * ImportManager::CreateEmptyDir() {
 	}
 
 	QTreeWidgetItem * itm = CreateDir(QString::fromStdString(name));
-	map.all_imports.dirEntries.emplace(name + ".dir", std::vector<std::string>());
+	map.imports.directories.emplace(name + ".dir", std::vector<std::string>());
 	return itm;
 }
 
@@ -115,22 +124,22 @@ void ImportManager::ImportFiles(QTreeWidgetItem * itm) {
 			std::string s = fs::path(f.toStdString()).stem().string();
 
 			auto cond = [&s](const Import &imp) { return fs::path(imp.path).stem().string() == s; };
-			auto position = std::find_if(map.all_imports.imports.begin(), map.all_imports.imports.end(), cond);
+			auto position = std::find_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
 
-			if (position == map.all_imports.imports.end()) {
+			if (position == map.imports.imports.end()) {
 				std::string file = f.toStdString();
-
+				std::cout << file << std::endl;
 				QString file_name = QString::fromStdString(fs::path(file).filename().string());
 				QString file_type = QString::fromStdString(fs::path(file).extension().string());
-				QString file_size = QString::fromStdString(std::to_string(fs::file_size(fs::path(file))));
+				QString file_size = QString::number(fs::file_size(fs::path(file)));
 				QString full_path = GenerateFullPath(file_name);
 
 				AddChildItem(itm, file_name, file_type, file_size, full_path);
 
 				int custom = true;
 
-				map.all_imports.imports.emplace_back(custom, full_path.toStdString(), f.toStdString());
-				map.all_imports.dirEntries.at(itm->text(0).toStdString() + ".dir").push_back(full_path.toStdString());
+				map.imports.imports.emplace_back(custom, full_path.toStdString(), f.toStdString());
+				map.imports.directories.at(itm->text(0).toStdString() + ".dir").push_back(full_path.toStdString());
 
 			}
 
@@ -142,26 +151,30 @@ void ImportManager::ImportFiles(QTreeWidgetItem * itm) {
 
 void ImportManager::RemoveItem(QTreeWidgetItem *itm) {
 	std::string itm_name = itm->text(0).toStdString();
-	std::vector<std::string> temp_vec;
+
+	if (!RemoveMessageBox(itm->text(0))) { return; }
+
 	if (itm->text(1) == "Directory") {
-		temp_vec = map.all_imports.dirEntries.at(itm_name + ".dir");
+		auto temp_vec = map.imports.directories.at(itm_name + ".dir");
 		for (auto&& f : temp_vec) {
 			auto cond = [&f](const Import &imp) { return (imp.path == f); };
-			map.all_imports.imports.erase(std::remove_if(map.all_imports.imports.begin(), map.all_imports.imports.end(), cond), map.all_imports.imports.end());
+			auto position = std::remove_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
+			if (position != map.imports.imports.end() ) {
+				map.imports.remove_import(f);
+				map.imports.imports.erase(position);
+			}
 		}
-		map.all_imports.dirEntries.erase(itm_name + ".dir");
-	}
-	else {
+		map.imports.directories.erase(itm_name + ".dir");
+	} else {
 		std::string parent_name = itm->parent()->text(0).toStdString() + ".dir";
 		itm_name = itm->text(3).toStdString();
 
 		auto cond = [&itm_name](const Import &imp) { return imp.path == itm_name;  };
-		map.all_imports.imports.erase(std::remove_if(map.all_imports.imports.begin(), map.all_imports.imports.end(), cond), map.all_imports.imports.end());
-
-		auto position = std::find(map.all_imports.dirEntries.at(parent_name).begin(), map.all_imports.dirEntries.at(parent_name).end(), itm_name);
-		if (position != map.all_imports.dirEntries.at(parent_name).end()) {
-
-			map.all_imports.dirEntries.at(parent_name).erase(position);
+		map.imports.imports.erase(std::remove_if(map.imports.imports.begin(), map.imports.imports.end(), cond), map.imports.imports.end());
+		auto position = std::find(map.imports.directories.at(parent_name).begin(), map.imports.directories.at(parent_name).end(), itm_name);
+		if (position != map.imports.directories.at(parent_name).end()) {
+			map.imports.remove_import(itm_name);
+			map.imports.directories.at(parent_name).erase(position);
 		}
 	}
 
@@ -169,20 +182,14 @@ void ImportManager::RemoveItem(QTreeWidgetItem *itm) {
 }
 
 QString ImportManager::GenerateFullPath(QString fileName) {
-	QString s;
-	if (fileName.startsWith("BTN"))
-	{
-		s = "ReplaceableTextures\\CommandButtons\\";
+	if (fileName.startsWith("BTN")) {
+		return "ReplaceableTextures\\CommandButtons\\" + fileName;
+	} else if (fileName.startsWith("PAS")) {
+		return "ReplaceableTextures\\PassiveButtons\\" + fileName;
+	} else if (fileName.startsWith("DISBTN") || fileName.startsWith("DISPAS")) {
+		return "ReplaceableTextures\\CommandButtonsDisabled\\" + fileName;
 	}
-	else if (fileName.startsWith("PAS"))
-	{
-		s = "ReplaceableTextures\\PassiveButtons\\";
-	}
-	else if (fileName.startsWith("DISBTN") || fileName.startsWith("DISPAS"))
-	{
-		s = "ReplaceableTextures\\CommandButtonsDisabled\\";
-	}
-	return QString(s + fileName);
+	return fileName;
 }
 
 void ImportManager::RenameDir(QTreeWidgetItem * itm) {
@@ -198,29 +205,24 @@ void ImportManager::RenameDir(QTreeWidgetItem * itm) {
 
 	vLayout->addWidget(input);
 
-	QPushButton * renameBut = new QPushButton();
-	renameBut->setText("Rename");
+	QPushButton * renameBut = new QPushButton("Rename");
+
 	connect(renameBut, &QPushButton::clicked, [&]() {
 		std::string name = input->text().toStdString() + ".dir";
-		std::vector <std::string> temp(map.all_imports.dirEntries.at(itm->text(0).toStdString() + ".dir"));
-		map.all_imports.dirEntries.erase(itm->text(0).toStdString() + ".dir");
-		map.all_imports.dirEntries.emplace(name, temp);
+		std::vector <std::string> temp(map.imports.directories.at(itm->text(0).toStdString() + ".dir"));
+		map.imports.directories.erase(itm->text(0).toStdString() + ".dir");
+		map.imports.directories.emplace(name, temp);
 
 		itm->setText(0, input->text());
 		diag->close();
 	});
 	connect(input, &QLineEdit::textChanged, [&](const QString &text) {
-		if (text.isEmpty() || map.all_imports.dirEntries.count(text.toStdString() + ".dir") == 1) {
-			renameBut->setEnabled(false);
-		}
-		else {
-			renameBut->setEnabled(true);
-		}
+		renameBut->setDisabled(text.isEmpty() || map.imports.directories.count(text.toStdString() + ".dir") == 1);
 	});
 	hLayout->addWidget(renameBut);
 
-	QPushButton * cancelBut = new QPushButton();
-	cancelBut->setText("Cancel");
+	QPushButton * cancelBut = new QPushButton("Cancel");
+
 	connect(cancelBut, &QPushButton::clicked, [&]() { diag->close(); });
 	hLayout->addWidget(cancelBut);
 
@@ -235,14 +237,14 @@ void ImportManager::RenameDir(QTreeWidgetItem * itm) {
 }
 
 
-void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &dirEntries, std::vector<Import> &imports) {
-	if (dirEntries.empty() && imports.empty()) { return; }
-	else if (dirEntries.empty()) {
+void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports) {
+	if (directories.empty() && imports.empty()) { return; }
+	else if (directories.empty()) {
 		QTreeWidgetItem * parent = CreateEmptyDir();
-		dirEntries.emplace(parent->text(0).toStdString() + ".dir", std::vector<std::string>());
+		directories.emplace(parent->text(0).toStdString() + ".dir", std::vector<std::string>());
 		ui->treeWidget->addTopLevelItem(parent);
 		for (auto&& imp : imports) {
-			dirEntries.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
+			directories.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
 
 			QString file_name = QString::fromStdString(fs::path(imp.path).filename().string());
 			QString file_type = QString::fromStdString(fs::path(imp.path).extension().string());
@@ -255,7 +257,7 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 		std::vector<std::string> temp_vec;
 
 		QTreeWidgetItem * parent;
-		for (auto&&[name, files] : dirEntries) {
+		for (auto&&[name, files] : directories) {
 			std::string s = fs::path(name).stem().string();
 			parent = CreateDir(QString::fromStdString(s));
 			ui->treeWidget->addTopLevelItem(parent);
@@ -263,7 +265,7 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 				auto cond = [&f](const Import &imp) { return f == imp.path; };
 				auto position = std::find_if(imports.begin(), imports.end(), cond);
 				if (position == imports.end()) {
-					dirEntries.at(name).erase(std::remove(files.begin(), files.end(), f));
+					directories.at(name).erase(std::remove(files.begin(), files.end(), f));
 				}
 				else {
 					temp_vec.push_back(f);
@@ -283,8 +285,8 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 		ui->treeWidget->addTopLevelItem(parent);
 
 		for (auto && imp : imports) {
-			for (auto &&[name, files] : dirEntries) {
-				if (files.size() == 0) { continue; }
+			for (auto &&[name, files] : directories) {
+				if (files.size() == 0 || imp.path == "war3map.dir") { continue; }
 				auto position = std::find(files.begin(), files.end(), imp.path);
 				auto vec_pos = std::find(temp_vec.begin(), temp_vec.end(), imp.path);
 
@@ -296,16 +298,73 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 
 					AddChildItem(parent, file_name, file_type, "", file_path);
 
-					dirEntries.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
+					directories.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
 				}
 			}
 		}
 
 		if (parent->childCount() == 0) {
-			dirEntries.erase(parent->text(0).toStdString() + ".dir");
+			directories.erase(parent->text(0).toStdString() + ".dir");
 			delete parent;
 		}
 
 	}
 
+}
+
+void ImportManager::ExportFiles(QTreeWidgetItem * itm) {
+	QFileDialog * fdiag = new QFileDialog(this, "Export Files", ".");
+	fdiag->setAcceptMode(QFileDialog::AcceptSave);
+	fdiag->setFileMode(QFileDialog::Directory);
+	fdiag->setOptions(QFileDialog::ShowDirsOnly);
+	std::string path = fdiag->getExistingDirectory(this,"Select Folder",".").toStdString();
+	if (itm->childCount() == 0) {
+		auto files = map.imports.directories.at(itm->text(0).toStdString() + ".dir");
+		for (auto && f : files) {
+			map.imports.export_file(path, f);
+		}
+	}
+	else {
+		map.imports.export_file(path, itm->text(3).toStdString());
+	}
+}
+
+
+bool ImportManager::eventFilter(QObject *obj, QEvent *event) {
+	if (event->type() == QKeyEvent::KeyPress) {
+		QKeyEvent * k_event = dynamic_cast<QKeyEvent *>(event);
+		if (k_event->key() == Qt::Key_Delete) {
+			RemoveItem(ui->treeWidget->currentItem());
+			return true;
+		}
+	} else if ( event->type() == QEvent::Drop) {
+		std::cout << "Dropping Something " << std::endl;
+		QDropEvent * d_event = dynamic_cast<QDropEvent *>(event);
+		QModelIndex index = ui->treeWidget->indexAt(d_event->pos());
+		if ( !index.isValid()) {
+			d_event->setDropAction(Qt::IgnoreAction);
+		}
+
+		return true;
+	} else if (event->type() == QEvent::DragEnter) {
+		std::cout << "Drag Entering" << std::endl;
+		return true;
+	} else if (event->type() == QEvent::DragLeave) {
+		std::cout << "Drag Leave" << std::endl;
+		return true;
+	} else if (event->type() == QEvent::DragMove) {
+		std::cout << "Drag Move" << std::endl;
+		return true;
+	}
+	return false;
+}
+
+
+bool ImportManager::RemoveMessageBox(QString msg) {
+	QMessageBox m_box;
+	m_box.setWindowTitle("Warning");
+	m_box.setText("Are you sure you want to remove " + msg + " ?");
+	m_box.setStandardButtons(QMessageBox::Yes);
+	m_box.addButton(QMessageBox::No);
+	return ( m_box.exec() == QMessageBox::Yes );
 }

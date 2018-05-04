@@ -51,7 +51,7 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 
 		if ( split(name, '.').back() == "dir" ) {
 			std::cout << "Entering directory: " << name << std::endl;
-			dirEntries.emplace(name, std::vector<std::string>());
+			directories.emplace(name, std::vector<std::string>());
 			nof = reader.read<uint32_t>();
 			last_dir.swap(name);
 
@@ -59,7 +59,7 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 				name = reader.read_c_string();
 				reader.advance(1);
 				std::cout << "\t- " << name << std::endl;
-				dirEntries.at(last_dir).push_back(name);
+				directories.at(last_dir).push_back(name);
 			}
 		}
 	}
@@ -70,8 +70,8 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 void Imports::saveDirectoryFile() {
 	BinaryWriter writer;
 	
-	writer.write<uint32_t>(dirEntries.size());
-	for (auto&&[name, files] : dirEntries) {
+	writer.write<uint32_t>(directories.size());
+	for (auto&&[name, files] : directories) {
 		std::cout << "Saving directory: " << name << std::endl;
 		writer.write_string(name);
 		writer.write('\0');
@@ -98,4 +98,27 @@ void Imports::save_imports() {
 		SFileAddFileEx(hierarchy.map.handle, imp.file_path.c_str(), imp.path.c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
 
 	}
+}
+
+
+void Imports::remove_import(std::string path) {
+	SFileRemoveFile(hierarchy.map.handle, path.c_str(), 0);
+}
+
+
+void Imports::export_file(std::string path,std::string file) {
+	HANDLE handle;
+	std::string s = fs::path(file).filename().string();
+	std::ofstream out_file(path + "\\" + s, std::ios::binary | std::ios::out | std::ios::ate);
+	const bool success = SFileOpenFileEx(hierarchy.map.handle, file.c_str(), SFILE_OPEN_FROM_MPQ, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+	auto size = SFileGetFileSize(handle, 0);
+	std::vector<char> buffer(size);
+	SFileReadFile(handle, buffer.data(), size, 0, 0);
+	out_file.write(buffer.data(), size);
+
+	out_file.close();
+	SFileCloseFile(handle);
 }
