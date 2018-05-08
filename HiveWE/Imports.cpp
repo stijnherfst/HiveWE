@@ -50,7 +50,6 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 		std::string last_dir;
 
 		if ( split(name, '.').back() == "dir" ) {
-			std::cout << "Entering directory: " << name << std::endl;
 			directories.emplace(name, std::vector<std::string>());
 			nof = reader.read<uint32_t>();
 			last_dir.swap(name);
@@ -58,7 +57,6 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 			for (int j = 0; j < nof; j++) {
 				name = reader.read_c_string();
 				reader.advance(1);
-				std::cout << "\t- " << name << std::endl;
 				directories.at(last_dir).push_back(name);
 			}
 		}
@@ -72,12 +70,10 @@ void Imports::saveDirectoryFile() {
 	
 	writer.write<uint32_t>(directories.size());
 	for (auto&&[name, files] : directories) {
-		std::cout << "Saving directory: " << name << std::endl;
 		writer.write_string(name);
 		writer.write('\0');
 		writer.write<uint32_t>(files.size());
 		for (auto&& f: files) {
-			std::cout << "\t- " << f << std::endl;
 			writer.write_string(f);
 			writer.write('\0');
 		}

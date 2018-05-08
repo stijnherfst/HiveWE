@@ -10,11 +10,9 @@ ImportManager::ImportManager(QWidget *parent) :
 	setAttribute(Qt::WA_DeleteOnClose);
 	ui->treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
 	ui->treeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->treeWidget->setDragDropMode(QAbstractItemView::InternalMove);
 
 	ui->treeWidget->setFocusPolicy(Qt::ClickFocus);
 	ui->treeWidget->setFocus();
-	ui->treeWidget->nativeParentWidget()->installEventFilter(this);
 	ui->treeWidget->installEventFilter(this);
 	ui->treeWidget->setUniformRowHeights(true);
 	ui->treeWidget->header()->resizeSection(0, 220);
@@ -54,7 +52,6 @@ void ImportManager::AddChildItem(QTreeWidgetItem * itm, QString name, QString it
 
 void ImportManager::CustomMenuPopup(const QPoint & pos) {
 	QTreeWidgetItem * itm = ui->treeWidget->itemAt(pos);
-	int column = ui->treeWidget->currentIndex().column();
 
 	QMenu * menu = new QMenu(this);
 	QAction * b = new QAction("Import Files");
@@ -103,7 +100,6 @@ QTreeWidgetItem * ImportManager::CreateEmptyDir() {
 	for (size_t i = 0; i < map.imports.directories.size(); i++) {
 		std::string s = "Untitled Directory" + std::to_string(i);
 		if (map.imports.directories.find(s + ".dir") == map.imports.directories.end()) {
-			std::cout << s << std::endl;
 			name.swap(s);
 			break;
 		}
@@ -127,8 +123,6 @@ void ImportManager::ImportFiles(QTreeWidgetItem * itm) {
 			auto position = std::find_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
 
 			if (position == map.imports.imports.end()) {
-				std::string file = f.toStdString();
-				std::cout << file << std::endl;
 				QString file_name = QString::fromStdString(fs::path(file).filename().string());
 				QString file_type = QString::fromStdString(fs::path(file).extension().string());
 				QString file_size = QString::number(fs::file_size(fs::path(file)));
@@ -280,7 +274,6 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 
 		}
 
-		// Da li je import u fajlovima.
 		parent = CreateEmptyDir();
 		ui->treeWidget->addTopLevelItem(parent);
 
@@ -337,25 +330,7 @@ bool ImportManager::eventFilter(QObject *obj, QEvent *event) {
 			RemoveItem(ui->treeWidget->currentItem());
 			return true;
 		}
-	} else if ( event->type() == QEvent::Drop) {
-		std::cout << "Dropping Something " << std::endl;
-		QDropEvent * d_event = dynamic_cast<QDropEvent *>(event);
-		QModelIndex index = ui->treeWidget->indexAt(d_event->pos());
-		if ( !index.isValid()) {
-			d_event->setDropAction(Qt::IgnoreAction);
-		}
-
-		return true;
-	} else if (event->type() == QEvent::DragEnter) {
-		std::cout << "Drag Entering" << std::endl;
-		return true;
-	} else if (event->type() == QEvent::DragLeave) {
-		std::cout << "Drag Leave" << std::endl;
-		return true;
-	} else if (event->type() == QEvent::DragMove) {
-		std::cout << "Drag Move" << std::endl;
-		return true;
-	}
+	} 
 	return false;
 }
 
