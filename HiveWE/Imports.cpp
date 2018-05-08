@@ -36,7 +36,6 @@ void Imports::save() {
 
 	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
 	SFileFinishFile(handle);
-	std::cout << ".imp file is saved." << std::endl;
 }
 
 void Imports::loadDirectoryFile(BinaryReader &reader) {
