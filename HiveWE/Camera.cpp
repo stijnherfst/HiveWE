@@ -105,7 +105,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// Some quick trigonometry to calculate height of at point distance
 	// half_height / z = tan(fov / 2)
 	auto fov_rad = (glm::pi<float>() / 180.f) * static_cast<float>(fov); // Need radians
-	auto height = v.z * glm::tan(fov_rad * 0.5f); // Note: this is half_height
+	auto height = 2.f * v.z * glm::tan(fov_rad * 0.5f);
 	if (v.y > height || v.y + height < 0) {
 		return false;
 	}
@@ -113,7 +113,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// For x-axis similarly but width instead
 	// use aspect ratio to get correct fov
 	fov_rad *= aspect_ratio;
-	auto width = v.z * glm::tan(fov_rad * 0.5f);
+	auto width = 2.f * v.z * glm::tan(fov_rad * 0.5f);
 	if (v.x > width || v.x + width < 0) {
 		return false;
 	}
