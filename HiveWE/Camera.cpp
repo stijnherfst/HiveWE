@@ -97,7 +97,6 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// Calculate real camera position, together with z-axis
 	auto cam_pos = position;
 	cam_pos.z = -distance; // Opengl flips z-axis (like a lens)
-	cam_pos *= direction;
 	auto v = point - cam_pos;
 	// First check if point is within frustum in z-axis (if its too far or too close)
 	if (v.z > view_distance || v.z < view_distance_close) {
@@ -105,7 +104,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	}
 	// Some quick trigonometry to calculate height of at point distance
 	// half_height / z = tan(fov / 2)
-	auto fov_rad = (glm::pi<float>() / 180.0) * fov; // Need radians
+	auto fov_rad = (glm::pi<float>() / 180.f) * static_cast<float>(fov); // Need radians
 	auto height = v.z * glm::tan(fov_rad * 0.5f); // Note: this is half_height
 	if (v.y > height || v.y + height < 0) {
 		return false;
