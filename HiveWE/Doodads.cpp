@@ -280,6 +280,9 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
+		if (!camera.is_visible(i.position / 128.f)) {
+			continue;
+		}
 		glm::mat4 model = glm::translate(glm::mat4(1.0f), i.position / 128.f);
 		model = glm::scale(model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f) * i.scale);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));

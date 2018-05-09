@@ -86,4 +86,42 @@ void TPSCamera::mouse_scroll_event(QWheelEvent* event) {
 	update(0);
 }
 
+
+/*!
+	Checks if a point is within the defined camera frustum.
+	The point is expected to be in the same coordinate system,
+	i.e divide wc3 object positions by 128.0 before passing.
+*/
+bool TPSCamera::is_visible(glm::vec3 && point)
+{
+	// Calculate real camera position, together with z-axis
+	auto cam_pos = position;
+	cam_pos.z = -distance; // Opengl flips z-axis (like a lens)
+	cam_pos *= direction;
+	auto v = point - cam_pos;
+	// First check if point is within frustum in z-axis (if its too far or too close)
+	if (v.z > view_distance || v.z < view_distance_close) {
+		return false;
+	}
+	// Some quick trigonometry to calculate height of at point distance
+	// half_height / z = tan(fov / 2)
+	auto fov_rad = (glm::pi<float>() / 180.0) * fov; // Need radians
+	auto height = v.z * glm::tan(fov_rad * 0.5f); // Note: this is half_height
+	if (v.y > height || v.y + height < 0) {
+		return false;
+	}
+
+	// For x-axis similarly but width instead
+	// use aspect ratio to get correct fov
+	fov_rad *= aspect_ratio;
+	auto width = v.z * glm::tan(fov_rad * 0.5f);
+	if (v.x > width || v.x + width < 0) {
+		return false;
+	}
+
+	// Point must be in frustum
+	return true;
+}
+
+
 TPSCamera camera;

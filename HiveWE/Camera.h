@@ -9,6 +9,8 @@ struct Camera {
 
 	double fov = 45;
 	double aspect_ratio = 16.0 / 9.0;
+	float view_distance = 200.0;
+	float view_distance_close = 5.0;
 
 	glm::mat4 projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
 	glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0, 0, 1));
@@ -37,6 +39,7 @@ struct TPSCamera : Camera {
 	void update(double delta) override;
 	void mouse_move_event(QMouseEvent* event) override;
 	void mouse_scroll_event(QWheelEvent* event) override;
+	bool is_visible(glm::vec3 &&point);
 };
 
 extern TPSCamera camera;
