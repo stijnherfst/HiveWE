@@ -8,6 +8,7 @@ struct Camera {
 	glm::vec3 X = { 1, 0, 0 };
 	glm::vec3 Y = { 0, 1, 0 };
 	glm::vec3 up = { 0, 0, 1 };
+	glm::vec3 forward = { 0, 1, 0 };
 
 	double fov = 45;
 	double aspect_ratio = 16.0 / 9.0;
@@ -36,7 +37,6 @@ struct FPSCamera : Camera {
 };
 
 struct TPSCamera : Camera {
-	float distance = 15;
 	double vertical_angle = 1;
 	double horizontal_angle = 3.1415;
 

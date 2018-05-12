@@ -72,6 +72,9 @@ void TPSCamera::update(double delta) {
 	Y = glm::cross(X, direction);
 	Y = glm::normalize(Y);
 
+	// The vector that is perpendicular to the up vector, thus points forward
+	forward = glm::cross(X, up);
+
 	projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
 	view = glm::lookAt(position + direction, position, up);
 	projection_view = projection * view;
@@ -82,8 +85,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 	if (event->buttons() == Qt::RightButton) {
-
-		position += glm::vec3(-diffx * 0.025, diffy * 0.025, 0);
+		position += X * (-diffx * 0.025f);
+		position += forward * (-diffy * 0.025f);
 
 		update(0);
 	}
