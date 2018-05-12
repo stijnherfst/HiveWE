@@ -133,7 +133,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// Calculate length to get how far away the point is in z-axis
 	auto z = glm::length(vZ);
 	// Check if point is within frustum in z-axis (if its too far or too close)
-	if (z > view_distance || z < view_distance_close) {
+	if (z > draw_distance || z < draw_distance_close) {
 		return false;
 	}
 

@@ -9,8 +9,8 @@ struct Camera {
 
 	double fov = 45;
 	double aspect_ratio = 16.0 / 9.0;
-	float view_distance = 200.0;
-	float view_distance_close = 0.1;
+	float draw_distance = 200.0;
+	float draw_distance_close = 0.1;
 
 	glm::mat4 projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
 	glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0, 0, 1));
