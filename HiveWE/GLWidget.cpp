@@ -165,6 +165,16 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	//}
 }
 
+void GLWidget::mousePressEvent(QMouseEvent * event)
+{
+	camera.mouse_press_event(event);
+}
+
+void GLWidget::mouseReleaseEvent(QMouseEvent * event)
+{
+	camera.mouse_release_event(event);
+}
+
 void GLWidget::wheelEvent(QWheelEvent* event) {
 	camera.mouse_scroll_event(event);
 }
