@@ -85,8 +85,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 	if (event->buttons() == Qt::RightButton) {
-		position += X * (-diffx * 0.025f);
-		position += forward * (-diffy * 0.025f);
+		position += X * (diffx * 0.025f);
+		position += forward * (diffy * 0.025f);
 
 		update(0);
 	}
