@@ -63,10 +63,19 @@ void TPSCamera::update(double delta) {
 	);
 
 	direction = glm::normalize(direction);
+	// Calculate axis directions for camera as referential point:
+	// Z axis is simply the direction we are facing
+	// X axis is then the cross product between the "fake" up and Z
+	X = glm::cross(direction, up);
+	X = glm::normalize(X);
+	// Y Axis is cross product between X and Z, e.g is the real up
+	Y = glm::cross(X, direction);
+	Y = glm::normalize(Y);
 
 	projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
 	view = glm::lookAt(position + direction, position, up);
 	projection_view = projection * view;
+
 }
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
@@ -115,21 +124,10 @@ void TPSCamera::mouse_release_event(QMouseEvent * event)
 */
 bool TPSCamera::is_visible(glm::vec3 && point)
 {
-	// Calculate axis directions for camera as referential point:
-	// Z axis is simply the direction we are facing
-	auto Z = direction;
-	// X axis is then the cross product between the "fake" up and Z
-	auto X = glm::cross(Z, up);
-	X = glm::normalize(X);
-	// Y Axis is cross product between X and Z, e.g is the real up
-	auto Y = glm::cross(X, Z);
-	Y = glm::normalize(Y);
-
 	// Calculate the point position as the camera as referential point
 	auto v = point - position;
-
 	// Project the vector on Z-axis
-	auto vZ = dot(v, -Z) * -Z;
+	auto vZ = dot(v, -direction) * -direction;
 	// Calculate length to get how far away the point is in z-axis
 	auto z = glm::length(vZ);
 	// Check if point is within frustum in z-axis (if its too far or too close)
@@ -140,7 +138,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// Some quick trigonometry to calculate height of at point distance
 	// half_height / v.z = tan(fov / 2)
 	auto fov_rad = (glm::pi<float>() / 180.f) * static_cast<float>(fov); // Need radians
-	auto height = 2.f * z * glm::tan(fov_rad * 0.5f);
+	auto height = z * tan_height;
 	// Calculate how far away the point is in Y-axis
 	auto vY = dot(v, Y) * Y;
 	auto y = glm::length(vY);
