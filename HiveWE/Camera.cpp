@@ -98,7 +98,7 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 }
 
 void TPSCamera::mouse_scroll_event(QWheelEvent* event) {
-	position += direction * (event->angleDelta().y() * 0.025f);
+	position += -direction * (event->angleDelta().y() * 0.025f);
 	update(0);
 }
 
