@@ -93,6 +93,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	if (rolling) {
 		horizontal_angle += diffx * 0.0025;
 		vertical_angle += diffy * 0.0025;
+
+		update(0);
 	}
 	input_handler.previous_mouse = event->globalPos();
 }
