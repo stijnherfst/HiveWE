@@ -84,12 +84,7 @@ void TPSCamera::update(double delta) {
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
-	if (event->modifiers() == Qt::ControlModifier && event->buttons() == Qt::RightButton) {
-		position += forward * (diffy * 0.025f);
-
-		horizontal_angle += static_cast<double>(diffx) * 0.0025;
-		vertical_angle += static_cast<double>(diffy) * 0.0025;
-	} else if (event->buttons() == Qt::RightButton) {
+	if (event->buttons() == Qt::RightButton) {
 		position += X * (diffx * 0.025f);
 		position += forward * (diffy * 0.025f);
 
@@ -98,8 +93,6 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	if (rolling) {
 		horizontal_angle += diffx * 0.0025;
 		vertical_angle += diffy * 0.0025;
-
-		update(0);
 	}
 	input_handler.previous_mouse = event->globalPos();
 }
