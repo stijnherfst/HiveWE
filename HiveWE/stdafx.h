@@ -18,7 +18,7 @@
 #include <cctype>
 
 using namespace std::literals::string_literals;
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 
 #include <QtWidgets>
 #include <QOpenGLWidget>

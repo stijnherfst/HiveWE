@@ -60,7 +60,7 @@ namespace mpq {
 
 	File MPQ::file_open(const fs::path& path) const {
 		File file;
-		const bool opened = SFileOpenFileEx(handle, path.string().c_str(), 0, &file.handle);
+		const bool opened = SFileOpenFileEx(handle, fs::weakly_canonical(path).string().c_str(), 0, &file.handle);
 		if (!opened) {
 			std::cout << "Error opening file " << path << " with error: " << GetLastError() << std::endl;
 		}
@@ -68,7 +68,7 @@ namespace mpq {
 	}
 
 	bool MPQ::file_exists(const fs::path& path) const {
-		return SFileHasFile(handle, path.string().c_str());
+		return SFileHasFile(handle, fs::weakly_canonical(path).string().c_str());
 	}
 
 	void MPQ::close() {

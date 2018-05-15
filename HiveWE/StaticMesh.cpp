@@ -1,10 +1,9 @@
 #include "stdafx.h"
 
 StaticMesh::StaticMesh(const fs::path& path) {
-	shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
-	shader_instanced = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
+	shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
 
-	if (fs::path(path).extension() == ".mdx" || fs::path(path).extension() == ".MDX") {
+	if (path.extension() == ".mdx" || path.extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
 		this->path = path;
 
@@ -67,7 +66,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower); // Support unicode? Unless these are always ASCII
 
-				animations.emplace( i.name, animation);
+				animations.emplace(i.name, animation);
 			}
 		}
 
@@ -134,105 +133,65 @@ void StaticMesh::render() {
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
-	if (render_jobs.size() < 10) {
-		shader->use();
+	// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
 
-		for (auto&& i : render_jobs) {
-			gl->glUniformMatrix4fv(2, 1, GL_FALSE, &i[0][0]);
+	shader->use();
+	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
-			for (auto&& j : entries) {
-				if (!j.visible) {
-					continue;
-				}
-				for (auto&& k : mtls->materials[j.material_id].layers) {
-					gl->glBindTextureUnit(0, textures[k.texture_id]->id);
+	// Since a mat4 is 4 vec4's
+	gl->glEnableVertexAttribArray(2);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+	for (int i = 0; i < 4; i++) {
+		gl->glEnableVertexAttribArray(2 + i);
+		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(2 + i, 1);
+	}
 
-					gl->glEnable(GL_BLEND);
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
-					gl->glUniform1f(3, -1.f);
-					switch (k.blend_mode) {
-						case 0:
-							gl->glDisable(GL_BLEND);
-							break;
-						case 1:
-							gl->glUniform1f(3, 0.75f); // Alpha test
-							break;
-						case 2:
-							gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-							break;
-						case 3:
-							gl->glBlendFunc(GL_ONE, GL_ONE);
-							break;
-						case 4:
-							gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-							break;
-						case 5:
-							gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-							break;
-						case 6:
-							gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-							break;
-					}
+	gl->glUniformMatrix4fv(4, 1, false, &camera.projection_view[0][0]);
 
-					gl->glDrawElementsBaseVertex(GL_TRIANGLES, j.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(j.base_index * sizeof(uint16_t)), j.base_vertex);
-				}
+	for (auto&& i : entries) {
+		if (!i.visible) {
+			continue;
+		}
+		for (auto&& j : mtls->materials[i.material_id].layers) {
+			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+
+			gl->glEnable(GL_BLEND);
+			gl->glUniform1f(3, -1.f);
+			switch (j.blend_mode) {
+				case 0:
+					gl->glDisable(GL_BLEND);
+					break;
+				case 1:
+					gl->glDisable(GL_BLEND);
+					gl->glUniform1f(3, 0.75f); // Alpha test
+					break;
+				case 2:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					break;
+				case 3:
+					gl->glBlendFunc(GL_ONE, GL_ONE);
+					break;
+				case 4:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+					break;
+				case 5:
+					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+					break;
+				case 6:
+					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+					break;
 			}
-		}
-	} else {
-		// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
 
-		shader_instanced->use();
-		gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
-
-		// Since a mat4 is 4 vec4's
-		gl->glEnableVertexAttribArray(2);
-		gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-		for (int i = 0; i < 4; i++) {
-			gl->glEnableVertexAttribArray(2 + i);
-			gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-			gl->glVertexAttribDivisor(2 + i, 1);
-		}
-
-		for (auto&& i : entries) {
-			for (auto&& j : mtls->materials[i.material_id].layers) {
-				gl->glBindTextureUnit(0, textures[j.texture_id]->id);
-
-				gl->glEnable(GL_BLEND);
-				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // ToDo needed?
-				gl->glUniform1f(3, -1.f);
-				switch (j.blend_mode) {
-					case 0:
-						gl->glDisable(GL_BLEND);
-						break;
-					case 1:
-						gl->glUniform1f(3, 0.75f); // Alpha test
-						break;
-					case 2:
-						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-						break;
-					case 3:
-						gl->glBlendFunc(GL_ONE, GL_ONE);
-						break;
-					case 4:
-						gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-						break;
-					case 5:
-						gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-						break;
-					case 6:
-						gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-						break;
-				}
-
-				gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-			}
-		}
-		gl->glDisableVertexAttribArray(2);
-
-		for (int i = 0; i < 4; i++) {
-			gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 		}
 	}
+	gl->glDisableVertexAttribArray(2);
+
+	for (int i = 0; i < 4; i++) {
+		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+	}
+	
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
 	gl->glEnable(GL_BLEND);

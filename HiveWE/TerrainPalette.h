@@ -17,5 +17,9 @@ private:
 	QButtonGroup* textures_group = new QButtonGroup;
 	FlowLayout* textures_layout = new FlowLayout;
 
+	QButtonGroup* cliff_group = new QButtonGroup;
+	FlowLayout* cliff_layout = new FlowLayout;
+
+
 	TerrainBrush brush;
 };

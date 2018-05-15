@@ -30,7 +30,7 @@ std::string read_text_file(const std::string& path);
 
 fs::path find_warcraft_directory();
 
-void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, bool modification);
+void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, bool modification, bool optional_ints = false);
 
 // Convert a Texture into an QIcon with two states
 QIcon texture_to_icon(uint8_t* data, int width, int height);

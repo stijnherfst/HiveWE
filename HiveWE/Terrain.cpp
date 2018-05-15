@@ -477,17 +477,17 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 	}
 
 	// Update texture usage information
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			ground_texture_list[j * width + i] = get_texture_variations(i, j);
+	for (int i = 0; i < width - 1; i++) {
+		for (int j = 0; j < height - 1; j++) {
+			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
 
 			if (corners[i][j].cliff) {
-				ground_texture_list[j * width + i].a |= 0b1000000000000000;
+				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
 			}
 		}
 	}
 
-	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width, height, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
+	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
 // ToDo only 1 of this is really needed to be here

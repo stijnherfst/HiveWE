@@ -33,6 +33,10 @@ PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 	});
 
 	connect(ui.brushSizeSlider, &QSlider::valueChanged, [&](int value) { brush.set_size(value - 1); });
+
+	connect(ui.brushShapeCircle, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::circle); });
+	connect(ui.brushShapeSquare, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::square); });
+	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
 }
 
 PathingPallete::~PathingPallete() {

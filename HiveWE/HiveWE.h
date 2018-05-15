@@ -3,8 +3,7 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_HiveWE.h"
 
-class HiveWE : public QMainWindow
-{
+class HiveWE : public QMainWindow {
 	Q_OBJECT
 
 public:
@@ -15,6 +14,9 @@ public:
 
 private:
 	Ui::HiveWEClass ui;
+
+signals:
+	void tileset_changed();
 };
 
 extern Map map;

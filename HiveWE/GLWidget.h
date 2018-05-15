@@ -21,5 +21,6 @@ public:
 	void keyPressEvent(QKeyEvent* e) override;
 	void keyReleaseEvent(QKeyEvent* e) override;
 	void mouseMoveEvent(QMouseEvent* event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 };

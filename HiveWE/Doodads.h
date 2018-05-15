@@ -14,6 +14,8 @@ struct Doodad {
 	float angle;
 	DoodadState state;
 	uint8_t life;
+
+	glm::mat4 matrix = glm::mat4(1.f);
 };
 
 class Doodads {
@@ -27,7 +29,6 @@ class Doodads {
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
 
 	std::shared_ptr<Shader> shader;
-
 public:
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void load_destructible_modifications(BinaryReader& reader);

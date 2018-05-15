@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>286</width>
-    <height>584</height>
+    <height>592</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -640,6 +640,9 @@
     </layout>
    </item>
    <item>
+    <layout class="QHBoxLayout" name="flowLayout_placeholder_2"/>
+   </item>
+   <item>
     <widget class="QGroupBox" name="deformationGroupBox">
      <property name="title">
       <string>Deformation</string>
@@ -699,6 +702,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">deformationButtonGroup</string>
+       </attribute>
       </widget>
      </item>
      <item>
@@ -746,6 +752,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">deformationButtonGroup</string>
+       </attribute>
       </widget>
      </item>
      <item>
@@ -793,6 +802,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">deformationButtonGroup</string>
+       </attribute>
       </widget>
      </item>
      <item>
@@ -840,6 +852,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">deformationButtonGroup</string>
+       </attribute>
       </widget>
      </item>
      <item>
@@ -887,6 +902,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <attribute name="buttonGroup">
+        <string notr="true">deformationButtonGroup</string>
+       </attribute>
       </widget>
      </item>
     </layout>
@@ -1188,6 +1206,35 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="brushShapeDiamond">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>Data/Icons/Brush/diamond.png</normaloff>Data/Icons/Brush/diamond.png</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>32</width>
+            <height>32</height>
+           </size>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <attribute name="buttonGroup">
+           <string notr="true">brushShapeButtonGroup</string>
+          </attribute>
+         </widget>
+        </item>
+        <item>
          <spacer name="horizontalSpacer_3">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -1211,8 +1258,9 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushSizeButtonGroup"/>
-  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="brushShapeButtonGroup"/>
+  <buttongroup name="cliffButtonGroup"/>
+  <buttongroup name="brushSizeButtonGroup"/>
+  <buttongroup name="deformationButtonGroup"/>
  </buttongroups>
 </ui>

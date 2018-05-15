@@ -24,6 +24,14 @@ struct TilePathingg {
 	bool unwalkable = false;
 	bool unflyable = false;
 	bool unbuildable = false;
+
+	uint8_t mask() const {
+		uint8_t mask = 0;
+		mask |= unwalkable ? 0b00000010 : 0;
+		mask |= unflyable ? 0b00000100 : 0;
+		mask |= unbuildable ? 0b00001000 : 0;
+		return mask;
+	}
 };
 
 class Terrain {
@@ -112,6 +120,8 @@ public:
 	bool load(BinaryReader& reader);
 	void save();
 	void render();
+
+	//void create_cliffs();
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
 

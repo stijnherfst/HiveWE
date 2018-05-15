@@ -98,7 +98,7 @@ fs::path find_warcraft_directory() {
 	}
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, const bool modification) {
+void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, const bool modification, bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -113,6 +113,11 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 		for (size_t j = 0; j < modifications; j++) {
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
+
+			if (optional_ints) {
+				// ToDo dont Skip optional ints
+				reader.advance(8);
+			}
 
 			const std::string column_header = meta_data.data("field", modification_id);
 
