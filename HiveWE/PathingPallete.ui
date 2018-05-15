@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>242</width>
-    <height>217</height>
+    <height>265</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -174,7 +174,7 @@
       <string>The brush size that will be applied on the terrain. The final dimensions are: (size-1)*2+1 x (size-1)*2+1.</string>
      </property>
      <property name="text">
-      <string>Brush Size</string>
+      <string>Brush</string>
      </property>
     </widget>
    </item>
@@ -389,6 +389,110 @@
      </item>
     </layout>
    </item>
+   <item>
+    <layout class="QHBoxLayout" name="brushShapeLayout">
+     <item>
+      <widget class="QPushButton" name="brushShapeCircle">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Data/Icons/Brush/circle.png</normaloff>Data/Icons/Brush/circle.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">brushShapeGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="brushShapeSquare">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Data/Icons/Brush/square.png</normaloff>Data/Icons/Brush/square.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">brushShapeGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="brushShapeDiamond">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset>
+         <normaloff>Data/Icons/Brush/diamond.png</normaloff>Data/Icons/Brush/diamond.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>32</width>
+         <height>32</height>
+        </size>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <attribute name="buttonGroup">
+        <string notr="true">brushShapeGroup</string>
+       </attribute>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
@@ -428,12 +532,13 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="toolTypeGroup"/>
   <buttongroup name="brushSizeGroup"/>
   <buttongroup name="brushTypeGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
+  <buttongroup name="toolTypeGroup"/>
+  <buttongroup name="brushShapeGroup"/>
  </buttongroups>
 </ui>

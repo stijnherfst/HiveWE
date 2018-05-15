@@ -15,7 +15,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	reader.read<uint32_t>();
 
 	const int doodads_count = reader.read<uint32_t>();
-	
+
 	doodads.resize(doodads_count);
 	for (int i = 0; i < doodads_count; i++) {
 		doodads[i].id = reader.read_string(4);
@@ -65,159 +65,33 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 }
 
 void Doodads::load_destructible_modifications(BinaryReader& reader) {
-	// Version
-	reader.read<uint32_t>();
-
-	// Original Table
-	uint32_t objects = reader.read<uint32_t>();
-
-	for (size_t i = 0; i < objects; i++) {
-		const std::string original_id = reader.read_string(4);
-		reader.position += 4; // Modified id is always 0 for original table
-
-		const uint32_t modifications = reader.read<uint32_t>();
-
-		for (size_t j = 0; j < modifications; j++) {
-			const std::string modification_id = reader.read_string(4);
-			const uint32_t type = reader.read<uint32_t>();
-
-			const std::string column_header = destructibles_meta_slk.data("field", modification_id);
-
-			std::string data;
-			switch (type) {
-				case 0:
-					data = std::to_string(reader.read<int>());
-					break;
-				case 1:
-				case 2:
-					data = std::to_string(reader.read<float>());
-					break;
-				case 3:
-					data = reader.read_c_string();
-					reader.position += 1;
-					break;
-			}
-			reader.position += 4;
-			destructibles_slk.set_shadow_data(column_header, original_id, data);
-		}
+	const int version = reader.read<uint32_t>();
+	if (version != 1 && version != 2) {
+		std::cout << "Unknown destructible modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	objects = reader.read<uint32_t>();
-
-	for (size_t i = 0; i < objects; i++) {
-		const std::string original_id = reader.read_string(4);
-		const std::string modified_id = reader.read_string(4);
-
-		destructibles_slk.copy_row(original_id, modified_id);
-
-		const uint32_t modifications = reader.read<uint32_t>();
-
-		for (size_t j = 0; j < modifications; j++) {
-			const std::string modification_id = reader.read_string(4);
-			const uint32_t type = reader.read<uint32_t>();
-
-			const std::string column_header = destructibles_meta_slk.data("field", modification_id);
-
-			std::string data;
-			switch (type) {
-				case 0:
-					data = std::to_string(reader.read<int>());
-					break;
-				case 1:
-				case 2:
-					data = std::to_string(reader.read<float>());
-					break;
-				case 3:
-					data = reader.read_c_string();
-					reader.position += 1;
-					break;
-			}
-			reader.position += 4;
-			destructibles_slk.set_shadow_data(column_header, modified_id, data);
-		}
-	}
+	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, false);
+	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, true);
 }
 
 void Doodads::load_doodad_modifications(BinaryReader& reader) {
-	// Version
-	reader.read<uint32_t>();
-
-	// Original Table
-	uint32_t objects = reader.read<uint32_t>();
-
-	for (size_t i = 0; i < objects; i++) {
-		const std::string original_id = reader.read_string(4);
-		reader.position += 4; // Modified id is always 0 for original table
-
-		const uint32_t modifications = reader.read<uint32_t>();
-
-		for (size_t j = 0; j < modifications; j++) {
-			const std::string modification_id = reader.read_string(4);
-			const uint32_t type = reader.read<uint32_t>();
-			uint32_t variation = reader.read<uint32_t>();
-			uint32_t data_pointer = reader.read<uint32_t>();
-
-			const std::string column_header = doodads_meta_slk.data("field", modification_id);
-
-			std::string data;
-			switch (type) {
-				case 0:
-					data = std::to_string(reader.read<int>());
-					break;
-				case 1:
-				case 2:
-					data = std::to_string(reader.read<float>());
-					break;
-				case 3:
-					data = reader.read_c_string();
-					reader.position += 1;
-					break;
-			}
-			reader.position += 4;
-			doodads_slk.set_shadow_data(column_header, original_id, data);
-		}
+	const int version = reader.read<uint32_t>();
+	if (version != 1 && version != 2) {
+		std::cout << "Unknown doodad modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	objects = reader.read<uint32_t>();
-
-	for (size_t i = 0; i < objects; i++) {
-		const std::string original_id = reader.read_string(4);
-		const std::string modified_id = reader.read_string(4);
-
-		doodads_slk.copy_row(original_id, modified_id);
-
-		const uint32_t modifications = reader.read<uint32_t>();
-
-		for (size_t j = 0; j < modifications; j++) {
-			const std::string modification_id = reader.read_string(4);
-			const uint32_t type = reader.read<uint32_t>();
-			uint32_t variation = reader.read<uint32_t>();
-			uint32_t data_pointer = reader.read<uint32_t>();
-
-			const std::string column_header = doodads_meta_slk.data("field", modification_id);
-
-			std::string data;
-			switch (type) {
-				case 0:
-					data = std::to_string(reader.read<int>());
-					break;
-				case 1:
-				case 2:
-					data = std::to_string(reader.read<float>());
-					break;
-				case 3:
-					data = reader.read_c_string();
-					reader.position += 1;
-					break;
-			}
-			reader.position += 4;
-			doodads_slk.set_shadow_data(column_header, modified_id, data);
-		}
-	}
+load_modification_table(reader, doodads_slk, doodads_meta_slk, false, true);
+	load_modification_table(reader, doodads_slk, doodads_meta_slk, true, true);
 }
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
+		// Do this properly somewhere else
+		i.matrix = glm::translate(i.matrix, i.position / 128.f);
+		i.matrix = glm::scale(i.matrix, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f) * i.scale);
+		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+
+
 		std::string full_id = i.id + std::to_string(i.variation);
 		if (id_to_mesh.find(full_id) != id_to_mesh.end()) {
 			continue;
@@ -252,7 +126,7 @@ void Doodads::create() {
 
 		// Use base model when variation doesn't exist
 		if (!hierarchy.file_exists(mesh_path)) {
-			mesh_path.remove_filename() /= stem +".mdx";
+			mesh_path.remove_filename() /= stem + ".mdx";
 		}
 
 		// Mesh doesnt exist at all
@@ -283,10 +157,7 @@ void Doodads::render() {
 		if (!camera.is_visible(i.position / 128.f)) {
 			continue;
 		}
-		glm::mat4 model = glm::translate(glm::mat4(1.0f), i.position / 128.f);
-		model = glm::scale(model, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f) * i.scale);
-		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
-		id_to_mesh[i.id + std::to_string(i.variation)]->render_queue(camera.projection_view * model);
+		id_to_mesh[i.id + std::to_string(i.variation)]->render_queue(i.matrix);
 	}
 }

@@ -2,6 +2,12 @@
 
 class Brush {
 public:
+	enum class Shape {
+		square,
+		circle,
+		diamond
+	};
+
 	int granularity = 1;
 	bool uv_offset_locked = false;
 	glm::ivec2 uv_offset;
@@ -10,14 +16,18 @@ public:
 	void create();
 	virtual void set_position(const glm::vec2& position);
 	void set_size(int size);
+	void set_shape(Shape shape);
 	void increase_size(int size);
 	void decrease_size(int size);
+	bool contains(int x, int y) const;
 
 	void render(Terrain& terrain) const;
 
 	virtual void apply() = 0;
-
+	virtual void apply_end() {};
 protected:
+	Shape shape = Shape::circle;
+
 	int size = 0;
 	glm::ivec2 position;
 

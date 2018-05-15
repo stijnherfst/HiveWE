@@ -6,7 +6,7 @@ void PathingBrush::apply() {
 	const int cells = size * 2 + 1;
 
 	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, int(map.pathing_map.width), int(map.pathing_map.height) });
-
+	
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
 	}
@@ -15,6 +15,10 @@ void PathingBrush::apply() {
 
 	for (int i = 0; i < area.width(); i++) {
 		for (int j = 0; j < area.height(); j++) {
+			if (!contains(i - std::min(x, 0), j - std::min(y, 0))) {
+				continue;
+			}
+
 			const int index = offset + j * map.pathing_map.width + i;
 			switch (operation) {
 			case Operation::replace:

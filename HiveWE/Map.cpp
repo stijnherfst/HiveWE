@@ -7,7 +7,7 @@ Map::~Map() {
 
 void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
-	filesystem_path = fs::system_complete(path);
+	filesystem_path = fs::canonical(path); //system_complete
 
 	// Terrain
 	BinaryReader war3map_w3e(hierarchy.map.file_open("war3map.w3e").read());
@@ -63,7 +63,7 @@ void Map::load(const fs::path& path) {
 }
 
 bool Map::save(const fs::path& path) {
-	const fs::path complete_path = fs::system_complete(path);
+	const fs::path complete_path = fs::canonical(path); //system_complete fs::system_complete(path);
 	if (complete_path != filesystem_path) {
 		try {
 			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);
@@ -97,7 +97,7 @@ void Map::play_test() {
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
-	arguments << "-loadfile" << QString::fromStdString(fs::system_complete("Data/Temporary/temp.w3x").string());
+	arguments << "-loadfile" << QString::fromStdString(fs::absolute("Data/Temporary/temp.w3x").string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
@@ -115,7 +115,7 @@ void Map::render(int width, int height) {
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	
 	// Map mouse coordinates to world coordinates
-	if (input_handler.mouse != input_handler.previous_mouse) {
+	if (input_handler.mouse != input_handler.previous_mouse && QRect(0, 0, width, height).contains(input_handler.mouse)) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
 		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
 		input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));

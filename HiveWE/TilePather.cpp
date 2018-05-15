@@ -97,8 +97,8 @@ void TilePather::save_tiles() {
 		}
 
 		const int id = map.terrain.ground_texture_to_id.at(tile_id);
-		for (int i = 0; i <= map.terrain.width; i++) {
-			for (int j = 0; j <= map.terrain.height; j++) {
+		for (int i = 0; i < map.terrain.width; i++) {
+			for (int j = 0; j < map.terrain.height; j++) {
 				if (map.terrain.real_tile_texture(i, j) != id) {
 					continue;
 				}
@@ -109,8 +109,8 @@ void TilePather::save_tiles() {
 				const int right = std::min(i * 4 + 2, map.pathing_map.width);
 				const int top = std::min(j * 4 + 2, map.pathing_map.height);
 
-				for (size_t x = left; x < right; x++) {
-					for (size_t y = bottom; y < top; y++) {
+				for (int x = left; x < right; x++) {
+					for (int y = bottom; y < top; y++) {
 						uint8_t byte_cell = map.pathing_map.pathing_cells[y * map.pathing_map.width + x];
 
 						switch (options.operation) {

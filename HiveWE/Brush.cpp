@@ -1,17 +1,6 @@
 #include "stdafx.h"
 
 void Brush::create() {
-	//for (int i = 0; i < size * 2 + 1; i++) {
-	//	for (int j = 0; j < size * 2 + 1; j++) {
-	//		if (std::sqrt(i * i + j * j) < size * 0.5) {
-	//			brush[j * (size * 2 + 1) + i] = { 0, 255, 0, 255 };
-	//		} else {
-	//			brush[j * (size * 2 + 1) + i] = { 0, 0, 0, 0 };
-	//		}
-	//	}
-	//}
-
-
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -37,11 +26,25 @@ void Brush::set_size(const int size) {
 	brush.clear();
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
+	set_shape(shape);
+
+	set_position(glm::vec2(position) + glm::vec2(uv_offset + size * granularity - change * granularity) * 0.25f);
+}
+
+void Brush::set_shape(const Shape shape) {
+	this->shape = shape;
+
+	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
+
 	for (int i = 0; i < this->size * 2 + 1; i++) {
 		for (int j = 0; j < this->size * 2 + 1; j++) {
 			for (int k = 0; k < granularity; k++) {
 				for (int l = 0; l < granularity; l++) {
-					brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 255, 0, 128 };
+					if (contains(i, j)) {
+						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 255, 0, 128 };
+					} else {
+						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 0, 0, 0 };
+					}
 				}
 			}
 		}
@@ -49,8 +52,26 @@ void Brush::set_size(const int size) {
 
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
 	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+}
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset + size * granularity - change * granularity) * 0.25f);
+/// Whether the brush shape contains the point, Arguments in brush coordinates
+bool Brush::contains(const int x, const int y) const {
+	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
+
+	switch (shape) {
+		case Shape::square:
+			return true;
+		case Shape::circle: {
+			float distance = (x - size) * (x - size);
+			distance += (y - size) * (y - size);
+			distance = std::sqrt(distance);
+
+			return distance <= size;
+		}
+		case Shape::diamond:
+			return std::abs(x - size) + std::abs(y - size) <= size;
+	}
+	return true;
 }
 
 void Brush::increase_size(const int size) {
@@ -61,11 +82,6 @@ void Brush::decrease_size(const int size) {
 }
 
 void Brush::render(Terrain& terrain) const {
-	const glm::ivec2 center_position = position + (size + uv_offset) / 4;
-	if (center_position.x < 0 || center_position.y < 0 || center_position.x > terrain.width || center_position.y > terrain.height) {
-		return;
-	}
-
 	gl->glDisable(GL_DEPTH_TEST);
 
 	shader->use();

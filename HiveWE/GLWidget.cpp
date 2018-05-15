@@ -55,6 +55,8 @@ void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
 
+
+
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	gl->glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
@@ -106,11 +108,9 @@ void GLWidget::paintGL() {
 	map.render(width(), height());
 	gl->glBindVertexArray(0);
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// QPainter does some wonky stuff with OpenGL state.
 	if (map.show_timings) {
 		QPainter p(this);
+		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
 		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
 			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
@@ -119,6 +119,14 @@ void GLWidget::paintGL() {
 		p.drawText(10, 80, QString::fromStdString("Doodad Queue: " + std::to_string(map.doodad_time)));
 		p.drawText(10, 95, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
 		p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
+
+		p.drawText(10, 130, QString::fromStdString("Total time: " + std::to_string(map.terrain_time + map.doodad_time + map.unit_time + map.render_time)));
+		p.end();
+		// Set changed state back
+		gl->glEnable(GL_DEPTH_TEST);
+		gl->glDepthFunc(GL_LEQUAL);
+		gl->glEnable(GL_BLEND);
+		gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
 
@@ -147,7 +155,6 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
-	//std::cout << event->pos
 	input_handler.mouse_move_event(event);
 	camera.mouse_move_event(event);
 
@@ -157,7 +164,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 
 	if (map.brush) {
 		map.brush->set_position(input_handler.mouse_world);
-
+			
 		if (event->buttons() == Qt::LeftButton) {
 			map.brush->apply();
 		}
@@ -165,14 +172,18 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	//}
 }
 
-void GLWidget::mousePressEvent(QMouseEvent * event)
-{
+void GLWidget::mousePressEvent(QMouseEvent * event) {
 	camera.mouse_press_event(event);
 }
 
-void GLWidget::mouseReleaseEvent(QMouseEvent * event)
-{
+void GLWidget::mouseReleaseEvent(QMouseEvent * event) {
 	camera.mouse_release_event(event);
+	if (map.brush) {
+		if (event->button() == Qt::LeftButton) {
+			map.brush->apply();
+			map.brush->apply_end();
+		}
+	}
 }
 
 void GLWidget::wheelEvent(QWheelEvent* event) {
