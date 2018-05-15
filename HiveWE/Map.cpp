@@ -57,7 +57,7 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
+	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
 
 	meshes.clear(); // ToDo this is not a nice way to do this
 }

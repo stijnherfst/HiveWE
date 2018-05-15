@@ -80,7 +80,7 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 		std::cout << "Unknown doodad modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, doodads_slk, doodads_meta_slk, false, true);
+load_modification_table(reader, doodads_slk, doodads_meta_slk, false, true);
 	load_modification_table(reader, doodads_slk, doodads_meta_slk, true, true);
 }
 
@@ -154,6 +154,10 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
+		if (!camera.is_visible(i.position / 128.f)) {
+			continue;
+		}
+
 		id_to_mesh[i.id + std::to_string(i.variation)]->render_queue(i.matrix);
 	}
 }
