@@ -8,8 +8,7 @@ public:
 		remove
 	};
 
-	uint8_t brush_mask;
-
+	uint8_t brush_mask = 0b00000000;
 
 	Operation operation = Operation::replace;
 

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>286</width>
-    <height>592</height>
+    <width>284</width>
+    <height>636</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -27,6 +27,9 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -83,6 +86,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="addBoundary">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -127,6 +133,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="removeBoundary">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -196,6 +205,9 @@
      </property>
      <property name="checkable">
       <bool>true</bool>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
      </property>
     </widget>
    </item>
@@ -352,6 +364,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <property name="default">
+        <bool>false</bool>
+       </property>
        <attribute name="buttonGroup">
         <string notr="true">cliffButtonGroup</string>
        </attribute>
@@ -476,6 +491,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="cliffDeepWater">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -526,6 +544,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="cliffShallowWater">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -576,6 +597,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="cliffRamp">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -653,12 +677,18 @@
      <property name="checkable">
       <bool>true</bool>
      </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
     </widget>
    </item>
    <item>
     <layout class="QHBoxLayout" name="deformationLayout">
      <item>
       <widget class="QPushButton" name="terrainLower">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -709,6 +739,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="terrainRaise">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -759,6 +792,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="terrainRipple">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -859,6 +895,9 @@
      </item>
      <item>
       <widget class="QPushButton" name="terrainSmooth">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -959,7 +998,7 @@
            <bool>true</bool>
           </property>
           <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
           <attribute name="buttonGroup">
            <string notr="true">brushSizeButtonGroup</string>
@@ -1171,6 +1210,9 @@
           <property name="checkable">
            <bool>true</bool>
           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
           <attribute name="buttonGroup">
            <string notr="true">brushShapeButtonGroup</string>
           </attribute>
@@ -1249,6 +1291,37 @@
         </item>
        </layout>
       </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Pathing</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QCheckBox" name="tilePathing">
+          <property name="text">
+           <string>Apply Tile Pathing</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="cliffPathing">
+          <property name="text">
+           <string>Apply Cliff Pathing</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
      </layout>
     </widget>
    </item>
@@ -1259,8 +1332,8 @@
  <connections/>
  <buttongroups>
   <buttongroup name="brushShapeButtonGroup"/>
-  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="brushSizeButtonGroup"/>
+  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="deformationButtonGroup"/>
  </buttongroups>
 </ui>

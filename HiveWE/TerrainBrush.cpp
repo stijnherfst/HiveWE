@@ -68,10 +68,10 @@ void TerrainBrush::apply() {
 					map.terrain.corners[i][j].ground_variation = get_random_variation();
 				}
 
-				if (apply_pathing) {
+				if (apply_tile_pathing) {
 					for (int k = -2; k < 2; k++) {
 						for (int l = -2; l < 2; l++) {
-							if (i * 4 + k < 0 || i * 4 + k > map.pathing_map.width || j * 4 + l < 0 || j * 4 + l > map.pathing_map.height) {
+							if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
 								continue;
 							}
 							map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
@@ -120,7 +120,11 @@ void TerrainBrush::apply() {
 					const int center_x = area.x() + area.width() * 0.5f;
 					const int center_y = area.y() + area.height() * 0.5f;
 
-					map.terrain.corners[i][j].ground_height = corners[center_x][center_y].ground_height;
+					if (!brush_hold) {
+						deformation_height = corners[center_x][center_y].ground_height;
+					}
+
+					map.terrain.corners[i][j].ground_height = deformation_height;
 					break;
 				}
 				case deformation::ripple:
@@ -164,8 +168,7 @@ void TerrainBrush::apply() {
 	}
 
 	if (apply_cliff) {
-		if (!layer_height_hold) {
-			layer_height_hold = true;
+		if (!brush_hold) {
 			layer_height = corners[input_handler.mouse_world.x][input_handler.mouse_world.y].layer_height;
 			switch (cliff_operation_type) {
 				case cliff_operation::lower2:
@@ -247,7 +250,7 @@ void TerrainBrush::apply() {
 
 					map.terrain.cliffs.emplace_back(i, j, map.terrain.path_to_cliff[file_name]);
 
-					if (apply_pathing) {
+					if (apply_cliff_pathing) {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
 								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
@@ -281,7 +284,7 @@ void TerrainBrush::apply() {
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 
-	if (apply_pathing) {
+	if (apply_tile_pathing || apply_cliff_pathing) {
 		QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map.pathing_map.width, map.pathing_map.height });
 
 		// Update pathing data
@@ -290,10 +293,12 @@ void TerrainBrush::apply() {
 		gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
+
+	brush_hold = true;
 }
 
 void TerrainBrush::apply_end() {
-	layer_height_hold = false;
+	brush_hold = false;
 }
 
 int TerrainBrush::get_random_variation() const {
@@ -315,6 +320,6 @@ int TerrainBrush::get_random_variation() const {
 		}
 		nr -= chance;
 	}
-	static_assert("Should never come here");
+	static_assert("Didn't hit the list of tile variations");
 	return 0;
 }

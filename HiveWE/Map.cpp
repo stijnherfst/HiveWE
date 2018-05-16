@@ -7,7 +7,7 @@ Map::~Map() {
 
 void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
-	filesystem_path = fs::canonical(path); //system_complete
+	filesystem_path = fs::absolute(path);
 
 	// Terrain
 	BinaryReader war3map_w3e(hierarchy.map.file_open("war3map.w3e").read());
@@ -63,7 +63,9 @@ void Map::load(const fs::path& path) {
 }
 
 bool Map::save(const fs::path& path) {
-	const fs::path complete_path = fs::canonical(path); //system_complete fs::system_complete(path);
+	std::error_code t;
+
+	const fs::path complete_path = fs::absolute(path, t); //system_complete fs::system_complete(path);
 	if (complete_path != filesystem_path) {
 		try {
 			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);

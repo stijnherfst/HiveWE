@@ -2,7 +2,7 @@
 
 GPUTexture::GPUTexture(const fs::path& path) {
 	if (path.extension() == ".blp" || path.extension() == ".BLP") {
-		auto[data, width, height] = blp::BLP::load(path); // ToDo use resource manager here too?
+		auto[data, width, height] = blp::BLP::load(path);
 
 		gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
 		gl->glTextureStorage2D(id, std::log(std::max(width, height)) + 1, GL_RGBA8, width, height);

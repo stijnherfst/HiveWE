@@ -354,7 +354,6 @@ void Terrain::save() {
 
 void Terrain::render() {
 	// Render tiles
-
 	auto begin = std::chrono::high_resolution_clock::now();
 
 	ground_shader->use();

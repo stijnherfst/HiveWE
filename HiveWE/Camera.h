@@ -12,8 +12,8 @@ struct Camera {
 
 	double fov = 45;
 	double aspect_ratio = 16.0 / 9.0;
-	float draw_distance = 200.0;
-	float draw_distance_close = 0.1;
+	float draw_distance = 2000.0;
+	float draw_distance_close = 0.05;
 	float fov_rad = (glm::pi<float>() / 180.f) * static_cast<float>(fov); // Need radians
 	float tan_height = 2.f * glm::tan(fov_rad * 0.5f);
 

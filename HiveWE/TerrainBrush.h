@@ -2,10 +2,11 @@
 
 class TerrainBrush : public Brush {
 public:
-	bool apply_texture = true;
-	bool apply_pathing = true;
-	bool apply_height = true;
-	bool apply_cliff = true;
+	bool apply_texture = false;
+	bool apply_height = false;
+	bool apply_cliff = false;
+	bool apply_tile_pathing = true;
+	bool apply_cliff_pathing = true;
 
 	std::string tile_id;
 
@@ -35,8 +36,6 @@ public:
 	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
 	void apply() override;
 	void apply_end() override;
-//	void apply_texture();
-//	void apply_deformation();
 
 	int get_random_variation() const;
 private:
@@ -62,6 +61,7 @@ private:
 		{ 15, 1 }
 	};
 
-	bool layer_height_hold = false;
+	bool brush_hold = false;
 	int layer_height = 0;
+	int deformation_height = 0;
 };

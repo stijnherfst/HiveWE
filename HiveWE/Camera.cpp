@@ -104,8 +104,7 @@ void TPSCamera::mouse_scroll_event(QWheelEvent* event) {
 	update(0);
 }
 
-void TPSCamera::mouse_press_event(QMouseEvent *event) // redefine the mouse event
-{
+void TPSCamera::mouse_press_event(QMouseEvent *event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = true;
@@ -113,8 +112,7 @@ void TPSCamera::mouse_press_event(QMouseEvent *event) // redefine the mouse even
 	}
 }
 
-void TPSCamera::mouse_release_event(QMouseEvent * event)
-{
+void TPSCamera::mouse_release_event(QMouseEvent * event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = false;
@@ -122,13 +120,11 @@ void TPSCamera::mouse_release_event(QMouseEvent * event)
 	}
 }
 
-/*!
-	Checks if a point is within the defined camera frustum.
-	The point is expected to be in the same coordinate system,
-	i.e divide wc3 object positions by 128.0 before passing.
-*/
-bool TPSCamera::is_visible(glm::vec3 && point)
-{
+
+//Checks if a point is within the defined camera frustum.
+//The point is expected to be in the same coordinate system,
+//i.e divide wc3 object positions by 128.0 before passing.
+bool TPSCamera::is_visible(glm::vec3 && point) {
 	// Calculate the point position as the camera as referential point
 	auto v = point - position;
 	// Project the vector on Z-axis
@@ -147,7 +143,7 @@ bool TPSCamera::is_visible(glm::vec3 && point)
 	// Calculate how far away the point is in Y-axis
 	auto vY = dot(v, Y) * Y;
 	auto y = glm::length(vY);
-	//auto vy = 
+
 	if (y > height || y + height < 0) {
 		return false;
 	}

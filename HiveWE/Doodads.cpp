@@ -154,9 +154,9 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		if (!camera.is_visible(i.position / 128.f)) {
-			continue;
-		}
+		//if (!camera.is_visible(i.position / 128.f)) {
+		//	continue;
+		//}
 
 		id_to_mesh[i.id + std::to_string(i.variation)]->render_queue(i.matrix);
 	}

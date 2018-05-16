@@ -67,18 +67,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	ui.blight->setProperty("tileName", "Blight");
 	textures_group->addButton(ui.blight);
 
-	connect(textures_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
-		brush.tile_id = button->property("tileID").toString().toStdString();
-		brush.apply_texture = true;
-		ui.textureGroupBox->setChecked(true);
-	});
-
-	connect(cliff_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
-		brush.cliff_id = button->property("cliffID").toInt();
-		brush.apply_cliff = true;
-		ui.cliffGroupBox->setChecked(true);
-	});
-
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.brushSizeSlider->setValue(button->text().toInt());
 	});
@@ -91,10 +79,30 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	connect(ui.cliffGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_cliff = checked; });
 	connect(ui.deformationGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_height = checked; });
 
-	connect(ui.cliffButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
+	connect(textures_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
+		brush.tile_id = button->property("tileID").toString().toStdString();
+		ui.textureGroupBox->setChecked(true);
+		brush.apply_texture = true;
+	});
+
+	connect(cliff_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
+		brush.cliff_id = button->property("cliffID").toInt();
+		ui.cliffGroupBox->setChecked(true);
 		brush.apply_cliff = true;
+	});
+
+	connect(ui.cliffButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
 		ui.cliffGroupBox->setChecked(true);
 		ui.deformationGroupBox->setChecked(false);
+		brush.apply_cliff = true;
+		brush.apply_height = false;
+	});
+
+	connect(ui.deformationButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
+		ui.deformationGroupBox->setChecked(true);
+		ui.cliffGroupBox->setChecked(false);
+		brush.apply_height = true;
+		brush.apply_cliff = false;
 	});
 
 	connect(ui.terrainRaise, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::raise; });
@@ -115,6 +123,9 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	connect(ui.brushShapeCircle, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::circle); });
 	connect(ui.brushShapeSquare, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::square); });
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
+
+	connect(ui.tilePathing, &QCheckBox::clicked, [&](bool checked) { brush.apply_tile_pathing = checked; });
+	connect(ui.cliffPathing, &QCheckBox::clicked, [&](bool checked) { brush.apply_cliff_pathing = checked; });
 }
 
 TerrainPalette::~TerrainPalette() {

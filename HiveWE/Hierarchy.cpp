@@ -50,7 +50,7 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	} else if (deprecated.file_exists(path)) {
 		file = deprecated.file_open(path);
 	} else {
-		std::cout << "Unable to find file in hierarchy";
+		std::cout << "Unable to find file in hierarchy: " << path << "\n";
 		return BinaryReader(std::vector<uint8_t>());
 	}
 

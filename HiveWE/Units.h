@@ -12,6 +12,8 @@ struct Unit {
 	uint8_t unknown2;
 	int health;
 	int mana;
+
+	glm::mat4 matrix = glm::mat4(1.f);
 };
 
 class Units {

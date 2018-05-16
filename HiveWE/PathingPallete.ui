@@ -210,7 +210,7 @@
         <bool>true</bool>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">brushSizeGroup</string>
@@ -415,6 +415,9 @@
        <property name="checkable">
         <bool>true</bool>
        </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
        <attribute name="buttonGroup">
         <string notr="true">brushShapeGroup</string>
        </attribute>
@@ -532,13 +535,13 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="brushShapeGroup"/>
+  <buttongroup name="toolTypeGroup"/>
   <buttongroup name="brushSizeGroup"/>
   <buttongroup name="brushTypeGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
-  <buttongroup name="toolTypeGroup"/>
-  <buttongroup name="brushShapeGroup"/>
  </buttongroups>
 </ui>
