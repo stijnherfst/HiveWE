@@ -16,7 +16,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
 			}
-
+			
 			// Allocate space
 			gl->glCreateBuffers(1, &vertex_buffer);
 			gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);

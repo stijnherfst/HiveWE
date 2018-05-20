@@ -80,7 +80,7 @@ namespace mdx {
 	}
 
 	TextureCoordinateSet::TextureCoordinateSet(BinaryReader& reader) {
-		reader.position += 4;
+		reader.advance(4);
 		const uint32_t texture_coordinates_count = reader.read<uint32_t>();
 		coordinates = reader.read_vector<glm::vec2>(texture_coordinates_count);
 	}
@@ -95,7 +95,7 @@ namespace mdx {
 		alpha = reader.read<float>();
 
 		// Skip tags
-		reader.position += size - 28;
+		reader.advance(size - 28);
 	}
 
 	Texture::Texture(BinaryReader& reader) {
@@ -130,28 +130,28 @@ namespace mdx {
 			total_size += reader.read<uint32_t>();
 
 			Geoset geoset;
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t vertex_count = reader.read<uint32_t>();
 			geoset.vertices = reader.read_vector<glm::vec3>(vertex_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t normal_count = reader.read<uint32_t>();
 			geoset.normals = reader.read_vector<float>(normal_count * 3);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t face_type_groups_count = reader.read<uint32_t>();
 			geoset.face_type_groups = reader.read_vector<uint32_t>(face_type_groups_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t face_groups_count = reader.read<uint32_t>();
 			geoset.face_groups = reader.read_vector<uint32_t>(face_groups_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t faces_count = reader.read<uint32_t>();
 			geoset.faces = reader.read_vector<uint16_t>(faces_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t vertex_groups_count = reader.read<uint32_t>();
 			geoset.vertex_groups = reader.read_vector<uint8_t>(vertex_groups_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
 			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
 			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
@@ -163,7 +163,7 @@ namespace mdx {
 			for (size_t i = 0; i < extents_count; i++) {
 				geoset.extents.emplace_back(Extent(reader));
 			}
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
 				geoset.texture_coordinate_sets.emplace_back(TextureCoordinateSet(reader));
@@ -214,7 +214,7 @@ namespace mdx {
 			Material material;
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
-			reader.position += 4;
+			reader.advance(4);
 			const uint32_t layers_count = reader.read<uint32_t>();
 
 			for (size_t i = 0; i < layers_count; i++) {

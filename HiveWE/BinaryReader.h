@@ -57,8 +57,8 @@ public:
 	}
 
 	void advance(const size_t amount) {
-		if (amount > 9999999) {
-			throw std::invalid_argument("Amount is very large");
+		if (position + amount > buffer.size()) {
+			throw std::out_of_range("Trying to advance past the end of the buffer");
 		}
 		position += amount;
 	}

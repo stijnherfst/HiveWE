@@ -98,7 +98,7 @@ void Terrain::create() {
 					water_colors.push_back(color / glm::vec4(255, 255, 255, 255));
 				}
 
-				const unsigned int index = water_vertices.size() - 4;
+				const size_t index = water_vertices.size() - 4;
 				water_indices.emplace_back(index + 0, index + 3, index + 1);
 				water_indices.emplace_back(index + 1, index + 3, index + 2);
 			}
@@ -363,12 +363,13 @@ void Terrain::render() {
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
 	gl->glUniform1i(2, map.render_pathing);
 
-	gl->glBindTextureUnit(0, ground_corner_height);
-	gl->glBindTextureUnit(1, ground_texture_data);
-	gl->glBindTextureUnit(2, pathing_map_texture);
+	gl->glBindTextureUnit(0, ground_height);
+	gl->glBindTextureUnit(1, ground_corner_height);
+	gl->glBindTextureUnit(2, ground_texture_data);
+	gl->glBindTextureUnit(3, pathing_map_texture);
 
 	for (size_t i = 0; i < ground_textures.size(); i++) {
-		gl->glBindTextureUnit(3 + i, ground_textures[i]->id);
+		gl->glBindTextureUnit(4 + i, ground_textures[i]->id);
 	}
 
 	gl->glEnableVertexAttribArray(0);
