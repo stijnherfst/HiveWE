@@ -22,10 +22,21 @@ void Map::load(const fs::path& path) {
 	if (!success) {
 		return;
 	}
-
+	
 	// Doodads
 	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
 	success = doodads.load(war3map_doo, terrain);
+
+
+	// Imported Files
+	if (hierarchy.map.file_exists("war3map.imp")) {
+		BinaryReader war3map_imp = BinaryReader(hierarchy.map.file_open("war3map.imp").read());
+		imports.load(war3map_imp);
+	}
+	if (hierarchy.map.file_exists("war3map.dir")) {
+		BinaryReader war3map_dir = BinaryReader(hierarchy.map.file_open("war3map.dir").read());
+		imports.load_dir_file(war3map_dir);
+	}
 
 	if (hierarchy.map.file_exists("war3map.w3d")) {
 		BinaryReader war3map_w3d = BinaryReader(hierarchy.map.file_open("war3map.w3d").read());
@@ -83,10 +94,18 @@ bool Map::save(const fs::path& path) {
 		pathing_map.save();
 		terrain.save();
 
+		imports.save();
+		imports.save_dir_file();
+		imports.save_imports();
+
 		std::swap(new_map, hierarchy.map);
 	} else {
 		pathing_map.save();
 		terrain.save();
+
+		imports.save();
+		imports.save_dir_file();
+		imports.save_imports();
 	}
 	return true;
 }
@@ -117,7 +136,7 @@ void Map::render(int width, int height) {
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	
 	// Map mouse coordinates to world coordinates
-	if (input_handler.mouse != input_handler.previous_mouse && QRect(0, 0, width, height).contains(input_handler.mouse)) {
+	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
 		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
 		input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));

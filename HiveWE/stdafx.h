@@ -58,6 +58,8 @@ namespace fs = std::filesystem;
 #include "Shader.h"
 #include "StaticMesh.h"
 
+
+#include "Imports.h"
 #include "Terrain.h"
 #include "PathingMap.h"
 #include "Doodads.h"
@@ -71,8 +73,10 @@ namespace fs = std::filesystem;
 #include "HiveWE.h"
 #include "GLWidget.h"
 
+#include "ImportManager.h"
 #include "PathingPallete.h"
 #include "TerrainPalette.h"
 #include "TilePicker.h"
 #include "TileSetter.h"
 #include "TilePather.h"
+

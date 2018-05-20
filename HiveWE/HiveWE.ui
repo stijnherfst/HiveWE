@@ -50,6 +50,7 @@
      <addaction name="actionTerrain_Palette"/>
     </widget>
     <addaction name="menuNew_Pallete"/>
+    <addaction name="actionImport_Manager"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -226,6 +227,11 @@
    </property>
    <property name="shortcut">
     <string>F1</string>
+   </property>
+  </action>
+  <action name="actionImport_Manager">
+   <property name="text">
+    <string>Import Manager</string>
    </property>
   </action>
  </widget>

@@ -201,6 +201,18 @@
     <ClCompile Include="GroundTexture.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="Imports.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImportManager.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -263,9 +275,6 @@
     <ClInclude Include="InputHandler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_PathingPallete.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="BinaryWriter.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
@@ -302,6 +311,9 @@
     <ClInclude Include="GroundTexture.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Imports.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -309,9 +321,6 @@
     </CustomBuild>
     <CustomBuild Include="HiveWE.ui">
       <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="HiveWE.qrc">
-      <Filter>Resource Files</Filter>
     </CustomBuild>
     <CustomBuild Include="GLWidget.h">
       <Filter>Header Files</Filter>
@@ -348,6 +357,15 @@
     </CustomBuild>
     <CustomBuild Include="TilePather.h">
       <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="HiveWE.qrc">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ImportManager.h">
+      <Filter>Header Files\Base</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ImportManager.ui">
+      <Filter>Form Files</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

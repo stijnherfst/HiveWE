@@ -6,6 +6,7 @@ public:
 	PathingMap pathing_map;
 	Doodads doodads;
 	Units units;
+	Imports imports;
 
 	Brush* brush = nullptr;
 

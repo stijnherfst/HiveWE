@@ -155,6 +155,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
+	//std::cout << event->pos
 	input_handler.mouse_move_event(event);
 	camera.mouse_move_event(event);
 
