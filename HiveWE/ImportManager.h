@@ -21,6 +21,7 @@ class ImportManager : public QMainWindow
 	void LoadFiles(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports);
 	bool RemoveMessageBox(QString msg);
 	QString GenerateFullPath(QString fileName);
+	QString GenerateFileType(fs::path path);
 protected:
 	bool eventFilter(QObject *obj, QEvent *event);
 public:

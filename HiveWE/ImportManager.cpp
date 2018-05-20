@@ -19,7 +19,7 @@ ImportManager::ImportManager(QWidget *parent) :
 	connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::CustomMenuPopup);
 
 
-	LoadFiles(map.imports.directories, map.imports.imports); // Loads pre-existing files if any.
+	LoadFiles(map.imports.directories, map.imports.imports);
 
 	show();
 }
@@ -96,7 +96,6 @@ void ImportManager::CustomMenuPopup(const QPoint & pos) {
 QTreeWidgetItem * ImportManager::CreateEmptyDir() {
 	std::string name = "Untitled Directory" + std::to_string(map.imports.directories.size());
 
-	// Maybe an error message box  ?
 	for (size_t i = 0; i < map.imports.directories.size(); i++) {
 		std::string s = "Untitled Directory" + std::to_string(i);
 		if (map.imports.directories.find(s + ".dir") == map.imports.directories.end()) {
@@ -112,7 +111,7 @@ QTreeWidgetItem * ImportManager::CreateEmptyDir() {
 
 void ImportManager::ImportFiles(QTreeWidgetItem * itm) {
 	QFileDialog * dial = new QFileDialog(this, tr("Import Files"), ".");
-	dial->setNameFilter(("*.blp *.mdx *.mdl *.tga *.wav *.mp3 *.txt"));
+	dial->setNameFilter(("*.blp *.mdx *.tga *.wav *.mp3 *.txt"));
 	dial->setFileMode(QFileDialog::ExistingFiles);
 	if (dial->exec() == QFileDialog::Accepted) {
 		for (auto&& f : dial->selectedFiles()) {
@@ -123,16 +122,19 @@ void ImportManager::ImportFiles(QTreeWidgetItem * itm) {
 			auto position = std::find_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
 
 			if (position == map.imports.imports.end()) {
+				std::string file = f.toStdString();
+				auto size = fs::file_size(fs::path(file));
+
 				QString file_name = QString::fromStdString(fs::path(file).filename().string());
-				QString file_type = QString::fromStdString(fs::path(file).extension().string());
-				QString file_size = QString::number(fs::file_size(fs::path(file)));
+				QString file_type = GenerateFileType(fs::path(file));
+				QString file_size = QString::number(size);
 				QString full_path = GenerateFullPath(file_name);
 
 				AddChildItem(itm, file_name, file_type, file_size, full_path);
 
 				int custom = true;
 
-				map.imports.imports.emplace_back(custom, full_path.toStdString(), f.toStdString());
+				map.imports.imports.emplace_back(custom, full_path.toStdString(), f.toStdString(), size);
 				map.imports.directories.at(itm->text(0).toStdString() + ".dir").push_back(full_path.toStdString());
 
 			}
@@ -186,6 +188,21 @@ QString ImportManager::GenerateFullPath(QString fileName) {
 	return fileName;
 }
 
+QString ImportManager::GenerateFileType(fs::path path) {
+	std::string extension = path.extension().string();
+	if (extension == ".blp" || extension == ".tga" ) {
+		return "Image/Texture";
+	} else if (extension == ".mdx") {
+		return "Model";
+	} else if (extension == ".txt") {
+		return "Text";
+	} else if (extension == ".mp3" || extension == ".wav") {
+		return "Sound/Music";
+	} else {
+		return "Other";
+	}
+
+}
 void ImportManager::RenameDir(QTreeWidgetItem * itm) {
 	QDialog * diag = new QDialog(this);
 	QGridLayout * gLayout = new QGridLayout();
@@ -232,22 +249,25 @@ void ImportManager::RenameDir(QTreeWidgetItem * itm) {
 
 
 void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports) {
-	if (directories.empty() && imports.empty()) { return; }
-	else if (directories.empty()) {
+	if (directories.empty() && imports.empty()) { 
+		return; 
+	} else if (directories.empty()) {
+		std::cout << "Creating Empty Dir" << std::endl;
 		QTreeWidgetItem * parent = CreateEmptyDir();
 		directories.emplace(parent->text(0).toStdString() + ".dir", std::vector<std::string>());
 		ui->treeWidget->addTopLevelItem(parent);
 		for (auto&& imp : imports) {
+			if (imp.path == "war3map.dir") { continue; }
 			directories.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
 
 			QString file_name = QString::fromStdString(fs::path(imp.path).filename().string());
-			QString file_type = QString::fromStdString(fs::path(imp.path).extension().string());
+			QString file_type = GenerateFileType(fs::path(imp.path));
+			QString file_size = QString::number(imp.file_size);
 			QString full_path = GenerateFullPath(file_name);
 
-			AddChildItem(parent, file_name, file_type, "", full_path);
+			AddChildItem(parent, file_name, file_type, file_size, full_path);
 		}
-	}
-	else {
+	} else {
 		std::vector<std::string> temp_vec;
 
 		QTreeWidgetItem * parent;
@@ -264,11 +284,14 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 				else {
 					temp_vec.push_back(f);
 
+					int idx = std::distance(imports.begin(), position);
+
 					QString file_name = QString::fromStdString(fs::path(f).filename().string());
-					QString file_type = QString::fromStdString(fs::path(f).extension().string());
+					QString file_type = GenerateFileType(fs::path(f));
+					QString file_size = QString::number(imports.at(idx).file_size);
 					QString file_path = GenerateFullPath(file_name);
 
-					AddChildItem(parent, file_name, file_type, "", file_path);
+					AddChildItem(parent, file_name, file_type, file_size, file_path);
 				}
 			}
 
@@ -286,10 +309,11 @@ void ImportManager::LoadFiles(std::map<std::string, std::vector<std::string>> &d
 				if (position == files.end() && vec_pos == temp_vec.end()) {
 					temp_vec.push_back(imp.path);
 					QString file_name = QString::fromStdString(fs::path(imp.path).filename().string());
-					QString file_type = QString::fromStdString(fs::path(imp.path).extension().string());
+					QString file_type = GenerateFileType(fs::path(imp.path));
+					QString file_size = QString::number(map.imports.import_size(imp.path));
 					QString file_path = QString::fromStdString(imp.path);
 
-					AddChildItem(parent, file_name, file_type, "", file_path);
+					AddChildItem(parent, file_name, file_type, file_size, file_path);
 
 					directories.at(parent->text(0).toStdString() + ".dir").push_back(imp.path);
 				}

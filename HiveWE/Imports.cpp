@@ -8,7 +8,7 @@ void Imports::load(BinaryReader& reader) {
 		int is_custom = reader.read<uint8_t>();
 		std::string path = reader.read_c_string();
 		reader.advance(1);
-		imports.emplace_back(is_custom ==  5 || is_custom == 13 , path,"");
+		imports.emplace_back(is_custom ==  5 || is_custom == 13 , path,"", import_size(path));
 	}
 
 }
@@ -18,7 +18,7 @@ void Imports::save() {
 	// Remove the item if it exists.
 	imports.erase(std::remove_if(imports.begin(), imports.end(), [&](const Import &imp) { return imp.path == "war3map.dir"; }), imports.end());
 	// Re add the item to the end of the vector.
-	imports.emplace_back(false, "war3map.dir","");
+	imports.emplace_back(false, "war3map.dir","",0);
 	
 	writer.write<uint32_t>(version);
 	writer.write<uint32_t>(imports.size());
@@ -38,7 +38,7 @@ void Imports::save() {
 	SFileFinishFile(handle);
 }
 
-void Imports::loadDirectoryFile(BinaryReader &reader) {
+void Imports::load_dir_file(BinaryReader &reader) {
 	int count = reader.read<uint32_t>();
 	
 	for (int i = 0; i < count; i++) {
@@ -64,7 +64,7 @@ void Imports::loadDirectoryFile(BinaryReader &reader) {
 }
 
 
-void Imports::saveDirectoryFile() {
+void Imports::save_dir_file() {
 	BinaryWriter writer;
 	
 	writer.write<uint32_t>(directories.size());
@@ -116,4 +116,17 @@ void Imports::export_file(std::string path,std::string file) {
 
 	out_file.close();
 	SFileCloseFile(handle);
+}
+
+int Imports::import_size(std::string path) {
+	HANDLE handle;
+	const bool success = SFileOpenFileEx(hierarchy.map.handle, path.c_str(), SFILE_OPEN_FROM_MPQ, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+	int size = SFileGetFileSize(handle, 0);
+
+	SFileCloseFile(handle);
+
+	return size;
 }
