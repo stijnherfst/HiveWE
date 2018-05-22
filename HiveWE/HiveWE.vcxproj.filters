@@ -211,7 +211,7 @@
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="ImportManager.cpp">
-      <Filter>Source Files\Base</Filter>
+      <Filter>Source Files\Menus</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -361,11 +361,11 @@
     <CustomBuild Include="HiveWE.qrc">
       <Filter>Source Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="ImportManager.h">
-      <Filter>Header Files\Base</Filter>
-    </CustomBuild>
     <CustomBuild Include="ImportManager.ui">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ImportManager.h">
+      <Filter>Header Files\Menus</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>

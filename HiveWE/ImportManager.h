@@ -1,31 +1,31 @@
 #pragma once
 
-namespace Ui {
-	class ImportManager;
-}
+#include "ui_ImportManager.h"
 
-class ImportManager : public QMainWindow
-{
+class ImportManager : public QMainWindow {
 	Q_OBJECT
 
-		QTreeWidgetItem * CreateDir(QString name);
+	QTreeWidgetItem* create_directory(QString name);
+	QTreeWidgetItem* create_empty_directory();
+	void rename_directory(QTreeWidgetItem * itm);
 
-	void AddChildItem(QTreeWidgetItem * itm, QString name, QString itmType, QString itmSize, QString fullPath);
-	void CustomMenuPopup(const QPoint & pos);
-	void RenameDir(QTreeWidgetItem * itm);
-	void ImportFiles(QTreeWidgetItem * itm);
-	void ExportFiles(QTreeWidgetItem * itm);
-	QTreeWidgetItem * CreateEmptyDir();
-	void RemoveItem(QTreeWidgetItem * itm);
+	void add_child_item(QTreeWidgetItem * itm, QString name, QString item_type, int item_size, QString full_path) const;
+	void custom_menu_popup(const QPoint & pos);
+	void import_files(QTreeWidgetItem * itm);
+	void export_files(QTreeWidgetItem * itm);
+	void remove_item(QTreeWidgetItem * itm);
 
-	void LoadFiles(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports);
-	bool RemoveMessageBox(QString msg);
-	QString GenerateFullPath(QString fileName);
-	QString GenerateFileType(fs::path path);
+	void load_files(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports);
+
+	static QString generate_full_path(QString file_name);
+
+	static QString get_file_type(fs::path path);
+
 protected:
-	bool eventFilter(QObject *obj, QEvent *event);
+	bool eventFilter(QObject* obj, QEvent *event) override;
+
 public:
-	explicit ImportManager(QWidget *parent = 0);
+	explicit ImportManager(QWidget *parent = nullptr);
 	~ImportManager();
 
 private:

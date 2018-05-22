@@ -33,7 +33,7 @@ public:
 
 	std::string read_c_string() {
 		std::string string(reinterpret_cast<char*>(buffer.data() + position));
-		position += string.size();
+		position += string.size() + 1;
 
 		if (position > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");

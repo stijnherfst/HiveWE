@@ -132,7 +132,6 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 					break;
 				case 3:
 					data = reader.read_c_string();
-					reader.position += 1;
 					break;
 				default: 
 					std::cout << "Unknown data type " << type << " while loading modification table.";

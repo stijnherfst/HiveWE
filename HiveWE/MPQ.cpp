@@ -17,6 +17,10 @@ namespace mpq {
 		return buffer;
 	}
 
+	size_t File::size() const {
+		return SFileGetFileSize(handle, 0);
+	}
+
 	void File::close() const {
 		SFileCloseFile(handle);
 	}

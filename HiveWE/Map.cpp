@@ -23,11 +23,6 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 	
-	// Doodads
-	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
-	success = doodads.load(war3map_doo, terrain);
-
-
 	// Imported Files
 	if (hierarchy.map.file_exists("war3map.imp")) {
 		BinaryReader war3map_imp = BinaryReader(hierarchy.map.file_open("war3map.imp").read());
@@ -37,6 +32,10 @@ void Map::load(const fs::path& path) {
 		BinaryReader war3map_dir = BinaryReader(hierarchy.map.file_open("war3map.dir").read());
 		imports.load_dir_file(war3map_dir);
 	}
+
+	// Doodads
+	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
+	success = doodads.load(war3map_doo, terrain);
 
 	if (hierarchy.map.file_exists("war3map.w3d")) {
 		BinaryReader war3map_w3d = BinaryReader(hierarchy.map.file_open("war3map.w3d").read());
