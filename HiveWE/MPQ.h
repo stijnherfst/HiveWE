@@ -53,6 +53,7 @@ namespace mpq {
 		void close();
 
 		File file_open(const fs::path& path) const;
+		void file_remove(const fs::path& path) const;
 		bool file_exists(const fs::path& path) const;
 	};
 

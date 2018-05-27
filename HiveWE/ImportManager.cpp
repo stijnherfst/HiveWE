@@ -1,74 +1,62 @@
 #include "stdafx.h"
 
-ImportManager::ImportManager(QWidget *parent) : QMainWindow(parent), ui(new Ui::ImportManager) {
+ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent), ui(new Ui::ImportManager) {
 	ui->setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
-	ui->treeWidget->setContextMenuPolicy(Qt::CustomContextMenu);
-	ui->treeWidget->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-	ui->treeWidget->setFocusPolicy(Qt::ClickFocus);
 	ui->treeWidget->setFocus();
 	ui->treeWidget->installEventFilter(this);
-	ui->treeWidget->setUniformRowHeights(true);
 	ui->treeWidget->header()->resizeSection(0, 220);
 	connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::custom_menu_popup);
 
-	load_files(map.imports.directories, map.imports.imports);
+	connect(ui->createDirectory, &QPushButton::clicked, [&]() { create_directory(ui->treeWidget->invisibleRootItem()); });
+	connect(ui->importFiles, &QPushButton::clicked, [&]() { import_files(ui->treeWidget->invisibleRootItem()); });
+
+	QFileIconProvider icons;
+	folder_icon = icons.icon(QFileIconProvider::Folder);
+	file_icon = icons.icon(QFileIconProvider::File);
+
+	ui->createDirectory->setIcon(folder_icon);
+	ui->importFiles->setIcon(file_icon);
+	ui->exportAll->setIcon(file_icon);
+
+	load_files(map.imports.imports);
 
 	show();
 }
 
-ImportManager::~ImportManager() {
-	delete ui;
-}
+void ImportManager::custom_menu_popup(const QPoint& pos) {
+	QTreeWidgetItem* parent = ui->treeWidget->itemAt(pos);
 
-QTreeWidgetItem * ImportManager::create_directory(const QString name) {
-	QTreeWidgetItem* item = new QTreeWidgetItem();
-	item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDropEnabled);
-	item->setText(0, name);
-	item->setText(1, "Directory");
-
-	return item;
-}
-
-void ImportManager::add_child_item(QTreeWidgetItem* itm, const QString name, const QString item_type, const int item_size, const QString full_path) const {
-	QTreeWidgetItem * childitm = new QTreeWidgetItem();
-	childitm->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);
-	childitm->setText(0, name);
-	childitm->setText(1, item_type);
-	childitm->setData(2, Qt::DisplayRole, item_size);
-	childitm->setText(3, full_path);
-
-	itm->addChild(childitm);
-}
-
-void ImportManager::custom_menu_popup(const QPoint & pos) {
-	QTreeWidgetItem * itm = ui->treeWidget->itemAt(pos);
+	if (parent == nullptr) {
+		parent = ui->treeWidget->invisibleRootItem();
+	}
 
 	QMenu* menu = new QMenu(this);
 	QAction* import_files_action = new QAction("Import Files");
-	QAction* remove_files_action = new QAction("Remove File");
+	QAction* remove_files_action = new QAction("Remove");
 	QAction* export_file_action = new QAction("Export File");
 	QAction* export_files_action = new QAction("Export Files");
 	QAction* add_directory_action = new QAction("Add Directory");
 	QAction* rename_action = new QAction("Rename");
 
-	connect(import_files_action, &QAction::triggered, [&]() { import_files(itm); });
-	connect(add_directory_action, &QAction::triggered, [&]() { ui->treeWidget->addTopLevelItem(create_empty_directory()); });
-	connect(remove_files_action, &QAction::triggered, [&]() { remove_item(itm);  });
-	connect(rename_action, &QAction::triggered, [&]() { rename_directory(itm);  });
-	connect(export_files_action, &QAction::triggered, [&]() { export_files(itm); });
-	connect(export_file_action, &QAction::triggered, [&]() { export_files(itm); });
+	connect(import_files_action, &QAction::triggered, [&]() { import_files(parent); });
+	connect(add_directory_action, &QAction::triggered, [&]() { create_directory(parent); });
+	connect(remove_files_action, &QAction::triggered, [&]() { remove_item(parent);  });
+	connect(rename_action, &QAction::triggered, [&]() { rename_directory(parent);  });
+	connect(export_files_action, &QAction::triggered, [&]() { export_files(parent); });
+	connect(export_file_action, &QAction::triggered, [&]() { export_files(parent); });
 
-	// Imported File
-	if (!itm) {
+	if (parent->text(0).isEmpty() || parent->text(1) == "Directory") {
 		menu->addAction(add_directory_action);
-	} else if (itm->text(1) == "Directory") {
 		menu->addAction(import_files_action);
 		menu->addAction(export_files_action);
+	} 
+	
+	if (parent->text(1) == "Directory") {
 		menu->addAction(rename_action);
 		menu->addAction(remove_files_action);
-	} else if (itm->childCount() == 0) {
+	} else if (!parent->text(0).isEmpty()) {
 		menu->addAction(export_file_action);
 		menu->addAction(remove_files_action);
 	}
@@ -76,88 +64,40 @@ void ImportManager::custom_menu_popup(const QPoint & pos) {
 	menu->exec(QCursor::pos());
 }
 
-
-QTreeWidgetItem * ImportManager::create_empty_directory() {
-	std::string name = "Untitled Directory" + std::to_string(map.imports.directories.size());
-
-	for (size_t i = 0; i < map.imports.directories.size(); i++) {
-		std::string s = "Untitled Directory" + std::to_string(i);
-		if (map.imports.directories.find(s) == map.imports.directories.end()) {
-			name.swap(s);
-			break;
-		}
-	}
-
-	QTreeWidgetItem * itm = create_directory(QString::fromStdString(name));
-	map.imports.directories.emplace(name, std::vector<std::string>());
-	return itm;
-}
-
 void ImportManager::import_files(QTreeWidgetItem* item) {
 	QStringList files = QFileDialog::getOpenFileNames(this, "Select one or more files to import",
 		".",
 		"*.blp *.mdx *.mdl *.tga *.wav *.mp3 *.txt");
 
-	for (auto&& f : files) {
-		fs::path s = fs::path(f.toStdString()).stem();
+	for (auto&& file : files) {
+		const QString file_name = QString::fromStdString(fs::path(file.toStdString()).filename().string());
+		const QString full_path = "war3mapImported\\" + file_name;
+		map.imports.import_file(file.toStdString(), file_name.toStdString());
 
-		auto cond = [&s](const Import &imp) { return fs::path(imp.path).stem() == s; };
-		auto position = std::find_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
-
-		if (position == map.imports.imports.end()) {
-			fs::path file = f.toStdString();
-			auto size = fs::file_size(file);
-
-			QString file_name = QString::fromStdString(file.filename().string());
-			QString file_type = get_file_type(file);
-			QString full_path = generate_full_path(file_name);
-
-			add_child_item(item, file_name, file_type, size, full_path);
-
-			map.imports.imports.emplace_back(true, full_path.toStdString(), f.toStdString(), size);
-			map.imports.directories.at(item->text(0).toStdString()).push_back(full_path.toStdString());
-
-			map.imports.import_file(file, full_path.toStdString());
-		}
+		QTreeWidgetItem* child = new QTreeWidgetItem(item);
+		child->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);
+		child->setText(0, file_name);
+		child->setText(1, get_file_type(file.toStdString()));
+		child->setText(2, QString::number(map.imports.file_size(file_name.toStdString())));
+		child->setText(3, "No");
+		child->setText(4, full_path);
+		child->setIcon(0, file_icon);
 	}
 	item->setExpanded(true);
+	items_changed();
 }
 
-void ImportManager::remove_item(QTreeWidgetItem *itm) {
+void ImportManager::remove_item(QTreeWidgetItem* item) {
 	const int choice = QMessageBox::warning(this, "HiveWE",
-					"Are you sure you want to remove " + itm->text(0),
+					"Are you sure you want to remove " + item->text(0),
 					QMessageBox::Yes | QMessageBox::No);
 
-	if (choice != QMessageBox::Yes) {
-		return;
+	if (choice == QMessageBox::Yes) {
+		delete item;
+
+		hierarchy.map.file_remove(item->text(0).toStdString());
+		items_changed();
 	}
-
-	std::string itm_name = itm->text(0).toStdString();
-	if (itm->text(1) == "Directory") {
-		auto temp_vec = map.imports.directories[itm_name];
-		for (auto&& f : temp_vec) {
-			auto cond = [&f](const Import &imp) { return (imp.path == f); };
-			auto position = std::remove_if(map.imports.imports.begin(), map.imports.imports.end(), cond);
-			if (position != map.imports.imports.end() ) {
-				map.imports.remove_import(f);
-				map.imports.imports.erase(position);
-			}
-		}
-		map.imports.directories.erase(itm_name);
-	} else {
-		std::string parent_name = itm->parent()->text(0).toStdString();
-		itm_name = itm->text(3).toStdString();
-
-		auto cond = [&itm_name](const Import &imp) { return imp.path == itm_name;  };
-		map.imports.imports.erase(std::remove_if(map.imports.imports.begin(), map.imports.imports.end(), cond), map.imports.imports.end());
-		auto position = std::find(map.imports.directories.at(parent_name).begin(), map.imports.directories.at(parent_name).end(), itm_name);
-		if (position != map.imports.directories.at(parent_name).end()) {
-			map.imports.remove_import(itm_name);
-			map.imports.directories.at(parent_name).erase(position);
-		}
-	}
-
-	delete itm;
 }
 
 QString ImportManager::generate_full_path(QString file_name) {
@@ -172,7 +112,7 @@ QString ImportManager::generate_full_path(QString file_name) {
 	return file_name;
 }
 
-QString ImportManager::get_file_type(fs::path path) {
+QString ImportManager::get_file_type(const fs::path& path) {
 	const std::string extension = path.extension().string();
 
 	if (extension == ".blp" || extension == ".tga" ) {
@@ -187,7 +127,17 @@ QString ImportManager::get_file_type(fs::path path) {
 
 	return "Other";
 }
-void ImportManager::rename_directory(QTreeWidgetItem * itm) {
+
+void ImportManager::create_directory(QTreeWidgetItem* parent) {
+	QTreeWidgetItem* item = new QTreeWidgetItem(parent);
+	item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
+	item->setText(0, "Untitled Directory");
+	item->setText(1, "Directory");
+	item->setIcon(0, folder_icon);
+	items_changed();
+}
+
+void ImportManager::rename_directory(QTreeWidgetItem* item) {
 	QDialog * diag = new QDialog(this);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -199,19 +149,14 @@ void ImportManager::rename_directory(QTreeWidgetItem * itm) {
 	QLineEdit * input = new QLineEdit(diag);
 	input->setPlaceholderText("Directory name...");
 	input->setMaxLength(32);
-	input->setText(itm->text(0));
+	input->setText(item->text(0));
 
 	connect(buttons, &QDialogButtonBox::accepted, [&]() {
-		std::string name = input->text().toStdString();
-		std::vector <std::string> temp(map.imports.directories.at(itm->text(0).toStdString()));
-		map.imports.directories.erase(itm->text(0).toStdString());
-		map.imports.directories.emplace(name, temp);
-
-		itm->setText(0, input->text());
+		item->setText(0, input->text());
 		diag->close();
 	});
 	connect(input, &QLineEdit::textChanged, [&](const QString &text) {
-		buttons->button(QDialogButtonBox::Ok)->setDisabled(text.isEmpty() || map.imports.directories.count(text.toStdString()) == 1);
+		buttons->button(QDialogButtonBox::Ok)->setDisabled(text.isEmpty());
 	});
 
 	mainLayout->addWidget(input);
@@ -220,106 +165,87 @@ void ImportManager::rename_directory(QTreeWidgetItem * itm) {
 	diag->setLayout(mainLayout);
 	diag->setWindowTitle("Rename Directory");
 	diag->exec();
+	items_changed();
 }
 
-
-void ImportManager::load_files(std::map<std::string, std::vector<std::string>>& directories, std::vector<Import>& imports) {
-	if (directories.empty() && imports.empty()) { 
-		return; 
-	}
-
-	if (directories.empty()) {
-		QTreeWidgetItem * parent = create_empty_directory();
-		directories.emplace(parent->text(0).toStdString(), std::vector<std::string>());
-		ui->treeWidget->addTopLevelItem(parent);
-		for (auto&& imp : imports) {
-			directories.at(parent->text(0).toStdString()).push_back(imp.path);
-
-			QString file_name = QString::fromStdString(fs::path(imp.path).filename().string());
-			QString file_type = get_file_type(imp.path);
-			QString full_path = generate_full_path(file_name);
-
-			add_child_item(parent, file_name, file_type, imp.size, full_path);
-		}
-	} else {
-		std::vector<std::string> temp_vec;
-
-		QTreeWidgetItem * parent;
-		for (auto&&[name, files] : directories) {
-			std::string s = fs::path(name).stem().string();
-			parent = create_directory(QString::fromStdString(s));
-			ui->treeWidget->addTopLevelItem(parent);
-			for (auto&& f : files) {
-				auto cond = [&f](const Import &imp) { return f == imp.path; };
-				auto position = std::find_if(imports.begin(), imports.end(), cond);
-				if (position == imports.end()) {
-					directories.at(name).erase(std::remove(files.begin(), files.end(), f));
-				} else {
-					temp_vec.push_back(f);
-
-					int idx = std::distance(imports.begin(), position);
-
-					QString file_name = QString::fromStdString(fs::path(f).filename().string());
-					QString file_type = get_file_type(f);
-					QString file_path = generate_full_path(file_name);
-
-					add_child_item(parent, file_name, file_type, imports.at(idx).size, file_path);
-				}
-			}
-
-		}
-
-		parent = create_empty_directory();
-		ui->treeWidget->addTopLevelItem(parent);
-
-		for (auto && imp : imports) {
-			for (auto &&[name, files] : directories) {
-				if (files.empty()) {
-					continue;
-				}
-
-				auto position = std::find(files.begin(), files.end(), imp.path);
-				auto vec_pos = std::find(temp_vec.begin(), temp_vec.end(), imp.path);
-
-				if (position == files.end() && vec_pos == temp_vec.end()) {
-					temp_vec.push_back(imp.path);
-					QString file_name = QString::fromStdString(fs::path(imp.path).filename().string());
-					QString file_type = get_file_type(imp.path);
-					QString file_path = QString::fromStdString(imp.path);
-
-					add_child_item(parent, file_name, file_type, map.imports.import_size(imp.path), file_path);
-
-					directories.at(parent->text(0).toStdString()).push_back(imp.path);
-				}
+void ImportManager::load_files(const std::vector<ImportItem>& imports) const {
+	const std::function<void(std::vector<ImportItem>, QTreeWidgetItem*)> create_tree = [&](std::vector<ImportItem>& items, QTreeWidgetItem* parent) {
+		for (auto&& i : items) {
+			QTreeWidgetItem* item = new QTreeWidgetItem(parent);
+			item->setText(0, QString::fromStdString(i.name.string()));
+			if (i.children.size()) {
+				item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
+				item->setText(1, "Directory");
+				item->setIcon(0, folder_icon);
+				create_tree(i.children, item);
+			} else {
+				item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);
+				item->setText(1, get_file_type(i.name));
+				item->setText(2, QString::number(i.size));
+				item->setText(3, i.custom ? "Yes" : "No");
+				item->setText(4, QString::fromStdString(i.full_path.string()));
+				item->setIcon(0, file_icon);
 			}
 		}
-	}
+	};
+
+	create_tree(imports, ui->treeWidget->invisibleRootItem());
 }
 
-void ImportManager::export_files(QTreeWidgetItem * itm) {
-	QFileDialog * fdiag = new QFileDialog(this, "Export Files", ".");
-	fdiag->setAcceptMode(QFileDialog::AcceptSave);
-	fdiag->setFileMode(QFileDialog::Directory);
-	fdiag->setOptions(QFileDialog::ShowDirsOnly);
-	std::string path = fdiag->getExistingDirectory(this,"Select Folder",".").toStdString();
-	if (itm->childCount() == 0) {
-		map.imports.export_file(path, itm->text(3).toStdString());
-	} else {
-		auto files = map.imports.directories.at(itm->text(0).toStdString());
-		for (auto && f : files) {
-			map.imports.export_file(path, f);
+void ImportManager::export_files(QTreeWidgetItem* item) {
+	const fs::path path = QFileDialog::getExistingDirectory(this, "Select Folder", ".").toStdString();
+
+	const std::function<void(fs::path, QTreeWidgetItem*)> export_files = [&](fs::path target, QTreeWidgetItem* parent) {
+		const int count = parent->childCount();
+		
+		if (count == 0) {
+			map.imports.export_file(target, parent->text(4).toStdString());
+		} else {
+			target /= parent->text(0).toStdString();
+			fs::create_directory(target);
+			for (int i = 0; i < count; i++) {
+				QTreeWidgetItem* child = parent->child(i);
+				export_files(target, child);
+			}
 		}
-	}
+	};
+
+	export_files(path, item);
 }
 
-
-bool ImportManager::eventFilter(QObject*, QEvent *event) {
+bool ImportManager::eventFilter(QObject*, QEvent* event) {
 	if (event->type() == QKeyEvent::KeyPress) {
-		QKeyEvent * k_event = dynamic_cast<QKeyEvent *>(event);
+		QKeyEvent* k_event = dynamic_cast<QKeyEvent *>(event);
 		if (k_event->key() == Qt::Key_Delete) {
 			remove_item(ui->treeWidget->currentItem());
 			return true;
 		}
-	} 
+	}
+	if (event->type() == QEvent::ChildRemoved) {
+		items_changed();
+	}
 	return false;
+}
+
+void ImportManager::items_changed() {
+	map.imports.imports.clear();
+
+	const std::function<void(std::vector<ImportItem>&, QTreeWidgetItem*)> recreate_imports = [&](std::vector<ImportItem>& items, QTreeWidgetItem* parent) {
+		const int count = parent->childCount();
+		for (int i = 0; i < count; i++) {
+			QTreeWidgetItem* item = parent->child(i);
+			ImportItem import_item;
+			import_item.name = item->text(0).toStdString();
+			import_item.size = item->text(2).toInt();
+			import_item.custom = item->text(3) == "Yes";
+			import_item.full_path = item->text(4).toStdString();
+
+			if (item->childCount() > 0) {
+				recreate_imports(import_item.children, item);
+			}
+			items.push_back(import_item);
+		}
+	};
+
+	recreate_imports(map.imports.imports, ui->treeWidget->invisibleRootItem());
 }

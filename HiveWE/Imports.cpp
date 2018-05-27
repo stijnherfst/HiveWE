@@ -1,35 +1,59 @@
 #include <stdafx.h>
 
 void Imports::load(BinaryReader& reader) {
-	version = reader.read<uint32_t>();
+	int version = reader.read<uint32_t>();
 	const int entries = reader.read<uint32_t>();
 
 	for (int i = 0; i < entries; i++) {
 		const int custom = reader.read<uint8_t>();
 		std::string path = reader.read_c_string();
+		// Blizzard uses @ to seperate instead of '/' or '\'
+		std::replace(path.begin(), path.end(), '@', '/');
 
 		if (path == "war3map.dir") {
 			continue;
 		}
 
-		imports.emplace_back(custom ==  5 || custom == 13 , path, "", import_size(path));
+		ImportItem item;
+		item.custom = custom == 10 || custom == 13;
+		item.name = path;
+		item.full_path = (item.custom ? "" : "war3mapImported\\") + path;
+		item.size = file_size(item.full_path);
+		uncategorized.push_back(item);
 	}
 }
 
 void Imports::save() {
 	BinaryWriter writer;
 	
-	writer.write<uint32_t>(version);
-	writer.write<uint32_t>(imports.size());
-	for (auto&& i : imports) {
-		writer.write<uint8_t>(i.custom ? 5 : 0);
-		writer.write_string(i.path);
-		writer.write('\0');
-	}
+	writer.write<uint32_t>(1);
+
+	int item_count = 0;
+	std::function<void(std::vector<ImportItem>&)> count_files = [&](std::vector<ImportItem>& items) {
+		for (auto&& i : items) {
+			item_count++;
+			count_files(i.children);
+		}
+	};
+	count_files(imports);
+
+	writer.write<uint32_t>(item_count);
+	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
+		for (auto&& i : items) {
+			if (i.children.empty()) {
+				writer.write<uint8_t>(i.custom ? 13 : 8);
+				writer.write_c_string(i.name.string());
+				item_count++;
+			} else {
+				save_directories(i.children);
+			}
+		}
+	};
+
+	save_directories(imports);
 
 	writer.write<uint8_t>(0);
-	writer.write_string("war3map.dir");
-	writer.write('\0');
+	writer.write_c_string("war3map.dir");
 
 	HANDLE handle;
 	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.imp", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
@@ -41,41 +65,61 @@ void Imports::save() {
 	SFileFinishFile(handle);
 }
 
-void Imports::load_dir_file(BinaryReader &reader) {
-	std::string last_directory = "";
-	const int count = reader.read<uint32_t>();
+void Imports::load_dir_file(BinaryReader& reader) {
+	std::string last_directory;
 
-	for (int i = 0; i < count; i++) {
-		const bool directory = reader.read<uint8_t>();
-		std::string name = reader.read_c_string();
-
-		if (directory) {
-			directories.emplace(name, std::vector<std::string>());
-			last_directory = name;
-		} else {
-			// Check if the import still exists
-			const auto found = std::find_if(imports.begin(), imports.end(), [&](Import ii) { return ii.path == name; });
-			if (found != imports.end()) {
-				directories[last_directory].push_back(name);
-			}
-		}
+	const int version = reader.read<uint32_t>();
+	if (version != 1) {
+		std::cout << "Attempting to read an newer directory file version:" << version << ". Program may crash";
 	}
+
+	const std::function<void(std::vector<ImportItem>&)> read_directory = [&](std::vector<ImportItem>& items) {
+		const int count = reader.read<uint32_t>();
+		for (int i = 0; i < count; i++) {
+			ImportItem item;
+			bool is_directory = reader.read<uint8_t>();
+			item.name = reader.read_c_string();
+			item.custom = reader.read<uint8_t>();
+
+			if (is_directory) {
+				read_directory(item.children);
+			} else {
+				item.full_path = (item.custom ? ""s : "war3mapImported\\"s) + item.name.string();
+				item.size = file_size(item.full_path);
+
+				auto found = std::find_if(uncategorized.begin(), uncategorized.end(), [&](ImportItem x) { return x.name == item.name; });
+				if (found != uncategorized.end()) {
+					uncategorized.erase(found);
+				}
+			}
+
+			items.push_back(item);
+		}
+	};
+
+	read_directory(imports);
 }
 
 void Imports::save_dir_file() {
 	BinaryWriter writer;
 	
-	writer.write<uint32_t>(directories.size() + imports.size());
-	for (auto&& [name, files] : directories) {
-		writer.write<uint8_t>(true);
-		writer.write_string(name);
-		writer.write('\0');
-		for (auto&& file : files) {
-			writer.write<uint8_t>(false);
-			writer.write_string(file);
-			writer.write('\0');
+	// Version
+	writer.write<uint32_t>(1);
+
+	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
+		writer.write<uint32_t>(items.size());
+		for (auto&& i : items) {
+			writer.write<uint8_t>(!i.children.empty()); // is_directory
+			writer.write_c_string(i.name.string());
+			writer.write<uint8_t>(i.custom);
+
+			if (!i.children.empty()) {
+				save_directories(i.children);
+			}
 		}
-	}
+	};
+
+	save_directories(imports);
 
 	HANDLE handle;
 	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.dir", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
@@ -87,14 +131,14 @@ void Imports::save_dir_file() {
 	SFileFinishFile(handle);
 }
 
-void Imports::save_imports() {
-	for (auto&& imp : imports) {
-		SFileAddFileEx(hierarchy.map.handle, imp.file_path.c_str(), imp.path.c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+void Imports::poplate_uncategorized() {
+	for (auto&& i : uncategorized) {
+		imports.push_back(i);
 	}
 }
 
-void Imports::remove_import(const fs::path& path) const {
-	SFileRemoveFile(hierarchy.map.handle, path.string().c_str(), 0);
+void Imports::remove_file(const fs::path& file) const {
+	SFileRemoveFile(hierarchy.map.handle, file.string().c_str(), 0);
 }
 
 void Imports::import_file(const fs::path& path, const fs::path& file) const {
@@ -107,6 +151,6 @@ void Imports::export_file(const fs::path& path, const fs::path& file) const {
 	output.write(reinterpret_cast<char*>(buffer.data()), buffer.size());
 }
 
-int Imports::import_size(const fs::path& path) const {
-	return hierarchy.map.file_open(path).size();
+int Imports::file_size(const fs::path& file) const {
+	return hierarchy.map.file_open(file).size();
 }

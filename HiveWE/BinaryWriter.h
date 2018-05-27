@@ -16,6 +16,17 @@ public:
 		std::copy(string.begin(), string.end(), buffer.end() - string.size());
 	}
 
+	void write_c_string(const std::string& string) {
+		if (string.back() == '\0') {
+			buffer.resize(buffer.size() + string.size());
+			std::copy(string.begin(), string.end(), buffer.end() - string.size());
+		} else {
+			buffer.resize(buffer.size() + string.size() + 1);
+			std::copy(string.begin(), string.end(), buffer.end() - string.size() - 1);
+			buffer[buffer.size() - 1] = '\0';
+		}
+	}
+
 	template<typename T>
 	void write_vector(const std::vector<T>& vector) {
 		if constexpr (std::is_same_v<T, std::string>) {

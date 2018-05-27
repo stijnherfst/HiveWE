@@ -1,22 +1,20 @@
 #pragma once
 #include <vector>
 
-struct Import {
-	bool custom;
-	std::string path;
-	fs::path file_path;
+struct ImportItem {
+	bool custom = false;
+	fs::path name;
 	int size;
+	fs::path full_path;
 
-	Import(const bool custom, const std::string path, const fs::path file_path, const int size) : custom(custom), path(path), file_path(file_path), size(size) {}
+	std::vector<ImportItem> children;
 };
 
-
 class Imports {
-	int version = 1;
-
 public:
-	std::vector<Import> imports;
-	std::map<std::string,std::vector<std::string>> directories;
+	//std::vector<ImportItem> war3map_imp;
+	std::vector<ImportItem> uncategorized;
+	std::vector<ImportItem> imports;
 
 	void load(BinaryReader &reader);
 	void save();
@@ -24,11 +22,10 @@ public:
 	void load_dir_file(BinaryReader &reader);
 	void save_dir_file();
 
-	void save_imports();
-	void remove_import(const fs::path& path) const;
+	void poplate_uncategorized();
 
+	void remove_file(const fs::path& file) const;
 	void import_file(const fs::path& path, const fs::path& file) const;
 	void export_file(const fs::path& path, const fs::path& file) const;
-	
-	int import_size(const fs::path& path) const;
+	int file_size(const fs::path& file) const;
 };

@@ -33,6 +33,8 @@ void Map::load(const fs::path& path) {
 		imports.load_dir_file(war3map_dir);
 	}
 
+	imports.poplate_uncategorized();
+
 	// Doodads
 	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
 	success = doodads.load(war3map_doo, terrain);
@@ -95,7 +97,8 @@ bool Map::save(const fs::path& path) {
 
 		imports.save();
 		imports.save_dir_file();
-		imports.save_imports();
+		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
+
 
 		std::swap(new_map, hierarchy.map);
 	} else {
@@ -104,7 +107,8 @@ bool Map::save(const fs::path& path) {
 
 		imports.save();
 		imports.save_dir_file();
-		imports.save_imports();
+
+		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
 	}
 	return true;
 }

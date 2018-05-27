@@ -5,29 +5,29 @@
 class ImportManager : public QMainWindow {
 	Q_OBJECT
 
-	QTreeWidgetItem* create_directory(QString name);
-	QTreeWidgetItem* create_empty_directory();
-	void rename_directory(QTreeWidgetItem * itm);
+	void create_directory(QTreeWidgetItem* parent);
+	void rename_directory(QTreeWidgetItem* itm);
+	void custom_menu_popup(const QPoint& pos);
 
-	void add_child_item(QTreeWidgetItem * itm, QString name, QString item_type, int item_size, QString full_path) const;
-	void custom_menu_popup(const QPoint & pos);
-	void import_files(QTreeWidgetItem * itm);
-	void export_files(QTreeWidgetItem * itm);
-	void remove_item(QTreeWidgetItem * itm);
+	void import_files(QTreeWidgetItem* itm);
+	void export_files(QTreeWidgetItem* itm);
+	void remove_item(QTreeWidgetItem* itm);
 
-	void load_files(std::map<std::string, std::vector<std::string>> &directories, std::vector<Import> &imports);
+	void load_files(const std::vector<ImportItem>& items) const;
 
 	static QString generate_full_path(QString file_name);
+	static QString get_file_type(const fs::path& path);
 
-	static QString get_file_type(fs::path path);
+	Ui::ImportManager* ui;
+
+	QIcon folder_icon;
+	QIcon file_icon;
 
 protected:
-	bool eventFilter(QObject* obj, QEvent *event) override;
+	bool eventFilter(QObject* obj, QEvent* event) override;
 
 public:
-	explicit ImportManager(QWidget *parent = nullptr);
-	~ImportManager();
+	explicit ImportManager(QWidget* parent = nullptr);
 
-private:
-	Ui::ImportManager *ui;
+	void items_changed();
 };
