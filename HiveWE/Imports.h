@@ -2,6 +2,7 @@
 #include <vector>
 
 struct ImportItem {
+	bool directory = false;
 	bool custom = false;
 	fs::path name;
 	int size;
@@ -25,7 +26,7 @@ public:
 	void poplate_uncategorized();
 
 	void remove_file(const fs::path& file) const;
-	void import_file(const fs::path& path, const fs::path& file) const;
+	bool import_file(const fs::path& path, const fs::path& file) const;
 	void export_file(const fs::path& path, const fs::path& file) const;
 	int file_size(const fs::path& file) const;
 };

@@ -8,9 +8,11 @@ ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent), ui(new Ui::
 	ui->treeWidget->installEventFilter(this);
 	ui->treeWidget->header()->resizeSection(0, 220);
 	connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::custom_menu_popup);
+	connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &ImportManager::edit_item);
 
 	connect(ui->createDirectory, &QPushButton::clicked, [&]() { create_directory(ui->treeWidget->invisibleRootItem()); });
 	connect(ui->importFiles, &QPushButton::clicked, [&]() { import_files(ui->treeWidget->invisibleRootItem()); });
+	connect(ui->exportAll, &QPushButton::clicked, [&]() { export_files(ui->treeWidget->invisibleRootItem()); });
 
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
@@ -19,6 +21,9 @@ ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent), ui(new Ui::
 	ui->createDirectory->setIcon(folder_icon);
 	ui->importFiles->setIcon(file_icon);
 	ui->exportAll->setIcon(file_icon);
+
+	ui->treeWidget->invisibleRootItem()->setText(0, "Exported Items"); // So export all works correctly
+	ui->treeWidget->invisibleRootItem()->setText(1, "Directory"); // So export all works correctly
 
 	load_files(map.imports.imports);
 
@@ -47,16 +52,17 @@ void ImportManager::custom_menu_popup(const QPoint& pos) {
 	connect(export_files_action, &QAction::triggered, [&]() { export_files(parent); });
 	connect(export_file_action, &QAction::triggered, [&]() { export_files(parent); });
 
-	if (parent->text(0).isEmpty() || parent->text(1) == "Directory") {
+	if (parent->text(1).isEmpty()) {
 		menu->addAction(add_directory_action);
 		menu->addAction(import_files_action);
 		menu->addAction(export_files_action);
-	} 
-	
-	if (parent->text(1) == "Directory") {
+	} else if (parent->text(1) == "Directory") {
 		menu->addAction(rename_action);
 		menu->addAction(remove_files_action);
-	} else if (!parent->text(0).isEmpty()) {
+		menu->addAction(import_files_action);
+		menu->addAction(export_file_action);
+		menu->addAction(remove_files_action);
+	} else {
 		menu->addAction(export_file_action);
 		menu->addAction(remove_files_action);
 	}
@@ -70,17 +76,17 @@ void ImportManager::import_files(QTreeWidgetItem* item) {
 		"*.blp *.mdx *.mdl *.tga *.wav *.mp3 *.txt");
 
 	for (auto&& file : files) {
-		const QString file_name = QString::fromStdString(fs::path(file.toStdString()).filename().string());
-		const QString full_path = "war3mapImported\\" + file_name;
-		map.imports.import_file(file.toStdString(), file_name.toStdString());
+		const fs::path file_name = fs::path(file.toStdString()).filename();
+		const fs::path full_path = "war3mapImported\\" / file_name;
+		auto t = map.imports.import_file(file.toStdString(), full_path);
 
 		QTreeWidgetItem* child = new QTreeWidgetItem(item);
 		child->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);
-		child->setText(0, file_name);
+		child->setText(0, QString::fromStdString(file_name.string()));
 		child->setText(1, get_file_type(file.toStdString()));
-		child->setText(2, QString::number(map.imports.file_size(file_name.toStdString())));
+		child->setText(2, QString::number(map.imports.file_size(full_path)));
 		child->setText(3, "No");
-		child->setText(4, full_path);
+		child->setText(4, QString::fromStdString(full_path.string()));
 		child->setIcon(0, file_icon);
 	}
 	item->setExpanded(true);
@@ -93,11 +99,35 @@ void ImportManager::remove_item(QTreeWidgetItem* item) {
 					QMessageBox::Yes | QMessageBox::No);
 
 	if (choice == QMessageBox::Yes) {
-		delete item;
-
 		hierarchy.map.file_remove(item->text(0).toStdString());
+		delete item;
 		items_changed();
 	}
+}
+
+void ImportManager::edit_item(QTreeWidgetItem* item) {
+	if (item->text(1) == "Directory") {
+		return;
+	}
+
+	auto editor = new ImportManagerEdit(this);
+	editor->ui.fileName->setText(item->text(0));
+	editor->ui.fileType->setText(item->text(1));
+	editor->ui.fileSize->setText(item->text(2));
+	editor->ui.fileFullPath->setText(item->text(4));
+
+	editor->ui.fileFullPath->setEnabled(item->text(3) == "Yes");
+	editor->ui.customPath->setChecked(item->text(3) == "Yes");
+
+	connect(editor, &ImportManagerEdit::accepted, [&](bool custom, QString full_path) {
+		SFileRenameFile(hierarchy.map.handle, item->text(4).toStdString().c_str(), full_path.toStdString().c_str());
+		item->setText(4, full_path);
+		item->setText(3, custom ? "Yes" : "No");
+		editor->close();
+		items_changed();
+	});
+
+	editor->exec();
 }
 
 QString ImportManager::generate_full_path(QString file_name) {
@@ -138,15 +168,14 @@ void ImportManager::create_directory(QTreeWidgetItem* parent) {
 }
 
 void ImportManager::rename_directory(QTreeWidgetItem* item) {
-	QDialog * diag = new QDialog(this);
+	QDialog* diag = new QDialog(this);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout;
-	QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok
-		| QDialogButtonBox::Cancel);
+	QDialogButtonBox* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 
 	connect(buttons, &QDialogButtonBox::rejected, diag, &QDialog::reject);
 
-	QLineEdit * input = new QLineEdit(diag);
+	QLineEdit* input = new QLineEdit;
 	input->setPlaceholderText("Directory name...");
 	input->setMaxLength(32);
 	input->setText(item->text(0));
@@ -173,7 +202,7 @@ void ImportManager::load_files(const std::vector<ImportItem>& imports) const {
 		for (auto&& i : items) {
 			QTreeWidgetItem* item = new QTreeWidgetItem(parent);
 			item->setText(0, QString::fromStdString(i.name.string()));
-			if (i.children.size()) {
+			if (i.directory) {
 				item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled);
 				item->setText(1, "Directory");
 				item->setIcon(0, folder_icon);
@@ -196,17 +225,16 @@ void ImportManager::export_files(QTreeWidgetItem* item) {
 	const fs::path path = QFileDialog::getExistingDirectory(this, "Select Folder", ".").toStdString();
 
 	const std::function<void(fs::path, QTreeWidgetItem*)> export_files = [&](fs::path target, QTreeWidgetItem* parent) {
-		const int count = parent->childCount();
-		
-		if (count == 0) {
-			map.imports.export_file(target, parent->text(4).toStdString());
-		} else {
+		if (parent->text(1) == "Directory") {
 			target /= parent->text(0).toStdString();
 			fs::create_directory(target);
+			const int count = parent->childCount();
 			for (int i = 0; i < count; i++) {
 				QTreeWidgetItem* child = parent->child(i);
 				export_files(target, child);
 			}
+		} else {
+			map.imports.export_file(target, parent->text(4).toStdString());
 		}
 	};
 
@@ -235,12 +263,13 @@ void ImportManager::items_changed() {
 		for (int i = 0; i < count; i++) {
 			QTreeWidgetItem* item = parent->child(i);
 			ImportItem import_item;
+			import_item.directory = item->text(1) == "Directory";
 			import_item.name = item->text(0).toStdString();
 			import_item.size = item->text(2).toInt();
 			import_item.custom = item->text(3) == "Yes";
 			import_item.full_path = item->text(4).toStdString();
 
-			if (item->childCount() > 0) {
+			if (import_item.directory) {
 				recreate_imports(import_item.children, item);
 			}
 			items.push_back(import_item);

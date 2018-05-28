@@ -73,6 +73,7 @@ namespace fs = std::filesystem;
 #include "HiveWE.h"
 #include "GLWidget.h"
 
+#include "ImportManagerEdit.h"
 #include "ImportManager.h"
 #include "PathingPallete.h"
 #include "TerrainPalette.h"

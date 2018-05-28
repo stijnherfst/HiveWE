@@ -213,6 +213,15 @@
     <ClCompile Include="ImportManager.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManagerEdit.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ImportManagerEdit.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ImportManagerEdit.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -314,6 +323,9 @@
     <ClInclude Include="Imports.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_ImportManagerEdit.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -365,6 +377,12 @@
       <Filter>Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="ImportManager.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ImportManagerEdit.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ImportManagerEdit.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
   </ItemGroup>

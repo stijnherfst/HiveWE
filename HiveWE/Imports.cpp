@@ -40,12 +40,11 @@ void Imports::save() {
 	writer.write<uint32_t>(item_count);
 	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
 		for (auto&& i : items) {
-			if (i.children.empty()) {
+			if (i.directory) {
+				save_directories(i.children);
+			} else {
 				writer.write<uint8_t>(i.custom ? 13 : 8);
 				writer.write_c_string(i.name.string());
-				item_count++;
-			} else {
-				save_directories(i.children);
 			}
 		}
 	};
@@ -77,11 +76,11 @@ void Imports::load_dir_file(BinaryReader& reader) {
 		const int count = reader.read<uint32_t>();
 		for (int i = 0; i < count; i++) {
 			ImportItem item;
-			bool is_directory = reader.read<uint8_t>();
+			item.directory = reader.read<uint8_t>();
 			item.name = reader.read_c_string();
 			item.custom = reader.read<uint8_t>();
 
-			if (is_directory) {
+			if (item.directory) {
 				read_directory(item.children);
 			} else {
 				item.full_path = (item.custom ? ""s : "war3mapImported\\"s) + item.name.string();
@@ -109,11 +108,11 @@ void Imports::save_dir_file() {
 	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
 		writer.write<uint32_t>(items.size());
 		for (auto&& i : items) {
-			writer.write<uint8_t>(!i.children.empty()); // is_directory
+			writer.write<uint8_t>(i.directory);
 			writer.write_c_string(i.name.string());
 			writer.write<uint8_t>(i.custom);
 
-			if (!i.children.empty()) {
+			if (i.directory) {
 				save_directories(i.children);
 			}
 		}
@@ -141,8 +140,8 @@ void Imports::remove_file(const fs::path& file) const {
 	SFileRemoveFile(hierarchy.map.handle, file.string().c_str(), 0);
 }
 
-void Imports::import_file(const fs::path& path, const fs::path& file) const {
-	SFileAddFileEx(hierarchy.map.handle, path.c_str(), file.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+bool Imports::import_file(const fs::path& path, const fs::path& file) const {
+	return SFileAddFileEx(hierarchy.map.handle, path.c_str(), file.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
 }
 
 void Imports::export_file(const fs::path& path, const fs::path& file) const {

@@ -6,12 +6,14 @@ class ImportManager : public QMainWindow {
 	Q_OBJECT
 
 	void create_directory(QTreeWidgetItem* parent);
-	void rename_directory(QTreeWidgetItem* itm);
+	void rename_directory(QTreeWidgetItem* item);
 	void custom_menu_popup(const QPoint& pos);
 
-	void import_files(QTreeWidgetItem* itm);
-	void export_files(QTreeWidgetItem* itm);
-	void remove_item(QTreeWidgetItem* itm);
+	void import_files(QTreeWidgetItem* item);
+	void export_files(QTreeWidgetItem* item);
+
+	void remove_item(QTreeWidgetItem* item);
+	void edit_item(QTreeWidgetItem* item);
 
 	void load_files(const std::vector<ImportItem>& items) const;
 
