@@ -151,11 +151,10 @@ void Terrain::create() {
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	for (size_t i = 0; i < water_textures.size(); i++) {
-		if (water_textures[i]->width > 128 || water_textures[i]->height > 128) {
+		if (water_textures[i]->width != 128 || water_textures[i]->height != 128) {
 			std::cout << "Odd water texture size detected of " << water_textures[i]->width << " wide and " << water_textures[i]->height << " high\n";
-			continue;
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, 128, 128, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data);
+		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, water_textures[i]->width, water_textures[i]->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data);
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 }

@@ -30,6 +30,7 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 			dynamic_cast<GLWidget*>(ui.widget)->timer.start(16);
 		});
 	});
+
 	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePather; });
 
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
@@ -41,13 +42,14 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 
 	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
 
-
-	// Do we supply the parent since vanilla WE doesn't ?
 	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {
-		if (!this->findChild<ImportManager*>()) {
+		if (auto manager = this->findChild<ImportManager*>(); !manager) {
 			new ImportManager(this);
+		} else {
+			manager->activateWindow();
+			manager->raise();
 		}
-		}); 
+	}); 
 }
 
 void HiveWE::load() {

@@ -2,13 +2,14 @@
 
 void Imports::load(BinaryReader& reader) {
 	int version = reader.read<uint32_t>();
-	const int entries = reader.read<uint32_t>();
 
+	const int entries = reader.read<uint32_t>();
 	for (int i = 0; i < entries; i++) {
 		const int custom = reader.read<uint8_t>();
-		std::string path = reader.read_c_string();
-		// Blizzard uses @ to seperate instead of '/' or '\'
-		std::replace(path.begin(), path.end(), '@', '/');
+		QString path = QString::fromStdString(reader.read_c_string());
+		// Strip any war3mapImported
+		path.remove("war3mapImported\\");
+		path.remove("war3mapImported/");
 
 		if (path == "war3map.dir") {
 			continue;
@@ -16,8 +17,8 @@ void Imports::load(BinaryReader& reader) {
 
 		ImportItem item;
 		item.custom = custom == 10 || custom == 13;
-		item.name = path;
-		item.full_path = (item.custom ? "" : "war3mapImported\\") + path;
+		item.name = path.toStdString();
+		item.full_path = (item.custom ? "" : "war3mapImported\\") + path.toStdString();
 		item.size = file_size(item.full_path);
 		uncategorized.push_back(item);
 	}
@@ -78,12 +79,14 @@ void Imports::load_dir_file(BinaryReader& reader) {
 			ImportItem item;
 			item.directory = reader.read<uint8_t>();
 			item.name = reader.read_c_string();
+
 			item.custom = reader.read<uint8_t>();
 
 			if (item.directory) {
 				read_directory(item.children);
 			} else {
 				item.full_path = (item.custom ? ""s : "war3mapImported\\"s) + item.name.string();
+
 				item.size = file_size(item.full_path);
 
 				auto found = std::find_if(uncategorized.begin(), uncategorized.end(), [&](ImportItem x) { return x.name == item.name; });

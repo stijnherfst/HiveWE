@@ -84,17 +84,19 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			}
 		}
 
-		for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
-			if (i.replaceable_id != 0) {
-				if (mdx::replacable_id_to_texture.find(i.replaceable_id) == mdx::replacable_id_to_texture.end()) {
-					std::cout << "Unknown replacable ID found\n";
+		if (model.has_chunk<mdx::TEXS>()) {
+			for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
+				if (i.replaceable_id != 0) {
+					if (mdx::replacable_id_to_texture.find(i.replaceable_id) == mdx::replacable_id_to_texture.end()) {
+						std::cout << "Unknown replacable ID found\n";
+					}
+					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
+				} else {
+					textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+					// ToDo Same texture on different model with different flags?
+					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 				}
-				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
-			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
-				// ToDo Same texture on different model with different flags?
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			}
 		}
 
