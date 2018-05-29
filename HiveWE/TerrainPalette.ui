@@ -740,7 +740,7 @@
      <item>
       <widget class="QPushButton" name="terrainRaise">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -896,7 +896,7 @@
      <item>
       <widget class="QPushButton" name="terrainSmooth">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1331,9 +1331,9 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushShapeButtonGroup"/>
   <buttongroup name="brushSizeButtonGroup"/>
   <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="deformationButtonGroup"/>
+  <buttongroup name="brushShapeButtonGroup"/>
  </buttongroups>
 </ui>

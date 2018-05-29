@@ -112,6 +112,7 @@ void GLWidget::paintGL() {
 		QPainter p(this);
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
+		// Rendering time
 		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
 			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
 			p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
@@ -121,7 +122,15 @@ void GLWidget::paintGL() {
 		p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
 
 		p.drawText(10, 130, QString::fromStdString("Total time: " + std::to_string(map.terrain_time + map.doodad_time + map.unit_time + map.render_time)));
+
+		// General info
+		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));
+		if (map.brush) {
+			p.drawText(300, 35, QString::fromStdString("Brush Grid Position X: " + std::to_string(map.brush->get_position().x) + " Y: " + std::to_string(map.brush->get_position().y)));
+		}
+
 		p.end();
+
 		// Set changed state back
 		gl->glEnable(GL_DEPTH_TEST);
 		gl->glDepthFunc(GL_LEQUAL);

@@ -18,6 +18,10 @@ void Brush::set_position(const glm::vec2& position) {
 	}
 }
 
+glm::vec2 Brush::get_position() const {
+	return glm::vec2(position) + brush_offset + 1.f;
+}
+
 void Brush::set_size(const int size) {
 	const int change = size - this->size;
 

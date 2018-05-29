@@ -15,6 +15,7 @@ public:
 
 	void create();
 	virtual void set_position(const glm::vec2& position);
+	glm::vec2 get_position() const;
 	void set_size(int size);
 	void set_shape(Shape shape);
 	void increase_size(int size);
