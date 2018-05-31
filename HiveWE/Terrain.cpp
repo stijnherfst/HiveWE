@@ -506,11 +506,6 @@ int Terrain::real_tile_texture(const int x, const int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
-
-				//if (x + i < 0 || x + i > width || y + j < 0 || y + j > height) {
-				//	continue;
-				//}
-
 				if (corners[x + i][y + j].cliff) {
 					int texture = corners[x + i][y + j].cliff_texture;
 					// Number 15 seems to be something

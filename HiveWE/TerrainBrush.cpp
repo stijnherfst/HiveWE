@@ -2,6 +2,8 @@
 
 // This whole class needs a bit of a rework
 
+
+// Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
 	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map.terrain.width, map.terrain.height });
 
@@ -212,6 +214,7 @@ void TerrainBrush::apply() {
 			default:
 				break;
 			}
+			layer_height = std::clamp(layer_height, 0, 15);
 		}
 
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
