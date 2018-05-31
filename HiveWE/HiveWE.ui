@@ -56,20 +56,13 @@
     <property name="title">
      <string>View</string>
     </property>
-    <widget class="QMenu" name="menuCamera">
-     <property name="title">
-      <string>Camera</string>
-     </property>
-     <addaction name="actionBirds_Eye"/>
-     <addaction name="actionFirst_Person"/>
-    </widget>
     <addaction name="actionUnits"/>
     <addaction name="actionDoodads"/>
     <addaction name="actionPathing"/>
     <addaction name="actionBrush"/>
     <addaction name="actionFrame_Times"/>
     <addaction name="separator"/>
-    <addaction name="menuCamera"/>
+    <addaction name="actionSwitch_Camera"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -204,6 +197,9 @@
    <property name="text">
     <string>Bird's-eye</string>
    </property>
+   <property name="toolTip">
+    <string>Bird's-eye</string>
+   </property>
   </action>
   <action name="actionFirst_Person">
    <property name="checkable">
@@ -226,12 +222,20 @@
     <string>Frame Times</string>
    </property>
    <property name="shortcut">
-    <string>F1</string>
+    <string>F3</string>
    </property>
   </action>
   <action name="actionImport_Manager">
    <property name="text">
     <string>Import Manager</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Camera">
+   <property name="text">
+    <string>Switch Camera</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

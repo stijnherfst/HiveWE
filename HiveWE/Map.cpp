@@ -69,7 +69,7 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
+	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
 
 	meshes.clear(); // ToDo this is not a nice way to do this
 }
@@ -142,7 +142,7 @@ void Map::render(int width, int height) {
 	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
 		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
-		input_handler.mouse_world = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));
+		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 	}
 
 	// Render Doodads

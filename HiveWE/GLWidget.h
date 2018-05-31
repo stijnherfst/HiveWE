@@ -10,6 +10,9 @@ public:
 	QElapsedTimer elapsed_timer;
 	GLuint vao;
 
+	TPSCamera tps_camera;
+	FPSCamera fps_camera;
+
 	explicit GLWidget(QWidget* parent);
 	~GLWidget() = default;
 

@@ -149,7 +149,7 @@ void StaticMesh::render() {
 		gl->glVertexAttribDivisor(2 + i, 1);
 	}
 
-	gl->glUniformMatrix4fv(4, 1, false, &camera.projection_view[0][0]);
+	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
 
 	for (auto&& i : entries) {
 		if (!i.visible) {

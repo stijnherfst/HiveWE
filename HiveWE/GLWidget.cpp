@@ -47,6 +47,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	connect(&timer, &QTimer::timeout, this, &GLWidget::update_scene);
 	timer.start(15);
 
+	camera = &tps_camera;
+
 	setMouseTracking(true);
 	setFocus();
 }
@@ -54,8 +56,6 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
-
-
 
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -82,15 +82,15 @@ void GLWidget::resizeGL(const int w, const int h) {
 	gl->glViewport(0, 0, w, h);
 
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
-	camera.aspect_ratio = double(w) / h;
-	camera.update(delta);
+	camera->aspect_ratio = double(w) / h;
+	camera->update(delta);
 }
 
 void GLWidget::update_scene() {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	camera.update(delta);
+	camera->update(delta);
 
 	map.terrain.current_texture += std::max(0.0, map.terrain.animation_rate * delta);
 	if (map.terrain.current_texture >= map.terrain.water_textures_nr) {
@@ -129,6 +129,9 @@ void GLWidget::paintGL() {
 			p.drawText(300, 35, QString::fromStdString("Brush Grid Position X: " + std::to_string(map.brush->get_position().x) + " Y: " + std::to_string(map.brush->get_position().y)));
 		}
 
+		p.drawText(300, 50, QString::fromStdString("Camera Horizontal Angle: " + std::to_string(camera->horizontal_angle)));
+		p.drawText(300, 64, QString::fromStdString("Camera Vertical Angle: " + std::to_string(camera->vertical_angle)));
+
 		p.end();
 
 		// Set changed state back
@@ -166,7 +169,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 	//std::cout << event->pos
 	input_handler.mouse_move_event(event);
-	camera.mouse_move_event(event);
+	camera->mouse_move_event(event);
 
 	//if (input_handler.key_pressed(Qt::Key_Alt)) {
 	//	map.brush.set_size(map.brush.size + (input_handler.mouse_world - input_handler.drag_start).x);
@@ -183,11 +186,11 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void GLWidget::mousePressEvent(QMouseEvent * event) {
-	camera.mouse_press_event(event);
+	camera->mouse_press_event(event);
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent * event) {
-	camera.mouse_release_event(event);
+	camera->mouse_release_event(event);
 	if (map.brush) {
 		if (event->button() == Qt::LeftButton) {
 			map.brush->apply();
@@ -197,5 +200,5 @@ void GLWidget::mouseReleaseEvent(QMouseEvent * event) {
 }
 
 void GLWidget::wheelEvent(QWheelEvent* event) {
-	camera.mouse_scroll_event(event);
+	camera->mouse_scroll_event(event);
 }

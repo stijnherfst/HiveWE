@@ -119,8 +119,6 @@ void TerrainBrush::apply() {
 				}
 				switch (deformation_type) {
 					case deformation::raise: {
-						/*corners[i][j].ground_height += 0.125f;*/
-
 						const int center_x = area.x() + area.width() * 0.5f;
 						const int center_y = area.y() + area.height() * 0.5f;
 						corners[center_x][center_y].ground_height += 0.025;
@@ -158,7 +156,7 @@ void TerrainBrush::apply() {
 					case deformation::ripple:
 						break;
 					case deformation::smooth: {
-						/*float accumulate = 0;
+						float accumulate = 0;
 
 						QRect acum_area = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, map.terrain.width, map.terrain.height});
 						for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
@@ -171,7 +169,7 @@ void TerrainBrush::apply() {
 							}
 						}
 						accumulate -= corners[i][j].ground_height;
-						corners[i][j].ground_height = 0.8 * corners[i][j].ground_height + 0.2 * (accumulate / (acum_area.width() * acum_area.height() - 1));*/
+						corners[i][j].ground_height = 0.8 * corners[i][j].ground_height + 0.2 * (accumulate / (acum_area.width() * acum_area.height() - 1));
 						break;
 					}
 				}
@@ -189,7 +187,9 @@ void TerrainBrush::apply() {
 
 	if (apply_cliff) {
 		if (!brush_hold) {
-			layer_height = corners[input_handler.mouse_world.x][input_handler.mouse_world.y].layer_height;
+			const int center_x = area.x() + area.width() * 0.5f;
+			const int center_y = area.y() + area.height() * 0.5f;
+			layer_height = corners[center_x][center_y].layer_height;
 			switch (cliff_operation_type) {
 			case cliff_operation::lower2:
 				layer_height -= 2;
@@ -247,13 +247,27 @@ void TerrainBrush::apply() {
 				Corner& top_left = map.terrain.corners[i][j + 1];
 				Corner& top_right = map.terrain.corners[i + 1][j + 1];
 
+				const bool was_cliff = bottom_left.cliff;
+
 				bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
 					|| bottom_left.layer_height != top_left.layer_height
 					|| bottom_left.layer_height != top_right.layer_height;
 
-				bottom_left.cliff_texture = cliff_id;
+				if (was_cliff && !bottom_left.cliff) {
+					if (apply_tile_pathing) {
+						for (int k = 0; k < 4; k++) {
+							for (int l = 0; l < 4; l++) {
+								const int id = map.terrain.corners[i  ][j ].ground_texture;
+								map.pathing_map.pathing_cells[((j  ) * 4 + l) * map.pathing_map.width + (i ) * 4 + k] &= ~0b00001110;
+								map.pathing_map.pathing_cells[((j  ) * 4 + l) * map.pathing_map.width + (i ) * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
+							}
+						}
+					}
+				}
 
 				if (bottom_left.cliff) {
+					bottom_left.cliff_texture = cliff_id;
+
 					// Cliff model path
 					const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
 					std::string file_name = ""s + char('A' + bottom_left.layer_height - base)

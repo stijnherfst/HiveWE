@@ -359,7 +359,7 @@ void Terrain::render() {
 
 	gl->glDisable(GL_BLEND);
 
-	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, map.render_pathing);
 
 	gl->glBindTextureUnit(0, ground_height);
@@ -402,7 +402,7 @@ void Terrain::render() {
 	
 	cliff_shader->use();
 
-	glm::mat4 MVP = glm::scale(camera.projection_view, glm::vec3(1.f / 128.f));
+	glm::mat4 MVP = glm::scale(camera->projection_view, glm::vec3(1.f / 128.f));
 	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &MVP[0][0]);
 	gl->glUniform1i(4, map.render_pathing);
 
@@ -421,7 +421,7 @@ void Terrain::render() {
 
 	water_shader->use();
 
-	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &camera.projection_view[0][0]);
+	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(4, current_texture);
 
 	gl->glBindTextureUnit(0, water_texture_array);

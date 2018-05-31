@@ -2,7 +2,7 @@
 
 Map map;
 
-HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
+HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
 	while (!fs::exists(directory / "War3x.mpq")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
@@ -22,6 +22,25 @@ HiveWE::HiveWE(QWidget *parent) : QMainWindow(parent) {
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
 	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
+
+	connect(ui.actionSwitch_Camera, &QAction::triggered, [&]() {
+		if (camera == &ui.widget->tps_camera) {
+			ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
+			ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
+
+			ui.widget->fps_camera.position = ui.widget->tps_camera.position;
+			camera = &ui.widget->fps_camera;
+			ui.actionDoodads->setEnabled(false);
+		} else {
+			ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
+			ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
+
+			ui.widget->tps_camera.position = ui.widget->fps_camera.position;
+			camera = &ui.widget->tps_camera;
+			ui.actionDoodads->setEnabled(true);
+		}
+		camera->update(0);
+	});
 
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { 
 		TileSetter* tilesetter = new TileSetter(this); 

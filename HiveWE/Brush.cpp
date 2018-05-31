@@ -93,7 +93,7 @@ void Brush::render(Terrain& terrain) const {
 	// +3 for uv_offset so it can move sub terrain cell
 	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
 
-	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform2f(2, position.x, position.y);
 	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
 

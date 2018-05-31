@@ -33,7 +33,7 @@ void FPSCamera::update(const double delta) {
 
 	direction = glm::normalize(direction);
 
-	projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
+	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
 	view = glm::lookAt(position, position + direction, up);
 	projection_view = projection * view;
 }
@@ -43,8 +43,8 @@ void FPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
 	horizontal_angle += diffx * 0.025;
-	vertical_angle += diffy * 0.025;
-	vertical_angle = std::max(-89.0, std::min(vertical_angle, 89.0));
+	vertical_angle += -diffy * 0.025;
+	vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 
 	update(0);
 
@@ -75,8 +75,8 @@ void TPSCamera::update(double delta) {
 	// The vector that is perpendicular to the up vector, thus points forward
 	forward = glm::cross(X, up);
 
-	projection = glm::perspective(fov, aspect_ratio, 0.1, 1000.0);
-	view = glm::lookAt(position + direction, position, up);
+	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
+	view = glm::lookAt(position, position + direction, up);
 	projection_view = projection * view;
 
 }
@@ -85,8 +85,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 	if (event->buttons() == Qt::RightButton) {
-		position += X * (diffx * 0.025f);
-		position += forward * (diffy * 0.025f);
+		position += X * (-diffx * 0.025f);
+		position += forward * (-diffy * 0.025f);
 
 		update(0);
 	}
@@ -100,11 +100,11 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 }
 
 void TPSCamera::mouse_scroll_event(QWheelEvent* event) {
-	position += -direction * (event->angleDelta().y() * 0.025f);
+	position += direction * (event->angleDelta().y() * 0.025f);
 	update(0);
 }
 
-void TPSCamera::mouse_press_event(QMouseEvent *event) {
+void TPSCamera::mouse_press_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = true;
@@ -112,14 +112,13 @@ void TPSCamera::mouse_press_event(QMouseEvent *event) {
 	}
 }
 
-void TPSCamera::mouse_release_event(QMouseEvent * event) {
+void TPSCamera::mouse_release_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = false;
 			break;
 	}
 }
-
 
 //Checks if a point is within the defined camera frustum.
 //The point is expected to be in the same coordinate system,
@@ -154,13 +153,7 @@ bool TPSCamera::is_visible(glm::vec3 && point) const {
 	// Again how far away the point is in X-axis
 	auto vX = dot(v, X) * X;
 	auto x = glm::length(vX);
-	if (x > width || x + width < 0) {
-		return false;
-	}
-
-	// Point must be in frustum
-	return true;
+	return x > width || x + width < 0;
 }
 
-
-TPSCamera camera;
+Camera* camera;
