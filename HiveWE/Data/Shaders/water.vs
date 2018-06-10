@@ -4,6 +4,7 @@ layout (location = 0) in vec2 vPosition;
 
 layout (binding = 0) uniform sampler2D water_height_texture;
 layout (binding = 1) uniform sampler2D ground_height_texture;
+layout (binding = 2) uniform sampler2D water_exists_texture;
 
 layout (location = 0) uniform mat4 MVP;
 layout (location = 1) uniform vec4 shallow_color_min;
@@ -24,25 +25,22 @@ void main() {
 	ivec2 height_pos = ivec2(vPosition + pos);
 	float water_height = texelFetch(water_height_texture, height_pos, 0).r;
 
-	bool is_water = true;
-	//bool is_water = texelFetch(water_exists_texture, pos, 0).r > 0;
-	// || texelFetch(water_exists_texture, pos + ivec2(1, 0), 0).r > 0
-	// || texelFetch(water_exists_texture, pos + ivec2(1, 1), 0).r > 0
-	// || texelFetch(water_exists_texture, pos + ivec2(0, 1), 0).r > 0;
+	bool is_water = texelFetch(water_exists_texture, pos, 0).r > 0
+	 || texelFetch(water_exists_texture, pos + ivec2(1, 0), 0).r > 0
+	 || texelFetch(water_exists_texture, pos + ivec2(1, 1), 0).r > 0
+	 || texelFetch(water_exists_texture, pos + ivec2(0, 1), 0).r > 0;
 
 	gl_Position = is_water ? MVP * vec4(vPosition + pos, water_height, 1) : vec4(2.0, 0.0, 0.0, 1.0);
 
 	UV = vec2(vPosition.x, 1 - vPosition.y);
 
 	float ground_height = texelFetch(ground_height_texture, height_pos, 0).r;
-
-	Color = vec4(pos.x / 64.f, pos.y / 64.f, 0, 1);
-	 float value = clamp(water_height - ground_height, 0.f, 1.f);
-	// if (value <= deeplevel) {
-	// 	value = max(0.f, value - min_depth) / (deeplevel - min_depth);
-	vec4 	Coloro = shallow_color_min * (1.f - value) + shallow_color_max * value;
-	// } else {
-	// 	value = clamp(value - deeplevel, 0.f, maxdepth - deeplevel) / (maxdepth - deeplevel);
-	vec4 	Coloroo = deep_color_min * (1.f - value) + deep_color_max * value;
-	// }
+	float value = clamp(water_height - ground_height, 0.f, 1.f);
+	if (value <= deeplevel) {
+		value = max(0.f, value - min_depth) / (deeplevel - min_depth);
+		Color = shallow_color_min * (1.f - value) + shallow_color_max * value;
+	} else {
+		value = clamp(value - deeplevel, 0.f, maxdepth - deeplevel) / (maxdepth - deeplevel);
+		Color = deep_color_min * (1.f - value) + deep_color_max * value;
+	}
  }

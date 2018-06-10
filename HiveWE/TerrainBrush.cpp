@@ -179,32 +179,78 @@ void TerrainBrush::apply() {
 			const int center_x = area.x() + area.width() * 0.5f;
 			const int center_y = area.y() + area.height() * 0.5f;
 			layer_height = corners[center_x][center_y].layer_height;
+			switch (cliff_operation_type) {
+				case cliff_operation::shallow_water:
+					if (!corners[center_x][center_y].water) {
+						layer_height -= 1;
+					} else if (corners[center_x][center_y].water_height + map.terrain.height_offset > map.terrain.corner_height(corners[center_x][center_y]) + 1) {
+						layer_height += 1;
+					}
+					break;
+				case cliff_operation::lower1:
+					layer_height -= 1;
+					break;
+				case cliff_operation::lower2:
+					layer_height -= 2;
+				case cliff_operation::deep_water:
+					if (!corners[center_x][center_y].water) {
+						layer_height -= 2;
+					} else if (corners[center_x][center_y].water_height + map.terrain.height_offset < map.terrain.corner_height(corners[center_x][center_y]) + 1) {
+						layer_height -= 1;
+					}
+					break;
+				case cliff_operation::raise1:
+					layer_height += 1;
+					break;
+				case cliff_operation::raise2:
+					layer_height += 2;
+					break;
+			}
+			layer_height = std::clamp(layer_height, 0, 15);
 		}
 
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			for (int j = area.y(); j < area.y() + area.height(); j++) {
 				const int xx = i - area.x() - std::min(position.x + 1, 0);
 				const int yy = j - area.y() - std::min(position.y + 1, 0);
-
 				if (!contains(xx, yy)) {
 					continue;
 				}
 
-				if (cliff_operation_type == cliff_operation::ramp) {
-					continue;
+				switch (cliff_operation_type) {
+					case cliff_operation::lower1:
+					case cliff_operation::lower2:
+					case cliff_operation::level:
+					case cliff_operation::raise1:
+					case cliff_operation::raise2:
+						corners[i][j].layer_height = layer_height;
+						if (corners[i][j].water) {
+							if (corners[i][j].water_height + map.terrain.height_offset < map.terrain.corner_height(corners[i][j])) {
+								corners[i][j].water = false;
+							}
+						}
+						break;
+					case cliff_operation::shallow_water:
+						if (!corners[i][j].water) {
+							corners[i][j].water = true;
+							map.terrain.water_exists_data[j * map.terrain.width + i] = true;
+				  		}
+						corners[i][j].layer_height = layer_height;
+						corners[i][j].water_height = corners[i][j].layer_height - 1;
+						map.terrain.water_heights[j * map.terrain.width + i] = corners[i][j].layer_height - 1 + map.terrain.height_offset;
+						break;
+					case cliff_operation::deep_water:
+						if (!corners[i][j].water) {
+							corners[i][j].water = true;
+							map.terrain.water_exists_data[j * map.terrain.width + i] = true;
+						}
+						corners[i][j].layer_height = layer_height;
+						corners[i][j].water_height = corners[i][j].layer_height;
+						map.terrain.water_heights[j * map.terrain.width + i] = corners[i][j].layer_height + map.terrain.height_offset;
+						break;
 				}
-
-				if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
-					if (corners[i][j].water) {
-						continue;
-					}
-					corners[i][j].layer_height -= 2;
-					corners[i][j].water = true;
-					map.terrain.water_exists_data[j * map.terrain.width + i] = true;
-				} else {
-					corners[i][j].layer_height = std::clamp(layer_height - static_cast<int>(cliff_operation_type), 0, 15);
-					check_nearby(x, y, i, j, updated_area);
-				}
+				
+				check_nearby(x, y, i, j, updated_area);
 				map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
 			}
 		}
@@ -299,14 +345,16 @@ void TerrainBrush::apply() {
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 		if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
-			//gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
-			//gl->glTextureStorage2D(water_height, 1, GL_R16F, width, height);
-			//gl->glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
+			offset = variation_area.y() * map.terrain.width + variation_area.x();
+			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
+			gl->glTextureSubImage2D(map.terrain.water_height, 0, variation_area.x(), variation_area.y(), variation_area.width(), variation_area.height(), GL_RED, GL_FLOAT, map.terrain.water_heights.data() + offset);
+			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
-			//offset = variation_area.y() * map.terrain.width + variation_area.x();
-			//gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
-			gl->glTextureSubImage2D(map.terrain.water_exists, 0, 0,0,map.terrain.width, map.terrain.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.terrain.water_exists_data.data() + offset);
-			//gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
+			gl->glTextureSubImage2D(map.terrain.water_exists, 0, variation_area.x(), variation_area.y(), variation_area.width(), variation_area.height(), GL_RED, GL_UNSIGNED_BYTE, map.terrain.water_exists_data.data() + offset);
+			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 		}
 
 	}

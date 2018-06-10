@@ -68,9 +68,7 @@ bool Brush::contains(const int x, const int y) const {
 		case Shape::circle: {
 			float distance = (x - size) * (x - size);
 			distance += (y - size) * (y - size);
-			distance = std::sqrt(distance);
-
-			return distance <= size;
+			return distance <= size * size;
 		}
 		case Shape::diamond:
 			return std::abs(x - size) + std::abs(y - size) <= size;

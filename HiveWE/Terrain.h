@@ -102,7 +102,7 @@ public:
 	int animation_rate;
 	
 	std::vector<float> water_heights;
-	std::vector<uint8_t> water_exists_data;
+	std::vector<unsigned char> water_exists_data;
 	GLuint water_height;
 	GLuint water_exists;
 

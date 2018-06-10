@@ -22,6 +22,6 @@ int main(int argc, char *argv[]) {
 	QSurfaceFormat::setDefaultFormat(format);
 
 	HiveWE w;
-	w.show();
+	w.showMaximized();
 	return QApplication::exec();
 }

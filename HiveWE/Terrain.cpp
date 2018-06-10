@@ -6,10 +6,11 @@ Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &ground_height);
 	gl->glDeleteTextures(1, &ground_corner_height);
 	gl->glDeleteTextures(1, &ground_texture_data);
-	gl->glDeleteTextures(1, &water_height);
-
 	gl->glDeleteTextures(1, &cliff_texture_array);
+
 	gl->glDeleteTextures(1, &water_texture_array);
+	gl->glDeleteTextures(1, &water_exists);
+	gl->glDeleteTextures(1, &water_height);
 }
 
 void Terrain::create() {
@@ -34,7 +35,7 @@ void Terrain::create() {
 	water_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
-	water_exists_data.resize((width + 1) * (height + 1), 0);
+	water_exists_data.resize(width * height);
 
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
@@ -43,7 +44,7 @@ void Terrain::create() {
 			ground_heights[j * width + i] = corners[i][j].ground_height;
 			ground_corner_heights[j * width + i] = corner_height(corners[i][j]);
 			water_heights[j * width + i] = corner_water_height(corners[i][j]);
-			water_exists_data[j * width + i] = i == j;//corners[i][j].water * 255;// corners[i][j].water;
+			water_exists_data[j * width + i] = corners[i][j].water;
 
 			if (i == width - 1 || j == height - 1) {
 				continue;
@@ -111,9 +112,9 @@ void Terrain::create() {
 
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
 	gl->glTextureStorage2D(water_exists, 1, GL_R8, width, height);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	gl->glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
-	gl->glTextureParameteri(water_exists, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(water_exists, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -402,7 +403,7 @@ void Terrain::render() {
 	gl->glUniform4fv(2, 1, &shallow_color_max[0]);
 	gl->glUniform4fv(3, 1, &deep_color_min[0]);
 	gl->glUniform4fv(4, 1, &deep_color_max[0]);
-	//gl->glUniform1i(5, current_texture);
+	gl->glUniform1i(5, current_texture);
 
 	gl->glBindTextureUnit(0, water_height);
 	gl->glBindTextureUnit(1, ground_corner_height);
