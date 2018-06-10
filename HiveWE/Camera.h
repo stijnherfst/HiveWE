@@ -3,7 +3,7 @@
 struct Camera {
 	virtual ~Camera() = default;
 
-	glm::vec3 position = { 0, 0, 5 };
+	glm::vec3 position = { 0, 0, 6 };
 	glm::vec3 direction = { 0, 1, 0 };
 	glm::vec3 X = { 1, 0, 0 };
 	glm::vec3 Y = { 0, 1, 0 };
@@ -30,6 +30,7 @@ struct Camera {
 	virtual void mouse_scroll_event(QWheelEvent* event) = 0;
 	virtual void mouse_press_event(QMouseEvent* event) = 0;
 	virtual void mouse_release_event(QMouseEvent* event) = 0;
+	virtual void reset();
 };
 
 struct FPSCamera : Camera {

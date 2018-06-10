@@ -15,6 +15,7 @@
 #include <string>
 #include <variant>
 #include <regex>
+#include <random>
 #include <cctype>
 
 using namespace std::literals::string_literals;
@@ -48,6 +49,7 @@ namespace fs = std::filesystem;
 #include "MDX.h"
 
 #include "Utilities.h"
+#include "Quadtree.h"
 
 // Resource types
 #include "Hierarchy.h"

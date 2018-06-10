@@ -198,7 +198,7 @@ void ImportManager::rename_directory(QTreeWidgetItem* item) {
 }
 
 void ImportManager::load_files(const std::vector<ImportItem>& imports) const {
-	const std::function<void(std::vector<ImportItem>, QTreeWidgetItem*)> create_tree = [&](std::vector<ImportItem>& items, QTreeWidgetItem* parent) {
+	const std::function<void(const std::vector<ImportItem>&, QTreeWidgetItem*)> create_tree = [&](const std::vector<ImportItem>& items, QTreeWidgetItem* parent) {
 		for (auto&& i : items) {
 			QTreeWidgetItem* item = new QTreeWidgetItem(parent);
 			item->setText(0, QString::fromStdString(i.name.string()));

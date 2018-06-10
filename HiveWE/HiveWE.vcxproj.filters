@@ -222,6 +222,9 @@
     <ClCompile Include="ImportManagerEdit.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
+    <ClCompile Include="Quadtree.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -326,6 +329,9 @@
     <ClInclude Include="GeneratedFiles\ui_ImportManagerEdit.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="Quadtree.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -385,5 +391,8 @@
     <CustomBuild Include="ImportManagerEdit.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\.editorconfig" />
   </ItemGroup>
 </Project>

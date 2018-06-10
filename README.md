@@ -12,7 +12,7 @@ A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threa
 ## Build Instructions
 
 1. Download and unzip source
-2. Get Qt opensource 5.10 64 bit binaries from https://www.qt.io/download  
+2. Get Qt opensource 5.11 MSVC 2017 64 bit binaries from https://www.qt.io/download (use the opensource installer)
 3. Also get the Qt Visual Studio Tools (go to Visual Studio, Tools -> Extensions and Updates -> Online -> Search for Qt)  
 4. Set up the Qt Visual Studio Tools from inside Visual Studio (add a version and point to the Qt binaries)  
 5. Set this version as the project its main version.
@@ -23,7 +23,9 @@ A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threa
 Want to help with the development of HiveWE? Below is a list of features that you could implement. You can try one of these or just add something else you feel like HiveWE should have. Any contributions are welcome!
 
 - A trigger editor for (an improved?) GUI
-- An object editor
-- An import manager
 - Being able to change forces/teams
+- Changing map description and loading screen
 - Changing map sizes/camera bound
+- 
+
+If you have any questions then don't be afraid to message me here, at HiveWorkshop (eejin) or on Discord eejin#4240

@@ -1,5 +1,7 @@
 #pragma once
 
+// These classes will be rewritten to use SOA instead of AOS
+
 struct Corner {
 	float ground_height;
 	float water_height;
@@ -43,6 +45,9 @@ public:
 	int width;
 	int height;
 
+	//int tiles_width;
+	//int tiles_height;
+
 	glm::vec2 offset;
 
 	std::vector<std::vector<Corner>> corners;
@@ -55,7 +60,6 @@ public:
 
 	GLuint ground_height;
 	GLuint ground_corner_height;
-	//GLuint ground_texture_array;
 	GLuint ground_texture_data;
 	GLuint pathing_map_texture;
 
@@ -97,15 +101,11 @@ public:
 	int water_textures_nr;
 	int animation_rate;
 	
-	GLuint water_vertex_buffer;
-	GLuint water_uv_buffer;
-	GLuint water_index_buffer;
-	GLuint water_color_buffer;
+	std::vector<float> water_heights;
+	std::vector<uint8_t> water_exists_data;
+	GLuint water_height;
+	GLuint water_exists;
 
-	std::vector <glm::vec3> water_vertices;
-	std::vector <glm::vec2> water_uvs;
-	std::vector <glm::ivec3> water_indices;
-	std::vector <glm::vec4> water_colors;
 
 	std::vector<std::shared_ptr<Texture>> water_textures;
 	std::shared_ptr<Shader> water_shader;
@@ -116,12 +116,9 @@ public:
 	~Terrain();
 
 	void create();
-	//void create_tile_textures();
 	bool load(BinaryReader& reader);
 	void save();
 	void render();
-
-	//void create_cliffs();
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
 

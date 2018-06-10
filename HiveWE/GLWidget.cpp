@@ -44,8 +44,10 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	connect(&timer, &QTimer::timeout, this, &GLWidget::update_scene);
-	timer.start(15);
+	//connect(&timer, &QTimer::timeout, this, &GLWidget::update_scene);
+	//timer.start(15);
+
+	QTimer::singleShot(16, this, &GLWidget::update_scene);
 
 	camera = &tps_camera;
 
@@ -68,7 +70,6 @@ void GLWidget::initializeGL() {
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl->glClearColor(0, 0, 0, 1);
-	//gl->glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
@@ -98,6 +99,7 @@ void GLWidget::update_scene() {
 	}
 
 	update();
+	QTimer::singleShot(std::max(0.0, 16.0 - map.total_time), this, &GLWidget::update_scene);
 }
 
 void GLWidget::paintGL() {
@@ -105,7 +107,7 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map.render(width(), height());
+	map.render(width(), height(), rect().contains(mapFromGlobal(QCursor::pos())));
 	gl->glBindVertexArray(0);
 
 	if (map.show_timings) {
@@ -121,7 +123,7 @@ void GLWidget::paintGL() {
 		p.drawText(10, 95, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
 		p.drawText(10, 110, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
 
-		p.drawText(10, 130, QString::fromStdString("Total time: " + std::to_string(map.terrain_time + map.doodad_time + map.unit_time + map.render_time)));
+		p.drawText(10, 130, QString::fromStdString("Total time: " + std::to_string(map.total_time) + " Min: " + std::to_string(map.total_time_min) + " Max: " + std::to_string(map.total_time_max)));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));
@@ -147,8 +149,6 @@ void GLWidget::keyPressEvent(QKeyEvent *e) {
 	switch (e->key()) {
 		case Qt::Key_Escape:
 			exit(0);
-	//case Qt::Key_Alt:
-			//input_handler.drag_start = input_handler.mouse_world;
 		case Qt::Key_Equal:
 			if (map.brush) {
 				map.brush->increase_size(1);
@@ -166,14 +166,9 @@ void GLWidget::keyReleaseEvent(QKeyEvent *e) {
 	input_handler.keys_pressed.erase(e->key());
 }
 
-void GLWidget::mouseMoveEvent(QMouseEvent *event) {
-	//std::cout << event->pos
+void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 	input_handler.mouse_move_event(event);
 	camera->mouse_move_event(event);
-
-	//if (input_handler.key_pressed(Qt::Key_Alt)) {
-	//	map.brush.set_size(map.brush.size + (input_handler.mouse_world - input_handler.drag_start).x);
-	//} else {
 
 	if (map.brush) {
 		map.brush->set_position(input_handler.mouse_world);
@@ -182,7 +177,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent *event) {
 			map.brush->apply();
 		}
 	}
-	//}
 }
 
 void GLWidget::mousePressEvent(QMouseEvent * event) {

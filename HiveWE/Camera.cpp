@@ -1,5 +1,12 @@
 #include "stdafx.h"
 
+void Camera::reset() {
+	position.z = 6;
+	horizontal_angle = 0.0;
+	vertical_angle = -0.977;
+	update(0);
+}
+
 void FPSCamera::update(const double delta) {
 	float speed = 5;
 	if (input_handler.key_pressed(Qt::Key_Shift)) {
@@ -42,8 +49,8 @@ void FPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
-	horizontal_angle += diffx * 0.025;
-	vertical_angle += -diffy * 0.025;
+	horizontal_angle += diffx * 0.012;
+	vertical_angle += -diffy * 0.012;
 	vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 
 	update(0);
@@ -78,7 +85,6 @@ void TPSCamera::update(double delta) {
 	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
 	view = glm::lookAt(position, position + direction, up);
 	projection_view = projection * view;
-
 }
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
@@ -90,12 +96,14 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 
 		update(0);
 	}
-	if (rolling) {
-		horizontal_angle += diffx * 0.0025;
-		vertical_angle += diffy * 0.0025;
 
+	if (rolling) {
+		horizontal_angle += -diffx * 0.0025;
+		vertical_angle += diffy * 0.0025;
+		vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 		update(0);
 	}
+
 	input_handler.previous_mouse = event->globalPos();
 }
 

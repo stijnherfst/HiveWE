@@ -22,11 +22,11 @@ public:
 	int cliff_id = 0;
 
 	enum class cliff_operation {
-		lower2,
-		lower1,
+		lower2 = -2,
+		lower1 = -1,
 		level,
-		raise1,
-		raise2,
+		raise1 = 1,
+		raise2 = 2,
 		deep_water,
 		shallow_water,
 		ramp

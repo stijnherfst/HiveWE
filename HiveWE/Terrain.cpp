@@ -1,14 +1,12 @@
 #include "stdafx.h"
 
+// These classes will be rewritten to use SOA instead of AOS
+
 Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &ground_height);
 	gl->glDeleteTextures(1, &ground_corner_height);
 	gl->glDeleteTextures(1, &ground_texture_data);
-
-	gl->glDeleteBuffers(1, &water_vertex_buffer);
-	gl->glDeleteBuffers(1, &water_uv_buffer);
-	gl->glDeleteBuffers(1, &water_color_buffer);
-	gl->glDeleteBuffers(1, &water_index_buffer);
+	gl->glDeleteTextures(1, &water_height);
 
 	gl->glDeleteTextures(1, &cliff_texture_array);
 	gl->glDeleteTextures(1, &water_texture_array);
@@ -28,12 +26,15 @@ void Terrain::create() {
 	for (auto&& cliff_id : cliffset_ids) {
 		auto t = cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp";
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
 	ground_heights.resize(width * height);
+	water_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
+	water_exists_data.resize((width + 1) * (height + 1), 0);
 
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
@@ -41,6 +42,8 @@ void Terrain::create() {
 			// Ground tiles
 			ground_heights[j * width + i] = corners[i][j].ground_height;
 			ground_corner_heights[j * width + i] = corner_height(corners[i][j]);
+			water_heights[j * width + i] = corner_water_height(corners[i][j]);
+			water_exists_data[j * width + i] = i == j;//corners[i][j].water * 255;// corners[i][j].water;
 
 			if (i == width - 1 || j == height - 1) {
 				continue;
@@ -52,6 +55,7 @@ void Terrain::create() {
 			Corner& bottom_right = corners[i + 1][j];
 			Corner& top_left = corners[i][j + 1];
 			Corner& top_right = corners[i + 1][j + 1];
+
 			if (bottom_left.cliff) {
 				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
 
@@ -70,37 +74,6 @@ void Terrain::create() {
 				file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
 
 				cliffs.emplace_back(i, j, path_to_cliff[file_name]);
-			}
-
-			// Water
-			if (bottom_left.water || bottom_right.water || top_left.water || top_right.water) {
-				water_vertices.emplace_back(i + 1,	j + 1,	corner_water_height(bottom_left));
-				water_vertices.emplace_back(i,		j + 1,	corner_water_height(bottom_left));
-				water_vertices.emplace_back(i,		j,		corner_water_height(bottom_left));
-				water_vertices.emplace_back(i + 1,	j,		corner_water_height(bottom_left));
-
-				water_uvs.emplace_back(1, 1);
-				water_uvs.emplace_back(0, 1);
-				water_uvs.emplace_back(0, 0);
-				water_uvs.emplace_back(1, 0);
-
-				// Calculate water colour based on distance to the terrain
-				glm::vec4 color;
-				for (auto&& corner : { top_right, top_left, bottom_left, bottom_right }) {
-					float value = std::clamp(corner_water_height(corner) - corner_height(corner), 0.f, 1.f);
-					if (value <= deeplevel) {
-						value = std::max(0.f, value - min_depth) / (deeplevel - min_depth);
-						color = shallow_color_min * (1.f - value) + shallow_color_max * value;
-					} else {
-						value = std::clamp(value - deeplevel, 0.f, maxdepth - deeplevel) / (maxdepth - deeplevel);
-						color = deep_color_min * (1.f - value) + deep_color_max * value;
-					}
-					water_colors.push_back(color / glm::vec4(255, 255, 255, 255));
-				}
-
-				const size_t index = water_vertices.size() - 4;
-				water_indices.emplace_back(index + 0, index + 3, index + 1);
-				water_indices.emplace_back(index + 1, index + 3, index + 2);
 			}
 		}
 	}
@@ -132,17 +105,15 @@ void Terrain::create() {
 	gl->glGenerateTextureMipmap(cliff_texture_array);
 
 	// Water
-	gl->glCreateBuffers(1, &water_vertex_buffer);
-	gl->glNamedBufferData(water_vertex_buffer, water_vertices.size() * sizeof(glm::vec3), water_vertices.data(), GL_STATIC_DRAW);
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
+	gl->glTextureStorage2D(water_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
 
-	gl->glCreateBuffers(1, &water_uv_buffer);
-	gl->glNamedBufferData(water_uv_buffer, water_uvs.size() * sizeof(glm::vec2), water_uvs.data(), GL_STATIC_DRAW);
-
-	gl->glCreateBuffers(1, &water_color_buffer);
-	gl->glNamedBufferData(water_color_buffer, water_colors.size() * sizeof(glm::vec4), water_colors.data(), GL_STATIC_DRAW);
-
-	gl->glCreateBuffers(1, &water_index_buffer);
-	gl->glNamedBufferData(water_index_buffer, water_indices.size() * sizeof(unsigned int) * 3, water_indices.data(), GL_STATIC_DRAW);
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
+	gl->glTextureStorage2D(water_exists, 1, GL_R8, width, height);
+	gl->glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
+	gl->glTextureParameteri(water_exists, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(water_exists, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 	// Water textures
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -257,6 +228,7 @@ bool Terrain::load(BinaryReader& reader) {
 	int alpha = std::stoi(water_slk.data("Smin_A", tileset + "Sha"s));
 
 	shallow_color_min = { red, green, blue, alpha };
+	shallow_color_min /= 255.f;
 
 	red = std::stoi(water_slk.data("Smax_R", tileset + "Sha"s));
 	green = std::stoi(water_slk.data("Smax_G", tileset + "Sha"s));
@@ -264,6 +236,7 @@ bool Terrain::load(BinaryReader& reader) {
 	alpha = std::stoi(water_slk.data("Smax_A", tileset + "Sha"s));
 	
 	shallow_color_max = { red, green, blue, alpha };
+	shallow_color_max /= 255.f;
 
 	red = std::stoi(water_slk.data("Dmin_R", tileset + "Sha"s));
 	green = std::stoi(water_slk.data("Dmin_G", tileset + "Sha"s));
@@ -271,6 +244,7 @@ bool Terrain::load(BinaryReader& reader) {
 	alpha = std::stoi(water_slk.data("Dmin_A", tileset + "Sha"s));
 
 	deep_color_min = { red, green, blue, alpha };
+	deep_color_min /= 255.f;
 
 	red = std::stoi(water_slk.data("Dmax_R", tileset + "Sha"s));
 	green = std::stoi(water_slk.data("Dmax_G", tileset + "Sha"s));
@@ -278,6 +252,7 @@ bool Terrain::load(BinaryReader& reader) {
 	alpha = std::stoi(water_slk.data("Dmax_A", tileset + "Sha"s));
 
 	deep_color_max = { red, green, blue, alpha };
+	deep_color_max /= 255.f;
 
 	// Cliff Meshes
 	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
@@ -361,6 +336,7 @@ void Terrain::render() {
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, map.render_pathing);
+	gl->glUniform1i(3, map.render_lighting);
 
 	gl->glBindTextureUnit(0, ground_height);
 	gl->glBindTextureUnit(1, ground_corner_height);
@@ -421,29 +397,28 @@ void Terrain::render() {
 
 	water_shader->use();
 
-	gl->glUniformMatrix4fv(3, 1, GL_FALSE, &camera->projection_view[0][0]);
-	gl->glUniform1i(4, current_texture);
+	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &camera->projection_view[0][0]);
+	gl->glUniform4fv(1, 1, &shallow_color_min[0]);
+	gl->glUniform4fv(2, 1, &shallow_color_max[0]);
+	gl->glUniform4fv(3, 1, &deep_color_min[0]);
+	gl->glUniform4fv(4, 1, &deep_color_max[0]);
+	//gl->glUniform1i(5, current_texture);
 
-	gl->glBindTextureUnit(0, water_texture_array);
+	gl->glBindTextureUnit(0, water_height);
+	gl->glBindTextureUnit(1, ground_corner_height);
+	gl->glBindTextureUnit(2, water_exists);
+	gl->glBindTextureUnit(3, water_texture_array);
 
 	gl->glEnableVertexAttribArray(0);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, water_vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
+	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	gl->glEnableVertexAttribArray(1);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, water_uv_buffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glEnableVertexAttribArray(2);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, water_color_buffer);
-	gl->glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, water_index_buffer);
-	gl->glDrawElements(GL_TRIANGLES, water_indices.size() * 3, GL_UNSIGNED_INT, nullptr);
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
+	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
 
 	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-	gl->glDisableVertexAttribArray(2);
+
+	gl->glEnable(GL_BLEND);
 
 	end = std::chrono::high_resolution_clock::now();
 	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;

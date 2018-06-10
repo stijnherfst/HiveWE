@@ -12,106 +12,82 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	}
 
 	// Subversion
-	reader.read<uint32_t>();
+	const int subversion = reader.read<uint32_t>();
+	if (subversion != 11) {
+		std::cout << "Unknown war3mapUnits.doo subversion: " << subversion << " Attempting to load but may crash\nPlease send this map to eejin\n";
+	}
 
-	const int unit_count = reader.read<uint32_t>();
-
-	units.resize(unit_count);
-	for (int i = 0; i < unit_count; i++) {
-		units[i].id = reader.read_string(4);
-		units[i].variation = reader.read<uint32_t>();
-		units[i].position = reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0);
-		units[i].angle = reader.read<float>();
-		units[i].scale = reader.read<glm::vec3>();
+	units.resize(reader.read<uint32_t>());
+	for (auto&& i : units) {
+		i.id = reader.read_string(4);
+		i.variation = reader.read<uint32_t>();
+		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
+		i.angle = reader.read<float>();
+		i.scale = reader.read<glm::vec3>() / 128.f;
 		
-		// flags
-		reader.read<uint8_t>();
+		i.flags = reader.read<uint8_t>();
 
-		units[i].player = reader.read<uint32_t>();
+		i.player = reader.read<uint32_t>();
 
-		// Unknwon
-		reader.read<uint8_t>();
-		reader.read<uint8_t>();
+		i.unknown1 = reader.read<uint8_t>();
+		i.unknown2 = reader.read<uint8_t>();
 
-		units[i].health = reader.read<uint32_t>();
-		units[i].mana = reader.read<uint32_t>();
+		i.health = reader.read<uint32_t>();
+		i.mana = reader.read<uint32_t>();
 
-		// map item table pointer
 		if (version >= 8) {
-			reader.read<uint32_t>();
+			i.item_table_pointer = reader.read<uint32_t>();
 		}
 
-		const int item_sets = reader.read<uint32_t>();
-
-		for (int j = 0; j < item_sets; j++) {
-			const int dropable_items = reader.read<uint32_t>();
-			for (int k = 0; k < dropable_items; k++) {
-				// Item id
-				reader.read_string(4);
-				// Drop chance
-				reader.read<uint32_t>();
+		i.item_sets.resize(reader.read<uint32_t>());
+		for (auto&& j : i.item_sets) {
+			j.items.resize(reader.read<uint32_t>());
+			for (auto&&[id, chance] : j.items) {
+				id = reader.read_string(4);
+				chance = reader.read<uint32_t>();
 			}
 		}
 
-		// Gold
-		reader.read<uint32_t>();
+		i.gold = reader.read<uint32_t>();
+		i.target_acquisition = reader.read<float>();
 
-		// Target acquisition
-		reader.read<float>();
-
-		// Hero lvl
-		reader.read<uint32_t>();
-
+		i.level = reader.read<uint32_t>();
 
 		if (version >= 8) {
-			// Strength
-			reader.read<uint32_t>();
-
-			// Agility
-			reader.read<uint32_t>();
-
-			// Intelligence
-			reader.read<uint32_t>();
+			i.strength = reader.read<uint32_t>();
+			i.agility = reader.read<uint32_t>();
+			i.intelligence = reader.read<uint32_t>();
 		}
 
-		const int items = reader.read<uint32_t>();
-		for (int j = 0; j < items; j++) {
-			// Inventory slot
-			reader.read<uint32_t>();
-			// Item ID
-			reader.read_string(4);
+		i.items.resize(reader.read<uint32_t>());
+		for (auto&& [slot, id] : i.items) {
+			slot = reader.read<uint32_t>();
+			id = reader.read_string(4);
 		}
 
-		const int modified_abilities = reader.read<uint32_t>();
-		for (int j = 0; j < modified_abilities; j++) {
-			// Ability ID
-			reader.read_string(4);
-			// Autocast active
-			reader.read<uint32_t>();
-			// Ability level
-			reader.read<uint32_t>();
+		i.abilities.resize(reader.read<uint32_t>());
+		for (auto&&[id, autocast, level] : i.abilities) {
+			id = reader.read_string(4);
+			autocast = reader.read<uint32_t>();
+			level =  reader.read<uint32_t>();
 		}
 
-		// Is random unit/item
-		const int random = reader.read<uint32_t>();
-		switch (random) {
+		i.random_type = reader.read<uint32_t>();
+		switch (i.random_type) {
 			case 0:
-				reader.position += 4;
+				i.random = reader.read_vector<uint8_t>(4);
 				break;
 			case 1:
-				reader.position += 8;
+				i.random = reader.read_vector<uint8_t>(8);
 				break;
 			case 2:
-				reader.position += reader.read<uint32_t>() * 8;
-				break;
-			default: 
-				std::cout << "Unknown random " << random << " while loading units\n";
+				i.random = reader.read_vector<uint8_t>(reader.read<uint32_t>() * 8);
 				break;
 		}
 
-		int custom_color = reader.read<uint32_t>();
-		int waygate = reader.read<uint32_t>();
-		int creation_number = reader.read<uint32_t>();
+		i.custom_color = reader.read<uint32_t>();
+		i.waygate = reader.read<uint32_t>();
+		i.creation_number = reader.read<uint32_t>();
 	}
 
 	units_slk = slk::SLK("Units/UnitData.slk");
@@ -141,6 +117,87 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	return true;
 }
 
+void Units::save() const {
+	BinaryWriter writer;
+
+	writer.write_string("W3do");
+	writer.write<uint32_t>(write_version);
+	writer.write<uint32_t>(write_subversion);
+
+	writer.write<uint32_t>(units.size());
+	for (auto&& i : units) {
+		writer.write_string(i.id);
+		writer.write<uint32_t>(i.variation);
+		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
+		writer.write<float>(i.angle);
+		writer.write<glm::vec3>(i.scale * 128.f);
+
+		writer.write<uint8_t>(i.flags);
+
+		writer.write<uint32_t>(i.player);
+
+		writer.write<uint8_t>(i.unknown1);
+		writer.write<uint8_t>(i.unknown2);
+
+		writer.write<uint32_t>(i.health);
+		writer.write<uint32_t>(i.mana);
+
+		writer.write<uint32_t>(i.item_table_pointer);
+
+		writer.write<uint32_t>(i.item_sets.size());
+		for (auto&& j : i.item_sets) {
+			writer.write<uint32_t>(j.items.size());
+			for (auto&&[id, chance] : j.items) {
+				writer.write_string(id);
+				writer.write<uint32_t>(chance);
+			}
+		}
+
+		writer.write<uint32_t>(i.gold);
+		writer.write<float>(i.target_acquisition);
+		writer.write<uint32_t>(i.level);
+		writer.write<uint32_t>(i.strength);
+		writer.write<uint32_t>(i.agility);
+		writer.write<uint32_t>(i.intelligence);
+
+
+		writer.write<uint32_t>(i.items.size());
+		for (auto&&[slot, id] : i.items) {
+			writer.write<uint32_t>(slot);
+			writer.write_string(id);
+		}
+
+		writer.write<uint32_t>(i.abilities.size());
+		for (auto&&[id, autocast, level] : i.abilities) {
+			writer.write_string(id);
+			writer.write<uint32_t>(autocast);
+			writer.write<uint32_t>(level);
+		}
+
+		writer.write<uint32_t>(i.random_type);
+		writer.write_vector(i.random);
+
+		writer.write<uint32_t>(i.custom_color);
+		writer.write<uint32_t>(i.waygate);
+		writer.write<uint32_t>(i.creation_number);
+	}
+
+	HANDLE handle;
+	bool success = SFileCreateFile(hierarchy.map.handle, "war3mapUnits.doo", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+
+	success = SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	if (!success) {
+		std::cout << "Writing to file failed: " << GetLastError() << "\n";
+	}
+	success = SFileFinishFile(handle);
+	if (!success) {
+		std::cout << "Finishing write failed: " << GetLastError() << "\n";
+	}
+}
+
 void Units::load_unit_modifications(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 	if (version != 1 && version != 2) {
@@ -161,11 +218,22 @@ void Units::load_item_modifications(BinaryReader& reader) {
 	load_modification_table(reader, items_slk, units_meta_slk, true);
 }
 
+void Units::update_area(const QRect& area) {
+	for (auto&& i : tree.query(area)) {
+		i->position.z = map.terrain.corner_height(i->position.x, i->position.y);
+		i->matrix = glm::translate(glm::mat4(1.f), i->position);
+		i->matrix = glm::scale(i->matrix, i->scale);
+		i->matrix = glm::rotate(i->matrix, i->angle, glm::vec3(0, 0, 1));
+	}
+}
+
 void Units::create() {
 	for (auto&& i : units) {
-		i.matrix = glm::translate(i.matrix, i.position / 128.f);
-		i.matrix = glm::scale(i.matrix, glm::vec3(1 / 128.f, 1 / 128.f, 1 / 128.f) * i.scale);
+		i.matrix = glm::translate(i.matrix, i.position);
+		i.matrix = glm::scale(i.matrix, i.scale);
 		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+
+		tree.insert(&i);
 
 		if (i.id == "sloc") {
 			continue;

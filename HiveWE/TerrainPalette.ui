@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TerrainPalette</string>
+   <string>Terrain Palette</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -492,7 +492,7 @@
      <item>
       <widget class="QPushButton" name="cliffDeepWater">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -545,7 +545,7 @@
      <item>
       <widget class="QPushButton" name="cliffShallowWater">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -687,7 +687,7 @@
      <item>
       <widget class="QPushButton" name="terrainLower">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1194,6 +1194,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Circular brush shape</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -1226,6 +1229,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Square brush shape</string>
+          </property>
           <property name="text">
            <string/>
           </property>
@@ -1254,6 +1260,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Diamond brush shape</string>
           </property>
           <property name="text">
            <string/>
@@ -1302,6 +1311,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
          <widget class="QCheckBox" name="tilePathing">
+          <property name="toolTip">
+           <string>Whether newly placed tiles have pathing applied. Examples are rock which you cannot build on.</string>
+          </property>
           <property name="text">
            <string>Apply Tile Pathing</string>
           </property>
@@ -1312,6 +1324,9 @@
         </item>
         <item>
          <widget class="QCheckBox" name="cliffPathing">
+          <property name="toolTip">
+           <string>Whether newly placed cliffs are unbuildable/unwalkable</string>
+          </property>
           <property name="text">
            <string>Apply Cliff Pathing</string>
           </property>
@@ -1331,9 +1346,9 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushSizeButtonGroup"/>
-  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="deformationButtonGroup"/>
+  <buttongroup name="cliffButtonGroup"/>
+  <buttongroup name="brushSizeButtonGroup"/>
   <buttongroup name="brushShapeButtonGroup"/>
  </buttongroups>
 </ui>

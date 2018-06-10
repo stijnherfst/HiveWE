@@ -37,3 +37,9 @@ QIcon texture_to_icon(uint8_t* data, int width, int height);
 
 extern QOpenGLFunctions_4_5_Core* gl;
 extern Shapes shapes;
+
+
+
+struct ItemSet {
+	std::vector<std::pair<std::string, int>> items;
+};

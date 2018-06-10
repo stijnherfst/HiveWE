@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TilePather</string>
+   <string>Tile Pathing</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

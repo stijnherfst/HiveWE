@@ -21,7 +21,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
 	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
 	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
+	connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
+	connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
 	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
+	connect(ui.actionReset_Camera, &QAction::triggered, [&](bool checked) { 
+		camera->reset(); 
+	});
 
 	connect(ui.actionSwitch_Camera, &QAction::triggered, [&]() {
 		if (camera == &ui.widget->tps_camera) {
@@ -42,14 +47,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		camera->update(0);
 	});
 
-	connect(ui.actionTileSetter, &QAction::triggered, [this]() { 
-		TileSetter* tilesetter = new TileSetter(this); 
-		dynamic_cast<GLWidget*>(ui.widget)->timer.stop(); 
-		connect(tilesetter, &QDialog::finished, [this]() { 
-			dynamic_cast<GLWidget*>(ui.widget)->timer.start(16);
-		});
-	});
-
+	connect(ui.actionTileSetter, &QAction::triggered, [this]() { new TileSetter(this); });
 	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePather; });
 
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {

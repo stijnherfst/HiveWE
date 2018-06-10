@@ -1,6 +1,7 @@
 #version 450 core
 
 layout (location = 2) uniform bool show_pathing_map_static;
+layout (location = 3) uniform bool show_lighting;
 //layout (location = 3) uniform bool show_pathing_map_dynamic;
 
 layout (binding = 3) uniform usampler2D pathing_map_static;
@@ -80,10 +81,12 @@ void main() {
 	color = color * color.a + get_fragment(texture_indices.g & 31, vec3(UV, texture_indices.g >> 5)) * (1 - color.a);
 	color = color * color.a + get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)) * (1 - color.a);
 
-	vec3 light_direction = vec3(-0.3, -0.3, 0.25);
-	light_direction = normalize(light_direction);
+	if (show_lighting) {
+		vec3 light_direction = vec3(-0.3, -0.3, 0.25);
+		light_direction = normalize(light_direction);
 
-	color *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
+		color *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
+	}
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
 	if (show_pathing_map_static) {

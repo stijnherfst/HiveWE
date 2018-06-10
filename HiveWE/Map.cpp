@@ -16,6 +16,9 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 
+	doodads.tree.resize(terrain.width, terrain.height);
+	units.tree.resize(terrain.width, terrain.height);
+
 	// Pathing Map
 	BinaryReader war3map_wpm(hierarchy.map.file_open("war3map.wpm").read());
 	success = pathing_map.load(war3map_wpm, terrain);
@@ -70,6 +73,7 @@ void Map::load(const fs::path& path) {
 	}
 
 	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
+	camera->reset();
 
 	meshes.clear(); // ToDo this is not a nice way to do this
 }
@@ -77,7 +81,7 @@ void Map::load(const fs::path& path) {
 bool Map::save(const fs::path& path) {
 	std::error_code t;
 
-	const fs::path complete_path = fs::absolute(path, t); //system_complete fs::system_complete(path);
+	const fs::path complete_path = fs::absolute(path, t);
 	if (complete_path != filesystem_path) {
 		try {
 			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);
@@ -94,16 +98,20 @@ bool Map::save(const fs::path& path) {
 
 		pathing_map.save();
 		terrain.save();
+		doodads.save();
+		units.save();
 
 		imports.save();
 		imports.save_dir_file();
-		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
 
+		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
 
 		std::swap(new_map, hierarchy.map);
 	} else {
 		pathing_map.save();
 		terrain.save();
+		doodads.save();
+		units.save();
 
 		imports.save();
 		imports.save_dir_file();
@@ -126,20 +134,22 @@ void Map::play_test() {
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
-void Map::render(int width, int height) {
+void Map::render(int width, int height, bool cursor_in_area) {
+	auto total_time_begin = std::chrono::high_resolution_clock::now();
+
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 	// Render Terrain
 	auto begin = std::chrono::high_resolution_clock::now();
 
 	terrain.render();
 
-
 	auto end = std::chrono::high_resolution_clock::now();
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	
 	// Map mouse coordinates to world coordinates
-	if (input_handler.mouse != input_handler.previous_mouse) {
+	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y() > 0) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
 		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
 		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
@@ -178,6 +188,10 @@ void Map::render(int width, int height) {
 
 	end = std::chrono::high_resolution_clock::now();
 	render_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	total_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - total_time_begin).count() / 1'000'000.0;
+
+	total_time_min = std::min(total_time, total_time_min);
+	total_time_max = std::max(total_time, total_time_max);
 
 	meshes.clear();
 }
