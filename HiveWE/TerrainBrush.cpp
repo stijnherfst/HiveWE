@@ -227,6 +227,7 @@ void TerrainBrush::apply() {
 						if (corners[i][j].water) {
 							if (corners[i][j].water_height + map.terrain.height_offset < map.terrain.corner_height(corners[i][j])) {
 								corners[i][j].water = false;
+								map.terrain.water_exists_data[j * map.terrain.width + i] = false;
 							}
 						}
 						break;
@@ -323,10 +324,12 @@ void TerrainBrush::apply() {
 			}
 		}
 
-		QRect variation_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, map.terrain.width - 1, map.terrain.height - 1 });
+		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, map.terrain.width - 1, map.terrain.height - 1 });
+		QRect corner_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, map.terrain.width, map.terrain.height});
+
 		// Update texture variations
-		for (int i = variation_area.x(); i < variation_area.x() + variation_area.width(); i++) {
-			for (int j = variation_area.y(); j < variation_area.y() + variation_area.height(); j++) {
+		for (int i = tile_area.x(); i < tile_area.x() + tile_area.width(); i++) {
+			for (int j = tile_area.y(); j < tile_area.y() + tile_area.height(); j++) {
 				map.terrain.ground_texture_list[j * (map.terrain.width - 1) + i] = map.terrain.get_texture_variations(i, j);
 				if (corners[i][j].cliff) {
 					map.terrain.ground_texture_list[j * (map.terrain.width - 1) + i] |= 0b1000000000000000;
@@ -334,27 +337,28 @@ void TerrainBrush::apply() {
 			}
 		}
 
-		int offset = variation_area.y() * (map.terrain.width - 1) + variation_area.x();
+		int offset = tile_area.y() * (map.terrain.width - 1) + tile_area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width - 1);
-		gl->glTextureSubImage2D(map.terrain.ground_texture_data, 0, variation_area.x(), variation_area.y(), variation_area.width(), variation_area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map.terrain.ground_texture_list.data() + offset);
+		gl->glTextureSubImage2D(map.terrain.ground_texture_data, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map.terrain.ground_texture_list.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 		offset = updated_area.y() * map.terrain.width + updated_area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
-		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, updated_area.x(), updated_area.y(), updated_area.width(), updated_area.height(), GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
+		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, updated_area.x(), updated_area.y(), updated_area.width() + 1, updated_area.height() + 1, GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
-		if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
-			offset = variation_area.y() * map.terrain.width + variation_area.x();
-			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
-			gl->glTextureSubImage2D(map.terrain.water_height, 0, variation_area.x(), variation_area.y(), variation_area.width(), variation_area.height(), GL_RED, GL_FLOAT, map.terrain.water_heights.data() + offset);
-			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+		offset = tile_area.y() * map.terrain.width + tile_area.x();
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
+		gl->glTextureSubImage2D(map.terrain.water_exists, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RED, GL_UNSIGNED_BYTE, map.terrain.water_exists_data.data() + offset);
+		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
+			offset = corner_area.y() * map.terrain.width + corner_area.x();
 			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.terrain.width);
-			gl->glTextureSubImage2D(map.terrain.water_exists, 0, variation_area.x(), variation_area.y(), variation_area.width(), variation_area.height(), GL_RED, GL_UNSIGNED_BYTE, map.terrain.water_exists_data.data() + offset);
+			gl->glTextureSubImage2D(map.terrain.water_height, 0, corner_area.x(), corner_area.y(), corner_area.width(), corner_area.height(), GL_RED, GL_FLOAT, map.terrain.water_heights.data() + offset);
 			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-			glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 		}
 
 	}
