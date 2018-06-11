@@ -7,6 +7,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	while (!fs::exists(directory / "War3x.mpq")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 	}
+	QSettings settings;
+	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 

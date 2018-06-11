@@ -89,12 +89,15 @@ std::string read_text_file(const std::string& path) {
 }
 
 fs::path find_warcraft_directory() {
-	if (fs::exists(L"C:/Program Files (x86)/Warcraft III/War3x.mpq")) {
-		return L"C:/Program Files (x86)/Warcraft III/";
-	} else if (fs::exists(L"D:/Program Files (x86)/Warcraft III/War3x.mpq")) {
-		return L"D:/Program Files (x86)/Warcraft III/";
+	QSettings settings;
+	if (settings.contains("warcraftDirectory")) {
+		return settings.value("warcraftDirectory").toString().toStdString();
+	} else if (fs::exists("C:/Program Files (x86)/Warcraft III/War3x.mpq")) {
+		return "C:/Program Files (x86)/Warcraft III/";
+	} else if (fs::exists("D:/Program Files (x86)/Warcraft III/War3x.mpq")) {
+		return "D:/Program Files (x86)/Warcraft III/";
 	} else {
-		return L"";
+		return "";
 	}
 }
 

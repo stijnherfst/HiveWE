@@ -1,13 +1,23 @@
 # HiveWE
 A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threads/introducing-hivewe.303183/)
 
-![HiveWE Screenshot](http://g2f.nl/0scv6qu)
+![HiveWE Screenshot](http://g2f.nl/0egc6n4)
+
+
 
 ## Features
 
 - Directly edit the pathing map  
+![Edit the Pathing Map](http://g2f.nl/046bx1s)
 - Fly around with a First Person camera
-- Edit the tileset
+![Fly around the Map](http://g2f.nl/018g8ym)
+- Edit the terrain
+![Edit the Terrain](http://g2f.nl/0q18ikj)
+- Manage your imports with folders!
+![Manage imports](http://g2f.nl/0j59f6v)
+- Edit global tile pathing  
+![Edit global tile pathing](http://g2f.nl/0ihyqgo)
+
 
 ## Build Instructions
 

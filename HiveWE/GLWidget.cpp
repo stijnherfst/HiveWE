@@ -44,9 +44,6 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	//connect(&timer, &QTimer::timeout, this, &GLWidget::update_scene);
-	//timer.start(15);
-
 	QTimer::singleShot(16, this, &GLWidget::update_scene);
 
 	camera = &tps_camera;
@@ -77,7 +74,6 @@ void GLWidget::initializeGL() {
 	shapes.init();
 
 	map.load(L"Data/Test.w3x");
-	new TerrainPalette(this);
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
