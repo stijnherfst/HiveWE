@@ -2,16 +2,23 @@
 
 namespace blp {
 	enum Content {
-		CONTENT_JPEG,
-		CONTENT_DIRECT
+		jpeg,
+		direct
 	};
 
 	class BLP {
 	public:
-		//BLP(const std::string& path) {
-		//}
+		std::vector<std::tuple<int, int, std::vector<uint8_t>>> mipmaps;
 
-		static std::tuple<uint8_t*, uint32_t, uint32_t> load(const fs::path& path);
+		Content content;
+		int alpha_bits;
+
+		int width;
+		int height;
+
+		BLP(BinaryReader& reader);
+
+		//static std::tuple<uint8_t*, uint32_t, uint32_t> load(const fs::path& path);
 	};
 
 }

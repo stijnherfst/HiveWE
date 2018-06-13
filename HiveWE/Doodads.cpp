@@ -199,7 +199,7 @@ void Doodads::create() {
 			mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string();
 		}
 
-		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path.string()));
+		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path));
 
 		// Switch it back
 		if (is_number(replaceable_id) && texture_name != "_.blp") {

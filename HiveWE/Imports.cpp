@@ -70,7 +70,7 @@ void Imports::load_dir_file(BinaryReader& reader) {
 
 	const int version = reader.read<uint32_t>();
 	if (version != 1) {
-		std::cout << "Attempting to read an newer directory file version:" << version << ". Program may crash";
+		std::cout << "Attempting to read a newer directory file version:" << version << ". Program may crash";
 	}
 
 	const std::function<void(std::vector<ImportItem>&)> read_directory = [&](std::vector<ImportItem>& items) {

@@ -36,6 +36,5 @@ Want to help with the development of HiveWE? Below is a list of features that yo
 - Being able to change forces/teams
 - Changing map description and loading screen
 - Changing map sizes/camera bound
-- 
 
 If you have any questions then don't be afraid to message me here, at HiveWorkshop (eejin) or on Discord eejin#4240
