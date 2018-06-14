@@ -9,6 +9,16 @@ void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::absolute(path);
 
+	BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
+	trigger_strings.load(war3map_wts);
+
+	// Protection check
+	is_protected = !hierarchy.map.file_exists("war3map.wtg");
+	std::cout << " Protected: " << (is_protected ? "True\n" : "False\n");
+
+	BinaryReader war3map_w3i(hierarchy.map.file_open("war3map.w3i").read());
+	info.load(war3map_w3i);
+
 	// Terrain
 	BinaryReader war3map_w3e(hierarchy.map.file_open("war3map.w3e").read());
 	bool success = terrain.load(war3map_w3e);

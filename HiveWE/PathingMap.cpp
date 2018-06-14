@@ -3,7 +3,7 @@
 bool PathingMap::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "MP3W") {
-		std::cout << "Invalid war3map.w3e file: Magic number is not MP3W" << std::endl;
+		std::cout << "Invalid war3map.wpm file: Magic number is not MP3W" << std::endl;
 		return false;
 	}
 

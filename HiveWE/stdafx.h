@@ -61,14 +61,17 @@ namespace fs = std::filesystem;
 #include "Shader.h"
 #include "StaticMesh.h"
 
+#include "TriggerStrings.h"
 #include "Imports.h"
 #include "Terrain.h"
 #include "PathingMap.h"
+#include "ShadowMap.h"
 #include "Doodads.h"
 #include "Units.h"
 #include "Brush.h"
 #include "PathingBrush.h"
 #include "TerrainBrush.h"
+#include "MapInfo.h"
 #include "Map.h"
 
 #include "Camera.h"
@@ -77,6 +80,8 @@ namespace fs = std::filesystem;
 
 #include "ImportManagerEdit.h"
 #include "ImportManager.h"
+#include "MapInfoEditor.h"
+#include "TriggerEditor.h"
 #include "PathingPallete.h"
 #include "TerrainPalette.h"
 #include "TilePicker.h"

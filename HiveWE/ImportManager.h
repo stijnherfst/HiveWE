@@ -20,7 +20,7 @@ class ImportManager : public QMainWindow {
 	static QString generate_full_path(QString file_name);
 	static QString get_file_type(const fs::path& path);
 
-	Ui::ImportManager* ui;
+	Ui::ImportManager ui;
 
 	QIcon folder_icon;
 	QIcon file_icon;

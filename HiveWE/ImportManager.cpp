@@ -1,29 +1,29 @@
 #include "stdafx.h"
 
-ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent), ui(new Ui::ImportManager) {
-	ui->setupUi(this);
+ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent) {
+	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	ui->treeWidget->setFocus();
-	ui->treeWidget->installEventFilter(this);
-	ui->treeWidget->header()->resizeSection(0, 220);
-	connect(ui->treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::custom_menu_popup);
-	connect(ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &ImportManager::edit_item);
+	ui.treeWidget->setFocus();
+	ui.treeWidget->installEventFilter(this);
+	ui.treeWidget->header()->resizeSection(0, 220);
+	connect(ui.treeWidget, &QTreeWidget::customContextMenuRequested, this, &ImportManager::custom_menu_popup);
+	connect(ui.treeWidget, &QTreeWidget::itemDoubleClicked, this, &ImportManager::edit_item);
 
-	connect(ui->createDirectory, &QPushButton::clicked, [&]() { create_directory(ui->treeWidget->invisibleRootItem()); });
-	connect(ui->importFiles, &QPushButton::clicked, [&]() { import_files(ui->treeWidget->invisibleRootItem()); });
-	connect(ui->exportAll, &QPushButton::clicked, [&]() { export_files(ui->treeWidget->invisibleRootItem()); });
+	connect(ui.createDirectory, &QPushButton::clicked, [&]() { create_directory(ui.treeWidget->invisibleRootItem()); });
+	connect(ui.importFiles, &QPushButton::clicked, [&]() { import_files(ui.treeWidget->invisibleRootItem()); });
+	connect(ui.exportAll, &QPushButton::clicked, [&]() { export_files(ui.treeWidget->invisibleRootItem()); });
 
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
 	file_icon = icons.icon(QFileIconProvider::File);
 
-	ui->createDirectory->setIcon(folder_icon);
-	ui->importFiles->setIcon(file_icon);
-	ui->exportAll->setIcon(file_icon);
-
-	ui->treeWidget->invisibleRootItem()->setText(0, "Exported Items"); // So export all works correctly
-	ui->treeWidget->invisibleRootItem()->setText(1, "Directory"); // So export all works correctly
+	ui.createDirectory->setIcon(folder_icon);
+	ui.importFiles->setIcon(file_icon);
+	ui.exportAll->setIcon(file_icon);
+	  
+	ui.treeWidget->invisibleRootItem()->setText(0, "Exported Items"); // So export all works correctly
+	ui.treeWidget->invisibleRootItem()->setText(1, "Directory"); // So export all works correctly
 
 	load_files(map.imports.imports);
 
@@ -31,10 +31,10 @@ ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent), ui(new Ui::
 }
 
 void ImportManager::custom_menu_popup(const QPoint& pos) {
-	QTreeWidgetItem* parent = ui->treeWidget->itemAt(pos);
+	QTreeWidgetItem* parent = ui.treeWidget->itemAt(pos);
 
 	if (parent == nullptr) {
-		parent = ui->treeWidget->invisibleRootItem();
+		parent = ui.treeWidget->invisibleRootItem();
 	}
 
 	QMenu* menu = new QMenu(this);
@@ -218,7 +218,7 @@ void ImportManager::load_files(const std::vector<ImportItem>& imports) const {
 		}
 	};
 
-	create_tree(imports, ui->treeWidget->invisibleRootItem());
+	create_tree(imports, ui.treeWidget->invisibleRootItem());
 }
 
 void ImportManager::export_files(QTreeWidgetItem* item) {
@@ -245,7 +245,7 @@ bool ImportManager::eventFilter(QObject*, QEvent* event) {
 	if (event->type() == QKeyEvent::KeyPress) {
 		QKeyEvent* k_event = dynamic_cast<QKeyEvent *>(event);
 		if (k_event->key() == Qt::Key_Delete) {
-			remove_item(ui->treeWidget->currentItem());
+			remove_item(ui.treeWidget->currentItem());
 			return true;
 		}
 	}
@@ -276,5 +276,5 @@ void ImportManager::items_changed() {
 		}
 	};
 
-	recreate_imports(map.imports.imports, ui->treeWidget->invisibleRootItem());
+	recreate_imports(map.imports.imports, ui.treeWidget->invisibleRootItem());
 }

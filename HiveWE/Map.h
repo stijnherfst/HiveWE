@@ -2,6 +2,8 @@
 
 class Map {
 public:
+	TriggerStrings trigger_strings;
+	MapInfo info;
 	Terrain terrain;
 	PathingMap pathing_map;
 	Doodads doodads;
@@ -10,6 +12,7 @@ public:
 
 	Brush* brush = nullptr;
 
+	bool is_protected = false;
 	bool units_loaded = false;
 
 	bool render_doodads = true;

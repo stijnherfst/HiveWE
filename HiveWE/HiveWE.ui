@@ -51,6 +51,7 @@
     </widget>
     <addaction name="menuNew_Pallete"/>
     <addaction name="actionImport_Manager"/>
+    <addaction name="actionTrigger_Editor"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -80,8 +81,20 @@
     <addaction name="actionTileSetter"/>
     <addaction name="menuPathing_Map"/>
    </widget>
+   <widget class="QMenu" name="menuScenario">
+    <property name="title">
+     <string>Map</string>
+    </property>
+    <addaction name="actionDescription"/>
+    <addaction name="actionLoading_Screen"/>
+    <addaction name="actionOptions"/>
+    <addaction name="actionPreferences"/>
+    <addaction name="actionSize_and_Camera_Bounds"/>
+    <addaction name="separator"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuScenario"/>
    <addaction name="menuTools"/>
    <addaction name="menuWindow"/>
   </widget>
@@ -287,6 +300,36 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+C</string>
+   </property>
+  </action>
+  <action name="actionTrigger_Editor">
+   <property name="text">
+    <string>Trigger Editor</string>
+   </property>
+  </action>
+  <action name="actionDescription">
+   <property name="text">
+    <string>Description...</string>
+   </property>
+  </action>
+  <action name="actionSize_and_Camera_Bounds">
+   <property name="text">
+    <string>Size and Camera Bounds...</string>
+   </property>
+  </action>
+  <action name="actionLoading_Screen">
+   <property name="text">
+    <string>Loading Screen...</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences...</string>
+   </property>
+  </action>
+  <action name="actionOptions">
+   <property name="text">
+    <string>Options...</string>
    </property>
   </action>
  </widget>

@@ -49,8 +49,13 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		camera->update(0);
 	});
 
+	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
+	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
+	connect(ui.actionOptions, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
+	connect(ui.actionPreferences, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
+
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { new TileSetter(this); });
-	connect(ui.actionChangeTilePathing, &QAction::triggered, []() { new TilePather; });
+	connect(ui.actionChangeTilePathing, &QAction::triggered, [this]() { new TilePather(this); });
 
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
 		auto palette = new PathingPallete(this);
@@ -60,6 +65,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 
 	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
+
+	connect(ui.actionTrigger_Editor, &QAction::triggered, [this]() {
+		if (auto editor = this->findChild<TriggerEditor*>(); !editor) {
+			new TriggerEditor(this);
+		} else {
+			editor->activateWindow();
+			editor->raise();
+		}
+	});
 
 	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {
 		if (auto manager = this->findChild<ImportManager*>(); !manager) {
