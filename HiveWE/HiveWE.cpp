@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 Map map;
+ini::INI world_edit_data;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
@@ -14,6 +15,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	ui.setupUi(this);
 
+	world_edit_data.load("UI/WorldEditData.txt");
+	const ini::INI world_edit_game_strings("UI/WorldEditGameStrings.txt");
+	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
+	const ini::INI world_edit_strings("UI/WorldEditStrings.txt");
+	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
+
 	connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
 	connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
@@ -26,9 +33,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
 	connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
 	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
-	connect(ui.actionReset_Camera, &QAction::triggered, [&](bool checked) { 
-		camera->reset(); 
-	});
+	connect(ui.actionReset_Camera, &QAction::triggered, [&]() { camera->reset(); });
 
 	connect(ui.actionSwitch_Camera, &QAction::triggered, [&]() {
 		if (camera == &ui.widget->tps_camera) {
@@ -114,4 +119,8 @@ void HiveWE::save_as() {
 	if (file_name != "") {
 		map.save(file_name.toStdString());
 	}
+}
+
+void HiveWE::closeEvent(QCloseEvent* event) {
+	event->accept();
 }

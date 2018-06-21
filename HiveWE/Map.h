@@ -43,7 +43,7 @@ public:
 	~Map();
 
 	void load(const fs::path& path);
-	bool save(const fs::path& path);
+	bool save(const fs::path& path) const;
 	void play_test();
-	void render(int width, int height, bool cursor_in_area);
+	void render(int width, int height);
 };

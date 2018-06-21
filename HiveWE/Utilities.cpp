@@ -22,6 +22,24 @@ std::vector<std::string> split(const std::string& string, const char delimiter) 
 	return elems;
 }
 
+std::vector<std::string_view> split_new(const std::string& string, const char delimiter) {
+	std::vector<std::string_view> elems;
+
+	int last_position = 0;
+	for (int i = 0; i < string.length(); i++) {
+		if (string[i] == delimiter) {
+			elems.emplace_back(string.c_str() + last_position, i - last_position);
+			last_position = i;
+		}
+	}
+
+	if (elems.empty()) {
+		elems.emplace_back(string);
+	}
+
+	return elems;
+}
+
 bool is_number(const std::string& s) {
 	return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
 }
@@ -44,7 +62,9 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 
 	gl->glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
 	gl->glGetShaderInfoLog(vertex, 512, nullptr, buffer);
-	std::cout << buffer << std::endl;
+	if (!status) {
+		std::cout << buffer << std::endl;
+	}
 
 	// Fragment Shader
 	source = fragment_source.c_str();
@@ -53,7 +73,9 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 
 	gl->glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
 	gl->glGetShaderInfoLog(fragment, 512, nullptr, buffer);
-	std::cout << buffer << std::endl;
+	if (!status) {
+		std::cout << buffer << std::endl;
+	}
 
 	// Link
 	const GLuint shader = gl->glCreateProgram();

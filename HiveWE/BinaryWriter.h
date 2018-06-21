@@ -6,6 +6,10 @@ public:
 
 	template<typename T>
 	void write(const T value) {
+		// These wouldn't make sense
+		static_assert(std::is_same<T, std::string>() == false);
+		static_assert(std::is_same<T, fs::path>() == false);
+
 		T temp = value;
 		buffer.resize(buffer.size() + sizeof(T));
 		std::copy(reinterpret_cast<const char*>(&temp), reinterpret_cast<const char*>(&temp) + sizeof(T), buffer.end() - sizeof(T));

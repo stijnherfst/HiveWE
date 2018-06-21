@@ -9,10 +9,6 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
-	ini::INI world_edit_data("UI/WorldEditData.txt");
-	const ini::INI world_edit_strings("UI/WorldEditGameStrings.txt");
-	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
-
 	slk::SLK& slk = map.terrain.terrain_slk;
 	for (auto&& i : map.terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");

@@ -31,7 +31,7 @@ namespace ini {
 				if (parts.size() < 2) {
 					continue;
 				}
-
+				parts[1].resize(parts[1].size() - 1); // Get rid of \\r
 				ini_data[current_section][parts[0]] = parts[1];
 			}
 		}
@@ -44,7 +44,9 @@ namespace ini {
 				for (auto&& part : split(value, ',')) {
 					std::string westring = ini.data(section, part);
 					if (!westring.empty()) {
-						ini_data[section_key][key] = westring;
+						auto position = value.find(part);
+						value.erase(position, part.length());
+						value.insert(position, westring);
 					}
 				}
 			}

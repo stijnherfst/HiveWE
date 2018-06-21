@@ -24,13 +24,13 @@ void Imports::load(BinaryReader& reader) {
 	}
 }
 
-void Imports::save() {
+void Imports::save() const {
 	BinaryWriter writer;
 	
 	writer.write<uint32_t>(1);
 
 	int item_count = 0;
-	std::function<void(std::vector<ImportItem>&)> count_files = [&](std::vector<ImportItem>& items) {
+	std::function<void(const std::vector<ImportItem>&)> count_files = [&](const std::vector<ImportItem>& items) {
 		for (auto&& i : items) {
 			item_count++;
 			count_files(i.children);
@@ -39,7 +39,7 @@ void Imports::save() {
 	count_files(imports);
 
 	writer.write<uint32_t>(item_count);
-	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
+	std::function<void(const std::vector<ImportItem>&)> save_directories = [&](const std::vector<ImportItem>& items) {
 		for (auto&& i : items) {
 			if (i.directory) {
 				save_directories(i.children);
@@ -102,13 +102,13 @@ void Imports::load_dir_file(BinaryReader& reader) {
 	read_directory(imports);
 }
 
-void Imports::save_dir_file() {
+void Imports::save_dir_file() const {
 	BinaryWriter writer;
 	
 	// Version
 	writer.write<uint32_t>(1);
 
-	std::function<void(std::vector<ImportItem>&)> save_directories = [&](std::vector<ImportItem>& items) {
+	std::function<void(const std::vector<ImportItem>&)> save_directories = [&](const std::vector<ImportItem>& items) {
 		writer.write<uint32_t>(items.size());
 		for (auto&& i : items) {
 			writer.write<uint8_t>(i.directory);
@@ -155,4 +155,24 @@ void Imports::export_file(const fs::path& path, const fs::path& file) const {
 
 int Imports::file_size(const fs::path& file) const {
 	return hierarchy.map.file_open(file).size();
+}
+
+std::vector<std::reference_wrapper<const ImportItem>> Imports::find(std::function<bool(const ImportItem&)> predicate) const {
+	std::vector<std::reference_wrapper<const ImportItem>> found_items;
+
+	std::function<void(const std::vector<ImportItem>&)> find_items = [&](const std::vector<ImportItem>& items) {
+		for (auto&& i : items) {
+			if (i.directory) {
+				find_items(i.children);
+			} else {
+				if (predicate(i)) {
+					found_items.emplace_back(i);
+				}
+			}
+		}
+	};
+
+	find_items(imports);
+
+	return found_items;
 }

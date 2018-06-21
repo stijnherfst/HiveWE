@@ -96,7 +96,7 @@ void Terrain::create() {
 
 	// Cliff
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
-	gl->glTextureStorage3D(cliff_texture_array, std::log(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
+	gl->glTextureStorage3D(cliff_texture_array, log2(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
 
 	int sub = 0;
 	for (auto&& i : cliff_textures) {
@@ -275,7 +275,7 @@ bool Terrain::load(BinaryReader& reader) {
 	return true;
 }
 
-void Terrain::save() {
+void Terrain::save() const {
 	BinaryWriter writer;
 	writer.write_string("W3E!");
 	writer.write(11);
@@ -291,7 +291,7 @@ void Terrain::save() {
 
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
-			Corner& corner = corners[i][j];
+			const Corner& corner = corners[i][j];
 
 			writer.write<uint16_t>(corner.ground_height * 512.f + 8192.f);
 
@@ -465,19 +465,22 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
-// ToDo only 1 of this is really needed to be here
+/// The final height a tilepoint will have in the terrain
 float Terrain::corner_height(const Corner corner) {
 	return corner.ground_height + corner.layer_height - 2.0;
 }
 
+/// The final height a tilepoint will have in the terrain
 float Terrain::corner_height(const int x, const int y) const {
 	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
 }
 
+/// The final height the water point will have in the terrain
 float Terrain::corner_water_height(const Corner corner) const {
 	return corner.water_height + height_offset;
 }
 
+/// The texture of the tilepoint which is influenced by its surroundings. nearby cliff > blight > regular texture
 int Terrain::real_tile_texture(const int x, const int y) {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
@@ -500,6 +503,7 @@ int Terrain::real_tile_texture(const int x, const int y) {
 	return corners[x][y].ground_texture;
 }
 
+/// The subtexture of a groundtexture to use.
 int Terrain::get_tile_variation(const int ground_texture, const int variation) {
 	if (ground_textures[ground_texture]->extended) {
 		if (variation <= 15) {
@@ -518,6 +522,7 @@ int Terrain::get_tile_variation(const int ground_texture, const int variation) {
 	}
 }
 
+/// The 4 ground textures of the tilepoint. First 5 bits are which texture array to use and the next 5 bits are which subtexture to use
 glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) {
 	const int bottom_left = real_tile_texture(x, y);
 	const int bottom_right = real_tile_texture(x + 1, y);

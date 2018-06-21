@@ -7,9 +7,9 @@ GroundTexture::GroundTexture(const fs::path& path) {
 
 		tile_size = height * 0.25;
 		extended = (width == height * 2);
-
+		
 		gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
-		gl->glTextureStorage3D(id, std::log(tile_size) + 1, GL_RGBA8, tile_size, tile_size, extended ? 32 : 16);
+		gl->glTextureStorage3D(id, log2(tile_size) + 1, GL_RGBA8, tile_size, tile_size, extended ? 32 : 16);
 		gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		gl->glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

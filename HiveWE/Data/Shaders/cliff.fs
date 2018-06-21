@@ -5,7 +5,6 @@ layout (binding = 2) uniform usampler2D pathing_map_static;
 
 layout (location = 4) uniform bool show_pathing_map_static;
 
-// in
 layout (location = 0) in vec3 UV;
 layout (location = 1) in vec2 pathing_map_uv;
 

@@ -8,22 +8,14 @@ layout (location = 3) uniform mat4 MVP;
 
 layout (binding = 1) uniform sampler2D ground_height;
 
-// out
 layout (location = 0) out vec3 UV;
 layout (location = 1) out vec2 pathing_map_uv;
 
 void main() {
 	pathing_map_uv = (vec2(vPosition.x + 128, vPosition.y) / 128 + vOffset.xy) * 4;
-
-	vec4 bottom_left = texelFetch(ground_height, ivec2(vOffset) + ivec2(0, 0), 0);
-	vec4 bottom_right = texelFetch(ground_height, ivec2(vOffset) + ivec2(1, 0), 0);
-	vec4 top_left = texelFetch(ground_height, ivec2(vOffset) + ivec2(0, 1), 0);
-	vec4 top_right = texelFetch(ground_height, ivec2(vOffset) + ivec2(1, 1), 0);
-
-	float bottom = mix(bottom_right.r, bottom_left.r, -(vPosition.x / 128.f));
-	float top = mix(top_right.r, top_left.r, -(vPosition.x / 128.f));
-	float value = mix(bottom, top, vPosition.y / 128.f);
-
+ 
+	ivec2 size = textureSize(ground_height, 0);
+	float value = texture(ground_height, (vOffset.xy + vec2(vPosition.x + 192, vPosition.y + 64) / 128) / vec2(size)).r;
 
 	gl_Position = MVP * vec4(vPosition + vec3(vOffset.xy + vec2(1, 0), vOffset.z + value) * 128, 1);
 	UV = vec3(vUV, vOffset.a);

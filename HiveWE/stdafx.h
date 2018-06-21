@@ -21,6 +21,7 @@
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 
+// Qt headers
 #include <QtWidgets>
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions_4_5_Core>
@@ -28,15 +29,20 @@ namespace fs = std::filesystem;
 #include <FlowLayout.h>
 #include <QDialogButtonBox>
 
+// Dependencies
 #include <glm.hpp>
 #define GLM_FORCE_RADIANS
 #include <gtc/matrix_transform.hpp>
 #include <SOIL2.h>
 #include <turbojpeg.h>
 
+// Custom Qt Widgets
+#include "ColorButton.h"
+
 #undef _DLL
 #include <StormLib.h>
 
+// Base Classes
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
 #include "InputHandler.h"

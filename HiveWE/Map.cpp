@@ -14,7 +14,7 @@ void Map::load(const fs::path& path) {
 
 	// Protection check
 	is_protected = !hierarchy.map.file_exists("war3map.wtg");
-	std::cout << " Protected: " << (is_protected ? "True\n" : "False\n");
+	std::cout << "Protected: " << (is_protected ? "True\n" : " Possibly False\n");
 
 	BinaryReader war3map_w3i(hierarchy.map.file_open("war3map.w3i").read());
 	info.load(war3map_w3i);
@@ -88,7 +88,7 @@ void Map::load(const fs::path& path) {
 	meshes.clear(); // ToDo this is not a nice way to do this
 }
 
-bool Map::save(const fs::path& path) {
+bool Map::save(const fs::path& path) const {
 	std::error_code t;
 
 	const fs::path complete_path = fs::absolute(path, t);
@@ -144,7 +144,7 @@ void Map::play_test() {
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
-void Map::render(int width, int height, bool cursor_in_area) {
+void Map::render(int width, int height) {
 	auto total_time_begin = std::chrono::high_resolution_clock::now();
 
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

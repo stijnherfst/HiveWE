@@ -51,6 +51,28 @@ struct TechAvailability {
 	std::string id;
 };
 
+struct RandomUnitLine {
+	int chance;
+	std::vector<std::string> ids;
+};
+
+struct RandomUnitTable {
+	int number;
+	std::string name;
+	std::vector<int> positions;
+	std::vector<RandomUnitLine> lines;
+};
+
+struct RandomItemSets {
+	std::vector<std::tuple<int, std::string>> items;
+};
+
+struct RandomItemTable {
+	int number;
+	std::string name;
+	std::vector<RandomItemSets> item_sets;
+};
+
 class MapInfo {
 public:
 	int map_version;
@@ -61,24 +83,40 @@ public:
 	std::string suggested_players;
 	int playable_width;
 	int playable_height;
-	int flags;
-	char tileset;
 
+	int all_flags;
+	bool hide_minimap_preview;
+	bool modif_ally_priorities;
+	bool melee_map;
+	bool unknown;
+	bool masked_area_partially_visible;
+	bool fixed_player_settings;
+	bool custom_forces;
+	bool custom_techtree;
+	bool custom_abilities;
+	bool custom_upgrades;
+	bool unknown2;
+	bool cliff_shore_waves;
+	bool rolling_shore_waves;
+	bool unknown3;
+	bool unknown4;
+	bool item_classification;
+	bool water_tinting;
 
 	int loading_screen_number;
-	fs::path loading_screen_model;
+	std::string loading_screen_model;
 	std::string loading_screen_text;
 	std::string loading_screen_title;
 	std::string loading_screen_subtitle;
 
 	int game_data_set;
 
-	fs::path prologue_screen_model;
+	std::string prologue_screen_model;
 	std::string prologue_text;
 	std::string prologue_title;
 	std::string prologue_subtitle;
 
-	int uses_fog;
+	int fog_style;
 	float fog_start_z_height;
 	float fog_end_z_height;
 	float fog_density;
@@ -93,9 +131,10 @@ public:
 	std::vector<ForceData> forces;
 	std::vector<UpgradeAvailability> available_upgrades;
 	std::vector<TechAvailability> available_tech;
+	std::vector<RandomUnitTable> random_unit_tables;
+	std::vector<RandomItemTable> random_item_tables;
 
 	static constexpr int write_version = 25;
-
 
 	void load(BinaryReader& reader);
 	void save() const;

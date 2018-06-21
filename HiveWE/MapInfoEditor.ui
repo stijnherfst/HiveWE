@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>376</width>
-    <height>488</height>
+    <height>527</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <item>
       <widget class="QTabWidget" name="tabs">
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="usesScrollButtons">
         <bool>false</bool>
@@ -164,10 +164,18 @@
             </widget>
            </item>
            <item row="1" column="1">
-            <widget class="QComboBox" name="campaignLoadingScreen"/>
+            <widget class="QComboBox" name="campaignLoadingScreen">
+             <property name="maxVisibleItems">
+              <number>20</number>
+             </property>
+            </widget>
            </item>
            <item row="2" column="1">
-            <widget class="QComboBox" name="importedLoadingScreen"/>
+            <widget class="QComboBox" name="importedLoadingScreen">
+             <property name="maxVisibleItems">
+              <number>20</number>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
@@ -208,6 +216,13 @@
          <string>Options</string>
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QCheckBox" name="meleeMap">
+           <property name="text">
+            <string>Melee Map</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QCheckBox" name="hideMinimapPreview">
            <property name="text">
@@ -260,7 +275,23 @@
              </widget>
             </item>
             <item row="0" column="1">
-             <widget class="QComboBox" name="fogStyle"/>
+             <widget class="QComboBox" name="fogStyle">
+              <item>
+               <property name="text">
+                <string>Linear</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Exponential 1</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Exponential 2</string>
+               </property>
+              </item>
+             </widget>
             </item>
             <item row="1" column="0">
              <widget class="QLabel" name="label_9">
@@ -276,6 +307,9 @@
               </property>
               <property name="frame">
                <bool>true</bool>
+              </property>
+              <property name="maximum">
+               <double>100000.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -294,6 +328,9 @@
               <property name="frame">
                <bool>true</bool>
               </property>
+              <property name="maximum">
+               <double>100000.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="3" column="0">
@@ -311,12 +348,22 @@
               <property name="frame">
                <bool>true</bool>
               </property>
+              <property name="maximum">
+               <double>100.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item row="4" column="0">
              <widget class="QLabel" name="label_12">
               <property name="text">
                <string>Color</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="ColorButton" name="fogColor">
+              <property name="text">
+               <string>Choose Color</string>
               </property>
              </widget>
             </item>
@@ -332,12 +379,18 @@
              </property>
             </widget>
            </item>
+           <item row="0" column="1">
+            <widget class="QComboBox" name="comboBox_5"/>
+           </item>
            <item row="1" column="0">
             <widget class="QCheckBox" name="customSound">
              <property name="text">
               <string>Custom Sound Environment</string>
              </property>
             </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="comboBox_4"/>
            </item>
            <item row="2" column="0">
             <widget class="QCheckBox" name="customLighting">
@@ -346,12 +399,8 @@
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
-            <widget class="QCheckBox" name="waterTinting">
-             <property name="text">
-              <string>Use Water Tinting Color</string>
-             </property>
-            </widget>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="comboBox_3"/>
            </item>
            <item row="4" column="0">
             <widget class="QLabel" name="label_13">
@@ -361,16 +410,37 @@
             </widget>
            </item>
            <item row="4" column="1">
-            <widget class="QComboBox" name="gameDataSet"/>
+            <widget class="QComboBox" name="gameDataSet">
+             <item>
+              <property name="text">
+               <string>Default (Map melee status)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Custom (TFT 1.02, RoC 1.01)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Melee (Latest Patch)</string>
+              </property>
+             </item>
+            </widget>
            </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="comboBox_3"/>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="waterTinting">
+             <property name="text">
+              <string>Use Water Tinting Color</string>
+             </property>
+            </widget>
            </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="comboBox_4"/>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="comboBox_5"/>
+           <item row="3" column="1">
+            <widget class="ColorButton" name="waterColor">
+             <property name="text">
+              <string>Choose Color</string>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
@@ -408,6 +478,13 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ColorButton</class>
+   <extends>QPushButton</extends>
+   <header>ColorButton.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>

@@ -9,4 +9,6 @@ public:
 	MapInfoEditor(QWidget* parent = nullptr);
 
 	Ui::MapInfoEditor ui;
+
+	void save() const;
 };

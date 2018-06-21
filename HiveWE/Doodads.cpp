@@ -153,10 +153,6 @@ void Doodads::create() {
 			continue;
 		}
 
-		if (i.id == "D00E") {
-			std::cout << "\n";
-		}
-
 		fs::path mesh_path;
 		std::string variations;
 		std::string replaceable_id;

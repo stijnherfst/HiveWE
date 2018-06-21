@@ -9,6 +9,10 @@ public:
 
 	template<typename T>
 	T read() {
+		// These wouldn't make sense
+		static_assert(std::is_same<T, std::string>() == false);
+		static_assert(std::is_same<T, fs::path>() == false);
+
 		if (position + sizeof(T) > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
@@ -44,6 +48,10 @@ public:
 
 	template<typename T>
 	std::vector<T> read_vector(const size_t size) {
+		// These wouldn't make sense
+		static_assert(std::is_same<T, std::string>() == false);
+		static_assert(std::is_same<T, fs::path>() == false);
+
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}

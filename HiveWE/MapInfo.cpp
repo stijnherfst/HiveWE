@@ -3,6 +3,10 @@
 void MapInfo::load(BinaryReader& reader) {
 	int version = reader.read<uint32_t>();
 
+	if (version != 18 && version != 25) {
+		std::cout << "Unknown war3map.w3i version\n";
+	}
+
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
 	name = reader.read_c_string();
@@ -15,8 +19,29 @@ void MapInfo::load(BinaryReader& reader) {
 
 	playable_width = reader.read<uint32_t>();
 	playable_height = reader.read<uint32_t>();
-	flags = reader.read<uint32_t>();
-	tileset = reader.read<uint8_t>();
+
+	int flags = reader.read<uint32_t>();
+	all_flags = flags; // ToDo temporary
+	hide_minimap_preview = flags & 0x0001;
+	modif_ally_priorities = flags & 0x0002;
+	melee_map = flags & 0x0004;
+	unknown = flags & 0x0008;
+	masked_area_partially_visible = flags & 0x0010;
+	fixed_player_settings = flags & 0x0020;
+	custom_forces = flags & 0x0040;
+	custom_techtree = flags & 0x0080;
+	custom_abilities = flags & 0x0100;
+	custom_upgrades = flags & 0x0200;
+	unknown2 = flags & 0x0400;
+	cliff_shore_waves = flags & 0x0800;
+	rolling_shore_waves = flags & 0x1000;
+	unknown3 = flags & 0x2000;
+	unknown4 = flags & 0x4000;
+	item_classification = flags & 0x8000;
+	water_tinting = flags & 0x10000;
+
+	// Tileset
+	reader.advance(1);
 
 	if (version == 25) { // TFT
 		loading_screen_number = reader.read<uint32_t>();
@@ -32,7 +57,7 @@ void MapInfo::load(BinaryReader& reader) {
 		prologue_title = reader.read_c_string();
 		prologue_subtitle = reader.read_c_string();
 
-		uses_fog = reader.read<uint32_t>();
+		fog_style = reader.read<uint32_t>();
 		fog_start_z_height = reader.read<float>();
 		fog_end_z_height = reader.read<float>();
 		fog_density = reader.read<float>();
@@ -61,6 +86,11 @@ void MapInfo::load(BinaryReader& reader) {
 			i.player_masks = reader.read<uint32_t>();
 			i.name = reader.read_c_string();
 		}
+		
+		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of atleast 12
+		if (map.is_protected) {
+			return;
+		}
 
 		available_upgrades.resize(reader.read<uint32_t>());
 		for (auto&& i : available_upgrades) {
@@ -76,12 +106,150 @@ void MapInfo::load(BinaryReader& reader) {
 			i.id = reader.read_string(4);
 		}
 
+		random_unit_tables.resize(reader.read<uint32_t>());
+		for (auto&& i : random_unit_tables) {
+			i.number = reader.read<uint32_t>();
+			i.name = reader.read_c_string();
+			i.positions = reader.read_vector<int>(reader.read<uint32_t>());
+
+			i.lines.resize(reader.read<uint32_t>());
+			for (auto&& j : i.lines) {
+				j.chance = reader.read<uint32_t>();
+				for (int k = 0; k < i.positions.size(); k++) {
+					j.ids.push_back(reader.read_string(4));
+				}
+			}
+		}
+
+		random_item_tables.resize(reader.read<uint32_t>());
+		for (auto&& i : random_item_tables) {
+			i.number = reader.read<uint32_t>();
+			i.name = reader.read_c_string();
+			i.item_sets.resize(reader.read<uint32_t>());
+			for (auto&& j : i.item_sets) {
+				j.items.resize(reader.read<uint32_t>());
+				for (auto&&[chance, id] : j.items) {
+					chance = reader.read<uint32_t>();
+					id = reader.read_string(4);
+				}
+			}
+		}
 
 	} else if (version == 18) { // RoC
 
 	}
 
 }
-void MapInfo::save() const {
 
+void MapInfo::save() const {
+	BinaryWriter writer;
+
+	writer.write(write_version);
+	writer.write(map_version);
+	writer.write(editor_version);
+	writer.write_c_string(name);
+	writer.write_c_string(author);
+	writer.write_c_string(description);
+	writer.write_c_string(suggested_players);
+
+	// Camera bounds 40 8 bytes
+
+	writer.write(playable_width);
+	writer.write(playable_height);
+	writer.write(editor_version);
+	writer.write(editor_version);
+	writer.write(editor_version);
+
+	int flags = hide_minimap_preview * 0x0001
+		| modif_ally_priorities * 0x0002
+		| melee_map * 0x0004
+		| unknown * 0x0008
+		| masked_area_partially_visible * 0x0010
+		| fixed_player_settings * 0x0020
+		| custom_forces * 0x0040
+		| custom_techtree * 0x0080
+		| custom_abilities * 0x0100
+		| custom_upgrades * 0x0200
+		| unknown2 * 0x0400
+		| cliff_shore_waves * 0x0800
+		| rolling_shore_waves * 0x1000
+		| unknown3 * 0x2000
+		| unknown4 * 0x4000
+		| item_classification * 0x8000
+		| water_tinting * 0x10000;
+	writer.write(flags);
+
+	if (flags != all_flags) {
+		std::cout << "Flags not equivalent\n";
+	}
+
+	writer.write(map.terrain.tileset);
+
+	writer.write(loading_screen_number);
+	writer.write_c_string(loading_screen_model);
+	writer.write_c_string(loading_screen_text);
+	writer.write_c_string(loading_screen_title);
+	writer.write_c_string(loading_screen_subtitle);
+
+	writer.write(game_data_set);
+
+	writer.write_c_string(prologue_screen_model);
+	writer.write_c_string(prologue_text);
+	writer.write_c_string(prologue_title);
+	writer.write_c_string(prologue_subtitle);
+
+	writer.write(fog_style);
+	writer.write(fog_start_z_height);
+	writer.write(fog_end_z_height);
+	writer.write(fog_density);
+	writer.write(fog_color);
+
+	writer.write(weather_id);
+	writer.write_c_string(custom_sound_environment);
+	writer.write(custom_light_tileset);
+	writer.write(water_color);
+
+	writer.write(players.size());
+	for (auto&& i : players) {
+		writer.write(i.internal_number);
+		writer.write(static_cast<int>(i.type));
+		writer.write(static_cast<int>(i.race));
+		writer.write(i.fixed_start_position);
+		writer.write_c_string(i.name);
+		writer.write(i.starting_position);
+		writer.write(i.ally_low_priorities_flags);
+		writer.write(i.ally_high_priorities_flags);
+	}
+
+	writer.write(forces.size());
+	for (auto&& i : forces) {
+		writer.write(static_cast<int>(i.focus_flags));
+		writer.write(i.player_masks);
+		writer.write_c_string(i.name);
+	}
+
+	writer.write(available_upgrades.size());
+	for (auto&& i : available_upgrades) {
+		writer.write(i.player_flags);
+		writer.write_string(i.id);
+		writer.write(i.level);
+		writer.write(i.availability);
+	}
+
+	writer.write(available_tech.size());
+	for (auto&& i : available_tech) {
+		writer.write(i.player_flags);
+		writer.write_string(i.id);
+	}
+
+	// Missing randoms units
+
+	HANDLE handle;
+	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.w3e", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+
+	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	SFileFinishFile(handle);
 }

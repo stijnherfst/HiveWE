@@ -1,8 +1,12 @@
 #include "stdafx.h"
 
 void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei length, const GLchar *message, void *) {
-	// Ignore non-significant error/warning codes
-	if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 8) return;
+	// Skip buffer info messages, framebuffer info messages, texture usage state warning, redundant state change buffer
+	if (id == 131185 || id == 131169 || id == 131204 || id == 8) {
+		return;
+	}
+
+	//if (id == 131218) return;
 
 	std::cout << "---------------" << std::endl;
 	std::cout << "Debug message (" << id << "): " << message << std::endl;
@@ -40,7 +44,6 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		default: break;
 	} 
 	std::cout << std::endl;
-	//std::cout << id << "\n";
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
@@ -104,7 +107,7 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map.render(width(), height(), rect().contains(mapFromGlobal(QCursor::pos())));
+	map.render(width(), height());
 	gl->glBindVertexArray(0);
 
 	if (map.show_timings) {

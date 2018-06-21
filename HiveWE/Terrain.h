@@ -117,7 +117,7 @@ public:
 
 	void create();
 	bool load(BinaryReader& reader);
-	void save();
+	void save() const;
 	void render();
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
