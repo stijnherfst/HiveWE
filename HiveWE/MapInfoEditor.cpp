@@ -76,6 +76,15 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map.info.weather_id != 0);
 
+	ui.customLighting->setChecked(!map.info.custom_sound_environment.empty());
+	slk::SLK environment_sounds_slk("UI/SoundInfo/EnvironmentSounds.slk");
+	environment_sounds_slk.merge(ini::INI("UI/WorldEditStrings.txt"), "WorldEditStrings");
+
+	for (int i = 1; i < environment_sounds_slk.rows; i++) {
+		ui.customLightingCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)));
+	}
+	ui.customLightingCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment)));
+
 	ui.gameDataSet->setCurrentIndex(map.info.game_data_set);
 
 	ui.itemClassification->setChecked(map.info.item_classification);

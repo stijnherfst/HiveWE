@@ -6,8 +6,6 @@ namespace slk {
 	}
 
 	void SLK::load(const fs::path& path, const bool local) {
-		//auto begin = std::chrono::high_resolution_clock::now();
-
 		std::stringstream file;
 		if (local) {
 			std::ifstream stream(path);
@@ -26,6 +24,7 @@ namespace slk {
 
 		size_t column = 0;
 		size_t row = 0;
+		size_t max_rows = 0; // To resize since some files have empty rows at the end. Fix it willy >:(
 
 		const auto parse_int_part = [&]() {
 			position++;
@@ -78,6 +77,7 @@ namespace slk {
 							column = parse_int_part() - 1;
 						}
 					}
+					max_rows = std::max(max_rows, row);
 
 					position++;
 
@@ -105,10 +105,22 @@ namespace slk {
 					goto exitloop;
 			}
 		}
-		exitloop:;
+	exitloop:
+		// If there are empty rows at the end
+		if (rows > max_rows + 1) {
+			rows = max_rows + 1;
+			table_data.resize(rows, std::vector<std::string>(columns));
+			shadow_data.resize(rows, std::vector<std::string>(columns));
 
-		//auto end = std::chrono::high_resolution_clock::now();
-		//std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0 << "\n";
+			for (auto it = header_to_row.begin(); it != header_to_row.end();) {
+				if (it->second == max_rows) {
+					it = header_to_row.erase(it);
+				} else {
+					++it;
+				}
+			}
+			std::cout << path << " Contains empty rows at the end\n";
+		}
 	}
 
 	void SLK::save(const fs::path& path) const {
@@ -125,12 +137,12 @@ namespace slk {
 		output << "E";
 	}
 
-	std::string SLK::data(const std::string& column_header, const size_t row) {
+	std::string SLK::data(const std::string& column_header, const size_t row) const {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			return "";
 		}
 
-		const size_t column = header_to_column[column_header];
+		const size_t column = header_to_column.at(column_header);
 
 		if (row >= rows) {
 			std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
@@ -144,7 +156,7 @@ namespace slk {
 		return table_data[row][column];
 	}
 
-	std::string SLK::data(const std::string& column_header, const std::string& row_header) {
+	std::string SLK::data(const std::string& column_header, const std::string& row_header) const {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
 			return "";
 		}
@@ -153,8 +165,8 @@ namespace slk {
 			return "";
 		}
 
-		const size_t column = header_to_column[column_header];
-		const size_t row = header_to_row[row_header];
+		const size_t column = header_to_column.at(column_header);
+		const size_t row = header_to_row.at(row_header);
 
 		if (!shadow_data[row][column].empty()) {
 			return shadow_data[row][column];
@@ -163,6 +175,7 @@ namespace slk {
 		return table_data[row][column];
 	}
 
+	/// Merges the data of the files. Any unknown rows and columns are appended
 	void SLK::merge(const slk::SLK& slk) {
 		for (size_t i = 1; i < slk.columns; i++) {
 			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
@@ -180,6 +193,9 @@ namespace slk {
 		}
 	}
 
+	/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
+	/// If an unknown section key is encountered then that section is skipped
+	/// If an unknown column key is encountered then the column is added
 	void SLK::merge(const ini::INI & ini) {
 		for (auto&& [section_key, section_value] : ini.ini_data) {
 			// If id does not exist
@@ -191,6 +207,19 @@ namespace slk {
 					add_column(key);
 				}
 				table_data[header_to_row[section_key]][header_to_column[key]] = value;
+			}
+		}
+	}
+
+	/// Merges the data of the files based on a certain section key.
+	/// The keys of the section are matched with all the cells in the table and if they match will replace the value
+	void SLK::merge(const ini::INI & ini, const std::string& section) {
+		for (auto&& i : table_data) {
+			for (auto&& j : i) {
+				std::string data = ini.data(section, j);
+				if (!data.empty()) {
+					j = data;
+				}
 			}
 		}
 	}
