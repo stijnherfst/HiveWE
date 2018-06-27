@@ -14,14 +14,18 @@ void MapInfo::load(BinaryReader& reader) {
 	description = reader.read_c_string();
 	suggested_players = reader.read_c_string();
 
-	// camera bounds
-	reader.advance(48);
+	camera_top_left = reader.read<glm::vec2>();
+	camera_top_right = reader.read<glm::vec2>();
+	camera_bottom_left = reader.read<glm::vec2>();
+	camera_bottom_right = reader.read<glm::vec2>();
+
+	camera_complements = reader.read<glm::ivec4>();
 
 	playable_width = reader.read<uint32_t>();
 	playable_height = reader.read<uint32_t>();
 
 	int flags = reader.read<uint32_t>();
-	all_flags = flags; // ToDo temporary
+	all_flags = flags; // ToDo temporary to check saving
 	hide_minimap_preview = flags & 0x0001;
 	modif_ally_priorities = flags & 0x0002;
 	melee_map = flags & 0x0004;
@@ -86,7 +90,7 @@ void MapInfo::load(BinaryReader& reader) {
 			i.player_masks = reader.read<uint32_t>();
 			i.name = reader.read_c_string();
 		}
-		
+
 		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of atleast 12
 		if (map.is_protected) {
 			return;
@@ -152,13 +156,15 @@ void MapInfo::save() const {
 	writer.write_c_string(description);
 	writer.write_c_string(suggested_players);
 
-	// Camera bounds 40 8 bytes
+	writer.write(camera_top_left);
+	writer.write(camera_top_right);
+	writer.write(camera_bottom_left);
+	writer.write(camera_bottom_right);
+
+	writer.write(camera_complements);
 
 	writer.write(playable_width);
 	writer.write(playable_height);
-	writer.write(editor_version);
-	writer.write(editor_version);
-	writer.write(editor_version);
 
 	int flags = hide_minimap_preview * 0x0001
 		| modif_ally_priorities * 0x0002
@@ -209,7 +215,7 @@ void MapInfo::save() const {
 	writer.write(custom_light_tileset);
 	writer.write(water_color);
 
-	writer.write(players.size());
+	writer.write<uint32_t>(players.size());
 	for (auto&& i : players) {
 		writer.write(i.internal_number);
 		writer.write(static_cast<int>(i.type));
@@ -221,14 +227,14 @@ void MapInfo::save() const {
 		writer.write(i.ally_high_priorities_flags);
 	}
 
-	writer.write(forces.size());
+	writer.write<uint32_t>(forces.size());
 	for (auto&& i : forces) {
 		writer.write(static_cast<int>(i.focus_flags));
 		writer.write(i.player_masks);
 		writer.write_c_string(i.name);
 	}
 
-	writer.write(available_upgrades.size());
+	writer.write<uint32_t>(available_upgrades.size());
 	for (auto&& i : available_upgrades) {
 		writer.write(i.player_flags);
 		writer.write_string(i.id);
@@ -236,16 +242,42 @@ void MapInfo::save() const {
 		writer.write(i.availability);
 	}
 
-	writer.write(available_tech.size());
+	writer.write<uint32_t>(available_tech.size());
 	for (auto&& i : available_tech) {
 		writer.write(i.player_flags);
 		writer.write_string(i.id);
 	}
 
-	// Missing randoms units
+	writer.write<uint32_t>(random_unit_tables.size());
+	for (auto&& i : random_unit_tables) {
+		writer.write(i.number);
+		writer.write_c_string(i.name);
+		writer.write_vector(i.positions);
+
+		writer.write<uint32_t>(i.lines.size());
+		for (auto&& j : i.lines) {
+			writer.write(j.chance);
+			writer.write_vector(j.ids);
+		}
+	}
+
+	writer.write<uint32_t>(random_item_tables.size());
+	for (auto&& i : random_item_tables) {
+		writer.write(i.number);
+		writer.write_c_string(i.name);
+
+		writer.write<uint32_t>(i.item_sets.size());
+		for (auto&& j : i.item_sets) {
+			writer.write<uint32_t>(j.items.size());
+			for (auto&&[chance, id] : j.items) {
+				writer.write(chance);
+				writer.write_string(id);
+			}
+		}
+	}
 
 	HANDLE handle;
-	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.w3e", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.w3i", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
 	if (!success) {
 		std::cout << GetLastError() << "\n";
 	}

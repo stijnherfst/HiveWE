@@ -4,17 +4,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
-		save();
-		emit accept();
-		close();
-	});
-
-	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
-		emit reject();
-		close();
-	});
-
 	// Description Tab
 	ui.name->setText(QString::fromStdString(map.trigger_strings.strings[map.info.name]));
 	ui.suggestedPlayers->setText(QString::fromStdString(map.trigger_strings.strings[map.info.suggested_players]));
@@ -76,18 +65,53 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map.info.weather_id != 0);
 
-	ui.customLighting->setChecked(!map.info.custom_sound_environment.empty());
-	slk::SLK environment_sounds_slk("UI/SoundInfo/EnvironmentSounds.slk");
-	environment_sounds_slk.merge(ini::INI("UI/WorldEditStrings.txt"), "WorldEditStrings");
+	auto world_edit_strings = ini::INI("UI/WorldEditStrings.txt");
+	// Global Weather
+	slk::SLK weather_slk("TerrainArt/Weather.slk");
+	weather_slk.merge(world_edit_strings, "WorldEditStrings");
 
-	for (int i = 1; i < environment_sounds_slk.rows; i++) {
-		ui.customLightingCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)));
+	ui.globalWeather->setChecked(map.info.weather_id != 0);
+	for (int i = 1; i < weather_slk.rows; i++) {
+		ui.globalWeatherCombo->addItem(QString::fromStdString(weather_slk.data("name", i)), QString::fromStdString(weather_slk.data("effectID", i)));
 	}
-	ui.customLightingCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment)));
+	std::string t = { reinterpret_cast<char*>(&map.info.weather_id), 4 };
+	ui.globalWeatherCombo->setCurrentText(QString::fromStdString(weather_slk.data("name", t)));
 
-	ui.gameDataSet->setCurrentIndex(map.info.game_data_set);
+	// Custom Sound
+	slk::SLK environment_sounds_slk("UI/SoundInfo/EnvironmentSounds.slk");
+	environment_sounds_slk.merge(world_edit_strings, "WorldEditStrings");
+
+	ui.customSound->setChecked(!map.info.custom_sound_environment.empty());
+	for (int i = 1; i < environment_sounds_slk.rows; i++) {
+		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)), QString::fromStdString(environment_sounds_slk.data("EnvironmentType", i)));
+	}
+	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment)));
+
+	// Custom Lighting
+	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
+		auto parts = split(value, ',');
+		ui.customLightingCombo->addItem(QString::fromStdString(parts.front()), map.info.custom_light_tileset);
+
+		if (key == std::string(&map.info.custom_light_tileset, 1)) {
+			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);
+		}
+	}
+	ui.customLighting->setChecked(map.info.custom_light_tileset != 0);
 
 	ui.itemClassification->setChecked(map.info.item_classification);
+	ui.gameDataSet->setCurrentIndex(map.info.game_data_set);
+
+	
+	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
+		save();
+		emit accept();
+		close();
+	});
+
+	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
+		emit reject();
+		close();
+	});
 
 	show();
 }
@@ -95,9 +119,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 void MapInfoEditor::save() const {
 	// Description Tab
 	map.trigger_strings.strings[map.info.name] = ui.name->text().toStdString();
-	map.trigger_strings.strings[map.info.suggested_players] = ui.suggestedPlayers->text().toStdString();
-	map.trigger_strings.strings[map.info.description] = ui.description->toPlainText().toStdString();
 	map.trigger_strings.strings[map.info.author] = ui.author->text().toStdString();
+	map.trigger_strings.strings[map.info.description] = ui.description->toPlainText().toStdString();
+	map.trigger_strings.strings[map.info.suggested_players] = ui.suggestedPlayers->text().toStdString();
 
 	if (ui.useDefaultLoadingScreen->isChecked()) {
 		map.info.loading_screen_model = "";
@@ -110,9 +134,13 @@ void MapInfoEditor::save() const {
 		map.info.loading_screen_number = ui.campaignLoadingScreen->currentIndex();
 	}
 
+	map.trigger_strings.strings[map.info.loading_screen_text] = ui.loadingScreenText->toPlainText().toStdString();
 	map.trigger_strings.strings[map.info.loading_screen_title] = ui.loadingScreenTitle->text().toStdString();
 	map.trigger_strings.strings[map.info.loading_screen_subtitle] = ui.loadingScreenSubtitle->text().toStdString();
-	map.trigger_strings.strings[map.info.loading_screen_text] = ui.loadingScreenText->toPlainText().toStdString();
+
+	map.info.game_data_set = ui.gameDataSet->currentIndex();
+
+	// Prologue?
 
 	// Options Tab
 	map.info.melee_map = ui.meleeMap->isChecked();
@@ -128,11 +156,27 @@ void MapInfoEditor::save() const {
 	map.info.fog_density = ui.fogDensity->value();
 	map.info.fog_color = ui.fogColor->get_glm_color();
 
+	// Global Weather
+	if (ui.globalWeather->isChecked()) {
+		map.info.weather_id = *reinterpret_cast<int*>(ui.globalWeatherCombo->currentData().toString().toStdString().data());
+	} else {
+		map.info.weather_id = 0;
+	}
+
+	// Custom Sound
+	if (ui.customSound->isChecked()) {
+		map.info.custom_sound_environment = ui.customSoundCombo->currentData().toString().toStdString();
+	} else {
+		map.info.custom_sound_environment = "";
+	}
+
+	// Custom Lighting
+	if (ui.customLighting->isChecked()) {
+		map.info.custom_light_tileset = 0;
+	} else {
+		map.info.custom_light_tileset = ui.customLightingCombo->currentData().toChar().toLatin1();
+	}
+
 	map.info.water_tinting = ui.waterTinting->isChecked();
 	map.info.water_color = ui.waterColor->get_glm_color();
-
-
-	//ui.globalWeather->setChecked(map.info.weather_id != 0);
-
-	//ui.gameDataSet->setCurrentIndex(map.info.game_data_set);
 }

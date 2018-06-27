@@ -21,7 +21,7 @@ public:
 	}
 
 	void write_c_string(const std::string& string) {
-		if (string.back() == '\0') {
+		if (!string.empty() && string.back() == '\0') {
 			buffer.resize(buffer.size() + string.size());
 			std::copy(string.begin(), string.end(), buffer.end() - string.size());
 		} else {

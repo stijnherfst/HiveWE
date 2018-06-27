@@ -2,6 +2,8 @@
 
 class Map {
 public:
+	bool loaded = false;
+
 	TriggerStrings trigger_strings;
 	MapInfo info;
 	Terrain terrain;

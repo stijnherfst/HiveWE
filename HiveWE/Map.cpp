@@ -9,6 +9,7 @@ void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::absolute(path);
 
+	// Trigger strings
 	BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
 	trigger_strings.load(war3map_wts);
 
@@ -86,6 +87,8 @@ void Map::load(const fs::path& path) {
 	camera->reset();
 
 	meshes.clear(); // ToDo this is not a nice way to do this
+
+	loaded = true;
 }
 
 bool Map::save(const fs::path& path) const {
@@ -110,6 +113,8 @@ bool Map::save(const fs::path& path) const {
 		terrain.save();
 		doodads.save();
 		units.save();
+		info.save();
+		trigger_strings.save();
 
 		imports.save();
 		imports.save_dir_file();
@@ -122,6 +127,8 @@ bool Map::save(const fs::path& path) const {
 		terrain.save();
 		doodads.save();
 		units.save();
+		info.save();
+		trigger_strings.save();
 
 		imports.save();
 		imports.save_dir_file();
@@ -145,6 +152,11 @@ void Map::play_test() {
 }
 
 void Map::render(int width, int height) {
+	// While switching maps it may happen that render is called before loading has finished.
+	if (!loaded) {
+		return;
+	}
+
 	auto total_time_begin = std::chrono::high_resolution_clock::now();
 
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

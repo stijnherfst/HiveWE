@@ -81,6 +81,14 @@ public:
 	std::string author;
 	std::string description;
 	std::string suggested_players;
+
+	glm::vec2 camera_top_left;
+	glm::vec2 camera_top_right;
+	glm::vec2 camera_bottom_left;
+	glm::vec2 camera_bottom_right;
+
+	glm::ivec4 camera_complements;
+
 	int playable_width;
 	int playable_height;
 
@@ -120,12 +128,12 @@ public:
 	float fog_start_z_height;
 	float fog_end_z_height;
 	float fog_density;
-	glm::vec4 fog_color;
+	glm::u8vec4 fog_color;
 
 	int weather_id;
 	std::string custom_sound_environment;
 	char custom_light_tileset;
-	glm::vec4 water_color;
+	glm::u8vec4 water_color;
 
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
