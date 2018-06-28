@@ -74,8 +74,8 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	for (int i = 1; i < weather_slk.rows; i++) {
 		ui.globalWeatherCombo->addItem(QString::fromStdString(weather_slk.data("name", i)), QString::fromStdString(weather_slk.data("effectID", i)));
 	}
-	std::string t = { reinterpret_cast<char*>(&map.info.weather_id), 4 };
-	ui.globalWeatherCombo->setCurrentText(QString::fromStdString(weather_slk.data("name", t)));
+	std::string weather_id = { reinterpret_cast<char*>(&map.info.weather_id), 4 };
+	ui.globalWeatherCombo->setCurrentText(QString::fromStdString(weather_slk.data("name", weather_id)));
 
 	// Custom Sound
 	slk::SLK environment_sounds_slk("UI/SoundInfo/EnvironmentSounds.slk");
@@ -85,12 +85,13 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	for (int i = 1; i < environment_sounds_slk.rows; i++) {
 		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)), QString::fromStdString(environment_sounds_slk.data("EnvironmentType", i)));
 	}
+	auto t = environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment);
 	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment)));
 
 	// Custom Lighting
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
 		auto parts = split(value, ',');
-		ui.customLightingCombo->addItem(QString::fromStdString(parts.front()), map.info.custom_light_tileset);
+		ui.customLightingCombo->addItem(QString::fromStdString(parts.front()), key.front());
 
 		if (key == std::string(&map.info.custom_light_tileset, 1)) {
 			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);
@@ -171,7 +172,7 @@ void MapInfoEditor::save() const {
 	}
 
 	// Custom Lighting
-	if (ui.customLighting->isChecked()) {
+	if (!ui.customLighting->isChecked()) {
 		map.info.custom_light_tileset = 0;
 	} else {
 		map.info.custom_light_tileset = ui.customLightingCombo->currentData().toChar().toLatin1();

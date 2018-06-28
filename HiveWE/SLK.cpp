@@ -113,7 +113,7 @@ namespace slk {
 			shadow_data.resize(rows, std::vector<std::string>(columns));
 
 			for (auto it = header_to_row.begin(); it != header_to_row.end();) {
-				if (it->second == max_rows) {
+				if (it->second > max_rows) {
 					it = header_to_row.erase(it);
 				} else {
 					++it;
