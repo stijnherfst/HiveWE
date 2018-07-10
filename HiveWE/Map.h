@@ -5,6 +5,7 @@ public:
 	bool loaded = false;
 
 	TriggerStrings trigger_strings;
+	Triggers triggers;
 	MapInfo info;
 	Terrain terrain;
 	PathingMap pathing_map;

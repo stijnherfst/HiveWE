@@ -10,4 +10,12 @@ public:
 
 private:
 	Ui::TriggerEditor ui;
+
+	QIcon folder_icon;
+	QIcon file_icon;
+
+	std::unordered_map<int, QTreeWidgetItem*> folders;
+	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
+
+	void item_clicked(QTreeWidgetItem* item);
 };

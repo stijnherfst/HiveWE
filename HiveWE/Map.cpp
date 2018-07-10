@@ -10,8 +10,22 @@ void Map::load(const fs::path& path) {
 	filesystem_path = fs::absolute(path);
 
 	// Trigger strings
-	BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
-	trigger_strings.load(war3map_wts);
+	if (hierarchy.map.file_exists("war3map.wts")) {
+		BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
+		trigger_strings.load(war3map_wts);
+	}
+
+	// Triggers (GUI and JASS)
+	if (hierarchy.map.file_exists("war3map.wtg")) {
+		BinaryReader war3map_wtg = BinaryReader(hierarchy.map.file_open("war3map.wtg").read());
+		triggers.load(war3map_wtg);
+
+		// Custom text triggers (JASS)
+		if (hierarchy.map.file_exists("war3map.wct")) {
+			BinaryReader war3map_wct = BinaryReader(hierarchy.map.file_open("war3map.wct").read());
+			triggers.load_jass(war3map_wct);
+		}
+	}
 
 	// Protection check
 	is_protected = !hierarchy.map.file_exists("war3map.wtg");
