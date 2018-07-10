@@ -29,9 +29,6 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 		"function", "endfunction", "scope", "endscope", "library", "library_once", "endlibrary", "struct", "endstruct", "method", 
 		"endmethod", "loop", "endloop", "if", "then", "else", "elseif", "endif", "operator", "readonly", "stub", "module", "endmodule", 
 		"implement", "optional" });
-
-
-
 }
 
 const char* Styling::language() const {

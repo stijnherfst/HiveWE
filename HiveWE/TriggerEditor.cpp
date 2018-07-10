@@ -5,8 +5,6 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	ui.splitter->setSizes({ 10000, 20000 });
-
-
 	show();
 
 	QFileIconProvider icons;
@@ -27,7 +25,9 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		files.emplace(item, i);
 	}
 
-	connect(ui.explorer, &QTreeWidget::itemClicked, this, &TriggerEditor::item_clicked);
+
+	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
+	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { delete ui.editor->widget(index); });
 }
 
 void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
@@ -36,7 +36,18 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	}
 	Trigger& trigger = files.at(item).get();
 	
+
+	// Check if trigger is already open and if so focus it
+	for (int i = 0; i < ui.editor->count(); i++) {
+		if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
+			ui.editor->setCurrentIndex(i);
+			return;
+		}
+	}
+
 	QWidget* tab = new QWidget;
+	tab->setProperty("TriggerID", trigger.id);
+
 	QVBoxLayout* layout = new QVBoxLayout(tab);
 
 	if (!trigger.custom_text.empty()) {
@@ -45,5 +56,6 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		edit->setText(QString::fromStdString(trigger.custom_text));
 	}
 
-	ui.editor->addTab(tab, QString::fromStdString(trigger.name)); 
+	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
+	ui.editor->setCurrentWidget(tab);
 }
