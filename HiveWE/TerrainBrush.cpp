@@ -69,11 +69,19 @@ void TerrainBrush::apply() {
 						continue;
 					}
 
-					map.terrain.corners[i][j].blight = true;
+					corners[i][j].blight = true;
 				} else {
-					map.terrain.corners[i][j].blight = false;
-					map.terrain.corners[i][j].ground_texture = id;
-					map.terrain.corners[i][j].ground_variation = get_random_variation();
+					corners[i][j].blight = false;
+					corners[i][j].ground_texture = id;
+					corners[i][j].ground_variation = get_random_variation();
+				}
+				// Set blight pathing
+				for (int k = 0; k < 4; k++) {
+					for (int l = 0; l < 4; l++) {
+						const int id = map.terrain.corners[i][j].ground_texture;
+						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00100000;
+						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].blight;
+					}
 				}
 
 				if (apply_tile_pathing) {
@@ -250,6 +258,14 @@ void TerrainBrush::apply() {
 						map.terrain.water_heights[j * map.terrain.width + i] = corners[i][j].layer_height + map.terrain.height_offset;
 						break;
 				}
+				// Set water pathing
+				for (int k = 0; k < 4; k++) {
+					for (int l = 0; l < 4; l++) {
+						const int id = map.terrain.corners[i][j].ground_texture;
+						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b01000000;
+						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water;
+					}
+				}
 				
 				check_nearby(x, y, i, j, updated_area);
 				map.terrain.ground_corner_heights[j * map.terrain.width + i] = map.terrain.corner_height(i, j);
@@ -286,8 +302,8 @@ void TerrainBrush::apply() {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
 								const int id = map.terrain.corners[i  ][j ].ground_texture;
-								map.pathing_map.pathing_cells[((j  ) * 4 + l) * map.pathing_map.width + (i ) * 4 + k] &= ~0b00001110;
-								map.pathing_map.pathing_cells[((j  ) * 4 + l) * map.pathing_map.width + (i ) * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
+								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
+								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
 							}
 						}
 					}
@@ -363,15 +379,13 @@ void TerrainBrush::apply() {
 
 	}
 
-	if (apply_tile_pathing || apply_cliff_pathing) {
-		QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map.pathing_map.width, map.pathing_map.height });
+	QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map.pathing_map.width, map.pathing_map.height });
 
-		// Update pathing data
-		const int offset = pathing_area.y() * map.pathing_map.width + pathing_area.x();
-		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.pathing_map.width);
-		gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
-		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-	}
+	// Update pathing data
+	const int offset = pathing_area.y() * map.pathing_map.width + pathing_area.x();
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.pathing_map.width);
+	gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 	if (apply_height || apply_cliff) {
 		map.doodads.update_area(updated_area);
