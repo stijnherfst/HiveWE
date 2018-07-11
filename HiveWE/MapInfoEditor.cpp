@@ -85,7 +85,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	for (int i = 1; i < environment_sounds_slk.rows; i++) {
 		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)), QString::fromStdString(environment_sounds_slk.data("EnvironmentType", i)));
 	}
-	auto t = environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment);
 	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map.info.custom_sound_environment)));
 
 	// Custom Lighting

@@ -37,10 +37,17 @@ namespace fs = std::filesystem;
 #include <turbojpeg.h>
 
 // Custom Qt Widgets
+#ifdef _DEBUG
+#define QSCINTILLA_DLL
+#endif
+#include <Qsci/qsciscintilla.h>
+#include <Qsci/qscilexercustom.h>
 #include "ColorButton.h"
+#include "JassEditor.h"
 
 #undef _DLL
 #include <StormLib.h>
+#include <CascLib.h>
 
 // Base Classes
 #include "BinaryReader.h"
@@ -49,6 +56,7 @@ namespace fs = std::filesystem;
 
 // File formats
 #include "MPQ.h"
+#include "CASC.h"
 #include "BLP.h"
 #include "INI.h"
 #include "SLK.h"
@@ -68,6 +76,7 @@ namespace fs = std::filesystem;
 #include "StaticMesh.h"
 
 #include "TriggerStrings.h"
+#include "Triggers.h"
 #include "Imports.h"
 #include "Terrain.h"
 #include "PathingMap.h"

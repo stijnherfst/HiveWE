@@ -12,7 +12,8 @@ private:
 	void add_tile() const;
 	void remove_tile() const;
 	void update_available_tiles() const;
-	void to_tile_clicked(QAbstractButton* button) const;
+	void existing_tile_clicked(QAbstractButton* button) const;
+	void available_tile_clicked(QAbstractButton* button) const;
 	void shift_left() const;
 	void shift_right() const;
 	void save_tiles();

@@ -34,10 +34,8 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	update_available_tiles();
 
 	connect(ui.tileset, &QComboBox::currentTextChanged, this, &TileSetter::update_available_tiles);
-	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::to_tile_clicked);
-	connect(available_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
-		ui.additionalTileLabel->setText("Tile: " + button->property("tileName").toString());
-	});
+	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::existing_tile_clicked);
+	connect(available_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::available_tile_clicked);
 	connect(ui.additionalAdd, &QPushButton::clicked, this, &TileSetter::add_tile);
 	connect(ui.selectedRemove, &QPushButton::clicked, this, &TileSetter::remove_tile);
 	connect(ui.selectedShiftLeft, &QPushButton::clicked, this, &TileSetter::shift_left);
@@ -50,13 +48,6 @@ void TileSetter::add_tile() const {
 	const auto available_button = available_group->checkedButton();
 	if (!available_button) {
 		return;
-	}
-
-	// if the tile is already added
-	for (auto&& i : selected_group->buttons()) {
-		if (i->property("tileID") == available_button->property("tileID")) {
-			return;
-		}
 	}
 
 	QPushButton* button = new QPushButton;
@@ -116,7 +107,7 @@ void TileSetter::update_available_tiles() const {
 	//	adjustSize();
 }
 
-void TileSetter::to_tile_clicked(QAbstractButton* button) const {
+void TileSetter::existing_tile_clicked(QAbstractButton* button) const {
 	ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
 
 	const int index = selected_layout->indexOf(button);
@@ -133,6 +124,19 @@ void TileSetter::to_tile_clicked(QAbstractButton* button) const {
 	}
 }
 
+void TileSetter::available_tile_clicked(QAbstractButton* button) const {
+	ui.additionalTileLabel->setText("Tile: " + button->property("tileName").toString());
+
+	// Check if tile was already in existing/modified tileset
+	bool tile_already_added = false;
+	for (auto&& i : selected_group->buttons()) {
+		if (i->property("tileID") == button->property("tileID")) {
+			tile_already_added = true;
+		}
+	}
+	tile_already_added |= selected_group->buttons().size() >= 16;
+	ui.additionalAdd->setDisabled(tile_already_added);
+}
 
 void TileSetter::shift_left() const {
 	const auto selected_button = selected_group->checkedButton();

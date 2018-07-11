@@ -10,8 +10,22 @@ void Map::load(const fs::path& path) {
 	filesystem_path = fs::absolute(path);
 
 	// Trigger strings
-	BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
-	trigger_strings.load(war3map_wts);
+	if (hierarchy.map.file_exists("war3map.wts")) {
+		BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
+		trigger_strings.load(war3map_wts);
+	}
+
+	// Triggers (GUI and JASS)
+	if (hierarchy.map.file_exists("war3map.wtg")) {
+		BinaryReader war3map_wtg = BinaryReader(hierarchy.map.file_open("war3map.wtg").read());
+		triggers.load(war3map_wtg);
+
+		// Custom text triggers (JASS)
+		if (hierarchy.map.file_exists("war3map.wct")) {
+			BinaryReader war3map_wct = BinaryReader(hierarchy.map.file_open("war3map.wct").read());
+			triggers.load_jass(war3map_wct);
+		}
+	}
 
 	// Protection check
 	is_protected = !hierarchy.map.file_exists("war3map.wtg");
@@ -139,14 +153,15 @@ bool Map::save(const fs::path& path) const {
 }
 
 void Map::play_test() {
-	if (!save("Data/Temporary/temp.w3x")) {
+	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
+	if (!save(path)) {
 		return;
 	}
 
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
-	arguments << "-loadfile" << QString::fromStdString(fs::absolute("Data/Temporary/temp.w3x").string());
+	arguments << "-loadfile" << QString::fromStdString(path.string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }

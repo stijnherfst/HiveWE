@@ -49,8 +49,8 @@ namespace mpq {
 	void MPQ::open(File& archive, const unsigned long flags) {
 		const std::vector<uint8_t> buffer = archive.read();
 
-		// Create unique name for local file
-		local_path = "Data/Temporary/" + std::to_string(time(nullptr)) + ".mpq";
+		// Create unique name for temp file
+		local_path = QDir::tempPath().toStdString() + "/" + std::to_string(time(nullptr)) + ".mpq";
 		std::ofstream output(local_path, std::ofstream::binary);
 		if (!output) {
 			std::cout << "Opening/Creation failed for: " << local_path << std::endl;
