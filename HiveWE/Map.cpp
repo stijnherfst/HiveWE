@@ -11,8 +11,10 @@ void Map::load(const fs::path& path) {
 
 	// Trigger strings
 	if (hierarchy.map.file_exists("war3map.wts")) {
-		BinaryReader war3map_wts(hierarchy.map.file_open("war3map.wts").read());
-		trigger_strings.load(war3map_wts);
+		if (auto t = hierarchy.map.file_open("war3map.wts").read2()) {
+			BinaryReader war3map_wts(t.value());
+			trigger_strings.load(war3map_wts);
+		}
 	}
 
 	// Triggers (GUI and JASS)

@@ -78,7 +78,9 @@ void TerrainBrush::apply() {
 				// Set blight pathing
 				for (int k = 0; k < 4; k++) {
 					for (int l = 0; l < 4; l++) {
-						const int id = map.terrain.corners[i][j].ground_texture;
+						if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
+							continue;
+						}
 						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00100000;
 						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].blight;
 					}
@@ -261,7 +263,10 @@ void TerrainBrush::apply() {
 				// Set water pathing
 				for (int k = 0; k < 4; k++) {
 					for (int l = 0; l < 4; l++) {
-						const int id = map.terrain.corners[i][j].ground_texture;
+						if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
+							continue;
+						}
+
 						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b01000000;
 						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water;
 					}
@@ -405,12 +410,6 @@ int TerrainBrush::get_random_variation() const {
 	const std::uniform_int_distribution<> dist(0, 570);
 
 	int nr = dist(e2) - 1;
-
-	const int id = map.terrain.ground_texture_to_id[tile_id];
-
-	if (!map.terrain.ground_textures[id]->extended) {
-		return nr < 285 ? 0 : 15;
-	}
 
 	for (auto&&[variation, chance] : variation_chances) {
 		if (nr < chance) {

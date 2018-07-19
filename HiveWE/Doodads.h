@@ -21,11 +21,14 @@ struct Doodad {
 	int world_editor_id;
 
 	glm::mat4 matrix = glm::mat4(1.f);
+	std::shared_ptr<StaticMesh> mesh;
 };
 
 struct SpecialDoodad {
 	std::string id;
-	glm::ivec3 position;
+	glm::vec3 position;
+	glm::mat4 matrix = glm::mat4(1.f);
+	std::shared_ptr<StaticMesh> mesh;
 };
 
 class Doodads {
@@ -54,4 +57,6 @@ public:
 	void update_area(const QRect& area);
 	void create();
 	void render();
+
+	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };

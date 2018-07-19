@@ -36,9 +36,6 @@ public:
 
 	fs::path path;
 
-	int vertices = 0;
-	int indices = 0;
-
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::shared_ptr<mdx::MTLS> mtls;
 	std::shared_ptr<Shader> shader; // ToDo only needed one for class

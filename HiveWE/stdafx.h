@@ -17,6 +17,7 @@
 #include <regex>
 #include <random>
 #include <cctype>
+#include <optional>
 
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;

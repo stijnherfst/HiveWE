@@ -7,6 +7,26 @@ namespace mpq {
 
 	std::vector<uint8_t> File::read() const {
 		const uint32_t size = SFileGetFileSize(handle, nullptr);
+		if (size == 0) {
+			return {};
+		}
+
+		std::vector<uint8_t> buffer(size);
+
+		unsigned long bytes_read;
+		const bool success = SFileReadFile(handle, &buffer[0], size, &bytes_read, nullptr);
+		if (!success) {
+			std::cout << "Failed to read file: " << GetLastError() << std::endl;
+		}
+		return buffer;
+	}
+
+	std::optional<std::vector<uint8_t>> File::read2() const {
+		const uint32_t size = SFileGetFileSize(handle, nullptr);
+		if (size == 0) {
+			return {};
+		}
+
 		std::vector<uint8_t> buffer(size);
 
 		unsigned long bytes_read;

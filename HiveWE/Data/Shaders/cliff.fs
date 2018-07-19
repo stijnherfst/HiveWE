@@ -15,6 +15,7 @@ void main() {
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
 	if (show_pathing_map_static) {
-		color = color + vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 255) * 0.25;
+		vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
+		color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
 	}
 }

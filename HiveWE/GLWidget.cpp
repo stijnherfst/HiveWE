@@ -77,7 +77,7 @@ void GLWidget::initializeGL() {
 	shapes.init();
 
 	map.load(L"Data/Test.w3x");
-	new TriggerEditor(this);
+	//new TriggerEditor(this);
 }
 
 void GLWidget::resizeGL(const int w, const int h) {

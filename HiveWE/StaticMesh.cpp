@@ -7,6 +7,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		BinaryReader reader = hierarchy.open_file(path);
 		this->path = path;
 
+		int vertices = 0;
+		int indices = 0;
+		int uvs = 0;
 		mdx::MDX model = mdx::MDX(reader);
 
 		has_mesh = model.has_chunk<mdx::GEOS>();
@@ -15,6 +18,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
+				//uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
 			}
 			
 			// Allocate space
@@ -64,7 +68,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				animation.sync_point = i.sync_point;
 				animation.extent = i.extent;
 
-				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower); // Support unicode? Unless these are always ASCII
+				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
 
 				animations.emplace(i.name, animation);
 			}

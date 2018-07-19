@@ -22,6 +22,7 @@ namespace mpq {
 
 
 		std::vector<uint8_t> read() const;
+		std::optional<std::vector<uint8_t>> read2() const;
 		size_t size() const;
 		void close() const;
 	};
