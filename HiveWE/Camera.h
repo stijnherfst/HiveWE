@@ -51,7 +51,6 @@ struct TPSCamera : Camera {
 	void mouse_scroll_event(QWheelEvent* event) override;
 	void mouse_press_event(QMouseEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;
-	bool is_visible(glm::vec3 &&point) const;
 };
 
 extern Camera* camera;

@@ -7,9 +7,7 @@ public:
 	GLuint normal_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
-
-	int vertices;
-	int indices;
+	size_t indices;
 
 	static constexpr const char* name = "CliffMesh";
 

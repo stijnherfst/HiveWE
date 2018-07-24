@@ -211,9 +211,9 @@ namespace slk {
 		}
 	}
 
-	/// Merges the data of the files based on a certain section key.
+	/// Substitutes the data of the slk with data from the INI based on a certain section key.
 	/// The keys of the section are matched with all the cells in the table and if they match will replace the value
-	void SLK::merge(const ini::INI & ini, const std::string& section) {
+	void SLK::substitute(const ini::INI & ini, const std::string& section) {
 		for (auto&& i : table_data) {
 			for (auto&& j : i) {
 				std::string data = ini.data(section, j);

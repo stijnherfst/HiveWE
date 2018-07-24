@@ -31,8 +31,9 @@ namespace fs = std::filesystem;
 #include <QDialogButtonBox>
 
 // Dependencies
-#include <glm.hpp>
+#define GLM_FORCE_CXX14
 #define GLM_FORCE_RADIANS
+#include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <SOIL2.h>
 #include <turbojpeg.h>
@@ -51,9 +52,11 @@ namespace fs = std::filesystem;
 #include <CascLib.h>
 
 // Base Classes
+#include "Quadtree.h"
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
 #include "InputHandler.h"
+#include "WindowHandler.h"
 
 // File formats
 #include "MPQ.h"
@@ -64,7 +67,6 @@ namespace fs = std::filesystem;
 #include "MDX.h"
 
 #include "Utilities.h"
-#include "Quadtree.h"
 
 // Resource types
 #include "Hierarchy.h"
@@ -94,12 +96,14 @@ namespace fs = std::filesystem;
 #include "HiveWE.h"
 #include "GLWidget.h"
 
+// Menus
 #include "ImportManagerEdit.h"
 #include "ImportManager.h"
 #include "MapInfoEditor.h"
 #include "TriggerEditor.h"
 #include "PathingPallete.h"
 #include "TerrainPalette.h"
+#include "DoodadPalette.h"
 #include "TilePicker.h"
 #include "TileSetter.h"
 #include "TilePather.h"

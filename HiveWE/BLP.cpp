@@ -28,7 +28,7 @@ namespace blp {
 
 			for (int i = 0; i < mipmap_sizes.size(); i++) {
 				if (mipmap_sizes[i] == 0) {
-					goto exitloop;
+					break;
 				}
 				int mipmap_width = std::max(1.0, width / std::pow(2, i));
 				int mipmap_height = std::max(1.0, height / std::pow(2, i));
@@ -44,14 +44,13 @@ namespace blp {
 					std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
 				}
 			}
-			exitloop:
 			tjDestroy(handle);
 		} else if (content == direct) {
 			auto header = reader.read_vector<uint32_t>(256);
 
 			for (int i = 0; i < mipmap_sizes.size(); i++) {
 				if (mipmap_sizes[i] == 0) {
-					goto exitloop2;
+					break;
 				}
 
 				int mipmap_width = std::max(1.0, width / std::pow(2, i));
@@ -85,7 +84,6 @@ namespace blp {
 					}
 				}
 			}
-			exitloop2:;
 		}
 	}
 }

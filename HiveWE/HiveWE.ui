@@ -48,6 +48,7 @@
      </property>
      <addaction name="actionPathing_Palette"/>
      <addaction name="actionTerrain_Palette"/>
+     <addaction name="actionDoodads_Palette"/>
     </widget>
     <addaction name="menuNew_Pallete"/>
     <addaction name="actionImport_Manager"/>
@@ -92,10 +93,17 @@
     <addaction name="actionSize_and_Camera_Bounds"/>
     <addaction name="separator"/>
    </widget>
+   <widget class="QMenu" name="menuAdvanced">
+    <property name="title">
+     <string>Advanced</string>
+    </property>
+    <addaction name="actionEnforce_Water_Height_Limit"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
    <addaction name="menuScenario"/>
    <addaction name="menuTools"/>
+   <addaction name="menuAdvanced"/>
    <addaction name="menuWindow"/>
   </widget>
   <action name="actionConvert_Blockers_to_Pathmap">
@@ -330,6 +338,22 @@
   <action name="actionOptions">
    <property name="text">
     <string>Options...</string>
+   </property>
+  </action>
+  <action name="actionDoodads_Palette">
+   <property name="text">
+    <string>Doodads</string>
+   </property>
+  </action>
+  <action name="actionEnforce_Water_Height_Limit">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enforce Water Height Limits</string>
    </property>
   </action>
  </widget>

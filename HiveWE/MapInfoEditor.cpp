@@ -68,7 +68,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	auto world_edit_strings = ini::INI("UI/WorldEditStrings.txt");
 	// Global Weather
 	slk::SLK weather_slk("TerrainArt/Weather.slk");
-	weather_slk.merge(world_edit_strings, "WorldEditStrings");
+	weather_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.globalWeather->setChecked(map.info.weather_id != 0);
 	for (int i = 1; i < weather_slk.rows; i++) {
@@ -79,7 +79,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	// Custom Sound
 	slk::SLK environment_sounds_slk("UI/SoundInfo/EnvironmentSounds.slk");
-	environment_sounds_slk.merge(world_edit_strings, "WorldEditStrings");
+	environment_sounds_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.customSound->setChecked(!map.info.custom_sound_environment.empty());
 	for (int i = 1; i < environment_sounds_slk.rows; i++) {

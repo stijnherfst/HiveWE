@@ -101,28 +101,28 @@ public:
 			|| bottom_right.remove(point);
 	}
 
-	std::vector<T*> query(const QRect& bounds) const {
+	std::vector<T*> query(const QRect& target_bounds) const {
 		std::vector<T*> items;
-		query(bounds, items);
+		query(target_bounds, items);
 		return items;
 	}
 
-	void query(const QRect& bounds, std::vector<T*>& result) const {
-		if (!this->bounds.intersects(bounds)) {
+	void query(const QRect& target_bounds, std::vector<T*>& result) const {
+		if (!bounds.intersects(target_bounds)) {
 			return;
 		}
 
-		if (bounds.contains(this->bounds) && !top_left) {
+		if (target_bounds.contains(bounds) && !top_left) {
 			result.insert(result.end(), elements.begin(), elements.end());
 		} else {
 			if (top_left) { // Divided
-				top_left->query(bounds, result);
-				top_right->query(bounds, result);
-				bottom_left->query(bounds, result);
-				bottom_right->query(bounds, result);
+				top_left->query(target_bounds, result);
+				top_right->query(target_bounds, result);
+				bottom_left->query(target_bounds, result);
+				bottom_right->query(target_bounds, result);
 			} else {
 				for (auto&& i : elements) {
-					if (bounds.contains(QPoint(i->position.x, i->position.y))) {
+					if (target_bounds.contains(QPoint(i->position.x, i->position.y))) {
 						result.push_back(i);
 					}
 				}

@@ -26,17 +26,13 @@ struct Doodad {
 
 struct SpecialDoodad {
 	std::string id;
+	int variation;
 	glm::vec3 position;
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
 };
 
 class Doodads {
-	slk::SLK doodads_slk;
-	slk::SLK doodads_meta_slk;
-	slk::SLK destructibles_slk;
-	slk::SLK destructibles_meta_slk;
-
 	std::vector<Doodad> doodads;
 	std::vector<SpecialDoodad> special_doodads;
 	
@@ -48,6 +44,11 @@ class Doodads {
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 public:
+	slk::SLK doodads_slk;
+	slk::SLK doodads_meta_slk;
+	slk::SLK destructibles_slk;
+	slk::SLK destructibles_meta_slk;
+
 	QuadTree<Doodad> tree;
 
 	bool load(BinaryReader& reader, Terrain& terrain);

@@ -11,6 +11,7 @@ layout (location = 1) uniform vec4 shallow_color_min;
 layout (location = 2) uniform vec4 shallow_color_max;
 layout (location = 3) uniform vec4 deep_color_min;
 layout (location = 4) uniform vec4 deep_color_max;
+layout (location = 5) uniform float water_offset;
 
 out vec2 UV;
 out vec4 Color;
@@ -23,7 +24,7 @@ void main() {
 	ivec2 size = textureSize(water_height_texture, 0) - 1;
 	ivec2 pos = ivec2(gl_InstanceID % size.x, gl_InstanceID / size.x);
 	ivec2 height_pos = ivec2(vPosition + pos);
-	float water_height = texelFetch(water_height_texture, height_pos, 0).r;
+	float water_height = texelFetch(water_height_texture, height_pos, 0).r + water_offset;
 
 	bool is_water = texelFetch(water_exists_texture, pos, 0).r > 0
 	 || texelFetch(water_exists_texture, pos + ivec2(1, 0), 0).r > 0

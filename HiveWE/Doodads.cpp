@@ -45,11 +45,13 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	special_doodads.resize(reader.read<uint32_t>());
 	for (auto&& i : special_doodads) {
 		i.id = reader.read_string(4);
-		reader.advance(4);
-		i.position = glm::ivec3(reader.read<glm::ivec2>() + 2, 0);
+		i.variation = reader.read<uint32_t>();
+		i.position = glm::ivec3(reader.read<glm::ivec2>(), 0);
 	}
 
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
+	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
+	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
@@ -92,8 +94,8 @@ void Doodads::save() const {
 	writer.write<uint32_t>(special_doodads.size());
 	for (auto&& i : special_doodads) {
 		writer.write_string(i.id);
-		writer.write<uint32_t>(0);
-		writer.write<glm::ivec2>(i.position);
+		writer.write<uint32_t>(i.variation);
+		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y) - 2);
 	}
 
 	HANDLE handle;
@@ -147,16 +149,17 @@ void Doodads::create() {
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, i.scale);
 		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+		i.mesh = get_mesh(i.id, i.variation);
 
 		tree.insert(&i);
-
-		i.mesh = get_mesh(i.id, i.variation);
 	}
 
 	for (auto&& i : special_doodads) {
+		float rotation = std::stoi(doodads_slk.data("fixedRot", i.id)) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
-		i.mesh = get_mesh(i.id, 0);
+		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
+		i.mesh = get_mesh(i.id, i.variation);
 	}
 }
 

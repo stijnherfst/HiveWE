@@ -6,7 +6,6 @@ CliffMesh::CliffMesh(const fs::path& path) {
 		mdx::MDX model = mdx::MDX(reader);
 
 		auto set = model.chunk<mdx::GEOS>()->geosets.front();
-		vertices = set.vertices.size();
 
 		gl->glCreateBuffers(1, &vertex_buffer);
 		gl->glNamedBufferData(vertex_buffer, set.vertices.size() * sizeof(glm::vec3), set.vertices.data(), GL_STATIC_DRAW);

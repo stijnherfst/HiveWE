@@ -3,8 +3,8 @@
 // These classes will be rewritten to use SOA instead of AOS
 
 struct Corner {
-	float ground_height;
-	float water_height;
+	//float ground_height;
+//	float water_height;
 	bool map_edge;
 
 	int ground_texture;
@@ -44,9 +44,6 @@ public:
 
 	int width;
 	int height;
-
-	//int tiles_width;
-	//int tiles_height;
 
 	glm::vec2 offset;
 
@@ -97,7 +94,7 @@ public:
 	glm::vec4 deep_color_min;
 	glm::vec4 deep_color_max;
 
-	float height_offset;
+	float water_offset;
 	int water_textures_nr;
 	int animation_rate;
 	
@@ -122,9 +119,8 @@ public:
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
 
-	static float corner_height(Corner corner);
 	float corner_height(int x, int y) const;
-	float corner_water_height(Corner corner) const;
+	float corner_water_height(const int x, const int y) const;
 
 	int real_tile_texture(int x, int y);
 	int get_tile_variation(int ground_texture, int variation);

@@ -25,7 +25,7 @@ namespace slk {
 
 		void merge(const SLK& slk);
 		void merge(const ini::INI& ini);
-		void merge(const ini::INI & ini, const std::string& section);
+		void substitute(const ini::INI & ini, const std::string& section);
 		void copy_row(const std::string& row_header, const std::string& new_row_header);
 		void add_column(const std::string& header);
 

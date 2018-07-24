@@ -33,7 +33,13 @@ struct TriggerParameter {
 };
 
 struct ECA {
-	int type;
+	enum class Type {
+		event,
+		condition,
+		action
+	};
+
+	Type type;
 	int group;
 	std::string name;
 	bool enabled;
@@ -58,6 +64,9 @@ class Triggers {
 	std::unordered_map<std::string, int> argument_counts;
 
 public:
+	ini::INI trigger_strings;
+	ini::INI trigger_data;
+
 	std::string global_jass_comment;
 	std::string global_jass;
 	

@@ -1,7 +1,8 @@
 #include "stdafx.h"
 
 void Triggers::load(BinaryReader& reader) {
-	ini::INI trigger_data = ini::INI("UI/TriggerData.txt");
+	trigger_strings.load("UI/TriggerStrings.txt");
+	trigger_data.load("UI/TriggerData.txt");
 
 	for (auto&& section : { "TriggerActions"s, "TriggerEvents"s, "TriggerConditions"s, "TriggerCalls"s }) {
 		for (auto&&[key, value] : trigger_data.section(section)) {
@@ -89,7 +90,7 @@ void Triggers::load(BinaryReader& reader) {
 
 	
 	std::function<void(ECA&, bool)> parse_eca_structure = [&](ECA& eca, bool is_child) {
-		eca.type = reader.read<uint32_t>();
+		eca.type = static_cast<ECA::Type>(reader.read<uint32_t>());
 		if (is_child) {
 			eca.group = reader.read<uint32_t>();
 		}

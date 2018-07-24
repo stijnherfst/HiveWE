@@ -1,7 +1,10 @@
 #include "stdafx.h"
 
 Map map;
+ini::INI world_edit_strings;
+ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
+WindowHandler window_handler;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
@@ -13,12 +16,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 
+	auto t = texture_to_icon("ReplaceableTextures\\WorldEditUI\\Actions-Nothing.blp");
+
 	ui.setupUi(this);
 
+	world_edit_strings.load("UI/WorldEditStrings.txt");
+	world_edit_game_strings.load("UI/WorldEditGameStrings.txt");
 	world_edit_data.load("UI/WorldEditData.txt");
-	const ini::INI world_edit_game_strings("UI/WorldEditGameStrings.txt");
+
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
-	const ini::INI world_edit_strings("UI/WorldEditStrings.txt");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);
@@ -33,26 +39,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
 	connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
 	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
+
 	connect(ui.actionReset_Camera, &QAction::triggered, [&]() { camera->reset(); });
-
-	connect(ui.actionSwitch_Camera, &QAction::triggered, [&]() {
-		if (camera == &ui.widget->tps_camera) {
-			ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
-			ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
-
-			ui.widget->fps_camera.position = ui.widget->tps_camera.position;
-			camera = &ui.widget->fps_camera;
-			ui.actionDoodads->setEnabled(false);
-		} else {
-			ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
-			ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
-
-			ui.widget->tps_camera.position = ui.widget->fps_camera.position;
-			camera = &ui.widget->tps_camera;
-			ui.actionDoodads->setEnabled(true);
-		}
-		camera->update(0);
-	});
+	connect(ui.actionSwitch_Camera, &QAction::triggered, this, &HiveWE::switch_camera);
 
 	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
 	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
@@ -62,33 +51,23 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionTileSetter, &QAction::triggered, [this]() { new TileSetter(this); });
 	connect(ui.actionChangeTilePathing, &QAction::triggered, [this]() { new TilePather(this); });
 
+	connect(ui.actionEnforce_Water_Height_Limit, &QAction::triggered, [&](bool checked) { map.enforce_water_height_limits = checked; });
+	
+
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
 		});
 	});
-
 	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
+	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { new DoodadPalette(this); });
 
-	connect(ui.actionTrigger_Editor, &QAction::triggered, [this]() {
-		if (auto editor = this->findChild<TriggerEditor*>(); !editor) {
-			new TriggerEditor(this);
-		} else {
-			editor->activateWindow();
-			editor->raise();
-		}
-	});
 
-	connect(ui.actionImport_Manager, &QAction::triggered, [this]() {
-		if (auto manager = this->findChild<ImportManager*>(); !manager) {
-			new ImportManager(this);
-		} else {
-			manager->activateWindow();
-			manager->raise();
-		}
-	}); 
+	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
+	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); }); 
 }
+
 
 void HiveWE::load() {
 	QSettings settings;
@@ -123,4 +102,23 @@ void HiveWE::save_as() {
 
 void HiveWE::closeEvent(QCloseEvent* event) {
 	event->accept();
+}
+
+void HiveWE::switch_camera() {
+	if (camera == &ui.widget->tps_camera) {
+		ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
+		ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
+
+		ui.widget->fps_camera.position = ui.widget->tps_camera.position;
+		camera = &ui.widget->fps_camera;
+		ui.actionDoodads->setEnabled(false);
+	} else {
+		ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
+		ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
+
+		ui.widget->tps_camera.position = ui.widget->fps_camera.position;
+		camera = &ui.widget->tps_camera;
+		ui.actionDoodads->setEnabled(true);
+	}
+	camera->update(0);
 }

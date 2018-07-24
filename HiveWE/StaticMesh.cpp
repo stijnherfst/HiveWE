@@ -7,9 +7,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		BinaryReader reader = hierarchy.open_file(path);
 		this->path = path;
 
-		int vertices = 0;
-		int indices = 0;
-		int uvs = 0;
+		size_t vertices = 0;
+		size_t indices = 0;
+		size_t uvs = 0;
 		mdx::MDX model = mdx::MDX(reader);
 
 		has_mesh = model.has_chunk<mdx::GEOS>();

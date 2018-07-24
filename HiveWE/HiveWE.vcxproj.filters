@@ -288,6 +288,24 @@
     <ClCompile Include="GeneratedFiles\Release\moc_JassEditor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_DoodadPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_DoodadPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DoodadPalette.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_WindowHandler.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_WindowHandler.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -419,6 +437,9 @@
     <ClInclude Include="INI.h">
       <Filter>Header Files\Base\File Formats</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_DoodadPalette.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -495,6 +516,15 @@
     </CustomBuild>
     <CustomBuild Include="JassEditor.h">
       <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DoodadPalette.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="DoodadPalette.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="WindowHandler.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

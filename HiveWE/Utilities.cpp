@@ -171,7 +171,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 	}
 }
 
-QIcon texture_to_icon(uint8_t* data, const int width, const int height) {
+QIcon ground_texture_to_icon(uint8_t* data, const int width, const int height) {
 	QImage temp_image = QImage(data, width, height, QImage::Format::Format_ARGB32);
 	const int size = height / 4;
 
@@ -188,3 +188,10 @@ QIcon texture_to_icon(uint8_t* data, const int width, const int height) {
 
 	return icon;
 }
+
+QIcon texture_to_icon(fs::path path) {
+	auto tex = resource_manager.load<Texture>(path);
+	QImage temp_image = QImage(tex->data.data(), tex->width, tex->height, QImage::Format::Format_ARGB32);
+	auto pix = QPixmap::fromImage(temp_image);
+	return QIcon(pix);
+};

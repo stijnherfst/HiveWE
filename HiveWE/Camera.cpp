@@ -128,40 +128,4 @@ void TPSCamera::mouse_release_event(QMouseEvent* event) {
 	}
 }
 
-//Checks if a point is within the defined camera frustum.
-//The point is expected to be in the same coordinate system,
-//i.e divide wc3 object positions by 128.0 before passing.
-bool TPSCamera::is_visible(glm::vec3 && point) const {
-	// Calculate the point position as the camera as referential point
-	auto v = point - position;
-	// Project the vector on Z-axis
-	auto vZ = dot(v, -direction) * -direction;
-	// Calculate length to get how far away the point is in z-axis
-	auto z = glm::length(vZ);
-	// Check if point is within frustum in z-axis (if its too far or too close)
-	if (z > draw_distance || z < draw_distance_close) {
-		return false;
-	}
-
-	// Some quick trigonometry to calculate height of at point distance
-	// half_height / v.z = tan(fov / 2)
-	auto fov_rad = (glm::pi<float>() / 180.f) * static_cast<float>(fov); // Need radians
-	const float height = z * tan_height;
-	// Calculate how far away the point is in Y-axis
-	auto vY = dot(v, Y) * Y;
-	auto y = glm::length(vY);
-
-	if (y > height || y + height < 0) {
-		return false;
-	}
-
-	// For x-axis similarly but width instead
-	// use aspect ratio to get width
-	auto width = height * aspect_ratio;
-	// Again how far away the point is in X-axis
-	auto vX = dot(v, X) * X;
-	auto x = glm::length(vX);
-	return x > width || x + width < 0;
-}
-
 Camera* camera;

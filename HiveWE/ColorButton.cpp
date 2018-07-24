@@ -11,8 +11,8 @@ void ColorButton::changeColor() {
 	}
 }
 
-void ColorButton::setColor(const QColor& color) {
-	this->color = color;
+void ColorButton::setColor(const QColor& new_color) {
+	color = new_color;
 
 	int delta = color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114;
 	QColor text_color = QColor((255 - delta < 105) ? Qt::black : Qt::white);

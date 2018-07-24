@@ -18,6 +18,8 @@ public:
 	bool is_protected = false;
 	bool units_loaded = false;
 
+	bool enforce_water_height_limits = true;
+
 	bool render_doodads = true;
 	bool render_units = true;
 	bool render_pathing = true;

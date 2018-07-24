@@ -31,19 +31,14 @@ void Terrain::create() {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
-	ground_heights.resize(width * height);
-	water_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
 	water_exists_data.resize(width * height);
 
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
-
-			// Ground tiles
-			ground_heights[j * width + i] = corners[i][j].ground_height;
-			ground_corner_heights[j * width + i] = corner_height(corners[i][j]);
-			water_heights[j * width + i] = corner_water_height(corners[i][j]);
+			ground_corner_heights[j * width + i] = corner_height(i, j);
+			
 			water_exists_data[j * width + i] = corners[i][j].water;
 
 			if (i == width - 1 || j == height - 1) {
@@ -160,14 +155,16 @@ bool Terrain::load(BinaryReader& reader) {
 
 	// Parse all tilepoints
 	corners.resize(width, std::vector<Corner>(height));
+	ground_heights.resize(width * height);
+	water_heights.resize(width * height);
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
 			Corner& corner = corners[i][j];
 
-			corner.ground_height = (reader.read<uint16_t>() - 8192.f) / 512.f;
+			ground_heights[j * width + i] = (reader.read<uint16_t>() - 8192.f) / 512.f;
 
 			const uint16_t water_and_edge = reader.read<uint16_t>();
-			corner.water_height = ((water_and_edge & 0x3FFF) - 8192.f)/ 512.f;
+			water_heights[j * width + i] = ((water_and_edge & 0x3FFF) - 8192.f) / 512.f;
 			corner.map_edge = water_and_edge & 0x4000;
 
 			const uint8_t texture_and_flags = reader.read<uint8_t>();
@@ -214,7 +211,7 @@ bool Terrain::load(BinaryReader& reader) {
 
 	// Water Textures and Colours
 
-	height_offset = std::stof(water_slk.data("height", tileset + "Sha"s));
+	water_offset = std::stof(water_slk.data("height", tileset + "Sha"s));
 	water_textures_nr = std::stoi(water_slk.data("numTex", tileset + "Sha"s));
 	animation_rate = std::stoi(water_slk.data("texRate", tileset + "Sha"s));
 
@@ -293,9 +290,9 @@ void Terrain::save() const {
 		for (int i = 0; i < width; i++) {
 			const Corner& corner = corners[i][j];
 
-			writer.write<uint16_t>(corner.ground_height * 512.f + 8192.f);
+			writer.write<uint16_t>(ground_heights[j * width + i] * 512.f + 8192.f);
 
-			uint16_t water_and_edge = corner.water_height * 512.f + 8192.f;
+			uint16_t water_and_edge = water_heights[j * width + i] * 512.f + 8192.f;
 			water_and_edge += corner.map_edge << 14;
 			writer.write(water_and_edge);
 
@@ -403,7 +400,8 @@ void Terrain::render() {
 	gl->glUniform4fv(2, 1, &shallow_color_max[0]);
 	gl->glUniform4fv(3, 1, &deep_color_min[0]);
 	gl->glUniform4fv(4, 1, &deep_color_max[0]);
-	gl->glUniform1i(5, current_texture);
+	gl->glUniform1f(5, water_offset);
+	gl->glUniform1i(6, current_texture);
 
 	gl->glBindTextureUnit(0, water_height);
 	gl->glBindTextureUnit(1, ground_corner_height);
@@ -466,18 +464,13 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 }
 
 /// The final height a tilepoint will have in the terrain
-float Terrain::corner_height(const Corner corner) {
-	return corner.ground_height + corner.layer_height - 2.0;
-}
-
-/// The final height a tilepoint will have in the terrain
 float Terrain::corner_height(const int x, const int y) const {
-	return corners[x][y].ground_height + corners[x][y].layer_height - 2.0;
+	return ground_heights[y * width + x] + corners[x][y].layer_height - 2.0;
 }
 
 /// The final height the water point will have in the terrain
-float Terrain::corner_water_height(const Corner corner) const {
-	return corner.water_height + height_offset;
+float Terrain::corner_water_height(const int x, const int y) const {
+	return water_heights[y * width + x] + water_offset;
 }
 
 /// The texture of the tilepoint which is influenced by its surroundings. nearby cliff > blight > regular texture

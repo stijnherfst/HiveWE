@@ -14,6 +14,12 @@ private:
 	QIcon folder_icon;
 	QIcon file_icon;
 
+	QIcon trigger_comment_icon;
+
+	QIcon event_icon;
+	QIcon condition_icon;
+	QIcon action_icon;
+
 	std::unordered_map<int, QTreeWidgetItem*> folders;
 	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
 

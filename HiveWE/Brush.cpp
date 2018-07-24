@@ -10,11 +10,11 @@ void Brush::create() {
 	shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 
-void Brush::set_position(const glm::vec2& position) {
-	const glm::vec2 center_position = (position + brush_offset) - size * granularity * 0.25f;
-	this->position = glm::floor(center_position) - glm::ceil(brush_offset);
+void Brush::set_position(const glm::vec2& new_position) {
+	const glm::vec2 center_position = (new_position + brush_offset) - size * granularity * 0.25f;
+	position = glm::floor(center_position) - glm::ceil(brush_offset);
 	if (!uv_offset_locked) {
-		uv_offset = glm::abs((center_position - glm::vec2(this->position)) * 4.f);
+		uv_offset = glm::abs((center_position - glm::vec2(position)) * 4.f);
 	}
 }
 
@@ -22,26 +22,26 @@ glm::vec2 Brush::get_position() const {
 	return glm::vec2(position) + brush_offset + 1.f;
 }
 
-void Brush::set_size(const int size) {
-	const int change = size - this->size;
+void Brush::set_size(const int new_size) {
+	const int change = new_size - size;
 
-	this->size = std::clamp(size, 0, 240);
-	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
+	size = std::clamp(new_size, 0, 240);
+	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
 	brush.clear();
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
 	set_shape(shape);
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset + size * granularity - change * granularity) * 0.25f);
+	set_position(glm::vec2(position) + glm::vec2(uv_offset + new_size * granularity - change * granularity) * 0.25f);
 }
 
-void Brush::set_shape(const Shape shape) {
-	this->shape = shape;
+void Brush::set_shape(const Shape new_shape) {
+	shape = new_shape;
 
-	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
+	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
 
-	for (int i = 0; i < this->size * 2 + 1; i++) {
-		for (int j = 0; j < this->size * 2 + 1; j++) {
+	for (int i = 0; i < size * 2 + 1; i++) {
+		for (int j = 0; j < size * 2 + 1; j++) {
 			for (int k = 0; k < granularity; k++) {
 				for (int l = 0; l < granularity; l++) {
 					if (contains(i, j)) {
@@ -76,11 +76,11 @@ bool Brush::contains(const int x, const int y) const {
 	return true;
 }
 
-void Brush::increase_size(const int size) {
-	set_size(this->size + size);
+void Brush::increase_size(const int new_size) {
+	set_size(size + new_size);
 }
-void Brush::decrease_size(const int size) {
-	set_size(this->size - size);
+void Brush::decrease_size(const int new_size) {
+	set_size(size - new_size);
 }
 
 void Brush::render(Terrain& terrain) const {
