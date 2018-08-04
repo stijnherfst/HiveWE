@@ -17,7 +17,6 @@ namespace blp {
 		// extra and has_mipmaps
 		reader.advance(8);
 
-		// Mipmaplocator
 		auto mipmap_offsets = reader.read_vector<uint32_t>(16);
 		auto mipmap_sizes = reader.read_vector<uint32_t>(16);
 
@@ -56,12 +55,16 @@ namespace blp {
 				int mipmap_width = std::max(1.0, width / std::pow(2, i));
 				int mipmap_height = std::max(1.0, height / std::pow(2, i));
 
+				// There might be fake mipmaps or the first mipmap could start within the 256 bytes of the colour header
+				// Thus we cannot rely purely on advancing the position by mipmap sizes alone
+				reader.position = mipmap_offsets[i];
 				auto rgb = reader.read_vector<uint8_t>(mipmap_width * mipmap_height);
 
 				mipmaps.emplace_back(mipmap_width, mipmap_height, std::vector<uint8_t>(mipmap_width * mipmap_height * 4, 255));
 				if (alpha_bits == 0) {
 					for (size_t j = 0; j < rgb.size(); j++) {
-						reinterpret_cast<uint32_t*>(std::get<2>(mipmaps[i]).data())[j] = header[rgb[j]];
+						// + (255 << 24) because the header alpha value is always 0 so we add 255
+						reinterpret_cast<uint32_t*>(std::get<2>(mipmaps[i]).data())[j] = header[rgb[j]] + (255 << 24);
 					}
 				} else {
 					auto alpha = reader.read_vector<uint8_t>((mipmap_width * mipmap_height * alpha_bits + 7) / 8);
