@@ -46,6 +46,9 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	}
 	Trigger& trigger = files.at(item).get();
 	
+	if (trigger.is_comment) {
+		return;
+	}
 
 	// Check if trigger is already open and if so focus it
 	for (int i = 0; i < ui.editor->count(); i++) {
@@ -67,6 +70,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	} else {
 		QTreeWidget* edit = new QTreeWidget;
 		edit->setHeaderHidden(true);
+		edit->setUniformRowHeights(true);
 		layout->addWidget(edit);
 
 		QTreeWidgetItem* events = new QTreeWidgetItem(edit);
@@ -81,34 +85,132 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		actions->setText(0, "Actions");
 		actions->setIcon(0, action_icon);
 
-		for (auto&& i : trigger.lines) {
-			QTreeWidgetItem* eca = new QTreeWidgetItem;
+		std::function<void(QTreeWidgetItem*, ECA&)> recurse = [&](QTreeWidgetItem* parent, ECA& i) {
+			QTreeWidgetItem* eca = new QTreeWidgetItem(parent);
 			std::string category;
-
+			
 			switch (i.type) {
 				case ECA::Type::event:
 					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerEventStrings", i.name)));
-					events->addChild(eca);
 					category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
 					break;
 				case ECA::Type::condition:
 					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerConditionStrings", i.name)));
-					conditions->addChild(eca);
 					category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
 					break;
 				case ECA::Type::action:
 					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerActionStrings", i.name)));
-					actions->addChild(eca);
 					category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
 					break;
 			}
 
-			std::string icon_path = split(map.triggers.trigger_data.data("TriggerCategories", category), ',')[1];
-			std::string final_path = icon_path + ".blp";
-			eca->setIcon(0, texture_to_icon("ReplaceableTextures\\WorldEditUI\\Actions-Nothing.blp"));
+			if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
+				std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
+				std::string final_path = icon_path + ".blp";
+				QIcon icon = texture_to_icon(final_path);
+				trigger_icons[category] = icon;
+				eca->setIcon(0, icon);
+			} else {
+				eca->setIcon(0, found->second);
+			}
+			for (auto&& j : i.ecas) {
+				recurse(eca, j);
+			}
+		};
+
+
+		for (auto&& i : trigger.lines) {
+			recurse(nullptr, i);
+
+			QTreeWidgetItem* eca = new QTreeWidgetItem;
+			std::string category;
+			std::vector<std::string> string_parameters;
+
+			switch (i.type) {
+				case ECA::Type::event:
+					events->addChild(eca);
+					string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", i.name);
+					category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
+					break;
+				case ECA::Type::condition:
+					conditions->addChild(eca);
+					string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", i.name);
+					category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
+					break;
+				case ECA::Type::action:
+					actions->addChild(eca);
+					string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", i.name);
+					category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
+					break;
+			}
+
+			eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
+
+			if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
+				std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
+				std::string final_path = icon_path + ".blp";
+				QIcon icon = texture_to_icon(final_path);
+				trigger_icons[category] = icon;
+				eca->setIcon(0, icon);
+			} else {
+				eca->setIcon(0, found->second);
+			}
+			for (auto&& j : i.ecas) {
+				recurse(eca, j);
+			}
 		}
+
+		edit->expandAll();
 	}
 
 	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
 	ui.editor->setCurrentWidget(tab);
+}
+
+std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_parameters, std::vector<TriggerParameter>& parameters) {
+	std::string result = "";
+
+	int current_parameter = 0;
+	for (auto&& i : string_parameters) {
+		if (i.size() && i.front() == '~') {
+			TriggerParameter& j = parameters[current_parameter];
+
+			std::vector<std::string> sub_string_parameters;
+			if (j.has_sub_parameter) {
+				switch (j.sub_parameter.type) {
+				case TriggerSubParameter::Type::events:
+					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", j.sub_parameter.name);
+					break;
+				case TriggerSubParameter::Type::conditions:
+					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", j.sub_parameter.name);
+					break;
+				case TriggerSubParameter::Type::actions:
+					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", j.sub_parameter.name);
+					break;
+				case TriggerSubParameter::Type::calls:
+					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerCallStrings", j.sub_parameter.name);
+					break;
+				}
+				result += "(" + get_parameters_names(sub_string_parameters, j.sub_parameter.parameters) + ")";
+			} else {
+				switch (j.type) {
+					case TriggerParameter::Type::preset:
+						result += map.triggers.trigger_data.data("TriggerParams", j.value, 3);
+						break;
+						break;
+					case TriggerParameter::Type::string:
+						result += map.trigger_strings.strings[j.value];
+						break;
+					case TriggerParameter::Type::variable:
+					default:
+						result += j.value;
+				}
+			}
+			current_parameter++;
+		} else {
+			result += i;
+		}
+	}
+
+	return result;
 }

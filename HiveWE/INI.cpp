@@ -4,7 +4,7 @@ namespace ini {
 	INI::INI(const fs::path& path) {
 		load(path);
 	}
-	
+
 	void INI::load(const fs::path& path) {
 		std::stringstream file;
 		file << hierarchy.open_file(path).buffer.data();
@@ -20,19 +20,33 @@ namespace ini {
 			if (line.front() == '[') {
 				const std::string key = line.substr(1, line.size() - 3);
 				// If the segment already exists
-				if (ini_data.count(key)) {
+				if (ini_data.count(key)) { // ToDo C++20 contains
 					continue;
 				}
-				ini_data[key] = std::map<std::string, std::string>();
+				ini_data[key] = std::map<std::string, std::vector<std::string>>();
 				current_section = key;
 			} else {
-				auto parts = split(line, '=');
-				// Key=Content so atleast size 2 to be valid
-				if (parts.size() < 2) {
+				auto found = line.find_first_of('=');
+				if (found == std::string::npos) {
 					continue;
 				}
-				parts[1].resize(parts[1].size() - 1); // Get rid of \\r
-				ini_data[current_section][parts[0]] = parts[1];
+
+				std::string key = line.substr(0, found);
+				std::string value = line.substr(found + 1, line.size() - found - 2); // Strip \r
+				auto parts = split(value, ',');
+				// Strip of quotes at the front/back
+				for (auto&& i : parts) {
+					if (i.size() < 2) {
+						continue;
+					}
+					if (i.front() == '\"') {
+						i.erase(i.begin());
+					}
+					if (i.back() == '\"') {
+						i.erase(i.end() - 1);
+					}
+				}
+				ini_data[current_section][key] = parts;
 			}
 		}
 	}
@@ -41,19 +55,17 @@ namespace ini {
 	void INI::substitute(const INI& ini, const std::string& section) {
 		for (auto&& [section_key, section_value] : ini_data) {
 			for (auto&& [key, value] : section_value) {
-				for (auto&& part : split(value, ',')) {
+				for (auto&& part : value) {
 					std::string westring = ini.data(section, part);
 					if (!westring.empty()) {
-						auto position = value.find(part);
-						value.erase(position, part.length());
-						value.insert(position, westring);
+						part = westring;
 					}
 				}
 			}
 		}
 	}
 
-	std::map<std::string, std::string> INI::section(const std::string& section) const {
+	std::map<std::string, std::vector<std::string>> INI::section(const std::string& section) const {
 		if (ini_data.count(section)) {
 			return ini_data.at(section);
 		} else {
@@ -61,11 +73,19 @@ namespace ini {
 		}
 	}
 
-	std::string INI::data(const std::string& section, const std::string& key) const {
-		if (ini_data.count(section) && ini_data.at(section).count(key)) {
-			return ini_data.at(section).at(key);
+	std::string INI::data(const std::string& section, const std::string& key, const int argument) const {
+		if (ini_data.count(section) && ini_data.at(section).count(key) && argument < ini_data.at(section).at(key).size()) { // ToDo C++20 contains
+			return ini_data.at(section).at(key)[argument];
 		} else {
 			return "";
+		}
+	}
+
+	std::vector<std::string> INI::whole_data(const std::string& section, const std::string& key) const {
+		if (ini_data.count(section) && ini_data.at(section).count(key)) { // ToDo C++20 contains
+			return ini_data.at(section).at(key);
+		} else {
+			return {};
 		}
 	}
 }

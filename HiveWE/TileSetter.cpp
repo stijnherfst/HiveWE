@@ -27,8 +27,8 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	}
 
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
-		const std::string tileset_key = split(value, ',').front();
-		ui.tileset->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
+//		const std::string tileset_key = split(value, ',').front();
+		ui.tileset->addItem(QString::fromStdString(value[0]), QString::fromStdString(key));
 	}
 
 	update_available_tiles();

@@ -206,7 +206,7 @@ namespace slk {
 				if (header_to_column.find(key) == header_to_column.end()) {
 					add_column(key);
 				}
-				table_data[header_to_row[section_key]][header_to_column[key]] = value;
+				table_data[header_to_row[section_key]][header_to_column[key]] = std::accumulate(value.begin(), value.end(), ""s);// value[0];
 			}
 		}
 	}

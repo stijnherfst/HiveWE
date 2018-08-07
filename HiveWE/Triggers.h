@@ -18,18 +18,32 @@ struct TriggerVariable {
 struct TriggerParameter;
 
 struct TriggerSubParameter {
-	int type;
+	enum class Type {
+		events,
+		conditions,
+		actions,
+		calls
+	};
+	Type type;
 	std::string name;
 	bool begin_parameters;
 	std::vector<TriggerParameter> parameters;
 };
 
 struct TriggerParameter {
-	int type;
+	enum class Type {
+		invalid = -1,
+		preset,
+		variable,
+		function,
+		string
+	};
+	Type type;
 	std::string value;
+	bool has_sub_parameter;
 	TriggerSubParameter sub_parameter;
 	bool is_array = false;
-	std::vector<TriggerParameter> parameters;
+	std::vector<TriggerParameter> parameters; // There is really only one so unique_ptr I guess
 };
 
 struct ECA {

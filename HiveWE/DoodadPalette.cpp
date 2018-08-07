@@ -7,17 +7,23 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 	show();
 
 	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
-		const std::string tileset_key = split(value, ',').front();
+		//const std::string tileset_key = split(value, ',').front();
+
+		const std::string tileset_key = value.front();
 		ui.tileset->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DoodadCategories")) {
-		const std::string tileset_key = split(value, ',').front();
+		//const std::string tileset_key = split(value, ',').front();
+		const std::string tileset_key = value.front();
+
 		ui.type->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DestructibleCategories")) {
-		const std::string tileset_key = split(value, ',').front();
+		//const std::string tileset_key = split(value, ',').front();
+		const std::string tileset_key = value.front();
+
 		ui.type->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 

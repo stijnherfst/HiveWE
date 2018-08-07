@@ -18,7 +18,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		if (key == "NumScreens") {
 			continue;
 		}
-		ui.campaignLoadingScreen->addItem(QString::fromStdString(split(value, ',')[1]));
+		ui.campaignLoadingScreen->addItem(QString::fromStdString(value[1]));
 	}
 
 	for (auto&& i : map.imports.find([](const ImportItem& item) { return item.full_path.extension() == ".mdx"; })) {
@@ -29,7 +29,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		if (key == "NumScreens") {
 			continue;
 		}
-		ui.campaignLoadingScreen->addItem(QString::fromStdString(split(value, ',')[1]));
+		ui.campaignLoadingScreen->addItem(QString::fromStdString(value[1]));
 	}
 
 	if (map.info.loading_screen_model.empty() && map.info.loading_screen_number == -1) {
@@ -89,8 +89,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	// Custom Lighting
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
-		auto parts = split(value, ',');
-		ui.customLightingCombo->addItem(QString::fromStdString(parts.front()), key.front());
+		ui.customLightingCombo->addItem(QString::fromStdString(value[0]), key.front());
 
 		if (key == std::string(&map.info.custom_light_tileset, 1)) {
 			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);

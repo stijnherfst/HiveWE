@@ -16,8 +16,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 
-	auto t = texture_to_icon("ReplaceableTextures\\WorldEditUI\\Actions-Nothing.blp");
-
 	ui.setupUi(this);
 
 	world_edit_strings.load("UI/WorldEditStrings.txt");
@@ -62,7 +60,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
 	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { new DoodadPalette(this); });
-
 
 	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
 	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); }); 
