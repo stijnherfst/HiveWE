@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 Map::~Map() {
-	hierarchy.tileset.close();
 	hierarchy.map.close();
 }
 
