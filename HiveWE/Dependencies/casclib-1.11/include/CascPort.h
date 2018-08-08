@@ -41,6 +41,7 @@
   #include <assert.h>
   #include <ctype.h>
   #include <stdio.h>
+  #include <malloc.h>
   #include <windows.h>
   #include <wininet.h>
   #include <sys/types.h>
@@ -76,6 +77,8 @@
   #include <dirent.h>
   #include <errno.h>
   #include <stddef.h>
+  #include <string.h>
+  #include <cassert>
 
   // Support for PowerPC on Max OS X
   #if (__ppc__ == 1) || (__POWERPC__ == 1) || (_ARCH_PPC == 1)
@@ -147,9 +150,6 @@
   typedef unsigned short USHORT;
   typedef int            LONG;
   typedef unsigned int   DWORD;
-  typedef unsigned long  DWORD_PTR;
-  typedef long           LONG_PTR;
-  typedef long           INT_PTR;
   typedef long long      LONGLONG;
   typedef unsigned long long ULONGLONG;
   typedef unsigned long long *PULONGLONG;
@@ -159,6 +159,7 @@
   typedef unsigned int   LCID;
   typedef LONG         * PLONG;
   typedef DWORD        * PDWORD;
+  typedef DWORD        * LPDWORD;
   typedef BYTE         * LPBYTE;
   typedef char         * LPSTR;
 

@@ -47,6 +47,7 @@
 #define CASC_GAME_OVERWATCH  0x00040000         // Overwatch since PTR 24919
 #define CASC_GAME_STARCRAFT2 0x00050000         // Starcraft II - Legacy of the Void, since build 38996
 #define CASC_GAME_STARCRAFT1 0x00060000         // Starcraft 1 (remastered)
+#define CASC_GAME_WARCRAFT3  0x00070000         // Warcraft III, since version 1.30, build 9655
 #define CASC_GAME_MASK       0xFFFF0000         // Mask for getting game ID
 
 #define CASC_INDEX_COUNT          0x10
@@ -93,7 +94,7 @@ typedef struct _CASC_CKEY_ENTRY
 typedef struct _CASC_EKEY_ENTRY
 {
     BYTE EKey[CASC_EKEY_SIZE];                      // The first 9 bytes of the encoded key. The encoded key is MD5 hash of the file header, which contains MD5 hashes of all the logical blocks of the file
-    BYTE ArchiveAndOffset[5];                       // Combined value of ArchiveIndex + EncodedHeader offset (big endian)
+    BYTE StorageOffset[5];                          // Offset of the file over the entire storage
     BYTE EncodedSize[4];                            // Encoded size (little endian). This is the size of encoded header, all file frame headers and all file frames
 } CASC_EKEY_ENTRY, *PCASC_EKEY_ENTRY;
 
@@ -145,9 +146,8 @@ typedef struct _TCascStorage
 {
     const char * szClassName;                       // "TCascStorage"
     const TCHAR * szIndexFormat;                    // Format of the index file name
-    TCHAR * szRootPath;                             // This is the game directory
-    TCHAR * szDataPath;                             // This is the directory where data files are
     TCHAR * szBuildFile;                            // Build file name (.build.info or .build.db)
+    TCHAR * szDataPath;                             // This is the directory where data files are
     TCHAR * szIndexPath;                            // This is the directory where index files are
     TCHAR * szCdnList;                              // Multi-SZ list of CDN servers, including subfolders
     DWORD dwRefCount;                               // Number of references
@@ -173,6 +173,9 @@ typedef struct _TCascStorage
     CASC_CKEY_ENTRY DownloadFile;                   // Information about DOWNLOAD file
     CASC_CKEY_ENTRY PatchFile;                      // Information about PATCH file
 
+    CASC_CKEY_ENTRY VfsRoot;                        // The main VFS root file
+    CASC_ARRAY VfsRootList;                         // List of VFS root files. Used on TVFS root keys
+
     TFileStream * DataFiles[CASC_MAX_DATA_FILES];   // Array of open data files
 
     CASC_INDEX_FILE IndexFile[CASC_INDEX_COUNT];    // Array of index files
@@ -182,7 +185,6 @@ typedef struct _TCascStorage
     QUERY_KEY  EncodingData;                        // Content of the ENCODING file. Keep this in for encoding table.
 
     TRootHandler * pRootHandler;                    // Common handler for various ROOT file formats
-    CASC_ARRAY VfsRootList;                         // List of VFS root files. Used on TVFS root keys
 
 } TCascStorage;
 
@@ -231,40 +233,24 @@ typedef struct _TCascSearch
 } TCascSearch;
 
 //-----------------------------------------------------------------------------
-// Memory management
-//
-// We use our own macros for allocating/freeing memory. If you want
-// to redefine them, please keep the following rules:
-//
-//  - The memory allocation must return NULL if not enough memory
-//    (i.e not to throw exception)
-//  - The allocating function does not need to fill the allocated buffer with zeros
-//  - The reallocating function must support NULL as the previous block
-//  - Memory freeing function doesn't have to test the pointer to NULL
-//
-
-#define CASC_REALLOC(type, ptr, count) (type *)realloc(ptr, (count) * sizeof(type))
-#define CASC_ALLOC(type, count)        (type *)malloc((count) * sizeof(type))
-#define CASC_FREE(ptr)                 free(ptr)
-
-//-----------------------------------------------------------------------------
-// Text file parsing (CascFiles.cpp)
+// Common functions (CascCommon.cpp)
 
 LPBYTE LoadInternalFileToMemory(TCascStorage * hs, LPBYTE pbQueryKey, DWORD dwOpenFlags, DWORD * pcbFileData);
 void FreeCascBlob(PQUERY_KEY pQueryKey);
 
-int LoadBuildInfo(TCascStorage * hs);
+//-----------------------------------------------------------------------------
+// Text file parsing (CascFiles.cpp)
+
 int CheckGameDirectory(TCascStorage * hs, TCHAR * szDirectory);
-/*
-int CSV_LineToElements(const char * szLinePtr, const char * szLineEnd, PCSV_ELEMENT pElements, size_t nMaxElements);
-int CSV_GetHeaderIndex(const char * szLinePtr, const char * szLineEnd, const char * szVariableName, int * PtrIndex);
-int CSV_GetNameAndCKey(const char * szLinePtr, const char * szLineEnd, int nFileNameIndex, int nCKeyIndex, char * szFileName, size_t nMaxChars, PCONTENT_KEY pCKey);
-*/
+int LoadBuildInfo(TCascStorage * hs);
+int LoadCdnConfigFile(TCascStorage * hs);
+int LoadCdnBuildFile(TCascStorage * hs);
+
 //-----------------------------------------------------------------------------
 // Internal file functions
 
-TCascStorage * IsValidStorageHandle(HANDLE hStorage);
-TCascFile * IsValidFileHandle(HANDLE hFile);
+TCascStorage * IsValidCascStorageHandle(HANDLE hStorage);
+TCascFile * IsValidCascFileHandle(HANDLE hFile);
 
 PCASC_CKEY_ENTRY FindCKeyEntry(TCascStorage * hs, PQUERY_KEY pCKey, PDWORD PtrIndex = NULL);
 PCASC_EKEY_ENTRY FindEKeyEntry(TCascStorage * hs, PQUERY_KEY pEKey, PDWORD PtrIndex = NULL);
