@@ -7,13 +7,14 @@ ini::INI world_edit_data;
 WindowHandler window_handler;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
-	/*fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "War3x.mpq")) {
-		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
-	}
+	fs::path directory = find_warcraft_directory();
+	if (directory == "")
+		do {
+			directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+		} while (!fs::exists(directory / "Data"));
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
-	hierarchy.warcraft_directory = directory;*/
+	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 
 	ui.setupUi(this);

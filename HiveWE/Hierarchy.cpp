@@ -3,7 +3,7 @@
 Hierarchy hierarchy;
 
 void Hierarchy::init() {
-	game_data.open("C:\\Program Files (x86)\\Warcraft III\\Data", STREAM_FLAG_READ_ONLY);
+	game_data.open(warcraft_directory / "Data", STREAM_FLAG_READ_ONLY);
 }
 
 BinaryReader Hierarchy::open_file(const fs::path& path) const {
