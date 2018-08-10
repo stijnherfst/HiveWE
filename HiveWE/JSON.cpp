@@ -53,18 +53,23 @@ namespace json {
 	}
 
 	bool JSON::exists(std::string file) const {
-		std::cout << "Queried exstance of: " << file;
+	#ifdef _DEBUG
+		std::cout << "Queried existance of alias for: " << file;
+	#endif
 		if (json_data.count(file))
 		{
+			#ifdef _DEBUG
 			std::cout << "  FOUND\n";
+			#endif
 				return true;
 		}
+		#ifdef _DEBUG
 		std::cout << "   NOT FOUND\n";
+		#endif
 		return false;
 	}
 
 	std::string JSON::alias(std::string file) const {
-		std::cout << "Queried file: " << file << std::endl;
 		return json_data.at(file);
 	}
 }
