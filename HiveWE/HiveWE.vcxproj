@@ -210,6 +210,7 @@
     </ClCompile>
     <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_GLWidget.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_ColorButton.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -269,6 +270,7 @@
     <ClCompile Include="INI.cpp" />
     <ClCompile Include="InputHandler.cpp" />
     <ClCompile Include="JassEditor.cpp" />
+    <ClCompile Include="JSON.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MapInfo.cpp" />
@@ -432,6 +434,7 @@
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
     </CustomBuild>
+    <ClInclude Include="JSON.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapInfo.h" />
     <CustomBuild Include="MapInfoEditor.h">

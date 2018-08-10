@@ -1,9 +1,11 @@
 #include "stdafx.h"
+#include <utility>
 
 Hierarchy hierarchy;
 
 void Hierarchy::init() {
 	game_data.open(warcraft_directory / "Data", STREAM_FLAG_READ_ONLY);
+	aliases.load("filealiases.json");
 }
 
 BinaryReader Hierarchy::open_file(const fs::path& path) const {
@@ -20,10 +22,19 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	} else if (game_data.file_exists("deprecated.mpq:"s + path.string())) {
 		file = game_data.file_open("deprecated.mpq:"s + path.string());
 	} else {
-		std::cout << "Unable to find file in hierarchy: " << path << "\n";
-		return BinaryReader(std::vector<uint8_t>());
+		if (aliases.exists(path.string())) {
+			std::string alias = aliases.alias(path.string());
+			if (game_data.file_exists("war3.mpq:"s + alias)) {
+				file = game_data.file_open("war3.mpq:"s + alias);
+			} else {
+				std::cout << "Unable to find file in hierarchy: " << path << "\n";
+				return BinaryReader(std::vector<uint8_t>());
+			}
+		} else {
+			std::cout << "Unable to find file in hierarchy: " << path << "\n";
+			return BinaryReader(std::vector<uint8_t>());
+		}
 	}
-
 	return BinaryReader(file.read());
 }
 

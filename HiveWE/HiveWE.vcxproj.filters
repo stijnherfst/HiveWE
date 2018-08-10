@@ -303,8 +303,8 @@
     <ClCompile Include="GeneratedFiles\Release\moc_GLWidget.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseDebugSymbols\moc_GLWidget.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="JSON.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -439,6 +439,9 @@
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_DoodadPalette.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSON.h">
+      <Filter>Header Files\Base\File Formats</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
