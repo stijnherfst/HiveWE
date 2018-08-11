@@ -13,7 +13,7 @@ namespace mpq {
 
 		std::vector<uint8_t> buffer(size);
 		#ifdef _MSC_VER
-		unsigned long bytes_read
+		unsigned long bytes_read;
 		#else
 		unsigned int bytes_read;
 		#endif
