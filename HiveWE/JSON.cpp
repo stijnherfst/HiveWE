@@ -17,13 +17,11 @@ namespace json {
 					if (line.substr(0, 2) == "//" || line.empty() || line.front() == ';') {
 						continue;
 					}
-					#ifdef WIN32
 					for (int i = 0; i < line.length(); i++) {
 						if (line.at(i) == '/') {
 							line.replace(i, 1, "\\");
 						}
 					}
-					#endif
 					if (line.substr(0, 12) == "    {\"src\":\"") {
 						end1 = line.find('\"', 13);
 						const std::string key = line.substr(12, end1 - 12);
