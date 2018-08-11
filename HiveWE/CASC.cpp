@@ -43,7 +43,7 @@ namespace casc {
 
 	File CASC::file_open(const fs::path& path) const {
 		File file;
-		const bool opened = CascOpenFile(handle, path.string().c_str(), 0, 0, &file.handle);
+		const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 		if (!opened) {
 			std::cout << "Error opening file " << path << " with error: " << GetLastError() << std::endl;
 		}
@@ -53,8 +53,7 @@ namespace casc {
 	/// ToDo is there a better way to check if a file exists?
 	bool CASC::file_exists(const fs::path& path) const {
 		File file;
-		const bool exists = CascOpenFile(handle, path.string().c_str(), 0, 0, &file.handle);
-		return exists;
+		return CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 	}
 
 	void CASC::close() {

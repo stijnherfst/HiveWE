@@ -5,6 +5,7 @@ public:
 	char tileset = 'L';
 	mpq::MPQ map;
 	casc::CASC game_data;
+	json::JSON aliases;
 
 	fs::path warcraft_directory;
 
