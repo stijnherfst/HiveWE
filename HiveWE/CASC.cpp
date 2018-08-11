@@ -60,6 +60,5 @@ namespace casc {
 	void CASC::close() {
 		CascCloseStorage(handle);
 		handle = nullptr;
-		fs::remove(local_path);
 	}
 }

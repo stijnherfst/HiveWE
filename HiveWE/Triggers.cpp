@@ -43,18 +43,33 @@ void Triggers::load(BinaryReader& reader) {
 
 	reader.advance(4); // Unknown always 0
 
-	variables.resize(reader.read<uint32_t>());
-	for (auto&& i : variables) {
-		i.name = reader.read_c_string();
-		i.type = reader.read_c_string();
+	int variable_count = reader.read<uint32_t>();
+	for (int i = 0; i < variable_count; i++) {
+		std::string name = reader.read_c_string();
+		TriggerVariable variable;
+		variable.type = reader.read_c_string();
 		reader.advance(4); // Unknown always 1
-		i.is_array = reader.read<uint32_t>();
+		variable.is_array = reader.read<uint32_t>();
 		if (version == 7) {
-			i.array_size = reader.read<uint32_t>();
+			variable.array_size = reader.read<uint32_t>();
 		}
-		i.is_initialized = reader.read<uint32_t>();
-		i.initial_value = reader.read_c_string();
+		variable.is_initialized = reader.read<uint32_t>();
+		variable.initial_value = reader.read_c_string();
+		variables[name] = variable;
 	}
+
+	//variables.resize(reader.read<uint32_t>());
+	//for (auto&& i : variables) {
+	//	i.name = reader.read_c_string();
+	//	i.type = reader.read_c_string();
+	//	reader.advance(4); // Unknown always 1
+	//	i.is_array = reader.read<uint32_t>();
+	//	if (version == 7) {
+	//		i.array_size = reader.read<uint32_t>();
+	//	}
+	//	i.is_initialized = reader.read<uint32_t>();
+	//	i.initial_value = reader.read_c_string();
+	//}
 
 	std::function<void(TriggerParameter&)> parse_parameter_structure = [&](TriggerParameter& parameter) {
 		parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
