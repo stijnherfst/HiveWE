@@ -13,7 +13,7 @@ namespace mpq {
 
 		std::vector<uint8_t> buffer(size);
 
-		unsigned long bytes_read;
+		unsigned int bytes_read;
 		const bool success = SFileReadFile(handle, &buffer[0], size, &bytes_read, nullptr);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;
@@ -29,7 +29,7 @@ namespace mpq {
 
 		std::vector<uint8_t> buffer(size);
 
-		unsigned long bytes_read;
+		unsigned int bytes_read;
 		const bool success = SFileReadFile(handle, &buffer[0], size, &bytes_read, nullptr);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;
@@ -65,7 +65,7 @@ namespace mpq {
 			std::wcout << "Error opening " << path << " with error:" << GetLastError() << std::endl;
 		}
 	}
-	
+
 	void MPQ::open(File& archive, const unsigned long flags) {
 		const std::vector<uint8_t> buffer = archive.read();
 
@@ -84,7 +84,11 @@ namespace mpq {
 
 	File MPQ::file_open(const fs::path& path) const {
 		File file;
+		#ifdef WIN32
 		const bool opened = SFileOpenFileEx(handle, fs::weakly_canonical(path).string().c_str(), 0, &file.handle);
+		#else
+		const bool opened = SFileOpenFileEx(handle, path.string().c_str(), 0, &file.handle);
+		#endif
 		if (!opened) {
 			std::cout << "Error opening file " << path << " with error: " << GetLastError() << std::endl;
 		}
@@ -96,7 +100,11 @@ namespace mpq {
 	}
 
 	bool MPQ::file_exists(const fs::path& path) const {
+	    #ifdef WIN32
 		return SFileHasFile(handle, fs::weakly_canonical(path).string().c_str());
+		#else
+		return SFileHasFile(handle, path.string().c_str());
+		#endif
 	}
 
 	void MPQ::close() {

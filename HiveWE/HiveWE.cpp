@@ -51,7 +51,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionChangeTilePathing, &QAction::triggered, [this]() { new TilePather(this); });
 
 	connect(ui.actionEnforce_Water_Height_Limit, &QAction::triggered, [&](bool checked) { map.enforce_water_height_limits = checked; });
-	
+
 
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
 		auto palette = new PathingPallete(this);
@@ -63,7 +63,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { new DoodadPalette(this); });
 
 	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
-	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); }); 
+	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); });
 }
 
 

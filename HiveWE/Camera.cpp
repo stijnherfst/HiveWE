@@ -31,7 +31,7 @@ void FPSCamera::update(const double delta) {
 	} else if (input_handler.key_pressed(Qt::Key_Control)) {
 		position.z -= 1 * speed * float(delta);
 	}
-	
+
 	direction = glm::vec3(
 		std::cos(vertical_angle) * std::sin(horizontal_angle),
 		std::cos(vertical_angle) * std::cos(horizontal_angle),
@@ -116,6 +116,7 @@ void TPSCamera::mouse_press_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = true;
+        default:
 			break;
 	}
 }
@@ -124,6 +125,7 @@ void TPSCamera::mouse_release_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = false;
+        default:
 			break;
 	}
 }

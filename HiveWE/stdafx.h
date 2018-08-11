@@ -35,7 +35,12 @@ namespace fs = std::filesystem;
 #define GLM_FORCE_RADIANS
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
+#ifdef _MSC_VER
 #include <SOIL2.h>
+<<<<<<< HEAD
+#else
+#include <SOIL/SOIL.h>
+#endif
 #include <turbojpeg.h>
 
 // Custom Qt Widgets

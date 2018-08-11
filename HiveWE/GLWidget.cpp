@@ -19,7 +19,7 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
 		case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
 		default: break;
-	} 
+	}
 	std::cout << std::endl;
 
 	switch (type) {
@@ -33,7 +33,7 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
 		case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
 		default: break;
-	} 
+	}
 	std::cout << std::endl;
 
 	switch (severity) {
@@ -42,7 +42,7 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
 		case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
 		default: break;
-	} 
+	}
 	std::cout << std::endl;
 }
 
@@ -76,7 +76,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load(L"Data/test.w3x");
+	map.load("Data/Test.w3x");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
@@ -172,7 +172,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 
 	if (map.brush) {
 		map.brush->set_position(input_handler.mouse_world);
-			
+
 		if (event->buttons() == Qt::LeftButton) {
 			map.brush->apply();
 		}

@@ -83,7 +83,7 @@ public:
 
 	std::string global_jass_comment;
 	std::string global_jass;
-	
+
 	std::vector<TriggerCategory> categories;
 	std::vector<TriggerVariable> variables;
 	std::vector<Trigger> triggers;

@@ -272,7 +272,7 @@ void TerrainBrush::apply() {
 						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water ? 1 : 0;
 					}
 				}
-				
+
 				check_nearby(x, y, i, j, updated_area);
 				map.terrain.ground_corner_heights[j * width + i] = map.terrain.corner_height(i, j);
 			}
@@ -408,7 +408,7 @@ void TerrainBrush::apply_end() {
 int TerrainBrush::get_random_variation() const {
 	std::random_device rd;
 	std::mt19937 e2(rd());
-	const std::uniform_int_distribution<> dist(0, 570);
+	std::uniform_int_distribution<> dist(0, 570);
 
 	int nr = dist(e2) - 1;
 

@@ -9,7 +9,7 @@ namespace casc {
 		const uint32_t size = CascGetFileSize(handle, 0);
 		std::vector<uint8_t> buffer(size);
 
-		unsigned long bytes_read;
+		unsigned bytes_read;
 		const bool success = CascReadFile(handle, &buffer[0], size, &bytes_read);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;

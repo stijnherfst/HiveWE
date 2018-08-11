@@ -38,7 +38,7 @@ void Terrain::create() {
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			ground_corner_heights[j * width + i] = corner_height(i, j);
-			
+
 			water_exists_data[j * width + i] = corners[i][j].water;
 
 			if (i == width - 1 || j == height - 1) {
@@ -169,7 +169,7 @@ bool Terrain::load(BinaryReader& reader) {
 
 			const uint8_t texture_and_flags = reader.read<uint8_t>();
 			corner.ground_texture = texture_and_flags & 0b00001111;
-			 
+
 			corner.ramp = texture_and_flags & 0b00010000;
 			corner.blight = texture_and_flags & 0b00100000;
 			corner.water = texture_and_flags & 0b01000000;
@@ -232,7 +232,7 @@ bool Terrain::load(BinaryReader& reader) {
 	green = std::stoi(water_slk.data("Smax_G", tileset + "Sha"s));
 	blue = std::stoi(water_slk.data("Smax_B", tileset + "Sha"s));
 	alpha = std::stoi(water_slk.data("Smax_A", tileset + "Sha"s));
-	
+
 	shallow_color_max = { red, green, blue, alpha };
 	shallow_color_max /= 255.f;
 
@@ -373,7 +373,7 @@ void Terrain::render() {
 
 		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottom_left.cliff_texture });
 	}
-	
+
 	cliff_shader->use();
 
 	glm::mat4 MVP = glm::scale(camera->projection_view, glm::vec3(1.f / 128.f));
@@ -432,7 +432,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 			j.ground_texture = new_to_old[j.ground_texture];
 		}
 	}
-	
+
 	// Reload tile textures
 	ground_textures.clear();	// ToDo Clear them after loading new ones?
 	ground_texture_to_id.clear();

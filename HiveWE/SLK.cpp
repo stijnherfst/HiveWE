@@ -18,7 +18,7 @@ namespace slk {
 		}
 
 		std::string line;
-		
+
 		size_t position = 0;
 		size_t length = 0;
 
@@ -91,7 +91,7 @@ namespace slk {
 						}
 
 						table_data[row][column] = part;
-						
+
 						if (row == 0) {
 							header_to_column.emplace(part, column);
 						}

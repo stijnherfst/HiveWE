@@ -54,5 +54,4 @@ namespace casc {
 		File file_open(const fs::path& path) const;
 		bool file_exists(const fs::path& path) const;
 	};
-
 }
