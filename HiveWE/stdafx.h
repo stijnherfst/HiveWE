@@ -37,7 +37,6 @@ namespace fs = std::filesystem;
 #include <gtc/matrix_transform.hpp>
 #ifdef _MSC_VER
 #include <SOIL2.h>
-<<<<<<< HEAD
 #else
 #include <SOIL/SOIL.h>
 #endif
