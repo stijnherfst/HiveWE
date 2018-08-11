@@ -99,6 +99,7 @@ void HiveWE::save_as() {
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
+	hierarchy.game_data.close();
 	event->accept();
 }
 
