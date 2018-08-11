@@ -12,6 +12,7 @@ namespace mpq {
 		}
 
 		std::vector<uint8_t> buffer(size);
+		
 		#ifdef _MSC_VER
 		unsigned long bytes_read;
 		#else
@@ -32,7 +33,11 @@ namespace mpq {
 
 		std::vector<uint8_t> buffer(size);
 
+		#ifdef _MSC_VER
+		unsigned long bytes_read;
+		#else
 		unsigned int bytes_read;
+		#endif
 		const bool success = SFileReadFile(handle, &buffer[0], size, &bytes_read, nullptr);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;
