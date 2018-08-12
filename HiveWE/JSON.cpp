@@ -24,7 +24,8 @@ namespace json {
 					}
 					if (line.substr(0, 12) == "    {\"src\":\"") {
 						end1 = line.find('\"', 13);
-						const std::string key = line.substr(12, end1 - 12);
+						std::string key = line.substr(12, end1 - 12);
+						std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 						// If the segment already exists
 						if (json_data.count(key)) {
 							continue;
@@ -50,11 +51,14 @@ namespace json {
 		}
 	}
 
-	bool JSON::exists(std::string file) const {
+	bool JSON::exists(const std::string& file) const {
+		std::string file_lower_case = file;
+		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+
 	#ifdef _DEBUG
 		std::cout << "Queried existance of alias for: " << file;
 	#endif
-		if (json_data.count(file))
+		if (json_data.count(file_lower_case))
 		{
 			#ifdef _DEBUG
 			std::cout << "  FOUND\n";
@@ -67,7 +71,7 @@ namespace json {
 		return false;
 	}
 
-	std::string JSON::alias(std::string file) const {
+	std::string JSON::alias(const std::string& file) const {
 		return json_data.at(file);
 	}
 }

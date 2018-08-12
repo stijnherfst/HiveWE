@@ -18,7 +18,11 @@ namespace ini {
 			}
 
 			if (line.front() == '[') {
-				const std::string key = line.substr(1, line.size() - 3);
+				std::string key = line.substr(1, line.size() - 3);
+
+				if (key.back() == ']') {
+					key.pop_back();
+				}
 				// If the segment already exists
 				if (ini_data.count(key)) { // ToDo C++20 contains
 					continue;

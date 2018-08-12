@@ -23,17 +23,17 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		file = game_data.file_open("deprecated.mpq:"s + path.string());
 	} else {
 		if (aliases.exists(path.string())) {
-			std::string alias = aliases.alias(path.string());
-			if (map.file_exists(alias)) {
-				auto file_content = map.file_open(alias).read();
-				return BinaryReader(file_content);
-			} else if (game_data.file_exists("war3.mpq:"s + alias)) {
-				file = game_data.file_open("war3.mpq:"s + alias);
-			}
-			else {
-				std::cout << "Unable to find file in hierarchy: " << path << "\n";
-				return BinaryReader(std::vector<uint8_t>());
-			}
+			return open_file(aliases.alias(path.string()));
+			//std::string alias = aliases.alias(path.string());
+			//if (map.file_exists(alias)) {
+			//	auto file_content = map.file_open(alias).read();
+			//	return BinaryReader(file_content);
+			//} else if (game_data.file_exists("war3.mpq:"s + alias)) {
+			//	file = game_data.file_open("war3.mpq:"s + alias);
+			//} else {
+			//	std::cout << "Unable to find file in hierarchy: " << path << "\n";
+			//	return BinaryReader(std::vector<uint8_t>());
+			//}
 		} else {
 			std::cout << "Unable to find file in hierarchy: " << path << "\n";
 			return BinaryReader(std::vector<uint8_t>());
