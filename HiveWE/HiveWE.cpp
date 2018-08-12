@@ -101,8 +101,11 @@ void HiveWE::save_as() {
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
-	hierarchy.game_data.close();
-	event->accept();
+	//int choice = QMessageBox::question(this, "Do you want to quit?", "Are you sure you want to quit?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+
+	//if (choice == QMessageBox::Yes) {
+	//}
+		event->accept();
 }
 
 void HiveWE::switch_camera() {
