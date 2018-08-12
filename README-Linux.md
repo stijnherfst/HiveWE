@@ -14,4 +14,3 @@
 	2. Run target "Pre-Generate"
 	3. Run target "Executable"
 	4. It should be all done
-	
