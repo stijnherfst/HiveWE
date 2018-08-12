@@ -100,7 +100,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.itemClassification->setChecked(map.info.item_classification);
 	ui.gameDataSet->setCurrentIndex(map.info.game_data_set);
 
-	
+
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();
 		emit accept();

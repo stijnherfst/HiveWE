@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include <utility>
 
 Hierarchy hierarchy;
 
@@ -22,6 +21,7 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	} else if (game_data.file_exists("deprecated.mpq:"s + path.string())) {
 		file = game_data.file_open("deprecated.mpq:"s + path.string());
 	} else {
+        std::cout << "Trying alias for " << path.string() << std::endl;
 		if (aliases.exists(path.string())) {
 			return open_file(aliases.alias(path.string()));
 			//std::string alias = aliases.alias(path.string());

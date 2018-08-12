@@ -30,7 +30,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 	for (int i = 1; i < map.doodads.doodads_slk.rows; i++) {
 		ui.doodads->addItem(QString::fromStdString(map.doodads.doodads_slk.data("Name", i)));
 	}
-	
+
 }
 
 DoodadPalette::~DoodadPalette() {

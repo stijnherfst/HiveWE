@@ -45,7 +45,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		return;
 	}
 	Trigger& trigger = files.at(item).get();
-	
+
 	if (trigger.is_comment) {
 		return;
 	}
@@ -88,7 +88,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		std::function<void(QTreeWidgetItem*, ECA&)> recurse = [&](QTreeWidgetItem* parent, ECA& i) {
 			QTreeWidgetItem* eca = new QTreeWidgetItem(parent);
 			std::string category;
-			
+
 			switch (i.type) {
 				case ECA::Type::event:
 					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerEventStrings", i.name)));

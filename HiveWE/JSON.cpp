@@ -51,13 +51,12 @@ namespace json {
 		}
 	}
 
-	bool JSON::exists(const std::string& file) const {
+	bool JSON::exists(std::string file) const {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
-
-	#ifdef _DEBUG
+		#ifdef _DEBUG
 		std::cout << "Queried existance of alias for: " << file;
-	#endif
+		#endif
 		if (json_data.count(file_lower_case))
 		{
 			#ifdef _DEBUG
@@ -71,7 +70,9 @@ namespace json {
 		return false;
 	}
 
-	std::string JSON::alias(const std::string& file) const {
-		return json_data.at(file);
+	std::string JSON::alias(std::string file) const {
+		std::string file_lower_case = file;
+		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+		return json_data.at(file_lower_case);
 	}
 }

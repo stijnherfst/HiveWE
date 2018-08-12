@@ -23,7 +23,7 @@ void Triggers::load(BinaryReader& reader) {
 			argument_counts[key] = arguments;
 		}
 	}
-	
+
 	std::string magic_number = reader.read_string(4);
 	if (magic_number != "WTG!") {
 		std::cout << "Unknown magic number for war3map.wtg " << magic_number << "\n";
@@ -104,7 +104,7 @@ void Triggers::load(BinaryReader& reader) {
 		}
 	};
 
-	
+
 	std::function<void(ECA&, bool)> parse_eca_structure = [&](ECA& eca, bool is_child) {
 		eca.type = static_cast<ECA::Type>(reader.read<uint32_t>());
 		if (is_child) {

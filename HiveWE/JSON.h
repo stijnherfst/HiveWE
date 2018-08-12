@@ -11,8 +11,8 @@ namespace json {
 
 		void load(const fs::path& path);
 
-		bool exists(const std::string& file) const;
+		bool exists(const std::string file) const;
 
-		std::string alias(const std::string& file) const;
+		std::string alias(const std::string file) const;
 	};
 }

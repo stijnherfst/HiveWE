@@ -105,7 +105,7 @@ namespace mdx {
 
 	struct AnimatedData {
 		std::unordered_map<TrackTag, std::shared_ptr<TrackHeaderBase>> tracks;
-		
+
 		void load_tracks(BinaryReader& reader);
 
 		AnimatedData() = default;
@@ -119,7 +119,7 @@ namespace mdx {
 		bool has_track(const TrackTag track) {
 			return tracks.find(track) != tracks.end();
 		}
-		
+
 	};
 
 	struct Extent {
@@ -265,7 +265,7 @@ namespace mdx {
 
 	class MDX {
 		std::map<ChunkTag, std::shared_ptr<Chunk>> chunks;
-	
+
 	public:
 		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
@@ -274,15 +274,14 @@ namespace mdx {
 		std::shared_ptr<T> chunk() {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
-			return std::dynamic_pointer_cast<T>(chunks[T::tag]);
+			return std::dynamic_pointer_cast<T>(chunks[static_cast<ChunkTag>(T::tag)]);
 		}
 
 		template<typename T>
 		bool has_chunk() {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
-			return chunks.find(T::tag) != chunks.end();
+			return chunks.find(static_cast<ChunkTag>(T::tag)) != chunks.end();
 		}
 	};
 }
-

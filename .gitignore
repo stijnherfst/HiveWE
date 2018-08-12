@@ -1,5 +1,6 @@
 .mpq
 .w3x
+.layout
 
 # User-specific files
 *.suo
@@ -326,3 +327,4 @@ ASALocalRun/
 !HiveWE/[Dd]ependencies/*
 !HiveWE/[Dd]ependencies/**/*
 !HiveWE/[Dd]ependencies/**/**/*
+HiveWE/Linux/
