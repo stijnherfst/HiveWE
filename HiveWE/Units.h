@@ -43,9 +43,6 @@ struct Unit {
 };
 
 class Units {
-	slk::SLK units_slk;
-	slk::SLK units_meta_slk;
-	slk::SLK items_slk;
 
 	std::vector<Unit> units;
 
@@ -54,6 +51,10 @@ class Units {
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
 public:
+	slk::SLK units_slk;
+	slk::SLK units_meta_slk;
+	slk::SLK items_slk;
+
 	QuadTree<Unit> tree;
 
 	bool load(BinaryReader& reader, Terrain& terrain);

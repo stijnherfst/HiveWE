@@ -197,11 +197,37 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 					case TriggerParameter::Type::preset:
 						result += map.triggers.trigger_data.data("TriggerParams", j.value, 3);
 						break;
-						break;
 					case TriggerParameter::Type::string:
-						result += map.trigger_strings.strings[j.value];
+						if (j.value.size() == 4) {
+							// Might be a unit
+							if (map.units.units_slk.header_to_row.find(j.value) != map.units.units_slk.header_to_row.end()) {
+								result += map.units.units_slk.data("Name", j.value);
+							} else {
+								result += j.value;
+							}
+						} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
+							result += map.trigger_strings.strings[j.value];
+						} else {
+							result += j.value;
+
+						}
 						break;
-					case TriggerParameter::Type::variable:
+					case TriggerParameter::Type::variable: {
+						if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
+							std::string type = j.value.substr(8, 4);
+							std::string instance = j.value.substr(13);
+							result += map.units.units_slk.data("Name", type);
+							result += " " + instance;
+						} else {
+							std::string type = map.triggers.variables[j.value].type;
+							if (type == "unit") {
+								std::cout << "test\n";
+							} else {
+								result += j.value;
+							}
+						}
+						break;
+					}
 					default:
 						result += j.value;
 				}

@@ -7,7 +7,7 @@ struct TriggerCategory {
 };
 
 struct TriggerVariable {
-	std::string name;
+//	std::string name;
 	std::string type;
 	bool is_array;
 	int array_size = 0;
@@ -85,7 +85,8 @@ public:
 	std::string global_jass;
 
 	std::vector<TriggerCategory> categories;
-	std::vector<TriggerVariable> variables;
+	//std::vector<TriggerVariable> variables;
+	std::unordered_map<std::string, TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
 	void load(BinaryReader& reader);

@@ -29,7 +29,6 @@ namespace casc {
 	class CASC {
 	public:
 		HANDLE handle;
-		fs::path local_path;
 
 		CASC() = default;
 
