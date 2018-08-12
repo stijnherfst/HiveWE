@@ -113,7 +113,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	items_slk = slk::SLK("Units/ItemData.slk");
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
-	
+
 	return true;
 }
 
