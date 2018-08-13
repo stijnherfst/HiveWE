@@ -9,8 +9,10 @@
 	soil
 	Qt5
 	qscintilla2_qt5
+	xterm (For running from CodeBlocks)
 ## Build Steps
 	1. Open CodeBlocks Project HiveWE/HiveWE.cbp
-	2. Run target "Pre-Generate"
-	3. Run target "Executable"
-	4. It should be all done
+	2. Build target "Pre-Generate"
+	3. Build target "Executable"
+	4. Run target "Executable" (if you have xterm) OR
+	4. Run the executable located in ../x64/Linux/
