@@ -1,6 +1,7 @@
 .mpq
 .w3x
-.layout
+*.layout
+*.depend
 
 # User-specific files
 *.suo
