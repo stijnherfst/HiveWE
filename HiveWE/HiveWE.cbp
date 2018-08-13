@@ -93,6 +93,9 @@
 					<Add library="GL" />
 					<Add library="stdc++fs" />
 				</Linker>
+				<ExtraCommands>
+					<Add after="cp -r ./Data ../x64/Linux/" />
+				</ExtraCommands>
 			</Target>
 		</Build>
 		<Unit filename="BLP.cpp">
