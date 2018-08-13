@@ -45,6 +45,9 @@
 					<Add library="Qt5Widgets" />
 					<Add library="qscintilla2_qt5" />
 				</Linker>
+				<ExtraCommands>
+					<Add before="mkdir -p ./GeneratedFiles/Linux" />
+				</ExtraCommands>
 			</Target>
 			<Target title="Executable">
 				<Option output="../x64/Linux/HiveWE" prefix_auto="1" extension_auto="1" />
