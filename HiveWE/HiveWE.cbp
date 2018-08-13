@@ -94,7 +94,7 @@
 					<Add library="stdc++fs" />
 				</Linker>
 				<ExtraCommands>
-					<Add after="cp -r ./Data ../x64/Linux/" />
+					<Add after="cp -r -u ./Data ../x64/Linux/" />
 				</ExtraCommands>
 			</Target>
 		</Build>
