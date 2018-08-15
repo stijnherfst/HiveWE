@@ -44,9 +44,7 @@ namespace json {
 					}
 				}
 			} else {
-			#ifdef _DEBUG
-				std::cout << "Malformed JSON\n";
-			#endif
+				std::cout << "Malformed Alias JSON\n";
 			}
 		}
 	}
@@ -55,23 +53,15 @@ namespace json {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
 
-	#ifdef _DEBUG
-		std::cout << "Queried existance of alias for: " << file;
-	#endif
-		if (json_data.count(file_lower_case))
-		{
-			#ifdef _DEBUG
-			std::cout << "  FOUND\n";
-			#endif
-				return true;
+		if (json_data.count(file_lower_case)) {
+			return true;
 		}
-		#ifdef _DEBUG
-		std::cout << "   NOT FOUND\n";
-		#endif
 		return false;
 	}
 
 	std::string JSON::alias(const std::string& file) const {
-		return json_data.at(file);
+		std::string file_lower_case = file;
+		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+		return json_data.at(file_lower_case);
 	}
 }

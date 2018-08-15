@@ -141,6 +141,7 @@
     <ClCompile Include="CASC.cpp" />
     <ClCompile Include="CliffMesh.cpp" />
     <ClCompile Include="ColorButton.cpp" />
+    <ClCompile Include="DoodadBrush.cpp" />
     <ClCompile Include="DoodadPalette.cpp" />
     <ClCompile Include="Doodads.cpp" />
     <ClCompile Include="FlowLayout.cpp" />
@@ -347,6 +348,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../%(Filename)%(Extension)"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include" "-I.\Dependencies\casclib-1.11\include" "-I.\Dependencies\qscintilla-2.10.7\include" "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets"</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp" "-fstdafx.h" "-f../../%(Filename)%(Extension)"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include" "-I.\Dependencies\casclib-1.11\include" "-I.\Dependencies\qscintilla-2.10.7\include" "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets"</Command>
     </CustomBuild>
+    <ClInclude Include="DoodadBrush.h" />
     <ClInclude Include="Doodads.h" />
     <CustomBuild Include="FlowLayout.h">
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
