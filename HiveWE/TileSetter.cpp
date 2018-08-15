@@ -21,7 +21,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
 		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
-		
+
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
 	}

@@ -51,7 +51,7 @@ void Map::load(const fs::path& path) {
 	if (!success) {
 		return;
 	}
-	
+
 	// Imported Files
 	if (hierarchy.map.file_exists("war3map.imp")) {
 		BinaryReader war3map_imp = BinaryReader(hierarchy.map.file_open("war3map.imp").read());
@@ -185,7 +185,7 @@ void Map::render(int width, int height) {
 
 	auto end = std::chrono::high_resolution_clock::now();
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-	
+
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y() > 0) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);

@@ -45,7 +45,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		return;
 	}
 	Trigger& trigger = files.at(item).get();
-	
+
 	if (trigger.is_comment) {
 		return;
 	}

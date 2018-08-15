@@ -49,7 +49,7 @@ namespace json {
 		}
 	}
 
-	bool JSON::exists(const std::string& file) const {
+	bool JSON::exists(std::string file) const {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
 
