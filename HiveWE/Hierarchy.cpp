@@ -39,5 +39,5 @@ bool Hierarchy::file_exists(const fs::path& path) const {
 		|| game_data.file_exists("enus-war3local.mpq:"s + path.string())
 		|| game_data.file_exists("war3.mpq:"s + path.string())
 		|| game_data.file_exists("deprecated.mpq:"s + path.string())
-		|| aliases.exists(path.string());
+		|| ((aliases.exists(path.string())) ? file_exists(aliases.alias(path.string())) : false );
 }
