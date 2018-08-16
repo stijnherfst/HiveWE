@@ -129,7 +129,11 @@ namespace slk {
 		output << "ID;PWXL;N;E\n";
 		output << "B;X" << columns << ";Y" << rows << ";D0\n";
 
-		for(int i = 0; i < table_data.size(); i++) {
+		for (auto&&[key, value] : header_to_column) {
+			output << "C;X" << value + 1 << ";Y1;K\"" << key << "\"\n";
+		}
+
+		for(int i = 1; i < table_data.size(); i++) {
 			for (int j = 0; j < table_data[i].size(); j++) {
 				output << "C;X" << j + 1 << ";Y" << i + 1 << ";K\"" << table_data[i][j] << "\"\n";
 			}
@@ -206,7 +210,7 @@ namespace slk {
 				if (header_to_column.find(key) == header_to_column.end()) {
 					add_column(key);
 				}
-				table_data[header_to_row[section_key]][header_to_column[key]] = std::accumulate(value.begin(), value.end(), ""s);// value[0];
+				table_data[header_to_row[section_key]][header_to_column[key]] = std::accumulate(value.begin(), value.end(), ""s);;
 			}
 		}
 	}

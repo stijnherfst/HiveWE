@@ -72,99 +72,106 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		edit->setHeaderHidden(true);
 		edit->setUniformRowHeights(true);
 		layout->addWidget(edit);
-
-		QTreeWidgetItem* events = new QTreeWidgetItem(edit);
-		events->setText(0, "Events");
-		events->setIcon(0, event_icon);
-
-		QTreeWidgetItem* conditions = new QTreeWidgetItem(edit);
-		conditions->setText(0, "Conditions");
-		conditions->setIcon(0, condition_icon);
-
-		QTreeWidgetItem* actions = new QTreeWidgetItem(edit);
-		actions->setText(0, "Actions");
-		actions->setIcon(0, action_icon);
-
-		std::function<void(QTreeWidgetItem*, ECA&)> recurse = [&](QTreeWidgetItem* parent, ECA& i) {
-			QTreeWidgetItem* eca = new QTreeWidgetItem(parent);
-			std::string category;
-
-			switch (i.type) {
-				case ECA::Type::event:
-					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerEventStrings", i.name)));
-					category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
-					break;
-				case ECA::Type::condition:
-					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerConditionStrings", i.name)));
-					category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
-					break;
-				case ECA::Type::action:
-					eca->setText(0, QString::fromStdString(map.triggers.trigger_strings.data("TriggerActionStrings", i.name)));
-					category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
-					break;
-			}
-
-			if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
-				std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
-				std::string final_path = icon_path + ".blp";
-				QIcon icon = texture_to_icon(final_path);
-				trigger_icons[category] = icon;
-				eca->setIcon(0, icon);
-			} else {
-				eca->setIcon(0, found->second);
-			}
-			for (auto&& j : i.ecas) {
-				recurse(eca, j);
-			}
-		};
-
-
-		for (auto&& i : trigger.lines) {
-			recurse(nullptr, i);
-
-			QTreeWidgetItem* eca = new QTreeWidgetItem;
-			std::string category;
-			std::vector<std::string> string_parameters;
-
-			switch (i.type) {
-				case ECA::Type::event:
-					events->addChild(eca);
-					string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", i.name);
-					category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
-					break;
-				case ECA::Type::condition:
-					conditions->addChild(eca);
-					string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", i.name);
-					category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
-					break;
-				case ECA::Type::action:
-					actions->addChild(eca);
-					string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", i.name);
-					category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
-					break;
-			}
-
-			eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
-
-			if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
-				std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
-				std::string final_path = icon_path + ".blp";
-				QIcon icon = texture_to_icon(final_path);
-				trigger_icons[category] = icon;
-				eca->setIcon(0, icon);
-			} else {
-				eca->setIcon(0, found->second);
-			}
-			for (auto&& j : i.ecas) {
-				recurse(eca, j);
-			}
-		}
-
+		show_gui_trigger(edit, trigger);
 		edit->expandAll();
 	}
 
 	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
 	ui.editor->setCurrentWidget(tab);
+}
+
+void TriggerEditor::show_gui_trigger(QTreeWidget* edit, Trigger& trigger) {
+	QTreeWidgetItem* events = new QTreeWidgetItem(edit);
+	events->setText(0, "Events");
+	events->setIcon(0, event_icon);
+
+	QTreeWidgetItem* conditions = new QTreeWidgetItem(edit);
+	conditions->setText(0, "Conditions");
+	conditions->setIcon(0, condition_icon);
+
+	QTreeWidgetItem* actions = new QTreeWidgetItem(edit);
+	actions->setText(0, "Actions");
+	actions->setIcon(0, action_icon);
+
+	std::function<void(QTreeWidgetItem*, ECA&)> recurse = [&](QTreeWidgetItem* parent, ECA& i) {
+		QTreeWidgetItem* eca = new QTreeWidgetItem(parent);
+		std::string category;
+
+		std::vector<std::string> string_parameters;
+
+		switch (i.type) {
+			case ECA::Type::event:
+				string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", i.name);
+				category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
+				break;
+			case ECA::Type::condition:
+				string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", i.name);
+				category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
+				break;
+			case ECA::Type::action:
+				string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", i.name);
+				category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
+				break;
+		}
+
+		eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
+
+		if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
+			std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
+			std::string final_path = icon_path + ".blp";
+			QIcon icon = texture_to_icon(final_path);
+			trigger_icons[category] = icon;
+			eca->setIcon(0, icon);
+		} else {
+			eca->setIcon(0, found->second);
+		}
+
+		QTreeWidgetItem* sub1 = eca;
+		QTreeWidgetItem* sub2 = eca;
+		QTreeWidgetItem* sub3 = eca;
+
+		if (i.name == "AndMultiple" || i.name == "OrMultiple") {
+			sub1 = new QTreeWidgetItem(eca, { "Conditions" });
+			sub1->setIcon(0, condition_icon);
+		} else if (i.name == "IfThenElseMultiple") {
+			sub1 = new QTreeWidgetItem(eca, { "If - Conditions" });
+			sub1->setIcon(0, condition_icon);
+			sub2 = new QTreeWidgetItem(eca, { "Then - Actions" });
+			sub2->setIcon(0, action_icon);
+			sub3 = new QTreeWidgetItem(eca, { "Else - Actions" });
+			sub3->setIcon(0, action_icon);
+		} else if (i.name == "ForLoopAMultiple"
+			|| i.name == "ForLoopBMultiple"
+			|| i.name == "ForLoopVarMultiple"
+			|| i.name == "ForLoopA"
+			|| i.name == "ForLoopB"
+			|| i.name == "ForLoopVar"
+			|| i.name == "ForForceMultiple"
+			|| i.name == "ForGroupMultiple") {
+			sub1 = new QTreeWidgetItem(eca, { "Loop - Actions" });
+			sub1->setIcon(0, action_icon);
+		}
+
+		for (auto&& j : i.ecas) {
+			if (j.group == 0) {
+				recurse(sub1, j);
+			} else if (j.group == 1) {
+				recurse(sub2, j);
+			} else if (j.group == 2) {
+				recurse(sub3, j);
+			}
+		}
+	};
+
+	for (auto&& i : trigger.lines) {
+		if (i.type == ECA::Type::event) {
+			recurse(events, i);
+		} else if (i.type == ECA::Type::condition) {
+			recurse(conditions, i);
+		} else if (i.type == ECA::Type::action) {
+			recurse(actions, i);
+		}
+	}
 }
 
 std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_parameters, std::vector<TriggerParameter>& parameters) {
@@ -199,9 +206,10 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 						break;
 					case TriggerParameter::Type::string:
 						if (j.value.size() == 4) {
-							// Might be a unit
 							if (map.units.units_slk.header_to_row.find(j.value) != map.units.units_slk.header_to_row.end()) {
 								result += map.units.units_slk.data("Name", j.value);
+							} else if (map.units.items_slk.header_to_row.find(j.value) != map.units.items_slk.header_to_row.end()) {
+								result += map.units.items_slk.data("Name", j.value);
 							} else {
 								result += j.value;
 							}
@@ -209,7 +217,6 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 							result += map.trigger_strings.strings[j.value];
 						} else {
 							result += j.value;
-
 						}
 						break;
 					case TriggerParameter::Type::variable: {

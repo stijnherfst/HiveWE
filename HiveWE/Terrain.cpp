@@ -203,7 +203,7 @@ bool Terrain::load(BinaryReader& reader) {
 	}
 	// Done parsing
 
-//	hierarchy.load_tileset(tileset);
+	hierarchy.tileset = tileset;
 
 	terrain_slk.load("TerrainArt/Terrain.slk");
 	cliff_slk.load("TerrainArt/CliffTypes.slk");

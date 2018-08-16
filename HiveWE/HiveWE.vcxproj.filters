@@ -303,6 +303,9 @@
     <ClCompile Include="JSON.cpp">
       <Filter>Source Files\Base\File Formats</Filter>
     </ClCompile>
+    <ClCompile Include="DoodadBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -439,6 +442,9 @@
     </ClInclude>
     <ClInclude Include="JSON.h">
       <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="DoodadBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
