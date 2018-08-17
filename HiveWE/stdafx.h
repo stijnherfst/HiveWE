@@ -82,6 +82,7 @@ namespace fs = std::filesystem;
 #include "CliffMesh.h"
 #include "Shader.h"
 #include "StaticMesh.h"
+#include "SkinnedMesh.h"
 
 #include "TriggerStrings.h"
 #include "Triggers.h"
@@ -94,6 +95,7 @@ namespace fs = std::filesystem;
 #include "Brush.h"
 #include "PathingBrush.h"
 #include "TerrainBrush.h"
+#include "DoodadBrush.h"
 #include "MapInfo.h"
 #include "Map.h"
 

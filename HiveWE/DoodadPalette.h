@@ -2,8 +2,7 @@
 
 #include "ui_DoodadPalette.h"
 
-class DoodadPalette : public QDialog
-{
+class DoodadPalette : public QDialog {
 	Q_OBJECT
 
 public:
@@ -11,5 +10,10 @@ public:
 	~DoodadPalette();
 
 private:
+	bool event(QEvent *e) override;
+
+	void set_doodad(QListWidgetItem* item);
+
 	Ui::DoodadPalette ui;
+	DoodadBrush brush;
 };

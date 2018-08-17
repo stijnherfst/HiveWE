@@ -214,7 +214,7 @@ void Map::render(int width, int height) {
 	}
 
 	if (render_brush && brush) {
-		brush->render(terrain);
+		brush->render();
 	}
 
 	// Render all meshes

@@ -22,7 +22,7 @@ public:
 	void decrease_size(int size);
 	bool contains(int x, int y) const;
 
-	void render(Terrain& terrain) const;
+	virtual void render() const;
 
 	virtual void apply() = 0;
 	virtual void apply_end() {};

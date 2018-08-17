@@ -306,6 +306,9 @@
     <ClCompile Include="DoodadBrush.cpp">
       <Filter>Source Files\Base\Brush</Filter>
     </ClCompile>
+    <ClCompile Include="SkinnedMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -445,6 +448,9 @@
     </ClInclude>
     <ClInclude Include="DoodadBrush.h">
       <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="SkinnedMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

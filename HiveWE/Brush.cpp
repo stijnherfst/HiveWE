@@ -83,7 +83,7 @@ void Brush::decrease_size(const int new_size) {
 	set_size(size - new_size);
 }
 
-void Brush::render(Terrain& terrain) const {
+void Brush::render() const {
 	gl->glDisable(GL_DEPTH_TEST);
 
 	shader->use();
@@ -95,7 +95,7 @@ void Brush::render(Terrain& terrain) const {
 	gl->glUniform2f(2, position.x, position.y);
 	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
 
-	gl->glBindTextureUnit(0, terrain.ground_corner_height);
+	gl->glBindTextureUnit(0, map.terrain.ground_corner_height);
 	gl->glBindTextureUnit(1, brush_texture);
 
 	gl->glEnableVertexAttribArray(0);
