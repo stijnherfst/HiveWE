@@ -230,7 +230,7 @@ namespace slk {
 
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
-			std::cout << "Uknown row header: " << row_header << "\n";
+			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}
 
@@ -255,12 +255,12 @@ namespace slk {
 
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
-			std::cout << "Uknown column header: " << column_header << "\n";
+			std::cout << "Unknown column header: " << column_header << "\n";
 			return;
 		}
 
 		if (header_to_row.find(row_header) == header_to_row.end()) {
-			std::cout << "Uknown row header: " << row_header << "\n";
+			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}
 
