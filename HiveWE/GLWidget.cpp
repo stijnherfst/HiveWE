@@ -55,6 +55,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	setFocus();
 }
 
+//std::shared_ptr<SkinnedMesh> footman;
+
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
@@ -77,6 +79,8 @@ void GLWidget::initializeGL() {
 	shapes.init();
 
 	map.load("Data/Test.w3x");
+
+//	footman = resource_manager.load<SkinnedMesh>("units\\human\\Footman\\Footman.mdx");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
@@ -108,6 +112,8 @@ void GLWidget::paintGL() {
 
 	gl->glBindVertexArray(vao);
 	map.render(width(), height());
+
+	//footman->render();
 	gl->glBindVertexArray(0);
 
 	if (map.show_timings) {

@@ -13,7 +13,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 
 	// Subversion
 	const int subversion = reader.read<uint32_t>();
-	if (subversion != 11) {
+	if (subversion != 9 && subversion != 11) {
 		std::cout << "Unknown war3mapUnits.doo subversion: " << subversion << " Attempting to load but may crash\nPlease send this map to eejin\n";
 	}
 
@@ -264,9 +264,6 @@ void Units::render() {
 		if (i.id == "sloc") {
 			continue;
 		} // ToDo handle starting locations
-		//if (!camera.is_visible(i.position / 128.f)) {
-		//	continue;
-		//}
 
 		id_to_mesh[i.id]->render_queue(i.matrix);
 	}

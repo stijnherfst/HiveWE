@@ -104,6 +104,19 @@ namespace mdx {
 		flags = reader.read<uint32_t>();
 	}
 
+	Node::Node(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t inclusive_size = reader.read<uint32_t>();
+		name = reader.read_string(80);
+		object_id = reader.read<uint32_t>();
+		parent_id = reader.read<uint32_t>();
+		flags = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + inclusive_size) {
+			animated_data.load_tracks(reader);
+		}
+	}
+
 	Sequence::Sequence(BinaryReader& reader) {
 		name = reader.read_string(80);
 		interval_start = reader.read<uint32_t>();
@@ -174,13 +187,12 @@ namespace mdx {
 	}
 
 	GEOA::GEOA(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-		uint32_t total_size = 0;
+		uint32_t remaining_size = reader.read<uint32_t>();
 
-		while (total_size < size) {
+		while (remaining_size > 0) {
 			const int reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			total_size += inclusive_size;
+			remaining_size -= inclusive_size;
 
 			GeosetAnimation animation;
 			animation.alpha = reader.read<float>();
@@ -225,6 +237,19 @@ namespace mdx {
 		}
 	}
 
+	BONE::BONE(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			Bone bone;
+			bone.node = Node(reader);
+			bone.geoset_id = reader.read<uint32_t>();
+			bone.geoset_animation_id = reader.read<uint32_t>();
+			bones.push_back(std::move(bone));
+		}
+	}
+
 	MDX::MDX(BinaryReader& reader) {
 		load(reader);
 	}
@@ -232,7 +257,7 @@ namespace mdx {
 	void MDX::load(BinaryReader& reader) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
-			std::cout << "The files magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
+			std::cout << "The file its magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
 			return;
 		}
 
@@ -254,6 +279,9 @@ namespace mdx {
 					break;
 				case ChunkTag::GEOA:
 					chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
+					break;
+				case ChunkTag::BONE:
+					chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
 					break;
 				default:
 					reader.advance(reader.read<uint32_t>());

@@ -67,6 +67,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		JassEditor* edit = new JassEditor;
 		layout->addWidget(edit);
 		edit->setText(QString::fromStdString(trigger.custom_text));
+		edit->setReadOnly(true);
 	} else {
 		QTreeWidget* edit = new QTreeWidget;
 		edit->setHeaderHidden(true);
