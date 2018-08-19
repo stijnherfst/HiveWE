@@ -24,13 +24,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 		ui.type->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
 	}
 
-	for (int i = 1; i < map.doodads.doodads_slk.rows; i++) {
-		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
-		item->setText(QString::fromStdString(map.doodads.doodads_slk.data("Name", i)));
-		item->setData(Qt::UserRole, QString::fromStdString(map.doodads.doodads_slk.data("doodID", i)));
-	}
-
+	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
+	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.doodads, &QListWidget::itemClicked, this, &DoodadPalette::set_doodad);
+
+	update_list();
 }
 
 DoodadPalette::~DoodadPalette() {
@@ -44,7 +42,40 @@ bool DoodadPalette::event(QEvent *e) {
 	return QWidget::event(e);
 }
 
+void DoodadPalette::update_list() {
+	ui.doodads->clear();
+	
+	char selected_tileset = ui.tileset->currentData().toString().toStdString().front();
+	std::string selected_category = ui.type->currentData().toString().toStdString();
+
+	bool exists = world_edit_data.key_exists("DoodadCategories", selected_category);
+	slk::SLK& slk = exists ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+
+	for (int i = 1; i < slk.rows; i++) {
+		// If the doodad belongs to this tileset
+		std::string tilesets = slk.data("tilesets", i);
+		if (tilesets.find(selected_tileset) == std::string::npos) {
+			continue;
+		}
+
+		// If the doodad belongs to this category
+		std::string category = slk.data("category", i);
+		if (category != selected_category) {
+			continue;
+		}
+
+		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
+		item->setText(QString::fromStdString(slk.data("Name", i)));
+		item->setData(Qt::UserRole, QString::fromStdString(slk.data(exists ? "doodID" : "DestructableID", i)));
+	}
+}
+
 void DoodadPalette::set_doodad(QListWidgetItem* item) {
 	std::string id = item->data(Qt::UserRole).toString().toStdString();
+	brush.id = id;
+
+	//map.doodads.doodads_slk.data()
+
+	//brush.variation = 
 	brush.mesh = map.doodads.get_mesh(id, 0);
 }

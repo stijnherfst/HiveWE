@@ -12,6 +12,7 @@ public:
 private:
 	bool event(QEvent *e) override;
 
+	void update_list();
 	void set_doodad(QListWidgetItem* item);
 
 	Ui::DoodadPalette ui;

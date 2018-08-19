@@ -6,7 +6,6 @@ namespace ini {
 		// header to items to list of values to value
 		std::map<std::string, std::map<std::string, std::vector<std::string>>> ini_data;
 
-
 		INI() = default;
 		explicit INI(const fs::path& path);
 
@@ -21,5 +20,6 @@ namespace ini {
 		/// Retrieves the list of key values
 		std::vector<std::string> whole_data(const std::string& section, const std::string& key) const;
 
+		bool key_exists(const std::string& section, const std::string& key);
 	};
 }

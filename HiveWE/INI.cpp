@@ -92,4 +92,8 @@ namespace ini {
 			return {};
 		}
 	}
+
+	bool INI::key_exists(const std::string& section, const std::string& key) {
+		return ini_data.count(section) && ini_data[section].count(key);
+	}
 }

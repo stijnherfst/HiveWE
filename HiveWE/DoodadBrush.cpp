@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 void DoodadBrush::apply() {
-
+	map.doodads.add_doodad(id, glm::vec2(position));
 }
 
 void DoodadBrush::render() const {

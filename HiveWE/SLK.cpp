@@ -179,6 +179,10 @@ namespace slk {
 		return table_data[row][column];
 	}
 
+	bool SLK::row_header_exists(std::string& row_header) {
+		return header_to_row.find(row_header) != header_to_row.end();
+	}
+
 	/// Merges the data of the files. Any unknown rows and columns are appended
 	void SLK::merge(const slk::SLK& slk) {
 		for (size_t i = 1; i < slk.columns; i++) {

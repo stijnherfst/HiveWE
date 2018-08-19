@@ -172,6 +172,19 @@ void Doodads::render() {
 	}
 }
 
+Doodad& Doodads::add_doodad(std::string id, glm::vec2 position) {
+	Doodad doodad;
+	doodad.id = id;
+	doodad.mesh = get_mesh(id, 0);
+	doodad.position = glm::vec3(position, 0);
+	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
+	doodad.matrix = glm::scale(doodad.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
+
+	doodads.push_back(doodad);
+	tree.insert(&doodads.back());
+	return doodads.back();
+}
+
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string full_id = id + std::to_string(variation);
 	if (id_to_mesh.find(full_id) != id_to_mesh.end()) {

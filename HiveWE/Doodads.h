@@ -59,5 +59,7 @@ public:
 	void create();
 	void render();
 
+	Doodad& add_doodad(std::string id, glm::vec2 position);
+
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };
