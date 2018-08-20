@@ -224,6 +224,9 @@ namespace slk {
 	void SLK::substitute(const ini::INI & ini, const std::string& section) {
 		for (auto&& i : table_data) {
 			for (auto&& j : i) {
+				if (j == "WESTRING_DEST_VOLCANO") {
+					std::cout << "\n";
+				}
 				std::string data = ini.data(section, j);
 				if (!data.empty()) {
 					j = data;

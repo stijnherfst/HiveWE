@@ -54,6 +54,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
