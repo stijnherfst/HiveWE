@@ -54,6 +54,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
@@ -170,6 +172,19 @@ void Doodads::render() {
 	for (auto&& i : special_doodads) {
 		i.mesh->render_queue(i.matrix);
 	}
+}
+
+Doodad& Doodads::add_doodad(std::string id, glm::vec2 position) {
+	Doodad doodad;
+	doodad.id = id;
+	doodad.mesh = get_mesh(id, 0);
+	doodad.position = glm::vec3(position, 0);
+	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
+	doodad.matrix = glm::scale(doodad.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
+
+	doodads.push_back(doodad);
+	tree.insert(&doodads.back());
+	return doodads.back();
 }
 
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
