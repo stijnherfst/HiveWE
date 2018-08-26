@@ -24,7 +24,7 @@ namespace slk {
 
 		size_t column = 0;
 		size_t row = 0;
-		size_t max_rows = 0; // To resize since some files have empty rows at the end. Fix it willy >:(
+		size_t max_rows = 0;
 
 		const auto parse_int_part = [&]() {
 			position++;
@@ -88,6 +88,10 @@ namespace slk {
 							part = line.substr(position, line.find('"', position) - position);
 						} else {
 							part = line.substr(position, line.size() - position - (line.back() == '\r' ? 1 : 0));
+						}
+
+						if (part == "-" || part == "_") {
+							part = "";
 						}
 
 						table_data[row][column] = part;
@@ -179,7 +183,7 @@ namespace slk {
 		return table_data[row][column];
 	}
 
-	bool SLK::row_header_exists(std::string& row_header) {
+	bool SLK::row_header_exists(const std::string& row_header) const {
 		return header_to_row.find(row_header) != header_to_row.end();
 	}
 

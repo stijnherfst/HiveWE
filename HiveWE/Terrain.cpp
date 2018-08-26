@@ -136,7 +136,7 @@ bool Terrain::load(BinaryReader& reader) {
 	reader.read<uint32_t>();
 
 	tileset = reader.read<char>();
-	bool custom_tileset = reader.read<uint32_t>() == 1; // 0 for not default, 1 for custom
+	reader.advance(4); // Custom tileset
 
 	const uint32_t tileset_textures = reader.read<uint32_t>();
 	for (size_t i = 0; i < tileset_textures; i++) {

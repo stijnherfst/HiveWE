@@ -26,7 +26,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	connect(ui.doodads, &QListWidget::itemClicked, this, &DoodadPalette::set_doodad);
+	connect(ui.doodads, &QListWidget::itemSelectionChanged, this, &DoodadPalette::selection_changed);
 
 	update_list();
 }
@@ -66,7 +66,7 @@ void DoodadPalette::update_list() {
 
 		std::string text = slk.data("Name", i);
 		if (!is_doodad) {
-			text += map.doodads.destructibles_slk.data("EditorSuffix", i);
+			text += " " + map.doodads.destructibles_slk.data("EditorSuffix", i);
 		}
 
 		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
@@ -75,12 +75,11 @@ void DoodadPalette::update_list() {
 	}
 }
 
-void DoodadPalette::set_doodad(QListWidgetItem* item) {
-	std::string id = item->data(Qt::UserRole).toString().toStdString();
-	brush.id = id;
+void DoodadPalette::selection_changed() {
+	if (ui.doodads->selectedItems().isEmpty()) {
+		return;
+	}
+	QListWidgetItem* item = ui.doodads->selectedItems().first();
 
-	//map.doodads.doodads_slk.data()
-
-	//brush.variation = 
-	brush.mesh = map.doodads.get_mesh(id, 0);
+	brush.set_doodad(item->data(Qt::UserRole).toString().toStdString());
 }

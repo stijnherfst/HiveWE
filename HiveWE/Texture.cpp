@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 Texture::Texture(const fs::path& path) {
+	BinaryReader reader = hierarchy.open_file(path);
 	if (path.extension() == ".blp" || path.extension() == ".BLP") {
-		BinaryReader reader = hierarchy.open_file(path);
 		auto[w, h, d] = blp::BLP(reader).mipmaps.front();
 
 		data = d;
@@ -10,7 +10,7 @@ Texture::Texture(const fs::path& path) {
 		height = h;
 		channels = 4;
 	} else {
-		uint8_t* image_data = SOIL_load_image(path.string().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
+		uint8_t* image_data = SOIL_load_image_from_memory(reader.buffer.data(), reader.buffer.size(), &width, &height, &channels, SOIL_LOAD_AUTO);
 		data = std::vector<uint8_t>(image_data, image_data + width * height * channels);
 	}
 }
