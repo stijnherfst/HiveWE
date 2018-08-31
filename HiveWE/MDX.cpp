@@ -257,7 +257,7 @@ namespace mdx {
 	void MDX::load(BinaryReader& reader) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
-			std::cout << "The file its magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
+			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
 			return;
 		}
 
