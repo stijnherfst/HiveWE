@@ -78,7 +78,6 @@ void ImportManager::import_files(QTreeWidgetItem* item) {
 	for (auto&& file : files) {
 		const fs::path file_name = fs::path(file.toStdString()).filename();
 		const fs::path full_path = "war3mapImported\\" / file_name;
-		auto t = map.imports.import_file(file.toStdString(), full_path);
 
 		QTreeWidgetItem* child = new QTreeWidgetItem(item);
 		child->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);

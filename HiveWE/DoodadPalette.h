@@ -13,7 +13,7 @@ private:
 	bool event(QEvent *e) override;
 
 	void update_list();
-	void set_doodad(QListWidgetItem* item);
+	void selection_changed();
 
 	Ui::DoodadPalette ui;
 	DoodadBrush brush;

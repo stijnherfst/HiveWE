@@ -303,55 +303,19 @@
     <ClCompile Include="SkinnedMesh.cpp">
       <Filter>Source Files\Base\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_PathingPallete.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_PathingPallete.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ColorButton.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_DoodadPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_GLWidget.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_HiveWE.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ImportManager.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ImportManagerEdit.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_JassEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_MapInfoEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TerrainPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TilePather.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TilePicker.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TileSetter.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TriggerEditor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_WindowHandler.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_TriggerEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TriggerEditor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
