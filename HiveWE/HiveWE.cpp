@@ -13,13 +13,125 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
 		}
-	} ;
+	}
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 	hierarchy.warcraft_directory = directory;
 	hierarchy.init();
 
 	ui.setupUi(this);
+
+	QRibbonTab* tab = new QRibbonTab(nullptr);
+
+
+	// Clipbord
+	QRibbonSection* home_section = new QRibbonSection;
+	home_section->setText("Clipboard");
+
+	QRibbonButton* copy = new QRibbonButton;
+	copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));
+	copy->setText("Copy");
+	home_section->addWidget(copy);
+
+	QRibbonButton* paste = new QRibbonButton;
+	paste->setIcon(QIcon("Data/Icons/Ribbon/paste32x32.ico"));
+	paste->setText("Paste");
+	home_section->addWidget(paste);
+
+	QVBoxLayout* lay = new QVBoxLayout;
+
+	QToolButton* but = new QToolButton;
+	QToolButton* butt = new QToolButton;
+	QToolButton* buttt = new QToolButton;
+
+	lay->addWidget(but);
+	lay->addWidget(butt);
+	lay->addWidget(buttt);
+
+	home_section->addLayout(lay);
+
+	// View
+	QRibbonTab* view_tab = new QRibbonTab(nullptr);
+
+	// Visible section
+	QRibbonSection* visible_section = new QRibbonSection;
+	visible_section->setText("Visible");
+	view_tab->add_section(visible_section);
+
+	QRibbonButton* units_visible = new QRibbonButton;
+	units_visible->setIcon(QIcon("Data/Icons/Ribbon/units32x32.png"));
+	units_visible->setText("Units");
+	units_visible->setCheckable(true);
+	visible_section->addWidget(units_visible);
+
+	QRibbonButton* doodads_visible = new QRibbonButton;
+	doodads_visible->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
+	doodads_visible->setText("Doodads");
+	doodads_visible->setCheckable(true);
+	visible_section->addWidget(doodads_visible);
+
+	QRibbonButton* pathing_visible = new QRibbonButton;
+	pathing_visible->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
+	pathing_visible->setText("Pathing");
+	pathing_visible->setCheckable(true);
+	visible_section->addWidget(pathing_visible);
+
+	QRibbonButton* brush_visible = new QRibbonButton;
+	brush_visible->setIcon(QIcon("Data/Icons/Ribbon/brush32x32.png"));
+	brush_visible->setText("Brush");
+	brush_visible->setCheckable(true);
+	visible_section->addWidget(brush_visible);
+
+	QRibbonButton* lighting_visible = new QRibbonButton;
+	lighting_visible->setIcon(QIcon("Data/Icons/Ribbon/lighting32x32.png"));
+	lighting_visible->setText("Lighting");
+	lighting_visible->setCheckable(true);
+	visible_section->addWidget(lighting_visible);
+
+	QRibbonButton* wireframe_visible = new QRibbonButton;
+	wireframe_visible->setIcon(QIcon("Data/Icons/Ribbon/wireframe32x32.png"));
+	wireframe_visible->setText("Wireframe");
+	wireframe_visible->setCheckable(true);
+	visible_section->addWidget(wireframe_visible);
+
+	QRibbonButton* debug_visible = new QRibbonButton;
+	debug_visible->setIcon(QIcon("Data/Icons/Ribbon/debug32x32.png"));
+	debug_visible->setText("Debug");
+	debug_visible->setCheckable(true);
+	visible_section->addWidget(debug_visible);
+
+	// Camera section
+
+	QRibbonSection* camera_section = new QRibbonSection;
+	camera_section->setText("Camera");
+	view_tab->add_section(camera_section);
+
+	QRibbonButton* switch_camera = new QRibbonButton;
+	switch_camera->setIcon(QIcon("Data/Icons/Ribbon/switch32x32.png"));
+	switch_camera->setText("Switch");
+	camera_section->addWidget(switch_camera);
+
+	QRibbonButton* reset_camera = new QRibbonButton;
+	reset_camera->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
+	reset_camera->setText("Reset");
+	camera_section->addWidget(reset_camera);
+
+	//QRibbonSection* section = new QRibbonSection(nullptr);
+	//QFormLayout* la = new QFormLayout;
+	//QSpinBox* sp1 = new QSpinBox;
+	//QSpinBox* sp2 = new QSpinBox;
+	//la->addRow("Minimum", sp1);
+	//la->addRow("Maximum", sp2);
+
+	//tab->add_section(section);
+	tab->add_section(home_section);
+	//QWidget* editpage = new QWidget;
+	//section->layoutt->insertLayout(0, la);
+
+	ui.ribbon->addTab(tab, "Home");
+	ui.ribbon->addTab(view_tab, "View");
+
+	
 
 	world_edit_strings.load("UI/WorldEditStrings.txt");
 	world_edit_game_strings.load("UI/WorldEditGameStrings.txt");
