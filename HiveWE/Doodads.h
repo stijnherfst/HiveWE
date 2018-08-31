@@ -1,18 +1,21 @@
 #pragma once
 
-enum class DoodadState {
-	invisible_non_solid,
-	visible_non_solid,
-	visible_solid
-};
 
 struct Doodad {
+	static int auto_increment;
+	int unique_id;
 	std::string id;
 	int variation;
 	glm::vec3 position;
 	glm::vec3 scale;
 	float angle;
-	DoodadState state;
+
+	enum class State {
+		invisible_non_solid,
+		visible_non_solid,
+		visible_solid
+	};
+	State state;
 	uint8_t life;
 
 	int item_table_pointer;
@@ -22,6 +25,10 @@ struct Doodad {
 
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
+
+	Doodad() {
+		unique_id = auto_increment++;
+	}
 };
 
 struct SpecialDoodad {
@@ -49,7 +56,7 @@ public:
 	slk::SLK destructibles_slk;
 	slk::SLK destructibles_meta_slk;
 
-	QuadTree<Doodad> tree;
+	//QuadTree<Doodad> tree;
 
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void save() const;
@@ -58,6 +65,12 @@ public:
 	void update_area(const QRect& area);
 	void create();
 	void render();
+
+	Doodad& add_doodad(std::string id, glm::vec2 position);
+	void remove_doodad(Doodad* doodad);
+
+	std::vector<Doodad*> query_area(QRectF area);
+	void remove_doodads(const std::vector<Doodad*> list);
 
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };

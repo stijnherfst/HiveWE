@@ -36,6 +36,7 @@ public:
 	double terrain_tiles_time;
 	double terrain_water_time;
 	double terrain_cliff_time;
+	double mouse_world_time;
 	double doodad_time;
 	double unit_time;
 	double render_time;

@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+int Doodad::auto_increment;
+
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
@@ -21,7 +23,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>() / 128.f;
-		i.state = static_cast<DoodadState>(reader.read<uint8_t>());
+		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 
 		if (version >= 8) {
@@ -54,6 +56,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
@@ -136,11 +140,14 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 }
 
 void Doodads::update_area(const QRect& area) {
-	for (auto&& i : tree.query(area)) {
-		i->position.z = map.terrain.corner_height(i->position.x, i->position.y);
-		i->matrix = glm::translate(glm::mat4(1.f), i->position);
-		i->matrix = glm::scale(i->matrix, i->scale);
-		i->matrix = glm::rotate(i->matrix, i->angle, glm::vec3(0, 0, 1));
+	// ToDo optimize with parallel for?
+	for (auto&& i : doodads) {
+		if (area.contains(i.position.x, i.position.y)) {
+			i.position.z = map.terrain.corner_height(i.position.x, i.position.y);
+			i.matrix = glm::translate(glm::mat4(1.f), i.position);
+			i.matrix = glm::scale(i.matrix, i.scale);
+			i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+		}
 	}
 }
 
@@ -150,8 +157,6 @@ void Doodads::create() {
 		i.matrix = glm::scale(i.matrix, i.scale);
 		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
 		i.mesh = get_mesh(i.id, i.variation);
-
-		tree.insert(&i);
 	}
 
 	for (auto&& i : special_doodads) {
@@ -170,6 +175,40 @@ void Doodads::render() {
 	for (auto&& i : special_doodads) {
 		i.mesh->render_queue(i.matrix);
 	}
+}
+
+Doodad& Doodads::add_doodad(std::string id, glm::vec2 position) {
+	Doodad doodad;
+	doodad.id = id;
+	doodad.mesh = get_mesh(id, 0);
+	doodad.position = glm::vec3(position, 0);
+	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
+	doodad.matrix = glm::scale(doodad.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
+
+	doodads.push_back(doodad);
+	return doodads.back();
+}
+
+void Doodads::remove_doodad(Doodad* doodad) {
+	auto iterator = doodads.begin() + std::distance(doodads.data(), doodad);
+	doodads.erase(iterator);
+}
+
+std::vector<Doodad*> Doodads::query_area(QRectF area) {
+	std::vector<Doodad*> result;
+
+	for (auto&& i : doodads) {
+		if (area.contains(i.position.x, i.position.y)) {
+			result.push_back(&i);
+		}
+	}
+	return result;
+}
+
+void Doodads::remove_doodads(const std::vector<Doodad*> list) {
+	doodads.erase(std::remove_if(doodads.begin(), doodads.end(), [&](Doodad& doodad) {
+		return std::find(list.begin(), list.end(), &doodad) != list.end();
+	}), doodads.end());
 }
 
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {

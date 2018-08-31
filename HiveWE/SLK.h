@@ -23,6 +23,8 @@ namespace slk {
 		std::string data(const std::string& column_header, const std::string& row_header) const;
 
 
+		bool row_header_exists(const std::string& row_header) const;
+
 		void merge(const SLK& slk);
 		void merge(const ini::INI& ini);
 		void substitute(const ini::INI & ini, const std::string& section);

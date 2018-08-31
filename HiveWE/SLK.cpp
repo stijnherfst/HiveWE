@@ -24,7 +24,7 @@ namespace slk {
 
 		size_t column = 0;
 		size_t row = 0;
-		size_t max_rows = 0; // To resize since some files have empty rows at the end. Fix it willy >:(
+		size_t max_rows = 0;
 
 		const auto parse_int_part = [&]() {
 			position++;
@@ -88,6 +88,10 @@ namespace slk {
 							part = line.substr(position, line.find('"', position) - position);
 						} else {
 							part = line.substr(position, line.size() - position - (line.back() == '\r' ? 1 : 0));
+						}
+
+						if (part == "-" || part == "_") {
+							part = "";
 						}
 
 						table_data[row][column] = part;
@@ -179,6 +183,10 @@ namespace slk {
 		return table_data[row][column];
 	}
 
+	bool SLK::row_header_exists(const std::string& row_header) const {
+		return header_to_row.find(row_header) != header_to_row.end();
+	}
+
 	/// Merges the data of the files. Any unknown rows and columns are appended
 	void SLK::merge(const slk::SLK& slk) {
 		for (size_t i = 1; i < slk.columns; i++) {
@@ -220,6 +228,9 @@ namespace slk {
 	void SLK::substitute(const ini::INI & ini, const std::string& section) {
 		for (auto&& i : table_data) {
 			for (auto&& j : i) {
+				if (j == "WESTRING_DEST_VOLCANO") {
+					std::cout << "\n";
+				}
 				std::string data = ini.data(section, j);
 				if (!data.empty()) {
 					j = data;
@@ -230,7 +241,7 @@ namespace slk {
 
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
-			std::cout << "Uknown row header: " << row_header << "\n";
+			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}
 
@@ -255,12 +266,12 @@ namespace slk {
 
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
 		if (header_to_column.find(column_header) == header_to_column.end()) {
-			std::cout << "Uknown column header: " << column_header << "\n";
+			std::cout << "Unknown column header: " << column_header << "\n";
 			return;
 		}
 
 		if (header_to_row.find(row_header) == header_to_row.end()) {
-			std::cout << "Uknown row header: " << row_header << "\n";
+			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}
 

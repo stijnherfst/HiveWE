@@ -42,7 +42,7 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 
-	doodads.tree.resize(terrain.width, terrain.height);
+//	doodads.tree.resize(terrain.width, terrain.height);
 	units.tree.resize(terrain.width, terrain.height);
 
 	// Pathing Map
@@ -186,12 +186,17 @@ void Map::render(int width, int height) {
 	auto end = std::chrono::high_resolution_clock::now();
 	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
+	begin = std::chrono::high_resolution_clock::now();
+
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y() > 0) {
 		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
 		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
 		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 	}
+
+	end = std::chrono::high_resolution_clock::now();
+	mouse_world_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	// Render Doodads
 	begin = std::chrono::high_resolution_clock::now();
@@ -214,7 +219,7 @@ void Map::render(int width, int height) {
 	}
 
 	if (render_brush && brush) {
-		brush->render(terrain);
+		brush->render();
 	}
 
 	// Render all meshes

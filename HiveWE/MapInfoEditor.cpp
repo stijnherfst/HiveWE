@@ -65,7 +65,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map.info.weather_id != 0);
 
-	auto world_edit_strings = ini::INI("UI/WorldEditStrings.txt");
 	// Global Weather
 	slk::SLK weather_slk("TerrainArt/Weather.slk");
 	weather_slk.substitute(world_edit_strings, "WorldEditStrings");

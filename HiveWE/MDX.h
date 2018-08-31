@@ -109,7 +109,9 @@ namespace mdx {
 		void load_tracks(BinaryReader& reader);
 
 		AnimatedData() = default;
+		AnimatedData(const AnimatedData&) = default;
 		AnimatedData(AnimatedData&&) = default;
+		AnimatedData& operator=(const AnimatedData&) = default;
 
 		template<typename T>
 		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) {
@@ -162,11 +164,15 @@ namespace mdx {
 		float alpha;
 	};
 
-	struct Texture {
-		explicit Texture(BinaryReader& reader);
-		uint32_t replaceable_id;
-		std::string file_name;
-		uint32_t flags;
+	struct Node {
+		Node() = default;
+		explicit Node(BinaryReader& reader);
+
+		std::string name;
+		int object_id;
+		int parent_id;
+		int flags;
+		AnimatedData animated_data;
 	};
 
 	struct Sequence {
@@ -202,13 +208,6 @@ namespace mdx {
 		std::vector<TextureCoordinateSet> texture_coordinate_sets;
 	};
 
-	struct Material {
-		uint32_t priority_plane;
-		uint32_t flags;
-		std::vector<Layer> layers;
-	};
-
-
 	struct GeosetAnimation {
 		float alpha;
 		uint32_t flags;
@@ -217,6 +216,24 @@ namespace mdx {
 		AnimatedData animated_data;
 	};
 
+	struct Texture {
+		explicit Texture(BinaryReader& reader);
+		uint32_t replaceable_id;
+		std::string file_name;
+		uint32_t flags;
+	};
+
+	struct Material {
+		uint32_t priority_plane;
+		uint32_t flags;
+		std::vector<Layer> layers;
+	};
+
+	struct Bone {
+		Node node;
+		int geoset_id;
+		int geoset_animation_id;
+	};
 
 	struct Chunk {
 		virtual ~Chunk() = default;
@@ -261,6 +278,13 @@ namespace mdx {
 
 		static const ChunkTag tag = ChunkTag::MTLS;
 		std::vector<Material> materials;
+	};
+
+	struct BONE : Chunk {
+		explicit BONE(BinaryReader& reader);
+
+		static const ChunkTag tag = ChunkTag::BONE;
+		std::vector<Bone> bones;
 	};
 
 	class MDX {

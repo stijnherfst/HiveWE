@@ -7,7 +7,7 @@ namespace ini {
 
 	void INI::load(const fs::path& path) {
 		std::stringstream file;
-		file << hierarchy.open_file(path).buffer.data();
+		file.write((char*)hierarchy.open_file(path).buffer.data(), hierarchy.open_file(path).buffer.size());
 
 		std::string line;
 		std::string current_section;
@@ -18,11 +18,8 @@ namespace ini {
 			}
 
 			if (line.front() == '[') {
-				std::string key = line.substr(1, line.size() - 3);
+				std::string key = line.substr(1, line.find(']') - 1);
 
-				if (key.back() == ']') {
-					key.pop_back();
-				}
 				// If the segment already exists
 				if (ini_data.count(key)) { // ToDo C++20 contains
 					continue;
@@ -30,15 +27,24 @@ namespace ini {
 				ini_data[key] = std::map<std::string, std::vector<std::string>>();
 				current_section = key;
 			} else {
-				auto found = line.find_first_of('=');
+				size_t found = line.find_first_of('=');
 				if (found == std::string::npos) {
 					continue;
 				}
 
 				std::string key = line.substr(0, found);
-				std::string value = line.substr(found + 1, line.size() - found - 2); // Strip \r
+				std::string value = line.substr(found + 1);
+
+				if (key.empty() || value.empty()) {
+					continue;
+				}
+
+				if (value.back() == '\r') {
+					value.pop_back();
+				}
+
 				auto parts = split(value, ',');
-				// Strip of quotes at the front/back
+				// Strip off quotes at the front/back
 				for (auto&& i : parts) {
 					if (i.size() < 2) {
 						continue;
@@ -47,7 +53,7 @@ namespace ini {
 						i.erase(i.begin());
 					}
 					if (i.back() == '\"') {
-						i.erase(i.end() - 1);
+						i.pop_back();
 					}
 				}
 				ini_data[current_section][key] = parts;
@@ -91,5 +97,9 @@ namespace ini {
 		} else {
 			return {};
 		}
+	}
+
+	bool INI::key_exists(const std::string& section, const std::string& key) {
+		return ini_data.count(section) && ini_data[section].count(key);
 	}
 }
