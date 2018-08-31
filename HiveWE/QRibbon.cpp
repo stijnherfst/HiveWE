@@ -88,11 +88,147 @@ void QRibbonTab::add_section(QRibbonSection* section) {
 	line->setFrameShape(QFrame::VLine);
 	line->setFrameShadow(QFrame::Sunken);
 
+	line->setStyleSheet(R"(
+		QFrame{
+			border: none;
+			max-width: 1px;
+			background-color: rgb(226, 227, 228);
+		}
+	)");
+
 	int count = sections->count();
 	sections->insertWidget(count - 1, section);
 	sections->insertWidget(count, line);
 }
 
+
+QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
+	setStyleSheet(R"(
+		QMenu {
+			border: 1px solid rgb(132, 146, 166);
+		}
+		QToolButton {
+			border: 1px solid transparent;
+			background-color: rgb(251, 252, 253);
+			height: 44px;
+			width: 216px;
+		}
+
+		QToolButton::hover {
+			border-color: rgb(168, 210, 253);
+			background-color: rgb(237, 244, 252);
+		}
+	)");
+
+	recent_maps->setStyleSheet(R"(
+		QListWidget {
+			border: none;
+			font: 8pt "Segoe UI";
+			background-color: rgb(246, 247, 248);
+			outline: 0;
+		}
+
+		QListView::item {
+			border: 1px solid transparent;
+		}
+
+		QListView::item::hover {
+			background-color: rgb(233, 240, 248);
+			border-color: rgb(165, 207, 249);
+		}
+
+		QListView::item:pressed {
+			background-color: rgb(233, 240, 248);
+			border-color: rgb(0, 207, 249);
+		}
+
+		QListView::item:selected {
+			background-color: rgb(233, 240, 248);
+			border-color: rgb(0, 207, 249);
+		}
+
+		QListView::item:selected:active {
+			background-color: rgb(233, 240, 248);
+			border-color: rgb(0, 207, 249);
+		}
+
+		QListView::item:selected:!active {
+			background-color: rgb(233, 240, 248);
+			border-color: rgb(0, 207, 249);
+		}
+
+		QListView::text {
+			left: 8px;
+		}
+	)");
+
+	recent_maps->setMinimumWidth(300);
+
+	base->setContentsMargins(1, 1, 1, 1);
+	base->setSpacing(0);
+	actions->setContentsMargins(0, 0, 0, 0);
+
+	QFrame* line = new QFrame();
+	line->setFrameShape(QFrame::VLine);
+	line->setFrameShadow(QFrame::Plain);
+	line->setStyleSheet(R"(
+		QFrame {
+			border: none;
+			max-width: 0x;
+			border-left: 1px solid rgb(220, 221, 222);
+			border-right: 1px solid rgb(254, 254, 255);
+		}
+	)");
+
+	base->addLayout(actions);
+	base->addWidget(line);
+	base->addLayout(frequent_places);
+
+	setLayout(base);
+
+	frequent_places->setContentsMargins(0, 0, 0, 0);
+
+	QLabel* label = new QLabel("Recent Maps");
+	label->setStyleSheet(R"(
+		QLabel {
+			background-color: rgb(246, 247, 248);
+			
+		}
+	)");
+
+	frequent_places->addWidget(label);
+	frequent_places->addWidget(recent_maps);
+	recent_maps->addItem("MCFC 7.0");
+}
+
+QRibbonFileButton::QRibbonFileButton(QWidget* parent) : QToolButton(parent) {
+	setStyleSheet(R"(
+		QToolButton {
+			border: 1px solid transparent;
+			background-color: rgb(25, 121, 202);
+			color: rgb(255, 255, 255);
+			height: 23px;
+			padding-left: 14px;
+			padding-right: 13px;
+		}
+
+		QToolButton::hover {
+			background-color: rgb(41, 140, 225);
+		}
+
+		QToolButton::pressed {
+			background-color: rgb(18, 104, 179);
+		}
+
+		QToolButton::menu-indicator { 
+			image: none; 
+		}
+	)");
+
+	setText("File");
+	setMenu(menu);
+	setPopupMode(QToolButton::InstantPopup);
+}
 
 QRibbon::QRibbon(QWidget *parent) : QTabWidget(parent) {
 	setStyleSheet(R"(
@@ -138,36 +274,26 @@ QRibbon::QRibbon(QWidget *parent) : QTabWidget(parent) {
 		}
 	)");
 
-	file->setText("File");
 	setCornerWidget(file, Qt::TopLeftCorner);
+}
 
-	QMenu* test = new QMenu;
-	QWidgetAction* w = new QWidgetAction(test);
+void QRibbon::addMenuItem(QWidget* widget) {
+	file->menu->actions->addWidget(widget);
+}
 
-	file->setStyleSheet(R"(
-		QToolButton {
-			border: 1px solid transparent;
-			background-color: rgb(25, 121, 202);
-			color: rgb(255, 255, 255);
-			height: 23px;
-			padding-left: 14px;
-			padding-right: 13px;
-		}
-
-		QToolButton::hover {
-			background-color: rgb(41, 140, 225);
-		}
-
-		QToolButton::pressed {
-			background-color: rgb(18, 104, 179);
+void QRibbon::addMenuSeperator() {
+	QFrame* line = new QFrame();
+	line->setFrameShape(QFrame::HLine);
+	line->setFrameShadow(QFrame::Plain);
+	line->setStyleSheet(R"(
+		QFrame {
+			background-color: rgb(220, 221, 222);
+			border: none;
+			max-height: 1px;
+			border-left: 44px solid rgb(251, 252, 253);
 		}
 	)");
-
-
-	/*QFont font;
-	font.setFamily("Segoe UI");
-
-	setFont(font);*/
+	file->menu->actions->addWidget(line);
 }
 
 QRibbon::~QRibbon() {

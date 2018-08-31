@@ -35,12 +35,35 @@ public:
 	void paintEvent(QPaintEvent* event);
 };
 
+
+class QRibbonMenu : public QMenu {
+	Q_OBJECT
+public:
+	QHBoxLayout* base = new QHBoxLayout;
+	QVBoxLayout* actions = new QVBoxLayout;
+	QVBoxLayout* frequent_places = new QVBoxLayout;
+
+	QListWidget* recent_maps = new QListWidget;
+
+	QRibbonMenu(QWidget* parent = nullptr);
+};
+
+class QRibbonFileButton : public QToolButton {
+	Q_OBJECT
+public:
+	QRibbonMenu* menu = new QRibbonMenu;
+	QRibbonFileButton(QWidget* parent = nullptr);
+};
+
 class QRibbon : public QTabWidget {
 	Q_OBJECT
 
-	QToolButton* file = new QToolButton;
+	QRibbonFileButton* file = new QRibbonFileButton;
 
 public:
+	void addMenuItem(QWidget* widget);
+	void addMenuSeperator();
+
 	QRibbon(QWidget *parent = nullptr);
 	~QRibbon();
 };

@@ -20,11 +20,11 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	hierarchy.init();
 
 	ui.setupUi(this);
-
+	
+	// Home
 	QRibbonTab* tab = new QRibbonTab(nullptr);
 
-
-	// Clipbord
+	// Clipboard
 	QRibbonSection* home_section = new QRibbonSection;
 	home_section->setText("Clipboard");
 
@@ -37,7 +37,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	paste->setIcon(QIcon("Data/Icons/Ribbon/paste32x32.ico"));
 	paste->setText("Paste");
 	home_section->addWidget(paste);
-
 	QVBoxLayout* lay = new QVBoxLayout;
 
 	QToolButton* but = new QToolButton;
@@ -49,6 +48,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	lay->addWidget(buttt);
 
 	home_section->addLayout(lay);
+	tab->add_section(home_section);
 
 	// View
 	QRibbonTab* view_tab = new QRibbonTab(nullptr);
@@ -101,7 +101,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	visible_section->addWidget(debug_visible);
 
 	// Camera section
-
 	QRibbonSection* camera_section = new QRibbonSection;
 	camera_section->setText("Camera");
 	view_tab->add_section(camera_section);
@@ -116,6 +115,43 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	reset_camera->setText("Reset");
 	camera_section->addWidget(reset_camera);
 
+	// Menu actions
+	QToolButton* new_map = new QToolButton;
+	new_map->setText("New Map");
+	new_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
+	new_map->setIconSize({ 32, 32 });
+	new_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	ui.ribbon->addMenuItem(new_map);
+
+	QToolButton* open_map = new QToolButton;
+	open_map->setText("Open Map");
+	open_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
+	open_map->setIconSize({ 32, 32 });
+	open_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	ui.ribbon->addMenuItem(open_map);
+
+	QToolButton* save_map = new QToolButton;
+	save_map->setText("Save Map");
+	save_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
+	save_map->setIconSize({ 32, 32 });
+	save_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	ui.ribbon->addMenuItem(save_map);
+
+	QToolButton* save_map_as = new QToolButton;
+	save_map_as->setText("Save Map as");
+	save_map_as->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
+	save_map_as->setIconSize({ 32, 32 });
+	save_map_as->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	ui.ribbon->addMenuItem(save_map_as);
+
+	ui.ribbon->addMenuSeperator();
+
+	QToolButton* exit = new QToolButton;
+	exit->setText("Exit");
+	exit->setIcon(QIcon("Data/Icons/Ribbon/exit32x32.ico"));
+	exit->setIconSize({ 32, 32 });
+	exit->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	ui.ribbon->addMenuItem(exit);
 	//QRibbonSection* section = new QRibbonSection(nullptr);
 	//QFormLayout* la = new QFormLayout;
 	//QSpinBox* sp1 = new QSpinBox;
@@ -124,7 +160,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	//la->addRow("Maximum", sp2);
 
 	//tab->add_section(section);
-	tab->add_section(home_section);
+	
 	//QWidget* editpage = new QWidget;
 	//section->layoutt->insertLayout(0, la);
 
