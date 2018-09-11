@@ -34,7 +34,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QRibbon" name="ribbon">
+     <widget class="MainRibbon" name="ribbon">
       <property name="maximumSize">
        <size>
         <width>16777215</width>
@@ -82,21 +82,6 @@
     <addaction name="actionImport_Manager"/>
     <addaction name="actionTrigger_Editor"/>
    </widget>
-   <widget class="QMenu" name="menuView">
-    <property name="title">
-     <string>View</string>
-    </property>
-    <addaction name="actionUnits"/>
-    <addaction name="actionDoodads"/>
-    <addaction name="actionPathing"/>
-    <addaction name="actionBrush"/>
-    <addaction name="actionLighting"/>
-    <addaction name="actionWireframe"/>
-    <addaction name="actionFrame_Times"/>
-    <addaction name="separator"/>
-    <addaction name="actionSwitch_Camera"/>
-    <addaction name="actionReset_Camera"/>
-   </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>Tools</string>
@@ -128,7 +113,6 @@
     <addaction name="actionEnforce_Water_Height_Limit"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuView"/>
    <addaction name="menuScenario"/>
    <addaction name="menuTools"/>
    <addaction name="menuAdvanced"/>
@@ -394,9 +378,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>QRibbon</class>
+   <class>MainRibbon</class>
    <extends>QTabWidget</extends>
-   <header>QRibbon.h</header>
+   <header>MainRibbon.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -100,9 +100,10 @@ namespace fs = std::filesystem;
 #include "Map.h"
 
 #include "Camera.h"
+#include "QRibbon.h"
+#include "MainRibbon.h"
 #include "HiveWE.h"
 #include "GLWidget.h"
-#include "QRibbon.h"
 
 // Menus
 #include "ImportManagerEdit.h"

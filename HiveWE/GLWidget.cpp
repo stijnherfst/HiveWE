@@ -117,7 +117,7 @@ void GLWidget::paintGL() {
 	//footman->render();
 	gl->glBindVertexArray(0);
 
-	if (map.show_timings) {
+	if (map.render_debug) {
 		QPainter p(this);
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));

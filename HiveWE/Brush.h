@@ -27,15 +27,17 @@ public:
 	void decrease_size(int size);
 	bool contains(int x, int y) const;
 
+	void switch_mode();
+
 	virtual void key_press_event(QKeyEvent* event);
 	virtual void mouse_move_event(QMouseEvent* event);
 	virtual void mouse_press_event(QMouseEvent* event);
 	virtual void mouse_release_event(QMouseEvent* event);
 
 	void render() const;
-	virtual void render_selection() const;
+	virtual void render_selector() const;
+	virtual void render_selection() const {};
 	virtual void render_brush() const;
-	virtual void render_selectionn() const {};
 
 	virtual void apply() = 0;
 	virtual void apply_end() {};

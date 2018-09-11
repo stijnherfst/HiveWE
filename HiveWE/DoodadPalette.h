@@ -13,8 +13,16 @@ private:
 	bool event(QEvent *e) override;
 
 	void update_list();
-	void selection_changed();
+	void selection_changed(QListWidgetItem* item);
 
 	Ui::DoodadPalette ui;
+
 	DoodadBrush brush;
+
+	QRibbonTab* ribbon_tab = new QRibbonTab;
+	QRibbonButton* selection_mode = new QRibbonButton;
+
+	QRibbonContainer* variations = new QRibbonContainer;
+signals:
+	void ribbon_tab_requested(QRibbonTab* tab);
 };

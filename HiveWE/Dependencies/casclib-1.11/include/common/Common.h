@@ -164,16 +164,16 @@ const XCHAR * GetFileExtension(const XCHAR * szFileName)
     return (XCHAR *)((szExtension != NULL) ? szExtension : szFileName);
 }
 
-bool CheckWildCard2(const char * szString, const char * szWildCard);
+bool CheckWildCard(const char * szString, const char * szWildCard);
 
 //-----------------------------------------------------------------------------
 // Hashing functions
 
 ULONGLONG HashStringJenkins(const char * szFileName);
 
-bool IsValidMD52(LPBYTE pbMd5);
-void CalculateDataBlockHash2(void * pvDataBlock, DWORD cbDataBlock, LPBYTE md5_hash);
-bool VerifyDataBlockHash2(void * pvDataBlock, DWORD cbDataBlock, LPBYTE expected_md5);
+bool IsValidMD5(LPBYTE pbMd5);
+void CalculateDataBlockHash(void * pvDataBlock, DWORD cbDataBlock, LPBYTE md5_hash);
+bool VerifyDataBlockHash(void * pvDataBlock, DWORD cbDataBlock, LPBYTE expected_md5);
 
 //-----------------------------------------------------------------------------
 // Scanning a directory

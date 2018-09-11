@@ -61,8 +61,6 @@ void Brush::set_shape(const Shape new_shape) {
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
 bool Brush::contains(const int x, const int y) const {
-	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
-
 	switch (shape) {
 		case Shape::square:
 			return true;
@@ -84,11 +82,12 @@ void Brush::decrease_size(const int new_size) {
 	set_size(size - new_size);
 }
 
+void Brush::switch_mode() {
+	mode = (mode == Mode::placement) ? Mode::selection : Mode::placement;
+}
+
 void Brush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
-		case Qt::Key_Space:
-			mode = (mode == Mode::placement) ? Mode::selection : Mode::placement;
-			break;
 		case Qt::Key_Equal:
 			increase_size(1);
 			break;
@@ -100,10 +99,6 @@ void Brush::key_press_event(QKeyEvent* event) {
 
 void Brush::mouse_move_event(QMouseEvent* event) {
 	set_position(input_handler.mouse_world);
-
-	//if (input_handler.key_pressed(Qt::Key_Control)) {
-
-	//}
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -118,12 +113,12 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 		return;
 	}
 
-	if (mode == Mode::selection) {
+	if (mode == Mode::selection && !(event->modifiers() & Qt::ControlModifier)) {
 		if (!selection_started) {
 			selection_started = true;
 			selection_start = input_handler.mouse_world;
 		}
-	} else {
+	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
 			map.brush->apply();
 			map.brush->apply_end();
@@ -139,14 +134,14 @@ void Brush::mouse_release_event(QMouseEvent* event) {
 
 void Brush::render() const {
 	if (mode == Mode::selection) {
-		render_selection();
+		render_selector();
 	} else {
 		render_brush();
 	}
-	render_selectionn();
+	render_selection();
 }
 
-void Brush::render_selection() const {
+void Brush::render_selector() const {
 	if (selection_started) {
 		gl->glDisable(GL_DEPTH_TEST);
 

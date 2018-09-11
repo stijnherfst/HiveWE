@@ -1,6 +1,5 @@
 #pragma once
 
-#include <QWidget>
 #include "ui_TerrainPalette.h"
 
 class TerrainPalette : public QDialog {
@@ -20,6 +19,9 @@ private:
 	QButtonGroup* cliff_group = new QButtonGroup;
 	FlowLayout* cliff_layout = new FlowLayout;
 
-
 	TerrainBrush brush;
+	QRibbonTab* ribbon_tab = new QRibbonTab;
+
+	signals:
+		void ribbon_tab_requested(QRibbonTab* tab);
 };

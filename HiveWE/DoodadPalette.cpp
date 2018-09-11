@@ -24,9 +24,82 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 		ui.type->addItem(QString::fromStdString(text), QString::fromStdString(key));
 	}
 
+	QRibbonSection* selection_section = new QRibbonSection;
+
+	selection_mode->setText("Selection\nMode");
+	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
+	selection_mode->setCheckable(true);
+	selection_section->addWidget(selection_mode);
+
+	connect(new QShortcut(Qt::Key_Space, parent), &QShortcut::activated, selection_mode, &QToolButton::click);
+
+	QRibbonSection* placement_section = new QRibbonSection;
+	placement_section->setText("Placement");
+	
+	QRibbonButton* random_rotation = new QRibbonButton;
+	random_rotation->setText("Random\nRotation");
+	random_rotation->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
+	random_rotation->setCheckable(true);
+	placement_section->addWidget(random_rotation);
+
+	QRibbonButton* random_scale = new QRibbonButton;
+	random_scale->setText("Random\nScale");
+	random_scale->setIcon(QIcon("Data/Icons/Ribbon/scale32x32.png"));
+	random_scale->setCheckable(true);
+	placement_section->addWidget(random_scale);
+
+
+	QRibbonSection* variation_section = new QRibbonSection;
+	variation_section->setText("Variations");
+
+	QRibbonButton* random_variation = new QRibbonButton;
+	random_variation->setText("Random\nVariation");
+	random_variation->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
+	random_variation->setCheckable(true);
+	variation_section->addWidget(random_variation);
+	variation_section->addWidget(variations);
+
+	/*QVBoxLayout* lay = new QVBoxLayout;
+	QDoubleSpinBox* but = new QDoubleSpinBox;
+	QDoubleSpinBox* butt = new QDoubleSpinBox;
+
+	but-> setStyleSheet(R"(
+		QDoubleSpinBox {
+			border: 1px solid black;
+		}
+	)");
+
+	butt->setStyleSheet(R"(
+		QDoubleSpinBox {
+			border: 1px solid black;
+		}
+	)");
+
+	QHBoxLayout* tt = new QHBoxLayout;
+	tt->addWidget(new QLabel("Min"));
+	tt->addWidget(but);
+
+	QHBoxLayout* ttt = new QHBoxLayout;
+	ttt->addWidget(new QLabel("Max"));
+	ttt->addWidget(butt);
+
+	ttt->setSpacing(6);*/
+
+	//lay->addLayout(tt);
+	//lay->addLayout(ttt);
+	//lay->addWidget(buttt);
+
+	//section->addLayout(lay);
+
+	ribbon_tab->add_section(selection_section);
+	ribbon_tab->add_section(placement_section);
+	ribbon_tab->add_section(variation_section);
+
+	connect(selection_mode, &QToolButton::toggled, [&]() { brush.switch_mode(); });
+
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	connect(ui.doodads, &QListWidget::itemSelectionChanged, this, &DoodadPalette::selection_changed);
+	connect(ui.doodads, &QListWidget::itemDoubleClicked, this, &DoodadPalette::selection_changed);
 
 	update_list();
 }
@@ -38,6 +111,7 @@ DoodadPalette::~DoodadPalette() {
 bool DoodadPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
 		map.brush = &brush;
+		emit ribbon_tab_requested(ribbon_tab);
 	}
 	return QWidget::event(e);
 }
@@ -75,11 +149,23 @@ void DoodadPalette::update_list() {
 	}
 }
 
-void DoodadPalette::selection_changed() {
-	if (ui.doodads->selectedItems().isEmpty()) {
-		return;
-	}
-	QListWidgetItem* item = ui.doodads->selectedItems().first();
+void DoodadPalette::selection_changed(QListWidgetItem* item) {
+	std::string id = item->data(Qt::UserRole).toString().toStdString();
 
-	brush.set_doodad(item->data(Qt::UserRole).toString().toStdString());
+	brush.set_doodad(id);
+	selection_mode->setChecked(false);
+
+	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+
+	variations->clear();
+
+	int variation_count = std::stoi(slk.data("numVar", id));
+	for (int i = 0; i < variation_count; i++) {
+		QRibbonButton* test = new QRibbonButton;
+		test->setCheckable(true);
+		test->setChecked(true);
+		test->setText(QString::number(i));
+		variations->addWidget(test, i % 3, i / 3);
+	}
 }

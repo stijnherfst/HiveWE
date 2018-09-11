@@ -30,27 +30,60 @@ QRibbonButton::QRibbonButton(QWidget* parent) : QToolButton(parent) {
 	setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
+QRibbonContainer::QRibbonContainer(QWidget* parent) {
+	setLayout(layout);
+	setAutoFillBackground(true);
+	setStyleSheet(R"(
+		QFrame {
+			border: 1px solid rgb(219, 220, 221);
+			background-color: rgb(250, 251, 252);
+		}
+	)");
+
+	layout->setContentsMargins(0, 0, 0, 0);
+	layout->setSpacing(0);
+}
+
+void QRibbonContainer::addWidget(QWidget* widget, int row, int column) {
+	layout->addWidget(widget, row, column);
+}
+
+void QRibbonContainer::clear() {
+	QLayoutItem *item;
+	while ((item = layout->takeAt(0))) {
+		if (item->widget()) {
+			delete item->widget();
+		}
+		delete item;
+	}
+}
+
 QRibbonSection::QRibbonSection(QWidget* parent) : QWidget(parent) {
-	layouttt->setContentsMargins(0, 0, 0, 0);
-	layoutt->setContentsMargins(0, 0, 0, 0);
-	layoutt->setSpacing(0);
-	setLayout(layouttt);
+	setLayout(section_inner);
+
+	section_inner->setContentsMargins(0, 0, 0, 0);
+	section_inner->setSpacing(5);
+	section_inner->setMargin(0);
+
+	section_outer->setContentsMargins(0, 0, 0, 0);
+	section_outer->setSpacing(0);
+	section_outer->setMargin(0);
+
 	layout()->setContentsMargins(0, 0, 0, 0);
-	layouttt->addLayout(layoutt);
-	layouttt->addWidget(section_text);
 	setContentsMargins(0, 0, 0, 0);
-	layouttt->setMargin(0);
-	layoutt->setMargin(0);
+	
+	section_inner->addLayout(section_outer);
+	section_inner->addWidget(section_text);
 
 	section_text->setAlignment(Qt::AlignBottom | Qt::AlignmentFlag::AlignHCenter);
 }
 
 void QRibbonSection::addWidget(QWidget* widget) {
-	layoutt->addWidget(widget);
+	section_outer->addWidget(widget);
 }
 
 void QRibbonSection::addLayout(QLayout* layout) {
-	layoutt->addLayout(layout);
+	section_outer->addLayout(layout);
 }
 
 
@@ -120,50 +153,6 @@ QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
 		}
 	)");
 
-	recent_maps->setStyleSheet(R"(
-		QListWidget {
-			border: none;
-			font: 8pt "Segoe UI";
-			background-color: rgb(246, 247, 248);
-			outline: 0;
-		}
-
-		QListView::item {
-			border: 1px solid transparent;
-		}
-
-		QListView::item::hover {
-			background-color: rgb(233, 240, 248);
-			border-color: rgb(165, 207, 249);
-		}
-
-		QListView::item:pressed {
-			background-color: rgb(233, 240, 248);
-			border-color: rgb(0, 207, 249);
-		}
-
-		QListView::item:selected {
-			background-color: rgb(233, 240, 248);
-			border-color: rgb(0, 207, 249);
-		}
-
-		QListView::item:selected:active {
-			background-color: rgb(233, 240, 248);
-			border-color: rgb(0, 207, 249);
-		}
-
-		QListView::item:selected:!active {
-			background-color: rgb(233, 240, 248);
-			border-color: rgb(0, 207, 249);
-		}
-
-		QListView::text {
-			left: 8px;
-		}
-	)");
-
-	recent_maps->setMinimumWidth(300);
-
 	base->setContentsMargins(1, 1, 1, 1);
 	base->setSpacing(0);
 	actions->setContentsMargins(0, 0, 0, 0);
@@ -188,18 +177,39 @@ QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
 
 	frequent_places->setContentsMargins(0, 0, 0, 0);
 
-	QLabel* label = new QLabel("Recent Maps");
-	label->setStyleSheet(R"(
-		QLabel {
-			background-color: rgb(246, 247, 248);
-			
-		}
-	)");
+	//QLabel* label = new QLabel("Recent Maps");
+	//label->setStyleSheet(R"(
+	//	QLabel {
+	//		background-color: rgb(246, 247, 248);
+	//		
+	//	}
+	//)");
 
-	frequent_places->addWidget(label);
-	frequent_places->addWidget(recent_maps);
-	recent_maps->addItem("MCFC 7.0");
+	//frequent_places->addWidget(label);
+	
+	//for (int i = 0; i < 5; i++) {
+	//	QLabel* labell = new QLabel("test");
+	//	labell->setStyleSheet(R"(
+	//		QLabel::hover {
+	//			background-color: rgb(233, 240, 248);
+	//			border: 1px solid rgb(165, 207, 249);
+	//			
+	//		}
+	//	)");
+	//	frequent_places->addWidget(labell);
+	//}
+	//frequent_places->addStretch(1);
 }
+
+//bool QRibbonMenu::eventFilter(QObject *obj, QEvent *event) {
+//	if (event->type() == QEvent::KeyPress) {
+//		QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+//		qDebug("Ate key press %d", keyEvent->key());
+//		return true;
+//	} else {
+//		return QObject::eventFilter(obj, event);
+//	}
+//}
 
 QRibbonFileButton::QRibbonFileButton(QWidget* parent) : QToolButton(parent) {
 	setStyleSheet(R"(
@@ -277,8 +287,10 @@ QRibbon::QRibbon(QWidget *parent) : QTabWidget(parent) {
 	setCornerWidget(file, Qt::TopLeftCorner);
 }
 
-void QRibbon::addMenuItem(QWidget* widget) {
+void QRibbon::addMenuItem(QAbstractButton* widget) {
 	file->menu->actions->addWidget(widget);
+	connect(widget, &QAbstractButton::clicked, [&]() { file->menu->close(); });
+
 }
 
 void QRibbon::addMenuSeperator() {

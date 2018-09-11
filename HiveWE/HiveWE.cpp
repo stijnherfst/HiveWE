@@ -21,154 +21,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	ui.setupUi(this);
 	
-	// Home
-	QRibbonTab* tab = new QRibbonTab(nullptr);
-
-	// Clipboard
-	QRibbonSection* home_section = new QRibbonSection;
-	home_section->setText("Clipboard");
-
-	QRibbonButton* copy = new QRibbonButton;
-	copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));
-	copy->setText("Copy");
-	home_section->addWidget(copy);
-
-	QRibbonButton* paste = new QRibbonButton;
-	paste->setIcon(QIcon("Data/Icons/Ribbon/paste32x32.ico"));
-	paste->setText("Paste");
-	home_section->addWidget(paste);
-	QVBoxLayout* lay = new QVBoxLayout;
-
-	QToolButton* but = new QToolButton;
-	QToolButton* butt = new QToolButton;
-	QToolButton* buttt = new QToolButton;
-
-	lay->addWidget(but);
-	lay->addWidget(butt);
-	lay->addWidget(buttt);
-
-	home_section->addLayout(lay);
-	tab->add_section(home_section);
-
-	// View
-	QRibbonTab* view_tab = new QRibbonTab(nullptr);
-
-	// Visible section
-	QRibbonSection* visible_section = new QRibbonSection;
-	visible_section->setText("Visible");
-	view_tab->add_section(visible_section);
-
-	QRibbonButton* units_visible = new QRibbonButton;
-	units_visible->setIcon(QIcon("Data/Icons/Ribbon/units32x32.png"));
-	units_visible->setText("Units");
-	units_visible->setCheckable(true);
-	visible_section->addWidget(units_visible);
-
-	QRibbonButton* doodads_visible = new QRibbonButton;
-	doodads_visible->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
-	doodads_visible->setText("Doodads");
-	doodads_visible->setCheckable(true);
-	visible_section->addWidget(doodads_visible);
-
-	QRibbonButton* pathing_visible = new QRibbonButton;
-	pathing_visible->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
-	pathing_visible->setText("Pathing");
-	pathing_visible->setCheckable(true);
-	visible_section->addWidget(pathing_visible);
-
-	QRibbonButton* brush_visible = new QRibbonButton;
-	brush_visible->setIcon(QIcon("Data/Icons/Ribbon/brush32x32.png"));
-	brush_visible->setText("Brush");
-	brush_visible->setCheckable(true);
-	visible_section->addWidget(brush_visible);
-
-	QRibbonButton* lighting_visible = new QRibbonButton;
-	lighting_visible->setIcon(QIcon("Data/Icons/Ribbon/lighting32x32.png"));
-	lighting_visible->setText("Lighting");
-	lighting_visible->setCheckable(true);
-	visible_section->addWidget(lighting_visible);
-
-	QRibbonButton* wireframe_visible = new QRibbonButton;
-	wireframe_visible->setIcon(QIcon("Data/Icons/Ribbon/wireframe32x32.png"));
-	wireframe_visible->setText("Wireframe");
-	wireframe_visible->setCheckable(true);
-	visible_section->addWidget(wireframe_visible);
-
-	QRibbonButton* debug_visible = new QRibbonButton;
-	debug_visible->setIcon(QIcon("Data/Icons/Ribbon/debug32x32.png"));
-	debug_visible->setText("Debug");
-	debug_visible->setCheckable(true);
-	visible_section->addWidget(debug_visible);
-
-	// Camera section
-	QRibbonSection* camera_section = new QRibbonSection;
-	camera_section->setText("Camera");
-	view_tab->add_section(camera_section);
-
-	QRibbonButton* switch_camera = new QRibbonButton;
-	switch_camera->setIcon(QIcon("Data/Icons/Ribbon/switch32x32.png"));
-	switch_camera->setText("Switch");
-	camera_section->addWidget(switch_camera);
-
-	QRibbonButton* reset_camera = new QRibbonButton;
-	reset_camera->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
-	reset_camera->setText("Reset");
-	camera_section->addWidget(reset_camera);
-
-	// Menu actions
-	QToolButton* new_map = new QToolButton;
-	new_map->setText("New Map");
-	new_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
-	new_map->setIconSize({ 32, 32 });
-	new_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	ui.ribbon->addMenuItem(new_map);
-
-	QToolButton* open_map = new QToolButton;
-	open_map->setText("Open Map");
-	open_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
-	open_map->setIconSize({ 32, 32 });
-	open_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	ui.ribbon->addMenuItem(open_map);
-
-	QToolButton* save_map = new QToolButton;
-	save_map->setText("Save Map");
-	save_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
-	save_map->setIconSize({ 32, 32 });
-	save_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	ui.ribbon->addMenuItem(save_map);
-
-	QToolButton* save_map_as = new QToolButton;
-	save_map_as->setText("Save Map as");
-	save_map_as->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
-	save_map_as->setIconSize({ 32, 32 });
-	save_map_as->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	ui.ribbon->addMenuItem(save_map_as);
-
-	ui.ribbon->addMenuSeperator();
-
-	QToolButton* exit = new QToolButton;
-	exit->setText("Exit");
-	exit->setIcon(QIcon("Data/Icons/Ribbon/exit32x32.ico"));
-	exit->setIconSize({ 32, 32 });
-	exit->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	ui.ribbon->addMenuItem(exit);
-	//QRibbonSection* section = new QRibbonSection(nullptr);
-	//QFormLayout* la = new QFormLayout;
-	//QSpinBox* sp1 = new QSpinBox;
-	//QSpinBox* sp2 = new QSpinBox;
-	//la->addRow("Minimum", sp1);
-	//la->addRow("Maximum", sp2);
-
-	//tab->add_section(section);
-	
-	//QWidget* editpage = new QWidget;
-	//section->layoutt->insertLayout(0, la);
-
-	ui.ribbon->addTab(tab, "Home");
-	ui.ribbon->addTab(view_tab, "View");
-
-	
-
 	world_edit_strings.load("UI/WorldEditStrings.txt");
 	world_edit_game_strings.load("UI/WorldEditGameStrings.txt");
 	world_edit_data.load("UI/WorldEditData.txt");
@@ -176,21 +28,53 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);
-	connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
-	connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
-	connect(ui.actionTest_Map, &QAction::triggered, [&]() { map.play_test(); });
 
-	connect(ui.actionUnits, &QAction::triggered, [&](bool checked) { map.render_units = checked; });
-	connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
-	connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
-	connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
-	connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
-	connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
-	connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
+	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map.render_units = checked; });
+	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map.render_doodads = checked; });
+	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map.render_pathing = checked; });
+	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) { map.render_brush = checked; });
+	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map.render_lighting = checked; });
+	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) { map.render_wireframe = checked; });
+	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map.render_debug = checked; });
+	  
+	connect(new QShortcut(Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::Key_F3, this), &QShortcut::activated, ui.ribbon->debug_visible, &QPushButton::click);
 
-	connect(ui.actionReset_Camera, &QAction::triggered, [&]() { camera->reset(); });
-	connect(ui.actionSwitch_Camera, &QAction::triggered, this, &HiveWE::switch_camera);
+
+	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera->reset(); });
+	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
+
+	connect(new QShortcut(Qt::Key_F1, this), &QShortcut::activated, ui.ribbon->switch_camera, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
+
+	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
+
+	//connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);
+	//connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
+	//connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
+	//connect(ui.actionTest_Map, &QAction::triggered, [&]() { map.play_test(); });
+
+	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
+	connect(ui.ribbon->open_map, &QPushButton::clicked, this, &HiveWE::load);
+	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
+	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
+	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
+	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {  });
+
+	//connect(ui.actionUnits, &QAction::triggered, [&](bool checked) { map.render_units = checked; });
+	//connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
+	//connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
+	//connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
+	//connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
+	//connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
+	//connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
+
+	//connect(ui.actionReset_Camera, &QAction::triggered, [&]() { camera->reset(); });
+	//connect(ui.actionSwitch_Camera, &QAction::triggered, this, &HiveWE::switch_camera);
 
 	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
 	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
@@ -209,8 +93,24 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			palette->close();
 		});
 	});
-	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { new TerrainPalette(this); });
-	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { new DoodadPalette(this); });
+	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { 
+		auto palette = new TerrainPalette(this);
+		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	});
+	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { 
+		auto palette = new DoodadPalette(this); 
+		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	});
+
+
+	// Temporary Temporary
+	QTimer::singleShot(5, [this]() {
+		auto palette = new DoodadPalette(this);
+		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	});
 
 	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
 	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); });
@@ -273,4 +173,55 @@ void HiveWE::switch_camera() {
 		ui.actionDoodads->setEnabled(true);
 	}
 	camera->update(0);
+}
+
+void HiveWE::import_heightmap() {
+	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -128 to +128");
+	QSettings settings;
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map.filesystem_path.filename().string());
+
+	QString file_name = QFileDialog::getOpenFileName(this, "Open Heightmap Image", directory);
+
+	if (file_name == "") {
+		return;
+	}
+
+	int width;
+	int height;
+	int channels;
+	uint8_t* image_data = SOIL_load_image(file_name.toStdString().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
+	
+	if (width != map.terrain.width || height != map.terrain.height) {
+		QMessageBox::warning(this, "Incorrect Image Size", QString("Image Size: %1x%2 does not match terrain size: %3x%4").arg(QString::number(width), QString::number(height), QString::number(map.terrain.width), QString::number(map.terrain.height)));
+		return;
+	}
+
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			map.terrain.ground_heights[j * width + i] = image_data[((height - 1 - j) * width + i) * 4] - 128;
+			map.terrain.ground_corner_heights[j * width + i] = map.terrain.corner_height(i, j);
+		}
+
+	}
+	gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data());
+	gl->glTextureSubImage2D(map.terrain.ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map.terrain.ground_heights.data());
+}
+
+void HiveWE::set_current_custom_tab(QRibbonTab* tab) {
+	if (current_custom_tab == tab) {
+		return;
+	}
+	remove_custom_tab();
+	current_custom_tab = tab;
+	ui.ribbon->addTab(tab, "Testtab");
+	ui.ribbon->setCurrentIndex(ui.ribbon->count() - 1);
+}
+
+void HiveWE::remove_custom_tab() {
+	for (int i = 0; i < ui.ribbon->count(); i++) {
+		if (ui.ribbon->widget(i) == current_custom_tab) {
+			ui.ribbon->removeTab(i);
+			return;
+		}
+	}
 }
