@@ -135,6 +135,7 @@ TerrainPalette::~TerrainPalette() {
 bool TerrainPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
 		map.brush = &brush;
+		emit ribbon_tab_requested(ribbon_tab);
 	}
 	return QWidget::event(e);
 }

@@ -14,7 +14,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	}
 
 	// Subversion
-	reader.read<uint32_t>();
+	const uint32_t subversion = reader.read<uint32_t>();
+	// ToDO check subversion
 
 	doodads.resize(reader.read<uint32_t>());
 	for (auto&& i : doodads) {
@@ -177,13 +178,15 @@ void Doodads::render() {
 	}
 }
 
-Doodad& Doodads::add_doodad(std::string id, glm::vec2 position) {
+Doodad& Doodads::add_doodad(std::string id, glm::vec3 position) {
 	Doodad doodad;
 	doodad.id = id;
 	doodad.mesh = get_mesh(id, 0);
-	doodad.position = glm::vec3(position, 0);
+	doodad.position = position;
+	doodad.scale = glm::vec3(1 / 128.f);
+	doodad.angle = 0;
 	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
-	doodad.matrix = glm::scale(doodad.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
+	doodad.matrix = glm::scale(doodad.matrix, doodad.scale);
 
 	doodads.push_back(doodad);
 	return doodads.back();

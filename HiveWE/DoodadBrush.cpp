@@ -9,7 +9,9 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			}
 			break;
 		case Qt::Key_A:
-		
+			if (event->modifiers() & Qt::ControlModifier) {
+				selections = map.doodads.query_area({0.0, 0.0, static_cast<double>(map.terrain.width), static_cast<double>(map.terrain.height)});
+			}
 			break;
 		default:
 			Brush::key_press_event(event);
@@ -19,8 +21,26 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 void DoodadBrush::mouse_release_event(QMouseEvent* event) {
 	if (event->button() == Qt::LeftButton && mode == Mode::selection) {
 		selection_started = false;
-		glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
-		selections = map.doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+	}
+}
+
+void DoodadBrush::mouse_move_event(QMouseEvent* event) {
+	Brush::mouse_move_event(event);
+
+	if (mode == Mode::selection) {
+		if (event->buttons() == Qt::LeftButton) {
+			if (event->modifiers() & Qt::ControlModifier) {
+				for (auto&& i : selections) {
+					i->angle = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					i->matrix = glm::translate(glm::mat4(1.f), i->position);
+					i->matrix = glm::scale(i->matrix, i->scale);
+					i->matrix = glm::rotate(i->matrix, i->angle, glm::vec3(0, 0, 1));
+				}
+			} else {
+				glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
+				selections = map.doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+			}
+		}
 	}
 }
 
@@ -28,15 +48,19 @@ void DoodadBrush::apply() {
 	if (id == "") {
 		return;
 	}
-	map.doodads.add_doodad(id, free_placement ? input_handler.mouse_world : get_position());
+	map.doodads.add_doodad(id, free_placement ? input_handler.mouse_world : glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
 }
 
 void DoodadBrush::render_brush() const {
+	//int cells = 
+	//for ()
+
+
 	glm::mat4 mat(1.f);
 	if (free_placement) {
 		mat = glm::translate(mat, input_handler.mouse_world);
 	} else {
-		mat = glm::translate(mat, glm::vec3(get_position(), 0));
+		mat = glm::translate(mat, glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
 	}
 	mat = glm::scale(mat, glm::vec3(1.f / 128.f));
 
@@ -45,7 +69,7 @@ void DoodadBrush::render_brush() const {
 	}
 }
 
-void DoodadBrush::render_selectionn() const {
+void DoodadBrush::render_selection() const {
 	gl->glDisable(GL_DEPTH_TEST);
 	selection_shader->use();
 	gl->glEnableVertexAttribArray(0);
@@ -78,12 +102,12 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		free_placement = true;
 		free_rotation = true;
 	} else {
-		free_placement = false;
 		if (hierarchy.file_exists(pathing_texture_path)) {
+			free_placement = false;
 			auto pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
 			free_rotation = pathing_texture->width == pathing_texture->height;
 		} else {
-			free_rotation = false;
+			free_placement = true;
 		}
 	}
 

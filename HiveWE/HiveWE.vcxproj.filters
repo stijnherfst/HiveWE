@@ -129,9 +129,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_TileSetter.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="FlowLayout.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_TilePicker.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -327,6 +324,18 @@
     <ClCompile Include="QRibbon.cpp">
       <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_MainRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_MainRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MainRibbon.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="FlowLayout.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -484,9 +493,6 @@
     <CustomBuild Include="TileSetter.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="FlowLayout.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="TilePicker.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
@@ -557,6 +563,12 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="QRibbon.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="MainRibbon.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="FlowLayout.h">
       <Filter>Header Files\Menus\Custom Widgets</Filter>
     </CustomBuild>
   </ItemGroup>
