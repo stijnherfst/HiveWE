@@ -337,6 +337,11 @@
     <string>Enforce Water Height Limits</string>
    </property>
   </action>
+  <action name="actionSwitch_Warcraft">
+   <property name="text">
+    <string>Switch Warcraft folder</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -66,7 +66,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
 	connect(ui.actionOptions, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	connect(ui.actionPreferences, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
-
+  
+  //connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
+  
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
@@ -134,6 +136,19 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 	//if (choice == QMessageBox::Yes) {
 	//}
 		event->accept();
+}
+
+void HiveWE::switch_warcraft() {
+	fs::path directory;
+	do {
+		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+	} while (!fs::exists(directory / "Data"));
+	QSettings settings;
+	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
+
+	hierarchy.game_data.close();
+	hierarchy.warcraft_directory = directory;
+	hierarchy.init();
 }
 
 void HiveWE::switch_camera() {

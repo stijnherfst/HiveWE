@@ -19,6 +19,7 @@ private:
 	void closeEvent(QCloseEvent* event) override;
 
 	void switch_camera();
+	void switch_warcraft();
 	void import_heightmap();
 
 	/// Adds the tab to the ribbon and sets the current index to this tab

@@ -6,6 +6,7 @@ namespace json {
 	}
 
 	void JSON::load(const fs::path& path) {
+		json_data.clear();
 		std::stringstream file;
 		file << hierarchy.open_file(path).buffer.data();
 		size_t end1;
