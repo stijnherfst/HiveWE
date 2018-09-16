@@ -111,6 +111,7 @@
      <string>Advanced</string>
     </property>
     <addaction name="actionEnforce_Water_Height_Limit"/>
+    <addaction name="actionSwitch_Warcraft"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuScenario"/>
@@ -366,6 +367,11 @@
    </property>
    <property name="text">
     <string>Enforce Water Height Limits</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Warcraft">
+   <property name="text">
+    <string>Switch Warcraft folder</string>
    </property>
   </action>
  </widget>
