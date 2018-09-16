@@ -5,7 +5,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	QRibbonTab* home_tab = new QRibbonTab;
 
 	// Clipboard
-	QRibbonSection* home_section = new QRibbonSection;
+	/*QRibbonSection* home_section = new QRibbonSection;
 	home_section->setText("Clipboard");
 
 	copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));
@@ -31,7 +31,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	lay->addWidget(buttt);
 
 	home_section->addLayout(lay);
-	home_tab->add_section(home_section);
+	home_tab->addSection(home_section);*/
 
 	// View
 	QRibbonTab* view_tab = new QRibbonTab;
@@ -39,7 +39,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Visible section
 	QRibbonSection* visible_section = new QRibbonSection;
 	visible_section->setText("Visible");
-	view_tab->add_section(visible_section);
+	view_tab->addSection(visible_section);
 	
 	units_visible->setIcon(QIcon("Data/Icons/Ribbon/units32x32.png"));
 	units_visible->setText("Units");
@@ -84,7 +84,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Camera section
 	QRibbonSection* camera_section = new QRibbonSection;
 	camera_section->setText("Camera");
-	view_tab->add_section(camera_section);
+	view_tab->addSection(camera_section);
 
 	switch_camera->setIcon(QIcon("Data/Icons/Ribbon/switch32x32.png"));
 	switch_camera->setText("Switch");
@@ -99,6 +99,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	new_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
 	new_map->setIconSize({ 32, 32 });
 	new_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	new_map->setDisabled(true);
 	addMenuItem(new_map);
 
 	open_map->setText("Open Map");
@@ -136,7 +137,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Tools tab
 	QRibbonTab* tools_tab = new QRibbonTab;
 
-	// Clipboard
+	// Import
 	QRibbonSection* import_section = new QRibbonSection;
 	import_section->setText("Import");
 
@@ -144,7 +145,21 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	import_heightmap->setText("Import\nHeightmap");
 	import_section->addWidget(import_heightmap);
 
-	tools_tab->add_section(import_section);
+	tools_tab->addSection(import_section);
+
+	// Tileset
+	QRibbonSection* tileset_section = new QRibbonSection;
+	tileset_section->setText("Tileset");
+
+	change_tileset->setIcon(QIcon("Data/Icons/Ribbon/heightmap32x32.png"));
+	change_tileset->setText("Change\nTileset");
+	tileset_section->addWidget(change_tileset);
+
+	change_tile_pathing->setIcon(QIcon("Data/Icons/Ribbon/heightmap32x32.png"));
+	change_tile_pathing->setText("Change Tile\nPathing");
+	tileset_section->addWidget(change_tile_pathing);
+
+	tools_tab->addSection(tileset_section);	
 
 	addTab(home_tab, "Home");
 	addTab(view_tab, "View");

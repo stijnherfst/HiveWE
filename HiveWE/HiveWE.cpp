@@ -44,7 +44,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(new QShortcut(Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_F3, this), &QShortcut::activated, ui.ribbon->debug_visible, &QPushButton::click);
 
-
 	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera->reset(); });
 	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
 
@@ -53,11 +52,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
-	//connect(ui.actionOpen, &QAction::triggered, this, &HiveWE::load);
-	//connect(ui.actionSave, &QAction::triggered, [&]() { map.save(map.filesystem_path); });
-	//connect(ui.actionSave_As, &QAction::triggered, this, &HiveWE::save_as);
-	//connect(ui.actionTest_Map, &QAction::triggered, [&]() { map.play_test(); });
-
 	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.ribbon->open_map, &QPushButton::clicked, this, &HiveWE::load);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
@@ -65,29 +59,16 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
 	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {  });
 
-	//connect(ui.actionUnits, &QAction::triggered, [&](bool checked) { map.render_units = checked; });
-	//connect(ui.actionDoodads, &QAction::triggered, [&](bool checked) { map.render_doodads = checked; });
-	//connect(ui.actionPathing, &QAction::triggered, [&](bool checked) { map.render_pathing = checked; });
-	//connect(ui.actionBrush, &QAction::triggered, [&](bool checked) { map.render_brush = checked; });
-	//connect(ui.actionLighting, &QAction::triggered, [&](bool checked) { map.render_lighting = checked; });
-	//connect(ui.actionWireframe, &QAction::triggered, [&](bool checked) { map.render_wireframe = checked; });
-	//connect(ui.actionFrame_Times, &QAction::triggered, [&](bool checked) { map.show_timings = checked; });
-
-	//connect(ui.actionReset_Camera, &QAction::triggered, [&]() { camera->reset(); });
-	//connect(ui.actionSwitch_Camera, &QAction::triggered, this, &HiveWE::switch_camera);
+	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
+	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });
 
 	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
 	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
 	connect(ui.actionOptions, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	connect(ui.actionPreferences, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
-
-	connect(ui.actionTileSetter, &QAction::triggered, [this]() { new TileSetter(this); });
-	connect(ui.actionChangeTilePathing, &QAction::triggered, [this]() { new TilePather(this); });
-
-	connect(ui.actionEnforce_Water_Height_Limit, &QAction::triggered, [&](bool checked) { map.enforce_water_height_limits = checked; });
-	connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
-
-
+  
+  //connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
+  
 	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
@@ -221,13 +202,13 @@ void HiveWE::import_heightmap() {
 	gl->glTextureSubImage2D(map.terrain.ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map.terrain.ground_heights.data());
 }
 
-void HiveWE::set_current_custom_tab(QRibbonTab* tab) {
+void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {
 	if (current_custom_tab == tab) {
 		return;
 	}
 	remove_custom_tab();
 	current_custom_tab = tab;
-	ui.ribbon->addTab(tab, "Testtab");
+	ui.ribbon->addTab(tab, name);
 	ui.ribbon->setCurrentIndex(ui.ribbon->count() - 1);
 }
 

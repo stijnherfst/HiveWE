@@ -41,7 +41,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 		if (is_cliff_tile != cliff_tiles.end()) {
 			const int index = std::distance(cliff_tiles.begin(), is_cliff_tile);
 
-
 			button = new QPushButton;
 			button->setIcon(icon);
 			button->setFixedSize(48, 48);
@@ -66,6 +65,21 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	ui.blight->setProperty("tileID", "blight");
 	ui.blight->setProperty("tileName", "Blight");
 	textures_group->addButton(ui.blight);
+
+	// Ribbon
+	QRibbonSection* settings_section = new QRibbonSection;
+	settings_section->setText("Settings");
+
+	QRibbonButton* enforce_water_height_limit = new QRibbonButton;
+	enforce_water_height_limit->setText("Enforce Water\nHeight Limit");
+	enforce_water_height_limit->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
+	enforce_water_height_limit->setCheckable(true);
+	enforce_water_height_limit->setChecked(true);
+	settings_section->addWidget(enforce_water_height_limit);
+
+	ribbon_tab->addSection(settings_section);
+
+	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { enforce_water_height_limits = checked; });
 
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.brushSizeSlider->setValue(button->text().toInt());
@@ -135,7 +149,7 @@ TerrainPalette::~TerrainPalette() {
 bool TerrainPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
 		map.brush = &brush;
-		emit ribbon_tab_requested(ribbon_tab);
+		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
 	return QWidget::event(e);
 }

@@ -43,8 +43,8 @@ public:
 	
 	QRibbonTab(QWidget* parent = nullptr);
 	
-	void add_section(QLayout* layout);
-	void add_section(QRibbonSection* layout);
+	void addSection(QLayout* layout);
+	void addSection(QRibbonSection* layout);
 
 	void paintEvent(QPaintEvent* event);
 };

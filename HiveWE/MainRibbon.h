@@ -19,6 +19,8 @@ public:
 	QRibbonButton* reset_camera = new QRibbonButton;
 
 	QRibbonButton* import_heightmap = new QRibbonButton;
+	QRibbonButton* change_tileset = new QRibbonButton;
+	QRibbonButton* change_tile_pathing = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;
 	QToolButton* open_map = new QToolButton;

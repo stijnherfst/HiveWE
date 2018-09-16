@@ -24,5 +24,5 @@ private:
 
 	QRibbonContainer* variations = new QRibbonContainer;
 signals:
-	void ribbon_tab_requested(QRibbonTab* tab);
+	void ribbon_tab_requested(QRibbonTab* tab, QString name);
 };
