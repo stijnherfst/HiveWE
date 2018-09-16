@@ -30,7 +30,7 @@ QRibbonButton::QRibbonButton(QWidget* parent) : QToolButton(parent) {
 	setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
-QRibbonContainer::QRibbonContainer(QWidget* parent) {
+QRibbonContainer::QRibbonContainer(QWidget* parent) : QFrame(parent) {
 	setLayout(layout);
 	setAutoFillBackground(true);
 	setStyleSheet(R"(
@@ -112,11 +112,11 @@ void QRibbonTab::paintEvent(QPaintEvent* event) {
 	QWidget::paintEvent(event);
 }
 
-void QRibbonTab::add_section(QLayout* layout) {
+void QRibbonTab::addSection(QLayout* layout) {
 	sections->insertLayout(0, layout);
 }
 
-void QRibbonTab::add_section(QRibbonSection* section) {
+void QRibbonTab::addSection(QRibbonSection* section) {
 	QFrame* line = new QFrame();
 	line->setFrameShape(QFrame::VLine);
 	line->setFrameShadow(QFrame::Sunken);

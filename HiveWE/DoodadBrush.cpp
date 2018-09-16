@@ -1,5 +1,20 @@
 #include "stdafx.h"
 
+/// Gets a random variation from the possible_variation list
+int DoodadBrush::get_random_variation() {
+	if (possible_variations.size() == 0) {
+		return 0;
+	}
+
+	std::mt19937 rng;
+	rng.seed(std::random_device()());
+	std::uniform_int_distribution<std::mt19937::result_type> dist(0, possible_variations.size() - 1);
+
+	auto it = possible_variations.begin();
+	std::advance(it, dist(rng));
+	return *it;
+}
+
 void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Delete:
@@ -48,7 +63,20 @@ void DoodadBrush::apply() {
 	if (id == "") {
 		return;
 	}
-	map.doodads.add_doodad(id, free_placement ? input_handler.mouse_world : glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
+
+	glm::vec3 position;
+	if (free_placement) {
+		position = input_handler.mouse_world;
+	} else {
+		// Round to 0.5
+		position = glm::vec3(glm::trunc(glm::vec2(input_handler.mouse_world) * 2.f) * 0.5f + 0.25f, input_handler.mouse_world.z);
+	}
+
+	map.doodads.add_doodad(id, variation, position);
+
+	if (random_variation) {
+		set_random_variation();
+	}
 }
 
 void DoodadBrush::render_brush() const {
@@ -90,9 +118,28 @@ void DoodadBrush::render_selection() const {
 	gl->glEnable(GL_DEPTH_TEST);
 }
 
+void DoodadBrush::set_random_variation() {
+	variation = get_random_variation();
+	mesh = map.doodads.get_mesh(id, variation);
+}
+
+void DoodadBrush::add_variation(int variation) {
+	possible_variations.insert(variation);
+}
+
+void DoodadBrush::erase_variation(int variation) {
+	possible_variations.erase(variation);
+	if (this->variation == variation) {
+		this->variation = get_random_variation();
+	}
+}
+
+
 void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
-
+	if (random_variation) {
+		set_random_variation();
+	}
 	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
 	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
 
@@ -104,12 +151,16 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	} else {
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			free_placement = false;
-			auto pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
+			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
 			free_rotation = pathing_texture->width == pathing_texture->height;
 		} else {
 			free_placement = true;
 		}
 	}
 
-	mesh = map.doodads.get_mesh(id, 0);
+	possible_variations.clear();
+	int variation_count = std::stoi(slk.data("numVar", id));
+	for (int i = 0; i < variation_count; i++) {
+		possible_variations.insert(i);
+	}
 }

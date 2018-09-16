@@ -195,7 +195,7 @@ namespace slk {
 		columns = columns + slk.columns - 1;
 
 		for (auto&& i : slk.table_data) {
-			const int index = header_to_row[i.front()];
+			const size_t index = header_to_row[i.front()];
 			table_data[index].insert(table_data[index].end(), i.begin() + 1, i.end());
 		}
 

@@ -22,7 +22,7 @@ private:
 	void import_heightmap();
 
 	/// Adds the tab to the ribbon and sets the current index to this tab
-	void set_current_custom_tab(QRibbonTab* tab);
+	void set_current_custom_tab(QRibbonTab* tab, QString name);
 	void remove_custom_tab();
 signals:
 	void tileset_changed();

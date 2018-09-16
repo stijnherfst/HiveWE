@@ -178,10 +178,11 @@ void Doodads::render() {
 	}
 }
 
-Doodad& Doodads::add_doodad(std::string id, glm::vec3 position) {
+Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	Doodad doodad;
 	doodad.id = id;
-	doodad.mesh = get_mesh(id, 0);
+	doodad.variation = variation;
+	doodad.mesh = get_mesh(id, variation);
 	doodad.position = position;
 	doodad.scale = glm::vec3(1 / 128.f);
 	doodad.angle = 0;

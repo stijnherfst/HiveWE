@@ -66,7 +66,7 @@ public:
 	void create();
 	void render();
 
-	Doodad& add_doodad(std::string id, glm::vec3 position);
+	Doodad& add_doodad(std::string id, int variation, glm::vec3 position);
 	void remove_doodad(Doodad* doodad);
 
 	std::vector<Doodad*> query_area(QRectF area);

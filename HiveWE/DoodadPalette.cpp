@@ -56,6 +56,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 	random_variation->setText("Random\nVariation");
 	random_variation->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
 	random_variation->setCheckable(true);
+	random_variation->setChecked(true);
 	variation_section->addWidget(random_variation);
 	variation_section->addWidget(variations);
 
@@ -91,11 +92,12 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 
 	//section->addLayout(lay);
 
-	ribbon_tab->add_section(selection_section);
-	ribbon_tab->add_section(placement_section);
-	ribbon_tab->add_section(variation_section);
+	ribbon_tab->addSection(selection_section);
+	ribbon_tab->addSection(placement_section);
+	ribbon_tab->addSection(variation_section);
 
-	connect(selection_mode, &QToolButton::toggled, [&]() { brush.switch_mode(); });
+	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
+	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) { brush.random_variation = checked; });
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
@@ -111,7 +113,7 @@ DoodadPalette::~DoodadPalette() {
 bool DoodadPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
 		map.brush = &brush;
-		emit ribbon_tab_requested(ribbon_tab);
+		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
 	}
 	return QWidget::event(e);
 }
@@ -150,7 +152,7 @@ void DoodadPalette::update_list() {
 }
 
 void DoodadPalette::selection_changed(QListWidgetItem* item) {
-	std::string id = item->data(Qt::UserRole).toString().toStdString();
+	const std::string id = item->data(Qt::UserRole).toString().toStdString();
 
 	brush.set_doodad(id);
 	selection_mode->setChecked(false);
@@ -162,10 +164,17 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 
 	int variation_count = std::stoi(slk.data("numVar", id));
 	for (int i = 0; i < variation_count; i++) {
-		QRibbonButton* test = new QRibbonButton;
-		test->setCheckable(true);
-		test->setChecked(true);
-		test->setText(QString::number(i));
-		variations->addWidget(test, i % 3, i / 3);
+		QRibbonButton* toggle = new QRibbonButton;
+		toggle->setCheckable(true);
+		toggle->setChecked(true);
+		toggle->setText(QString::number(i));
+		variations->addWidget(toggle, i % 3, i / 3);
+		connect(toggle, &QRibbonButton::toggled, [=](bool checked) {
+			if (checked) {
+				brush.add_variation(i);
+			} else {
+				brush.erase_variation(i);
+			}
+		});
 	}
 }
