@@ -27,6 +27,7 @@ public:
 	QToolButton* save_map = new QToolButton;
 	QToolButton* save_map_as = new QToolButton;
 	QToolButton* test_map = new QToolButton;
+	QToolButton* switch_warcraft = new QToolButton;
 	QToolButton* exit = new QToolButton;
 
 	MainRibbon(QWidget* parent);

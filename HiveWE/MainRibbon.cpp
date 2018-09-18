@@ -126,6 +126,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	test_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 	addMenuItem(test_map);
 
+	switch_warcraft->setText("Switch Warcraft III folder");
+	switch_warcraft->setIcon(QIcon("Data/Icons/Ribbon/WarIII32x32.ico"));
+	switch_warcraft->setIconSize({ 32, 32 });
+	switch_warcraft->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(switch_warcraft);
+
 	addMenuSeperator();
 
 	exit->setText("Exit");
