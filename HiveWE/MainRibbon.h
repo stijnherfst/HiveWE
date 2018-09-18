@@ -21,13 +21,13 @@ public:
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;
 	QRibbonButton* change_tile_pathing = new QRibbonButton;
+	QRibbonButton* switch_warcraft = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;
 	QToolButton* open_map = new QToolButton;
 	QToolButton* save_map = new QToolButton;
 	QToolButton* save_map_as = new QToolButton;
 	QToolButton* test_map = new QToolButton;
-	QToolButton* switch_warcraft = new QToolButton;
 	QToolButton* exit = new QToolButton;
 
 	MainRibbon(QWidget* parent);
