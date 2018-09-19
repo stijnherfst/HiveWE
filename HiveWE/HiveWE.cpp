@@ -143,13 +143,18 @@ void HiveWE::switch_warcraft() {
 	fs::path directory;
 	do {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+		if (directory == "")
+			directory = hierarchy.warcraft_directory;
 	} while (!fs::exists(directory / "Data"));
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
-	hierarchy.game_data.close();
-	hierarchy.warcraft_directory = directory;
-	hierarchy.init();
+	if (directory != hierarchy.warcraft_directory)
+	{
+		hierarchy.game_data.close();
+		hierarchy.warcraft_directory = directory;
+		hierarchy.init();
+	}
 }
 
 void HiveWE::switch_camera() {
