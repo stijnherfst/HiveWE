@@ -110,6 +110,7 @@ namespace fs = std::filesystem;
 #include "ImportManager.h"
 #include "MapInfoEditor.h"
 #include "TriggerEditor.h"
+#include "Palette.h"
 #include "PathingPallete.h"
 #include "TerrainPalette.h"
 #include "DoodadPalette.h"

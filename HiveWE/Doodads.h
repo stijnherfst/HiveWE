@@ -29,6 +29,8 @@ struct Doodad {
 	Doodad() {
 		unique_id = auto_increment++;
 	}
+
+	void update();
 };
 
 struct SpecialDoodad {

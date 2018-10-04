@@ -30,6 +30,40 @@ QRibbonButton::QRibbonButton(QWidget* parent) : QToolButton(parent) {
 	setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
+QRibbonButton::~QRibbonButton() {
+	for (auto&& i : shortcuts) {
+		i->setParent(nullptr);
+		delete i;
+	}
+}
+
+void QRibbonButton::setShortCut(const QKeySequence sequence, const std::vector<QWidget*>& attach_to) {
+	for (auto&& i : attach_to) {
+		shortcuts.push_back(new QShortcut(sequence, i));
+		connect(shortcuts.back(), &QShortcut::activated, this, &QToolButton::click);
+		connect(shortcuts.back(), &QShortcut::activatedAmbiguously, []() { printf("kut2\n"); });
+	}
+}
+
+void QRibbonButton::disableShortcuts() {
+	for (auto&& i : shortcuts) {
+		i->setEnabled(false);
+	}
+}
+
+void QRibbonButton::enableShortcuts() {
+	for (auto&& i : shortcuts) {
+		i->setEnabled(true);
+	}
+}
+
+void QRibbonButton::disconnectShortcuts() {
+	//for (auto&& i : shortcuts) {
+	//	delete i;
+	//	shortcuts.clear();
+	//}
+}
+
 QRibbonContainer::QRibbonContainer(QWidget* parent) : QFrame(parent) {
 	setLayout(layout);
 	setAutoFillBackground(true);
@@ -101,6 +135,14 @@ QRibbonTab::QRibbonTab(QWidget* parent) : QWidget(parent) {
 			background-color: rgb(245, 246, 247);
 		}
 	)");
+}
+
+void QRibbonTab::disableShortcuts() {
+	
+}
+
+void QRibbonTab::enableShortcuts() {
+
 }
 
 void QRibbonTab::paintEvent(QPaintEvent* event) {

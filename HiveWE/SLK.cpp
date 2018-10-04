@@ -123,7 +123,6 @@ namespace slk {
 					++it;
 				}
 			}
-			std::cout << path << " Contains empty rows at the end\n";
 		}
 	}
 

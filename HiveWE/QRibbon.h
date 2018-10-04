@@ -5,6 +5,15 @@ class QRibbonButton : public QToolButton {
 
 public:
 	QRibbonButton(QWidget* parent = nullptr);
+	~QRibbonButton();
+
+	std::vector<QShortcut*> shortcuts;
+
+	void setShortCut(const QKeySequence sequence, const std::vector<QWidget*>& attach_to);
+
+	void disableShortcuts();
+	void enableShortcuts();
+	void disconnectShortcuts();
 };
 
 class QRibbonContainer : public QFrame {
@@ -46,7 +55,11 @@ public:
 	void addSection(QLayout* layout);
 	void addSection(QRibbonSection* layout);
 
-	void paintEvent(QPaintEvent* event);
+	void disableShortcuts();
+	void enableShortcuts();
+
+
+	void paintEvent(QPaintEvent* event) override;
 };
 
 

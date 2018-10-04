@@ -134,6 +134,30 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	exit->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 	addMenuItem(exit);
 
+	// Map tab
+
+	QRibbonTab* map_tab = new QRibbonTab;
+
+	QRibbonSection* map_section = new QRibbonSection;
+
+	map_description->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png"));
+	map_description->setText("Description");
+	map_section->addWidget(map_description);
+
+	map_loading_screen->setIcon(QIcon("Data/Icons/Ribbon/loading32x32.png"));
+	map_loading_screen->setText("Loading\nScreen");
+	map_section->addWidget(map_loading_screen);
+
+	map_options->setIcon(QIcon("Data/Icons/Ribbon/options32x32.png"));
+	map_options->setText("Options");
+	map_section->addWidget(map_options);
+
+	//map_size_camera_bounds->setIcon(QIcon("Data/Icons/Ribbon/sizebounds32x32.png"));
+	//map_size_camera_bounds->setText("Size&&Camera\nBounds");
+	//map_section->addWidget(map_size_camera_bounds);
+
+	map_tab->addSection(map_section);
+
 	// Tools tab
 	QRibbonTab* tools_tab = new QRibbonTab;
 
@@ -151,19 +175,55 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	QRibbonSection* tileset_section = new QRibbonSection;
 	tileset_section->setText("Tileset");
 
-	change_tileset->setIcon(QIcon("Data/Icons/Ribbon/heightmap32x32.png"));
+	change_tileset->setIcon(QIcon("Data/Icons/Ribbon/tileset32x32.png"));
 	change_tileset->setText("Change\nTileset");
 	tileset_section->addWidget(change_tileset);
 
-	change_tile_pathing->setIcon(QIcon("Data/Icons/Ribbon/heightmap32x32.png"));
+	change_tile_pathing->setIcon(QIcon("Data/Icons/Ribbon/tileset32x32.png"));
 	change_tile_pathing->setText("Change Tile\nPathing");
 	tileset_section->addWidget(change_tile_pathing);
 
 	tools_tab->addSection(tileset_section);	
 
-	addTab(home_tab, "Home");
+	// Window Tab
+	QRibbonTab* window_tab = new QRibbonTab;
+
+	QRibbonSection* editor_section = new QRibbonSection;
+	editor_section->setText("Editor/Viewer");
+
+	import_manager->setIcon(QIcon("Data/Icons/Ribbon/importmanager32x32.png"));
+	import_manager->setText("Import\nManager");
+	editor_section->addWidget(import_manager);
+
+	trigger_viewer->setIcon(QIcon("Data/Icons/Ribbon/triggereditor32x32.png"));
+	trigger_viewer->setText("Trigger\nViewer");
+	editor_section->addWidget(trigger_viewer);
+
+	QRibbonSection* palette_section = new QRibbonSection;
+	palette_section->setText("Palette"); 
+	
+	terrain_palette->setIcon(QIcon("Data/Icons/Ribbon/heightmap32x32.png"));
+	terrain_palette->setText("Terrain");
+	palette_section->addWidget(terrain_palette);
+
+	doodad_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
+	doodad_palette->setText("Doodads");
+	palette_section->addWidget(doodad_palette);
+
+	pathing_palette->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
+	pathing_palette->setText("Pathing");
+	palette_section->addWidget(pathing_palette);
+
+	window_tab->addSection(editor_section);
+	window_tab->addSection(palette_section);
+
+
+	//addTab(home_tab, "Home");
 	addTab(view_tab, "View");
+	addTab(map_tab, "Map");
 	addTab(tools_tab, "Tools");
+	addTab(window_tab, "Window");
+
 }
 
 MainRibbon::~MainRibbon() {

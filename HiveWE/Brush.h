@@ -27,7 +27,7 @@ public:
 	void decrease_size(int size);
 	bool contains(int x, int y) const;
 
-	void switch_mode();
+	virtual void switch_mode();
 
 	virtual void key_press_event(QKeyEvent* event);
 	virtual void mouse_move_event(QMouseEvent* event);

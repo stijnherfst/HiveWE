@@ -14,6 +14,14 @@ public:
 	bool free_rotation;
 
 	bool random_variation = true;
+	bool random_scale = true;
+	bool random_rotation = true;
+
+	float scale = 1.f;
+	float min_scale = 1.f;
+	float max_scale = 1.f;
+
+	float rotation = 0.f;
 
 	void key_press_event(QKeyEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;

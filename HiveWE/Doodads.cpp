@@ -2,6 +2,12 @@
 
 int Doodad::auto_increment;
 
+void Doodad::update() {
+	matrix = glm::translate(glm::mat4(1.f), position);
+	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+}
+
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
@@ -23,7 +29,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
-		i.scale = reader.read<glm::vec3>() / 128.f;
+		i.scale = reader.read<glm::vec3>();
 		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 
@@ -145,18 +151,14 @@ void Doodads::update_area(const QRect& area) {
 	for (auto&& i : doodads) {
 		if (area.contains(i.position.x, i.position.y)) {
 			i.position.z = map.terrain.corner_height(i.position.x, i.position.y);
-			i.matrix = glm::translate(glm::mat4(1.f), i.position);
-			i.matrix = glm::scale(i.matrix, i.scale);
-			i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+			i.update();
 		}
 	}
 }
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		i.matrix = glm::translate(i.matrix, i.position);
-		i.matrix = glm::scale(i.matrix, i.scale);
-		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+		i.update();
 		i.mesh = get_mesh(i.id, i.variation);
 	}
 
@@ -184,10 +186,9 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.variation = variation;
 	doodad.mesh = get_mesh(id, variation);
 	doodad.position = position;
-	doodad.scale = glm::vec3(1 / 128.f);
+	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
-	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
-	doodad.matrix = glm::scale(doodad.matrix, doodad.scale);
+	doodad.update();
 
 	doodads.push_back(doodad);
 	return doodads.back();

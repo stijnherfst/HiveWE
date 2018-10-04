@@ -23,6 +23,7 @@ layout (binding = 16) uniform sampler2DArray sample12;
 layout (binding = 17) uniform sampler2DArray sample13;
 layout (binding = 18) uniform sampler2DArray sample14;
 layout (binding = 19) uniform sampler2DArray sample15;
+layout (binding = 20) uniform sampler2DArray sample16;
 
 layout (location = 0) in vec2 UV;
 layout (location = 1) in flat uvec4 texture_indices;
@@ -70,6 +71,8 @@ vec4 get_fragment(uint id, vec3 uv) {
 		case 15:
 			return textureGrad(sample15, uv, dx, dy);
 		case 16:
+			return textureGrad(sample16, uv, dx, dy);
+		case 17:
 			return vec4(0, 0, 0, 0);
 	}
 }

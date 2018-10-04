@@ -84,6 +84,8 @@ void Brush::decrease_size(const int new_size) {
 
 void Brush::switch_mode() {
 	mode = (mode == Mode::placement) ? Mode::selection : Mode::placement;
+
+	selection_started = false;
 }
 
 void Brush::key_press_event(QKeyEvent* event) {
@@ -120,8 +122,8 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 		}
 	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
-			map.brush->apply();
-			map.brush->apply_end();
+			apply();
+			apply_end();
 		}
 	}
 }

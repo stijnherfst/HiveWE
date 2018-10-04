@@ -62,40 +62,49 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
 	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });
 
-	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
-	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
-	connect(ui.actionOptions, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
-	connect(ui.actionPreferences, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
+	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
+	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
+	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
+	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
   
   //connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
   
-	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
+	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() { 
+		auto palette = new TerrainPalette(this);
+		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	});
+	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
+		auto palette = new DoodadPalette(this); 
+		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(this, &HiveWE::palette_changed, palette, &Palette::disableShortcuts);
+		connect(palette, &Palette::finished, [&]() {
+			remove_custom_tab();
+			disconnect(this, &HiveWE::palette_changed, palette, &Palette::disableShortcuts);
+		});
+	});
+	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
 		});
 	});
-	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { 
-		auto palette = new TerrainPalette(this);
-		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
-	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { 
-		auto palette = new DoodadPalette(this); 
-		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
 
 
 	// Temporary Temporary
-	QTimer::singleShot(5, [this]() {
-		auto palette = new DoodadPalette(this);
-		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
+	//QTimer::singleShot(5, [this]() {
+	//	auto palette = new DoodadPalette(this);
+	//	connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+	//	connect(this, &HiveWE::palette_changed, palette, &DoodadPalette::disableShortcuts);
+	//	connect(palette, &DoodadPalette::finished, [&]() {
+	//		remove_custom_tab();
+	//		disconnect(this, &HiveWE::palette_changed, palette, &DoodadPalette::disableShortcuts);
+	//	});
 
-	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
-	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); });
+	//});
+
+	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
+	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
 }
 
 
@@ -206,6 +215,11 @@ void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {
 	if (current_custom_tab == tab) {
 		return;
 	}
+
+	if (current_custom_tab != nullptr) {
+		emit palette_changed(tab);
+	}
+
 	remove_custom_tab();
 	current_custom_tab = tab;
 	ui.ribbon->addTab(tab, name);
@@ -216,6 +230,7 @@ void HiveWE::remove_custom_tab() {
 	for (int i = 0; i < ui.ribbon->count(); i++) {
 		if (ui.ribbon->widget(i) == current_custom_tab) {
 			ui.ribbon->removeTab(i);
+			current_custom_tab = nullptr;
 			return;
 		}
 	}

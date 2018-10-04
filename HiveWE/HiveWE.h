@@ -10,11 +10,9 @@ public:
 	void load();
 	void save_as();
 
-
 private:
 	Ui::HiveWEClass ui;
 	QRibbonTab* current_custom_tab = nullptr;
-
 
 	void closeEvent(QCloseEvent* event) override;
 
@@ -27,6 +25,7 @@ private:
 	void remove_custom_tab();
 signals:
 	void tileset_changed();
+	void palette_changed(QRibbonTab* tab);
 };
 
 extern Map map;

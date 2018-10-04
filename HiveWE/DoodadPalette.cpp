@@ -1,8 +1,7 @@
 #include "stdafx.h"
 
-DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
+DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
-
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
@@ -30,24 +29,25 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
-
-	connect(new QShortcut(Qt::Key_Space, parent), &QShortcut::activated, selection_mode, &QToolButton::click);
+	
+	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	QRibbonSection* placement_section = new QRibbonSection;
 	placement_section->setText("Placement");
-	
+
 	QRibbonButton* random_rotation = new QRibbonButton;
 	random_rotation->setText("Random\nRotation");
 	random_rotation->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
 	random_rotation->setCheckable(true);
+	random_rotation->setChecked(true);
 	placement_section->addWidget(random_rotation);
 
 	QRibbonButton* random_scale = new QRibbonButton;
 	random_scale->setText("Random\nScale");
 	random_scale->setIcon(QIcon("Data/Icons/Ribbon/scale32x32.png"));
 	random_scale->setCheckable(true);
+	random_scale->setChecked(true);
 	placement_section->addWidget(random_scale);
-
 
 	QRibbonSection* variation_section = new QRibbonSection;
 	variation_section->setText("Variations");
@@ -97,6 +97,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : QDialog(parent) {
 	ribbon_tab->addSection(variation_section);
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
+	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) { brush.random_rotation = checked; });
+	connect(random_scale, &QRibbonButton::toggled, [&](bool checked) { brush.random_scale = checked; });
 	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) { brush.random_variation = checked; });
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
@@ -111,10 +113,17 @@ DoodadPalette::~DoodadPalette() {
 }
 
 bool DoodadPalette::event(QEvent *e) {
-	if (e->type() == QEvent::WindowActivate) {
+	if (e->type() == QEvent::Close) {
+		// Remove shortcut from parent
+		selection_mode->disconnectShortcuts();
+		ribbon_tab->setParent(nullptr);
+		delete ribbon_tab;
+	} else if (e->type() == QEvent::WindowActivate) {
+		selection_mode->enableShortcuts();
 		map.brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
 	}
+
 	return QWidget::event(e);
 }
 
@@ -176,5 +185,11 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 				brush.erase_variation(i);
 			}
 		});
+	}
+}
+
+void DoodadPalette::disableShortcuts(QRibbonTab* tab) {
+	if (tab != ribbon_tab) {
+		selection_mode->disableShortcuts();
 	}
 }

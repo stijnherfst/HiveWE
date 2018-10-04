@@ -324,7 +324,7 @@ void Terrain::save() const {
 	SFileFinishFile(handle);
 }
 
-void Terrain::render() {
+void Terrain::render() const {
 	// Render tiles
 	auto begin = std::chrono::high_resolution_clock::now();
 
@@ -363,10 +363,10 @@ void Terrain::render() {
 	begin = std::chrono::high_resolution_clock::now();
 
 	for (auto&& i : cliffs) {
-		Corner& bottom_left = corners[i.x][i.y];
-		Corner& bottom_right = corners[i.x + 1][i.y];
-		Corner& top_left = corners[i.x][i.y + 1];
-		Corner& top_right = corners[i.x + 1][i.y + 1];
+		const Corner& bottom_left = corners[i.x][i.y];
+		const Corner& bottom_right = corners[i.x + 1][i.y];
+		const Corner& top_left = corners[i.x][i.y + 1];
+		const Corner& top_right = corners[i.x + 1][i.y + 1];
 
 		const float min = std::min({bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
 									top_left.layer_height - 2,		top_right.layer_height - 2 });
@@ -423,8 +423,11 @@ void Terrain::render() {
 	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 }
 
-void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old) {
+void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {
 	tileset_ids = new_tileset_ids;
+
+	// Blight
+	new_to_old.push_back(new_tileset_ids.size());
 
 	// Map old ids to the new ids
 	for (auto&& i : corners) {
@@ -441,8 +444,9 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, co
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
+	blight_texture = ground_textures.size();
+	ground_texture_to_id.emplace("blight", blight_texture);
 	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
-	blight_texture = ground_textures.size() - 1;
 
 	cliff_to_ground_texture.clear();
 	for (auto&& cliff_id : cliffset_ids) {
@@ -474,7 +478,7 @@ float Terrain::corner_water_height(const int x, const int y) const {
 }
 
 /// The texture of the tilepoint which is influenced by its surroundings. nearby cliff > blight > regular texture
-int Terrain::real_tile_texture(const int x, const int y) {
+int Terrain::real_tile_texture(const int x, const int y) const {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
 			if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {
@@ -497,7 +501,7 @@ int Terrain::real_tile_texture(const int x, const int y) {
 }
 
 /// The subtexture of a groundtexture to use.
-int Terrain::get_tile_variation(const int ground_texture, const int variation) {
+int Terrain::get_tile_variation(const int ground_texture, const int variation) const {
 	if (ground_textures[ground_texture]->extended) {
 		if (variation <= 15) {
 			return 16 + variation;
@@ -516,14 +520,14 @@ int Terrain::get_tile_variation(const int ground_texture, const int variation) {
 }
 
 /// The 4 ground textures of the tilepoint. First 5 bits are which texture array to use and the next 5 bits are which subtexture to use
-glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) {
+glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	const int bottom_left = real_tile_texture(x, y);
 	const int bottom_right = real_tile_texture(x + 1, y);
 	const int top_left = real_tile_texture(x, y + 1);
 	const int top_right = real_tile_texture(x + 1, y + 1);
 
 	std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
-	glm::u16vec4 tiles(16); // 16 means black transparent texture
+	glm::u16vec4 tiles(17); // 17 means black transparent texture
 	int component = 1;
 
 	tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 5);
