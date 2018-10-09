@@ -207,15 +207,15 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 						break;
 					case TriggerParameter::Type::string:
 						if (j.value.size() == 4) {
-							if (map.units.units_slk.header_to_row.find(j.value) != map.units.units_slk.header_to_row.end()) {
-								result += map.units.units_slk.data("Name", j.value);
-							} else if (map.units.items_slk.header_to_row.find(j.value) != map.units.items_slk.header_to_row.end()) {
-								result += map.units.items_slk.data("Name", j.value);
+							if (units_slk.row_header_exists(j.value)) {
+								result += units_slk.data("Name", j.value);
+							} else if (items_slk.row_header_exists(j.value)) {
+								result += items_slk.data("Name", j.value);
 							} else {
 								result += j.value;
 							}
 						} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
-							result += map.trigger_strings.strings[j.value];
+							result += map.trigger_strings.string(j.value);
 						} else {
 							result += j.value;
 						}
@@ -224,7 +224,7 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 						if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
 							std::string type = j.value.substr(8, 4);
 							std::string instance = j.value.substr(13);
-							result += map.units.units_slk.data("Name", type);
+							result += units_slk.data("Name", type);
 							result += " " + instance;
 						} else {
 							std::string type = map.triggers.variables[j.value].type;

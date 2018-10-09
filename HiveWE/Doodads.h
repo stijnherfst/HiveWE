@@ -58,8 +58,6 @@ public:
 	slk::SLK destructibles_slk;
 	slk::SLK destructibles_meta_slk;
 
-	//QuadTree<Doodad> tree;
-
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void save() const;
 	void load_destructible_modifications(BinaryReader& reader);

@@ -188,8 +188,9 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 	}
 }
 
-void DoodadPalette::disableShortcuts(QRibbonTab* tab) {
+void DoodadPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {
+		brush.clear_selection();
 		selection_mode->disableShortcuts();
 	}
 }

@@ -238,7 +238,7 @@ void TerrainBrush::apply() {
 					case cliff_operation::raise2:
 						corners[i][j].layer_height = layer_height;
 						if (corners[i][j].water) {
-							if (map.enforce_water_height_limits && map.terrain.corner_water_height(i, j) < map.terrain.corner_height(i, j)) {
+							if (enforce_water_height_limits && map.terrain.corner_water_height(i, j) < map.terrain.corner_height(i, j)) {
 								corners[i][j].water = false;
 								map.terrain.water_exists_data[j * width + i] = false;
 							}

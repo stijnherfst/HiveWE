@@ -6,6 +6,10 @@ ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
 WindowHandler window_handler;
 
+slk::SLK units_slk;
+slk::SLK units_meta_slk;
+slk::SLK items_slk;
+
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
 	while (!fs::exists(directory / "Data")) {
@@ -27,7 +31,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
-
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map.render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map.render_doodads = checked; });
@@ -77,10 +80,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new DoodadPalette(this); 
 		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(this, &HiveWE::palette_changed, palette, &Palette::disableShortcuts);
+		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		connect(palette, &Palette::finished, [&]() {
 			remove_custom_tab();
-			disconnect(this, &HiveWE::palette_changed, palette, &Palette::disableShortcuts);
+			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		});
 	});
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {

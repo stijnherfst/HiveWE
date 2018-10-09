@@ -13,5 +13,5 @@ public:
 signals:
 	void ribbon_tab_requested(QRibbonTab* tab, QString name);
 
-	virtual void disableShortcuts(QRibbonTab* tab) = 0;
+	virtual void deactivate(QRibbonTab* tab) = 0;
 };

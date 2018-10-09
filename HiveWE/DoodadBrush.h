@@ -29,6 +29,8 @@ public:
 
 	std::vector<Doodad*> selections;
 
+	void clear_selection() override;
+
 	void apply() override;
 	void render_brush() const override;
 	void render_selection() const override;

@@ -82,7 +82,7 @@ void Doodads::save() const {
 		writer.write<uint32_t>(i.variation);
 		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
 		writer.write<float>(i.angle);
-		writer.write<glm::vec3>(i.scale * 128.f);
+		writer.write<glm::vec3>(i.scale);
 
 		writer.write<uint8_t>(static_cast<int>(i.state));
 		writer.write<uint8_t>(i.life);
@@ -227,7 +227,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string replaceable_id;
 	fs::path texture_name;
 
-	if (doodads_slk.header_to_row.find(id) != doodads_slk.header_to_row.end()) {
+	if (doodads_slk.row_header_exists(id)) {
 		// Is doodad
 		mesh_path = doodads_slk.data("file", id);
 		variations = doodads_slk.data("numVar", id);

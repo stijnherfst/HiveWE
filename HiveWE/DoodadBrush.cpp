@@ -57,6 +57,10 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 	}
 }
 
+void DoodadBrush::clear_selection() {
+	selections.clear();
+}
+
 void DoodadBrush::apply() {
 	if (id == "") {
 		return;
@@ -121,6 +125,7 @@ void DoodadBrush::render_selection() const {
 	for (auto&& i : selections) {
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(0.5f, 0.5f, 0.f));
+
 		model = camera->projection_view * model;
 		gl->glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
 

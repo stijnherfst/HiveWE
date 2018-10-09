@@ -8,6 +8,31 @@ void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::absolute(path);
 
+	// Load all SLKs
+	units_slk = slk::SLK("Units/UnitData.slk");
+	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
+
+	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
+	units_slk.merge(slk::SLK("Units/unitUI.slk"));
+	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
+	units_slk.merge(slk::SLK("Units/UnitAbilities.slk"));
+
+	units_slk.merge(ini::INI("Units/HumanUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"));
+
+	units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/OrcUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
+
+	items_slk = slk::SLK("Units/ItemData.slk");
+	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
+	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
+
 	// Trigger strings
 	if (hierarchy.map.file_exists("war3map.wts")) {
 		if (auto t = hierarchy.map.file_open("war3map.wts").read2()) {
@@ -80,20 +105,21 @@ void Map::load(const fs::path& path) {
 
 	doodads.create();
 
-	// Units
+	// Units/Items
+	if (hierarchy.map.file_exists("war3map.w3u")) {
+		BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
+		units.load_unit_modifications(war3map_w3u);
+	}
+	if (hierarchy.map.file_exists("war3map.w3t")) {
+		BinaryReader war3map_w3t = BinaryReader(hierarchy.map.file_open("war3map.w3t").read());
+		units.load_item_modifications(war3map_w3t);
+	}
+
 	if (hierarchy.map.file_exists("war3mapUnits.doo")) {
 		BinaryReader war3mapUnits_doo(hierarchy.map.file_open("war3mapUnits.doo").read());
 		units_loaded = units.load(war3mapUnits_doo, terrain);
 
 		if (units_loaded) {
-			if (hierarchy.map.file_exists("war3map.w3u")) {
-				BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
-				units.load_unit_modifications(war3map_w3u);
-			}
-			if (hierarchy.map.file_exists("war3map.w3t")) {
-				BinaryReader war3map_w3t = BinaryReader(hierarchy.map.file_open("war3map.w3t").read());
-				units.load_item_modifications(war3map_w3t);
-			}
 			units.create();
 		}
 	}
@@ -106,7 +132,7 @@ void Map::load(const fs::path& path) {
 	loaded = true;
 }
 
-bool Map::save(const fs::path& path) const {
+bool Map::save(const fs::path& path) {
 	std::error_code t;
 
 	const fs::path complete_path = fs::absolute(path, t);
@@ -135,8 +161,6 @@ bool Map::save(const fs::path& path) const {
 		imports.save_dir_file();
 
 		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
-
-		std::swap(new_map, hierarchy.map);
 	} else {
 		pathing_map.save();
 		terrain.save();
@@ -150,6 +174,7 @@ bool Map::save(const fs::path& path) const {
 
 		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
 	}
+
 	return true;
 }
 

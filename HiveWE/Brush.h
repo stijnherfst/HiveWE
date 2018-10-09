@@ -34,6 +34,8 @@ public:
 	virtual void mouse_press_event(QMouseEvent* event);
 	virtual void mouse_release_event(QMouseEvent* event);
 
+	virtual void clear_selection() {};
+
 	void render() const;
 	virtual void render_selector() const;
 	virtual void render_selection() const {};

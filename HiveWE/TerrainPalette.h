@@ -22,8 +22,6 @@ private:
 	TerrainBrush brush;
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 
-	bool enforce_water_height_limits = true;
-
 	signals:
 		void ribbon_tab_requested(QRibbonTab* tab, QString name);
 };

@@ -238,6 +238,7 @@ namespace slk {
 		}
 	}
 
+	/// Copies the row with header row_header to a new line with the new header as new_row_header
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
 			std::cout << "Unknown row header: " << row_header << "\n";

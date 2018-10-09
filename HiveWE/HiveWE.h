@@ -33,3 +33,8 @@ extern ini::INI world_edit_strings;
 extern ini::INI world_edit_game_strings;
 extern ini::INI world_edit_data;
 extern WindowHandler window_handler;
+
+extern slk::SLK units_slk;
+extern slk::SLK units_meta_slk;
+
+extern slk::SLK items_slk;

@@ -84,6 +84,8 @@ void Terrain::create() {
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
 	gl->glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
 	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	gl->glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
 	gl->glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);

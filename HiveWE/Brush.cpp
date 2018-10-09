@@ -85,6 +85,7 @@ void Brush::decrease_size(const int new_size) {
 void Brush::switch_mode() {
 	mode = (mode == Mode::placement) ? Mode::selection : Mode::placement;
 
+	clear_selection();
 	selection_started = false;
 }
 
@@ -123,7 +124,7 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
 			apply();
-			apply_end();
+//			apply_end();
 		}
 	}
 }
@@ -131,6 +132,10 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 void Brush::mouse_release_event(QMouseEvent* event) {
 	if (mode == Mode::selection) {
 		selection_started = false;
+	} else if (mode == Mode::placement) {
+		if (event->button() == Qt::LeftButton) {
+			apply_end();
+		}
 	}
 }
 

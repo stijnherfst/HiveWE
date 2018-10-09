@@ -25,5 +25,5 @@ private:
 	QRibbonContainer* variations = new QRibbonContainer;
 
 public slots:
-	void disableShortcuts(QRibbonTab* tab) override;
+	void deactivate(QRibbonTab* tab) override;
 };
