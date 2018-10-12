@@ -135,6 +135,7 @@ void Map::load(const fs::path& path) {
 bool Map::save(const fs::path& path) {
 	std::error_code t;
 
+	// If the map is saved in another location we need to copy the map and switch our working W3X to that one
 	const fs::path complete_path = fs::absolute(path, t);
 	if (complete_path != filesystem_path) {
 		try {
@@ -147,34 +148,24 @@ bool Map::save(const fs::path& path) {
 		}
 
 		mpq::MPQ new_map(complete_path);
-
 		std::swap(new_map, hierarchy.map);
-
-		pathing_map.save();
-		terrain.save();
-		doodads.save();
-		units.save();
-		info.save();
-		trigger_strings.save();
-
-		imports.save();
-		imports.save_dir_file();
-
-		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
-	} else {
-		pathing_map.save();
-		terrain.save();
-		doodads.save();
-		units.save();
-		info.save();
-		trigger_strings.save();
-
-		imports.save();
-		imports.save_dir_file();
-
-		SFileCompactArchive(hierarchy.map.handle, nullptr, false);
 	}
 
+	pathing_map.save();
+	terrain.save();
+	doodads.save();
+	units.save();
+	info.save();
+	trigger_strings.save();
+
+	imports.save();
+	imports.save_dir_file();
+
+	bool result = SFileCompactArchive(hierarchy.map.handle, nullptr, false);
+	if (!result) {
+		std::cout << "Compacting error code: " << GetLastError() << "\n";
+		QMessageBox::information(nullptr, "Compacting archive failed", "Compacting the map archive failed. This is not a crucial error, but the size of your map file will be slightly bigger");
+	}
 	return true;
 }
 

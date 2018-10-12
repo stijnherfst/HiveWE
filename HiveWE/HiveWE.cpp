@@ -125,6 +125,8 @@ void HiveWE::load() {
 			Map new_map;
 			std::swap(new_map, map);
 		}
+		//QMessageBox::information(nullptr, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+
 		map.load(file_name.toStdString());
 	}
 }
