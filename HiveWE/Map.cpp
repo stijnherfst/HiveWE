@@ -35,7 +35,7 @@ void Map::load(const fs::path& path) {
 
 	// Trigger strings
 	if (hierarchy.map.file_exists("war3map.wts")) {
-		if (auto t = hierarchy.map.file_open("war3map.wts").read2()) {
+		if (auto t = hierarchy.map.file_open("war3map.wts").read2(); t) {
 			BinaryReader war3map_wts(t.value());
 			trigger_strings.load(war3map_wts);
 		}
@@ -87,7 +87,7 @@ void Map::load(const fs::path& path) {
 		imports.load_dir_file(war3map_dir);
 	}
 
-	imports.poplate_uncategorized();
+	imports.populate_uncategorized();
 
 	// Doodads
 	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());

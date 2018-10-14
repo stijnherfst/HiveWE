@@ -133,7 +133,7 @@ void Imports::save_dir_file() const {
 	SFileFinishFile(handle);
 }
 
-void Imports::poplate_uncategorized() {
+void Imports::populate_uncategorized() {
 	for (auto&& i : uncategorized) {
 		imports.push_back(i);
 	}

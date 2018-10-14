@@ -205,21 +205,29 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 					case TriggerParameter::Type::preset:
 						result += map.triggers.trigger_data.data("TriggerParams", j.value, 3);
 						break;
-					case TriggerParameter::Type::string:
+					case TriggerParameter::Type::string: {
+						std::string pre_result;
 						if (j.value.size() == 4) {
 							if (units_slk.row_header_exists(j.value)) {
-								result += units_slk.data("Name", j.value);
+								pre_result = units_slk.data("Name", j.value);
 							} else if (items_slk.row_header_exists(j.value)) {
-								result += items_slk.data("Name", j.value);
+								pre_result = items_slk.data("Name", j.value);
 							} else {
-								result += j.value;
+								pre_result = j.value;
 							}
+						}
+
+						if (pre_result.size() > 8 && pre_result.substr(0, 7) == "TRIGSTR") {
+							result += map.trigger_strings.string(pre_result);
+						} else if (!pre_result.empty()) {
+							result += pre_result;
 						} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
 							result += map.trigger_strings.string(j.value);
 						} else {
 							result += j.value;
 						}
 						break;
+					}
 					case TriggerParameter::Type::variable: {
 						if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
 							std::string type = j.value.substr(8, 4);
