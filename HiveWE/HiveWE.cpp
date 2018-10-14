@@ -121,13 +121,23 @@ void HiveWE::load() {
 	if (file_name != "") {
 		settings.setValue("openDirectory", file_name);
 
+		
+		// Try opening the archive
+		HANDLE handle;
+		bool success = SFileOpenArchive(fs::path(file_name.toStdString()).c_str(), 0, 0, &handle);
+		if (!success) {
+			QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+			return;
+		}
+		SFileCloseArchive(handle);
+		
+		
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
 			std::swap(new_map, map);
 		}
-		//QMessageBox::information(nullptr, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
-
 		map.load(file_name.toStdString());
+		
 	}
 }
 
