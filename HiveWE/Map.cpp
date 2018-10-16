@@ -8,7 +8,7 @@ void Map::load(const fs::path& path) {
 	hierarchy.map = mpq::MPQ(path);
 	filesystem_path = fs::absolute(path);
 
-	// Load all SLKs
+	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
 	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
 
@@ -29,9 +29,24 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
 
+	// Items
 	items_slk = slk::SLK("Units/ItemData.slk");
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
+
+	// Doodads
+	doodads_slk = slk::SLK("Doodads/Doodads.slk");
+	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
+	
+	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
+	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
+
+	// Destructibles
+	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
+
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 	// Trigger strings
 	if (hierarchy.map.file_exists("war3map.wts")) {

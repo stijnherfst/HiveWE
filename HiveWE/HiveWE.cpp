@@ -9,6 +9,10 @@ WindowHandler window_handler;
 slk::SLK units_slk;
 slk::SLK units_meta_slk;
 slk::SLK items_slk;
+slk::SLK doodads_slk;
+slk::SLK doodads_meta_slk;
+slk::SLK destructibles_slk;
+slk::SLK destructibles_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
@@ -60,7 +64,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
-	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {  });
+	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
 
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
 	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });

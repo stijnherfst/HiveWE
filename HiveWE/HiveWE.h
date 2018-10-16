@@ -38,3 +38,8 @@ extern slk::SLK units_slk;
 extern slk::SLK units_meta_slk;
 
 extern slk::SLK items_slk;
+
+extern slk::SLK doodads_slk;
+extern slk::SLK doodads_meta_slk;
+extern slk::SLK destructibles_slk;
+extern slk::SLK destructibles_meta_slk;

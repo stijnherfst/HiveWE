@@ -134,7 +134,7 @@ void DoodadPalette::update_list() {
 	std::string selected_category = ui.type->currentData().toString().toStdString();
 
 	bool is_doodad = world_edit_data.key_exists("DoodadCategories", selected_category);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	for (int i = 1; i < slk.rows; i++) {
 		// If the doodad belongs to this tileset
@@ -151,7 +151,7 @@ void DoodadPalette::update_list() {
 
 		std::string text = slk.data("Name", i);
 		if (!is_doodad) {
-			text += " " + map.doodads.destructibles_slk.data("EditorSuffix", i);
+			text += " " + destructibles_slk.data("EditorSuffix", i);
 		}
 
 		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
@@ -166,8 +166,8 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 	brush.set_doodad(id);
 	selection_mode->setChecked(false);
 
-	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	variations->clear();
 

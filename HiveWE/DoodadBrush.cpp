@@ -75,7 +75,7 @@ void DoodadBrush::apply() {
 	}
 
 	Doodad& doodad = map.doodads.add_doodad(id, variation, position);
-	doodad.scale = { scale, scale, scale };
+	doodad.scale = glm::vec3(scale);
 	doodad.angle = rotation;
 	doodad.update();
 
@@ -160,8 +160,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	if (random_variation) {
 		set_random_variation();
 	}
-	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 
 	min_scale = std::stof(slk.data("minScale", id));
@@ -172,7 +172,6 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 
 	rotation = glm::radians(std::max(0.f, std::stof(slk.data("fixedRot", id))));
-	//rotation = 0.f;
 
 	std::string pathing_texture_path = slk.data("pathTex", id);
 	if (pathing_texture_path.empty()) {

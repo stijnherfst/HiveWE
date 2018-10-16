@@ -3,8 +3,14 @@
 int Doodad::auto_increment;
 
 void Doodad::update() {
+	glm::vec3 base_scale = glm::vec3(1.f);
+
+	if (doodads_slk.row_header_exists(id)) {
+		base_scale = glm::vec3(std::stof(doodads_slk.data("defScale", id)));
+	}
+
 	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 }
 
@@ -57,15 +63,6 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = glm::ivec3(reader.read<glm::ivec2>(), 0);
 	}
-
-	doodads_slk = slk::SLK("Doodads/Doodads.slk");
-	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
-	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
-	destructibles_slk = slk::SLK("Units/DestructableData.slk");
-	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
-	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
 }

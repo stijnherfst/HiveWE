@@ -53,10 +53,6 @@ class Doodads {
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 public:
-	slk::SLK doodads_slk;
-	slk::SLK doodads_meta_slk;
-	slk::SLK destructibles_slk;
-	slk::SLK destructibles_meta_slk;
 
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void save() const;
