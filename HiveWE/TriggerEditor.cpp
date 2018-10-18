@@ -237,7 +237,7 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 						} else {
 							std::string type = map.triggers.variables[j.value].type;
 							if (type == "unit") {
-								std::cout << "test\n";
+								//std::cout << "test\n";
 							} else {
 								result += j.value;
 							}

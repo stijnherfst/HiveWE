@@ -148,7 +148,7 @@ namespace mdx {
 			geoset.vertices = reader.read_vector<glm::vec3>(vertex_count);
 			reader.advance(4);
 			const uint32_t normal_count = reader.read<uint32_t>();
-			geoset.normals = reader.read_vector<float>(normal_count * 3);
+			geoset.normals = reader.read_vector<glm::vec3>(normal_count);
 			reader.advance(4);
 			const uint32_t face_type_groups_count = reader.read<uint32_t>();
 			geoset.face_type_groups = reader.read_vector<uint32_t>(face_type_groups_count);

@@ -2,10 +2,8 @@
 
 layout (location = 2) uniform bool show_pathing_map_static;
 layout (location = 3) uniform bool show_lighting;
-//layout (location = 3) uniform bool show_pathing_map_dynamic;
 
 layout (binding = 3) uniform usampler2D pathing_map_static;
-//layout (binding = 3) uniform usampler2D pathing_map_dynamic;
 
 layout (binding = 4) uniform sampler2DArray sample0;
 layout (binding = 5) uniform sampler2DArray sample1;
@@ -88,7 +86,7 @@ void main() {
 		vec3 light_direction = vec3(-0.3, -0.3, 0.25);
 		light_direction = normalize(light_direction);
 
-		color *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
+		color.rgb *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
 	}
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
@@ -96,9 +94,4 @@ void main() {
 		vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
 		color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
 	}
-
-	// byte = texelFetch(pathing_map_dynamic, ivec2(pathing_map_uv), 0);
-	// if (show_pathing_map_dynamic) {
-	// 	color = color + vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 255) * 0.25;
-	// }
 }

@@ -191,7 +191,7 @@ namespace mdx {
 
 	struct Geoset {
 		std::vector<glm::vec3> vertices;
-		std::vector<float> normals;
+		std::vector<glm::vec3> normals;
 		std::vector<uint32_t> face_type_groups;
 		std::vector<uint32_t> face_groups;
 		std::vector<uint16_t> faces;

@@ -25,7 +25,6 @@ void main() {
 	float hR = texelFetch(height_texture, height_pos + off.xz, 0).r;
 	float hD = texelFetch(height_texture, height_pos - off.zy, 0).r;
 	float hU = texelFetch(height_texture, height_pos + off.zy, 0).r;
-
 	normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
 	UV = vec2(vPosition.x, 1 - vPosition.y);
