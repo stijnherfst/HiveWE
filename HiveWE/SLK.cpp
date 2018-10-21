@@ -186,7 +186,7 @@ namespace slk {
 		return header_to_row.find(row_header) != header_to_row.end();
 	}
 
-	/// Merges the data of the files. Any unknown rows and columns are appended
+	/// Merges the data of the files. Any unknown columns are appended
 	void SLK::merge(const slk::SLK& slk) {
 		for (size_t i = 1; i < slk.columns; i++) {
 			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
@@ -251,6 +251,7 @@ namespace slk {
 		table_data[table_data.size() - 1][0] = new_row_header;
 		shadow_data.emplace_back(std::vector<std::string>(columns));
 		header_to_row.emplace(new_row_header, table_data.size() - 1);
+		rows++;
 	}
 
 	void SLK::add_column(const std::string& header) {

@@ -28,7 +28,7 @@ namespace slk {
 			const size_t column = header_to_column.at(column_header);
 
 			if (row >= rows) {
-				std::cout << "Reading invalid row: " << row + 1 << "/" << rows;
+				std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
 				return T();
 			}
 
