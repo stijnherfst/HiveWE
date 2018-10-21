@@ -1,27 +1,28 @@
 #version 450 core
 
-layout (location = 2) uniform bool show_pathing_map_static;
+layout (location = 2) uniform bool show_pathing_map;
 layout (location = 3) uniform bool show_lighting;
 
-layout (binding = 3) uniform usampler2D pathing_map_static;
+layout (binding = 3) uniform sampler2DArray sample0;
+layout (binding = 4) uniform sampler2DArray sample1;
+layout (binding = 5) uniform sampler2DArray sample2;
+layout (binding = 6) uniform sampler2DArray sample3;
+layout (binding = 7) uniform sampler2DArray sample4;
+layout (binding = 8) uniform sampler2DArray sample5;
+layout (binding = 9) uniform sampler2DArray sample6;
+layout (binding = 10) uniform sampler2DArray sample7;
+layout (binding = 11) uniform sampler2DArray sample8;
+layout (binding = 12) uniform sampler2DArray sample9;
+layout (binding = 13) uniform sampler2DArray sample10;
+layout (binding = 14) uniform sampler2DArray sample11;
+layout (binding = 15) uniform sampler2DArray sample12;
+layout (binding = 16) uniform sampler2DArray sample13;
+layout (binding = 17) uniform sampler2DArray sample14;
+layout (binding = 18) uniform sampler2DArray sample15;
+layout (binding = 19) uniform sampler2DArray sample16;
 
-layout (binding = 4) uniform sampler2DArray sample0;
-layout (binding = 5) uniform sampler2DArray sample1;
-layout (binding = 6) uniform sampler2DArray sample2;
-layout (binding = 7) uniform sampler2DArray sample3;
-layout (binding = 8) uniform sampler2DArray sample4;
-layout (binding = 9) uniform sampler2DArray sample5;
-layout (binding = 10) uniform sampler2DArray sample6;
-layout (binding = 11) uniform sampler2DArray sample7;
-layout (binding = 12) uniform sampler2DArray sample8;
-layout (binding = 13) uniform sampler2DArray sample9;
-layout (binding = 14) uniform sampler2DArray sample10;
-layout (binding = 15) uniform sampler2DArray sample11;
-layout (binding = 16) uniform sampler2DArray sample12;
-layout (binding = 17) uniform sampler2DArray sample13;
-layout (binding = 18) uniform sampler2DArray sample14;
-layout (binding = 19) uniform sampler2DArray sample15;
-layout (binding = 20) uniform sampler2DArray sample16;
+layout (binding = 20) uniform usampler2D pathing_map_static;
+layout (binding = 21) uniform usampler2D pathing_map_dynamic;
 
 layout (location = 0) in vec2 UV;
 layout (location = 1) in flat uvec4 texture_indices;
@@ -90,7 +91,7 @@ void main() {
 	}
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
-	if (show_pathing_map_static) {
+	if (show_pathing_map) {
 		vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
 		color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
 	}

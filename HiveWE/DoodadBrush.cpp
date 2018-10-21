@@ -77,6 +77,7 @@ void DoodadBrush::apply() {
 	Doodad& doodad = map.doodads.add_doodad(id, variation, position);
 	doodad.scale = glm::vec3(scale);
 	doodad.angle = rotation;
+	doodad.state = state;
 	doodad.update();
 
 	std::random_device rd;
