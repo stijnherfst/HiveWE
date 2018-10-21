@@ -26,10 +26,10 @@ layout (binding = 20) uniform sampler2DArray sample16;
 layout (location = 0) in vec2 UV;
 layout (location = 1) in flat uvec4 texture_indices;
 layout (location = 2) in vec2 pathing_map_uv;
+layout (location = 3) in vec3 normal;
 
-in vec3 normal;
-
-out vec4 color;
+layout (location = 0) out vec4 color;
+layout (location = 1) out vec4 position;
 
 vec4 get_fragment(uint id, vec3 uv) {
 	vec2 dx = dFdx(uv.xy);
