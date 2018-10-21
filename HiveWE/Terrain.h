@@ -42,7 +42,6 @@ public:
 
 	int width;
 	int height;
-
 	glm::vec2 offset;
 
 	std::vector<std::vector<Corner>> corners;
