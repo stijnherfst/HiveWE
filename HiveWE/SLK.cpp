@@ -144,43 +144,43 @@ namespace slk {
 		output << "E";
 	}
 
-	std::string SLK::data(const std::string& column_header, const size_t row) const {
-		if (header_to_column.find(column_header) == header_to_column.end()) {
-			return "";
-		}
+	//std::string SLK::data(const std::string& column_header, const size_t row) const {
+	//	if (header_to_column.find(column_header) == header_to_column.end()) {
+	//		return "";
+	//	}
 
-		const size_t column = header_to_column.at(column_header);
+	//	const size_t column = header_to_column.at(column_header);
 
-		if (row >= rows) {
-			std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
-			return "";
-		}
+	//	if (row >= rows) {
+	//		std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
+	//		return "";
+	//	}
 
-		if (!shadow_data[row][column].empty()) {
-			return shadow_data[row][column];
-		}
+	//	if (!shadow_data[row][column].empty()) {
+	//		return shadow_data[row][column];
+	//	}
 
-		return table_data[row][column];
-	}
+	//	return table_data[row][column];
+	//}
 
-	std::string SLK::data(const std::string& column_header, const std::string& row_header) const {
-		if (header_to_column.find(column_header) == header_to_column.end()) {
-			return "";
-		}
+	//std::string SLK::data(const std::string& column_header, const std::string& row_header) const {
+	//	if (header_to_column.find(column_header) == header_to_column.end()) {
+	//		return "";
+	//	}
 
-		if (header_to_row.find(row_header) == header_to_row.end()) {
-			return "";
-		}
+	//	if (header_to_row.find(row_header) == header_to_row.end()) {
+	//		return "";
+	//	}
 
-		const size_t column = header_to_column.at(column_header);
-		const size_t row = header_to_row.at(row_header);
+	//	const size_t column = header_to_column.at(column_header);
+	//	const size_t row = header_to_row.at(row_header);
 
-		if (!shadow_data[row][column].empty()) {
-			return shadow_data[row][column];
-		}
+	//	if (!shadow_data[row][column].empty()) {
+	//		return shadow_data[row][column];
+	//	}
 
-		return table_data[row][column];
-	}
+	//	return table_data[row][column];
+	//}
 
 	bool SLK::row_header_exists(const std::string& row_header) const {
 		return header_to_row.find(row_header) != header_to_row.end();

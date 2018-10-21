@@ -85,7 +85,6 @@ void DoodadBrush::apply() {
 	if (random_rotation && free_rotation) {
 		std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
 		rotation = dist(gen);
-		rotation = 0.f;
 	}
 
 	if (random_variation) {
@@ -164,17 +163,17 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 
-	min_scale = std::stof(slk.data("minScale", id));
-	max_scale = std::stof(slk.data("maxScale", id));
+	min_scale = slk.data<float>("minScale", id);
+	max_scale = slk.data<float>("maxScale", id);
 
 	if (is_doodad) {
-		scale = std::stof(slk.data("defScale", id));
+		scale = slk.data<float>("defScale", id);
 	}
 
-	rotation = glm::radians(std::max(0.f, std::stof(slk.data("fixedRot", id))));
+	rotation = glm::radians(std::max(0.f, slk.data<float>("fixedRot", id)));
 
 	std::string pathing_texture_path = slk.data("pathTex", id);
-	if (pathing_texture_path.empty()) {
+	if (pathing_texture_path.empty() || !hierarchy.file_exists(pathing_texture_path)) {
 		free_placement = true;
 		free_rotation = true;
 	} else {
@@ -182,14 +181,14 @@ void DoodadBrush::set_doodad(const std::string& id) {
 			free_placement = false;
 			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
 			free_rotation = pathing_texture->width == pathing_texture->height;
-			free_rotation = free_rotation && std::stof(slk.data("fixedRot", id)) < 0.f;
+			free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
 		} else {
 			free_placement = true;
 		}
 	}
 
 	possible_variations.clear();
-	int variation_count = std::stoi(slk.data("numVar", id));
+	int variation_count = slk.data<int>("numVar", id);
 	for (int i = 0; i < variation_count; i++) {
 		possible_variations.insert(i);
 	}

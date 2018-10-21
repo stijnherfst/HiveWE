@@ -171,7 +171,7 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 
 	variations->clear();
 
-	int variation_count = std::stoi(slk.data("numVar", id));
+	int variation_count = slk.data<int>("numVar", id);
 	for (int i = 0; i < variation_count; i++) {
 		QRibbonButton* toggle = new QRibbonButton;
 		toggle->setCheckable(true);

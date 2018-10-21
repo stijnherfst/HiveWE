@@ -6,7 +6,7 @@ void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 
 	if (doodads_slk.row_header_exists(id)) {
-		base_scale = glm::vec3(std::stof(doodads_slk.data("defScale", id)));
+		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
 	}
 
 	matrix = glm::translate(glm::mat4(1.f), position);
@@ -160,7 +160,7 @@ void Doodads::create() {
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = std::stoi(doodads_slk.data("fixedRot", i.id)) / 360.f * 2.f * glm::pi<float>();
+		float rotation = doodads_slk.data<int>("fixedRot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
