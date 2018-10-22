@@ -157,6 +157,15 @@ void Doodads::create() {
 	for (auto&& i : doodads) {
 		i.update();
 		i.mesh = get_mesh(i.id, i.variation);
+
+		// Get pathing map
+		bool is_doodad = doodads_slk.row_header_exists(i.id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		std::string pathing_texture_path = slk.data("pathTex", i.id);
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			i.pathing = resource_manager.load<Texture>(pathing_texture_path);
+		}
 	}
 
 	for (auto&& i : special_doodads) {

@@ -55,7 +55,6 @@ public:
 	GLuint ground_height;
 	GLuint ground_corner_height;
 	GLuint ground_texture_data;
-	GLuint pathing_map_texture;
 
 	std::vector<float> ground_heights;
 	std::vector<float> ground_corner_heights;

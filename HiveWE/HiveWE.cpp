@@ -114,10 +114,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
 }
 
-
 void HiveWE::load() {
 	QSettings settings;
-
+	
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
 		"Warcraft III Scenario (*.w3x)");
@@ -140,8 +139,9 @@ void HiveWE::load() {
 			Map new_map;
 			std::swap(new_map, map);
 		}
+		puts("\n");
 		map.load(file_name.toStdString());
-		
+		puts("\n");
 	}
 }
 

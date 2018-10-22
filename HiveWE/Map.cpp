@@ -87,7 +87,7 @@ void Map::load(const fs::path& path) {
 
 	// Pathing Map
 	BinaryReader war3map_wpm(hierarchy.map.file_open("war3map.wpm").read());
-	success = pathing_map.load(war3map_wpm, terrain);
+	success = pathing_map.load(war3map_wpm);
 	if (!success) {
 		return;
 	}
@@ -119,6 +119,7 @@ void Map::load(const fs::path& path) {
 	}
 
 	doodads.create();
+	pathing_map.update_dynamic();
 
 	// Units/Items
 	if (hierarchy.map.file_exists("war3map.w3u")) {

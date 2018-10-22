@@ -7,6 +7,7 @@ namespace slk {
 
 		std::unordered_map<std::string, size_t> header_to_column;
 
+		constexpr static char shadow_table_empty_identifier[] = "dezecelisleeg"; // not a nice way to do this
 	public:
 		size_t rows = 0;
 		size_t columns = 0;
@@ -32,7 +33,7 @@ namespace slk {
 				return T();
 			}
 
-			if (!shadow_data[row][column].empty()) {
+			if (shadow_data[row][column] != shadow_table_empty_identifier) {
 				if constexpr (std::is_same<T, std::string>()) {
 					return shadow_data[row][column];
 				} else if constexpr (std::is_same<T, float>()) {

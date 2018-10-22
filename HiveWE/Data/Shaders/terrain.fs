@@ -90,9 +90,13 @@ void main() {
 		color.rgb *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
 	}
 
-	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
+	uint byte_static = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0).r;
+	uint byte_dynamic = texelFetch(pathing_map_dynamic, ivec2(pathing_map_uv), 0).r;
 	if (show_pathing_map) {
-		vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
-		color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
+		uint final = byte_static.r | byte_dynamic.r;
+
+		vec4 pathing_static_color = vec4((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3, 0.25);
+
+		color = length(pathing_static_color.rgb) > 0 ? color * 0.75 + pathing_static_color * 0.5 : color;
 	}
 }

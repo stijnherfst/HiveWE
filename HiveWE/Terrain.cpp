@@ -426,8 +426,8 @@ void Terrain::render() const {
 	for (size_t i = 0; i < ground_textures.size(); i++) {
 		gl->glBindTextureUnit(3 + i, ground_textures[i]->id);
 	}
-	gl->glBindTextureUnit(20, pathing_map_texture);
-	//gl->glBindTextureUnit(21, pathing_map_dynamic);
+	gl->glBindTextureUnit(20, map.pathing_map.texture_static);
+	gl->glBindTextureUnit(21, map.pathing_map.texture_dynamic);
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
@@ -467,7 +467,7 @@ void Terrain::render() const {
 
 	gl->glBindTextureUnit(0, cliff_texture_array);
 	gl->glBindTextureUnit(1, ground_height);
-	gl->glBindTextureUnit(2, pathing_map_texture);
+	gl->glBindTextureUnit(2, map.pathing_map.texture_static);
 	for (auto&& i : cliff_meshes) {
 		i->render();
 	}
