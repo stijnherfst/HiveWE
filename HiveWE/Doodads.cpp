@@ -3,8 +3,14 @@
 int Doodad::auto_increment;
 
 void Doodad::update() {
+	glm::vec3 base_scale = glm::vec3(1.f);
+
+	if (doodads_slk.row_header_exists(id)) {
+		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
+	}
+
 	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 }
 
@@ -57,15 +63,6 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = glm::ivec3(reader.read<glm::ivec2>(), 0);
 	}
-
-	doodads_slk = slk::SLK("Doodads/Doodads.slk");
-	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
-	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
-	destructibles_slk = slk::SLK("Units/DestructableData.slk");
-	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
-	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	return true;
 }
@@ -160,10 +157,19 @@ void Doodads::create() {
 	for (auto&& i : doodads) {
 		i.update();
 		i.mesh = get_mesh(i.id, i.variation);
+
+		// Get pathing map
+		bool is_doodad = doodads_slk.row_header_exists(i.id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		std::string pathing_texture_path = slk.data("pathTex", i.id);
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			i.pathing = resource_manager.load<Texture>(pathing_texture_path);
+		}
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = std::stoi(doodads_slk.data("fixedRot", i.id)) / 360.f * 2.f * glm::pi<float>();
+		float rotation = doodads_slk.data<int>("fixedRot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));

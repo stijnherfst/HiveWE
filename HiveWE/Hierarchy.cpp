@@ -3,6 +3,7 @@
 Hierarchy hierarchy;
 
 void Hierarchy::init() {
+	std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
 	game_data.open(warcraft_directory / "Data");
 	aliases.load("filealiases.json");
 }

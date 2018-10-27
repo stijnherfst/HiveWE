@@ -23,7 +23,7 @@ public:
 	void load_dir_file(BinaryReader &reader);
 	void save_dir_file() const;
 
-	void poplate_uncategorized();
+	void populate_uncategorized();
 
 	void remove_file(const fs::path& file) const;
 	bool import_file(const fs::path& path, const fs::path& file) const;

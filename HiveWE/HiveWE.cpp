@@ -9,6 +9,10 @@ WindowHandler window_handler;
 slk::SLK units_slk;
 slk::SLK units_meta_slk;
 slk::SLK items_slk;
+slk::SLK doodads_slk;
+slk::SLK doodads_meta_slk;
+slk::SLK destructibles_slk;
+slk::SLK destructibles_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
@@ -60,7 +64,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
-	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {  });
+	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
 
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
 	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });
@@ -110,10 +114,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
 }
 
-
 void HiveWE::load() {
 	QSettings settings;
-
+	
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
 		"Warcraft III Scenario (*.w3x)");
@@ -121,11 +124,24 @@ void HiveWE::load() {
 	if (file_name != "") {
 		settings.setValue("openDirectory", file_name);
 
+		
+		// Try opening the archive
+		HANDLE handle;
+		bool success = SFileOpenArchive(fs::path(file_name.toStdString()).c_str(), 0, 0, &handle);
+		if (!success) {
+			QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+			return;
+		}
+		SFileCloseArchive(handle);
+		
+		
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
 			std::swap(new_map, map);
 		}
+		puts("\n");
 		map.load(file_name.toStdString());
+		puts("\n");
 	}
 }
 

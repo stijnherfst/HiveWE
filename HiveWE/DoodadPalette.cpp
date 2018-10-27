@@ -60,6 +60,33 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	variation_section->addWidget(random_variation);
 	variation_section->addWidget(variations);
 
+	QRibbonSection* flags_section = new QRibbonSection;
+	flags_section->setText("Flags");
+	flags_section->setStyleSheet(R"(
+		QDoubleSpinBox {
+			border: 1px solid black;
+		}
+	)");
+
+	QVBoxLayout* visibility_flags_layout = new QVBoxLayout;
+
+	QRadioButton* invisible_non_solid = new QRadioButton;
+	invisible_non_solid->setText("Invisible non solid");
+
+	QRadioButton* visible_non_solid = new QRadioButton;
+	visible_non_solid->setText("Visible non solid");
+
+	QRadioButton* visible_solid = new QRadioButton;
+	visible_solid->setText("Visible solid");
+	visible_solid->setChecked(true);
+
+	visibility_flags_layout->addWidget(invisible_non_solid);
+	visibility_flags_layout->addWidget(visible_non_solid);
+	visibility_flags_layout->addWidget(visible_solid);
+
+	visibility_flags_layout->setSpacing(6);
+	flags_section->addLayout(visibility_flags_layout);
+
 	/*QVBoxLayout* lay = new QVBoxLayout;
 	QDoubleSpinBox* but = new QDoubleSpinBox;
 	QDoubleSpinBox* butt = new QDoubleSpinBox;
@@ -95,11 +122,16 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(placement_section);
 	ribbon_tab->addSection(variation_section);
+	ribbon_tab->addSection(flags_section);
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
 	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) { brush.random_rotation = checked; });
 	connect(random_scale, &QRibbonButton::toggled, [&](bool checked) { brush.random_scale = checked; });
 	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) { brush.random_variation = checked; });
+
+	connect(invisible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::invisible_non_solid; });
+	connect(visible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_non_solid; });
+	connect(visible_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_solid; });
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
@@ -134,7 +166,7 @@ void DoodadPalette::update_list() {
 	std::string selected_category = ui.type->currentData().toString().toStdString();
 
 	bool is_doodad = world_edit_data.key_exists("DoodadCategories", selected_category);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	for (int i = 1; i < slk.rows; i++) {
 		// If the doodad belongs to this tileset
@@ -151,7 +183,7 @@ void DoodadPalette::update_list() {
 
 		std::string text = slk.data("Name", i);
 		if (!is_doodad) {
-			text += " " + map.doodads.destructibles_slk.data("EditorSuffix", i);
+			text += " " + destructibles_slk.data("EditorSuffix", i);
 		}
 
 		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
@@ -166,12 +198,12 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 	brush.set_doodad(id);
 	selection_mode->setChecked(false);
 
-	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	variations->clear();
 
-	int variation_count = std::stoi(slk.data("numVar", id));
+	int variation_count = slk.data<int>("numVar", id);
 	for (int i = 0; i < variation_count; i++) {
 		QRibbonButton* toggle = new QRibbonButton;
 		toggle->setCheckable(true);

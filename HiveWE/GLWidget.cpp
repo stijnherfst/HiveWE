@@ -79,7 +79,6 @@ void GLWidget::initializeGL() {
 	shapes.init();
 
 	map.load("Data/Test.w3x");
-
 	//new DoodadPalette(this);
 //	footman = resource_manager.load<SkinnedMesh>("units\\human\\Footman\\Footman.mdx");
 }
