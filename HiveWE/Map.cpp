@@ -191,7 +191,7 @@ void Map::play_test() {
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 	warcraft->waitForFinished();
-	hierarchy.game_data.open(hierarchy.warcraft_directory / "Data", 0);
+	hierarchy.game_data.open(hierarchy.warcraft_directory / "Data");
 }
 
 void Map::render(int width, int height) {
