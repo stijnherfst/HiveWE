@@ -46,7 +46,7 @@ void Brush::set_shape(const Shape new_shape) {
 			for (int k = 0; k < granularity; k++) {
 				for (int l = 0; l < granularity; l++) {
 					if (contains(i, j)) {
-						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 255, 0, 128 };
+						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = brush_color;
 					} else {
 						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 0, 0, 0 };
 					}
@@ -124,7 +124,6 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
 			apply();
-//			apply_end();
 		}
 	}
 }

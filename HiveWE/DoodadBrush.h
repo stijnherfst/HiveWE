@@ -8,9 +8,9 @@ class DoodadBrush : public Brush {
 	int variation;
 
 	std::shared_ptr<StaticMesh> mesh;
-	std::shared_ptr<Texture> pathing_texture;
 public:
 	Doodad::State state = Doodad::State::visible_solid;
+	std::shared_ptr<Texture> pathing_texture;
 
 	bool free_placement;
 	bool free_rotation;
