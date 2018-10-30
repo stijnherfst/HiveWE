@@ -342,6 +342,15 @@
     <ClCompile Include="Palette.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AspectRatioPixmapLabel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -579,6 +588,9 @@
     </CustomBuild>
     <CustomBuild Include="Palette.h">
       <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="AspectRatioPixmapLabel.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

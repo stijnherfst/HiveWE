@@ -48,6 +48,7 @@ namespace fs = std::filesystem;
 #endif
 #include <Qsci/qsciscintilla.h>
 #include <Qsci/qscilexercustom.h>
+#include "AspectRatioPixmapLabel.h"
 #include "ColorButton.h"
 #include "JassEditor.h"
 

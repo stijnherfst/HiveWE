@@ -101,13 +101,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	// Temporary Temporary
 	//QTimer::singleShot(5, [this]() {
 	//	auto palette = new DoodadPalette(this);
-	//	connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-	//	connect(this, &HiveWE::palette_changed, palette, &DoodadPalette::disableShortcuts);
-	//	connect(palette, &DoodadPalette::finished, [&]() {
+	//	connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+	//	connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+	//	connect(palette, &Palette::finished, [&]() {
 	//		remove_custom_tab();
-	//		disconnect(this, &HiveWE::palette_changed, palette, &DoodadPalette::disableShortcuts);
+	//		disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 	//	});
-
 	//});
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
@@ -116,7 +115,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 void HiveWE::load() {
 	QSettings settings;
-	
+
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
 		"Warcraft III Scenario (*.w3x)");
@@ -134,14 +133,13 @@ void HiveWE::load() {
 		}
 		SFileCloseArchive(handle);
 		
-		
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
 			std::swap(new_map, map);
 		}
-		puts("\n");
+
 		map.load(file_name.toStdString());
-		puts("\n");
+		
 	}
 }
 

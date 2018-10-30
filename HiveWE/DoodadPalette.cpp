@@ -87,6 +87,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	visibility_flags_layout->setSpacing(6);
 	flags_section->addLayout(visibility_flags_layout);
 
+
+	pathing_section->setText("Pathing");
+	pathing_section->addWidget(pathing_image_label);
+
+
 	/*QVBoxLayout* lay = new QVBoxLayout;
 	QDoubleSpinBox* but = new QDoubleSpinBox;
 	QDoubleSpinBox* butt = new QDoubleSpinBox;
@@ -123,6 +128,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ribbon_tab->addSection(placement_section);
 	ribbon_tab->addSection(variation_section);
 	ribbon_tab->addSection(flags_section);
+	ribbon_tab->addSection(pathing_section);
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
 	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) { brush.random_rotation = checked; });
@@ -217,6 +223,15 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 				brush.erase_variation(i);
 			}
 		});
+	}
+
+	if (brush.pathing_texture) {
+		pathing_section->setHidden(false);
+		QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
+		QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
+		pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
+	} else {
+		pathing_section->setHidden(true);
 	}
 }
 

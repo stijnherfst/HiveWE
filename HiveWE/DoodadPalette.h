@@ -24,6 +24,9 @@ private:
 
 	QRibbonContainer* variations = new QRibbonContainer;
 
+	QRibbonSection* pathing_section = new QRibbonSection;
+	AspectRatioPixmapLabel* pathing_image_label = new AspectRatioPixmapLabel;
+
 public slots:
 	void deactivate(QRibbonTab* tab) override;
 };
