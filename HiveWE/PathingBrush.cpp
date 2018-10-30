@@ -22,20 +22,20 @@ void PathingBrush::apply() {
 			const int index = offset + j * map.pathing_map.width + i;
 			switch (operation) {
 			case Operation::replace:
-				map.pathing_map.pathing_cells[index] &= ~0b00001110;
-				map.pathing_map.pathing_cells[index] |= brush_mask;
+				map.pathing_map.pathing_cells_static[index] &= ~0b00001110;
+				map.pathing_map.pathing_cells_static[index] |= brush_mask;
 				break;
 			case Operation::add:
-				map.pathing_map.pathing_cells[index] |= brush_mask;
+				map.pathing_map.pathing_cells_static[index] |= brush_mask;
 				break;
 			case Operation::remove:
-				map.pathing_map.pathing_cells[index] &= ~brush_mask;
+				map.pathing_map.pathing_cells_static[index] &= ~brush_mask;
 				break;
 			}
 		}
 	}
 
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.pathing_map.width);
-	gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
+	gl->glTextureSubImage2D(map.pathing_map.texture_static, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells_static.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }

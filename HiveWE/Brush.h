@@ -18,21 +18,25 @@ public:
 	glm::ivec2 uv_offset;
 	glm::vec2 brush_offset = { 0, 0 };
 
-	void create();
-	virtual void set_position(const glm::vec2& position);
-	glm::vec2 get_position() const;
-	void set_size(int size);
-	void set_shape(Shape shape);
-	void increase_size(int size);
-	void decrease_size(int size);
-	bool contains(int x, int y) const;
+	glm::vec4 brush_color = { 0, 255, 0, 128 };
 
-	void switch_mode();
+	virtual void create();
+	virtual void set_position(const glm::vec2& position);
+	virtual glm::vec2 get_position() const;
+	virtual void set_size(int size);
+	virtual void set_shape(Shape shape);
+	virtual void increase_size(int size);
+	virtual void decrease_size(int size);
+	virtual bool contains(int x, int y) const;
+
+	virtual void switch_mode();
 
 	virtual void key_press_event(QKeyEvent* event);
 	virtual void mouse_move_event(QMouseEvent* event);
 	virtual void mouse_press_event(QMouseEvent* event);
 	virtual void mouse_release_event(QMouseEvent* event);
+
+	virtual void clear_selection() {};
 
 	void render() const;
 	virtual void render_selector() const;

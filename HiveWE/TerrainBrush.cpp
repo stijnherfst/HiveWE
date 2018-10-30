@@ -85,8 +85,8 @@ void TerrainBrush::apply() {
 						if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
 							continue;
 						}
-						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00100000;
-						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].blight ? 1 : 0;
+						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00100000;
+						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].blight ? 1 : 0;
 					}
 				}
 
@@ -99,8 +99,8 @@ void TerrainBrush::apply() {
 							if (corners[i + std::clamp(k, -1, 0)][j + std::clamp(l, -1, 0)].cliff) {
 								continue;
 							}
-							map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-							map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[tile_id].mask();
+							map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
+							map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[tile_id].mask();
 						}
 					}
 				}
@@ -238,7 +238,7 @@ void TerrainBrush::apply() {
 					case cliff_operation::raise2:
 						corners[i][j].layer_height = layer_height;
 						if (corners[i][j].water) {
-							if (map.enforce_water_height_limits && map.terrain.corner_water_height(i, j) < map.terrain.corner_height(i, j)) {
+							if (enforce_water_height_limits && map.terrain.corner_water_height(i, j) < map.terrain.corner_height(i, j)) {
 								corners[i][j].water = false;
 								map.terrain.water_exists_data[j * width + i] = false;
 							}
@@ -268,8 +268,8 @@ void TerrainBrush::apply() {
 							continue;
 						}
 
-						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b01000000;
-						map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water ? 1 : 0;
+						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b01000000;
+						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water ? 1 : 0;
 					}
 				}
 
@@ -308,8 +308,8 @@ void TerrainBrush::apply() {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
 								const int id = map.terrain.corners[i  ][j ].ground_texture;
-								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
+								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
+								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
 							}
 						}
 					}
@@ -337,8 +337,8 @@ void TerrainBrush::apply() {
 					if (apply_cliff_pathing) {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
-								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-								map.pathing_map.pathing_cells[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= 0b00001010;
+								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
+								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= 0b00001010;
 							}
 						}
 					}
@@ -390,7 +390,7 @@ void TerrainBrush::apply() {
 	// Update pathing data
 	const int offset = pathing_area.y() * map.pathing_map.width + pathing_area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.pathing_map.width);
-	gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data() + offset);
+	gl->glTextureSubImage2D(map.pathing_map.texture_static, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells_static.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 	if (apply_height || apply_cliff) {

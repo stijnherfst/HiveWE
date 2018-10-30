@@ -48,45 +48,6 @@
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>600</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuWindow">
-    <property name="title">
-     <string>Window</string>
-    </property>
-    <widget class="QMenu" name="menuNew_Pallete">
-     <property name="title">
-      <string>New Pallete</string>
-     </property>
-     <addaction name="actionPathing_Palette"/>
-     <addaction name="actionTerrain_Palette"/>
-     <addaction name="actionDoodads_Palette"/>
-    </widget>
-    <addaction name="menuNew_Pallete"/>
-    <addaction name="actionImport_Manager"/>
-    <addaction name="actionTrigger_Editor"/>
-   </widget>
-   <widget class="QMenu" name="menuScenario">
-    <property name="title">
-     <string>Map</string>
-    </property>
-    <addaction name="actionDescription"/>
-    <addaction name="actionLoading_Screen"/>
-    <addaction name="actionOptions"/>
-    <addaction name="actionPreferences"/>
-    <addaction name="actionSize_and_Camera_Bounds"/>
-    <addaction name="separator"/>
-   </widget>
-   <addaction name="menuScenario"/>
-   <addaction name="menuWindow"/>
-  </widget>
   <action name="actionConvert_Blockers_to_Pathmap">
    <property name="text">
     <string>Convert Blockers to Pathing Map</string>

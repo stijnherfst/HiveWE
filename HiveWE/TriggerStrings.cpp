@@ -11,7 +11,7 @@ void TriggerStrings::load(BinaryReader& reader) {
 			continue;
 		}
 		if (line.back() == '\r') {
-			line.resize(line.size() - 1);
+			line.pop_back();
 		}
 
 		if (line.empty()) {
@@ -22,11 +22,13 @@ void TriggerStrings::load(BinaryReader& reader) {
 
 		if (line.front() == '{') {
 			std::string value;
+			bool first = true;
 			while (std::getline(file, line) && !line.empty() && line.front() != '}') {
 				if (line.back() == '\r') {
-					line.resize(line.size() - 1);
+					line.pop_back();
 				}
-				value += line;
+				value += (first ? "" : "\n") + line;
+				first = false;
 			}
 			strings.emplace(key, value);
 		} else {
@@ -40,18 +42,37 @@ void TriggerStrings::load(BinaryReader& reader) {
 void TriggerStrings::save() const {
 	BinaryWriter writer;
 
+	writer.write<uint8_t>(0xEF);
+	writer.write<uint8_t>(0xBB);
+	writer.write<uint8_t>(0xBF);
+
 	std::stringstream file;
 	for (auto&& [key, value] : strings) {
 		auto found = key.find('_') + 1;
-		std::string final_string = "STRING " + key.substr(found);
-		final_string.erase(std::remove_if(final_string.begin(), final_string.end(), [](char c) { return c == '0'; }), final_string.end());
-		
-		writer.write_string(final_string);
-		writer.write_string("\n{\n");
-		writer.write_string(value);
-		writer.write_string("\n}\n\n");
-	}
+		std::string final_key = "STRING " + key.substr(found);
 
+		// Remove leading zeroes
+		while (final_key.front() == '0') {
+			final_key.erase(final_key.begin());
+		}
+
+		std::string final_value = value;
+		// Insert carriage returns
+		auto it = final_value.begin();
+		while (it != final_value.end()) {
+			if (*it == '\n') {
+				it = final_value.insert(it, '\r');
+				it++;
+			}
+			it++;
+		}
+		
+		writer.write_string(final_key);
+		writer.write_string("\r\n{\r\n");
+		writer.write_string(final_value);
+		writer.write_string("\r\n}\r\n\r\n");
+	}
+	
 	HANDLE handle;
 	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wts", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
 	if (!success) {
@@ -60,4 +81,21 @@ void TriggerStrings::save() const {
 
 	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
 	SFileFinishFile(handle);
+}
+
+std::string TriggerStrings::string(const std::string& key) const {
+	if (strings.find(key) == strings.end()) {
+		return "";
+	}
+
+	return strings.at(key);
+}
+
+void TriggerStrings::set_string(const std::string& key, const std::string& value) {
+	if (key.rfind("TRIGSTR_", 0) != 0) {
+		std::cout << "Invalid TRIGSTR set: " << key << " --- " << value << "\n";
+		return;
+	}
+
+	strings[key] = value;
 }

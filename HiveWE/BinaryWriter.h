@@ -15,11 +15,13 @@ public:
 		std::copy(reinterpret_cast<const char*>(&temp), reinterpret_cast<const char*>(&temp) + sizeof(T), buffer.end() - sizeof(T));
 	}
 
+	/// Writes the string to the buffer (null terminated if the input string is null terminated)
 	void write_string(const std::string& string) {
 		buffer.resize(buffer.size() + string.size());
 		std::copy(string.begin(), string.end(), buffer.end() - string.size());
 	}
 
+	/// Writes a null terminated string to the buffer
 	void write_c_string(const std::string& string) {
 		if (!string.empty() && string.back() == '\0') {
 			buffer.resize(buffer.size() + string.size());
@@ -31,6 +33,7 @@ public:
 		}
 	}
 
+	/// Copies the contents of the array to the buffer, has special code for std::string
 	template<typename T>
 	void write_vector(const std::vector<T>& vector) {
 		if constexpr (std::is_same_v<T, std::string>) {

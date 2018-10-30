@@ -79,7 +79,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 
 	ribbon_tab->addSection(settings_section);
 
-	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { enforce_water_height_limits = checked; });
+	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { brush.enforce_water_height_limits = checked; });
 
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.brushSizeSlider->setValue(button->text().toInt());

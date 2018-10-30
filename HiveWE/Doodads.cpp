@@ -2,6 +2,18 @@
 
 int Doodad::auto_increment;
 
+void Doodad::update() {
+	glm::vec3 base_scale = glm::vec3(1.f);
+
+	if (doodads_slk.row_header_exists(id)) {
+		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
+	}
+
+	matrix = glm::translate(glm::mat4(1.f), position);
+	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
+	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+}
+
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
@@ -23,7 +35,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
-		i.scale = reader.read<glm::vec3>() / 128.f;
+		i.scale = reader.read<glm::vec3>();
 		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 
@@ -52,15 +64,6 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.position = glm::ivec3(reader.read<glm::ivec2>(), 0);
 	}
 
-	doodads_slk = slk::SLK("Doodads/Doodads.slk");
-	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
-	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
-	destructibles_slk = slk::SLK("Units/DestructableData.slk");
-	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
-	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
-
 	return true;
 }
 
@@ -76,7 +79,7 @@ void Doodads::save() const {
 		writer.write<uint32_t>(i.variation);
 		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
 		writer.write<float>(i.angle);
-		writer.write<glm::vec3>(i.scale * 128.f);
+		writer.write<glm::vec3>(i.scale);
 
 		writer.write<uint8_t>(static_cast<int>(i.state));
 		writer.write<uint8_t>(i.life);
@@ -145,23 +148,28 @@ void Doodads::update_area(const QRect& area) {
 	for (auto&& i : doodads) {
 		if (area.contains(i.position.x, i.position.y)) {
 			i.position.z = map.terrain.corner_height(i.position.x, i.position.y);
-			i.matrix = glm::translate(glm::mat4(1.f), i.position);
-			i.matrix = glm::scale(i.matrix, i.scale);
-			i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+			i.update();
 		}
 	}
 }
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		i.matrix = glm::translate(i.matrix, i.position);
-		i.matrix = glm::scale(i.matrix, i.scale);
-		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
+		i.update();
 		i.mesh = get_mesh(i.id, i.variation);
+
+		// Get pathing map
+		bool is_doodad = doodads_slk.row_header_exists(i.id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		std::string pathing_texture_path = slk.data("pathTex", i.id);
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			i.pathing = resource_manager.load<Texture>(pathing_texture_path);
+		}
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = std::stoi(doodads_slk.data("fixedRot", i.id)) / 360.f * 2.f * glm::pi<float>();
+		float rotation = doodads_slk.data<int>("fixedRot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
@@ -184,10 +192,9 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.variation = variation;
 	doodad.mesh = get_mesh(id, variation);
 	doodad.position = position;
-	doodad.scale = glm::vec3(1 / 128.f);
+	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
-	doodad.matrix = glm::translate(doodad.matrix, doodad.position);
-	doodad.matrix = glm::scale(doodad.matrix, doodad.scale);
+	doodad.update();
 
 	doodads.push_back(doodad);
 	return doodads.back();
@@ -226,7 +233,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string replaceable_id;
 	fs::path texture_name;
 
-	if (doodads_slk.header_to_row.find(id) != doodads_slk.header_to_row.end()) {
+	if (doodads_slk.row_header_exists(id)) {
 		// Is doodad
 		mesh_path = doodads_slk.data("file", id);
 		variations = doodads_slk.data("numVar", id);

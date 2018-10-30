@@ -42,14 +42,12 @@ void DoodadBrush::mouse_release_event(QMouseEvent* event) {
 void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 	Brush::mouse_move_event(event);
 
-	if (mode == Mode::selection) {
+	if (mode == Mode::selection && selection_started) {
 		if (event->buttons() == Qt::LeftButton) {
 			if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
 					i->angle = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
-					i->matrix = glm::translate(glm::mat4(1.f), i->position);
-					i->matrix = glm::scale(i->matrix, i->scale);
-					i->matrix = glm::rotate(i->matrix, i->angle, glm::vec3(0, 0, 1));
+					i->update();
 				}
 			} else {
 				glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
@@ -57,6 +55,10 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 			}
 		}
 	}
+}
+
+void DoodadBrush::clear_selection() {
+	selections.clear();
 }
 
 void DoodadBrush::apply() {
@@ -72,10 +74,27 @@ void DoodadBrush::apply() {
 		position = glm::vec3(glm::trunc(glm::vec2(input_handler.mouse_world) * 2.f) * 0.5f + 0.25f, input_handler.mouse_world.z);
 	}
 
-	map.doodads.add_doodad(id, variation, position);
+	Doodad& doodad = map.doodads.add_doodad(id, variation, position);
+	doodad.scale = glm::vec3(scale);
+	doodad.angle = rotation;
+	doodad.state = state;
+	doodad.update();
+
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	if (random_rotation && free_rotation) {
+		std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
+		rotation = dist(gen);
+	}
 
 	if (random_variation) {
 		set_random_variation();
+	}
+
+	if (random_scale) {
+		std::uniform_real_distribution dist(min_scale, max_scale);
+		scale = dist(gen);
 	}
 }
 
@@ -84,16 +103,17 @@ void DoodadBrush::render_brush() const {
 	//for ()
 
 
-	glm::mat4 mat(1.f);
+	glm::mat4 matrix(1.f);
 	if (free_placement) {
-		mat = glm::translate(mat, input_handler.mouse_world);
+		matrix = glm::translate(matrix, input_handler.mouse_world);
 	} else {
-		mat = glm::translate(mat, glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
+		matrix = glm::translate(matrix, glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
 	}
-	mat = glm::scale(mat, glm::vec3(1.f / 128.f));
+	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f) * scale);
+	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
 	if (mesh) {
-		mesh->render_queue(mat);
+		mesh->render_queue(matrix);
 	}
 }
 
@@ -105,6 +125,7 @@ void DoodadBrush::render_selection() const {
 	for (auto&& i : selections) {
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(0.5f, 0.5f, 0.f));
+
 		model = camera->projection_view * model;
 		gl->glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
 
@@ -134,18 +155,26 @@ void DoodadBrush::erase_variation(int variation) {
 	}
 }
 
-
 void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
 	if (random_variation) {
 		set_random_variation();
 	}
-	bool is_doodad = map.doodads.doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? map.doodads.doodads_slk : map.doodads.destructibles_slk;
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+
+	min_scale = slk.data<float>("minScale", id);
+	max_scale = slk.data<float>("maxScale", id);
+
+	if (is_doodad) {
+		scale = slk.data<float>("defScale", id);
+	}
+
+	rotation = glm::radians(std::max(0.f, slk.data<float>("fixedRot", id)));
 
 	std::string pathing_texture_path = slk.data("pathTex", id);
-
-	if (pathing_texture_path.empty()) {
+	if (pathing_texture_path.empty() || !hierarchy.file_exists(pathing_texture_path)) {
 		free_placement = true;
 		free_rotation = true;
 	} else {
@@ -153,13 +182,14 @@ void DoodadBrush::set_doodad(const std::string& id) {
 			free_placement = false;
 			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
 			free_rotation = pathing_texture->width == pathing_texture->height;
+			free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
 		} else {
 			free_placement = true;
 		}
 	}
 
 	possible_variations.clear();
-	int variation_count = std::stoi(slk.data("numVar", id));
+	int variation_count = slk.data<int>("numVar", id);
 	for (int i = 0; i < variation_count; i++) {
 		possible_variations.insert(i);
 	}

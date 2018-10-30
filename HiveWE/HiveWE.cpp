@@ -6,6 +6,14 @@ ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
 WindowHandler window_handler;
 
+slk::SLK units_slk;
+slk::SLK units_meta_slk;
+slk::SLK items_slk;
+slk::SLK doodads_slk;
+slk::SLK doodads_meta_slk;
+slk::SLK destructibles_slk;
+slk::SLK destructibles_meta_slk;
+
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
 	while (!fs::exists(directory / "Data")) {
@@ -27,7 +35,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
-
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map.render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map.render_doodads = checked; });
@@ -58,47 +65,54 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
-	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {  });
+	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
 
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
 	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });
 
-	connect(ui.actionDescription, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
-	connect(ui.actionLoading_Screen, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
-	connect(ui.actionOptions, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
-	connect(ui.actionPreferences, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
+	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
+	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
+	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
+	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
   
   //connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
   
-	connect(ui.actionPathing_Palette, &QAction::triggered, [this]() {
+	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() { 
+		auto palette = new TerrainPalette(this);
+		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	});
+	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
+		auto palette = new DoodadPalette(this); 
+		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+		connect(palette, &Palette::finished, [&]() {
+			remove_custom_tab();
+			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+		});
+	});
+	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
 		});
 	});
-	connect(ui.actionTerrain_Palette, &QAction::triggered, [this]() { 
-		auto palette = new TerrainPalette(this);
-		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
-	connect(ui.actionDoodads_Palette, &QAction::triggered, [this]() { 
-		auto palette = new DoodadPalette(this); 
-		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
 
 
 	// Temporary Temporary
-	QTimer::singleShot(5, [this]() {
-		auto palette = new DoodadPalette(this);
-		connect(palette, &DoodadPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	});
+	//QTimer::singleShot(5, [this]() {
+	//	auto palette = new DoodadPalette(this);
+	//	connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+	//	connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+	//	connect(palette, &Palette::finished, [&]() {
+	//		remove_custom_tab();
+	//		disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+	//	});
+	//});
 
-	connect(ui.actionTrigger_Editor, &QAction::triggered, []() { window_handler.create_or_raise<TriggerEditor>(); });
-	connect(ui.actionImport_Manager, &QAction::triggered, []() { window_handler.create_or_raise<ImportManager>(); });
+	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
+	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
 }
-
 
 void HiveWE::load() {
 	QSettings settings;
@@ -110,11 +124,23 @@ void HiveWE::load() {
 	if (file_name != "") {
 		settings.setValue("openDirectory", file_name);
 
+		
+		// Try opening the archive
+		HANDLE handle;
+		bool success = SFileOpenArchive(fs::path(file_name.toStdString()).c_str(), 0, 0, &handle);
+		if (!success) {
+			QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+			return;
+		}
+		SFileCloseArchive(handle);
+		
 		{ // Map falls out of scope so is cleaned before a new load
 			Map new_map;
 			std::swap(new_map, map);
 		}
+
 		map.load(file_name.toStdString());
+		
 	}
 }
 
@@ -212,6 +238,11 @@ void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {
 	if (current_custom_tab == tab) {
 		return;
 	}
+
+	if (current_custom_tab != nullptr) {
+		emit palette_changed(tab);
+	}
+
 	remove_custom_tab();
 	current_custom_tab = tab;
 	ui.ribbon->addTab(tab, name);
@@ -222,6 +253,7 @@ void HiveWE::remove_custom_tab() {
 	for (int i = 0; i < ui.ribbon->count(); i++) {
 		if (ui.ribbon->widget(i) == current_custom_tab) {
 			ui.ribbon->removeTab(i);
+			current_custom_tab = nullptr;
 			return;
 		}
 	}

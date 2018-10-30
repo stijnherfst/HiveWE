@@ -10,8 +10,7 @@ layout (binding = 2) uniform usampler2D terrain_texture_list;
 layout (location = 0) out vec2 UV;
 layout (location = 1) out flat uvec4 texture_indices;
 layout (location = 2) out vec2 pathing_map_uv;
-
-out vec3 normal;
+layout (location = 3) out vec3 normal;
 
 void main() { 
 	ivec2 size = textureSize(terrain_texture_list, 0);
@@ -25,7 +24,6 @@ void main() {
 	float hR = texelFetch(height_texture, height_pos + off.xz, 0).r;
 	float hD = texelFetch(height_texture, height_pos - off.zy, 0).r;
 	float hU = texelFetch(height_texture, height_pos + off.zy, 0).r;
-
 	normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
 	UV = vec2(vPosition.x, 1 - vPosition.y);

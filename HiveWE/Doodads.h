@@ -16,7 +16,7 @@ struct Doodad {
 		visible_solid
 	};
 	State state;
-	uint8_t life;
+	int life;
 
 	int item_table_pointer;
 	std::vector<ItemSet> item_sets;
@@ -25,10 +25,13 @@ struct Doodad {
 
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
+	std::shared_ptr<Texture> pathing;
 
 	Doodad() {
 		unique_id = auto_increment++;
 	}
+
+	void update();
 };
 
 struct SpecialDoodad {
@@ -40,7 +43,6 @@ struct SpecialDoodad {
 };
 
 class Doodads {
-	std::vector<Doodad> doodads;
 	std::vector<SpecialDoodad> special_doodads;
 	
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
@@ -51,12 +53,7 @@ class Doodads {
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 public:
-	slk::SLK doodads_slk;
-	slk::SLK doodads_meta_slk;
-	slk::SLK destructibles_slk;
-	slk::SLK destructibles_meta_slk;
-
-	//QuadTree<Doodad> tree;
+	std::vector<Doodad> doodads;
 
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void save() const;

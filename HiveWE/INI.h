@@ -3,7 +3,7 @@
 namespace ini {
 	class INI {
 	public:
-		// header to items to list of values to value
+		/// header to items to list of values to value
 		std::map<std::string, std::map<std::string, std::vector<std::string>>> ini_data;
 
 		INI() = default;

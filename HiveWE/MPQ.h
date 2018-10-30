@@ -5,7 +5,7 @@ namespace mpq {
 	class File {
 	public:
 		HANDLE handle = nullptr;
-		
+	
 		File() = default;
 		~File();
 		File(File&& move) noexcept {
@@ -30,12 +30,10 @@ namespace mpq {
 	class MPQ {
 	public:
 		HANDLE handle;
-		fs::path local_path;
 
 		MPQ() = default;
 
 		explicit MPQ(const fs::path& path, unsigned long flags = 0);
-		explicit MPQ(File archive, unsigned long flags = 0);
 		~MPQ();
 		MPQ(MPQ&& move) noexcept {
 			handle = move.handle;
@@ -49,8 +47,7 @@ namespace mpq {
 			return *this;
 		}
 
-		void open(const fs::path& path, unsigned long flags = 0);
-		void open(File& archive, unsigned long flags = 0);
+		bool open(const fs::path& path, unsigned long flags = 0);
 		void close();
 
 		File file_open(const fs::path& path) const;

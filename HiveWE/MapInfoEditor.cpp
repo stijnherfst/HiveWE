@@ -5,10 +5,10 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	// Description Tab
-	ui.name->setText(QString::fromStdString(map.trigger_strings.strings[map.info.name]));
-	ui.suggestedPlayers->setText(QString::fromStdString(map.trigger_strings.strings[map.info.suggested_players]));
-	ui.description->setPlainText(QString::fromStdString(map.trigger_strings.strings[map.info.description]));
-	ui.author->setText(QString::fromStdString(map.trigger_strings.strings[map.info.author]));
+	ui.name->setText(QString::fromStdString(map.trigger_strings.string(map.info.name)));
+	ui.suggestedPlayers->setText(QString::fromStdString(map.trigger_strings.string(map.info.suggested_players)));
+	ui.description->setPlainText(QString::fromStdString(map.trigger_strings.string(map.info.description)));
+	ui.author->setText(QString::fromStdString(map.trigger_strings.string(map.info.author)));
 
 	ui.mapVersion->setText(QString::number(map.info.map_version));
 	ui.editorVersion->setText(QString::number(map.info.editor_version));
@@ -42,9 +42,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		ui.campaignLoadingScreen->setCurrentIndex(map.info.loading_screen_number);
 	}
 
-	ui.loadingScreenTitle->setText(QString::fromStdString(map.trigger_strings.strings[map.info.loading_screen_title]));
-	ui.loadingScreenSubtitle->setText(QString::fromStdString(map.trigger_strings.strings[map.info.loading_screen_subtitle]));
-	ui.loadingScreenText->setPlainText(QString::fromStdString(map.trigger_strings.strings[map.info.loading_screen_text]));
+	ui.loadingScreenTitle->setText(QString::fromStdString(map.trigger_strings.string(map.info.loading_screen_title)));
+	ui.loadingScreenSubtitle->setText(QString::fromStdString(map.trigger_strings.string(map.info.loading_screen_subtitle)));
+	ui.loadingScreenText->setPlainText(QString::fromStdString(map.trigger_strings.string(map.info.loading_screen_text)));
 
 	// Options Tab
 	ui.meleeMap->setChecked(map.info.melee_map);
@@ -116,10 +116,10 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 void MapInfoEditor::save() const {
 	// Description Tab
-	map.trigger_strings.strings[map.info.name] = ui.name->text().toStdString();
-	map.trigger_strings.strings[map.info.author] = ui.author->text().toStdString();
-	map.trigger_strings.strings[map.info.description] = ui.description->toPlainText().toStdString();
-	map.trigger_strings.strings[map.info.suggested_players] = ui.suggestedPlayers->text().toStdString();
+	map.trigger_strings.set_string(map.info.name, ui.name->text().toStdString());
+	map.trigger_strings.set_string(map.info.author, ui.author->text().toStdString());
+	map.trigger_strings.set_string(map.info.description, ui.description->toPlainText().toStdString());
+	map.trigger_strings.set_string(map.info.suggested_players, ui.suggestedPlayers->text().toStdString());
 
 	if (ui.useDefaultLoadingScreen->isChecked()) {
 		map.info.loading_screen_model = "";
@@ -132,9 +132,9 @@ void MapInfoEditor::save() const {
 		map.info.loading_screen_number = ui.campaignLoadingScreen->currentIndex();
 	}
 
-	map.trigger_strings.strings[map.info.loading_screen_text] = ui.loadingScreenText->toPlainText().toStdString();
-	map.trigger_strings.strings[map.info.loading_screen_title] = ui.loadingScreenTitle->text().toStdString();
-	map.trigger_strings.strings[map.info.loading_screen_subtitle] = ui.loadingScreenSubtitle->text().toStdString();
+	map.trigger_strings.set_string(map.info.loading_screen_text, ui.loadingScreenText->toPlainText().toStdString());
+	map.trigger_strings.set_string(map.info.loading_screen_title, ui.loadingScreenTitle->text().toStdString());
+	map.trigger_strings.set_string(map.info.loading_screen_subtitle, ui.loadingScreenSubtitle->text().toStdString());
 
 	map.info.game_data_set = ui.gameDataSet->currentIndex();
 

@@ -18,10 +18,22 @@ public:
 	QRibbonButton* switch_camera = new QRibbonButton;
 	QRibbonButton* reset_camera = new QRibbonButton;
 
+	QRibbonButton* map_description = new QRibbonButton;
+	QRibbonButton* map_loading_screen = new QRibbonButton;
+	QRibbonButton* map_options = new QRibbonButton;
+	QRibbonButton* map_size_camera_bounds = new QRibbonButton;
+
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;
 	QRibbonButton* change_tile_pathing = new QRibbonButton;
 	QRibbonButton* switch_warcraft = new QRibbonButton;
+
+	QRibbonButton* import_manager = new QRibbonButton;
+	QRibbonButton* trigger_viewer = new QRibbonButton;
+
+	QRibbonButton* terrain_palette = new QRibbonButton;
+	QRibbonButton* doodad_palette = new QRibbonButton;
+	QRibbonButton* pathing_palette = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;
 	QToolButton* open_map = new QToolButton;

@@ -306,9 +306,6 @@
     <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TriggerEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_TriggerEditor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -335,6 +332,24 @@
     </ClCompile>
     <ClCompile Include="FlowLayout.cpp">
       <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Palette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_Palette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Palette.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AspectRatioPixmapLabel.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -570,6 +585,12 @@
     </CustomBuild>
     <CustomBuild Include="FlowLayout.h">
       <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Palette.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="AspectRatioPixmapLabel.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

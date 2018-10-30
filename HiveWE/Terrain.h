@@ -3,8 +3,6 @@
 // These classes will be rewritten to use SOA instead of AOS
 
 struct Corner {
-	//float ground_height;
-//	float water_height;
 	bool map_edge;
 
 	int ground_texture;
@@ -44,7 +42,6 @@ public:
 
 	int width;
 	int height;
-
 	glm::vec2 offset;
 
 	std::vector<std::vector<Corner>> corners;
@@ -58,7 +55,6 @@ public:
 	GLuint ground_height;
 	GLuint ground_corner_height;
 	GLuint ground_texture_data;
-	GLuint pathing_map_texture;
 
 	std::vector<float> ground_heights;
 	std::vector<float> ground_corner_heights;
@@ -115,14 +111,14 @@ public:
 	void create();
 	bool load(BinaryReader& reader);
 	void save() const;
-	void render();
+	void render() const;
 
-	void change_tileset(const std::vector<std::string>& new_tileset_ids, const std::vector<int>& new_to_old);
+	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old);
 
 	float corner_height(int x, int y) const;
 	float corner_water_height(const int x, const int y) const;
 
-	int real_tile_texture(int x, int y);
-	int get_tile_variation(int ground_texture, int variation);
-	glm::u16vec4 get_texture_variations(int x, int y);
+	int real_tile_texture(int x, int y) const;
+	int get_tile_variation(int ground_texture, int variation) const;
+	glm::u16vec4 get_texture_variations(int x, int y) const;
 };

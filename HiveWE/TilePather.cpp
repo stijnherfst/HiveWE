@@ -111,7 +111,7 @@ void TilePather::save_tiles() {
 
 				for (int x = left; x < right; x++) {
 					for (int y = bottom; y < top; y++) {
-						uint8_t byte_cell = map.pathing_map.pathing_cells[y * map.pathing_map.width + x];
+						uint8_t byte_cell = map.pathing_map.pathing_cells_static[y * map.pathing_map.width + x];
 
 						switch (options.operation) {
 						case PathingOptions::Operation::replace:
@@ -126,14 +126,14 @@ void TilePather::save_tiles() {
 							break;
 						}
 
-						map.pathing_map.pathing_cells[y * map.pathing_map.width + x] = byte_cell;
+						map.pathing_map.pathing_cells_static[y * map.pathing_map.width + x] = byte_cell;
 					}
 				}
 			}
 		}
 	}
 
-	gl->glTextureSubImage2D(map.pathing_map.pathing_texture, 0, 0, 0, map.pathing_map.width, map.pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells.data());
+	gl->glTextureSubImage2D(map.pathing_map.texture_static, 0, 0, 0, map.pathing_map.width, map.pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells_static.data());
 
 	close();
 }

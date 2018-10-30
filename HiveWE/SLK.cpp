@@ -61,7 +61,7 @@ namespace slk {
 							return;
 					}
 					table_data.resize(rows, std::vector<std::string>(columns));
-					shadow_data.resize(rows, std::vector<std::string>(columns));
+					shadow_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
 					break;
 				case 'C':
 					if (line[position] == 'X') {
@@ -114,7 +114,7 @@ namespace slk {
 		if (rows > max_rows + 1) {
 			rows = max_rows + 1;
 			table_data.resize(rows, std::vector<std::string>(columns));
-			shadow_data.resize(rows, std::vector<std::string>(columns));
+			shadow_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
 
 			for (auto it = header_to_row.begin(); it != header_to_row.end();) {
 				if (it->second > max_rows) {
@@ -123,7 +123,6 @@ namespace slk {
 					++it;
 				}
 			}
-			std::cout << path << " Contains empty rows at the end\n";
 		}
 	}
 
@@ -145,49 +144,11 @@ namespace slk {
 		output << "E";
 	}
 
-	std::string SLK::data(const std::string& column_header, const size_t row) const {
-		if (header_to_column.find(column_header) == header_to_column.end()) {
-			return "";
-		}
-
-		const size_t column = header_to_column.at(column_header);
-
-		if (row >= rows) {
-			std::cout << "Reading invalid row: " <<  row + 1 << "/" << rows;
-			return "";
-		}
-
-		if (!shadow_data[row][column].empty()) {
-			return shadow_data[row][column];
-		}
-
-		return table_data[row][column];
-	}
-
-	std::string SLK::data(const std::string& column_header, const std::string& row_header) const {
-		if (header_to_column.find(column_header) == header_to_column.end()) {
-			return "";
-		}
-
-		if (header_to_row.find(row_header) == header_to_row.end()) {
-			return "";
-		}
-
-		const size_t column = header_to_column.at(column_header);
-		const size_t row = header_to_row.at(row_header);
-
-		if (!shadow_data[row][column].empty()) {
-			return shadow_data[row][column];
-		}
-
-		return table_data[row][column];
-	}
-
 	bool SLK::row_header_exists(const std::string& row_header) const {
 		return header_to_row.find(row_header) != header_to_row.end();
 	}
 
-	/// Merges the data of the files. Any unknown rows and columns are appended
+	/// Merges the data of the files. Any unknown columns are appended
 	void SLK::merge(const slk::SLK& slk) {
 		for (size_t i = 1; i < slk.columns; i++) {
 			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
@@ -201,7 +162,7 @@ namespace slk {
 
 		for (size_t i = 0; i < rows; i++) {
 			table_data[i].resize(columns);
-			shadow_data[i].resize(columns);
+			shadow_data[i].resize(columns, shadow_table_empty_identifier);
 		}
 	}
 
@@ -228,9 +189,6 @@ namespace slk {
 	void SLK::substitute(const ini::INI & ini, const std::string& section) {
 		for (auto&& i : table_data) {
 			for (auto&& j : i) {
-				if (j == "WESTRING_DEST_VOLCANO") {
-					std::cout << "\n";
-				}
 				std::string data = ini.data(section, j);
 				if (!data.empty()) {
 					j = data;
@@ -239,6 +197,7 @@ namespace slk {
 		}
 	}
 
+	/// Copies the row with header row_header to a new line with the new header as new_row_header
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
 		if (header_to_row.find(row_header) == header_to_row.end()) {
 			std::cout << "Unknown row header: " << row_header << "\n";
@@ -249,8 +208,9 @@ namespace slk {
 
 		table_data.emplace_back(table_data[row]);
 		table_data[table_data.size() - 1][0] = new_row_header;
-		shadow_data.emplace_back(std::vector<std::string>(columns));
+		shadow_data.emplace_back(std::vector<std::string>(columns, shadow_table_empty_identifier));
 		header_to_row.emplace(new_row_header, table_data.size() - 1);
+		rows++;
 	}
 
 	void SLK::add_column(const std::string& header) {
@@ -259,7 +219,7 @@ namespace slk {
 			i.resize(columns);
 		}
 		for (auto&& i : shadow_data) {
-			i.resize(columns);
+			i.resize(columns, shadow_table_empty_identifier);
 		}
 		header_to_column.emplace(header, columns - 1);
 	}

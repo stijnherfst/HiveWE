@@ -1,5 +1,11 @@
 ﻿#include "stdafx.h"
 
+void Unit::update() {
+	matrix = glm::translate(glm::mat4(1.f), position);
+	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+}
+
 bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
@@ -17,13 +23,18 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		std::cout << "Unknown war3mapUnits.doo subversion: " << subversion << " Attempting to load but may crash\nPlease send this map to eejin\n";
 	}
 
-	units.resize(reader.read<uint32_t>());
-	for (auto&& i : units) {
+	const int unit_count = reader.read<uint32_t>();
+	for (int j = 0; j < unit_count; j++) {
+		Unit i;
 		i.id = reader.read_string(4);
 		i.variation = reader.read<uint32_t>();
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
-		i.scale = reader.read<glm::vec3>() / 128.f;
+
+		// Scale isn't actually used
+		//i.scale = reader.read<glm::vec3>() / 128.f;
+		reader.advance(12);
+		i.scale = glm::vec3(1.f);
 		
 		i.flags = reader.read<uint8_t>();
 
@@ -88,31 +99,14 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.custom_color = reader.read<uint32_t>();
 		i.waygate = reader.read<uint32_t>();
 		i.creation_number = reader.read<uint32_t>();
+
+		// Either a unit or an item
+		if (units_slk.row_header_exists(i.id) || i.id == "sloc") {
+			units.push_back(i);
+		} else {
+			items.push_back(i);
+		}
 	}
-
-	units_slk = slk::SLK("Units/UnitData.slk");
-	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
-	units_slk.merge(slk::SLK("Units/unitUI.slk"));
-	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
-	units_slk.merge(slk::SLK("Units/UnitAbilities.slk"));
-
-	units_slk.merge(ini::INI("Units/HumanUnitFunc.txt"));
-	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
-	units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"));
-	units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"));
-	units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"));
-
-	units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"));
-	units_slk.merge(ini::INI("Units/OrcUnitStrings.txt"));
-	units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"));
-	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
-	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
-
-	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
-
-	items_slk = slk::SLK("Units/ItemData.slk");
-	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
-	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
 
 	return true;
 }
@@ -124,63 +118,69 @@ void Units::save() const {
 	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(write_subversion);
 
-	writer.write<uint32_t>(units.size());
-	for (auto&& i : units) {
-		writer.write_string(i.id);
-		writer.write<uint32_t>(i.variation);
-		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
-		writer.write<float>(i.angle);
-		writer.write<glm::vec3>(i.scale * 128.f);
+	writer.write<uint32_t>(units.size() + items.size());
 
-		writer.write<uint8_t>(i.flags);
+	auto write_units = [&](const std::vector<Unit>& to_write) {
+		for (auto&& i : to_write) {
+			writer.write_string(i.id);
+			writer.write<uint32_t>(i.variation);
+			writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
+			writer.write<float>(i.angle);
+			writer.write<glm::vec3>(i.scale * 128.f);
 
-		writer.write<uint32_t>(i.player);
+			writer.write<uint8_t>(i.flags);
 
-		writer.write<uint8_t>(i.unknown1);
-		writer.write<uint8_t>(i.unknown2);
+			writer.write<uint32_t>(i.player);
 
-		writer.write<uint32_t>(i.health);
-		writer.write<uint32_t>(i.mana);
+			writer.write<uint8_t>(i.unknown1);
+			writer.write<uint8_t>(i.unknown2);
 
-		writer.write<uint32_t>(i.item_table_pointer);
+			writer.write<uint32_t>(i.health);
+			writer.write<uint32_t>(i.mana);
 
-		writer.write<uint32_t>(i.item_sets.size());
-		for (auto&& j : i.item_sets) {
-			writer.write<uint32_t>(j.items.size());
-			for (auto&&[id, chance] : j.items) {
-				writer.write_string(id);
-				writer.write<uint32_t>(chance);
+			writer.write<uint32_t>(i.item_table_pointer);
+
+			writer.write<uint32_t>(i.item_sets.size());
+			for (auto&& j : i.item_sets) {
+				writer.write<uint32_t>(j.items.size());
+				for (auto&&[id, chance] : j.items) {
+					writer.write_string(id);
+					writer.write<uint32_t>(chance);
+				}
 			}
+
+			writer.write<uint32_t>(i.gold);
+			writer.write<float>(i.target_acquisition);
+			writer.write<uint32_t>(i.level);
+			writer.write<uint32_t>(i.strength);
+			writer.write<uint32_t>(i.agility);
+			writer.write<uint32_t>(i.intelligence);
+
+
+			writer.write<uint32_t>(i.items.size());
+			for (auto&&[slot, id] : i.items) {
+				writer.write<uint32_t>(slot);
+				writer.write_string(id);
+			}
+
+			writer.write<uint32_t>(i.abilities.size());
+			for (auto&&[id, autocast, level] : i.abilities) {
+				writer.write_string(id);
+				writer.write<uint32_t>(autocast);
+				writer.write<uint32_t>(level);
+			}
+
+			writer.write<uint32_t>(i.random_type);
+			writer.write_vector(i.random);
+
+			writer.write<uint32_t>(i.custom_color);
+			writer.write<uint32_t>(i.waygate);
+			writer.write<uint32_t>(i.creation_number);
 		}
+	};
 
-		writer.write<uint32_t>(i.gold);
-		writer.write<float>(i.target_acquisition);
-		writer.write<uint32_t>(i.level);
-		writer.write<uint32_t>(i.strength);
-		writer.write<uint32_t>(i.agility);
-		writer.write<uint32_t>(i.intelligence);
-
-
-		writer.write<uint32_t>(i.items.size());
-		for (auto&&[slot, id] : i.items) {
-			writer.write<uint32_t>(slot);
-			writer.write_string(id);
-		}
-
-		writer.write<uint32_t>(i.abilities.size());
-		for (auto&&[id, autocast, level] : i.abilities) {
-			writer.write_string(id);
-			writer.write<uint32_t>(autocast);
-			writer.write<uint32_t>(level);
-		}
-
-		writer.write<uint32_t>(i.random_type);
-		writer.write_vector(i.random);
-
-		writer.write<uint32_t>(i.custom_color);
-		writer.write<uint32_t>(i.waygate);
-		writer.write<uint32_t>(i.creation_number);
-	}
+	write_units(units);
+	write_units(items);
 
 	HANDLE handle;
 	bool success = SFileCreateFile(hierarchy.map.handle, "war3mapUnits.doo", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
@@ -221,50 +221,65 @@ void Units::load_item_modifications(BinaryReader& reader) {
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
 		i->position.z = map.terrain.corner_height(i->position.x, i->position.y);
-		i->matrix = glm::translate(glm::mat4(1.f), i->position);
-		i->matrix = glm::scale(i->matrix, i->scale);
-		i->matrix = glm::rotate(i->matrix, i->angle, glm::vec3(0, 0, 1));
+		i->update();
 	}
 }
 
 void Units::create() {
 	for (auto&& i : units) {
-		i.matrix = glm::translate(i.matrix, i.position);
-		i.matrix = glm::scale(i.matrix, i.scale);
-		i.matrix = glm::rotate(i.matrix, i.angle, glm::vec3(0, 0, 1));
-
-		tree.insert(&i);
-
+		// ToDo handle starting location
 		if (i.id == "sloc") {
 			continue;
-		} // ToDo handle starting locations
-		if (id_to_mesh.find(i.id) != id_to_mesh.end()) {
-			continue;
 		}
+		i.scale = glm::vec3(std::stof(units_slk.data("modelScale", i.id)));
 
-		fs::path mesh_path = units_slk.data("file", i.id);
-		if (mesh_path.empty()) {
-			mesh_path = items_slk.data("file", i.id);
-		}
-		mesh_path.replace_extension(".mdx");
+		i.update();
 
-		// Mesh doesnt exist at all
-		if (!hierarchy.file_exists(mesh_path)) {
-			std::cout << "Invalid model file for " << i.id << " With file path: " << mesh_path << "\n";
-			id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
-			continue;
-		}
+		tree.insert(&i);
+		i.mesh = get_mesh(i.id);
+	}	
+	for (auto&& i : items) {
+		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
 
-		id_to_mesh.emplace(i.id, resource_manager.load<StaticMesh>(mesh_path));
+		i.update();
+
+		tree.insert(&i);
+		i.mesh = get_mesh(i.id);
 	}
 }
 
-void Units::render() {
+void Units::render() const {
 	for (auto&& i : units) {
 		if (i.id == "sloc") {
 			continue;
 		} // ToDo handle starting locations
 
-		id_to_mesh[i.id]->render_queue(i.matrix);
+		i.mesh->render_queue(i.matrix);
 	}
+	for (auto&& i : items) {
+		i.mesh->render_queue(i.matrix);
+	}
+}
+
+std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
+	if (id_to_mesh.find(id) != id_to_mesh.end()) {
+		return id_to_mesh[id];
+	}
+
+	fs::path mesh_path = units_slk.data("file", id);
+	if (mesh_path.empty()) {
+		mesh_path = items_slk.data("file", id);
+	}
+	mesh_path.replace_extension(".mdx");
+
+	// Mesh doesnt exist at all
+	if (!hierarchy.file_exists(mesh_path)) {
+		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
+		id_to_mesh.emplace(id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
+		return id_to_mesh[id];
+	}
+
+	id_to_mesh.emplace(id, resource_manager.load<StaticMesh>(mesh_path));
+
+	return id_to_mesh[id];
 }

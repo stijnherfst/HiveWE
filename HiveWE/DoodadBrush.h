@@ -6,20 +6,32 @@ class DoodadBrush : public Brush {
 
 	std::string id;
 	int variation;
+
 	std::shared_ptr<StaticMesh> mesh;
-	std::shared_ptr<Texture> pathing_texture;
 public:
+	Doodad::State state = Doodad::State::visible_solid;
+	std::shared_ptr<Texture> pathing_texture;
 
 	bool free_placement;
 	bool free_rotation;
 
 	bool random_variation = true;
+	bool random_scale = true;
+	bool random_rotation = true;
+
+	float scale = 1.f;
+	float min_scale = 1.f;
+	float max_scale = 1.f;
+
+	float rotation = 0.f;
 
 	void key_press_event(QKeyEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
 
 	std::vector<Doodad*> selections;
+
+	void clear_selection() override;
 
 	void apply() override;
 	void render_brush() const override;

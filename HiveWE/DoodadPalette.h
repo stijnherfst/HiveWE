@@ -2,7 +2,7 @@
 
 #include "ui_DoodadPalette.h"
 
-class DoodadPalette : public QDialog {
+class DoodadPalette : public Palette {
 	Q_OBJECT
 
 public:
@@ -23,6 +23,10 @@ private:
 	QRibbonButton* selection_mode = new QRibbonButton;
 
 	QRibbonContainer* variations = new QRibbonContainer;
-signals:
-	void ribbon_tab_requested(QRibbonTab* tab, QString name);
+
+	QRibbonSection* pathing_section = new QRibbonSection;
+	AspectRatioPixmapLabel* pathing_image_label = new AspectRatioPixmapLabel;
+
+public slots:
+	void deactivate(QRibbonTab* tab) override;
 };
