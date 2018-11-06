@@ -7,10 +7,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	brush.granularity = 4;
-	brush.uv_offset_locked = true;
-	brush.uv_offset = { 2, 2 };
-	brush.brush_offset = { 0.5f, 0.5f };
 	brush.tile_id = map.terrain.tileset_ids.front();
 	brush.create();
 	map.brush = &brush;

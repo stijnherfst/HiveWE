@@ -35,6 +35,7 @@ public:
 	};
 	cliff_operation cliff_operation_type = cliff_operation::level;
 
+	TerrainBrush();
 	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
 	void apply() override;
 	void apply_end() override;

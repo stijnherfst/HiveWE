@@ -5,7 +5,7 @@ void PathingBrush::apply() {
 	const int y = position.y * 4 + uv_offset.y;
 	const int cells = size * 2 + 1;
 
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, int(map.pathing_map.width), int(map.pathing_map.height) });
+	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, map.pathing_map.width, map.pathing_map.height });
 	
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -21,16 +21,16 @@ void PathingBrush::apply() {
 
 			const int index = offset + j * map.pathing_map.width + i;
 			switch (operation) {
-			case Operation::replace:
-				map.pathing_map.pathing_cells_static[index] &= ~0b00001110;
-				map.pathing_map.pathing_cells_static[index] |= brush_mask;
-				break;
-			case Operation::add:
-				map.pathing_map.pathing_cells_static[index] |= brush_mask;
-				break;
-			case Operation::remove:
-				map.pathing_map.pathing_cells_static[index] &= ~brush_mask;
-				break;
+				case Operation::replace:
+					map.pathing_map.pathing_cells_static[index] &= ~0b00001110;
+					map.pathing_map.pathing_cells_static[index] |= brush_mask;
+					break;
+				case Operation::add:
+					map.pathing_map.pathing_cells_static[index] |= brush_mask;
+					break;
+				case Operation::remove:
+					map.pathing_map.pathing_cells_static[index] &= ~brush_mask;
+					break;
 			}
 		}
 	}

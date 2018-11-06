@@ -25,11 +25,15 @@ public:
 
 	float rotation = 0.f;
 
+	std::vector<Doodad*> selections;
+
+	DoodadBrush();
+
+	void set_shape(const Shape new_shape) override;
+
 	void key_press_event(QKeyEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
-
-	std::vector<Doodad*> selections;
 
 	void clear_selection() override;
 

@@ -12,10 +12,25 @@ void Brush::create() {
 }
 
 void Brush::set_position(const glm::vec2& new_position) {
-	const glm::vec2 center_position = (new_position + brush_offset) - size * granularity * 0.25f;
+	const glm::vec2 center_position = (new_position + brush_offset) - size * size_granularity * 0.25f;
 	position = glm::floor(center_position) - glm::ceil(brush_offset);
 	if (!uv_offset_locked) {
-		uv_offset = glm::abs((center_position - glm::vec2(position)) * 4.f);
+		glm::vec2 decimals = center_position - glm::vec2(position);
+
+		switch (uv_offset_granularity) {
+			case 1:
+				uv_offset = { 0.f, 0.f };
+				break;
+			case 2:
+				decimals *= 2.f;
+				decimals = glm::floor(decimals);
+				decimals *= 2.f;
+				uv_offset = glm::abs(decimals);
+				break;
+			case 4:
+				uv_offset = glm::abs(decimals * 4.f);
+				break;
+		}
 	}
 }
 
@@ -27,28 +42,28 @@ void Brush::set_size(const int new_size) {
 	const int change = new_size - size;
 
 	size = std::clamp(new_size, 0, 240);
-	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
+	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
 	brush.clear();
 	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
 
 	set_shape(shape);
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset + new_size * granularity - change * granularity) * 0.25f);
+	set_position(glm::vec2(position) + glm::vec2(uv_offset + new_size * size_granularity - change * size_granularity) * 0.25f);
 }
 
 void Brush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
-	const int cells = std::ceil(((size * 2 + 1) * granularity + 3) / 4.f);
+	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
 
 	for (int i = 0; i < size * 2 + 1; i++) {
 		for (int j = 0; j < size * 2 + 1; j++) {
-			for (int k = 0; k < granularity; k++) {
-				for (int l = 0; l < granularity; l++) {
+			for (int k = 0; k < size_granularity; k++) {
+				for (int l = 0; l < size_granularity; l++) {
 					if (contains(i, j)) {
-						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = brush_color;
+						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = brush_color;
 					} else {
-						brush[(j * granularity + l) * cells * 4 + i * granularity + k] = { 0, 0, 0, 0 };
+						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = { 0, 0, 0, 0 };
 					}
 				}
 			}
@@ -176,7 +191,7 @@ void Brush::render_brush() const {
 	brush_shader->use();
 
 	// +3 for uv_offset so it can move sub terrain cell
-	const int cells = std::ceil(((this->size * 2 + 1) * granularity + 3) / 4.f);
+	const int cells = std::ceil(((this->size * 2 + 1) * size_granularity + 3) / 4.f);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform2f(2, position.x, position.y);

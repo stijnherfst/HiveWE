@@ -2,6 +2,12 @@
 
 // This whole class needs a bit of a rework
 
+TerrainBrush::TerrainBrush() {
+	size_granularity = 4;
+	uv_offset_locked = true;
+	uv_offset = { 2, 2 };
+	brush_offset = { 0.5f, 0.5f };
+}
 
 // Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {

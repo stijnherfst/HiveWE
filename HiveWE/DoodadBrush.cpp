@@ -1,5 +1,10 @@
 #include "stdafx.h"
 
+DoodadBrush::DoodadBrush() {
+	size_granularity = 2;
+	uv_offset_granularity = 2;
+}
+
 /// Gets a random variation from the possible_variation list
 int DoodadBrush::get_random_variation() {
 	if (possible_variations.size() == 0) {
@@ -13,6 +18,40 @@ int DoodadBrush::get_random_variation() {
 	auto it = possible_variations.begin();
 	std::advance(it, dist(rng));
 	return *it;
+}
+
+void DoodadBrush::set_shape(const Shape new_shape) {
+	shape = new_shape;
+
+	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
+
+	/*for (int i = 0; i < size * 2 + 1; i++) {
+		for (int j = 0; j < size * 2 + 1; j++) {
+			for (int k = 0; k < size_granularity; k++) {
+				for (int l = 0; l < size_granularity; l++) {
+					if (contains(i, j)) {
+						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = brush_color;
+					} else {
+						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = { 0, 0, 0, 0 };
+					}
+				}
+			}
+		}
+	}*/
+
+	if (pathing_texture) {
+
+		for (int i = 0; i < pathing_texture->width; i++) {
+			for (int j = 0; j < pathing_texture->height; j++) {
+				brush[j * pathing_texture->width + i] = pathing_texture->data[j * pathing_texture->width + i];
+			}
+		}
+	} else {
+		puts("\n");
+	}
+
+	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
+	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
@@ -101,7 +140,7 @@ void DoodadBrush::apply() {
 void DoodadBrush::render_brush() const {
 	//int cells = 
 	//for ()
-
+	Brush::render_brush();
 
 	glm::mat4 matrix(1.f);
 	if (free_placement) {
@@ -181,6 +220,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			free_placement = false;
 			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
+			set_size(pathing_texture->width);
+
 			free_rotation = pathing_texture->width == pathing_texture->height;
 			free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
 		} else {
