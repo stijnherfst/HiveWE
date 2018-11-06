@@ -43,7 +43,7 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 		for (int i = 0; i < pathing_texture->width; i++) {
 			for (int j = 0; j < pathing_texture->height; j++) {
-				brush[j * pathing_texture->width + i] = pathing_texture->data[j * pathing_texture->width + i];
+//				brush[j * pathing_texture->width + i] = pathing_texture->data[j * pathing_texture->width + i];
 			}
 		}
 	} else {

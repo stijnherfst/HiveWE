@@ -189,7 +189,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	game_section->setText("Game");
 
 	switch_warcraft->setIcon(QIcon("Data/Icons/Ribbon/WarIII32x32.ico"));
-	switch_warcraft->setText("Change Game folder");
+	switch_warcraft->setText("Change\n Game folder");
 	game_section->addWidget(switch_warcraft);
 
 	tools_tab->addSection(game_section);	
