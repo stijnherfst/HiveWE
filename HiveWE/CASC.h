@@ -32,8 +32,8 @@ namespace casc {
 
 		CASC() = default;
 
-		explicit CASC(const fs::path& path, unsigned long flags = 0);
-		explicit CASC(File archive, unsigned long flags = 0);
+		explicit CASC(const fs::path& path);
+		explicit CASC(File archive);
 		~CASC();
 		CASC(CASC&& move) noexcept {
 			handle = move.handle;
@@ -47,7 +47,7 @@ namespace casc {
 			return *this;
 		}
 
-		void open(const fs::path& path, unsigned long flags = 0);
+		void open(const fs::path& path);
 		void close();
 
 		File file_open(const fs::path& path) const;

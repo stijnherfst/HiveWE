@@ -30,15 +30,15 @@ namespace casc {
 	}
 
 	// CASC
-	CASC::CASC(const fs::path& path, const unsigned long flags) {
-		open(path, flags);
+	CASC::CASC(const fs::path& path) {
+		open(path);
 	}
 
 	CASC::~CASC() {
 		close();
 	}
 
-	void CASC::open(const fs::path& path, const unsigned long flags) {
+	void CASC::open(const fs::path& path) {
 		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
 			std::wcout << "Error opening " << path << " with error:" << GetLastError() << std::endl;
