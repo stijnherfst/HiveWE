@@ -183,7 +183,16 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	change_tile_pathing->setText("Change Tile\nPathing");
 	tileset_section->addWidget(change_tile_pathing);
 
-	tools_tab->addSection(tileset_section);	
+	tools_tab->addSection(tileset_section);
+
+	QRibbonSection* game_section = new QRibbonSection;
+	game_section->setText("Game");
+
+	switch_warcraft->setIcon(QIcon("Data/Icons/Ribbon/WarIII32x32.ico"));
+	switch_warcraft->setText("Change Game folder");
+	game_section->addWidget(switch_warcraft);
+
+	tools_tab->addSection(game_section);	
 
 	// Window Tab
 	QRibbonTab* window_tab = new QRibbonTab;

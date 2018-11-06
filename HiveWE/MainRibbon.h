@@ -26,6 +26,7 @@ public:
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;
 	QRibbonButton* change_tile_pathing = new QRibbonButton;
+	QRibbonButton* switch_warcraft = new QRibbonButton;
 
 	QRibbonButton* import_manager = new QRibbonButton;
 	QRibbonButton* trigger_viewer = new QRibbonButton;

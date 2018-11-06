@@ -64,6 +64,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
+	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
 	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
 
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
@@ -168,13 +169,18 @@ void HiveWE::switch_warcraft() {
 	fs::path directory;
 	do {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+		if (directory == "")
+			directory = hierarchy.warcraft_directory;
 	} while (!fs::exists(directory / "Data"));
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
-	hierarchy.game_data.close();
-	hierarchy.warcraft_directory = directory;
-	hierarchy.init();
+	if (directory != hierarchy.warcraft_directory)
+	{
+		hierarchy.game_data.close();
+		hierarchy.warcraft_directory = directory;
+		hierarchy.init();
+	}
 }
 
 void HiveWE::switch_camera() {
