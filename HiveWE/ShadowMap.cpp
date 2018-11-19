@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 bool ShadowMap::load(BinaryReader& reader) {
-	width = map.terrain.width * 4;
-	height = map.terrain.height * 4;
+	width = map->terrain.width * 4;
+	height = map->terrain.height * 4;
 
 	cells = reader.read_vector<uint8_t>(width * height);
 

@@ -118,3 +118,5 @@ namespace fs = std::filesystem;
 #include "TilePicker.h"
 #include "TileSetter.h"
 #include "TilePather.h"
+
+#include "Minimap.h"

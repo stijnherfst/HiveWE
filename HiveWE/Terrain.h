@@ -1,7 +1,5 @@
 #pragma once
 
-// These classes will be rewritten to use SOA instead of AOS
-
 struct Corner {
 	bool map_edge;
 
@@ -34,7 +32,11 @@ struct TilePathingg {
 	}
 };
 
-class Terrain {
+class Terrain : public QObject {
+	Q_OBJECT
+
+	static const int write_version = 11;
+
 public:
 	char tileset;
 	std::vector<std::string> tileset_ids;
@@ -121,4 +123,9 @@ public:
 	int real_tile_texture(int x, int y) const;
 	int get_tile_variation(int ground_texture, int variation) const;
 	glm::u16vec4 get_texture_variations(int x, int y) const;
+
+	Texture minimap_image();
+
+signals:
+	void minimap_changed(Texture minimap);
 };

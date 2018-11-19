@@ -92,7 +92,7 @@ void MapInfo::load(BinaryReader& reader) {
 		}
 
 		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of atleast 12
-		if (map.is_protected) {
+		if (map->is_protected) {
 			return;
 		}
 
@@ -189,7 +189,7 @@ void MapInfo::save() const {
 		std::cout << "Flags not equivalent\n";
 	}
 
-	writer.write(map.terrain.tileset);
+	writer.write(map->terrain.tileset);
 
 	writer.write(loading_screen_number);
 	writer.write_c_string(loading_screen_model);

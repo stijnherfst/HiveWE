@@ -3,7 +3,9 @@
 GroundTexture::GroundTexture(const fs::path& path) {
 	if (path.extension() == ".blp" || path.extension() == ".BLP") {
 		BinaryReader reader = hierarchy.open_file(path);
-		auto [width, height, data] = blp::BLP(reader).mipmaps.front();
+
+		blp::BLP blp = blp::BLP(reader);
+		auto[width, height, data] = blp.mipmaps.front();
 
 		tile_size = height * 0.25;
 		extended = (width == height * 2);
@@ -26,6 +28,10 @@ GroundTexture::GroundTexture(const fs::path& path) {
 		}
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		gl->glGenerateTextureMipmap(id);
+
+		// Find mipmap where each tile is 1x1 px
+		int mipmap_number = std::log2(width);
+		minimap_color = *reinterpret_cast<glm::u8vec4*>(std::get<2>(blp.mipmaps[mipmap_number]).data());
 	} else {
 		static_assert("Haven't handled loading non .blp images yet");
 		id = SOIL_load_OGL_texture(path.string().c_str(), SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);

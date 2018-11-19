@@ -63,7 +63,7 @@ void PathingMap::save() const {
 }
 
 void PathingMap::update_dynamic() {
-	for (const auto& i : map.doodads.doodads) {
+	for (const auto& i : map->doodads.doodads) {
 		if (!i.pathing || doodads_slk.row_header_exists(i.id)) {
 			continue;
 		}

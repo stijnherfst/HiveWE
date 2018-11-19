@@ -119,7 +119,7 @@ void StaticMesh::render_queue(const glm::mat4& mvp){
 	render_jobs.push_back(mvp);
 
 	if (render_jobs.size() == 1) {
-		map.meshes.push_back(this);
+		map->meshes.push_back(this);
 	}
 }
 

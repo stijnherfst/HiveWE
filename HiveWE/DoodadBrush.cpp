@@ -58,13 +58,13 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Delete:
 			if (selections.size()) {
-				map.doodads.remove_doodads(selections);
+				map->doodads.remove_doodads(selections);
 				selections.clear();
 			}
 			break;
 		case Qt::Key_A:
 			if (event->modifiers() & Qt::ControlModifier) {
-				selections = map.doodads.query_area({0.0, 0.0, static_cast<double>(map.terrain.width), static_cast<double>(map.terrain.height)});
+				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
 			}
 			break;
 		default:
@@ -90,7 +90,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 				}
 			} else {
 				glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
-				selections = map.doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 			}
 		}
 	}
@@ -113,7 +113,7 @@ void DoodadBrush::apply() {
 		position = glm::vec3(glm::trunc(glm::vec2(input_handler.mouse_world) * 2.f) * 0.5f + 0.25f, input_handler.mouse_world.z);
 	}
 
-	Doodad& doodad = map.doodads.add_doodad(id, variation, position);
+	Doodad& doodad = map->doodads.add_doodad(id, variation, position);
 	doodad.scale = glm::vec3(scale);
 	doodad.angle = rotation;
 	doodad.state = state;
@@ -180,7 +180,7 @@ void DoodadBrush::render_selection() const {
 
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
-	mesh = map.doodads.get_mesh(id, variation);
+	mesh = map->doodads.get_mesh(id, variation);
 }
 
 void DoodadBrush::add_variation(int variation) {

@@ -77,7 +77,7 @@ void Doodads::save() const {
 	for (auto&& i : doodads) {
 		writer.write_string(i.id);
 		writer.write<uint32_t>(i.variation);
-		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
+		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map->terrain.offset, 0));
 		writer.write<float>(i.angle);
 		writer.write<glm::vec3>(i.scale);
 
@@ -147,7 +147,7 @@ void Doodads::update_area(const QRect& area) {
 	// ToDo optimize with parallel for?
 	for (auto&& i : doodads) {
 		if (area.contains(i.position.x, i.position.y)) {
-			i.position.z = map.terrain.corner_height(i.position.x, i.position.y);
+			i.position.z = map->terrain.corner_height(i.position.x, i.position.y);
 			i.update();
 		}
 	}

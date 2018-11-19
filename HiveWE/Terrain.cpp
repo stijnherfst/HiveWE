@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-// These classes will be rewritten to use SOA instead of AOS
-
 Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &ground_height);
 	gl->glDeleteTextures(1, &ground_corner_height);
@@ -276,12 +274,9 @@ bool Terrain::load(BinaryReader& reader) {
 			Corner& top_left = corners[i][j + 1];
 			Corner& top_right = corners[i + 1][j + 1];
 
-			if (bottom_left.layer_height != bottom_right.layer_height
+			bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
 				|| bottom_left.layer_height != top_left.layer_height
-				|| bottom_left.layer_height != top_right.layer_height) {
-
-				bottom_left.cliff = true;
-			}
+				|| bottom_left.layer_height != top_right.layer_height;
 		}
 	}
 	// Done parsing
@@ -294,43 +289,43 @@ bool Terrain::load(BinaryReader& reader) {
 
 	// Water Textures and Colours
 
-	water_offset = std::stof(water_slk.data("height", tileset + "Sha"s));
-	water_textures_nr = std::stoi(water_slk.data("numTex", tileset + "Sha"s));
-	animation_rate = std::stoi(water_slk.data("texRate", tileset + "Sha"s));
+	water_offset = water_slk.data<float>("height", tileset + "Sha"s);
+	water_textures_nr = water_slk.data<int>("numTex", tileset + "Sha"s);
+	animation_rate = water_slk.data<int>("texRate", tileset + "Sha"s);
 
 	std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
 	for (int i = 0; i < water_textures_nr; i++) {
-		water_textures.push_back(resource_manager.load<Texture>(file_name + (i < 10 ? "0" + std::to_string(i) : std::to_string(i)) + ".blp"));
+		water_textures.push_back(resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp"));
 	}
 
-	int red = std::stoi(water_slk.data("Smin_R", tileset + "Sha"s));
-	int green = std::stoi(water_slk.data("Smin_G", tileset + "Sha"s));
-	int blue = std::stoi(water_slk.data("Smin_B", tileset + "Sha"s));
-	int alpha = std::stoi(water_slk.data("Smin_A", tileset + "Sha"s));
+	int red =	water_slk.data<int>("Smin_R", tileset + "Sha"s);
+	int green = water_slk.data<int>("Smin_G", tileset + "Sha"s);
+	int blue =	water_slk.data<int>("Smin_B", tileset + "Sha"s);
+	int alpha = water_slk.data<int>("Smin_A", tileset + "Sha"s);
 
 	shallow_color_min = { red, green, blue, alpha };
 	shallow_color_min /= 255.f;
 
-	red = std::stoi(water_slk.data("Smax_R", tileset + "Sha"s));
-	green = std::stoi(water_slk.data("Smax_G", tileset + "Sha"s));
-	blue = std::stoi(water_slk.data("Smax_B", tileset + "Sha"s));
-	alpha = std::stoi(water_slk.data("Smax_A", tileset + "Sha"s));
+	red =	water_slk.data<int>("Smax_R", tileset + "Sha"s);
+	green = water_slk.data<int>("Smax_G", tileset + "Sha"s);
+	blue =	water_slk.data<int>("Smax_B", tileset + "Sha"s);
+	alpha = water_slk.data<int>("Smax_A", tileset + "Sha"s);
 
 	shallow_color_max = { red, green, blue, alpha };
 	shallow_color_max /= 255.f;
 
-	red = std::stoi(water_slk.data("Dmin_R", tileset + "Sha"s));
-	green = std::stoi(water_slk.data("Dmin_G", tileset + "Sha"s));
-	blue = std::stoi(water_slk.data("Dmin_B", tileset + "Sha"s));
-	alpha = std::stoi(water_slk.data("Dmin_A", tileset + "Sha"s));
+	red =	water_slk.data<int>("Dmin_R", tileset + "Sha"s);
+	green = water_slk.data<int>("Dmin_G", tileset + "Sha"s);
+	blue =	water_slk.data<int>("Dmin_B", tileset + "Sha"s);
+	alpha = water_slk.data<int>("Dmin_A", tileset + "Sha"s);
 
 	deep_color_min = { red, green, blue, alpha };
 	deep_color_min /= 255.f;
 
-	red = std::stoi(water_slk.data("Dmax_R", tileset + "Sha"s));
-	green = std::stoi(water_slk.data("Dmax_G", tileset + "Sha"s));
-	blue = std::stoi(water_slk.data("Dmax_B", tileset + "Sha"s));
-	alpha = std::stoi(water_slk.data("Dmax_A", tileset + "Sha"s));
+	red =	water_slk.data<int>("Dmax_R", tileset + "Sha"s);
+	green = water_slk.data<int>("Dmax_G", tileset + "Sha"s);
+	blue =	water_slk.data<int>("Dmax_B", tileset + "Sha"s);
+	alpha = water_slk.data<int>("Dmax_A", tileset + "Sha"s);
 
 	deep_color_max = { red, green, blue, alpha };
 	deep_color_max /= 255.f;
@@ -338,12 +333,12 @@ bool Terrain::load(BinaryReader& reader) {
 	// Cliff Meshes
 	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
 	for (size_t i = 1; i < cliffs_slk.rows; i++) {
-		for (int j = 0; j < std::stoi(cliffs_slk.data("variations", i)) + 1; j++) {
+		for (int j = 0; j < cliffs_slk.data<int>("variations", i) + 1; j++) {
 			file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffID", i) + std::to_string(j) + ".mdx";
 			cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
 			path_to_cliff.emplace(cliffs_slk.data("cliffID", i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
 		}
-		cliff_variations.emplace(cliffs_slk.data("cliffID", i), std::stoi(cliffs_slk.data("variations", i)));
+		cliff_variations.emplace(cliffs_slk.data("cliffID", i), cliffs_slk.data<int>("variations", i));
 	}
 
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
@@ -358,7 +353,7 @@ bool Terrain::load(BinaryReader& reader) {
 void Terrain::save() const {
 	BinaryWriter writer;
 	writer.write_string("W3E!");
-	writer.write(11);
+	writer.write(write_version);
 	writer.write(tileset);
 	writer.write(1);
 	writer.write<uint32_t>(tileset_ids.size());
@@ -416,8 +411,8 @@ void Terrain::render() const {
 	gl->glDisable(GL_BLEND);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
-	gl->glUniform1i(2, map.render_pathing);
-	gl->glUniform1i(3, map.render_lighting);
+	gl->glUniform1i(2, map->render_pathing);
+	gl->glUniform1i(3, map->render_lighting);
 
 	gl->glBindTextureUnit(0, ground_height);
 	gl->glBindTextureUnit(1, ground_corner_height);
@@ -426,8 +421,8 @@ void Terrain::render() const {
 	for (size_t i = 0; i < ground_textures.size(); i++) {
 		gl->glBindTextureUnit(3 + i, ground_textures[i]->id);
 	}
-	gl->glBindTextureUnit(20, map.pathing_map.texture_static);
-	gl->glBindTextureUnit(21, map.pathing_map.texture_dynamic);
+	gl->glBindTextureUnit(20, map->pathing_map.texture_static);
+	gl->glBindTextureUnit(21, map->pathing_map.texture_dynamic);
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
@@ -441,7 +436,7 @@ void Terrain::render() const {
 	gl->glEnable(GL_BLEND);
 
 	auto end = std::chrono::high_resolution_clock::now();
-	map.terrain_tiles_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	map->terrain_tiles_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	// Render cliffs
 	begin = std::chrono::high_resolution_clock::now();
@@ -460,20 +455,21 @@ void Terrain::render() const {
 
 	cliff_shader->use();
 
+	// WC3 models are 128x too large
 	glm::mat4 MVP = glm::scale(camera->projection_view, glm::vec3(1.f / 128.f));
 	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &MVP[0][0]);
-	gl->glUniform1i(1, map.render_pathing);
-	gl->glUniform1i(2, map.render_lighting);
+	gl->glUniform1i(1, map->render_pathing);
+	gl->glUniform1i(2, map->render_lighting);
 
 	gl->glBindTextureUnit(0, cliff_texture_array);
 	gl->glBindTextureUnit(1, ground_height);
-	gl->glBindTextureUnit(2, map.pathing_map.texture_static);
+	gl->glBindTextureUnit(2, map->pathing_map.texture_static);
 	for (auto&& i : cliff_meshes) {
 		i->render();
 	}
 
 	end = std::chrono::high_resolution_clock::now();
-	map.terrain_cliff_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	map->terrain_cliff_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 
 	// Render water
 	begin = std::chrono::high_resolution_clock::now();
@@ -505,7 +501,7 @@ void Terrain::render() const {
 	gl->glEnable(GL_BLEND);
 
 	end = std::chrono::high_resolution_clock::now();
-	map.terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
+	map->terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 }
 
 void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {
@@ -628,4 +624,8 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 		tiles[component++] = texture + (index.to_ulong() << 5);
 	}
 	return tiles;
+}
+
+Texture Terrain::minimap_image() {
+	return Texture("war3mapMap.blp");
 }

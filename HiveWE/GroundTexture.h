@@ -5,6 +5,7 @@ public:
 	GLuint id = 0;
 	int tile_size;
 	bool extended = false;
+	glm::vec4 minimap_color;
 
 	static constexpr const char* name = "GroundTexture";
 

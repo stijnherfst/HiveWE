@@ -11,7 +11,7 @@ TerrainBrush::TerrainBrush() {
 
 // Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map.terrain.width, map.terrain.height });
+	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
 
 	for (int k = bounds.x(); k <= bounds.right(); k++) {
 		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
@@ -19,10 +19,10 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 				continue;
 			}
 
-			int difference = map.terrain.corners[i][j].layer_height - map.terrain.corners[k][l].layer_height;
+			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
 			if (std::abs(difference) > 2 && !contains(begx + (k - i), begy + (l - k))) {
-				map.terrain.corners[k][l].layer_height = map.terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
-				map.terrain.ground_corner_heights[l * map.terrain.width + k] = map.terrain.corner_height(k, l);
+				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
+				map->terrain.ground_corner_heights[l * map->terrain.width + k] = map->terrain.corner_height(k, l);
 
 				area.setX(std::min(area.x(), k - 1));
 				area.setY(std::min(area.y(), l - 1));
@@ -36,11 +36,11 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 };
 
 void TerrainBrush::apply() {
-	int width = map.terrain.width;
-	int height = map.terrain.height;
-	auto& corners = map.terrain.corners;
-	auto& ground_heights = map.terrain.ground_heights;
-	auto& water_heights = map.terrain.water_heights;
+	int width = map->terrain.width;
+	int height = map->terrain.height;
+	auto& corners = map->terrain.corners;
+	auto& ground_heights = map->terrain.ground_heights;
+	auto& water_heights = map->terrain.water_heights;
 
 	const int x = position.x + 1;
 	const int y = position.y + 1;
@@ -55,7 +55,7 @@ void TerrainBrush::apply() {
 	}
 
 	if (apply_texture) {
-		const int id = map.terrain.ground_texture_to_id[tile_id];
+		const int id = map->terrain.ground_texture_to_id[tile_id];
 
 		// Update textures
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
@@ -74,7 +74,7 @@ void TerrainBrush::apply() {
 				}
 
 				// Blight shouldnt be set when there is a cliff near
-				if (id == map.terrain.blight_texture) {
+				if (id == map->terrain.blight_texture) {
 					if (cliff_near) {
 						continue;
 					}
@@ -88,25 +88,25 @@ void TerrainBrush::apply() {
 				// Set blight pathing
 				for (int k = 0; k < 4; k++) {
 					for (int l = 0; l < 4; l++) {
-						if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
+						if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
 							continue;
 						}
-						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00100000;
-						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].blight ? 1 : 0;
+						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00100000;
+						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= corners[i][j].blight ? 1 : 0;
 					}
 				}
 
 				if (apply_tile_pathing) {
 					for (int k = -2; k < 2; k++) {
 						for (int l = -2; l < 2; l++) {
-							if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
+							if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
 								continue;
 							}
 							if (corners[i + std::clamp(k, -1, 0)][j + std::clamp(l, -1, 0)].cliff) {
 								continue;
 							}
-							map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-							map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[tile_id].mask();
+							map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00001110;
+							map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= map->terrain.pathing_options[tile_id].mask();
 						}
 					}
 				}
@@ -116,9 +116,9 @@ void TerrainBrush::apply() {
 		// Update texture variations
 		for (int i = area2.x(); i < area2.x() + area2.width(); i++) {
 			for (int j = area2.y(); j < area2.y() + area2.height(); j++) {
-				map.terrain.ground_texture_list[j * (width - 1) + i] = map.terrain.get_texture_variations(i, j);
+				map->terrain.ground_texture_list[j * (width - 1) + i] = map->terrain.get_texture_variations(i, j);
 				if (corners[i][j].cliff) {
-					map.terrain.ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
+					map->terrain.ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
 				}
 			}
 		}
@@ -126,7 +126,7 @@ void TerrainBrush::apply() {
 		// Update ground texture data
 		const int offset = area2.y() * (width - 1) + area2.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width - 1);
-		gl->glTextureSubImage2D(map.terrain.ground_texture_data, 0, area2.x(), area2.y(), area2.width(), area2.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map.terrain.ground_texture_list.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.ground_texture_data, 0, area2.x(), area2.y(), area2.width(), area2.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map->terrain.ground_texture_list.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 
@@ -182,14 +182,14 @@ void TerrainBrush::apply() {
 					}
 				}
 				ground_heights[j * width + i] = std::clamp(ground_heights[j * width + i], -16.f, 15.998f);
-				map.terrain.ground_corner_heights[j * width + i] = map.terrain.corner_height(i, j);
+				map->terrain.ground_corner_heights[j * width + i] = map->terrain.corner_height(i, j);
 			}
 
 		}
-		const int offset = area.y() * map.terrain.width + area.x();
+		const int offset = area.y() * map->terrain.width + area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
-		gl->glTextureSubImage2D(map.terrain.ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map.terrain.ground_heights.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map->terrain.ground_corner_heights.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map->terrain.ground_heights.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	}
 
@@ -202,7 +202,7 @@ void TerrainBrush::apply() {
 				case cliff_operation::shallow_water:
 					if (!corners[center_x][center_y].water) {
 						layer_height -= 1;
-					} else if (map.terrain.corner_water_height(center_x, center_y) > map.terrain.corner_height(center_x, center_y) + 1) {
+					} else if (map->terrain.corner_water_height(center_x, center_y) > map->terrain.corner_height(center_x, center_y) + 1) {
 						layer_height += 1;
 					}
 					break;
@@ -214,7 +214,7 @@ void TerrainBrush::apply() {
 				case cliff_operation::deep_water:
 					if (!corners[center_x][center_y].water) {
 						layer_height -= 2;
-					} else if (map.terrain.corner_water_height(center_x, center_y) < map.terrain.corner_height(center_x, center_y) + 1) {
+					} else if (map->terrain.corner_water_height(center_x, center_y) < map->terrain.corner_height(center_x, center_y) + 1) {
 						layer_height -= 1;
 					}
 					break;
@@ -244,16 +244,16 @@ void TerrainBrush::apply() {
 					case cliff_operation::raise2:
 						corners[i][j].layer_height = layer_height;
 						if (corners[i][j].water) {
-							if (enforce_water_height_limits && map.terrain.corner_water_height(i, j) < map.terrain.corner_height(i, j)) {
+							if (enforce_water_height_limits && map->terrain.corner_water_height(i, j) < map->terrain.corner_height(i, j)) {
 								corners[i][j].water = false;
-								map.terrain.water_exists_data[j * width + i] = false;
+								map->terrain.water_exists_data[j * width + i] = false;
 							}
 						}
 						break;
 					case cliff_operation::shallow_water:
 						if (!corners[i][j].water) {
 							corners[i][j].water = true;
-							map.terrain.water_exists_data[j * width + i] = true;
+							map->terrain.water_exists_data[j * width + i] = true;
 				  		}
 						corners[i][j].layer_height = layer_height;
 						water_heights[j * width + i] = corners[i][j].layer_height - 1;
@@ -261,7 +261,7 @@ void TerrainBrush::apply() {
 					case cliff_operation::deep_water:
 						if (!corners[i][j].water) {
 							corners[i][j].water = true;
-							map.terrain.water_exists_data[j * width + i] = true;
+							map->terrain.water_exists_data[j * width + i] = true;
 						}
 						corners[i][j].layer_height = layer_height;
 						water_heights[j * width + i] = corners[i][j].layer_height;
@@ -270,17 +270,17 @@ void TerrainBrush::apply() {
 				// Set water pathing
 				for (int k = 0; k < 4; k++) {
 					for (int l = 0; l < 4; l++) {
-						if (i * 4 + k < 0 || i * 4 + k >= map.pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map.pathing_map.height) {
+						if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
 							continue;
 						}
 
-						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b01000000;
-						map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= corners[i][j].water ? 1 : 0;
+						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01000000;
+						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= corners[i][j].water ? 1 : 0;
 					}
 				}
 
 				check_nearby(x, y, i, j, updated_area);
-				map.terrain.ground_corner_heights[j * width + i] = map.terrain.corner_height(i, j);
+				map->terrain.ground_corner_heights[j * width + i] = map->terrain.corner_height(i, j);
 			}
 		}
 
@@ -288,20 +288,20 @@ void TerrainBrush::apply() {
 		updated_area = updated_area.intersected({ 0, 0, width - 1, height - 1 });
 
 		// Remove all existing cliff meshes in area
-		for (size_t i = map.terrain.cliffs.size(); i-- > 0;) {
-			glm::ivec3& pos = map.terrain.cliffs[i];
+		for (size_t i = map->terrain.cliffs.size(); i-- > 0;) {
+			glm::ivec3& pos = map->terrain.cliffs[i];
 			if (updated_area.contains(pos.x, pos.y)) {
-				map.terrain.cliffs.erase(map.terrain.cliffs.begin() + i);
+				map->terrain.cliffs.erase(map->terrain.cliffs.begin() + i);
 			}
 		}
 
 		// Determine if cliff
 		for (int i = updated_area.x(); i <= updated_area.right(); i++) {
 			for (int j = updated_area.y(); j <= updated_area.bottom(); j++) {
-				Corner& bottom_left = map.terrain.corners[i][j];
-				Corner& bottom_right = map.terrain.corners[i + 1][j];
-				Corner& top_left = map.terrain.corners[i][j + 1];
-				Corner& top_right = map.terrain.corners[i + 1][j + 1];
+				Corner& bottom_left = map->terrain.corners[i][j];
+				Corner& bottom_right = map->terrain.corners[i + 1][j];
+				Corner& top_left = map->terrain.corners[i][j + 1];
+				Corner& top_right = map->terrain.corners[i + 1][j + 1];
 
 				const bool was_cliff = bottom_left.cliff;
 
@@ -313,9 +313,9 @@ void TerrainBrush::apply() {
 					if (apply_cliff_pathing && apply_tile_pathing) {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
-								const int id = map.terrain.corners[i  ][j ].ground_texture;
-								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= map.terrain.pathing_options[map.terrain.tileset_ids[id]].mask();
+								const int id = map->terrain.corners[i  ][j ].ground_texture;
+								map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00001110;
+								map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
 							}
 						}
 					}
@@ -336,15 +336,15 @@ void TerrainBrush::apply() {
 					}
 
 					// Clamp to within max variations
-					file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, map.terrain.cliff_variations[file_name]));
+					file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, map->terrain.cliff_variations[file_name]));
 
-					map.terrain.cliffs.emplace_back(i, j, map.terrain.path_to_cliff[file_name]);
+					map->terrain.cliffs.emplace_back(i, j, map->terrain.path_to_cliff[file_name]);
 
 					if (apply_cliff_pathing) {
 						for (int k = 0; k < 4; k++) {
 							for (int l = 0; l < 4; l++) {
-								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] &= ~0b00001110;
-								map.pathing_map.pathing_cells_static[(j * 4 + l) * map.pathing_map.width + i * 4 + k] |= 0b00001010;
+								map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00001110;
+								map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= 0b00001010;
 							}
 						}
 					}
@@ -358,50 +358,50 @@ void TerrainBrush::apply() {
 		// Update texture variations
 		for (int i = tile_area.x(); i < tile_area.x() + tile_area.width(); i++) {
 			for (int j = tile_area.y(); j < tile_area.y() + tile_area.height(); j++) {
-				map.terrain.ground_texture_list[j * (width - 1) + i] = map.terrain.get_texture_variations(i, j);
+				map->terrain.ground_texture_list[j * (width - 1) + i] = map->terrain.get_texture_variations(i, j);
 				if (corners[i][j].cliff) {
-					map.terrain.ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
+					map->terrain.ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
 				}
 			}
 		}
 
 		int offset = tile_area.y() * (width - 1) + tile_area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width - 1);
-		gl->glTextureSubImage2D(map.terrain.ground_texture_data, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map.terrain.ground_texture_list.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.ground_texture_data, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, map->terrain.ground_texture_list.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 		offset = updated_area.y() * width + updated_area.x();
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-		gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, updated_area.x(), updated_area.y(), updated_area.width() + 1, updated_area.height() + 1, GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.ground_corner_height, 0, updated_area.x(), updated_area.y(), updated_area.width() + 1, updated_area.height() + 1, GL_RED, GL_FLOAT, map->terrain.ground_corner_heights.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 		offset = tile_area.y() * width + tile_area.x();
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-		gl->glTextureSubImage2D(map.terrain.water_exists, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RED, GL_UNSIGNED_BYTE, map.terrain.water_exists_data.data() + offset);
+		gl->glTextureSubImage2D(map->terrain.water_exists, 0, tile_area.x(), tile_area.y(), tile_area.width(), tile_area.height(), GL_RED, GL_UNSIGNED_BYTE, map->terrain.water_exists_data.data() + offset);
 		gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
 		if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
 			offset = corner_area.y() * width + corner_area.x();
 			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-			gl->glTextureSubImage2D(map.terrain.water_height, 0, corner_area.x(), corner_area.y(), corner_area.width(), corner_area.height(), GL_RED, GL_FLOAT, map.terrain.water_heights.data() + offset);
+			gl->glTextureSubImage2D(map->terrain.water_height, 0, corner_area.x(), corner_area.y(), corner_area.width(), corner_area.height(), GL_RED, GL_FLOAT, map->terrain.water_heights.data() + offset);
 			gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		}
 
 	}
 
-	QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map.pathing_map.width, map.pathing_map.height });
+	QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
 
 	// Update pathing data
-	const int offset = pathing_area.y() * map.pathing_map.width + pathing_area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map.pathing_map.width);
-	gl->glTextureSubImage2D(map.pathing_map.texture_static, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells_static.data() + offset);
+	const int offset = pathing_area.y() * map->pathing_map.width + pathing_area.x();
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map->pathing_map.width);
+	gl->glTextureSubImage2D(map->pathing_map.texture_static, 0, pathing_area.x(), pathing_area.y(), pathing_area.width(), pathing_area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 
 	if (apply_height || apply_cliff) {
-		map.doodads.update_area(updated_area);
-		map.units.update_area(updated_area);
+		map->doodads.update_area(updated_area);
+		map->units.update_area(updated_area);
 	}
 
 	brush_hold = true;

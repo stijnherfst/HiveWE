@@ -7,7 +7,7 @@ PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 	show();
 
 	brush.create();
-	map.brush = &brush;
+	map->brush = &brush;
 
 	connect(ui.replaceType, &QPushButton::clicked, [&]() { brush.operation = PathingBrush::Operation::replace; });
 	connect(ui.addType, &QPushButton::clicked, [&]() { brush.operation = PathingBrush::Operation::add; });
@@ -40,12 +40,12 @@ PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 }
 
 PathingPallete::~PathingPallete() {
-	map.brush = nullptr;
+	map->brush = nullptr;
 }
 
 bool PathingPallete::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
-		map.brush = &brush;
+		map->brush = &brush;
 	}
 	return QWidget::event(e);
 }

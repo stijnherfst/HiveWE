@@ -8,14 +8,14 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
 
-	for (auto&&[tile_id, options] : map.terrain.pathing_options) {
+	for (auto&&[tile_id, options] : map->terrain.pathing_options) {
 		pathing_options[tile_id].unwalkable = options.unwalkable;
 		pathing_options[tile_id].unflyable = options.unflyable;
 		pathing_options[tile_id].unbuildable = options.unbuildable;
 	}
 
-	slk::SLK& slk = map.terrain.terrain_slk;
-	for (auto&& i : map.terrain.tileset_ids) {
+	slk::SLK& slk = map->terrain.terrain_slk;
+	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -77,9 +77,9 @@ void TilePather::changed_tile(QAbstractButton* button) {
 void TilePather::save_tiles() {
 	for (auto&&[tile_id, options] : pathing_options) {
 		// Save state
-		map.terrain.pathing_options[tile_id].unwalkable = options.unwalkable;
-		map.terrain.pathing_options[tile_id].unflyable = options.unflyable;
-		map.terrain.pathing_options[tile_id].unbuildable = options.unbuildable;
+		map->terrain.pathing_options[tile_id].unwalkable = options.unwalkable;
+		map->terrain.pathing_options[tile_id].unflyable = options.unflyable;
+		map->terrain.pathing_options[tile_id].unbuildable = options.unbuildable;
 
 		if (!options.apply_retroactively) {
 			continue;
@@ -96,22 +96,22 @@ void TilePather::save_tiles() {
 			mask |= 0b00001000;
 		}
 
-		const int id = map.terrain.ground_texture_to_id.at(tile_id);
-		for (int i = 0; i < map.terrain.width; i++) {
-			for (int j = 0; j < map.terrain.height; j++) {
-				if (map.terrain.real_tile_texture(i, j) != id) {
+		const int id = map->terrain.ground_texture_to_id.at(tile_id);
+		for (int i = 0; i < map->terrain.width; i++) {
+			for (int j = 0; j < map->terrain.height; j++) {
+				if (map->terrain.real_tile_texture(i, j) != id) {
 					continue;
 				}
 
 				const int left = std::max(i * 4 - 2, 0);
 				const int bottom = std::max(j * 4 - 2, 0);
 
-				const int right = std::min(i * 4 + 2, map.pathing_map.width);
-				const int top = std::min(j * 4 + 2, map.pathing_map.height);
+				const int right = std::min(i * 4 + 2, map->pathing_map.width);
+				const int top = std::min(j * 4 + 2, map->pathing_map.height);
 
 				for (int x = left; x < right; x++) {
 					for (int y = bottom; y < top; y++) {
-						uint8_t byte_cell = map.pathing_map.pathing_cells_static[y * map.pathing_map.width + x];
+						uint8_t byte_cell = map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x];
 
 						switch (options.operation) {
 						case PathingOptions::Operation::replace:
@@ -126,14 +126,14 @@ void TilePather::save_tiles() {
 							break;
 						}
 
-						map.pathing_map.pathing_cells_static[y * map.pathing_map.width + x] = byte_cell;
+						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] = byte_cell;
 					}
 				}
 			}
 		}
 	}
 
-	gl->glTextureSubImage2D(map.pathing_map.texture_static, 0, 0, 0, map.pathing_map.width, map.pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map.pathing_map.pathing_cells_static.data());
+	gl->glTextureSubImage2D(map->pathing_map.texture_static, 0, 0, 0, map->pathing_map.width, map->pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data());
 
 	close();
 }

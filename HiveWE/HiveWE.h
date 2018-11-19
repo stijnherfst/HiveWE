@@ -28,7 +28,7 @@ signals:
 	void palette_changed(QRibbonTab* tab);
 };
 
-extern Map map;
+extern Map* map;
 extern ini::INI world_edit_strings;
 extern ini::INI world_edit_game_strings;
 extern ini::INI world_edit_data;

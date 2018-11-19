@@ -55,8 +55,6 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	setFocus();
 }
 
-//std::shared_ptr<SkinnedMesh> footman;
-
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
@@ -78,9 +76,7 @@ void GLWidget::initializeGL() {
 
 	shapes.init();
 
-	map.load("Data/Test.w3x");
-	//new DoodadPalette(this);
-//	footman = resource_manager.load<SkinnedMesh>("units\\human\\Footman\\Footman.mdx");
+	map->load("Data/Test.w3x");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
@@ -97,13 +93,13 @@ void GLWidget::update_scene() {
 
 	camera->update(delta);
 
-	map.terrain.current_texture += std::max(0.0, map.terrain.animation_rate * delta);
-	if (map.terrain.current_texture >= map.terrain.water_textures_nr) {
-		map.terrain.current_texture = 0;
+	map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);
+	if (map->terrain.current_texture >= map->terrain.water_textures_nr) {
+		map->terrain.current_texture = 0;
 	}
 
 	update();
-	QTimer::singleShot(std::max(0.0, 16.0 - map.total_time), this, &GLWidget::update_scene);
+	QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
 }
 
 void GLWidget::paintGL() {
@@ -111,31 +107,30 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map.render(width(), height());
+	map->render(width(), height());
 
-	//footman->render();
 	gl->glBindVertexArray(0);
 
-	if (map.render_debug) {
+	if (map->render_debug) {
 		QPainter p(this);
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
 		// Rendering time
-		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map.terrain_time)));
-			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map.terrain_tiles_time)));
-			p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map.terrain_cliff_time)));
-			p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map.terrain_water_time)));
-		p.drawText(10, 80, QString::fromStdString("Mouse to world coordinates: " + std::to_string(map.terrain_time)));
-		p.drawText(10, 95, QString::fromStdString("Doodad Queue: " + std::to_string(map.doodad_time)));
-		p.drawText(10, 110, QString::fromStdString("Unit Queue: " + std::to_string(map.unit_time)));
-		p.drawText(10, 125, QString::fromStdString("Render time: " + std::to_string(map.render_time)));
+		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map->terrain_time)));
+			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map->terrain_tiles_time)));
+			p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map->terrain_cliff_time)));
+			p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map->terrain_water_time)));
+		p.drawText(10, 80, QString::fromStdString("Mouse to world coordinates: " + std::to_string(map->terrain_time)));
+		p.drawText(10, 95, QString::fromStdString("Doodad Queue: " + std::to_string(map->doodad_time)));
+		p.drawText(10, 110, QString::fromStdString("Unit Queue: " + std::to_string(map->unit_time)));
+		p.drawText(10, 125, QString::fromStdString("Render time: " + std::to_string(map->render_time)));
 
-		p.drawText(10, 145, QString::fromStdString("Total time: " + std::to_string(map.total_time) + " Min: " + std::to_string(map.total_time_min) + " Max: " + std::to_string(map.total_time_max)));
+		p.drawText(10, 145, QString::fromStdString("Total time: " + std::to_string(map->total_time) + " Min: " + std::to_string(map->total_time_min) + " Max: " + std::to_string(map->total_time_max)));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));
-		if (map.brush) {
-			p.drawText(300, 35, QString::fromStdString("Brush Grid Position X: " + std::to_string(map.brush->get_position().x) + " Y: " + std::to_string(map.brush->get_position().y)));
+		if (map->brush) {
+			p.drawText(300, 35, QString::fromStdString("Brush Grid Position X: " + std::to_string(map->brush->get_position().x) + " Y: " + std::to_string(map->brush->get_position().y)));
 		}
 
 		p.drawText(300, 50, QString::fromStdString("Camera Horizontal Angle: " + std::to_string(camera->horizontal_angle)));
@@ -158,8 +153,8 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 			exit(0);
 			break;
 		default:
-			if (map.brush) {
-				map.brush->key_press_event(event);
+			if (map->brush) {
+				map->brush->key_press_event(event);
 			}
 	}
 }
@@ -172,22 +167,22 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 	input_handler.mouse_move_event(event);
 	camera->mouse_move_event(event);
 
-	if (map.brush) {
-		map.brush->mouse_move_event(event);
+	if (map->brush) {
+		map->brush->mouse_move_event(event);
 	}
 }
 
 void GLWidget::mousePressEvent(QMouseEvent* event) {
 	camera->mouse_press_event(event);
-	if (map.brush) {
-		map.brush->mouse_press_event(event);
+	if (map->brush) {
+		map->brush->mouse_press_event(event);
 	}
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event) {
 	camera->mouse_release_event(event);
-	if (map.brush) {
-		map.brush->mouse_release_event(event);
+	if (map->brush) {
+		map->brush->mouse_release_event(event);
 	}
 }
 

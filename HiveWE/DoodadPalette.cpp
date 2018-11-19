@@ -6,7 +6,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	show();
 
 	brush.create();
-	map.brush = &brush;
+	map->brush = &brush;
 
 	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
 		const std::string tileset_key = value.front();
@@ -147,7 +147,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 }
 
 DoodadPalette::~DoodadPalette() {
-	map.brush = nullptr;
+	map->brush = nullptr;
 }
 
 bool DoodadPalette::event(QEvent *e) {
@@ -158,7 +158,7 @@ bool DoodadPalette::event(QEvent *e) {
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
 		selection_mode->enableShortcuts();
-		map.brush = &brush;
+		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
 	}
 

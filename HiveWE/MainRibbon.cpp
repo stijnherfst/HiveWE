@@ -135,7 +135,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	addMenuItem(exit);
 
 	// Map tab
-
 	QRibbonTab* map_tab = new QRibbonTab;
 
 	QRibbonSection* map_section = new QRibbonSection;

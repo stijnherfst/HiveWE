@@ -124,7 +124,7 @@ void Units::save() const {
 		for (auto&& i : to_write) {
 			writer.write_string(i.id);
 			writer.write<uint32_t>(i.variation);
-			writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map.terrain.offset, 0));
+			writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map->terrain.offset, 0));
 			writer.write<float>(i.angle);
 			writer.write<glm::vec3>(i.scale * 128.f);
 
@@ -220,7 +220,7 @@ void Units::load_item_modifications(BinaryReader& reader) {
 
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
-		i->position.z = map.terrain.corner_height(i->position.x, i->position.y);
+		i->position.z = map->terrain.corner_height(i->position.x, i->position.y);
 		i->update();
 	}
 }

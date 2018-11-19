@@ -6,7 +6,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	ui.flowlayout_placeholder_1->addLayout(from_layout);
 	ui.flowlayout_placeholder_2->addLayout(to_layout);
 
-	slk::SLK& slk = map.terrain.terrain_slk;
+	slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&& i : from_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);

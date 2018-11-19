@@ -17,14 +17,14 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
 	action_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Action"));
 
-	for (auto&& i : map.triggers.categories) {
+	for (auto&& i : map->triggers.categories) {
 		QTreeWidgetItem* item = new QTreeWidgetItem(ui.explorer);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		item->setIcon(0, folder_icon);
 		folders[i.id] = item;
 	}
 
-	for (auto&& i : map.triggers.triggers) {
+	for (auto&& i : map->triggers.triggers) {
 		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.category_id]);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		if (i.is_comment) {
@@ -102,23 +102,23 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, Trigger& trigger) {
 
 		switch (i.type) {
 			case ECA::Type::event:
-				string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", i.name);
-				category = map.triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
+				string_parameters = map->triggers.trigger_strings.whole_data("TriggerEventStrings", i.name);
+				category = map->triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
 				break;
 			case ECA::Type::condition:
-				string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", i.name);
-				category = map.triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
+				string_parameters = map->triggers.trigger_strings.whole_data("TriggerConditionStrings", i.name);
+				category = map->triggers.trigger_data.data("TriggerConditions", "_" + i.name + "_Category");
 				break;
 			case ECA::Type::action:
-				string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", i.name);
-				category = map.triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
+				string_parameters = map->triggers.trigger_strings.whole_data("TriggerActionStrings", i.name);
+				category = map->triggers.trigger_data.data("TriggerActions", "_" + i.name + "_Category");
 				break;
 		}
 
 		eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
 
 		if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
-			std::string icon_path = map.triggers.trigger_data.data("TriggerCategories", category, 1);
+			std::string icon_path = map->triggers.trigger_data.data("TriggerCategories", category, 1);
 			std::string final_path = icon_path + ".blp";
 			QIcon icon = texture_to_icon(final_path);
 			trigger_icons[category] = icon;
@@ -187,23 +187,23 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 			if (j.has_sub_parameter) {
 				switch (j.sub_parameter.type) {
 				case TriggerSubParameter::Type::events:
-					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerEventStrings", j.sub_parameter.name);
+					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerEventStrings", j.sub_parameter.name);
 					break;
 				case TriggerSubParameter::Type::conditions:
-					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerConditionStrings", j.sub_parameter.name);
+					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerConditionStrings", j.sub_parameter.name);
 					break;
 				case TriggerSubParameter::Type::actions:
-					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerActionStrings", j.sub_parameter.name);
+					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerActionStrings", j.sub_parameter.name);
 					break;
 				case TriggerSubParameter::Type::calls:
-					sub_string_parameters = map.triggers.trigger_strings.whole_data("TriggerCallStrings", j.sub_parameter.name);
+					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerCallStrings", j.sub_parameter.name);
 					break;
 				}
 				result += "(" + get_parameters_names(sub_string_parameters, j.sub_parameter.parameters) + ")";
 			} else {
 				switch (j.type) {
 					case TriggerParameter::Type::preset:
-						result += map.triggers.trigger_data.data("TriggerParams", j.value, 3);
+						result += map->triggers.trigger_data.data("TriggerParams", j.value, 3);
 						break;
 					case TriggerParameter::Type::string: {
 						std::string pre_result;
@@ -218,11 +218,11 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 						}
 
 						if (pre_result.size() > 8 && pre_result.substr(0, 7) == "TRIGSTR") {
-							result += map.trigger_strings.string(pre_result);
+							result += map->trigger_strings.string(pre_result);
 						} else if (!pre_result.empty()) {
 							result += pre_result;
 						} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
-							result += map.trigger_strings.string(j.value);
+							result += map->trigger_strings.string(j.value);
 						} else {
 							result += j.value;
 						}
@@ -235,7 +235,7 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 							result += units_slk.data("Name", type);
 							result += " " + instance;
 						} else {
-							std::string type = map.triggers.variables[j.value].type;
+							std::string type = map->triggers.variables[j.value].type;
 							if (type == "unit") {
 								//std::cout << "test\n";
 							} else {

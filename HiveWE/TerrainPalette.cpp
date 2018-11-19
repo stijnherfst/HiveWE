@@ -7,16 +7,16 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	brush.tile_id = map.terrain.tileset_ids.front();
+	brush.tile_id = map->terrain.tileset_ids.front();
 	brush.create();
-	map.brush = &brush;
+	map->brush = &brush;
 
 	ui.flowLayout_placeholder->addLayout(textures_layout);
 	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
 
 	// Ground Tiles
-	slk::SLK& slk = map.terrain.terrain_slk;
-	for (auto&& i : map.terrain.tileset_ids) {
+	slk::SLK& slk = map->terrain.terrain_slk;
+	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i) + ".blp");
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -31,8 +31,8 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 		textures_layout->addWidget(button);
 		textures_group->addButton(button);
 
-		auto& cliff_tiles = map.terrain.cliff_to_ground_texture;
-		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map.terrain.ground_texture_to_id[i]);
+		auto& cliff_tiles = map->terrain.cliff_to_ground_texture;
+		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map->terrain.ground_texture_to_id[i]);
 
 		if (is_cliff_tile != cliff_tiles.end()) {
 			const int index = std::distance(cliff_tiles.begin(), is_cliff_tile);
@@ -139,12 +139,12 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 }
 
 TerrainPalette::~TerrainPalette() {
-	map.brush = nullptr;
+	map->brush = nullptr;
 }
 
 bool TerrainPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
-		map.brush = &brush;
+		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
 	return QWidget::event(e);

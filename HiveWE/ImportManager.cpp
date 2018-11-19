@@ -25,7 +25,7 @@ ImportManager::ImportManager(QWidget* parent) : QMainWindow(parent) {
 	ui.treeWidget->invisibleRootItem()->setText(0, "Exported Items"); // So export all works correctly
 	ui.treeWidget->invisibleRootItem()->setText(1, "Directory"); // So export all works correctly
 
-	load_files(map.imports.imports);
+	load_files(map->imports.imports);
 
 	show();
 }
@@ -83,7 +83,7 @@ void ImportManager::import_files(QTreeWidgetItem* item) {
 		child->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsDragEnabled);
 		child->setText(0, QString::fromStdString(file_name.string()));
 		child->setText(1, get_file_type(file.toStdString()));
-		child->setText(2, QString::number(map.imports.file_size(full_path)));
+		child->setText(2, QString::number(map->imports.file_size(full_path)));
 		child->setText(3, "No");
 		child->setText(4, QString::fromStdString(full_path.string()));
 		child->setIcon(0, file_icon);
@@ -233,7 +233,7 @@ void ImportManager::export_files(QTreeWidgetItem* item) {
 				export_files(target, child);
 			}
 		} else {
-			map.imports.export_file(target, parent->text(4).toStdString());
+			map->imports.export_file(target, parent->text(4).toStdString());
 		}
 	};
 
@@ -255,7 +255,7 @@ bool ImportManager::eventFilter(QObject*, QEvent* event) {
 }
 
 void ImportManager::items_changed() {
-	map.imports.imports.clear();
+	map->imports.imports.clear();
 
 	const std::function<void(std::vector<ImportItem>&, QTreeWidgetItem*)> recreate_imports = [&](std::vector<ImportItem>& items, QTreeWidgetItem* parent) {
 		const int count = parent->childCount();
@@ -275,5 +275,5 @@ void ImportManager::items_changed() {
 		}
 	};
 
-	recreate_imports(map.imports.imports, ui.treeWidget->invisibleRootItem());
+	recreate_imports(map->imports.imports, ui.treeWidget->invisibleRootItem());
 }

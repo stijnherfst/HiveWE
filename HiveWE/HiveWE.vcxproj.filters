@@ -348,8 +348,23 @@
     <ClCompile Include="GeneratedFiles\Release\moc_AspectRatioPixmapLabel.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Minimap.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_Minimap.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
     <ClCompile Include="AspectRatioPixmapLabel.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="Minimap.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Terrain.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_Terrain.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -390,9 +405,6 @@
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
     <ClInclude Include="PathingMap.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Terrain.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
     <ClInclude Include="Map.h">
@@ -494,6 +506,9 @@
     <ClInclude Include="SkinnedMesh.h">
       <Filter>Header Files\Base\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_Minimap.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -589,8 +604,17 @@
     <CustomBuild Include="Palette.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
+    <CustomBuild Include="Minimap.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
     <CustomBuild Include="AspectRatioPixmapLabel.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Minimap.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Terrain.h">
+      <Filter>Header Files\Base</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

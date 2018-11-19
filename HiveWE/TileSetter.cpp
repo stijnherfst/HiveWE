@@ -9,8 +9,8 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
-	slk::SLK& slk = map.terrain.terrain_slk;
-	for (auto&& i : map.terrain.tileset_ids) {
+	slk::SLK& slk = map->terrain.terrain_slk;
+	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i) + ".blp");
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -84,8 +84,8 @@ void TileSetter::update_available_tiles() const {
 
 	std::string tileset = ui.tileset->currentData().toString().toStdString();
 
-	slk::SLK& slk = map.terrain.terrain_slk;
-	for (auto&&[key, value] : map.terrain.terrain_slk.header_to_row) {
+	slk::SLK& slk = map->terrain.terrain_slk;
+	for (auto&&[key, value] : map->terrain.terrain_slk.header_to_row) {
 		if (key.front() != tileset.front()) {
 			continue;
 		}
@@ -116,9 +116,9 @@ void TileSetter::existing_tile_clicked(QAbstractButton* button) const {
 
 	// Check if cliff tile
 	const std::string tile_id = button->property("tileID").toString().toStdString();
-	auto& cliff_tiles = map.terrain.cliff_to_ground_texture;
-	if (map.terrain.ground_texture_to_id.count(tile_id)) {
-		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map.terrain.ground_texture_to_id[tile_id]);
+	auto& cliff_tiles = map->terrain.cliff_to_ground_texture;
+	if (map->terrain.ground_texture_to_id.count(tile_id)) {
+		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map->terrain.ground_texture_to_id[tile_id]);
 
 		ui.selectedRemove->setEnabled(is_cliff_tile == cliff_tiles.end());
 	}
@@ -176,9 +176,9 @@ void TileSetter::save_tiles() {
 		to_ids.push_back(j->widget()->property("tileID").toString().toStdString());
 	}
 
-	from_to_id.resize(map.terrain.tileset_ids.size());
-	for (size_t i = 0; i < map.terrain.tileset_ids.size(); i++) {
-		const std::string from_id = map.terrain.tileset_ids[i];
+	from_to_id.resize(map->terrain.tileset_ids.size());
+	for (size_t i = 0; i < map->terrain.tileset_ids.size(); i++) {
+		const std::string from_id = map->terrain.tileset_ids[i];
 
 		const auto found = std::find(to_ids.begin(), to_ids.end(), from_id);
 		if (found != to_ids.end()) {
@@ -193,6 +193,6 @@ void TileSetter::save_tiles() {
 		}
 	}
 
-	map.terrain.change_tileset(to_ids, from_to_id);
+	map->terrain.change_tileset(to_ids, from_to_id);
 	close();
 }

@@ -10,6 +10,4 @@ public:
 	static constexpr const char* name = "Texture";
 
 	explicit Texture(const fs::path& path);
-
-
 };

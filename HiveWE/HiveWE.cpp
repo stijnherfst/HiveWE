@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-Map map;
+Map* map = new Map();
 ini::INI world_edit_strings;
 ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
@@ -28,7 +28,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	hierarchy.init();
 
 	ui.setupUi(this);
-	
+	showMaximized();
+
 	world_edit_strings.load("UI/WorldEditStrings.txt");
 	world_edit_game_strings.load("UI/WorldEditGameStrings.txt");
 	world_edit_data.load("UI/WorldEditData.txt");
@@ -36,13 +37,17 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map.render_units = checked; });
-	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map.render_doodads = checked; });
-	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map.render_pathing = checked; });
-	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) { map.render_brush = checked; });
-	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map.render_lighting = checked; });
-	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) { map.render_wireframe = checked; });
-	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map.render_debug = checked; });
+	// Need to offset the x by 5 due to some bug where it is offset to the right by ~2
+	Minimap* minimap = new Minimap(this);
+	minimap->move(mapToGlobal(ui.widget->pos()) + QPoint(8, 10));
+
+	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
+	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
+	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map->render_pathing = checked; });
+	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) { map->render_brush = checked; });
+	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map->render_lighting = checked; });
+	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) { map->render_wireframe = checked; });
+	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map->render_debug = checked; });
 	  
 	connect(new QShortcut(Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
@@ -61,9 +66,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.ribbon->open_map, &QPushButton::clicked, this, &HiveWE::load);
-	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map.save(map.filesystem_path); });
+	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map->save(map->filesystem_path); });
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
-	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map.play_test(); });
+	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map->play_test(); });
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
 	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
 
@@ -74,8 +79,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
-  
-  //connect(ui.actionSwitch_Warcraft, &QAction::triggered, this, &HiveWE::switch_warcraft);
   
 	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() { 
 		auto palette = new TerrainPalette(this);
@@ -97,7 +100,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			palette->close();
 		});
 	});
-
 
 	// Temporary Temporary
 	//QTimer::singleShot(5, [this]() {
@@ -134,26 +136,30 @@ void HiveWE::load() {
 		}
 		SFileCloseArchive(handle);
 		
-		{ // Map falls out of scope so is cleaned before a new load
-			Map new_map;
-			std::swap(new_map, map);
-		}
+		//{ // Map falls out of scope so is cleaned before a new load
+			//Map new_map;
+			//std::swap(new_map, map);
+		//}
 
-		map.load(file_name.toStdString());
+		delete map;
+		map = new Map();
+		map->load(file_name.toStdString());
+
+		//map->load(file_name.toStdString());
 		
 	}
 }
 
 void HiveWE::save_as() {
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map.filesystem_path.filename().string());
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
 
 	QString file_name = QFileDialog::getSaveFileName(this, "Save File",
 		directory,
 		"Warcraft III Scenario (*.w3x)");
 
 	if (file_name != "") {
-		map.save(file_name.toStdString());
+		map->save(file_name.toStdString());
 	}
 }
 
@@ -202,10 +208,11 @@ void HiveWE::switch_camera() {
 	camera->update(0);
 }
 
+// ToDo move to terrain class?
 void HiveWE::import_heightmap() {
 	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -128 to +128");
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map.filesystem_path.filename().string());
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
 
 	QString file_name = QFileDialog::getOpenFileName(this, "Open Heightmap Image", directory);
 
@@ -218,20 +225,20 @@ void HiveWE::import_heightmap() {
 	int channels;
 	uint8_t* image_data = SOIL_load_image(file_name.toStdString().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
 	
-	if (width != map.terrain.width || height != map.terrain.height) {
-		QMessageBox::warning(this, "Incorrect Image Size", QString("Image Size: %1x%2 does not match terrain size: %3x%4").arg(QString::number(width), QString::number(height), QString::number(map.terrain.width), QString::number(map.terrain.height)));
+	if (width != map->terrain.width || height != map->terrain.height) {
+		QMessageBox::warning(this, "Incorrect Image Size", QString("Image Size: %1x%2 does not match terrain size: %3x%4").arg(QString::number(width), QString::number(height), QString::number(map->terrain.width), QString::number(map->terrain.height)));
 		return;
 	}
 
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
-			map.terrain.ground_heights[j * width + i] = image_data[((height - 1 - j) * width + i) * 4] - 128;
-			map.terrain.ground_corner_heights[j * width + i] = map.terrain.corner_height(i, j);
+			map->terrain.ground_heights[j * width + i] = image_data[((height - 1 - j) * width + i) * 4] - 128;
+			map->terrain.ground_corner_heights[j * width + i] = map->terrain.corner_height(i, j);
 		}
 
 	}
-	gl->glTextureSubImage2D(map.terrain.ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map.terrain.ground_corner_heights.data());
-	gl->glTextureSubImage2D(map.terrain.ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map.terrain.ground_heights.data());
+	gl->glTextureSubImage2D(map->terrain.ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map->terrain.ground_corner_heights.data());
+	gl->glTextureSubImage2D(map->terrain.ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map->terrain.ground_heights.data());
 }
 
 void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {
