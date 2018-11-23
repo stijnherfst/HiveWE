@@ -16,7 +16,7 @@ slk::SLK destructibles_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "Data")) {
+	while (!fs::exists(directory / "Data") || directory == "") {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
