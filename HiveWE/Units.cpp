@@ -101,7 +101,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.creation_number = reader.read<uint32_t>();
 
 		// Either a unit or an item
-		if (units_slk.row_header_exists(i.id) || i.id == "sloc") {
+		if (units_slk.row_header_exists(i.id) || i.id == "sloc" || i.id == "uDNR" || i.id == "bDNR") {
 			units.push_back(i);
 		} else {
 			items.push_back(i);
@@ -231,7 +231,10 @@ void Units::create() {
 		if (i.id == "sloc") {
 			continue;
 		}
-		i.scale = glm::vec3(std::stof(units_slk.data("modelScale", i.id)));
+		// ToDo handle random units
+		if (i.id != "uDNR" && i.id != "bDNR") {
+			i.scale = glm::vec3(std::stof(units_slk.data("modelScale", i.id)));
+		}
 
 		i.update();
 
