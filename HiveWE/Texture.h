@@ -9,5 +9,6 @@ public:
 
 	static constexpr const char* name = "Texture";
 
+	explicit Texture() = default;
 	explicit Texture(const fs::path& path);
 };

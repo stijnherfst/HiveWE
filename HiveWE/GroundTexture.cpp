@@ -30,8 +30,10 @@ GroundTexture::GroundTexture(const fs::path& path) {
 		gl->glGenerateTextureMipmap(id);
 
 		// Find mipmap where each tile is 1x1 px
-		int mipmap_number = std::log2(width);
-		minimap_color = *reinterpret_cast<glm::u8vec4*>(std::get<2>(blp.mipmaps[mipmap_number]).data());
+		int mipmap_number = std::log2(width) - 3;
+		auto[mipw, miph, mipmap] = blp.mipmaps[mipmap_number];
+		minimap_color = *reinterpret_cast<glm::u8vec4*>(mipmap.data());
+		std::swap(minimap_color.r, minimap_color.b);
 	} else {
 		static_assert("Haven't handled loading non .blp images yet");
 		id = SOIL_load_OGL_texture(path.string().c_str(), SOIL_LOAD_RGBA, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS);

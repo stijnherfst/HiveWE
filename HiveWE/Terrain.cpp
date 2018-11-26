@@ -627,5 +627,24 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 }
 
 Texture Terrain::minimap_image() {
-	return Texture("war3mapMap.blp");
+	Texture new_minimap_image;
+
+	new_minimap_image.width = width;
+	new_minimap_image.height = height;
+	new_minimap_image.channels = 4;
+	new_minimap_image.data.resize(width * height * 4);
+	
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
+			auto color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+
+			int index = (height - 1 - j) * (width * 4) + i * 4;
+			new_minimap_image.data[index + 0] = color.r;
+			new_minimap_image.data[index + 1] = color.g;
+			new_minimap_image.data[index + 2] = color.b;
+			new_minimap_image.data[index + 3] = color.a;
+		}
+	}
+
+	return new_minimap_image;
 }

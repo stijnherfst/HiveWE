@@ -37,9 +37,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	// Need to offset the x by 5 due to some bug where it is offset to the right by ~2
-	Minimap* minimap = new Minimap(this);
-	minimap->move(mapToGlobal(ui.widget->pos()) + QPoint(8, 10));
+	Minimap* minimap = new Minimap(ui.widget);
+	minimap->move(10, 10);
+
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+
+	emit map->terrain.minimap_changed(map->terrain.minimap_image());
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
@@ -145,6 +148,7 @@ void HiveWE::load() {
 		map = new Map();
 		map->load(file_name.toStdString());
 
+		
 		//map->load(file_name.toStdString());
 		
 	}
