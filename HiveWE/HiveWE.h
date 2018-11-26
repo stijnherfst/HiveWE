@@ -13,6 +13,7 @@ public:
 private:
 	Ui::HiveWEClass ui;
 	QRibbonTab* current_custom_tab = nullptr;
+	Minimap* minimap = new Minimap(this);
 
 	void closeEvent(QCloseEvent* event) override;
 

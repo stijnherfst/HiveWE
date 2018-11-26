@@ -626,6 +626,7 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
+/// Constructs a minimap image with tile, cliff, and water colors. Other objects such ad doodads will not be added here
 Texture Terrain::minimap_image() {
 	Texture new_minimap_image;
 
@@ -636,13 +637,22 @@ Texture Terrain::minimap_image() {
 	
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
-			auto color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+			glm::vec4 color;
+
+			if (corners[i][j].water && corner_water_height(i, j) > corner_height(i, j)) {
+				color = glm::vec4(50, 50, 200, 255);
+			} else if (corners[i][j].cliff || (i > 0 && corners[i - 1][j].cliff) || (j > 0 && corners[i][j - 1].cliff) || (i > 0 && j > 0 && corners[i - 1][j - 1].cliff)) {
+				color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->clr;
+			} else {
+				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+			}
 
 			int index = (height - 1 - j) * (width * 4) + i * 4;
 			new_minimap_image.data[index + 0] = color.r;
 			new_minimap_image.data[index + 1] = color.g;
 			new_minimap_image.data[index + 2] = color.b;
 			new_minimap_image.data[index + 3] = color.a;
+
 		}
 	}
 

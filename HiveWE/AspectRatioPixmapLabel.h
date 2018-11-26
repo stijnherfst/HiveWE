@@ -6,7 +6,7 @@ class AspectRatioPixmapLabel : public QLabel {
 
 	QPixmap pixmap;
 
-	QPixmap get_scaled_pixmap();
+	QPixmap get_scaled_pixmap(bool grid_lines = false);
 
 public:
 	AspectRatioPixmapLabel() {

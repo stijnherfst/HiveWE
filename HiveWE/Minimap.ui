@@ -27,7 +27,13 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QLabel" name="image">
+    <widget class="AspectRatioPixmapLabel" name="image">
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
+     </property>
      <property name="text">
       <string>Image</string>
      </property>
@@ -36,6 +42,13 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>AspectRatioPixmapLabel</class>
+   <extends>QLabel</extends>
+   <header>AspectRatioPixmapLabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

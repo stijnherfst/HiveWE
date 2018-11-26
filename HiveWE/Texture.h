@@ -6,7 +6,7 @@ public:
 	int height;
 	int channels;
 	std::vector<uint8_t> data;
-
+	glm::vec4 clr;
 	static constexpr const char* name = "Texture";
 
 	explicit Texture() = default;

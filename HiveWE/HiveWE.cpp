@@ -37,12 +37,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	Minimap* minimap = new Minimap(ui.widget);
-	minimap->move(10, 10);
-
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-
-	emit map->terrain.minimap_changed(map->terrain.minimap_image());
+	
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
@@ -117,6 +112,13 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
 	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
+
+	minimap->setParent(ui.widget);
+	minimap->move(10, 10);
+	minimap->show();
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+
+	emit map->terrain.minimap_changed(map->terrain.minimap_image());
 }
 
 void HiveWE::load() {
@@ -129,7 +131,6 @@ void HiveWE::load() {
 	if (file_name != "") {
 		settings.setValue("openDirectory", file_name);
 
-		
 		// Try opening the archive
 		HANDLE handle;
 		bool success = SFileOpenArchive(fs::path(file_name.toStdString()).c_str(), 0, 0, &handle);
@@ -139,18 +140,11 @@ void HiveWE::load() {
 		}
 		SFileCloseArchive(handle);
 		
-		//{ // Map falls out of scope so is cleaned before a new load
-			//Map new_map;
-			//std::swap(new_map, map);
-		//}
-
 		delete map;
 		map = new Map();
 		map->load(file_name.toStdString());
-
-		
-		//map->load(file_name.toStdString());
-		
+		connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+		emit map->terrain.minimap_changed(map->terrain.minimap_image());
 	}
 }
 
