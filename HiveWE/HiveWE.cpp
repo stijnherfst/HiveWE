@@ -37,8 +37,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	
-
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
 	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map->render_pathing = checked; });
@@ -46,7 +44,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map->render_lighting = checked; });
 	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) { map->render_wireframe = checked; });
 	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map->render_debug = checked; });
-	  
+
 	connect(new QShortcut(Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
@@ -77,14 +75,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
-  
-	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() { 
+
+	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new TerrainPalette(this);
 		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
 	});
 	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
-		auto palette = new DoodadPalette(this); 
+		auto palette = new DoodadPalette(this);
 		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		connect(palette, &Palette::finished, [&]() {
@@ -116,9 +114,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->setParent(ui.widget);
 	minimap->move(10, 10);
 	minimap->show();
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
-	emit map->terrain.minimap_changed(map->terrain.minimap_image());
+
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+	map->load("Data/Test.w3x");
 }
 
 void HiveWE::load() {
@@ -139,12 +138,14 @@ void HiveWE::load() {
 			return;
 		}
 		SFileCloseArchive(handle);
-		
+
 		delete map;
 		map = new Map();
-		map->load(file_name.toStdString());
+
 		connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-		emit map->terrain.minimap_changed(map->terrain.minimap_image());
+
+		//ui.widget->makeCurrent();
+		map->load(file_name.toStdString());
 	}
 }
 
@@ -166,7 +167,7 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 
 	//if (choice == QMessageBox::Yes) {
 	//}
-		event->accept();
+	event->accept();
 }
 
 void HiveWE::switch_warcraft() {
@@ -179,8 +180,7 @@ void HiveWE::switch_warcraft() {
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
-	if (directory != hierarchy.warcraft_directory)
-	{
+	if (directory != hierarchy.warcraft_directory) {
 		hierarchy.game_data.close();
 		hierarchy.warcraft_directory = directory;
 		hierarchy.init();
@@ -222,7 +222,7 @@ void HiveWE::import_heightmap() {
 	int height;
 	int channels;
 	uint8_t* image_data = SOIL_load_image(file_name.toStdString().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
-	
+
 	if (width != map->terrain.width || height != map->terrain.height) {
 		QMessageBox::warning(this, "Incorrect Image Size", QString("Image Size: %1x%2 does not match terrain size: %3x%4").arg(QString::number(width), QString::number(height), QString::number(map->terrain.width), QString::number(map->terrain.height)));
 		return;

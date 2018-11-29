@@ -1,14 +1,19 @@
 #include "stdafx.h"
 
 QPixmap AspectRatioPixmapLabel::get_scaled_pixmap(bool grid_lines) {
-	//auto t = height();
-	//auto tt = pixmap.height();
-	int new_height = pixmap.height() * ((float)height() / pixmap.height());
+	QPixmap new_pixmap(width(), height());
 
-	QPixmap new_pixmap = pixmap.scaled(999, new_height, Qt::KeepAspectRatio);
+	QPainter painter(&new_pixmap);
+	painter.fillRect(0, 0, width(), height(), Qt::black);
 
-	if (grid_lines) {
-		QPainter painter(&new_pixmap);
+	QPixmap scaled_pixmap = pixmap.scaled(width(), height(), Qt::KeepAspectRatio);
+	int x = (width() - scaled_pixmap.width()) / 2.f;
+	int y = (height() - scaled_pixmap.height()) / 2.f;
+
+	painter.drawPixmap(x, y, scaled_pixmap);
+
+
+	/*if (grid_lines) {
 		auto tt = new_pixmap.width();
 		auto ttt = pixmap.width();
 
@@ -27,7 +32,7 @@ QPixmap AspectRatioPixmapLabel::get_scaled_pixmap(bool grid_lines) {
 			}
 		}
 		painter.end();
-	}
+	}*/
 
 	return new_pixmap;
 }

@@ -75,8 +75,6 @@ void GLWidget::initializeGL() {
 	gl->glBindVertexArray(vao);
 
 	shapes.init();
-
-	map->load("Data/Test.w3x");
 }
 
 void GLWidget::resizeGL(const int w, const int h) {

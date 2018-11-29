@@ -205,6 +205,8 @@ void Terrain::create() {
 		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, water_textures[i]->width, water_textures[i]->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data.data());
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
+
+	emit minimap_changed(minimap_image());
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -640,7 +642,7 @@ Texture Terrain::minimap_image() {
 			glm::vec4 color;
 
 			if (corners[i][j].cliff || (i > 0 && corners[i - 1][j].cliff) || (j > 0 && corners[i][j - 1].cliff) || (i > 0 && j > 0 && corners[i - 1][j - 1].cliff)) {
-				color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->clr;
+				color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
 			} else {
 				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
 			}

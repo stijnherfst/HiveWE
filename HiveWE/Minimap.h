@@ -6,8 +6,7 @@ class Minimap : public QWidget {
 	Q_OBJECT
 
 public:
-	Minimap(QWidget *parent = Q_NULLPTR);
-	~Minimap();
+	Minimap(QWidget* parent = nullptr);
 
 public slots:
 	void set_minimap(Texture texture);
