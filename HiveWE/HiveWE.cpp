@@ -115,7 +115,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->move(10, 10);
 	minimap->show();
 
-
+	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	map->load("Data/Test.w3x");
 }

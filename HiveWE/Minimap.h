@@ -11,6 +11,12 @@ public:
 public slots:
 	void set_minimap(Texture texture);
 
+signals:
+	/// point contains the location clicked on the minimap in the range [0..1]
+	void clicked(QPointF point);
 private:
 	Ui::Minimap ui;
+
+	void mousePressEvent(QMouseEvent* event) override;
+	void mouseMoveEvent(QMouseEvent* event) override;
 };
