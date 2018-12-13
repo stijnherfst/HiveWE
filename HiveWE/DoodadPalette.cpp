@@ -22,6 +22,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		const std::string text = value.front();
 		ui.type->addItem(QString::fromStdString(text), QString::fromStdString(key));
 	}
+	// Default to Trees/Destructibles
+	ui.type->setCurrentIndex(ui.type->count() - 2);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 

@@ -87,6 +87,7 @@ namespace fs = std::filesystem;
 
 #include "TriggerStrings.h"
 #include "Triggers.h"
+#include "TerrainUndo.h"
 #include "Imports.h"
 #include "Terrain.h"
 #include "PathingMap.h"

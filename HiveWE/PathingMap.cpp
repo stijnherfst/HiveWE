@@ -46,20 +46,8 @@ void PathingMap::save() const {
 	writer.write<uint32_t>(height);
 	writer.write_vector<uint8_t>(pathing_cells_static);
 	
-	HANDLE handle;
-	bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wpm", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
 
-	success = SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	if (!success) {
-		std::cout << "Writing to file failed: " << GetLastError() << "\n";
-	}
-	success = SFileFinishFile(handle);
-	if (!success) {
-		std::cout << "Finishing write failed: " << GetLastError() << "\n";
-	}
+	hierarchy.map.file_write("war3map.wpm", writer.buffer);
 }
 
 void PathingMap::update_dynamic() {

@@ -82,7 +82,6 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 
-//	doodads.tree.resize(terrain.width, terrain.height);
 	units.tree.resize(terrain.width, terrain.height);
 
 	// Pathing Map
@@ -119,6 +118,7 @@ void Map::load(const fs::path& path) {
 	}
 
 	doodads.create();
+	// Can only do this after all doodads are created
 	pathing_map.update_dynamic();
 
 	// Units/Items
@@ -126,6 +126,7 @@ void Map::load(const fs::path& path) {
 		BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
 		units.load_unit_modifications(war3map_w3u);
 	}
+
 	if (hierarchy.map.file_exists("war3map.w3t")) {
 		BinaryReader war3map_w3t = BinaryReader(hierarchy.map.file_open("war3map.w3t").read());
 		units.load_item_modifications(war3map_w3t);
@@ -143,13 +144,13 @@ void Map::load(const fs::path& path) {
 	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
 	camera->reset();
 
-	meshes.clear(); // ToDo this is not a nice way to do this
-
 	loaded = true;
 }
 
-bool Map::save(const fs::path& path) {
+bool Map::save(const fs::path& path, bool switch_working) {
 	std::error_code t;
+
+	mpq::MPQ new_map;
 
 	// If the map is saved in another location we need to copy the map and switch our working W3X to that one
 	const fs::path complete_path = fs::absolute(path, t);
@@ -163,8 +164,8 @@ bool Map::save(const fs::path& path) {
 			return false;
 		}
 
-		mpq::MPQ new_map(complete_path);
-		std::swap(new_map, hierarchy.map);
+		new_map.open(complete_path);
+		std::swap(new_map.handle, hierarchy.map.handle);
 	}
 
 	pathing_map.save();
@@ -182,15 +183,23 @@ bool Map::save(const fs::path& path) {
 		std::cout << "Compacting error code: " << GetLastError() << "\n";
 		QMessageBox::information(nullptr, "Compacting archive failed", "Compacting the map archive failed. This is not a crucial error, but the size of your map file will be slightly bigger");
 	}
+
+	// Switch back if we do not want to switch currently active W3X
+	if (!switch_working && complete_path != filesystem_path) {
+		std::swap(new_map.handle, hierarchy.map.handle);
+	}
+
+	new_map.close();
+
 	return true;
 }
 
 void Map::play_test() {
 	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
-	if (!save(path)) {
+	if (!save(path), false) {
 		return;
 	}
-	hierarchy.game_data.close();
+	//hierarchy.game_data.close();
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
@@ -198,7 +207,7 @@ void Map::play_test() {
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 	warcraft->waitForFinished();
-	hierarchy.game_data.open(hierarchy.warcraft_directory / "Data");
+	//hierarchy.game_data.open(hierarchy.warcraft_directory / "Data");
 }
 
 void Map::render(int width, int height) {

@@ -358,6 +358,7 @@
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="TerrainBrush.cpp" />
     <ClCompile Include="TerrainPalette.cpp" />
+    <ClCompile Include="TerrainUndo.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TilePather.cpp" />
     <ClCompile Include="TilePicker.cpp" />
@@ -641,6 +642,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include" "-I.\Dependencies\casclib-1.11\include" "-I.\Dependencies\qscintilla-2.10.7\include" "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets" "-fstdafx.h" "-f../../%(Filename)%(Extension)"</Command>
     </CustomBuild>
     <ClInclude Include="TerrainBrush.h" />
+    <ClInclude Include="TerrainUndo.h" />
     <ClInclude Include="Texture.h" />
     <CustomBuild Include="TileSetter.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>

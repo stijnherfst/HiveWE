@@ -67,4 +67,8 @@ private:
 	bool brush_hold = false;
 	int layer_height = 0;
 	int deformation_height = 0;
+
+	QRect texture_height_area;
+	QRect cliff_area;
+	QRect water_area;
 };

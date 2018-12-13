@@ -80,6 +80,24 @@ namespace mpq {
 		return file;
 	}
 
+	void MPQ::file_write(const fs::path& path, const std::vector<uint8_t>& data) {
+		HANDLE out_handle;
+		bool success = SFileCreateFile(handle , path.string().c_str(), 0, data.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &out_handle);
+		if (!success) {
+			std::cout << GetLastError() << " " << path << "\n";
+		}
+
+		success = SFileWriteFile(out_handle, data.data(), data.size(), MPQ_COMPRESSION_ZLIB);
+		if (!success) {
+			std::cout << "Writing to file failed: " << GetLastError() << " " << path << "\n";
+		}
+
+		success = SFileFinishFile(out_handle);
+		if (!success) {
+			std::cout << "Finishing write failed: " << GetLastError() << " " << path << "\n";
+		}
+	}
+
 	void MPQ::file_remove(const fs::path& path) const {
 		SFileRemoveFile(handle, path.string().c_str(), 0);
 	}

@@ -182,20 +182,7 @@ void Units::save() const {
 	write_units(units);
 	write_units(items);
 
-	HANDLE handle;
-	bool success = SFileCreateFile(hierarchy.map.handle, "war3mapUnits.doo", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
-
-	success = SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	if (!success) {
-		std::cout << "Writing to file failed: " << GetLastError() << "\n";
-	}
-	success = SFileFinishFile(handle);
-	if (!success) {
-		std::cout << "Finishing write failed: " << GetLastError() << "\n";
-	}
+	hierarchy.map.file_write("war3mapUnits.doo", writer.buffer);
 }
 
 void Units::load_unit_modifications(BinaryReader& reader) {
@@ -220,7 +207,7 @@ void Units::load_item_modifications(BinaryReader& reader) {
 
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
-		i->position.z = map->terrain.corner_height(i->position.x, i->position.y);
+		i->position.z = map->terrain.corners[i->position.x][i->position.y].final_ground_height();
 		i->update();
 	}
 }

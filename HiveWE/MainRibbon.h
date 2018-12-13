@@ -4,6 +4,11 @@ class MainRibbon : public QRibbon {
 	Q_OBJECT
 
 public:
+	QRibbonButton* undo = new QRibbonButton;
+	QRibbonButton* redo = new QRibbonButton;
+	QRibbonButton* view_history = new QRibbonButton;
+
+
 	QRibbonButton* copy = new QRibbonButton;
 	QRibbonButton* paste = new QRibbonButton;
 

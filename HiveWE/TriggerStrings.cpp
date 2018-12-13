@@ -72,15 +72,8 @@ void TriggerStrings::save() const {
 		writer.write_string(final_value);
 		writer.write_string("\r\n}\r\n\r\n");
 	}
-	
-	HANDLE handle;
-	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.wts", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
 
-	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	SFileFinishFile(handle);
+	hierarchy.map.file_write("war3map.wts", writer.buffer);
 }
 
 std::string TriggerStrings::string(const std::string& key) const {

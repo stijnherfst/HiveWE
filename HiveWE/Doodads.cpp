@@ -106,20 +106,7 @@ void Doodads::save() const {
 		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y) - 2);
 	}
 
-	HANDLE handle;
-	bool success = SFileCreateFile(hierarchy.map.handle, "war3map.doo", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
-
-	success = SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	if (!success) {
-		std::cout << "Writing to file failed: " << GetLastError() << "\n";
-	}
-	success = SFileFinishFile(handle);
-	if (!success) {
-		std::cout << "Finishing write failed: " << GetLastError() << "\n";
-	}
+	hierarchy.map.file_write("war3map.doo", writer.buffer);
 }
 
 
@@ -147,7 +134,7 @@ void Doodads::update_area(const QRect& area) {
 	// ToDo optimize with parallel for?
 	for (auto&& i : doodads) {
 		if (area.contains(i.position.x, i.position.y)) {
-			i.position.z = map->terrain.corner_height(i.position.x, i.position.y);
+			i.position.z = map->terrain.corners[i.position.x][i.position.y].final_ground_height();
 			i.update();
 		}
 	}

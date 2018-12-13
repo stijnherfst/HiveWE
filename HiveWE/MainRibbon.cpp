@@ -4,11 +4,23 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Home
 	QRibbonTab* home_tab = new QRibbonTab;
 
-	// Clipboard
-	/*QRibbonSection* home_section = new QRibbonSection;
-	home_section->setText("Clipboard");
+	// Undo/Redo History
+	QRibbonSection* history_section = new QRibbonSection;
+	history_section->setText("History");
 
-	copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));
+	undo->setIcon(QIcon("Data/Icons/Ribbon/undo32x32.png"));
+	undo->setText("Undo");
+	history_section->addWidget(undo);
+
+	redo->setIcon(QIcon("Data/Icons/Ribbon/redo32x32.png"));
+	redo->setText("Redo");
+	history_section->addWidget(redo);
+
+	view_history->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png"));
+	view_history->setText("View\nHistory");
+	history_section->addWidget(view_history);
+
+	/*copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));
 	copy->setText("Copy");
 	home_section->addWidget(copy);
 
@@ -24,14 +36,14 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	but->setIcon(QIcon("Data/Icons/Ribbon/paste32x32.ico"));
 	but->setIconSize({ 16, 16 });
 	but->setText("Cut");
-	but->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	but->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);*/
 
-	lay->addWidget(but);
-	lay->addWidget(butt);
-	lay->addWidget(buttt);
+	//lay->addWidget(but);
+	//lay->addWidget(butt);
+	//lay->addWidget(buttt);
 
-	home_section->addLayout(lay);
-	home_tab->addSection(home_section);*/
+	//history_section->addLayout(lay);
+	home_tab->addSection(history_section);
 
 	// View
 	QRibbonTab* view_tab = new QRibbonTab;
@@ -226,7 +238,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	window_tab->addSection(palette_section);
 
 
-	//addTab(home_tab, "Home");
+	addTab(home_tab, "Home");
 	addTab(view_tab, "View");
 	addTab(map_tab, "Map");
 	addTab(tools_tab, "Tools");

@@ -1,26 +1,26 @@
 #pragma once
 
 struct Corner {
+	float ground_height;
+
 	bool map_edge;
+	float water_height;
 
 	int ground_texture;
 
-	float height;
-	float water_height;
 	bool ramp;
 	bool blight;
 	bool water;
 	bool boundary;
 	bool cliff = false;
 
+
+
 	int ground_variation;
 	int cliff_variation;
 
 	int cliff_texture;
 	int layer_height;
-
-	float final_ground_height() const;
-	float final_water_height() const;
 };
 
 struct TilePathingg {
@@ -37,15 +37,21 @@ struct TilePathingg {
 	}
 };
 
+struct TerrainAction {
+	QRect area;
+	virtual void execute() = 0;
+};
+
+struct HeightAction : public TerrainAction {
+	std::vector<float> heights;
+
+	void execute() override;
+};
+
 class Terrain : public QObject {
 	Q_OBJECT
 
 	static const int write_version = 11;
-
-	// For GPU uploading
-	std::vector<float> ground_heights;
-	std::vector<float> ground_corner_heights;
-	std::vector<glm::u16vec4> ground_texture_list;
 
 public:
 	char tileset;
@@ -55,6 +61,8 @@ public:
 	int width;
 	int height;
 	glm::vec2 offset;
+
+	std::vector<std::vector<Corner>> corners;
 
 	// Ground
 	std::shared_ptr<Shader> ground_shader;
@@ -66,10 +74,9 @@ public:
 	GLuint ground_corner_height;
 	GLuint ground_texture_data;
 
-	std::vector<std::vector<Corner>> corners;
-	// For undo/redo operations
-	std::vector<std::vector<Corner>> old_corners;
-
+	std::vector<float> ground_heights;
+	std::vector<float> ground_corner_heights;
+	std::vector<glm::u16vec4> ground_texture_list;
 
 	int variation_size = 64;
 	int blight_texture;
@@ -110,6 +117,7 @@ public:
 	GLuint water_height;
 	GLuint water_exists;
 
+
 	std::vector<std::shared_ptr<Texture>> water_textures;
 	std::shared_ptr<Shader> water_shader;
 
@@ -125,75 +133,33 @@ public:
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old);
 
+	float corner_height(int x, int y) const;
+	float corner_water_height(const int x, const int y) const;
+
 	int real_tile_texture(int x, int y) const;
 	int get_tile_variation(int ground_texture, int variation) const;
 	glm::u16vec4 get_texture_variations(int x, int y) const;
 
 	Texture minimap_image();
 
-	enum class undo_type {
-		texture,
-		height,
-		cliff,
-		water
-	};
+	std::vector<std::vector<std::unique_ptr<TerrainAction>>> undo_actions;
+	std::vector<std::vector<std::unique_ptr<TerrainAction>>> redo_actions;
 
-	void new_undo_group();
-	void add_undo(const QRect& area, undo_type type);
+	void undo();
+	void redo();
 
-	void upload_ground_heights(const QRect& area) const;
-	void upload_corner_heights(const QRect& area) const;
-	void upload_ground_texture(const QRect& area) const;
-	void upload_water_exists(const QRect& area) const;
-	void upload_water_heights(const QRect& area) const;
 
-	void update_ground_heights(const QRect& area);
-	void update_ground_textures(const QRect& area);
-	void update_water(const QRect& area);
-	void update_cliff_meshes(const QRect& area);
+
+	void begin_operation();
+	void end_operation();
+
+	void set_ground_height(int x, int y, float height);
+	void update_ground_heights(QRect area);
+	void update_corner_heights(QRect area);
+	void update_ground_textures(QRect area);
+	void update_water_exists(QRect area);
+	void update_water_heights(QRect area);
 
 signals:
 	void minimap_changed(Texture minimap);
 };
-
-// Undo/redo structures
-class TerrainGenericAction : public TerrainUndoAction {
-public:
-	QRect area;
-	std::vector<Corner> old_corners;
-	std::vector<Corner> new_corners;
-	Terrain::undo_type undo_type;
-
-	void undo() override;
-	void redo() override;
-};
-
-//class TerrainHeightAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<float> old_heights;
-//	std::vector<float> new_heights;
-//
-//	void undo() override;
-//	void redo() override;
-//};
-//
-//class TerrainCliffAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<Corner> old_corners;
-//	std::vector<Corner> new_corners;
-//
-//	void undo() override;
-//	void redo() override;
-//};
-//
-//class TerrainWaterAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<float> old_heights;
-//	std::vector<float> new_heights;
-//
-//	void undo() override;
-//	void redo() override;
-//};

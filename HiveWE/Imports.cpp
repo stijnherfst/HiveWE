@@ -55,14 +55,17 @@ void Imports::save() const {
 	writer.write<uint8_t>(0);
 	writer.write_c_string("war3map.dir");
 
-	HANDLE handle;
-	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.imp", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
 
-	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	SFileFinishFile(handle);
+	hierarchy.map.file_write("war3map.imp", writer.buffer);
+
+	//HANDLE handle;
+	//const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.imp", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	//if (!success) {
+	//	std::cout << GetLastError() << "\n";
+	//}
+
+	//SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	//SFileFinishFile(handle);
 }
 
 void Imports::load_dir_file(BinaryReader& reader) {
@@ -123,14 +126,7 @@ void Imports::save_dir_file() const {
 
 	save_directories(imports);
 
-	HANDLE handle;
-	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.dir", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	if (!success) {
-		std::cout << GetLastError() << "\n";
-	}
-
-	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	SFileFinishFile(handle);
+	hierarchy.map.file_write("war3map.dir", writer.buffer);
 }
 
 void Imports::populate_uncategorized() {

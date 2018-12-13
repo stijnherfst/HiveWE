@@ -7,10 +7,10 @@ QPixmap AspectRatioPixmapLabel::get_scaled_pixmap(bool grid_lines) {
 	painter.fillRect(0, 0, width(), height(), Qt::black);
 
 	QPixmap scaled_pixmap = pixmap.scaled(width(), height(), Qt::KeepAspectRatio);
-	int x = (width() - scaled_pixmap.width()) / 2.f;
-	int y = (height() - scaled_pixmap.height()) / 2.f;
+	horizontal_border = (width() - scaled_pixmap.width()) / 2.f;
+	vertical_border = (height() - scaled_pixmap.height()) / 2.f;
 
-	painter.drawPixmap(x, y, scaled_pixmap);
+	painter.drawPixmap(horizontal_border, vertical_border, scaled_pixmap);
 
 
 	/*if (grid_lines) {

@@ -1,5 +1,12 @@
 #include "stdafx.h"
 
+// To force HiveWE to run on the discrete GPU if available
+extern "C" {
+	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+}
+
+
 int main(int argc, char *argv[]) {
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);

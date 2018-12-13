@@ -37,6 +37,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
+	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() { map->terrain_undo.undo(); });
+	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() { map->terrain_undo.redo(); });
+
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Z), this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Y), this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
+
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
 	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map->render_pathing = checked; });
@@ -208,7 +214,7 @@ void HiveWE::switch_camera() {
 
 // ToDo move to terrain class?
 void HiveWE::import_heightmap() {
-	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -128 to +128");
+	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -16 to +16");
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
 
@@ -228,15 +234,13 @@ void HiveWE::import_heightmap() {
 		return;
 	}
 
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			map->terrain.ground_heights[j * width + i] = image_data[((height - 1 - j) * width + i) * 4] - 128;
-			map->terrain.ground_corner_heights[j * width + i] = map->terrain.corner_height(i, j);
+	for (int j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
+			map->terrain.corners[i][j].height = (image_data[((height - 1 - j) * width + i) * channels] - 128) / 16.f;
 		}
-
 	}
-	gl->glTextureSubImage2D(map->terrain.ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map->terrain.ground_corner_heights.data());
-	gl->glTextureSubImage2D(map->terrain.ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, map->terrain.ground_heights.data());
+
+	map->terrain.update_ground_heights({ 0, 0, width, height });
 }
 
 void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {

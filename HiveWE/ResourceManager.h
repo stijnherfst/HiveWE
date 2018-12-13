@@ -26,7 +26,7 @@ public:
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
 		
 		std::string resource;
-		for (auto&& path : paths) {
+		for (const auto& path : paths) {
 			resource += path.string();
 		}
 		resource += T::name;

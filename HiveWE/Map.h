@@ -8,6 +8,7 @@ public:
 	Triggers triggers;
 	MapInfo info;
 	Terrain terrain;
+	TerrainUndo terrain_undo;
 	PathingMap pathing_map;
 	Doodads doodads;
 	Units units;
@@ -48,7 +49,7 @@ public:
 	~Map();
 
 	void load(const fs::path& path);
-	bool save(const fs::path& path);
+	bool save(const fs::path& path, bool switch_working = true);
 	void play_test();
 	void render(int width, int height);
 };

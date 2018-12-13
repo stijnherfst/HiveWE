@@ -1,14 +1,5 @@
 #include "stdafx.h"
 
-
-float Corner::final_ground_height() const {
-	return height + layer_height - 2.0;
-}
-
-float Corner::final_water_height() const {
-	return water_height + map->terrain.water_offset;
-}
-
 Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &ground_height);
 	gl->glDeleteTextures(1, &ground_corner_height);
@@ -38,17 +29,15 @@ void Terrain::create() {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
-	ground_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
-	water_heights.resize(width * height);
 	water_exists_data.resize(width * height);
+
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
+			ground_corner_heights[j * width + i] = corner_height(i, j);
+
 			water_exists_data[j * width + i] = corners[i][j].water;
-			ground_heights[j * width + i] = corners[i][j].height;
-			water_heights[j * width + i] = corners[i][j].water_height;
 
 			if (i == width - 1 || j == height - 1) {
 				continue;
@@ -249,14 +238,16 @@ bool Terrain::load(BinaryReader& reader) {
 
 	// Parse all tilepoints
 	corners.resize(width, std::vector<Corner>(height));
+	ground_heights.resize(width * height);
+	water_heights.resize(width * height);
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
 			Corner& corner = corners[i][j];
 
-			corners[i][j].height = (reader.read<uint16_t>() - 8192.f) / 512.f;
+			ground_heights[j * width + i] = (reader.read<uint16_t>() - 8192.f) / 512.f;
 
 			const uint16_t water_and_edge = reader.read<uint16_t>();
-			corners[i][j].water_height = ((water_and_edge & 0x3FFF) - 8192.f) / 512.f;
+			water_heights[j * width + i] = ((water_and_edge & 0x3FFF) - 8192.f) / 512.f;
 			corner.map_edge = water_and_edge & 0x4000;
 
 			const uint8_t texture_and_flags = reader.read<uint8_t>();
@@ -379,9 +370,9 @@ void Terrain::save() const {
 		for (int i = 0; i < width; i++) {
 			const Corner& corner = corners[i][j];
 
-			writer.write<uint16_t>(corner.height * 512.f + 8192.f);
+			writer.write<uint16_t>(ground_heights[j * width + i] * 512.f + 8192.f);
 
-			uint16_t water_and_edge = corner.water_height * 512.f + 8192.f;
+			uint16_t water_and_edge = water_heights[j * width + i] * 512.f + 8192.f;
 			water_and_edge += corner.map_edge << 14;
 			writer.write(water_and_edge);
 
@@ -403,7 +394,14 @@ void Terrain::save() const {
 		}
 	}
 
-	hierarchy.map.file_write("war3map.w3e", writer.buffer);
+	HANDLE handle;
+	const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.w3e", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
+	if (!success) {
+		std::cout << GetLastError() << "\n";
+	}
+
+	SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
+	SFileFinishFile(handle);
 }
 
 void Terrain::render() const {
@@ -538,7 +536,28 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
-	update_ground_textures({ 0, 0, width, height });
+	// Update texture usage information
+	for (int i = 0; i < width - 1; i++) {
+		for (int j = 0; j < height - 1; j++) {
+			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
+
+			if (corners[i][j].cliff) {
+				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+			}
+		}
+	}
+
+	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
+}
+
+/// The final height a tilepoint will have in the terrain
+float Terrain::corner_height(const int x, const int y) const {
+	return ground_heights[y * width + x] + corners[x][y].layer_height - 2.0;
+}
+
+/// The final height the water point will have in the terrain
+float Terrain::corner_water_height(const int x, const int y) const {
+	return water_heights[y * width + x] + water_offset;
 }
 
 /// The texture of the tilepoint which is influenced by its surroundings. nearby cliff > blight > regular texture
@@ -628,8 +647,8 @@ Texture Terrain::minimap_image() {
 				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
 			}
 
-			if (corners[i][j].water &&  corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
-				if (corners[i][j].final_water_height() - corners[i][j].final_ground_height() > 0.5f) {
+			if (corners[i][j].water && corner_water_height(i, j) > corner_height(i, j)) {
+				if (corner_water_height(i, j) - corner_height(i, j) > 0.5f) {
 					color *= 0.5625f;
 					color += glm::vec4(0, 0, 80, 112);
 				} else {
@@ -650,61 +669,78 @@ Texture Terrain::minimap_image() {
 	return new_minimap_image;
 }
 
-/// Starts a new undo group for add_undo
-void Terrain::new_undo_group() {
-	map->terrain_undo.new_undo_group();
+void Terrain::undo() {
+	auto& actions = undo_actions.front();
+	for (const auto& i : actions) {
+		i->execute();
+	}
 
-	old_corners = corners;
+	redo_actions.push_back(std::move(actions));
+	undo_actions.pop_back();
 }
 
-/// Adds the undo to the current undo group
-void Terrain::add_undo(const QRect& area, undo_type type) {
-	auto undo_action = std::make_unique<TerrainGenericAction>();
+void Terrain::redo() {
+	auto& actions = redo_actions.front();
+	for (const auto& i : actions) {
+		i->execute();
+	}
 
-	undo_action->area = area;
-	undo_action->undo_type = type;
+	undo_actions.push_back(std::move(actions));
+	redo_actions.pop_back();
+}
 
-	// Copy old corners
-	undo_action->old_corners.reserve(area.width() * area.height());
+void HeightAction::execute() {
 	for (int j = area.top(); j <= area.bottom(); j++) {
+		auto it = heights.begin() + j * area.width();
+
+		std::copy(it, it + area.width(), map->terrain.ground_heights.begin() + j * map->terrain.width + area.left());
 		for (int i = area.left(); i <= area.right(); i++) {
-			undo_action->old_corners.push_back(old_corners[i][j]);
+			map->terrain.ground_corner_heights[j * map->terrain.width + i] = map->terrain.corner_height(i, j);
 		}
 	}
 
-	// Copy new corners
-	undo_action->new_corners.reserve(area.width() * area.height());
-	for (int j = area.top(); j <= area.bottom(); j++) {
-		for (int i = area.left(); i <= area.right(); i++) {
-			undo_action->new_corners.push_back(corners[i][j]);
-		}
-	}
-
-	map->terrain_undo.add_undo_action(std::move(undo_action));
+	const int offset = area.y() * map->terrain.width + area.x();
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map->terrain.width);
+	gl->glTextureSubImage2D(map->terrain.ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map->terrain.ground_heights.data() + offset);
+	gl->glTextureSubImage2D(map->terrain.ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, map->terrain.ground_corner_heights.data() + offset);
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
-void Terrain::upload_ground_heights(const QRect& area) const {
+void Terrain::begin_operation() {
+
+}
+
+void Terrain::end_operation() {
+
+}
+
+void Terrain::set_ground_height(int x, int y, float height) {
+	ground_heights[y * width + x] = std::clamp(height, -16.f, 15.998f); // ToDo 15.998???
+	ground_corner_heights[y * width + x] = corner_height(x, y);
+}
+
+void Terrain::update_ground_heights(QRect area) {
 	const int offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	gl->glTextureSubImage2D(ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_heights.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
-void Terrain::upload_corner_heights(const QRect& area) const {
+void Terrain::update_corner_heights(QRect area) {
 	int offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	gl->glTextureSubImage2D(ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_corner_heights.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
-void Terrain::upload_ground_texture(const QRect& area) const {
+void Terrain::update_ground_textures(QRect area) {
 	const int offset = area.y() * (width - 1) + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width - 1);
 	gl->glTextureSubImage2D(ground_texture_data, 0, area.x(), area.y(), area.width(), area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
-void Terrain::upload_water_exists(const QRect& area) const {
+void Terrain::update_water_exists(QRect area) {
 	const int offset = area.y() * width + area.x();
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
@@ -713,133 +749,9 @@ void Terrain::upload_water_exists(const QRect& area) const {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-void Terrain::upload_water_heights(const QRect& area) const {
+void Terrain::update_water_heights(QRect area) {
 	int offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 	gl->glTextureSubImage2D(water_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, water_heights.data() + offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-}
-
-
-void Terrain::update_ground_heights(const QRect& area) {
-	for (int j = area.y(); j < area.y() + area.height(); j++) {
-		for (int i = area.x(); i < area.x() + area.width(); i++) {
-			ground_heights[j * width + i] = corners[i][j].height; // todo 15.998???
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
-		}
-	}
-
-	upload_ground_heights(area);
-	upload_corner_heights(area);
-}
-
-void Terrain::update_ground_textures(const QRect& area) {
-	QRect update_area = area.adjusted(-1, -1, 0, 0).intersected({ 0, 0, width - 1, height - 1 });
-
-	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
-		for (int i = update_area.left(); i <= update_area.right(); i++) {
-			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
-			if (corners[i][j].cliff) {
-				ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
-			}
-		}
-	}
-
-	upload_ground_texture(update_area);
-}
-
-void Terrain::update_water(const QRect& area) {
-	for (int i = area.x(); i < area.x() + area.width(); i++) {
-		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			map->terrain.water_exists_data[j * width + i] = corners[i][j].water;
-			map->terrain.water_heights[j * width + i] = corners[i][j].water_height;
-		}
-	}
-	upload_water_exists(area);
-	upload_water_heights(area);
-}
-
-void Terrain::update_cliff_meshes(const QRect& area) {
-	// Remove all existing cliff meshes in area
-	for (size_t i = cliffs.size(); i-- > 0;) {
-		glm::ivec3& pos = cliffs[i];
-		if (area.contains(pos.x, pos.y)) {
-			cliffs.erase(cliffs.begin() + i);
-		}
-	}
-
-	// Add new cliff meshes
-	for (int i = area.x(); i <= area.right(); i++) {
-		for (int j = area.y(); j <= area.bottom(); j++) {
-			Corner& bottom_left = map->terrain.corners[i][j];
-			Corner& bottom_right = map->terrain.corners[i + 1][j];
-			Corner& top_left = map->terrain.corners[i][j + 1];
-			Corner& top_right = map->terrain.corners[i + 1][j + 1];
-
-			if (!bottom_left.cliff) {
-				continue;
-			}
-
-			const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
-			std::string file_name = ""s + char('A' + bottom_left.layer_height - base)
-				+ char('A' + top_left.layer_height - base)
-				+ char('A' + top_right.layer_height - base)
-				+ char('A' + bottom_right.layer_height - base);
-
-			if (file_name == "AAAA") {
-				continue;
-			}
-
-			// Clamp to within max variations
-			file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
-
-			cliffs.emplace_back(i, j, path_to_cliff[file_name]);
-		}
-	}
-}
-
-void TerrainGenericAction::undo() {
-	for (int j = area.top(); j <= area.bottom(); j++) {
-		for (int i = area.left(); i <= area.right(); i++) {
-			map->terrain.corners[i][j] = old_corners[(j - area.top()) * area.width() + i - area.left()];
-		}
-	}
-
-	if (undo_type == Terrain::undo_type::height) {
-		map->terrain.update_ground_heights(area);
-	}
-
-	if (undo_type == Terrain::undo_type::texture) {
-		map->terrain.update_ground_textures(area);
-	}
-
-	if (undo_type == Terrain::undo_type::cliff) {
-		map->terrain.update_ground_heights(area);
-		map->terrain.update_cliff_meshes(area);
-		map->terrain.update_ground_textures(area);
-		map->terrain.update_water(area);
-	}
-}
-
-void TerrainGenericAction::redo() {
-	for (int j = area.top(); j <= area.bottom(); j++) {
-		for (int i = area.left(); i <= area.right(); i++) {
-			map->terrain.corners[i][j] = new_corners[(j - area.top()) * area.width() + i - area.left()];
-		}
-	}
-
-	if (undo_type == Terrain::undo_type::height) {
-		map->terrain.update_ground_heights(area);
-	}
-
-	if (undo_type == Terrain::undo_type::texture) {
-		map->terrain.update_ground_textures(area);
-	}
-
-	if (undo_type == Terrain::undo_type::cliff) {
-		map->terrain.update_ground_heights(area);
-		map->terrain.update_cliff_meshes(area);
-		map->terrain.update_ground_textures(area);
-		map->terrain.update_water(area);
-	}
 }
