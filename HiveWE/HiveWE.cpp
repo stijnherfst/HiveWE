@@ -86,6 +86,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		auto palette = new TerrainPalette(this);
 		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+		palette->move(width() - palette->width() - 10, 10);
 	});
 	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new DoodadPalette(this);
@@ -95,12 +96,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			remove_custom_tab();
 			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		});
+		palette->move(width() - palette->width() - 10, 10);
 	});
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new PathingPallete(this);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
 		});
+		palette->move(width() - palette->width() - 10, 10);
 	});
 
 	// Temporary Temporary

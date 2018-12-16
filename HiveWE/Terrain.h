@@ -167,33 +167,3 @@ public:
 	void undo() override;
 	void redo() override;
 };
-
-//class TerrainHeightAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<float> old_heights;
-//	std::vector<float> new_heights;
-//
-//	void undo() override;
-//	void redo() override;
-//};
-//
-//class TerrainCliffAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<Corner> old_corners;
-//	std::vector<Corner> new_corners;
-//
-//	void undo() override;
-//	void redo() override;
-//};
-//
-//class TerrainWaterAction : public TerrainUndoAction {
-//public:
-//	QRect area;
-//	std::vector<float> old_heights;
-//	std::vector<float> new_heights;
-//
-//	void undo() override;
-//	void redo() override;
-//};

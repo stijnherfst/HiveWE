@@ -45,7 +45,6 @@ void PathingMap::save() const {
 	writer.write<uint32_t>(width);
 	writer.write<uint32_t>(height);
 	writer.write_vector<uint8_t>(pathing_cells_static);
-	
 
 	hierarchy.map.file_write("war3map.wpm", writer.buffer);
 }
@@ -77,4 +76,57 @@ void PathingMap::update_dynamic() {
 	}
 
 	gl->glTextureSubImage2D(texture_dynamic, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_dynamic.data());
+}
+
+void PathingMap::upload_static_pathing(const QRect& area) {
+	const int offset = area.y() * width + area.x();
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
+	gl->glTextureSubImage2D(texture_static, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data() + offset);
+	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+}
+
+void PathingMap::new_undo_group() {
+	old_pathing_cells_static = pathing_cells_static;
+}
+
+void PathingMap::add_undo(const QRect& area) {
+	auto undo_action = std::make_unique<PathingMapAction>();
+
+	undo_action->area = area;
+
+	// Copy old corners
+	undo_action->old_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->old_pathing.push_back(old_pathing_cells_static[j * width + i]);
+		}
+	}
+
+	// Copy new corners
+	undo_action->new_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->new_pathing.push_back(pathing_cells_static[j * width + i]);
+		}
+	}
+
+	map->terrain_undo.add_undo_action(std::move(undo_action));
+}
+
+void PathingMapAction::undo() {
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] = old_pathing[(j - area.top()) * area.width() + i - area.left()];
+		}
+	}
+	map->pathing_map.upload_static_pathing(area);
+}
+
+void PathingMapAction::redo() {
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] = new_pathing[(j - area.top()) * area.width() + i - area.left()];
+		}
+	}
+	map->pathing_map.upload_static_pathing(area);
 }

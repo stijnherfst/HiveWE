@@ -57,15 +57,6 @@ void Imports::save() const {
 
 
 	hierarchy.map.file_write("war3map.imp", writer.buffer);
-
-	//HANDLE handle;
-	//const bool success = SFileCreateFile(hierarchy.map.handle, "war3map.imp", 0, writer.buffer.size(), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &handle);
-	//if (!success) {
-	//	std::cout << GetLastError() << "\n";
-	//}
-
-	//SFileWriteFile(handle, writer.buffer.data(), writer.buffer.size(), MPQ_COMPRESSION_ZLIB);
-	//SFileFinishFile(handle);
 }
 
 void Imports::load_dir_file(BinaryReader& reader) {

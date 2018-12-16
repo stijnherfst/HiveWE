@@ -18,6 +18,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 
 	view_history->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png"));
 	view_history->setText("View\nHistory");
+	view_history->setEnabled(false);
 	history_section->addWidget(view_history);
 
 	/*copy->setIcon(QIcon("Data/Icons/Ribbon/copy32x32.ico"));

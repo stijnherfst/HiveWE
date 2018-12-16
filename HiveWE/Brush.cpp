@@ -138,6 +138,7 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 		}
 	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
+			apply_begin();
 			apply();
 		}
 	}

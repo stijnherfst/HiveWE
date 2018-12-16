@@ -9,6 +9,9 @@ public:
 	bool apply_cliff_pathing = true;
 
 	bool enforce_water_height_limits = true;
+	bool change_doodad_heights = true;
+	bool relative_cliff_heights = false;
+
 
 	std::string tile_id;
 
@@ -37,6 +40,8 @@ public:
 
 	TerrainBrush();
 	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
+
+	void apply_begin() override;
 	void apply() override;
 	void apply_end() override;
 
@@ -64,11 +69,10 @@ private:
 		{ 15, 1 }
 	};
 
-	bool brush_hold = false;
+	//bool brush_hold = false;
 	int layer_height = 0;
 	int deformation_height = 0;
 
 	QRect texture_height_area;
 	QRect cliff_area;
-	QRect water_area;
 };

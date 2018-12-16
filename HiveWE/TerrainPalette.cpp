@@ -63,19 +63,41 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	textures_group->addButton(ui.blight);
 
 	// Ribbon
-	QRibbonSection* settings_section = new QRibbonSection;
-	settings_section->setText("Settings");
+	QRibbonSection* general_section = new QRibbonSection;
+	general_section->setText("General");
 
 	QRibbonButton* enforce_water_height_limit = new QRibbonButton;
 	enforce_water_height_limit->setText("Enforce Water\nHeight Limit");
 	enforce_water_height_limit->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
 	enforce_water_height_limit->setCheckable(true);
 	enforce_water_height_limit->setChecked(true);
-	settings_section->addWidget(enforce_water_height_limit);
+	general_section->addWidget(enforce_water_height_limit);
 
-	ribbon_tab->addSection(settings_section);
+	QRibbonButton* change_doodad_heights = new QRibbonButton;
+	change_doodad_heights->setText("Update\nDoodad Z");
+	change_doodad_heights->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	change_doodad_heights->setCheckable(true);
+	change_doodad_heights->setChecked(true);
+	general_section->addWidget(change_doodad_heights);
+
+	QRibbonSection* cliff_section = new QRibbonSection;
+	cliff_section->setText("Cliff");
+
+	QRibbonButton* relative_cliff_heights = new QRibbonButton;
+	relative_cliff_heights->setText("Relative\nHeight");
+	relative_cliff_heights->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	relative_cliff_heights->setCheckable(true);
+	relative_cliff_heights->setChecked(false);
+	relative_cliff_heights->setEnabled(false);
+	cliff_section->addWidget(relative_cliff_heights);
+
+	ribbon_tab->addSection(general_section);
+	ribbon_tab->addSection(cliff_section);
+
 
 	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { brush.enforce_water_height_limits = checked; });
+	connect(change_doodad_heights, &QRibbonButton::toggled, [&](bool checked) { brush.change_doodad_heights = checked; });
+	connect(relative_cliff_heights, &QRibbonButton::toggled, [&](bool checked) { brush.relative_cliff_heights = checked; });
 
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.brushSizeSlider->setValue(button->text().toInt());

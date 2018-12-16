@@ -12,5 +12,9 @@ public:
 
 	Operation operation = Operation::replace;
 
+	QRect applied_area;
+
+	void apply_begin() override;
 	void apply() override;
+	void apply_end() override;
 };

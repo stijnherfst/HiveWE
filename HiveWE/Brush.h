@@ -45,6 +45,7 @@ public:
 	virtual void render_selection() const {};
 	virtual void render_brush() const;
 
+	virtual void apply_begin() {};
 	virtual void apply() = 0;
 	virtual void apply_end() {};
 protected:

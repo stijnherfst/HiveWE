@@ -1,5 +1,16 @@
 #include "stdafx.h"
 
+void PathingBrush::apply_begin() {
+	const int x = position.x * 4 + uv_offset.x;
+	const int y = position.y * 4 + uv_offset.y;
+	const int cells = size * 2 + 1;
+
+	applied_area = QRect(x, y, cells, cells).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
+
+	map->terrain_undo.new_undo_group();
+	map->pathing_map.new_undo_group();
+}
+
 void PathingBrush::apply() {
 	const int x = position.x * 4 + uv_offset.x;
 	const int y = position.y * 4 + uv_offset.y;
@@ -35,7 +46,11 @@ void PathingBrush::apply() {
 		}
 	}
 
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, map->pathing_map.width);
-	gl->glTextureSubImage2D(map->pathing_map.texture_static, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data() + offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	applied_area = applied_area.united(area);
+
+	map->pathing_map.upload_static_pathing(area);
+}
+
+void PathingBrush::apply_end() {
+	map->pathing_map.add_undo(applied_area);
 }

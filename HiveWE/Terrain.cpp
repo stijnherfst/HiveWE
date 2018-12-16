@@ -650,10 +650,8 @@ Texture Terrain::minimap_image() {
 	return new_minimap_image;
 }
 
-/// Starts a new undo group for add_undo
+/// Backups the old corners for a new undo group
 void Terrain::new_undo_group() {
-	map->terrain_undo.new_undo_group();
-
 	old_corners = corners;
 }
 

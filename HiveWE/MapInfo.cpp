@@ -91,7 +91,7 @@ void MapInfo::load(BinaryReader& reader) {
 			i.name = reader.read_c_string();
 		}
 
-		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of atleast 12
+		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of at least 12
 		if (map->is_protected) {
 			return;
 		}
