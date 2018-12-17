@@ -24,7 +24,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	}
 
 	const int unit_count = reader.read<uint32_t>();
-	for (int j = 0; j < unit_count; j++) {
+	for (int k = 0; k < unit_count; k++) {
 		Unit i;
 		i.id = reader.read_string(4);
 		i.variation = reader.read<uint32_t>();

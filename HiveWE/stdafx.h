@@ -31,7 +31,7 @@ namespace fs = std::filesystem;
 #include <QDialogButtonBox>
 
 // Dependencies
-//#define GLM_FORCE_CXX14
+#define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>

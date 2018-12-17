@@ -37,7 +37,7 @@ public:
 	template<typename T>
 	void write_vector(const std::vector<T>& vector) {
 		if constexpr (std::is_same_v<T, std::string>) {
-			for (auto&& i : vector) {
+			for (const auto& i : vector) {
 				buffer.insert(buffer.end(), i.begin(), i.end());
 			}
 		} else {

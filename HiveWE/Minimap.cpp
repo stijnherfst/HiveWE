@@ -30,7 +30,7 @@ void Minimap::mousePressEvent(QMouseEvent* event) {
 	}
 }
 
-void Minimap::mouseReleaseEvent(QMouseEvent* event) {
+void Minimap::mouseReleaseEvent(QMouseEvent*) {
 	setCursor(Qt::ArrowCursor);
 }
 

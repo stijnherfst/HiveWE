@@ -152,6 +152,7 @@ public:
 	void update_water(const QRect& area);
 	void update_cliff_meshes(const QRect& area);
 
+	void update_minimap();
 signals:
 	void minimap_changed(Texture minimap);
 };

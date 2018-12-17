@@ -121,7 +121,7 @@ void Imports::save_dir_file() const {
 }
 
 void Imports::populate_uncategorized() {
-	for (auto&& i : uncategorized) {
+	for (const auto& i : uncategorized) {
 		imports.push_back(i);
 	}
 }

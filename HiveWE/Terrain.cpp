@@ -682,39 +682,39 @@ void Terrain::add_undo(const QRect& area, undo_type type) {
 }
 
 void Terrain::upload_ground_heights(const QRect& area) const {
-	const int offset = area.y() * width + area.x();
+	const int data_offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_heights.data() + offset);
+	gl->glTextureSubImage2D(ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_heights.data() + data_offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
 void Terrain::upload_corner_heights(const QRect& area) const {
-	int offset = area.y() * width + area.x();
+	const int data_offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_corner_heights.data() + offset);
+	gl->glTextureSubImage2D(ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_corner_heights.data() + data_offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
 void Terrain::upload_ground_texture(const QRect& area) const {
-	const int offset = area.y() * (width - 1) + area.x();
+	const int data_offset = area.y() * (width - 1) + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width - 1);
-	gl->glTextureSubImage2D(ground_texture_data, 0, area.x(), area.y(), area.width(), area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data() + offset);
+	gl->glTextureSubImage2D(ground_texture_data, 0, area.x(), area.y(), area.width(), area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data() + data_offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
 void Terrain::upload_water_exists(const QRect& area) const {
-	const int offset = area.y() * width + area.x();
+	const int data_offset = area.y() * width + area.x();
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(water_exists, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data() + offset);
+	gl->glTextureSubImage2D(water_exists, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data() + data_offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
 void Terrain::upload_water_heights(const QRect& area) const {
-	int offset = area.y() * width + area.x();
+	const int data_offset = area.y() * width + area.x();
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(water_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, water_heights.data() + offset);
+	gl->glTextureSubImage2D(water_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, water_heights.data() + data_offset);
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 }
 
@@ -732,7 +732,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 }
 
 void Terrain::update_ground_textures(const QRect& area) {
-	QRect update_area = area.adjusted(-1, -1, 0, 0).intersected({ 0, 0, width - 1, height - 1 });
+	QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
 		for (int i = update_area.left(); i <= update_area.right(); i++) {
@@ -796,6 +796,10 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 	}
 }
 
+void Terrain::update_minimap() {
+	emit minimap_changed(minimap_image());
+}
+
 void TerrainGenericAction::undo() {
 	for (int j = area.top(); j <= area.bottom(); j++) {
 		for (int i = area.left(); i <= area.right(); i++) {
@@ -817,6 +821,8 @@ void TerrainGenericAction::undo() {
 		map->terrain.update_ground_textures(area);
 		map->terrain.update_water(area);
 	}
+
+	map->terrain.update_minimap();
 }
 
 void TerrainGenericAction::redo() {
@@ -840,4 +846,6 @@ void TerrainGenericAction::redo() {
 		map->terrain.update_ground_textures(area);
 		map->terrain.update_water(area);
 	}
+
+	map->terrain.update_minimap();
 }

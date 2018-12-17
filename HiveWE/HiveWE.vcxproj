@@ -95,6 +95,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <ConformanceMode>true</ConformanceMode>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
