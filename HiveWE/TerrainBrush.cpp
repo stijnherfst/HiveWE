@@ -287,23 +287,13 @@ void TerrainBrush::apply() {
 				uint8_t mask = 0;
 
 				if (was_cliff && !bottom_left.cliff) {
-					const int id = map->terrain.corners[i][j].ground_texture;
+					const int id = bottom_left.ground_texture;
 					mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
 				}
 
 				if (bottom_left.cliff) {
 					bottom_left.cliff_texture = cliff_id;
 					mask |= 0b00001010;
-				}
-
-				// Set water pathing
-				if (corners[i][j].water) {
-					mask |= 0b01000000;
-					if (corners[i][j].final_water_height() > corners[i][j].final_ground_height() + 1) {
-						mask |= 0b00001010;
-					} else if (corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
-						mask |= 0b00001000;
-					}
 				}
 
 				for (int k = 0; k < 4; k++) {
@@ -315,13 +305,40 @@ void TerrainBrush::apply() {
 			}
 		}
 
+		QRect water_area = updated_area.adjusted(0, 0, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
+
+		for (int i = water_area.x(); i <= water_area.right(); i++) {
+			for (int j = water_area.y(); j <= water_area.bottom(); j++) {
+				// Set water pathing
+				uint8_t water_mask = 0;
+				if (corners[i][j].water) {
+					water_mask |= 0b01000000;
+					if (corners[i][j].final_water_height() > corners[i][j].final_ground_height() + 0.40){
+						water_mask |= 0b00001010;
+					} else if (corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
+						water_mask |= 0b00001000;
+					}
+				}
+
+				for (int k = -2; k < 2; k++) {
+					for (int l = -2; l < 2; l++) {
+						if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
+							continue;
+						}
+
+						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= water_mask;
+					}
+				}
+			}
+		}
+
 		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
 		QRect corner_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width, height});
 
 		map->terrain.update_cliff_meshes(updated_area);
 		map->terrain.update_ground_textures(updated_area);
 		map->terrain.update_ground_heights(updated_area.adjusted(0, 0, 1, 1));
-		map->terrain.update_water(tile_area);
+		map->terrain.update_water(tile_area.adjusted(0, 0, 1, 1));
 
 		cliff_area = cliff_area.united(updated_area);
 

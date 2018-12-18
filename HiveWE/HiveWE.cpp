@@ -84,26 +84,26 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new TerrainPalette(this);
+		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 	});
 	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new DoodadPalette(this);
+		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		connect(palette, &Palette::finished, [&]() {
 			remove_custom_tab();
 			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 		});
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 	});
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		auto palette = new PathingPallete(this);
+		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
 		});
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 	});
 
 	// Temporary Temporary

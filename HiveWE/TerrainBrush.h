@@ -71,7 +71,7 @@ private:
 
 	//bool brush_hold = false;
 	int layer_height = 0;
-	int deformation_height = 0;
+	float deformation_height = 0.f;
 
 	QRect texture_height_area;
 	QRect cliff_area;
