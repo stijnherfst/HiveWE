@@ -25,7 +25,7 @@ class PathingMap {
 	void save() const;
 
 	void update_dynamic();
-	void upload_static_pathing(const QRect& area);
+	void upload_static_pathing();
 
 
 	void new_undo_group();

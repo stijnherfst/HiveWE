@@ -141,11 +141,11 @@ public:
 	void new_undo_group();
 	void add_undo(const QRect& area, undo_type type);
 
-	void upload_ground_heights(const QRect& area) const;
-	void upload_corner_heights(const QRect& area) const;
-	void upload_ground_texture(const QRect& area) const;
-	void upload_water_exists(const QRect& area) const;
-	void upload_water_heights(const QRect& area) const;
+	void upload_ground_heights() const;
+	void upload_corner_heights() const;
+	void upload_ground_texture() const;
+	void upload_water_exists() const;
+	void upload_water_heights() const;
 
 	void update_ground_heights(const QRect& area);
 	void update_ground_textures(const QRect& area);

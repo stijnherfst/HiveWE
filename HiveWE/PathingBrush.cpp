@@ -48,7 +48,7 @@ void PathingBrush::apply() {
 
 	applied_area = applied_area.united(area);
 
-	map->pathing_map.upload_static_pathing(area);
+	map->pathing_map.upload_static_pathing();
 }
 
 void PathingBrush::apply_end() {

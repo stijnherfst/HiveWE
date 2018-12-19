@@ -125,8 +125,8 @@ void TerrainBrush::apply() {
 					}
 				}
 
-				// Blight shouldnt be set when there is a cliff near
 				if (id == map->terrain.blight_texture) {
+					// Blight shouldn't be set when there is a cliff near
 					if (cliff_near) {
 						continue;
 					}
@@ -136,31 +136,6 @@ void TerrainBrush::apply() {
 					corners[i][j].blight = false;
 					corners[i][j].ground_texture = id;
 					corners[i][j].ground_variation = get_random_variation();
-				}
-				// Set blight pathing
-				for (int k = 0; k < 4; k++) {
-					for (int l = 0; l < 4; l++) {
-						if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
-							continue;
-						}
-						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00100000;
-						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= corners[i][j].blight ? 1 : 0;
-					}
-				}
-
-				if (apply_tile_pathing) {
-					for (int k = -2; k < 2; k++) {
-						for (int l = -2; l < 2; l++) {
-							if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
-								continue;
-							}
-							if (corners[i + std::clamp(k, -1, 0)][j + std::clamp(l, -1, 0)].cliff) {
-								continue;
-							}
-							map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b00001110;
-							map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= map->terrain.pathing_options[tile_id].mask();
-						}
-					}
 				}
 			}
 		}
@@ -278,62 +253,16 @@ void TerrainBrush::apply() {
 				Corner& top_left = map->terrain.corners[i][j + 1];
 				Corner& top_right = map->terrain.corners[i + 1][j + 1];
 
-				const bool was_cliff = bottom_left.cliff;
-
 				bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
 					|| bottom_left.layer_height != top_left.layer_height
 					|| bottom_left.layer_height != top_right.layer_height;
 
-				uint8_t mask = 0;
 
-				if (was_cliff && !bottom_left.cliff) {
-					const int id = bottom_left.ground_texture;
-					mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
-				}
-
-				if (bottom_left.cliff) {
-					bottom_left.cliff_texture = cliff_id;
-					mask |= 0b00001010;
-				}
-
-				for (int k = 0; k < 4; k++) {
-					for (int l = 0; l < 4; l++) {
-						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
-						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= mask;
-					}
-				}
-			}
-		}
-
-		QRect water_area = updated_area.adjusted(0, 0, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
-
-		for (int i = water_area.x(); i <= water_area.right(); i++) {
-			for (int j = water_area.y(); j <= water_area.bottom(); j++) {
-				// Set water pathing
-				uint8_t water_mask = 0;
-				if (corners[i][j].water) {
-					water_mask |= 0b01000000;
-					if (corners[i][j].final_water_height() > corners[i][j].final_ground_height() + 0.40){
-						water_mask |= 0b00001010;
-					} else if (corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
-						water_mask |= 0b00001000;
-					}
-				}
-
-				for (int k = -2; k < 2; k++) {
-					for (int l = -2; l < 2; l++) {
-						if (i * 4 + k < 0 || i * 4 + k >= map->pathing_map.width || j * 4 + l < 0 || j * 4 + l >= map->pathing_map.height) {
-							continue;
-						}
-
-						map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= water_mask;
-					}
-				}
+				bottom_left.cliff_texture = cliff_id;
 			}
 		}
 
 		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
-		QRect corner_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width, height});
 
 		map->terrain.update_cliff_meshes(updated_area);
 		map->terrain.update_ground_textures(updated_area);
@@ -343,13 +272,43 @@ void TerrainBrush::apply() {
 		cliff_area = cliff_area.united(updated_area);
 
 		if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
-			map->terrain.upload_water_heights(corner_area);
+			map->terrain.upload_water_heights();
 		}
 	}
 
-	QRect pathing_area = QRect(updated_area.x() * 4, updated_area.y() * 4, updated_area.width() * 4, updated_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
+	// Apply pathing
+	for (int i = updated_area.x(); i <= updated_area.right(); i++) {
+		for (int j = updated_area.y(); j <= updated_area.bottom(); j++) {
+			Corner& bottom_left = map->terrain.corners[i][j];
 
-	map->pathing_map.upload_static_pathing(pathing_area);
+			for (int k = 0; k < 4; k++) {
+				for (int l = 0; l < 4; l++) {
+					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
+
+					uint8_t mask = 0;
+					if (bottom_left.cliff) {
+						mask = 0b00001010;
+					} else {
+						Corner& corner = map->terrain.corners[i + k / 3][j + l / 3];
+						const int id = corner.ground_texture;
+						mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
+
+						if (corner.water) {
+							mask |= 0b01000000;
+							if (corner.final_water_height() > corner.final_ground_height() + 0.40) {
+								mask |= 0b00001010;
+							} else if (corner.final_water_height() > corner.final_ground_height()) {
+								mask |= 0b00001000;
+							}
+						}
+					}
+					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= mask;
+				}
+			}
+		}
+	}
+
+	map->pathing_map.upload_static_pathing();
 
 	if (apply_height || apply_cliff) {
 		if (change_doodad_heights) {
@@ -392,6 +351,6 @@ int TerrainBrush::get_random_variation() const {
 		}
 		nr -= chance;
 	}
-	assert(true, "Didn't hit the list of tile variations");
+	assert("Didn't hit the list of tile variations");
 	return 0;
 }

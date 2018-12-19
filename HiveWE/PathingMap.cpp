@@ -78,11 +78,8 @@ void PathingMap::update_dynamic() {
 	gl->glTextureSubImage2D(texture_dynamic, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_dynamic.data());
 }
 
-void PathingMap::upload_static_pathing(const QRect& area) {
-	const int offset = area.y() * width + area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(texture_static, 0, area.x(), area.y(), area.width(), area.height(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data() + offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+void PathingMap::upload_static_pathing() {
+	gl->glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
 }
 
 void PathingMap::new_undo_group() {
@@ -119,7 +116,7 @@ void PathingMapAction::undo() {
 			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] = old_pathing[(j - area.top()) * area.width() + i - area.left()];
 		}
 	}
-	map->pathing_map.upload_static_pathing(area);
+	map->pathing_map.upload_static_pathing();
 }
 
 void PathingMapAction::redo() {
@@ -128,5 +125,5 @@ void PathingMapAction::redo() {
 			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] = new_pathing[(j - area.top()) * area.width() + i - area.left()];
 		}
 	}
-	map->pathing_map.upload_static_pathing(area);
+	map->pathing_map.upload_static_pathing();
 }

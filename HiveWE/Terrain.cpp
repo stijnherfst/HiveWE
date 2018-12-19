@@ -681,41 +681,26 @@ void Terrain::add_undo(const QRect& area, undo_type type) {
 	map->terrain_undo.add_undo_action(std::move(undo_action));
 }
 
-void Terrain::upload_ground_heights(const QRect& area) const {
-	const int data_offset = area.y() * width + area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(ground_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_heights.data() + data_offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+void Terrain::upload_ground_heights() const {
+	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
 }
 
-void Terrain::upload_corner_heights(const QRect& area) const {
-	const int data_offset = area.y() * width + area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(ground_corner_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, ground_corner_heights.data() + data_offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+void Terrain::upload_corner_heights() const {
+	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
 }
 
-void Terrain::upload_ground_texture(const QRect& area) const {
-	const int data_offset = area.y() * (width - 1) + area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width - 1);
-	gl->glTextureSubImage2D(ground_texture_data, 0, area.x(), area.y(), area.width(), area.height(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data() + data_offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+void Terrain::upload_ground_texture() const {
+	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
-void Terrain::upload_water_exists(const QRect& area) const {
-	const int data_offset = area.y() * width + area.x();
+void Terrain::upload_water_exists() const {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(water_exists, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data() + data_offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+	gl->glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 }
 
-void Terrain::upload_water_heights(const QRect& area) const {
-	const int data_offset = area.y() * width + area.x();
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
-	gl->glTextureSubImage2D(water_height, 0, area.x(), area.y(), area.width(), area.height(), GL_RED, GL_FLOAT, water_heights.data() + data_offset);
-	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+void Terrain::upload_water_heights() const {
+	gl->glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
 }
 
 
@@ -727,8 +712,8 @@ void Terrain::update_ground_heights(const QRect& area) {
 		}
 	}
 
-	upload_ground_heights(area);
-	upload_corner_heights(area);
+	upload_ground_heights();
+	upload_corner_heights();
 }
 
 void Terrain::update_ground_textures(const QRect& area) {
@@ -743,7 +728,7 @@ void Terrain::update_ground_textures(const QRect& area) {
 		}
 	}
 
-	upload_ground_texture(update_area);
+	upload_ground_texture();
 }
 
 void Terrain::update_water(const QRect& area) {
@@ -753,8 +738,8 @@ void Terrain::update_water(const QRect& area) {
 			map->terrain.water_heights[j * width + i] = corners[i][j].water_height;
 		}
 	}
-	upload_water_exists(area);
-	upload_water_heights(area);
+	upload_water_exists();
+	upload_water_heights();
 }
 
 void Terrain::update_cliff_meshes(const QRect& area) {
