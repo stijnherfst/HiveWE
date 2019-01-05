@@ -195,19 +195,22 @@ bool Map::save(const fs::path& path, bool switch_working) {
 }
 
 void Map::play_test() {
+	fs::path old_path = filesystem_path;
 	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
 	if (!save(path), false) {
 		return;
 	}
-	//hierarchy.game_data.close();
+	hierarchy.map.close();
+	loaded = false;
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
 	arguments << "-loadfile" << QString::fromStdString(path.string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
-	warcraft->waitForFinished();
-	//hierarchy.game_data.open(hierarchy.warcraft_directory / "Data");
+	warcraft->waitForFinished(); 
+	load(path);
+	filesystem_path = old_path;
 }
 
 void Map::render(int width, int height) {
