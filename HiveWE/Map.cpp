@@ -215,7 +215,7 @@ bool Map::save(const fs::path& path, bool switch_working) {
 	if (!switch_working && complete_path != filesystem_path) {
 		std::swap(new_map.handle, hierarchy.map.handle);
 	}
-
+	
 	new_map.close();
 
 	return true;
@@ -223,18 +223,15 @@ bool Map::save(const fs::path& path, bool switch_working) {
 
 void Map::play_test() {
 	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
-	if (!save(path), false) {
+	if (!save(path, false)) {
 		return;
 	}
-	//hierarchy.game_data.close();
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
 	arguments << "-loadfile" << QString::fromStdString(path.string());
 
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
-	warcraft->waitForFinished();
-	//hierarchy.game_data.open(hierarchy.warcraft_directory / "Data");
 }
 
 void Map::render(int width, int height) {
