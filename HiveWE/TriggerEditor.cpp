@@ -176,16 +176,19 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, Trigger& trigger) {
 }
 
 std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_parameters, std::vector<TriggerParameter>& parameters) {
-	std::string result = "";
+	std::string result;
 
 	int current_parameter = 0;
 	for (auto&& i : string_parameters) {
-		if (i.size() && i.front() == '~') {
-			TriggerParameter& j = parameters[current_parameter];
+		if (i.empty() || i.front() != '~') {
+			result += i;
+			continue;
+		}
+		TriggerParameter& j = parameters[current_parameter];
 
-			std::vector<std::string> sub_string_parameters;
-			if (j.has_sub_parameter) {
-				switch (j.sub_parameter.type) {
+		std::vector<std::string> sub_string_parameters;
+		if (j.has_sub_parameter) {
+			switch (j.sub_parameter.type) {
 				case TriggerSubParameter::Type::events:
 					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerEventStrings", j.sub_parameter.name);
 					break;
@@ -198,60 +201,57 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 				case TriggerSubParameter::Type::calls:
 					sub_string_parameters = map->triggers.trigger_strings.whole_data("TriggerCallStrings", j.sub_parameter.name);
 					break;
-				}
-				result += "(" + get_parameters_names(sub_string_parameters, j.sub_parameter.parameters) + ")";
-			} else {
-				switch (j.type) {
-					case TriggerParameter::Type::preset:
-						result += map->triggers.trigger_data.data("TriggerParams", j.value, 3);
-						break;
-					case TriggerParameter::Type::string: {
-						std::string pre_result;
-						if (j.value.size() == 4) {
-							if (units_slk.row_header_exists(j.value)) {
-								pre_result = units_slk.data("Name", j.value);
-							} else if (items_slk.row_header_exists(j.value)) {
-								pre_result = items_slk.data("Name", j.value);
-							} else {
-								pre_result = j.value;
-							}
+			}
+			result += "(" + get_parameters_names(sub_string_parameters, j.sub_parameter.parameters) + ")";
+		} else {
+			switch (j.type) {
+				case TriggerParameter::Type::preset:
+					result += map->triggers.trigger_data.data("TriggerParams", j.value, 3);
+					break;
+				case TriggerParameter::Type::string: {
+					std::string pre_result;
+					if (j.value.size() == 4) {
+						if (units_slk.row_header_exists(j.value)) {
+							pre_result = units_slk.data("Name", j.value);
+						} else if (items_slk.row_header_exists(j.value)) {
+							pre_result = items_slk.data("Name", j.value);
+						} else {
+							pre_result = j.value;
 						}
+					}
 
-						if (pre_result.size() > 8 && pre_result.substr(0, 7) == "TRIGSTR") {
-							result += map->trigger_strings.string(pre_result);
-						} else if (!pre_result.empty()) {
-							result += pre_result;
-						} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
-							result += map->trigger_strings.string(j.value);
+					if (pre_result.size() > 8 && pre_result.substr(0, 7) == "TRIGSTR") {
+						result += map->trigger_strings.string(pre_result);
+					} else if (!pre_result.empty()) {
+						result += pre_result;
+					} else if (j.value.size() > 8 && j.value.substr(0, 7) == "TRIGSTR") {
+						result += map->trigger_strings.string(j.value);
+					} else {
+						result += j.value;
+					}
+					break;
+				}
+				case TriggerParameter::Type::variable: {
+					if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
+						std::string type = j.value.substr(8, 4);
+						std::string instance = j.value.substr(13);
+						result += units_slk.data("Name", type);
+						result += " " + instance;
+					} else {
+						std::string type = map->triggers.variables[j.value].type;
+						if (type == "unit") {
+							//std::cout << "test\n";
 						} else {
 							result += j.value;
 						}
-						break;
 					}
-					case TriggerParameter::Type::variable: {
-						if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
-							std::string type = j.value.substr(8, 4);
-							std::string instance = j.value.substr(13);
-							result += units_slk.data("Name", type);
-							result += " " + instance;
-						} else {
-							std::string type = map->triggers.variables[j.value].type;
-							if (type == "unit") {
-								//std::cout << "test\n";
-							} else {
-								result += j.value;
-							}
-						}
-						break;
-					}
-					default:
-						result += j.value;
+					break;
 				}
+				default:
+					result += j.value;
 			}
-			current_parameter++;
-		} else {
-			result += i;
 		}
+		current_parameter++;
 	}
 
 	return result;

@@ -25,7 +25,6 @@ void MapInfo::load(BinaryReader& reader) {
 	playable_height = reader.read<uint32_t>();
 
 	int flags = reader.read<uint32_t>();
-	all_flags = flags; // ToDo temporary to check saving
 	hide_minimap_preview = flags & 0x0001;
 	modif_ally_priorities = flags & 0x0002;
 	melee_map = flags & 0x0004;
@@ -71,60 +70,79 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_sound_environment = reader.read_c_string();
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
+	} else if (version == 18) { // RoC
+		loading_screen_number = reader.read<uint32_t>();
+		loading_screen_text = reader.read_c_string();
+		loading_screen_title = reader.read_c_string();
+		loading_screen_subtitle = reader.read_c_string();
 
-		players.resize(reader.read<uint32_t>());
-		for (auto&& i : players) {
-			i.internal_number = reader.read<uint32_t>();
-			i.type = static_cast<PlayerType>(reader.read<uint32_t>());
-			i.race = static_cast<PlayerRace>(reader.read<uint32_t>());
-			i.fixed_start_position = reader.read<uint32_t>();
-			i.name = reader.read_c_string();
-			i.starting_position = reader.read<glm::vec2>();
-			i.ally_low_priorities_flags = reader.read<uint32_t>();
-			i.ally_high_priorities_flags = reader.read<uint32_t>();
-		}
+		//game_data_set = reader.read<uint32_t>();
+		reader.advance(4); // ToDo RoC map loading screen number
 
-		forces.resize(reader.read<uint32_t>());
-		for (auto&& i : forces) {
-			i.focus_flags = static_cast<FocusFlags>(reader.read<uint32_t>());
-			i.player_masks = reader.read<uint32_t>();
-			i.name = reader.read_c_string();
-		}
+		prologue_text = reader.read_c_string();
+		prologue_title = reader.read_c_string();
+		prologue_subtitle = reader.read_c_string();
+	}
+	players.resize(reader.read<uint32_t>());
+	for (auto&& i : players) {
+		i.internal_number = reader.read<uint32_t>();
+		i.type = static_cast<PlayerType>(reader.read<uint32_t>() - 1);
+		i.race = static_cast<PlayerRace>(reader.read<uint32_t>());
+		i.fixed_start_position = reader.read<uint32_t>();
+		i.name = reader.read_c_string();
+		i.starting_position = reader.read<glm::vec2>();
+		i.ally_low_priorities_flags = reader.read<uint32_t>();
+		i.ally_high_priorities_flags = reader.read<uint32_t>();
+	}
 
-		// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of at least 12
-		if (map->is_protected) {
-			return;
-		}
+	forces.resize(reader.read<uint32_t>());
+	for (auto&& i : forces) {
+		uint32_t flags = reader.read<uint32_t>();
+		i.allied = flags & 0b00000001;
+		i.allied_victory = flags & 0b00000010;
+		i.share_vision = flags & 0b00001000;
+		i.share_unit_control = flags & 0b00010000;
+		i.share_advanced_unit_control = flags & 0b00100000;
 
-		available_upgrades.resize(reader.read<uint32_t>());
-		for (auto&& i : available_upgrades) {
-			i.player_flags = reader.read<uint32_t>();
-			i.id = reader.read_string(4);
-			i.level = reader.read<uint32_t>();
-			i.availability = reader.read<uint32_t>();
-		}
+		i.player_masks = reader.read<uint32_t>();
+		i.name = reader.read_c_string();
+	}
 
-		available_tech.resize(reader.read<uint32_t>());
-		for (auto&& i : available_tech) {
-			i.player_flags = reader.read<uint32_t>();
-			i.id = reader.read_string(4);
-		}
+	// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of at least 12
+	if (map->is_protected) {
+		return;
+	}
 
-		random_unit_tables.resize(reader.read<uint32_t>());
-		for (auto&& i : random_unit_tables) {
-			i.number = reader.read<uint32_t>();
-			i.name = reader.read_c_string();
-			i.positions = reader.read_vector<int>(reader.read<uint32_t>());
+	available_upgrades.resize(reader.read<uint32_t>());
+	for (auto&& i : available_upgrades) {
+		i.player_flags = reader.read<uint32_t>();
+		i.id = reader.read_string(4);
+		i.level = reader.read<uint32_t>();
+		i.availability = reader.read<uint32_t>();
+	}
 
-			i.lines.resize(reader.read<uint32_t>());
-			for (auto&& j : i.lines) {
-				j.chance = reader.read<uint32_t>();
-				for (int k = 0; k < i.positions.size(); k++) {
-					j.ids.push_back(reader.read_string(4));
-				}
+	available_tech.resize(reader.read<uint32_t>());
+	for (auto&& i : available_tech) {
+		i.player_flags = reader.read<uint32_t>();
+		i.id = reader.read_string(4);
+	}
+
+	random_unit_tables.resize(reader.read<uint32_t>());
+	for (auto&& i : random_unit_tables) {
+		i.number = reader.read<uint32_t>();
+		i.name = reader.read_c_string();
+		i.positions = reader.read_vector<int>(reader.read<uint32_t>());
+
+		i.lines.resize(reader.read<uint32_t>());
+		for (auto&& j : i.lines) {
+			j.chance = reader.read<uint32_t>();
+			for (int k = 0; k < i.positions.size(); k++) {
+				j.ids.push_back(reader.read_string(4));
 			}
 		}
+	}
 
+	if (version == 25) {
 		random_item_tables.resize(reader.read<uint32_t>());
 		for (auto&& i : random_item_tables) {
 			i.number = reader.read<uint32_t>();
@@ -138,11 +156,7 @@ void MapInfo::load(BinaryReader& reader) {
 				}
 			}
 		}
-
-	} else if (version == 18) { // RoC
-
 	}
-
 }
 
 void MapInfo::save() const {
@@ -185,10 +199,6 @@ void MapInfo::save() const {
 		| water_tinting * 0x10000;
 	writer.write(flags);
 
-	if (flags != all_flags) {
-		std::cout << "Flags not equivalent\n";
-	}
-
 	writer.write(map->terrain.tileset);
 
 	writer.write(loading_screen_number);
@@ -218,7 +228,7 @@ void MapInfo::save() const {
 	writer.write<uint32_t>(players.size());
 	for (auto&& i : players) {
 		writer.write(i.internal_number);
-		writer.write(static_cast<int>(i.type));
+		writer.write(static_cast<int>(i.type) + 1);
 		writer.write(static_cast<int>(i.race));
 		writer.write(i.fixed_start_position);
 		writer.write_c_string(i.name);
@@ -229,7 +239,13 @@ void MapInfo::save() const {
 
 	writer.write<uint32_t>(forces.size());
 	for (auto&& i : forces) {
-		writer.write(static_cast<int>(i.focus_flags));
+		uint32_t flags = i.allied * 0b00000001
+			| i.allied_victory * 0b00000010
+			| i.share_vision * 0b00000100
+			| i.share_unit_control * 0b00010000
+			| i.share_advanced_unit_control * 0b00100000;
+		writer.write(flags);
+
 		writer.write(i.player_masks);
 		writer.write_c_string(i.name);
 	}

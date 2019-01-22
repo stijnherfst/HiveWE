@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
 
 	QApplication a(argc, argv);
 
+
 	HiveWE w;
 	w.showMaximized();
 	return QApplication::exec();

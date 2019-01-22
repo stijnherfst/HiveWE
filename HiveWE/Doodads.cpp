@@ -181,6 +181,14 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.position = position;
 	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
+
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	std::string pathing_texture_path = slk.data("pathTex", id);
+	if (hierarchy.file_exists(pathing_texture_path)) {
+		doodad.pathing = resource_manager.load<Texture>(pathing_texture_path);
+	}
+
 	doodad.update();
 
 	doodads.push_back(doodad);

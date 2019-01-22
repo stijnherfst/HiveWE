@@ -8,6 +8,7 @@ enum class PlayerType {
 };
 
 enum class PlayerRace {
+	selectable,
 	human,
 	orc,
 	undead,
@@ -21,20 +22,16 @@ struct PlayerData {
 	int fixed_start_position;
 	std::string name;
 	glm::vec2 starting_position;
-	int ally_low_priorities_flags;
-	int ally_high_priorities_flags;
-};
-
-enum class FocusFlags {
-	allied,
-	allied_victory,
-	share_vision,
-	share_unit_control,
-	share_advanced_unit_control
+	uint32_t ally_low_priorities_flags;
+	uint32_t ally_high_priorities_flags;
 };
 
 struct ForceData {
-	FocusFlags focus_flags;
+	bool allied;
+	bool allied_victory;
+	bool share_vision;
+	bool share_unit_control;
+	bool share_advanced_unit_control;
 	int player_masks;
 	std::string name;
 };

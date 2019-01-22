@@ -369,6 +369,15 @@
     <ClCompile Include="TerrainUndo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Regions.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCameras.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Sounds.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -514,6 +523,15 @@
     </ClInclude>
     <ClInclude Include="TerrainUndo.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Regions.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCameras.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Sounds.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

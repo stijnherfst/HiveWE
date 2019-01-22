@@ -9,6 +9,7 @@ WindowHandler window_handler;
 slk::SLK units_slk;
 slk::SLK units_meta_slk;
 slk::SLK items_slk;
+slk::SLK abilities_slk;
 slk::SLK doodads_slk;
 slk::SLK doodads_meta_slk;
 slk::SLK destructibles_slk;
@@ -134,7 +135,7 @@ void HiveWE::load() {
 
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
-		"Warcraft III Scenario (*.w3x)");
+		"Warcraft III Scenario (*.w3m *.w3x)");
 
 	if (file_name != "") {
 		settings.setValue("openDirectory", file_name);
