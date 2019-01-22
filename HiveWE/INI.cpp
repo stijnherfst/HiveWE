@@ -91,6 +91,10 @@ namespace ini {
 		}
 	}
 
+	void INI::set_whole_data(const std::string& section, const std::string& key, const std::string& value) {
+		ini_data[section][key] = { value };
+	}
+
 	std::vector<std::string> INI::whole_data(const std::string& section, const std::string& key) const {
 		if (ini_data.count(section) && ini_data.at(section).count(key)) { // ToDo C++20 contains
 			return ini_data.at(section).at(key);
@@ -99,7 +103,7 @@ namespace ini {
 		}
 	}
 
-	bool INI::key_exists(const std::string& section, const std::string& key) {
-		return ini_data.count(section) && ini_data[section].count(key);
+	bool INI::key_exists(const std::string& section, const std::string& key) const {
+		return ini_data.count(section) && ini_data.at(section).count(key);
 	}
 }

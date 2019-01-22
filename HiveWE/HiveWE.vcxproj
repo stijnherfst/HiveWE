@@ -140,6 +140,7 @@
     <ClCompile Include="BLP.cpp" />
     <ClCompile Include="Brush.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GameCameras.cpp" />
     <ClCompile Include="CASC.cpp" />
     <ClCompile Include="CliffMesh.cpp" />
     <ClCompile Include="ColorButton.cpp" />
@@ -345,11 +346,13 @@
     <ClCompile Include="PathingPallete.cpp" />
     <ClCompile Include="QRibbon.cpp" />
     <ClCompile Include="Quadtree.cpp" />
+    <ClCompile Include="Regions.cpp" />
     <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
     <ClCompile Include="SkinnedMesh.cpp" />
     <ClCompile Include="SLK.cpp" />
+    <ClCompile Include="Sounds.cpp" />
     <ClCompile Include="StaticMesh.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -391,6 +394,7 @@
     <ClInclude Include="BLP.h" />
     <ClInclude Include="Brush.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="GameCameras.h" />
     <ClInclude Include="CASC.h" />
     <ClInclude Include="CliffMesh.h" />
     <CustomBuild Include="WindowHandler.h">
@@ -608,11 +612,13 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">"$(QTDIR)\bin\moc.exe"  "%(FullPath)" -o ".\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp"  -DUNICODE -DWIN32 -DWIN64 -DQT_NO_DEBUG -DNDEBUG -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE  "-I.\GeneratedFiles" "-I." "-I$(QTDIR)\include" "-I.\GeneratedFiles\$(ConfigurationName)\." "-I.\Dependencies\glm-0.9.8.5" "-I.\Dependencies\soil2\include" "-I.\Dependencies\stormlib-9.21\include" "-I.\Dependencies\libjpeg-turbo-1.5.2\include" "-I.\Dependencies\casclib-1.11\include" "-I.\Dependencies\qscintilla-2.10.7\include" "-I$(QTDIR)\include\QtCore" "-I$(QTDIR)\include\QtGui" "-I$(QTDIR)\include\QtANGLE" "-I$(QTDIR)\include\QtOpenGL" "-I$(QTDIR)\include\QtWidgets" "-fstdafx.h" "-f../../%(Filename)%(Extension)"</Command>
     </CustomBuild>
     <ClInclude Include="Quadtree.h" />
+    <ClInclude Include="Regions.h" />
     <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="ShadowMap.h" />
     <ClInclude Include="SkinnedMesh.h" />
     <ClInclude Include="SLK.h" />
+    <ClInclude Include="Sounds.h" />
     <ClInclude Include="StaticMesh.h" />
     <CustomBuild Include="Terrain.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>

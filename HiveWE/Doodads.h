@@ -71,3 +71,15 @@ public:
 
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };
+
+// Undo/redo structures
+class DoodadsAction : public TerrainUndoAction {
+public:
+	QRect area;
+	std::vector<Corner> old_corners;
+	std::vector<Corner> new_corners;
+	Terrain::undo_type undo_type;
+
+	void undo() override;
+	void redo() override;
+};

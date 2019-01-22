@@ -286,14 +286,18 @@ void TerrainBrush::apply() {
 					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
 
 					uint8_t mask = 0;
-					if (bottom_left.cliff) {
+					if (bottom_left.cliff && apply_cliff_pathing) {
 						mask = 0b00001010;
-					} else {
+					} 
+					
+					if (!bottom_left.cliff) {
 						Corner& corner = map->terrain.corners[i + k / 3][j + l / 3];
-						const int id = corner.ground_texture;
-						mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
+						if (apply_tile_pathing) {
+							const int id = corner.ground_texture;
+							mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();
+						}
 
-						if (corner.water) {
+						if (corner.water && apply_water_pathing) {
 							mask |= 0b01000000;
 							if (corner.final_water_height() > corner.final_ground_height() + 0.40) {
 								mask |= 0b00001010;

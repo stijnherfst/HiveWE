@@ -91,13 +91,41 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	relative_cliff_heights->setEnabled(false);
 	cliff_section->addWidget(relative_cliff_heights);
 
+	QRibbonSection* pathing_section = new QRibbonSection;
+	pathing_section->setText("Pathing");
+
+	QRibbonButton* apply_cliff_pathing = new QRibbonButton;
+	apply_cliff_pathing->setText("Cliff\nPathing");
+	apply_cliff_pathing->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	apply_cliff_pathing->setCheckable(true);
+	apply_cliff_pathing->setChecked(true);
+	pathing_section->addWidget(apply_cliff_pathing);
+
+	QRibbonButton* apply_tile_pathing = new QRibbonButton;
+	apply_tile_pathing->setText("Tile\nPathing");
+	apply_tile_pathing->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	apply_tile_pathing->setCheckable(true);
+	apply_tile_pathing->setChecked(true);
+	pathing_section->addWidget(apply_tile_pathing);
+
+	QRibbonButton* apply_water_pathing = new QRibbonButton;
+	apply_water_pathing->setText("Water\nPathing");
+	apply_water_pathing->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	apply_water_pathing->setCheckable(true);
+	apply_water_pathing->setChecked(true);
+	pathing_section->addWidget(apply_water_pathing);
+
 	ribbon_tab->addSection(general_section);
 	ribbon_tab->addSection(cliff_section);
+	ribbon_tab->addSection(pathing_section);
 
 
 	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { brush.enforce_water_height_limits = checked; });
 	connect(change_doodad_heights, &QRibbonButton::toggled, [&](bool checked) { brush.change_doodad_heights = checked; });
 	connect(relative_cliff_heights, &QRibbonButton::toggled, [&](bool checked) { brush.relative_cliff_heights = checked; });
+
+	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { brush.enforce_water_height_limits = checked; });
+
 
 	connect(ui.brushSizeButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.brushSizeSlider->setValue(button->text().toInt());
@@ -155,9 +183,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	connect(ui.brushShapeCircle, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::circle); });
 	connect(ui.brushShapeSquare, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::square); });
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
-
-	connect(ui.tilePathing, &QCheckBox::clicked, [&](bool checked) { brush.apply_tile_pathing = checked; });
-	connect(ui.cliffPathing, &QCheckBox::clicked, [&](bool checked) { brush.apply_cliff_pathing = checked; });
 }
 
 TerrainPalette::~TerrainPalette() {

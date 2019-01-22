@@ -10,9 +10,12 @@ public:
 	Terrain terrain;
 	TerrainUndo terrain_undo;
 	PathingMap pathing_map;
+	Imports imports;
 	Doodads doodads;
 	Units units;
-	Imports imports;
+	Regions regions;
+	GameCameras cameras;
+	Sounds sounds;
 
 	Brush* brush = nullptr;
 
@@ -31,7 +34,7 @@ public:
 
 	fs::path filesystem_path;
 
-	// Temporary for instancing. Replace by some kind of scenenode
+	// For instancing
 	std::vector<StaticMesh*> meshes;
 
 	double terrain_time;

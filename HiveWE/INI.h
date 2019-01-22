@@ -17,9 +17,13 @@ namespace ini {
 		/// To access key data where the value of the key is comma seperated
 		std::string data(const std::string& section, const std::string& key, const int argument = 0) const;
 
+
 		/// Retrieves the list of key values
 		std::vector<std::string> whole_data(const std::string& section, const std::string& key) const;
 
-		bool key_exists(const std::string& section, const std::string& key);
+		/// Sets the data of a whole key
+		void set_whole_data(const std::string& section, const std::string& key, const std::string& value);
+
+		bool key_exists(const std::string& section, const std::string& key) const;
 	};
 }

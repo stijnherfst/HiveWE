@@ -11,6 +11,25 @@ void Shapes::init() {
 	gl->glNamedBufferData(index_buffer, quad_indices.size() * sizeof(unsigned int) * 3, quad_indices.data(), GL_STATIC_DRAW);
 }
 
+std::string string_replaced(const std::string& source, const std::string& from, const std::string& to) {
+	std::string new_string;
+	new_string.reserve(source.length());  // avoids a few memory allocations
+
+	size_t lastPos = 0;
+	size_t findPos;
+
+	while (std::string::npos != (findPos = source.find(from, lastPos))) {
+		new_string.append(source, lastPos, findPos - lastPos);
+		new_string += to;
+		lastPos = findPos + from.length();
+	}
+
+	// Care for the rest after last occurrence
+	new_string += source.substr(lastPos);
+
+	return new_string;
+}
+
 std::vector<std::string> split(const std::string& string, const char delimiter) {
 	std::vector<std::string> elems;
 	std::stringstream ss(string);

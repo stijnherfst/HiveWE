@@ -46,15 +46,14 @@ struct Unit {
 };
 
 class Units {
-	std::vector<Unit> units;
-	std::vector<Unit> items;
-
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
 public:
-	QuadTree<Unit> tree;
+	std::vector<Unit> units;
+	std::vector<Unit> items;
+	QuadTree<Unit> tree; // ToDo remove
 
 	bool load(BinaryReader& reader, Terrain& terrain);
 	void save() const;

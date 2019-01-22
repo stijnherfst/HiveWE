@@ -21,6 +21,7 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/CampaignUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"));
 
 	units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"));
@@ -28,6 +29,15 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
+
+	abilities_slk = slk::SLK("Units/AbilityData.slk");
+	abilities_slk.merge(ini::INI("Units/HumanAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/OrcAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/UndeadAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/NightElfAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/CampaignAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/NeutralAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/CommonAbilityFunc.txt"));
 
 	// Items
 	items_slk = slk::SLK("Units/ItemData.slk");
@@ -141,10 +151,27 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
+	if (hierarchy.map.file_exists("war3map.w3r")) {
+		BinaryReader war3map_w3r(hierarchy.map.file_open("war3map.w3r").read());
+		regions.load(war3map_w3r);
+	}
+
+	if (hierarchy.map.file_exists("war3map.w3c")) {
+		BinaryReader war3map_w3c(hierarchy.map.file_open("war3map.w3c").read());
+		cameras.load(war3map_w3c);
+	}
+
+	if (hierarchy.map.file_exists("war3map.w3s")) {
+		BinaryReader war3map_w3s(hierarchy.map.file_open("war3map.w3s").read());
+		sounds.load(war3map_w3s);
+	}
+
 	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
 	camera->reset();
 
 	loaded = true;
+
+	//triggers.generate_map_script();
 }
 
 bool Map::save(const fs::path& path, bool switch_working) {

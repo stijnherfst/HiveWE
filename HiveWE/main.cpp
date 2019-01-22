@@ -6,7 +6,6 @@ extern "C" {
 	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 }
 
-
 int main(int argc, char *argv[]) {
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
@@ -20,6 +19,7 @@ int main(int argc, char *argv[]) {
 	QCoreApplication::setApplicationName("HiveWE");
 
 	QApplication a(argc, argv);
+
 
 	HiveWE w;
 	w.showMaximized();
