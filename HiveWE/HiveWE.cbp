@@ -98,6 +98,15 @@
 				</ExtraCommands>
 			</Target>
 		</Build>
+		<Unit filename="AspectRatioPixmapLabel.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="AspectRatioPixmapLabel.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
 		<Unit filename="BLP.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -146,6 +155,12 @@
 			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
 			<Option target="Pre-Generate" />
 		</Unit>
+		<Unit filename="DoodadBrush.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="DoodadBrush.h">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="DoodadPalette.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -185,6 +200,9 @@
 		<Unit filename="GPUTexture.h">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_AspectRatioPixmapLabel.cpp">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_ColorButton.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -206,10 +224,25 @@
 		<Unit filename="GeneratedFiles/Linux/moc_JassEditor.cpp">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_MainRibbon.cpp">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_MapInfoEditor.cpp">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_Minimap.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_Palette.cpp">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_PathingPallete.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_QRibbon.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_Terrain.cpp">
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_TerrainPalette.cpp">
@@ -246,6 +279,9 @@
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="GeneratedFiles/ui_MapInfoEditor.h">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="GeneratedFiles/ui_Minimap.h">
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="GeneratedFiles/ui_PathingPallete.h">
@@ -368,6 +404,15 @@
 		<Unit filename="MPQ.h">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="MainRibbon.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="MainRibbon.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
 		<Unit filename="Map.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -395,6 +440,26 @@
 			<Option compiler="gcc" use="1" buildCommand='uic -o &quot;./GeneratedFiles/ui_$file_name.h&quot; $file ' />
 			<Option target="Pre-Generate" />
 		</Unit>
+		<Unit filename="Minimap.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="Minimap.h">
+			<Option compile="1" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
+		<Unit filename="Minimap.ui">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="Palette.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="Palette.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
 		<Unit filename="PathingBrush.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -420,6 +485,15 @@
 			<Option compile="1" />
 			<Option weight="0" />
 			<Option compiler="gcc" use="1" buildCommand='uic -o &quot;./GeneratedFiles/ui_$file_name.h&quot; $file ' />
+			<Option target="Pre-Generate" />
+		</Unit>
+		<Unit filename="QRibbon.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="QRibbon.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
 			<Option target="Pre-Generate" />
 		</Unit>
 		<Unit filename="Quadtree.cpp">
@@ -451,7 +525,11 @@
 		<Unit filename="Terrain.cpp">
 			<Option target="Executable" />
 		</Unit>
-		<Unit filename="Terrain.h" />
+		<Unit filename="Terrain.h">
+			<Option compile="1" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
 		<Unit filename="TerrainBrush.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -470,6 +548,12 @@
 			<Option weight="0" />
 			<Option compiler="gcc" use="1" buildCommand='uic -o &quot;./GeneratedFiles/ui_$file_name.h&quot; $file ' />
 			<Option target="Pre-Generate" />
+		</Unit>
+		<Unit filename="TerrainUndo.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="TerrainUndo.h">
+			<Option target="Executable" />
 		</Unit>
 		<Unit filename="Texture.cpp">
 			<Option target="Executable" />
