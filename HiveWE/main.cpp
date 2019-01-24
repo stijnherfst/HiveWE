@@ -8,7 +8,17 @@ extern "C" {
 }
 #endif
 
+#include <stack>
+
+class TT : public Doodad {
+
+};
+
 int main(int argc, char *argv[]) {
+	std::stack<Doodad*> triggerItems;
+	triggerItems.push(new TT());
+
+
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
