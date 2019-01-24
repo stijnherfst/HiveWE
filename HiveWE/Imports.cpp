@@ -1,7 +1,7 @@
 #include <stdafx.h>
 
 void Imports::load(BinaryReader& reader) {
-	int version = reader.read<uint32_t>();
+	int version = reader.read<uint32_t>(); // ToDo check version
 
 	const int entries = reader.read<uint32_t>();
 	for (int i = 0; i < entries; i++) {
@@ -31,7 +31,7 @@ void Imports::save() const {
 
 	int item_count = 0;
 	std::function<void(const std::vector<ImportItem>&)> count_files = [&](const std::vector<ImportItem>& items) {
-		for (auto&& i : items) {
+		for (const auto& i : items) {
 			item_count++;
 			count_files(i.children);
 		}
@@ -40,7 +40,7 @@ void Imports::save() const {
 
 	writer.write<uint32_t>(item_count);
 	std::function<void(const std::vector<ImportItem>&)> save_directories = [&](const std::vector<ImportItem>& items) {
-		for (auto&& i : items) {
+		for (const auto& i : items) {
 			if (i.directory) {
 				save_directories(i.children);
 			} else {

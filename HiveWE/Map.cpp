@@ -21,23 +21,34 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"));
-	units_slk.merge(ini::INI("Units/CampaignUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"));
+	units_slk.merge(ini::INI("Units/CampaignUnitFunc.txt"));
 
 	units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/OrcUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
+	units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"));
 
 	abilities_slk = slk::SLK("Units/AbilityData.slk");
 	abilities_slk.merge(ini::INI("Units/HumanAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/OrcAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/UndeadAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/NightElfAbilityFunc.txt"));
-	abilities_slk.merge(ini::INI("Units/CampaignAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/NeutralAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/ItemAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/CommonAbilityFunc.txt"));
+	abilities_slk.merge(ini::INI("Units/CampaignAbilityFunc.txt"));
+
+	abilities_slk.merge(ini::INI("Units/HumanAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/OrcAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/UndeadAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/NightElfAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/NeutralAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/ItemAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/CommonAbilityStrings.txt"));
+	abilities_slk.merge(ini::INI("Units/CampaignAbilityStrings.txt"));
 
 	// Items
 	items_slk = slk::SLK("Units/ItemData.slk");

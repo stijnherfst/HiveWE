@@ -24,7 +24,7 @@ void MapInfo::load(BinaryReader& reader) {
 	playable_width = reader.read<uint32_t>();
 	playable_height = reader.read<uint32_t>();
 
-	int flags = reader.read<uint32_t>();
+	const int flags = reader.read<uint32_t>();
 	hide_minimap_preview = flags & 0x0001;
 	modif_ally_priorities = flags & 0x0002;
 	melee_map = flags & 0x0004;
@@ -97,8 +97,8 @@ void MapInfo::load(BinaryReader& reader) {
 
 	forces.resize(reader.read<uint32_t>());
 	for (auto&& i : forces) {
-		uint32_t flags = reader.read<uint32_t>();
-		i.allied = flags & 0b00000001;
+		const uint32_t force_flags = reader.read<uint32_t>();
+		i.allied = force_flags & 0b00000001;
 		i.allied_victory = flags & 0b00000010;
 		i.share_vision = flags & 0b00001000;
 		i.share_unit_control = flags & 0b00010000;
@@ -180,7 +180,7 @@ void MapInfo::save() const {
 	writer.write(playable_width);
 	writer.write(playable_height);
 
-	int flags = hide_minimap_preview * 0x0001
+	const int flags = hide_minimap_preview * 0x0001
 		| modif_ally_priorities * 0x0002
 		| melee_map * 0x0004
 		| unknown * 0x0008
@@ -226,7 +226,7 @@ void MapInfo::save() const {
 	writer.write(water_color);
 
 	writer.write<uint32_t>(players.size());
-	for (auto&& i : players) {
+	for (const auto& i : players) {
 		writer.write(i.internal_number);
 		writer.write(static_cast<int>(i.type) + 1);
 		writer.write(static_cast<int>(i.race));
@@ -238,20 +238,20 @@ void MapInfo::save() const {
 	}
 
 	writer.write<uint32_t>(forces.size());
-	for (auto&& i : forces) {
-		uint32_t flags = i.allied * 0b00000001
+	for (const auto& i : forces) {
+		const uint32_t force_flags = i.allied * 0b00000001
 			| i.allied_victory * 0b00000010
 			| i.share_vision * 0b00000100
 			| i.share_unit_control * 0b00010000
 			| i.share_advanced_unit_control * 0b00100000;
-		writer.write(flags);
+		writer.write(force_flags);
 
 		writer.write(i.player_masks);
 		writer.write_c_string(i.name);
 	}
 
 	writer.write<uint32_t>(available_upgrades.size());
-	for (auto&& i : available_upgrades) {
+	for (const auto& i : available_upgrades) {
 		writer.write(i.player_flags);
 		writer.write_string(i.id);
 		writer.write(i.level);
@@ -259,33 +259,33 @@ void MapInfo::save() const {
 	}
 
 	writer.write<uint32_t>(available_tech.size());
-	for (auto&& i : available_tech) {
+	for (const auto& i : available_tech) {
 		writer.write(i.player_flags);
 		writer.write_string(i.id);
 	}
 
 	writer.write<uint32_t>(random_unit_tables.size());
-	for (auto&& i : random_unit_tables) {
+	for (const auto& i : random_unit_tables) {
 		writer.write(i.number);
 		writer.write_c_string(i.name);
 		writer.write_vector(i.positions);
 
 		writer.write<uint32_t>(i.lines.size());
-		for (auto&& j : i.lines) {
+		for (const auto& j : i.lines) {
 			writer.write(j.chance);
 			writer.write_vector(j.ids);
 		}
 	}
 
 	writer.write<uint32_t>(random_item_tables.size());
-	for (auto&& i : random_item_tables) {
+	for (const auto& i : random_item_tables) {
 		writer.write(i.number);
 		writer.write_c_string(i.name);
 
 		writer.write<uint32_t>(i.item_sets.size());
-		for (auto&& j : i.item_sets) {
+		for (const auto& j : i.item_sets) {
 			writer.write<uint32_t>(j.items.size());
-			for (auto&&[chance, id] : j.items) {
+			for (const auto&[chance, id] : j.items) {
 				writer.write(chance);
 				writer.write_string(id);
 			}

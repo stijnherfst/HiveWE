@@ -29,6 +29,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const uint32_t subversion = reader.read<uint32_t>();
 	// ToDO check subversion
 
+	Doodad::auto_increment = 0;
 	doodads.resize(reader.read<uint32_t>());
 	for (auto&& i : doodads) {
 		i.id = reader.read_string(4);
@@ -51,7 +52,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 			}
 		}
 
-		i.world_editor_id = reader.read<uint32_t>();
+		i.editor_id = reader.read<uint32_t>();
+		Doodad::auto_increment = std::max(Doodad::auto_increment, i.editor_id);
 	}
 
 	// Terrain Doodads
@@ -94,7 +96,7 @@ void Doodads::save() const {
 			}
 		}
 
-		writer.write<uint32_t>(i.world_editor_id);
+		writer.write<uint32_t>(i.editor_id);
 	}
 
 	writer.write<uint32_t>(write_special_version);
@@ -130,15 +132,20 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 	load_modification_table(reader, doodads_slk, doodads_meta_slk, true, true);
 }
 
-void Doodads::update_area(const QRect& area) {
-	// ToDo optimize with parallel for?
-	for (auto&& i : doodads) {
-		if (area.contains(i.position.x, i.position.y)) {
-			i.position.z = map->terrain.corners[i.position.x][i.position.y].final_ground_height();
-			i.update();
-		}
-	}
-}
+//void Doodads::update_area(const QRect& area) {
+//	auto undo = std::make_unique<DoodadStateAction>();
+//
+//	// ToDo optimize with parallel for?
+//	for (auto&& i : doodads) {
+//		if (area.contains(i.position.x, i.position.y)) {
+//			undo->old_doodads.push_back(i);
+//			i.position.z = map->terrain.corners[i.position.x][i.position.y].final_ground_height();
+//			i.update();
+//			undo->new_doodads.push_back(i);
+//		}
+//	}
+//	map->terrain_undo.add_undo_action(std::move(undo));
+//}
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
@@ -211,7 +218,7 @@ std::vector<Doodad*> Doodads::query_area(QRectF area) {
 	return result;
 }
 
-void Doodads::remove_doodads(const std::vector<Doodad*> list) {
+void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
 	doodads.erase(std::remove_if(doodads.begin(), doodads.end(), [&](Doodad& doodad) {
 		return std::find(list.begin(), list.end(), &doodad) != list.end();
 	}), doodads.end());
@@ -273,4 +280,38 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	}
 
 	return id_to_mesh[full_id];
+}
+
+void DoodadAddAction::undo() {
+	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
+}
+void DoodadAddAction::redo() {
+	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
+}
+
+void DoodadDeleteAction::undo() {
+	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
+}
+void DoodadDeleteAction::redo() {
+	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
+}
+
+void DoodadStateAction::undo() {
+	for (auto& i : old_doodads) {
+		for (auto& j : map->doodads.doodads) {
+			if (i.editor_id == j.editor_id) {
+				j = i;
+			}
+		}
+	}
+}
+
+void DoodadStateAction::redo() {
+	for (auto& i : new_doodads) {
+		for (auto& j : map->doodads.doodads) {
+			if (i.editor_id == j.editor_id) {
+				j = i;
+			}
+		}
+	}
 }

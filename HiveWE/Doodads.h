@@ -3,7 +3,6 @@
 
 struct Doodad {
 	static int auto_increment;
-	int unique_id;
 	std::string id;
 	int variation;
 	glm::vec3 position;
@@ -21,14 +20,14 @@ struct Doodad {
 	int item_table_pointer;
 	std::vector<ItemSet> item_sets;
 
-	int world_editor_id;
+	int editor_id;
 
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
 	std::shared_ptr<Texture> pathing;
 
 	Doodad() {
-		unique_id = auto_increment++;
+		editor_id = ++auto_increment;
 	}
 
 	void update();
@@ -59,7 +58,7 @@ public:
 	void save() const;
 	void load_destructible_modifications(BinaryReader& reader);
 	void load_doodad_modifications(BinaryReader& reader);
-	void update_area(const QRect& area);
+	//void update_area(const QRect& area);
 	void create();
 	void render();
 
@@ -67,18 +66,32 @@ public:
 	void remove_doodad(Doodad* doodad);
 
 	std::vector<Doodad*> query_area(QRectF area);
-	void remove_doodads(const std::vector<Doodad*> list);
+	void remove_doodads(const std::vector<Doodad*>& list);
 
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };
 
 // Undo/redo structures
-class DoodadsAction : public TerrainUndoAction {
+class DoodadAddAction : public TerrainUndoAction {
 public:
-	QRect area;
-	std::vector<Corner> old_corners;
-	std::vector<Corner> new_corners;
-	Terrain::undo_type undo_type;
+	std::vector<Doodad> doodads;
+
+	void undo() override;
+	void redo() override;
+};
+
+class DoodadDeleteAction : public TerrainUndoAction {
+public:
+	std::vector<Doodad> doodads;
+
+	void undo() override;
+	void redo() override;
+};
+
+class DoodadStateAction : public TerrainUndoAction {
+public:
+	std::vector<Doodad> old_doodads;
+	std::vector<Doodad> new_doodads;
 
 	void undo() override;
 	void redo() override;

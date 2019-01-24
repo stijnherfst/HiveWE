@@ -58,6 +58,14 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Delete:
 			if (selections.size()) {
+				// Undo/redo
+				map->terrain_undo.new_undo_group();
+				auto action = std::make_unique<DoodadDeleteAction>();
+				for (const auto& i : selections) {
+					action->doodads.push_back(*i);
+				}
+				map->terrain_undo.add_undo_action(std::move(action));
+
 				map->doodads.remove_doodads(selections);
 				selections.clear();
 			}
@@ -75,6 +83,8 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 void DoodadBrush::mouse_release_event(QMouseEvent* event) {
 	if (event->button() == Qt::LeftButton && mode == Mode::selection) {
 		selection_started = false;
+	} else {
+		Brush::mouse_release_event(event);
 	}
 }
 
@@ -100,6 +110,11 @@ void DoodadBrush::clear_selection() {
 	selections.clear();
 }
 
+void DoodadBrush::apply_begin() {
+	map->terrain_undo.new_undo_group();
+	test = std::make_unique<DoodadAddAction>();
+}
+
 void DoodadBrush::apply() {
 	if (id == "") {
 		return;
@@ -119,6 +134,8 @@ void DoodadBrush::apply() {
 	doodad.state = state;
 	doodad.update();
 
+	test->doodads.push_back(doodad);
+
 	std::random_device rd;
 	std::mt19937 gen(rd());
 
@@ -135,6 +152,10 @@ void DoodadBrush::apply() {
 		std::uniform_real_distribution dist(min_scale, max_scale);
 		scale = dist(gen);
 	}
+}
+
+void DoodadBrush::apply_end() {
+	map->terrain_undo.add_undo_action(std::move(test));
 }
 
 void DoodadBrush::render_brush() const {

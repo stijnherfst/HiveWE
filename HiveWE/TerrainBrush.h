@@ -13,7 +13,6 @@ public:
 	bool change_doodad_heights = true;
 	bool relative_cliff_heights = false;
 
-
 	std::string tile_id;
 
 	enum class deformation {
@@ -70,10 +69,12 @@ private:
 		{ 15, 1 }
 	};
 
-	//bool brush_hold = false;
 	int layer_height = 0;
 	float deformation_height = 0.f;
 
 	QRect texture_height_area;
 	QRect cliff_area;
+	std::vector<Doodad> pre_change_doodads;
+	std::map<int, Doodad> post_change_doodads;
+
 };

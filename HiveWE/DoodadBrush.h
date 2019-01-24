@@ -26,6 +26,7 @@ public:
 	float rotation = 0.f;
 
 	std::vector<Doodad*> selections;
+	std::unique_ptr<DoodadAddAction> test;
 
 	DoodadBrush();
 
@@ -37,7 +38,9 @@ public:
 
 	void clear_selection() override;
 
+	void apply_begin() override;
 	void apply() override;
+	void apply_end() override;
 	void render_brush() const override;
 	void render_selection() const override;
 

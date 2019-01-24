@@ -209,13 +209,18 @@ void Terrain::create() {
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	for (size_t i = 0; i < water_textures.size(); i++) {
-		if (water_textures[i]->width != 128 || water_textures[i]->height != 128) {
-			std::cout << "Odd water texture size detected of " << water_textures[i]->width << " wide and " << water_textures[i]->height << " high\n";
+	slk::SLK water_slk("TerrainArt/Water.slk");
+	std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
+	for (int i = 0; i < water_textures_nr; i++) {
+		auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp");
+
+		if (texture->width != 128 || texture->height != 128) {
+			std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, water_textures[i]->width, water_textures[i]->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, water_textures[i]->data.data());
+		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, texture->data.data());
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
+
 
 	emit minimap_changed(minimap_image());
 }
@@ -304,11 +309,6 @@ bool Terrain::load(BinaryReader& reader) {
 	water_textures_nr = water_slk.data<int>("numTex", tileset + "Sha"s);
 	animation_rate = water_slk.data<int>("texRate", tileset + "Sha"s);
 
-	std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
-	for (int i = 0; i < water_textures_nr; i++) {
-		water_textures.push_back(resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp"));
-	}
-
 	int red =	water_slk.data<int>("Smin_R", tileset + "Sha"s);
 	int green = water_slk.data<int>("Smin_G", tileset + "Sha"s);
 	int blue =	water_slk.data<int>("Smin_B", tileset + "Sha"s);
@@ -345,7 +345,7 @@ bool Terrain::load(BinaryReader& reader) {
 	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
 	for (size_t i = 1; i < cliffs_slk.rows; i++) {
 		for (int j = 0; j < cliffs_slk.data<int>("variations", i) + 1; j++) {
-			file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffID", i) + std::to_string(j) + ".mdx";
+			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffID", i) + std::to_string(j) + ".mdx";
 			cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
 			path_to_cliff.emplace(cliffs_slk.data("cliffID", i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
 		}

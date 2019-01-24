@@ -366,8 +366,8 @@ void Triggers::generate_map_script() {
 	writer.write_string("\tlocal real life\n");
 
 	for (const auto& i : map->doodads.doodads) {
-		if (destructable_variables.find(std::to_string(i.world_editor_id)) != destructable_variables.end()) {
-			writer.write_string("\tset gg_dest_" + i.id + "_" + std::to_string(i.world_editor_id) + " = CreateDestructable(" +
+		if (destructable_variables.find(std::to_string(i.editor_id)) != destructable_variables.end()) {
+			writer.write_string("\tset gg_dest_" + i.id + "_" + std::to_string(i.editor_id) + " = CreateDestructable(" +
 				i.id + ", " +
 				std::to_string(i.position.x) + ", " +
 				std::to_string(i.position.y) + ", " +

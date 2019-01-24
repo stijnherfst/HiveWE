@@ -316,7 +316,16 @@ void TerrainBrush::apply() {
 
 	if (apply_height || apply_cliff) {
 		if (change_doodad_heights) {
-			map->doodads.update_area(updated_area);
+			for (auto&& i : map->doodads.doodads) {
+				if (area.contains(i.position.x, i.position.y)) {
+					if (std::find_if(pre_change_doodads.begin(), pre_change_doodads.end(), [i](const Doodad& doodad) { return doodad.editor_id == i.editor_id; }) == pre_change_doodads.end()) {
+						pre_change_doodads.push_back(i);
+					}
+					i.position.z = map->terrain.corners[i.position.x][i.position.y].final_ground_height();
+					i.update();
+					post_change_doodads[i.editor_id] = i;
+				}
+			}
 		}
 		map->units.update_area(updated_area);
 	}
@@ -334,6 +343,17 @@ void TerrainBrush::apply_end() {
 	if (apply_cliff) {
 		QRect cliff_areaa = cliff_area.adjusted(0, 0, 1, 1).intersected({ 0, 0, map->terrain.width, map->terrain.height });
 		map->terrain.add_undo(cliff_areaa, Terrain::undo_type::cliff);
+	}
+
+	if (change_doodad_heights) {
+		auto undo = std::make_unique<DoodadStateAction>();
+		undo->old_doodads = pre_change_doodads;
+		for (const auto& [id, doodad] : post_change_doodads) {
+			undo->new_doodads.push_back(doodad);
+		}
+		pre_change_doodads.clear();
+		post_change_doodads.clear();
+		map->terrain_undo.add_undo_action(std::move(undo));
 	}
 
 	QRect pathing_area = QRect(cliff_area.x() * 4, cliff_area.y() * 4, cliff_area.width() * 4, cliff_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
