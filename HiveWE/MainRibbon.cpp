@@ -139,6 +139,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	test_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 	addMenuItem(test_map);
 
+	settings->setText("Settings");
+	settings->setIcon(QIcon("Data/Icons/Ribbon/options32x32.png"));
+	settings->setIconSize({ 32, 32 });
+	settings->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(settings);
+
 	addMenuSeperator();
 
 	exit->setText("Exit");

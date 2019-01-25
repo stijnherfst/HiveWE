@@ -378,6 +378,15 @@
     <ClCompile Include="Sounds.cpp">
       <Filter>Source Files\Base</Filter>
     </ClCompile>
+    <ClCompile Include="SettingsEditor.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_SettingsEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_SettingsEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -533,6 +542,9 @@
     <ClInclude Include="Sounds.h">
       <Filter>Header Files\Base</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_SettingsEditor.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="HiveWE.h">
@@ -639,6 +651,12 @@
     </CustomBuild>
     <CustomBuild Include="Terrain.h">
       <Filter>Header Files\Base</Filter>
+    </CustomBuild>
+    <CustomBuild Include="SettingsEditor.ui">
+      <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="SettingsEditor.h">
+      <Filter>Header Files\Menus</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
