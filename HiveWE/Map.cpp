@@ -242,6 +242,10 @@ void Map::play_test() {
 	QStringList arguments;
 	arguments << "-loadfile" << QString::fromStdString(path.string());
 
+	QSettings settings;
+	if (settings.value("testArgs").toString() != "")
+		arguments << settings.value("testArgs").toString();
+
 	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
