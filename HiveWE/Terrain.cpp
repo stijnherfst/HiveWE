@@ -67,10 +67,7 @@ void Terrain::create() {
 				bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
 				bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
 
-				if (bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && corners[i][j + (facing_down ? -1 : 1)].layer_height == base && corners[i + 1][j + (facing_down ? -1 : 1)].layer_height == base) {
-
-
-					ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+				if (bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff) {
 
 					char left_char = bottom_left.ramp ? 'L' : 'A';
 					char right_char = bottom_right.ramp ? 'L' : 'A';
@@ -88,12 +85,13 @@ void Terrain::create() {
 							cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
 							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
 						}
-						//
 						cliffs.emplace_back(i, j - facing_down, path_to_cliff[file_name]);
+						ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+
 						continue;
 					}
-				} else if (bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && corners[i + (facing_left ? -1 : 1)][j].layer_height == base && corners[i + (facing_left ? -1 : 1)][j + 1].layer_height == base) { //
-					ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+				} else if (bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff) {
+
 
 					char bottom_char = bottom_left.ramp ? 'L' : 'A';
 					char top_char = top_left.ramp ? 'L' : 'A';
@@ -113,11 +111,13 @@ void Terrain::create() {
 						}
 
 						cliffs.emplace_back(i + !facing_left, j, path_to_cliff[file_name]);
+						ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+
 						continue;
 					}
 				}
 
-				if (((bottom_left.ramp && top_left.ramp) || (bottom_left.ramp && bottom_right.ramp))) {
+				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
 					continue;
 				}
 				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
