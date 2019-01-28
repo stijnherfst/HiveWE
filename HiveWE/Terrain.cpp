@@ -61,70 +61,63 @@ void Terrain::create() {
 			Corner& top_left = corners[i][j + 1];
 			Corner& top_right = corners[i + 1][j + 1];
 
-
-			if (bottom_left.cliff && bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp) {
-				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
-
-				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
-				
-				char left_char = bottom_left.ramp ? 'L' : 'A';
-				char right_char = bottom_right.ramp ? 'L' : 'A';
-
-				std::string file_name = ""s
-					+ char(left_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-					+ char(left_char + (top_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-					+ char(right_char + (top_right.layer_height - base) * (bottom_right.ramp ? -4 : 1))
-					+ char(right_char + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
-
-				file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-				if (hierarchy.file_exists(file_name)) {
-
-					if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
-						cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-						path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-					}
-
-					cliffs.emplace_back(i, j - (top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height), path_to_cliff[file_name]);
-				}
-				continue;
-			}
-
-			if (bottom_left.cliff && bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp) {
-				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
-
-				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
-
-				char bottom_char = bottom_left.ramp ? 'L' : 'A';
-				char top_char = top_left.ramp ? 'L' : 'A';
-
-				std::string file_name = ""s
-					+ char(bottom_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-					+ char(top_char + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
-					+ char(top_char + (top_right.layer_height - base) * (top_left.ramp ? -4 : 1))
-					+ char(bottom_char + (bottom_right.layer_height - base) * (bottom_left.ramp ? -4 : 1));
-
-				file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-				if (hierarchy.file_exists(file_name)) {
-
-					if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
-						cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-						path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-					}
-
-					cliffs.emplace_back(i + (bottom_left.layer_height >= bottom_right.layer_height && top_left.layer_height >= top_right.layer_height), j, path_to_cliff[file_name]);
-				}
-				continue;
-			}
-
-			//if (bottom_left.ramp ) {
-			//	ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
-			//	continue;
-			//}
-
 			if (bottom_left.cliff) {
 				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
 
-				if (bottom_left.ramp) {
+				bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
+				bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
+
+				if (bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && corners[i][j + (facing_down ? -1 : 1)].layer_height == base && corners[i + 1][j + (facing_down ? -1 : 1)].layer_height == base) {
+
+
+					ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+
+					char left_char = bottom_left.ramp ? 'L' : 'A';
+					char right_char = bottom_right.ramp ? 'L' : 'A';
+
+					std::string file_name = ""s
+						+ char(left_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
+						+ char(left_char + (top_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
+						+ char(right_char + (top_right.layer_height - base) * (bottom_right.ramp ? -4 : 1))
+						+ char(right_char + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
+
+					file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
+					if (hierarchy.file_exists(file_name)) {
+
+						if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
+							cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
+							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
+						}
+						//
+						cliffs.emplace_back(i, j - facing_down, path_to_cliff[file_name]);
+						continue;
+					}
+				} else if (bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && corners[i + (facing_left ? -1 : 1)][j].layer_height == base && corners[i + (facing_left ? -1 : 1)][j + 1].layer_height == base) { //
+					ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+
+					char bottom_char = bottom_left.ramp ? 'L' : 'A';
+					char top_char = top_left.ramp ? 'L' : 'A';
+
+					std::string file_name = ""s
+						+ char(bottom_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
+						+ char(top_char + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
+						+ char(top_char + (top_right.layer_height - base) * (top_left.ramp ? -4 : 1))
+						+ char(bottom_char + (bottom_right.layer_height - base) * (bottom_left.ramp ? -4 : 1));
+
+					file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
+					if (hierarchy.file_exists(file_name)) {
+
+						if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
+							cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
+							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
+						}
+
+						cliffs.emplace_back(i + !facing_left, j, path_to_cliff[file_name]);
+						continue;
+					}
+				}
+
+				if (((bottom_left.ramp && top_left.ramp) || (bottom_left.ramp && bottom_right.ramp))) {
 					continue;
 				}
 				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
