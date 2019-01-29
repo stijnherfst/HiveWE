@@ -119,6 +119,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	//	});
 	//});
 
+	QTimer::singleShot(5, [this]() {
+		window_handler.create_or_raise<TriggerEditor>();
+	});
+
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
 	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
 

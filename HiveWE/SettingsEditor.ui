@@ -31,6 +31,29 @@
         <attribute name="title">
          <string>General</string>
         </attribute>
+        <layout class="QFormLayout" name="formLayout_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="themeLabel">
+           <property name="text">
+            <string>Theme</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="theme">
+           <item>
+            <property name="text">
+             <string>Light</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Dark</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="tab_1">
         <attribute name="title">
@@ -63,4 +86,6 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
 </ui>

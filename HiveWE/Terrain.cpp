@@ -43,6 +43,10 @@ void Terrain::create() {
 	ground_texture_list.resize((width - 1) * (height - 1));
 	water_heights.resize(width * height);
 	water_exists_data.resize(width * height);
+
+
+	//update_ground_heights({ 0, 0, width, height });
+
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
@@ -91,8 +95,6 @@ void Terrain::create() {
 						continue;
 					}
 				} else if (bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff) {
-
-
 					char bottom_char = bottom_left.ramp ? 'L' : 'A';
 					char top_char = top_left.ramp ? 'L' : 'A';
 
@@ -517,7 +519,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	update_ground_textures({ 0, 0, width, height });
 }
 
-/// The texture of the tilepoint which is influenced by its surroundings. nearby cliff > blight > regular texture
+/// The texture of the tilepoint which is influenced by its surroundings. nearby cliff/ramp > blight > regular texture
 int Terrain::real_tile_texture(const int x, const int y) const {
 	for (int i = -1; i < 1; i++) {
 		for (int j = -1; j < 1; j++) {
@@ -684,7 +686,25 @@ void Terrain::update_ground_heights(const QRect& area) {
 	for (int j = area.y(); j < area.y() + area.height(); j++) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			ground_heights[j * width + i] = corners[i][j].height; // todo 15.998???
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
+
+
+
+			//float tt = 0.f;
+
+			//if (i < width && j < height) {
+			//	Corner& bottom_left = corners[i][j];
+			//	Corner& bottom_right = corners[i + 1][j];
+			//	Corner& top_left = corners[i][j + 1];
+			//	Corner& top_right = corners[i + 1][j + 1];
+
+			//	if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+			//		tt = 0.5f;
+			//	}
+			//}
+
+
+
+			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();// +tt;
 		}
 	}
 
