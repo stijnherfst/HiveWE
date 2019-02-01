@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
 
 	QApplication a(argc, argv);
 
-
 	qApp->setStyle(QStyleFactory::create("Fusion"));
 	// increase font size for better reading
 	QFont defaultFont = QApplication::font();
@@ -52,6 +51,17 @@ int main(int argc, char *argv[]) {
 	darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
 
 	qApp->setPalette(darkPalette);
+
+	QSettings settings;
+	if (!settings.contains("theme")) {
+		settings.setValue("theme", "Light");
+	}
+
+	QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
+	file.open(QFile::ReadOnly);
+	QString StyleSheet = QLatin1String(file.readAll());
+
+	qApp->setStyleSheet(StyleSheet);
 
 
 	HiveWE w;

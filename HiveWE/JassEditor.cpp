@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include <Qsci/qsciapis.h>
+
 
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
@@ -16,7 +18,7 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	//setPaper(QColor("#ffffffff"), 2);
 	//setPaper(QColor("#ffffffff"), 3);
 	//setPaper(QColor("#ffffffff"), 4);
-
+	
 	setFont(QFont("Consolas", 10, QFont::Normal), 0);
 	setFont(QFont("Consolas", 10, QFont::Normal), 1);
 	setFont(QFont("Consolas", 10, QFont::Normal), 2);
@@ -33,6 +35,8 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 		"uses", "needs", "struct", "endstruct", "then", "endif", "loop", "exitwhen", "endloop", "method", "takes", "endmethod", "set", 
 		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" });
 }
+
+
 
 const char* Styling::language() const {
 	return "Vjass";
@@ -86,10 +90,10 @@ void Styling::styleText(int start, int end) {
 		}
 
 		if (i.startsWith("//")) {
-			setStyling(i.length(), 4);
+			setStyling(i.length(), 4); // Comments
 		} else if (i == "/*") {
 			multiline = true;
-			setStyling(i.length(), 4);
+			setStyling(i.length(), 4); // Comments
 		} else if (blocks.contains(i)) { // Keywords
 			setStyling(i.length(), 2);
 		} else if (i.contains(QRegExp(R"(^[0-9]+$)"))) { // Numbers
@@ -100,6 +104,10 @@ void Styling::styleText(int start, int end) {
 			setStyling(i.length(), 0);
 		}
 	}
+}
+
+bool Styling::caseSensitive() const {
+	return false;
 }
 
 JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
@@ -115,6 +123,30 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setIndentationGuides(true);
 	setTabWidth(4);
 
+	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAPIs);
+	setAutoCompletionUseSingle(QsciScintilla::AcusExplicit);
+	setAutoCompletionReplaceWord(false);
+	setAutoCompletionThreshold(1);
+
+	auto tt = new QsciAPIs(lexer);
+	lexer->setAPIs(tt);
+	auto tot = map->triggers.trigger_data.section("TriggerActions");
+
+	std::stringstream file;
+	file << hierarchy.open_file("Scripts/common.j").buffer.data();
+	
+	std::string hur;
+	while (std::getline(file, hur)) {
+		if (QString::fromStdString(hur).startsWith("native")) {
+			tt->add(QString::fromStdString(hur).mid(7));
+		}
+	}
+	tt->prepare();
+	
+	SendScintilla(SCI_STYLESETBACK, STYLE_BRACELIGHT, RGB(30, 75, 125));
+	SendScintilla(SCI_STYLESETBACK, STYLE_BRACEBAD, RGB(125, 60, 25));
+
+	setBraceMatching(QsciScintilla::BraceMatch::SloppyBraceMatch);
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
 

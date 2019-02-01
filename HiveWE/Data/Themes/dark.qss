@@ -1,0 +1,143 @@
+/* http://doc.qt.io/qt-5/stylesheet-syntax.html */
+/* http://doc.qt.io/qt-5/stylesheet-customizing.html */
+
+/******************************************************/
+/* QRibbon */
+QRibbon QWidget {
+	font: 8pt "Segoe UI";
+	color: white;
+}
+
+QWidget#centralWidget {
+	background-color: rgb(53, 53, 53);
+}
+
+QRibbon::pane {
+	border-top: 1px solid rgb(38, 38, 38);
+	border-bottom: 1px solid rgb(38, 38, 38);
+	margin-top: -1;
+}
+
+QRibbon QTabBar::tab { 
+	height: 22px;
+	background-color: rgb(53, 53, 53);
+	border: 1px solid rgb(53, 53, 53);
+	border-bottom-width: 0px;
+
+	padding-top: -1px;
+	padding-left: 14px;
+	padding-right: 14px;
+	margin-right: 1px;
+}
+
+QRibbon QTabBar::tab::hover {
+	background-color: rgb(77, 77, 77);
+	border-color: rgb(38, 38, 38);
+	height: 23px;
+}
+
+QRibbon QTabBar::tab::selected {
+	background-color: rgb(67, 67, 67);
+	border-color: rgb(38, 38, 38);
+	padding-bottom: 2px;
+}
+
+/******************************************************/
+.QRibbonFileButton {
+	border: 1px solid transparent;
+	background-color: rgb(38, 109, 132);
+	height: 23px;
+	color: white;
+	padding-left: 14px;
+	padding-right: 13px;
+}
+
+QRibbonFileButton::hover {
+	background-color: rgb(41, 140, 225);
+}
+
+QRibbonFileButton::pressed {
+	background-color: rgb(18, 104, 179);
+}
+
+QRibbonFileButton::menu-indicator { 
+	image: none; 
+} 
+
+/******************************************************/
+/* QRibbonMenu */
+QRibbonMenu {
+	color: black;
+	background-color: rgb(251, 252, 253);
+	border: 1px solid rgb(132, 146, 166);
+}
+
+QRibbonMenu QToolButton {
+	border: 1px solid transparent;
+	background-color: rgb(251, 252, 253);
+	height: 44px;
+	width: 216px;
+	color: black;
+}
+
+QRibbonMenu QToolButton::hover {
+	border-color: rgb(168, 210, 253);
+	background-color: rgb(237, 244, 252);
+}
+
+QRibbonMenu QFrame#verticalSeperator {
+	border: none;
+	max-width: 0px;
+	background-color: gray;
+	border-left: 1px solid rgb(220, 221, 222);
+	border-right: 1px solid rgb(254, 254, 255);
+}
+
+QRibbonMenu QFrame#horizontalSeperator {
+	border: none;
+	background-color: rgb(220, 221, 222);
+	max-height: 1px;
+	margin-left: 44px;
+}
+
+/******************************************************/
+/* QRibbonTab */
+QRibbonTab {
+	background-color: rgb(67, 67, 67);
+}
+
+QRibbonTab QFrame#seperator {
+	border: none;
+	max-width: 1px;
+	background-color: rgb(38, 38, 38);
+}
+
+/******************************************************/
+/* QRibbonContainer */
+QRibbonContainer {
+	border: 1px solid rgb(38, 38, 38);
+	background-color: rgb(42, 42, 42);
+}
+
+/******************************************************/
+/* QRibbonButton */
+QRibbonButton {
+	border: 1px solid transparent;
+	padding-left: 3px;
+	padding-right: 2px;
+}
+
+QRibbonButton::hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QRibbonButton::pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QRibbonButton::checked {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}

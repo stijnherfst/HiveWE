@@ -16,6 +16,8 @@ slk::SLK destructibles_slk;
 slk::SLK destructibles_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
+	setAutoFillBackground(true);
+
 	fs::path directory = find_warcraft_directory();
 	while (!fs::exists(directory / "Data") || directory == "") {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
@@ -61,6 +63,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera->reset(); });
 	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
+	setAutoFillBackground(true);
 
 	connect(new QShortcut(Qt::Key_F1, this), &QShortcut::activated, ui.ribbon->switch_camera, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
@@ -107,6 +110,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			palette->close();
 		});
 	});
+	setAutoFillBackground(true);
 
 	// Temporary Temporary
 	//QTimer::singleShot(5, [this]() {
@@ -133,6 +137,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	map->load("Data/Test.w3x");
+
 }
 
 void HiveWE::load() {

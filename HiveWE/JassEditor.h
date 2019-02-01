@@ -10,6 +10,7 @@ public:
 	const char* language() const override;
 	QString description(int style) const override;
 	void styleText(int start, int end) override;
+	bool caseSensitive() const override;
 };
 
 class JassEditor : public QsciScintilla {

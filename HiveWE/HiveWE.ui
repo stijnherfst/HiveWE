@@ -14,9 +14,6 @@
    <string>HiveWE</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <property name="styleSheet">
-    <string notr="true">QWidget#centralWidget { background-color: rgb(255, 255, 255); }</string>
-   </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <property name="spacing">
      <number>0</number>
@@ -44,7 +41,17 @@
      </widget>
     </item>
     <item>
-     <widget class="GLWidget" name="widget" native="true"/>
+     <widget class="GLWidget" name="widget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
