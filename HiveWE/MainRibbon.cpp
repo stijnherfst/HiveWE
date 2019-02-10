@@ -94,6 +94,11 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	debug_visible->setCheckable(true);
 	visible_section->addWidget(debug_visible);
 
+	minimap_visible->setIcon(QIcon("Data/Icons/Ribbon/minimap32x32.png"));
+	minimap_visible->setText("Minimap");
+	minimap_visible->setCheckable(true);
+	minimap_visible->setChecked(true);
+	visible_section->addWidget(minimap_visible);
 	// Camera section
 	QRibbonSection* camera_section = new QRibbonSection;
 	camera_section->setText("Camera");

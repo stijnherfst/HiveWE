@@ -19,6 +19,7 @@ public:
 	QRibbonButton* lighting_visible = new QRibbonButton;
 	QRibbonButton* wireframe_visible = new QRibbonButton;
 	QRibbonButton* debug_visible = new QRibbonButton;
+	QRibbonButton* minimap_visible = new QRibbonButton;
 
 	QRibbonButton* switch_camera = new QRibbonButton;
 	QRibbonButton* reset_camera = new QRibbonButton;
