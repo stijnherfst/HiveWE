@@ -61,9 +61,6 @@ void Triggers::load(BinaryReader& reader) {
 			variable.array_size = reader.read<uint32_t>();
 		}
 		variable.is_initialized = reader.read<uint32_t>();
-		if (variable.is_initialized) {
-			std::cout << "init\n";
-		}
 		variable.initial_value = reader.read_c_string();
 		variables[name] = variable;
 	}

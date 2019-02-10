@@ -4,27 +4,12 @@
 
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
-	//setDefaultColor(QColor("#ff000000"));
-	//setDefaultPaper(QColor("#ffffffff"));
 
-	//setColor(QColor("#ff000000"), 0);
 	setColor(QColor(181, 206, 168), 1); // numbers
 	setColor(QColor(56, 156, 214), 2); // keywords
 	setColor(QColor(214, 157, 133), 3); // string
 	setColor(QColor(87, 166, 74), 4); // comment
-
-	//setPaper(QColor("#ffffffff"), 0);
-	//setPaper(QColor("#ffffffff"), 1);
-	//setPaper(QColor("#ffffffff"), 2);
-	//setPaper(QColor("#ffffffff"), 3);
-	//setPaper(QColor("#ffffffff"), 4);
 	
-	setFont(QFont("Consolas", 10, QFont::Normal), 0);
-	setFont(QFont("Consolas", 10, QFont::Normal), 1);
-	setFont(QFont("Consolas", 10, QFont::Normal), 2);
-	setFont(QFont("Consolas", 10, QFont::Normal), 3);
-	setFont(QFont("Consolas", 10, QFont::Normal), 4);
-
 	std::vector<std::string> operators = { "+", "-", "/", "*", ",", "=", ":", "(", ")", ">=", "<=", "!=", "[", "]", "<", ">", "&" };
 	blocks = QStringList({ "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage", 
 		"function", "returns", "public", "private", "protected", "import", "initlater", "native", "nativetype", "extends", "interface", 
@@ -35,8 +20,6 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 		"uses", "needs", "struct", "endstruct", "then", "endif", "loop", "exitwhen", "endloop", "method", "takes", "endmethod", "set", 
 		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" });
 }
-
-
 
 const char* Styling::language() const {
 	return "Vjass";
@@ -89,16 +72,16 @@ void Styling::styleText(int start, int end) {
 			continue;
 		}
 
-		if (i.startsWith("//")) {
-			setStyling(i.length(), 4); // Comments
-		} else if (i == "/*") {
+		if (i.startsWith("//")) { // Comments
+			setStyling(i.length(), 4); 
+		} else if (i == "/*") { // Multiline Comments
 			multiline = true;
-			setStyling(i.length(), 4); // Comments
+			setStyling(i.length(), 4); 
 		} else if (blocks.contains(i)) { // Keywords
 			setStyling(i.length(), 2);
 		} else if (i.contains(QRegExp(R"(^[0-9]+$)"))) { // Numbers
 			setStyling(i.length(), 1);
-		} else if (i.contains(QRegExp(R"(^\".*\"$)"))) {
+		} else if (i.contains(QRegExp(R"(^\".*\"$)"))) { // Strings
 			setStyling(i.length(), 3);
 		} else {
 			setStyling(i.length(), 0);
@@ -121,6 +104,7 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setIndentationsUseTabs(true);
 	setTabIndents(true);
 	setIndentationGuides(true);
+	setAutoIndent(true);
 	setTabWidth(4);
 
 	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAPIs);
@@ -128,25 +112,55 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setAutoCompletionReplaceWord(false);
 	setAutoCompletionThreshold(1);
 
-	auto tt = new QsciAPIs(lexer);
-	lexer->setAPIs(tt);
-	auto tot = map->triggers.trigger_data.section("TriggerActions");
+	SendScintilla(SCI_STYLESETBACK, STYLE_BRACELIGHT, qRgb(30, 75, 125));
+	SendScintilla(SCI_STYLESETBACK, STYLE_BRACEBAD, qRgb(125, 60, 25));
 
+	// Column selections
+	SendScintilla(SCI_SETMULTIPLESELECTION, true);
+	SendScintilla(SCI_SETVIRTUALSPACEOPTIONS, SCVS_RECTANGULARSELECTION | SCVS_NOWRAPLINESTART);
+	SendScintilla(SCI_SETADDITIONALSELECTIONTYPING, true);
+	SendScintilla(SCI_SETMULTIPASTE, SC_MULTIPASTE_EACH);
+
+	setCallTipsBackgroundColor(palette().color(QPalette::ColorRole::Base));
+	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
+	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
+
+	auto apis = new QsciAPIs(lexer);
+	lexer->setAPIs(apis);
+
+
+	// Very rough and temporary parsing of the script files
 	std::stringstream file;
 	file << hierarchy.open_file("Scripts/common.j").buffer.data();
-	
-	std::string hur;
-	while (std::getline(file, hur)) {
-		if (QString::fromStdString(hur).startsWith("native")) {
-			tt->add(QString::fromStdString(hur).mid(7));
+	file << hierarchy.open_file("Scripts/blizzard.j").buffer.data();
+	file << hierarchy.open_file("Scripts/cheats.j").buffer.data();
+
+	std::string line;
+	while (std::getline(file, line)) {
+		QString linee = QString::fromStdString(line).simplified();
+		
+		if (linee.startsWith("type")) {
+			apis->add(linee.mid(5, linee.indexOf(' ', 5) + 1 - 5));
+		}
+		if (linee.startsWith("native")) {
+			apis->add(linee.mid(7, linee.indexOf(' ', 7) + 1 - 7));
+		}
+
+		if (linee.startsWith("function")) {
+			apis->add(linee.mid(9, linee.indexOf(' ', 9) + 1 - 9));
+			auto splito = linee.splitRef(',');
+
+		}
+
+		if (linee.startsWith("constant")) {
+			int index = linee.indexOf(' ', 9) + 1;
+			apis->add(linee.mid(index, linee.indexOf(' ', index) + 1 - index));
 		}
 	}
-	tt->prepare();
-	
-	SendScintilla(SCI_STYLESETBACK, STYLE_BRACELIGHT, RGB(30, 75, 125));
-	SendScintilla(SCI_STYLESETBACK, STYLE_BRACEBAD, RGB(125, 60, 25));
+	apis->prepare();
 
 	setBraceMatching(QsciScintilla::BraceMatch::SloppyBraceMatch);
+
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
 
