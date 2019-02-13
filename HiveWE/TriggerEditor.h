@@ -28,4 +28,7 @@ private:
 	void show_gui_trigger(QTreeWidget* edit, Trigger& trigger);
 
 	std::string get_parameters_names(std::vector<std::string> string_parameters, std::vector<TriggerParameter>& parameters);
+
+signals:
+	void save_changes();
 };

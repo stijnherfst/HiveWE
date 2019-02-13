@@ -99,10 +99,10 @@ void MapInfo::load(BinaryReader& reader) {
 	for (auto&& i : forces) {
 		const uint32_t force_flags = reader.read<uint32_t>();
 		i.allied = force_flags & 0b00000001;
-		i.allied_victory = flags & 0b00000010;
-		i.share_vision = flags & 0b00001000;
-		i.share_unit_control = flags & 0b00010000;
-		i.share_advanced_unit_control = flags & 0b00100000;
+		i.allied_victory = force_flags & 0b00000010;
+		i.share_vision = force_flags & 0b00001000;
+		i.share_unit_control = force_flags & 0b00010000;
+		i.share_advanced_unit_control = force_flags & 0b00100000;
 
 		i.player_masks = reader.read<uint32_t>();
 		i.name = reader.read_c_string();

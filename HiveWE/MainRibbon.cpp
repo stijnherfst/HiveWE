@@ -228,7 +228,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	editor_section->addWidget(import_manager);
 
 	trigger_viewer->setIcon(QIcon("Data/Icons/Ribbon/triggereditor32x32.png"));
-	trigger_viewer->setText("Trigger\nViewer");
+	trigger_viewer->setText("Trigger\nEditor");
 	editor_section->addWidget(trigger_viewer);
 
 	QRibbonSection* palette_section = new QRibbonSection;

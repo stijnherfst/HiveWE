@@ -125,11 +125,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	//});
 
 	QTimer::singleShot(5, [this]() {
-		window_handler.create_or_raise<TriggerEditor>();
+		auto editor = window_handler.create_or_raise<TriggerEditor>();
+		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
-	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, []() { window_handler.create_or_raise<TriggerEditor>(); });
+	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, [this]() { 
+		auto editor = window_handler.create_or_raise<TriggerEditor>();
+		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
+	});
 
 	minimap->setParent(ui.widget);
 	minimap->move(10, 10);
@@ -179,6 +183,7 @@ void HiveWE::save_as() {
 		"Warcraft III Scenario (*.w3x)");
 
 	if (file_name != "") {
+		emit saving_initiated();
 		map->save(file_name.toStdString());
 	}
 }

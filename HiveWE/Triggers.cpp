@@ -173,7 +173,24 @@ void Triggers::save() const {
 }
 
 void Triggers::save_jass() const {
+	BinaryWriter writer;
 
+	writer.write<uint32_t>(write_string_version);
+
+	writer.write_c_string(global_jass_comment);
+	writer.write<uint32_t>(global_jass.size());
+	writer.write_string(global_jass);
+
+	writer.write<uint32_t>(triggers.size());
+
+	for (auto&& i : triggers) {
+		writer.write<uint32_t>(i.custom_text.size());
+		if (!i.custom_text.empty()) {
+			writer.write_string(i.custom_text);
+		}
+	}
+
+	hierarchy.map.file_write("war3map.wct", writer.buffer);
 }
 
 void Triggers::generate_map_script() {

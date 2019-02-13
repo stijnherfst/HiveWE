@@ -22,7 +22,7 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 }
 
 const char* Styling::language() const {
-	return "Vjass";
+	return "VJass";
 }
 
 QString Styling::description(int style) const {
@@ -114,6 +114,7 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 
 	SendScintilla(SCI_STYLESETBACK, STYLE_BRACELIGHT, qRgb(30, 75, 125));
 	SendScintilla(SCI_STYLESETBACK, STYLE_BRACEBAD, qRgb(125, 60, 25));
+	setBraceMatching(QsciScintilla::BraceMatch::SloppyBraceMatch);
 
 	// Column selections
 	SendScintilla(SCI_SETMULTIPLESELECTION, true);
@@ -125,9 +126,9 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
 	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
 
+
 	auto apis = new QsciAPIs(lexer);
 	lexer->setAPIs(apis);
-
 
 	// Very rough and temporary parsing of the script files
 	std::stringstream file;
@@ -158,8 +159,6 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 		}
 	}
 	apis->prepare();
-
-	setBraceMatching(QsciScintilla::BraceMatch::SloppyBraceMatch);
 
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }

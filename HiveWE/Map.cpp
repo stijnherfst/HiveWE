@@ -212,6 +212,8 @@ bool Map::save(const fs::path& path, bool switch_working) {
 	units.save();
 	info.save();
 	trigger_strings.save();
+	triggers.save();
+	triggers.save_jass();
 
 	imports.save();
 	imports.save_dir_file();

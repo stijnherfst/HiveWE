@@ -27,6 +27,8 @@ private:
 signals:
 	void tileset_changed();
 	void palette_changed(QRibbonTab* tab);
+
+	void saving_initiated();
 };
 
 extern Map* map;
