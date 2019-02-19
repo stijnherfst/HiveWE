@@ -124,10 +124,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	//	});
 	//});
 
-	QTimer::singleShot(5, [this]() {
-		auto editor = window_handler.create_or_raise<TriggerEditor>();
-		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
-	});
+	//QTimer::singleShot(5, [this]() {
+	//	auto editor = window_handler.create_or_raise<TriggerEditor>();
+	//	connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
+	//});
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
 	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, [this]() { 

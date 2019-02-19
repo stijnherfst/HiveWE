@@ -12,6 +12,7 @@ struct Corner {
 	bool water;
 	bool boundary;
 	bool cliff = false;
+	bool romp = false;
 
 	int ground_variation;
 	int cliff_variation;
@@ -116,8 +117,8 @@ public:
 
 	~Terrain();
 
-	void create();
 	bool load(BinaryReader& reader);
+	void create();
 	void save() const;
 	void render() const;
 
