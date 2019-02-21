@@ -1,12 +1,10 @@
 #include "stdafx.h"
 
-// This whole class needs a bit of a rework
-
 TerrainBrush::TerrainBrush() {
 	size_granularity = 4;
 	uv_offset_locked = true;
 	uv_offset = { 2, 2 };
-	brush_offset = { 0.5f, 0.5f };
+	brush_offset = { -0.5f , -0.5f };
 }
 
 // Make this an iterative function instead to avoid stack overflows
@@ -41,8 +39,7 @@ void TerrainBrush::apply_begin() {
 
 	const int x = position.x + 1;
 	const int y = position.y + 1;
-	const int cells = size * 2 + 1;
-	const QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, width, height });
+	const QRect area = QRect(x, y, size / 4.f, size / 4.f).intersected({ 0, 0, width, height });
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
 
@@ -98,9 +95,8 @@ void TerrainBrush::apply() {
 
 	const int x = position.x + 1;
 	const int y = position.y + 1;
-	const int cells = size * 2 + 1;
 
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, width, height });
+	QRect area = QRect(x, y, size / 4.f, size / 4.f).intersected({ 0, 0, width, height });
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -203,7 +199,7 @@ void TerrainBrush::apply() {
 		texture_height_area = texture_height_area.united(area);
 	}
 
-	QRect updated_area = QRect(x - 1, y - 1, cells + 1, cells + 1).intersected({ 0, 0, width - 1, height - 1 });
+	QRect updated_area = QRect(x - 1, y - 1, size / 4.f + 1, size / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {

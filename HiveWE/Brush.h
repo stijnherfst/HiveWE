@@ -14,7 +14,7 @@ public:
 	};
 
 	bool uv_offset_locked = false;
-	glm::ivec2 uv_offset;
+	glm::ivec2 uv_offset = { 0, 0 };
 	int size_granularity = 1;
 	int uv_offset_granularity = 4;
 
@@ -52,7 +52,7 @@ protected:
 	Shape shape = Shape::circle;
 	Mode mode = Mode::placement;
 
-	int size = 0;
+	int size = 1;
 	glm::ivec2 position;
 
 	bool selection_started = false;

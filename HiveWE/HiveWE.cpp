@@ -114,15 +114,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	// Temporary Temporary
-	//QTimer::singleShot(5, [this]() {
-	//	auto palette = new DoodadPalette(this);
-	//	connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-	//	connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-	//	connect(palette, &Palette::finished, [&]() {
-	//		remove_custom_tab();
-	//		disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-	//	});
-	//});
 
 	//QTimer::singleShot(5, [this]() {
 	//	auto editor = window_handler.create_or_raise<TriggerEditor>();
@@ -143,6 +134,16 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	map->load("Data/Test.w3x");
 
+	QTimer::singleShot(50, [this]() {
+		auto palette = new DoodadPalette(this);
+		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
+		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+		connect(palette, &Palette::finished, [&]() {
+			remove_custom_tab();
+			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+		});
+	});
 }
 
 void HiveWE::load() {

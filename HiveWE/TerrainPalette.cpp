@@ -131,7 +131,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 		ui.brushSizeSlider->setValue(button->text().toInt());
 	});
 	connect(ui.brushSizeSlider, &QSlider::valueChanged, [&](int value) {
-		brush.set_size(value - 1);
+		brush.set_size(value);
 		ui.brushSize->setValue(value);
 	});
 

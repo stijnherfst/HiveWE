@@ -28,11 +28,11 @@ PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 	});
 
 	connect(ui.brushSizeGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) { 
-		brush.set_size(button->text().toInt() - 1); 
+		brush.set_size(button->text().toInt()); 
 		ui.brushSize->setValue(button->text().toInt());
 	});
 
-	connect(ui.brushSizeSlider, &QSlider::valueChanged, [&](int value) { brush.set_size(value - 1); });
+	connect(ui.brushSizeSlider, &QSlider::valueChanged, [&](int value) { brush.set_size(value); });
 
 	connect(ui.brushShapeCircle, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::circle); });
 	connect(ui.brushShapeSquare, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::square); });

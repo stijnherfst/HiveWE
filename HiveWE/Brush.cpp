@@ -4,6 +4,8 @@ void Brush::create() {
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	set_size(size);
 
@@ -12,10 +14,9 @@ void Brush::create() {
 }
 
 void Brush::set_position(const glm::vec2& new_position) {
-	const glm::vec2 center_position = (new_position + brush_offset) - size * size_granularity * 0.25f;
-	position = glm::floor(center_position) - glm::ceil(brush_offset);
+	position = new_position - size / 2.f * 0.25f;
 	if (!uv_offset_locked) {
-		glm::vec2 decimals = center_position - glm::vec2(position);
+		glm::vec2 decimals = new_position - glm::vec2(position);
 
 		switch (uv_offset_granularity) {
 			case 1:
@@ -39,39 +40,33 @@ glm::vec2 Brush::get_position() const {
 }
 
 void Brush::set_size(const int new_size) {
-	const int change = new_size - size;
+	const int change = new_size * size_granularity - size;
 
-	size = std::clamp(new_size, 0, 240);
-	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
+	size = std::clamp(new_size * size_granularity, 1, 240);
+
 	brush.clear();
-	brush.resize(cells * 4 * cells * 4, { 0, 0, 0, 0 });
+	brush.resize(size * size, { 0, 0, 0, 0 });
 
 	set_shape(shape);
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset + new_size * size_granularity - change * size_granularity) * 0.25f);
+	set_position(glm::vec2(position) + glm::vec2(uv_offset));
 }
 
 void Brush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
-	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
-
-	for (int i = 0; i < size * 2 + 1; i++) {
-		for (int j = 0; j < size * 2 + 1; j++) {
-			for (int k = 0; k < size_granularity; k++) {
-				for (int l = 0; l < size_granularity; l++) {
-					if (contains(i, j)) {
-						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = brush_color;
-					} else {
-						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = { 0, 0, 0, 0 };
-					}
-				}
+	for (int i = 0; i < size; i++) {
+		for (int j = 0; j < size; j++) {
+			if (contains(i / size_granularity, j / size_granularity)) {
+				brush[j * size + i] = brush_color;
+			} else {
+				brush[j * size + i] = { 0, 0, 0, 0 };
 			}
 		}
 	}
 
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
-	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
@@ -80,9 +75,10 @@ bool Brush::contains(const int x, const int y) const {
 		case Shape::square:
 			return true;
 		case Shape::circle: {
-			float distance = (x - size) * (x - size);
-			distance += (y - size) * (y - size);
-			return distance <= size * size;
+			int half_size = (size / 2) / size_granularity;
+			int distance = (x - half_size) * (x - half_size);
+			distance += (y - half_size) * (y - half_size);
+			return distance <= half_size * half_size;
 		}
 		case Shape::diamond:
 			return std::abs(x - size) + std::abs(y - size) <= size;
@@ -191,12 +187,12 @@ void Brush::render_brush() const {
 
 	brush_shader->use();
 
-	// +3 for uv_offset so it can move sub terrain cell
-	const int cells = std::ceil(((this->size * 2 + 1) * size_granularity + 3) / 4.f);
+	const int cells = std::ceil(size / 4.f) + 1;
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform2f(2, position.x, position.y);
 	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
+	gl->glUniform1i(4, cells);
 
 	gl->glBindTextureUnit(0, map->terrain.ground_corner_height);
 	gl->glBindTextureUnit(1, brush_texture);

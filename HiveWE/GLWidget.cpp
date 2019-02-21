@@ -2,7 +2,12 @@
 
 void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei, const GLchar *message, void *) {
 	// Skip buffer info messages, framebuffer info messages, texture usage state warning, redundant state change buffer
-	if (id == 131185 || id == 131169 || id == 131204 || id == 8) {
+	if (id == 131185 // ?
+		|| id == 131169 // ?
+		|| id == 131204 // ?
+		|| id == 8 // ?
+		|| 131218) // Unexplainable performance warnings
+	{
 		return;
 	}
 
