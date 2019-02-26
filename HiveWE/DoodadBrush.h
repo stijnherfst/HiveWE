@@ -26,7 +26,7 @@ public:
 	float rotation = 0.f;
 
 	std::vector<Doodad*> selections;
-	std::unique_ptr<DoodadAddAction> test;
+	std::unique_ptr<DoodadAddAction> doodad_undo;
 
 	DoodadBrush();
 

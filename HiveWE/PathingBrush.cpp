@@ -1,11 +1,14 @@
 #include "stdafx.h"
 
+PathingBrush::PathingBrush() {
+	brush_offset = {0.125f, 0.125f};
+}
+
 void PathingBrush::apply_begin() {
 	const int x = position.x * 4 + uv_offset.x;
 	const int y = position.y * 4 + uv_offset.y;
-	const int cells = size * 2 + 1;
 
-	applied_area = QRect(x, y, cells, cells).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
+	applied_area = QRect(x, y, size, size).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
 
 	map->terrain_undo.new_undo_group();
 	map->pathing_map.new_undo_group();
@@ -14,9 +17,8 @@ void PathingBrush::apply_begin() {
 void PathingBrush::apply() {
 	const int x = position.x * 4 + uv_offset.x;
 	const int y = position.y * 4 + uv_offset.y;
-	const int cells = size * 2 + 1;
 
-	QRect area = QRect(x, y, cells, cells).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
+	QRect area = QRect(x, y, size, size).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
 	
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;

@@ -4,7 +4,6 @@ TerrainBrush::TerrainBrush() {
 	size_granularity = 4;
 	uv_offset_locked = true;
 	uv_offset = { 2, 2 };
-	brush_offset = { -0.5f , -0.5f };
 }
 
 // Make this an iterative function instead to avoid stack overflows

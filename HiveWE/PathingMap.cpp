@@ -49,6 +49,29 @@ void PathingMap::save() const {
 	hierarchy.map.file_write("war3map.wpm", writer.buffer);
 }
 
+void PathingMap::blit_pathing_texture(glm::vec2 position, const std::shared_ptr<Texture>& pathing_texture) {
+	for (int j = 0; j < pathing_texture->height; j++) {
+		for (int i = 0; i < pathing_texture->width; i++) {
+			int xx = position.x * 4 + i;
+			int yy = position.y * 4 + j;
+
+			if (xx < 0 || xx > width || yy < 0 || yy > height) {
+				continue;
+			}
+
+			unsigned int index = (j * pathing_texture->width + i) * pathing_texture->channels;
+
+			uint8_t bytes = pathing_texture->data[index] & Flags::unwalkable
+				| pathing_texture->data[index + 1] & Flags::unflyable
+				| pathing_texture->data[index + 2] & Flags::unbuildable;
+
+			pathing_cells_dynamic[yy * width + xx] |= bytes;
+		}
+	}
+
+	gl->glTextureSubImage2D(texture_dynamic, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_dynamic.data());
+}
+
 void PathingMap::update_dynamic() {
 	for (const auto& i : map->doodads.doodads) {
 		if (!i.pathing) {
@@ -64,7 +87,7 @@ void PathingMap::update_dynamic() {
 					continue;
 				}
 
-				unsigned int index = (j * i.pathing->height + k) * i.pathing->channels;
+				unsigned int index = (j * i.pathing->width + k) * i.pathing->channels;
 
 				uint8_t bytes = i.pathing->data[index] & Flags::unwalkable
 					| i.pathing->data[index + 1] & Flags::unflyable

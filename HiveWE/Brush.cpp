@@ -14,9 +14,11 @@ void Brush::create() {
 }
 
 void Brush::set_position(const glm::vec2& new_position) {
-	position = new_position - size / 2.f * 0.25f;
+	const glm::vec2 center_position = new_position - size / 2.f * 0.25f + brush_offset;
+
+	position = center_position;
 	if (!uv_offset_locked) {
-		glm::vec2 decimals = new_position - glm::vec2(position);
+		glm::vec2 decimals = center_position - glm::vec2(position);
 
 		switch (uv_offset_granularity) {
 			case 1:
@@ -40,7 +42,7 @@ glm::vec2 Brush::get_position() const {
 }
 
 void Brush::set_size(const int new_size) {
-	const int change = new_size * size_granularity - size;
+	//const int change = new_size * size_granularity - size;
 
 	size = std::clamp(new_size * size_granularity, 1, 240);
 

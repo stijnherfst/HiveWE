@@ -14,6 +14,8 @@ public:
 
 	QRect applied_area;
 
+	PathingBrush();
+
 	void apply_begin() override;
 	void apply() override;
 	void apply_end() override;

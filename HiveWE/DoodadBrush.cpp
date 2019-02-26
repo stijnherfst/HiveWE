@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
 DoodadBrush::DoodadBrush() {
-	size_granularity = 2;
 	uv_offset_granularity = 2;
+	brush_offset = { 0.25f , 0.25f };
 }
 
 /// Gets a random variation from the possible_variation list
@@ -23,36 +23,28 @@ int DoodadBrush::get_random_variation() {
 void DoodadBrush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
-	const int cells = std::ceil(((size * 2 + 1) * size_granularity + 3) / 4.f);
+	if (pathing_texture) {
+		for (int i = 0; i < pathing_texture->width; i++) {
+			for (int j = 0; j < pathing_texture->height; j++) {
+				const int index = (j * pathing_texture->width + i) * pathing_texture->channels;
 
-	/*for (int i = 0; i < size * 2 + 1; i++) {
-		for (int j = 0; j < size * 2 + 1; j++) {
-			for (int k = 0; k < size_granularity; k++) {
-				for (int l = 0; l < size_granularity; l++) {
-					if (contains(i, j)) {
-						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = brush_color;
-					} else {
-						brush[(j * size_granularity + l) * cells * 4 + i * size_granularity + k] = { 0, 0, 0, 0 };
-					}
+				glm::vec4 color = { pathing_texture->data[index + 2],
+					pathing_texture->data[index + 1],
+					pathing_texture->data[index],
+					0 };
+
+				if (color.r || color.g || color.b) {
+					color.a = 128;
+					brush[j * pathing_texture->width + i] = color;
+				} else {
+					brush[j * pathing_texture->width + i] = { 0, 0, 0, 0 };
 				}
 			}
 		}
-	}*/
-
-	if (pathing_texture) {
-
-		for (int i = 0; i < pathing_texture->width; i++) {
-			for (int j = 0; j < pathing_texture->height; j++) {
-				brush[j * pathing_texture->width + i] = { 255, 0,0, 255 };
-					//pathing_texture->data[j * pathing_texture->width + i];
-			}
-		}
-	} else {
-		puts("\n");
 	}
 
 	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
-	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, cells * 4, cells * 4, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
@@ -113,7 +105,7 @@ void DoodadBrush::clear_selection() {
 
 void DoodadBrush::apply_begin() {
 	map->terrain_undo.new_undo_group();
-	test = std::make_unique<DoodadAddAction>();
+	doodad_undo = std::make_unique<DoodadAddAction>();
 }
 
 void DoodadBrush::apply() {
@@ -121,21 +113,26 @@ void DoodadBrush::apply() {
 		return;
 	}
 
-	glm::vec3 position;
+	glm::vec3 doodad_position;
 	if (free_placement) {
-		position = input_handler.mouse_world;
+		doodad_position = input_handler.mouse_world;
 	} else {
-		// Round to 0.5
-		position = glm::vec3(glm::trunc(glm::vec2(input_handler.mouse_world) * 2.f) * 0.5f + 0.25f, input_handler.mouse_world.z);
+		doodad_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
 	}
 
-	Doodad& doodad = map->doodads.add_doodad(id, variation, position);
+	Doodad& doodad = map->doodads.add_doodad(id, variation, doodad_position);
 	doodad.scale = glm::vec3(scale);
 	doodad.angle = rotation;
 	doodad.state = state;
 	doodad.update();
 
-	test->doodads.push_back(doodad);
+	doodad_undo->doodads.push_back(doodad);
+
+	if (pathing_texture) {
+		glm::vec2 dod = glm::vec2(position) + glm::vec2(uv_offset) * 0.25f;
+
+		map->pathing_map.blit_pathing_texture(dod, pathing_texture);
+	}
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -156,20 +153,23 @@ void DoodadBrush::apply() {
 }
 
 void DoodadBrush::apply_end() {
-	map->terrain_undo.add_undo_action(std::move(test));
+	map->terrain_undo.add_undo_action(std::move(doodad_undo));
 }
 
 void DoodadBrush::render_brush() const {
 	//int cells = 
 	//for ()
-	Brush::render_brush();
+	if (pathing_texture) {
+		Brush::render_brush();
+	}
 
 	glm::mat4 matrix(1.f);
 	if (free_placement) {
 		matrix = glm::translate(matrix, input_handler.mouse_world);
 	} else {
-		matrix = glm::translate(matrix, glm::vec3(glm::vec2(glm::ivec2(input_handler.mouse_world * 2.f)) * 0.5f + 0.25f, input_handler.mouse_world.z));
+		matrix = glm::translate(matrix, glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z));
 	}
+
 	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f) * scale);
 	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
@@ -234,6 +234,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	rotation = glm::radians(std::max(0.f, slk.data<float>("fixedRot", id)));
 
+	pathing_texture.reset();
 	std::string pathing_texture_path = slk.data("pathTex", id);
 	if (pathing_texture_path.empty() || !hierarchy.file_exists(pathing_texture_path)) {
 		free_placement = true;

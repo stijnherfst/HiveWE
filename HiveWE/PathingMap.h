@@ -24,6 +24,7 @@ class PathingMap {
 	bool load(BinaryReader& reader);
 	void save() const;
 
+	void blit_pathing_texture(glm::vec2 pos, const std::shared_ptr<Texture>& pathing_texture);
 	void update_dynamic();
 	void upload_static_pathing();
 
