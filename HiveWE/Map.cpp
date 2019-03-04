@@ -139,8 +139,15 @@ void Map::load(const fs::path& path) {
 	}
 
 	doodads.create();
-	// Can only do this after all doodads are created
-	pathing_map.update_dynamic();
+
+	for (const auto& i : doodads.doodads) {
+		if (!i.pathing) {
+			continue;
+		}
+
+		pathing_map.blit_pathing_texture(i.position, i.pathing);
+	}
+	pathing_map.upload_dynamic_pathing();
 
 	// Units/Items
 	if (hierarchy.map.file_exists("war3map.w3u")) {

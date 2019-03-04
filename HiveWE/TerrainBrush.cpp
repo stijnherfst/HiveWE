@@ -56,32 +56,34 @@ void TerrainBrush::apply_begin() {
 	if (apply_cliff) {
 		layer_height = corners[center_x][center_y].layer_height;
 		switch (cliff_operation_type) {
-		case cliff_operation::shallow_water:
-			if (!corners[center_x][center_y].water) {
+			case cliff_operation::shallow_water:
+				if (!corners[center_x][center_y].water) {
+					layer_height -= 1;
+				} else if (corners[center_x][center_y].final_water_height() > corners[center_x][center_y].final_ground_height() + 1) {
+					layer_height += 1;
+				}
+				break;
+			case cliff_operation::lower1:
 				layer_height -= 1;
-			} else if (corners[center_x][center_y].final_water_height() > corners[center_x][center_y].final_ground_height() + 1) {
-				layer_height += 1;
-			}
-			break;
-		case cliff_operation::lower1:
-			layer_height -= 1;
-			break;
-		case cliff_operation::lower2:
-			layer_height -= 2;
-			break;
-		case cliff_operation::deep_water:
-			if (!corners[center_x][center_y].water) {
+				break;
+			case cliff_operation::lower2:
 				layer_height -= 2;
-			} else if (corners[center_x][center_y].final_water_height() < corners[center_x][center_y].final_ground_height() + 1) {
-				layer_height -= 1;
-			}
-			break;
-		case cliff_operation::raise1:
-			layer_height += 1;
-			break;
-		case cliff_operation::raise2:
-			layer_height += 2;
-			break;
+				break;
+			case cliff_operation::deep_water:
+				if (!corners[center_x][center_y].water) {
+					layer_height -= 2;
+				} else if (corners[center_x][center_y].final_water_height() < corners[center_x][center_y].final_ground_height() + 1) {
+					layer_height -= 1;
+				}
+				break;
+			case cliff_operation::raise1:
+				layer_height += 1;
+				break;
+			case cliff_operation::raise2:
+				layer_height += 2;
+				break;
+			case cliff_operation::ramp:
+				break;
 		}
 		layer_height = std::clamp(layer_height, 0, 15);
 	}
@@ -231,6 +233,9 @@ void TerrainBrush::apply() {
 						corners[i][j].water = true;
 						corners[i][j].water_height = corners[i][j].layer_height;
 						break;
+					case cliff_operation::ramp:
+						corners[i][j].ramp = true;
+						break;
 				}
 
 				check_nearby(x, y, i, j, updated_area);
@@ -251,7 +256,6 @@ void TerrainBrush::apply() {
 				bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
 					|| bottom_left.layer_height != top_left.layer_height
 					|| bottom_left.layer_height != top_right.layer_height;
-
 
 				bottom_left.cliff_texture = cliff_id;
 			}

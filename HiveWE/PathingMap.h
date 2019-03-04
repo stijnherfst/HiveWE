@@ -24,9 +24,12 @@ class PathingMap {
 	bool load(BinaryReader& reader);
 	void save() const;
 
+	void dynamic_clear_area(QRect area);
+
 	void blit_pathing_texture(glm::vec2 pos, const std::shared_ptr<Texture>& pathing_texture);
-	void update_dynamic();
+
 	void upload_static_pathing();
+	void upload_dynamic_pathing();
 
 
 	void new_undo_group();

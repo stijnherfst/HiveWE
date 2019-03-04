@@ -24,20 +24,41 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
 	if (pathing_texture) {
+		bool is_doodad = doodads_slk.row_header_exists(id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		int rotation = std::max(0, slk.data<int>("fixedRot", id)) + 90;
+		std::cout << rotation << "\n";
 		for (int i = 0; i < pathing_texture->width; i++) {
 			for (int j = 0; j < pathing_texture->height; j++) {
-				const int index = (j * pathing_texture->width + i) * pathing_texture->channels;
+				int x = i;
+				int y = j;
+				if (rotation == 90) {
+					x = pathing_texture->width - 1 - j;
+					y = i;
+				} else if (rotation == 180) {
+					x = pathing_texture->width - 1 - i;
+					y = pathing_texture->height - 1 - j;
+				} else if (rotation == 270) {
+					x = j + std::max(0, pathing_texture->height - pathing_texture->width);
+					y = pathing_texture->height - 1 - i + std::max(0, pathing_texture->width - pathing_texture->height);
+				} else if (rotation != 0) {
+					std::cout << "Rotation is not 0, but is: " << rotation << "\n";
+				}
 
-				glm::vec4 color = { pathing_texture->data[index + 2],
-					pathing_texture->data[index + 1],
-					pathing_texture->data[index],
+				const int in = (j * pathing_texture->width + i) * pathing_texture->channels;
+				
+				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
+					pathing_texture->data[in + 1] > 250 ? 255 : 0,
+					pathing_texture->data[in] > 250 ? 255 : 0,
 					0 };
+
+				const int index = y * size + x;
 
 				if (color.r || color.g || color.b) {
 					color.a = 128;
-					brush[j * pathing_texture->width + i] = color;
+					brush[index] = color;
 				} else {
-					brush[j * pathing_texture->width + i] = { 0, 0, 0, 0 };
+					brush[index] = { 0, 0, 0, 0 };
 				}
 			}
 		}
@@ -51,15 +72,36 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Delete:
 			if (selections.size()) {
+				QRectF update_pathing_area;
 				// Undo/redo
 				map->terrain_undo.new_undo_group();
 				auto action = std::make_unique<DoodadDeleteAction>();
 				for (const auto& i : selections) {
 					action->doodads.push_back(*i);
+
+					if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+						update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
+					}
+					update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
 				}
 				map->terrain_undo.add_undo_action(std::move(action));
-
 				map->doodads.remove_doodads(selections);
+
+				// Update pathing
+				update_pathing_area.adjust(-6, -6, 6, 6);
+				map->pathing_map.dynamic_clear_area(update_pathing_area.toRect());
+
+				update_pathing_area.adjust(-6, -6, 6, 6);
+
+				const auto doodads_to_blit = map->doodads.query_area(update_pathing_area);
+				for (const auto& i : doodads_to_blit) {
+					if (!i->pathing) {
+						continue;
+					}
+					map->pathing_map.blit_pathing_texture(i->position, i->pathing);
+				}
+				map->pathing_map.upload_dynamic_pathing();
+
 				selections.clear();
 			}
 			break;
@@ -129,9 +171,10 @@ void DoodadBrush::apply() {
 	doodad_undo->doodads.push_back(doodad);
 
 	if (pathing_texture) {
-		glm::vec2 dod = glm::vec2(position) + glm::vec2(uv_offset) * 0.25f;
+		glm::vec2 dod = glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f;
 
 		map->pathing_map.blit_pathing_texture(dod, pathing_texture);
+		map->pathing_map.upload_dynamic_pathing();
 	}
 
 	std::random_device rd;
@@ -174,7 +217,7 @@ void DoodadBrush::render_brush() const {
 	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
 	if (mesh) {
-		mesh->render_queue(matrix);
+	//	mesh->render_queue(matrix);
 	}
 }
 
@@ -243,6 +286,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			free_placement = false;
 			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
+
+			std::cout << pathing_texture_path << "\n";
 			set_size(pathing_texture->width);
 
 			free_rotation = pathing_texture->width == pathing_texture->height;

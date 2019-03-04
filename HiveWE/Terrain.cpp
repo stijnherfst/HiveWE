@@ -193,44 +193,15 @@ void Terrain::create() {
 				bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
 				bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
 
-				if (bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff) {
+				bool br = bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff;
+				bool bo = bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff;
 
-					bottom_left.romp = true;
-					corners[i][j + (facing_down ? -1 : 1)].romp = true;
-
-					char left_char = bottom_left.ramp ? 'L' : 'A';
-					char right_char = bottom_right.ramp ? 'L' : 'A';
-
+				if (br || bo) {
 					std::string file_name = ""s
-						+ char(left_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-						+ char(left_char + (top_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-						+ char(right_char + (top_right.layer_height - base) * (bottom_right.ramp ? -4 : 1))
-						+ char(right_char + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
-
-					file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-					if (hierarchy.file_exists(file_name)) {
-
-						if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
-							cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-						}
-						cliffs.emplace_back(i, j - facing_down, path_to_cliff[file_name]);
-
-						continue;
-					}
-				} else if (bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff) {
-
-					bottom_left.romp = true;
-					corners[i + (facing_left ? -1 : 1)][j].romp = true;
-
-					char bottom_char = bottom_left.ramp ? 'L' : 'A';
-					char top_char = top_left.ramp ? 'L' : 'A';
-
-					std::string file_name = ""s
-						+ char(bottom_char + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-						+ char(top_char + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
-						+ char(top_char + (top_right.layer_height - base) * (top_left.ramp ? -4 : 1))
-						+ char(bottom_char + (bottom_right.layer_height - base) * (bottom_left.ramp ? -4 : 1));
+						+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
+						+ char((top_left.ramp ? 'L' : 'A') + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
+						+ char((top_right.ramp ? 'L' : 'A') + (top_right.layer_height - base) * (top_right.ramp ? -4 : 1))
+						+ char((bottom_right.ramp ? 'L' : 'A') + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
 
 					file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
 					if (hierarchy.file_exists(file_name)) {
@@ -240,11 +211,14 @@ void Terrain::create() {
 							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
 						}
 
-						cliffs.emplace_back(i + !facing_left, j, path_to_cliff[file_name]);
+						cliffs.emplace_back(i + bo * !facing_left, j - br * facing_down, path_to_cliff[file_name]);
+						bottom_left.romp = true;
+						corners[i + (facing_left ? -1 : 1) * bo][j + (facing_down ? -1 : 1) * br].romp = true;
 
 						continue;
 					}
 				}
+
 
 				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
 					continue;
@@ -266,7 +240,7 @@ void Terrain::create() {
 				cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 			}
 
-			
+
 		}
 	}
 
@@ -450,7 +424,7 @@ void Terrain::render() const {
 		const Corner& top_left = corners[i.x][i.y + 1];
 		const Corner& top_right = corners[i.x + 1][i.y + 1];
 
-		const float min = std::min({bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
+		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
 									top_left.layer_height - 2,		top_right.layer_height - 2 });
 
 		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottom_left.cliff_texture });
@@ -617,7 +591,7 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 		index[0] = bottom_right == texture;
 		index[1] = bottom_left == texture;
 		index[2] = top_right == texture;
-		index[3] = top_left	== texture;
+		index[3] = top_left == texture;
 
 		tiles[component++] = texture + (index.to_ulong() << 5);
 	}
@@ -632,7 +606,7 @@ Texture Terrain::minimap_image() {
 	new_minimap_image.height = height;
 	new_minimap_image.channels = 4;
 	new_minimap_image.data.resize(width * height * 4);
-	
+
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
 			glm::vec4 color;
@@ -737,7 +711,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 						if (corners[i][j].layer_height != base) {
 							continue;
 						}
-						
+
 						if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp /*optional part? >>*/ && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
 							ramp_height = 0.5f;
 							goto exit_loop;
@@ -745,7 +719,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 					}
 				}
 			}
-			exit_loop:
+		exit_loop:
 
 			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height() + ramp_height;
 		}

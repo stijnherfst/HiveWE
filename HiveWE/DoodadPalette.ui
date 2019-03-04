@@ -26,6 +26,9 @@
    </item>
    <item>
     <widget class="QLineEdit" name="search">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="placeholderText">
       <string>Search</string>
      </property>

@@ -22,5 +22,6 @@ Texture::Texture(const fs::path& path) {
 	} else {
 		uint8_t* image_data = SOIL_load_image_from_memory(reader.buffer.data(), reader.buffer.size(), &width, &height, &channels, SOIL_LOAD_AUTO);
 		data = std::vector<uint8_t>(image_data, image_data + width * height * channels);
+		delete image_data;
 	}
 }
