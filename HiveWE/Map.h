@@ -37,17 +37,8 @@ public:
 	// For instancing
 	std::vector<StaticMesh*> meshes;
 
-	double terrain_time;
-	double terrain_tiles_time;
-	double terrain_water_time;
-	double terrain_cliff_time;
-	double mouse_world_time;
-	double doodad_time;
-	double unit_time;
-	double render_time;
+	std::chrono::steady_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 	double total_time;
-	double total_time_min = std::numeric_limits<double>::max();
-	double total_time_max = std::numeric_limits<double>::min();
 
 	~Map();
 

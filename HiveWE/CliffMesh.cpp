@@ -4,7 +4,7 @@ CliffMesh::CliffMesh(const fs::path& path) {
 	if (path.extension() == ".mdx" || path.extension() == ".MDX") {
 		auto reader = BinaryReader(hierarchy.open_file(path));
 		mdx::MDX model = mdx::MDX(reader);
-
+		pathi = path;
 		auto set = model.chunk<mdx::GEOS>()->geosets.front();
 
 		gl->glCreateBuffers(1, &vertex_buffer);

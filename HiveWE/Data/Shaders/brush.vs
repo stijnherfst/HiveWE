@@ -17,7 +17,8 @@ void main() {
 
 	vec2 local_pos = vec2(gl_InstanceID % cells, gl_InstanceID / cells);
 	vec2 pos = offset + vPosition + local_pos;
-	vec4 height = texelFetch(height_texture, ivec2(pos), 0);
+
+	vec4 height = texture(height_texture, (pos + 1) / textureSize(height_texture, 0));
 
 	gl_Position = MVP * vec4(pos, height.r, 1);
 

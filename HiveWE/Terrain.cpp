@@ -77,6 +77,12 @@ bool Terrain::load(BinaryReader& reader) {
 		}
 	}
 
+	create();
+
+	return true;
+}
+
+void Terrain::create() {
 	// Determine if cliff
 	for (int i = 0; i < width - 1; i++) {
 		for (int j = 0; j < height - 1; j++) {
@@ -96,7 +102,7 @@ bool Terrain::load(BinaryReader& reader) {
 
 	terrain_slk.load("TerrainArt/Terrain.slk");
 	cliff_slk.load("TerrainArt/CliffTypes.slk");
-	slk::SLK water_slk("TerrainArt/Water.slk");
+	const slk::SLK water_slk("TerrainArt/Water.slk");
 
 	// Water Textures and Colours
 
@@ -147,16 +153,6 @@ bool Terrain::load(BinaryReader& reader) {
 		cliff_variations.emplace(cliffs_slk.data("cliffID", i), cliffs_slk.data<int>("variations", i));
 	}
 
-	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
-	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
-	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
-
-	create();
-
-	return true;
-}
-
-void Terrain::create() {
 	// Ground textures
 	for (auto&& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
@@ -173,101 +169,22 @@ void Terrain::create() {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
+	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+
+	// prepare GPU data
 	ground_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
 	water_heights.resize(width * height);
 	water_exists_data.resize(width * height);
 
-	// Create ramps and cliffs
-	for (int i = 0; i < width - 1; i++) {
-		for (int j = 0; j < height - 1; j++) {
-			Corner& bottom_left = corners[i][j];
-			Corner& bottom_right = corners[i + 1][j];
-			Corner& top_left = corners[i][j + 1];
-			Corner& top_right = corners[i + 1][j + 1];
-
-			if (bottom_left.cliff) {
-				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
-
-				bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
-				bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
-
-				bool br = bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff;
-				bool bo = bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff;
-
-				if (br || bo) {
-					std::string file_name = ""s
-						+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-						+ char((top_left.ramp ? 'L' : 'A') + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
-						+ char((top_right.ramp ? 'L' : 'A') + (top_right.layer_height - base) * (top_right.ramp ? -4 : 1))
-						+ char((bottom_right.ramp ? 'L' : 'A') + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
-
-					file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-					if (hierarchy.file_exists(file_name)) {
-
-						if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
-							cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-							path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-						}
-
-						cliffs.emplace_back(i + bo * !facing_left, j - br * facing_down, path_to_cliff[file_name]);
-						bottom_left.romp = true;
-						corners[i + (facing_left ? -1 : 1) * bo][j + (facing_down ? -1 : 1) * br].romp = true;
-
-						continue;
-					}
-				}
-
-
-				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
-					continue;
-				}
-
-				// Cliff model path
-				std::string file_name = ""s + char('A' + bottom_left.layer_height - base)
-					+ char('A' + top_left.layer_height - base)
-					+ char('A' + top_right.layer_height - base)
-					+ char('A' + bottom_right.layer_height - base);
-
-				if (file_name == "AAAA") {
-					continue;
-				}
-
-				// Clamp to within max variations
-				file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
-
-				cliffs.emplace_back(i, j, path_to_cliff[file_name]);
-			}
-
-
-		}
-	}
-
+	update_ground_textures({ 0, 0, width - 1, height - 1 });
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
 			water_exists_data[j * width + i] = corners[i][j].water;
 			ground_heights[j * width + i] = corners[i][j].height;
 			water_heights[j * width + i] = corners[i][j].water_height;
-
-			if (i == width - 1 || j == height - 1) {
-				continue;
-			}
-
-			Corner& bottom_left = corners[i][j];
-			Corner& bottom_right = corners[i + 1][j];
-			Corner& top_left = corners[i][j + 1];
-			Corner& top_right = corners[i + 1][j + 1];
-
-			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
-
-			if (corners[i][j].cliff || corners[i][j].romp) {
-				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp /*optional part? >>*/ && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
-					continue;
-				}
-				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
-			}
 		}
 	}
 
@@ -287,13 +204,15 @@ void Terrain::create() {
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
 	gl->glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
 	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+	gl->glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	// Cliff
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
 	gl->glTextureStorage3D(cliff_texture_array, log2(cliff_texture_size) + 1, GL_RGBA8, cliff_texture_size, cliff_texture_size, cliff_textures.size());
 	gl->glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	int sub = 0;
-	for (auto&& i : cliff_textures) {
+	for (const auto& i : cliff_textures) {
 		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data.data());
 		sub += 1;
 	}
@@ -316,10 +235,9 @@ void Terrain::create() {
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	slk::SLK water_slk("TerrainArt/Water.slk");
-	std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
+	const std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
 	for (int i = 0; i < water_textures_nr; i++) {
-		auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp");
+		const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp");
 
 		if (texture->width != 128 || texture->height != 128) {
 			std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
@@ -328,8 +246,11 @@ void Terrain::create() {
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 
-
 	update_ground_heights({ 0, 0, width - 1, height - 1 });
+
+	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
+	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
+	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
 
 	emit minimap_changed(minimap_image());
 }
@@ -381,8 +302,6 @@ void Terrain::save() const {
 
 void Terrain::render() const {
 	// Render tiles
-	auto begin = std::chrono::high_resolution_clock::now();
-
 	ground_shader->use();
 
 	gl->glDisable(GL_BLEND);
@@ -412,17 +331,15 @@ void Terrain::render() const {
 
 	gl->glEnable(GL_BLEND);
 
-	auto end = std::chrono::high_resolution_clock::now();
-	map->terrain_tiles_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-
 	// Render cliffs
-	begin = std::chrono::high_resolution_clock::now();
-
-	for (auto&& i : cliffs) {
+	for (const auto& i : cliffs) {
+		if (i.x + 1 > 64) {
+			puts("\n");
+		}
 		const Corner& bottom_left = corners[i.x][i.y];
-		const Corner& bottom_right = corners[i.x + 1][i.y];
+		const Corner& bottom_right = corners[std::min(64, i.x + 1)][i.y];
 		const Corner& top_left = corners[i.x][i.y + 1];
-		const Corner& top_right = corners[i.x + 1][i.y + 1];
+		const Corner& top_right = corners[std::min(64, i.x + 1)][i.y + 1];
 
 		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
 									top_left.layer_height - 2,		top_right.layer_height - 2 });
@@ -441,16 +358,11 @@ void Terrain::render() const {
 	gl->glBindTextureUnit(0, cliff_texture_array);
 	gl->glBindTextureUnit(1, ground_height);
 	gl->glBindTextureUnit(2, map->pathing_map.texture_static);
-	for (auto&& i : cliff_meshes) {
+	for (const auto& i : cliff_meshes) {
 		i->render();
 	}
 
-	end = std::chrono::high_resolution_clock::now();
-	map->terrain_cliff_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-
 	// Render water
-	begin = std::chrono::high_resolution_clock::now();
-
 	water_shader->use();
 
 	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &camera->projection_view[0][0]);
@@ -476,9 +388,6 @@ void Terrain::render() const {
 	gl->glDisableVertexAttribArray(0);
 
 	gl->glEnable(GL_BLEND);
-
-	end = std::chrono::high_resolution_clock::now();
-	map->terrain_water_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 }
 
 void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {
@@ -488,8 +397,8 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	new_to_old.push_back(new_tileset_ids.size());
 
 	// Map old ids to the new ids
-	for (auto&& i : corners) {
-		for (auto&& j : i) {
+	for (auto& i : corners) {
+		for (auto& j : i) {
 			j.ground_texture = new_to_old[j.ground_texture];
 		}
 	}
@@ -498,7 +407,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	ground_textures.clear();	// ToDo Clear them after loading new ones?
 	ground_texture_to_id.clear();
 
-	for (auto&& tile_id : tileset_ids) {
+	for (const auto& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
@@ -507,7 +416,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
 
 	cliff_to_ground_texture.clear();
-	for (auto&& cliff_id : cliffset_ids) {
+	for (const auto& cliff_id : cliffset_ids) {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
 
@@ -580,7 +489,7 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	const int top_right = real_tile_texture(x + 1, y + 1);
 
 	std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
-	glm::u16vec4 tiles(17); // 17 means black transparent texture
+	glm::u16vec4 tiles(17); // 17 is a black transparent texture
 	int component = 1;
 
 	tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 5);
@@ -701,7 +610,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 			// Check if in one of the configurations the bottom_left is a ramp
 			for (int x_offset = -1; x_offset <= 0; x_offset++) {
 				for (int y_offset = -1; y_offset <= 0; y_offset++) {
-					if (i + x_offset >= 0 && i + x_offset < width && j + y_offset >= 0 && j + y_offset < height) {
+					if (i + x_offset >= 0 && i + x_offset < width - 1 && j + y_offset >= 0 && j + y_offset < height - 1) {
 						Corner& bottom_left = corners[i + x_offset][j + y_offset];
 						Corner& bottom_right = corners[i + 1 + x_offset][j + y_offset];
 						Corner& top_left = corners[i + x_offset][j + 1 + y_offset];
@@ -729,14 +638,24 @@ void Terrain::update_ground_heights(const QRect& area) {
 	upload_corner_heights();
 }
 
+/// Updates the ground texture variation information and uploads it to the GPU
 void Terrain::update_ground_textures(const QRect& area) {
 	QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
 		for (int i = update_area.left(); i <= update_area.right(); i++) {
+			Corner& bottom_left = corners[i][j];
+			Corner& bottom_right = corners[i + 1][j];
+			Corner& top_left = corners[i][j + 1];
+			Corner& top_right = corners[i + 1][j + 1];
+
 			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
-			if (corners[i][j].cliff) {
-				ground_texture_list[j * (width - 1) + i] |= 0b1000000000000000;
+
+			if (corners[i][j].cliff || corners[i][j].romp) {
+				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp /*optional part? >>*/ && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+					continue;
+				}
+				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
 			}
 		}
 	}
@@ -744,6 +663,7 @@ void Terrain::update_ground_textures(const QRect& area) {
 	upload_ground_texture();
 }
 
+/// Updates and uploads the water data for the GPU
 void Terrain::update_water(const QRect& area) {
 	for (int i = area.x(); i < area.x() + area.width(); i++) {
 		for (int j = area.y(); j < area.y() + area.height(); j++) {
@@ -755,6 +675,8 @@ void Terrain::update_water(const QRect& area) {
 	upload_water_heights();
 }
 
+/// Function is a bit of a mess
+/// Updates the cliff and ramp meshes for an area
 void Terrain::update_cliff_meshes(const QRect& area) {
 	// Remove all existing cliff meshes in area
 	for (size_t i = cliffs.size(); i-- > 0;) {
@@ -764,32 +686,89 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 		}
 	}
 
+	for (int i = area.x(); i < area.right(); i++) {
+		for (int j = area.y(); j < area.bottom(); j++) {
+			corners[i][j].romp = false;
+		}
+	}
+
+	QRect ramp_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width, height });
+
 	// Add new cliff meshes
-	for (int i = area.x(); i <= area.right(); i++) {
-		for (int j = area.y(); j <= area.bottom(); j++) {
-			Corner& bottom_left = map->terrain.corners[i][j];
-			Corner& bottom_right = map->terrain.corners[i + 1][j];
-			Corner& top_left = map->terrain.corners[i][j + 1];
-			Corner& top_right = map->terrain.corners[i + 1][j + 1];
+	for (int i = ramp_area.x(); i < ramp_area.right(); i++) {
+		for (int j = ramp_area.y(); j < ramp_area.bottom(); j++) {
+			Corner& bottom_left = corners[i][j];
+			Corner& bottom_right = corners[i + 1][j];
+			Corner& top_left = corners[i][j + 1];
+			Corner& top_right = corners[i + 1][j + 1];
 
-			if (!bottom_left.cliff) {
-				continue;
+			if (bottom_left.cliff) {
+				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
+
+				const bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
+				const bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
+				
+				if (!(facing_down && j == 0) && !(!facing_down && j >= height - 2) && !(facing_left && i == 0) && !(!facing_left && i >= width - 2)) {
+					const bool br = bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff;
+					const bool bo = bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff;
+
+					if (br || bo) {
+						std::string file_name = ""s
+							+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
+							+ char((top_left.ramp ? 'L' : 'A') + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
+							+ char((top_right.ramp ? 'L' : 'A') + (top_right.layer_height - base) * (top_right.ramp ? -4 : 1))
+							+ char((bottom_right.ramp ? 'L' : 'A') + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
+
+						file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
+						if (hierarchy.file_exists(file_name)) {
+
+							if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
+								cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
+								path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
+							}
+
+							for (size_t ji = cliffs.size(); ji-- > 0;) {
+								glm::ivec3& pos = cliffs[ji];
+								if (pos.x == (i + bo * !facing_left) && pos.y == (j - br * facing_down)) {
+									cliffs.erase(cliffs.begin() + ji);
+									break;
+								}
+							}
+
+							cliffs.emplace_back(i + bo * !facing_left, j - br * facing_down, path_to_cliff[file_name]);
+							bottom_left.romp = true;
+
+							corners[i + (facing_left ? -1 : 1) * bo][j + (facing_down ? -1 : 1) * br].romp = true;
+
+							continue;
+						}
+					}
+				}
+
+				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+					continue;
+				}
+
+				// Ramps move 1 right/down in some cases and thus their area is one bigger to the top and left.
+				if (!area.contains(i, j)) {
+					continue;
+				}
+
+				// Cliff model path
+				std::string file_name = ""s + char('A' + bottom_left.layer_height - base)
+					+ char('A' + top_left.layer_height - base)
+					+ char('A' + top_right.layer_height - base)
+					+ char('A' + bottom_right.layer_height - base);
+
+				if (file_name == "AAAA") {
+					continue;
+				}
+
+				// Clamp to within max variations
+				file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
+
+				cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 			}
-
-			const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
-			std::string file_name = ""s + char('A' + bottom_left.layer_height - base)
-				+ char('A' + top_left.layer_height - base)
-				+ char('A' + top_right.layer_height - base)
-				+ char('A' + bottom_right.layer_height - base);
-
-			if (file_name == "AAAA") {
-				continue;
-			}
-
-			// Clamp to within max variations
-			file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
-
-			cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 		}
 	}
 }

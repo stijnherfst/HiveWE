@@ -145,7 +145,7 @@ void Map::load(const fs::path& path) {
 			continue;
 		}
 
-		pathing_map.blit_pathing_texture(i.position, i.pathing);
+		pathing_map.blit_pathing_texture(i.position, 0, i.pathing);
 	}
 	pathing_map.upload_dynamic_pathing();
 
@@ -264,20 +264,15 @@ void Map::render(int width, int height) {
 		return;
 	}
 
-	auto total_time_begin = std::chrono::high_resolution_clock::now();
+	total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
+	last_time = std::chrono::high_resolution_clock::now();
+
 
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 	// Render Terrain
-	auto begin = std::chrono::high_resolution_clock::now();
-
 	terrain.render();
-
-	auto end = std::chrono::high_resolution_clock::now();
-	terrain_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-
-	begin = std::chrono::high_resolution_clock::now();
 
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y() > 0) {
@@ -286,27 +281,16 @@ void Map::render(int width, int height) {
 		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 	}
 
-	end = std::chrono::high_resolution_clock::now();
-	mouse_world_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-
 	// Render Doodads
-	begin = std::chrono::high_resolution_clock::now();
-
 	if (render_doodads) {
 		doodads.render();
 	}
 
-	end = std::chrono::high_resolution_clock::now();
-	doodad_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-
 	// Render units
 	if (units_loaded) {
-		begin = std::chrono::high_resolution_clock::now();
 		if (render_units) {
 			units.render();
 		}
-		end = std::chrono::high_resolution_clock::now();
-		unit_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
 	}
 
 	if (render_brush && brush) {
@@ -314,18 +298,9 @@ void Map::render(int width, int height) {
 	}
 
 	// Render all meshes
-	begin = std::chrono::high_resolution_clock::now();
-
 	for (auto&& i : meshes) {
 		i->render();
 	}
-
-	end = std::chrono::high_resolution_clock::now();
-	render_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin).count() / 1'000'000.0;
-	total_time = std::chrono::duration_cast<std::chrono::nanoseconds>(end - total_time_begin).count() / 1'000'000.0;
-
-	total_time_min = std::min(total_time, total_time_min);
-	total_time_max = std::max(total_time, total_time_max);
 
 	meshes.clear();
 }

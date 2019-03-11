@@ -16,7 +16,7 @@ void Brush::create() {
 void Brush::set_position(const glm::vec2& new_position) {
 	const glm::vec2 center_position = new_position - size / 2.f * 0.25f + brush_offset;
 
-	position = center_position;
+	position = glm::floor(center_position);
 	if (!uv_offset_locked) {
 		glm::vec2 decimals = center_position - glm::vec2(position);
 
@@ -38,7 +38,7 @@ void Brush::set_position(const glm::vec2& new_position) {
 }
 
 glm::vec2 Brush::get_position() const {
-	return glm::vec2(position) + brush_offset + 1.f;
+	return glm::vec2(position);
 }
 
 void Brush::set_size(const int new_size) {

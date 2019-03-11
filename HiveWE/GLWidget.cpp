@@ -119,16 +119,7 @@ void GLWidget::paintGL() {
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
 		// Rendering time
-		p.drawText(10, 20, QString::fromStdString("Terrain Drawing: " + std::to_string(map->terrain_time)));
-			p.drawText(20, 35, QString::fromStdString("Terrain Tiles: " + std::to_string(map->terrain_tiles_time)));
-			p.drawText(20, 50, QString::fromStdString("Terrain Cliffs: " + std::to_string(map->terrain_cliff_time)));
-			p.drawText(20, 65, QString::fromStdString("Terrain Water: " + std::to_string(map->terrain_water_time)));
-		p.drawText(10, 80, QString::fromStdString("Mouse to world coordinates: " + std::to_string(map->terrain_time)));
-		p.drawText(10, 95, QString::fromStdString("Doodad Queue: " + std::to_string(map->doodad_time)));
-		p.drawText(10, 110, QString::fromStdString("Unit Queue: " + std::to_string(map->unit_time)));
-		p.drawText(10, 125, QString::fromStdString("Render time: " + std::to_string(map->render_time)));
-
-		p.drawText(10, 145, QString::fromStdString("Total time: " + std::to_string(map->total_time) + " Min: " + std::to_string(map->total_time_min) + " Max: " + std::to_string(map->total_time_max)));
+		p.drawText(10, 20, QString::fromStdString("Total time: " + std::to_string(map->total_time)));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));

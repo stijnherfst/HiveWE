@@ -203,42 +203,48 @@ void TerrainBrush::apply() {
 	QRect updated_area = QRect(x - 1, y - 1, size / 4.f + 1, size / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
-		for (int i = area.x(); i < area.x() + area.width(); i++) {
-			for (int j = area.y(); j < area.y() + area.height(); j++) {
-				const int xx = i - area.x() - std::min(position.x + 1, 0);
-				const int yy = j - area.y() - std::min(position.y + 1, 0);
-				if (!contains(xx, yy)) {
-					continue;
-				}
+		if (cliff_operation_type == cliff_operation::ramp) {
+			const int center_x = area.x() + area.width() * 0.5f;
+			const int center_y = area.y() + area.height() * 0.5f;
 
-				corners[i][j].layer_height = layer_height;
+			if (corners[center_x][center_y].cliff) {
+			//	corners[i][j].ramp = true;
+			}
+		} else {
+			for (int i = area.x(); i < area.x() + area.width(); i++) {
+				for (int j = area.y(); j < area.y() + area.height(); j++) {
+					const int xx = i - area.x() - std::min(position.x + 1, 0);
+					const int yy = j - area.y() - std::min(position.y + 1, 0);
+					if (!contains(xx, yy)) {
+						continue;
+					}
 
-				switch (cliff_operation_type) {
-					case cliff_operation::lower1:
-					case cliff_operation::lower2:
-					case cliff_operation::level:
-					case cliff_operation::raise1:
-					case cliff_operation::raise2:
-						if (corners[i][j].water) {
-							if (enforce_water_height_limits && corners[i][j].final_water_height() < corners[i][j].final_ground_height()) {
-								corners[i][j].water = false;
+					corners[i][j].layer_height = layer_height;
+
+					switch (cliff_operation_type) {
+						case cliff_operation::lower1:
+						case cliff_operation::lower2:
+						case cliff_operation::level:
+						case cliff_operation::raise1:
+						case cliff_operation::raise2:
+							if (corners[i][j].water) {
+								if (enforce_water_height_limits && corners[i][j].final_water_height() < corners[i][j].final_ground_height()) {
+									corners[i][j].water = false;
+								}
 							}
-						}
-						break;
-					case cliff_operation::shallow_water:
-						corners[i][j].water = true;
-						corners[i][j].water_height = corners[i][j].layer_height - 1;
-						break;
-					case cliff_operation::deep_water:
-						corners[i][j].water = true;
-						corners[i][j].water_height = corners[i][j].layer_height;
-						break;
-					case cliff_operation::ramp:
-						corners[i][j].ramp = true;
-						break;
-				}
+							break;
+						case cliff_operation::shallow_water:
+							corners[i][j].water = true;
+							corners[i][j].water_height = corners[i][j].layer_height - 1;
+							break;
+						case cliff_operation::deep_water:
+							corners[i][j].water = true;
+							corners[i][j].water_height = corners[i][j].layer_height;
+							break;
+					}
 
-				check_nearby(x, y, i, j, updated_area);
+					check_nearby(x, y, i, j, updated_area);
+				}
 			}
 		}
 
@@ -257,13 +263,15 @@ void TerrainBrush::apply() {
 					|| bottom_left.layer_height != top_left.layer_height
 					|| bottom_left.layer_height != top_right.layer_height;
 
-				bottom_left.cliff_texture = cliff_id;
+				if (cliff_operation_type != cliff_operation::ramp) {
+					bottom_left.cliff_texture = cliff_id;
+				}
 			}
 		}
 
 		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
 
-		map->terrain.update_cliff_meshes(updated_area);
+		map->terrain.update_cliff_meshes(tile_area);
 		map->terrain.update_ground_textures(updated_area);
 		map->terrain.update_ground_heights(updated_area.adjusted(0, 0, 1, 1));
 		map->terrain.update_water(tile_area.adjusted(0, 0, 1, 1));
@@ -285,7 +293,7 @@ void TerrainBrush::apply() {
 					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
 
 					uint8_t mask = 0;
-					if (bottom_left.cliff && apply_cliff_pathing) {
+					if ((bottom_left.cliff || bottom_left.romp) && apply_cliff_pathing) {
 						mask = 0b00001010;
 					} 
 					

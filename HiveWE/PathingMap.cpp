@@ -50,9 +50,11 @@ void PathingMap::save() const {
 }
 
 /// Clears an area with zeroes
-void PathingMap::dynamic_clear_area(QRect area) {
-	for (int j = area.top() * 4; j < area.bottom() * 4; j++) {
-		for (int i = area.left() * 4; i < area.right() * 4; i++) {
+void PathingMap::dynamic_clear_area(const QRect& area) {
+	QRect t = area.intersected({ 0, 0, width, height });
+
+	for (int j = t.top() * 4; j < t.bottom() * 4; j++) {
+		for (int i = t.left() * 4; i < t.right() * 4; i++) {
 			pathing_cells_dynamic[j * width + i] = 0;
 		}
 	}
@@ -60,17 +62,42 @@ void PathingMap::dynamic_clear_area(QRect area) {
 
 /// Blits a pathing texture to the specified location on the pathing map. Manually call update_dynamic() afterwards to upload the changes to the GPU
 /// Expects position in whole grid tiles and draws the texture centered around this position
-void PathingMap::blit_pathing_texture(glm::vec2 position, const std::shared_ptr<Texture>& pathing_texture) {
+/// Rotation in multiples of 90
+/// Blits the texture upside down as OpenGL uses the bottom-left as 0,0
+void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<Texture>& pathing_texture) {
+	std::cout << position.x << "   " << position.y << "\n";
+
 	for (int j = 0; j < pathing_texture->height; j++) {
 		for (int i = 0; i < pathing_texture->width; i++) {
-			int xx = position.x * 4 + i - pathing_texture->width / 2;
-			int yy = position.y * 4 + j - pathing_texture->height / 2;
+			int x = i;
+			int y = j;
+
+			switch (rotation) {
+				case 90:
+					x = pathing_texture->width - 1 - j - std::max(0, pathing_texture->width - pathing_texture->height);
+					y = i + std::max(0, pathing_texture->height - pathing_texture->width);
+					break;
+				case 180:
+					x = pathing_texture->width - 1 - i;
+					y = pathing_texture->height - 1 - j;
+					break;
+				case 270:
+					x = j + std::max(0, pathing_texture->height - pathing_texture->width);
+					y = pathing_texture->height - 1 - i + std::max(0, pathing_texture->width - pathing_texture->height);
+					break;
+			}
+
+			// Width and height for centering change if rotation is not divisible by 180
+			const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
+			const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
+			const int xx = position.x * 4 + x - div_w / 2;
+			const int yy = position.y * 4 + y - div_h / 2;
 
 			if (xx < 0 || xx > width || yy < 0 || yy > height) {
 				continue;
 			}
 
-			const unsigned int index = (j * pathing_texture->width + i) * pathing_texture->channels;
+			const unsigned int index = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
 
 			uint8_t bytes = (pathing_texture->data[index] > 250) * Flags::unwalkable
 				| (pathing_texture->data[index + 1] > 250) * Flags::unflyable
