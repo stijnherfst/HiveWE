@@ -207,9 +207,11 @@ void TerrainBrush::apply() {
 			const int center_x = area.x() + area.width() * 0.5f;
 			const int center_y = area.y() + area.height() * 0.5f;
 
-			if (corners[center_x][center_y].cliff) {
-			//	corners[i][j].ramp = true;
-			}
+			//input_handler.mouse_world.x
+
+			//if (corners[center_x][center_y].cliff) {
+				corners[center_x][center_y].ramp = true;
+			//}
 		} else {
 			for (int i = area.x(); i < area.x() + area.width(); i++) {
 				for (int j = area.y(); j < area.y() + area.height(); j++) {

@@ -333,9 +333,6 @@ void Terrain::render() const {
 
 	// Render cliffs
 	for (const auto& i : cliffs) {
-		if (i.x + 1 > 64) {
-			puts("\n");
-		}
 		const Corner& bottom_left = corners[i.x][i.y];
 		const Corner& bottom_right = corners[std::min(64, i.x + 1)][i.y];
 		const Corner& top_left = corners[i.x][i.y + 1];
@@ -675,6 +672,7 @@ void Terrain::update_water(const QRect& area) {
 	upload_water_heights();
 }
 
+/// ToDo clean
 /// Function is a bit of a mess
 /// Updates the cliff and ramp meshes for an area
 void Terrain::update_cliff_meshes(const QRect& area) {
@@ -692,7 +690,7 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 		}
 	}
 
-	QRect ramp_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width, height });
+	QRect ramp_area = area.adjusted(-2, -2, 2, 2).intersected({ 0, 0, width, height });
 
 	// Add new cliff meshes
 	for (int i = ramp_area.x(); i < ramp_area.right(); i++) {

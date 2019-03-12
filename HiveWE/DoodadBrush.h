@@ -36,6 +36,7 @@ public:
 	void mouse_release_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
 
+	void delete_selection();
 	void clear_selection() override;
 
 	void apply_begin() override;

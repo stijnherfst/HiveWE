@@ -74,39 +74,7 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Delete:
-			if (selections.size()) {
-				QRectF update_pathing_area;
-				// Undo/redo
-				map->terrain_undo.new_undo_group();
-				auto action = std::make_unique<DoodadDeleteAction>();
-				for (const auto& i : selections) {
-					action->doodads.push_back(*i);
-
-					if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-						update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
-					}
-					update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
-				}
-				map->terrain_undo.add_undo_action(std::move(action));
-				map->doodads.remove_doodads(selections);
-
-				// Update pathing
-				update_pathing_area.adjust(-6, -6, 6, 6);
-				map->pathing_map.dynamic_clear_area(update_pathing_area.toRect());
-
-				update_pathing_area.adjust(-6, -6, 6, 6);
-
-				const auto doodads_to_blit = map->doodads.query_area(update_pathing_area);
-				for (const auto& i : doodads_to_blit) {
-					if (!i->pathing) {
-						continue;
-					}
-					map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
-				}
-				map->pathing_map.upload_dynamic_pathing();
-
-				selections.clear();
-			}
+			delete_selection();
 			break;
 		case Qt::Key_A:
 			if (event->modifiers() & Qt::ControlModifier) {
@@ -141,6 +109,42 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 			}
 		}
+	}
+}
+
+void DoodadBrush::delete_selection() {
+	if (selections.size()) {
+		QRectF update_pathing_area;
+		// Undo/redo
+		map->terrain_undo.new_undo_group();
+		auto action = std::make_unique<DoodadDeleteAction>();
+		for (const auto& i : selections) {
+			action->doodads.push_back(*i);
+
+			if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+				update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
+			}
+			update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
+		}
+		map->terrain_undo.add_undo_action(std::move(action));
+		map->doodads.remove_doodads(selections);
+
+		// Update pathing
+		update_pathing_area.adjust(-6, -6, 6, 6);
+		map->pathing_map.dynamic_clear_area(update_pathing_area.toRect());
+
+		update_pathing_area.adjust(-6, -6, 6, 6);
+
+		const auto doodads_to_blit = map->doodads.query_area(update_pathing_area);
+		for (const auto& i : doodads_to_blit) {
+			if (!i->pathing) {
+				continue;
+			}
+			map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
+		}
+		map->pathing_map.upload_dynamic_pathing();
+
+		selections.clear();
 	}
 }
 
