@@ -207,7 +207,7 @@ void Doodads::remove_doodad(Doodad* doodad) {
 	doodads.erase(iterator);
 }
 
-std::vector<Doodad*> Doodads::query_area(QRectF area) {
+std::vector<Doodad*> Doodads::query_area(const QRectF& area) {
 	std::vector<Doodad*> result;
 
 	for (auto&& i : doodads) {
@@ -222,6 +222,22 @@ void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
 	doodads.erase(std::remove_if(doodads.begin(), doodads.end(), [&](Doodad& doodad) {
 		return std::find(list.begin(), list.end(), &doodad) != list.end();
 	}), doodads.end());
+}
+
+void update_doodad_pathing(const QRectF& area) {
+	QRectF new_area = area.adjusted(-6, -6, 6, 6);
+	map->pathing_map.dynamic_clear_area(new_area.toRect());
+
+	new_area.adjust(-6, -6, 6, 6);
+
+	const auto doodads_to_blit = map->doodads.query_area(new_area);
+	for (const auto& i : doodads_to_blit) {
+		if (!i->pathing) {
+			continue;
+		}
+		map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
+	}
+	map->pathing_map.upload_dynamic_pathing();
 }
 
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
@@ -284,16 +300,64 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 void DoodadAddAction::undo() {
 	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
+
+	QRectF update_pathing_area;
+	for (const auto& i : doodads) {
+
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	}
+
+	update_doodad_pathing(update_pathing_area);
 }
+
 void DoodadAddAction::redo() {
 	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
+
+	QRectF update_pathing_area;
+	for (const auto& i : doodads) {
+
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	}
+
+	// Update pathing
+	update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadDeleteAction::undo() {
 	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
+
+	QRectF update_pathing_area;
+	for (const auto& i : doodads) {
+
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	}
+
+	// Update pathing
+	update_doodad_pathing(update_pathing_area);
 }
 void DoodadDeleteAction::redo() {
 	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
+
+	QRectF update_pathing_area;
+	for (const auto& i : doodads) {
+
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	}
+
+	// Update pathing
+	update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadStateAction::undo() {
