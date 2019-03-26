@@ -36,15 +36,6 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		files.emplace(item, i);
 	}
 
-	connect(new QShortcut(Qt::Key_R, this), &QShortcut::activated, [&]() {
-		QSettings settings;
-		QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
-		file.open(QFile::ReadOnly);
-		QString StyleSheet = QLatin1String(file.readAll());
-
-		qApp->setStyleSheet(StyleSheet);
-	});
-
 	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
 	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { delete ui.editor->widget(index); });
 }

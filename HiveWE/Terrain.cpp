@@ -333,13 +333,10 @@ void Terrain::render() const {
 
 	// Render cliffs
 	for (const auto& i : cliffs) {
-		if (i.x + 1 > 64) {
-			puts("\n");
-		}
 		const Corner& bottom_left = corners[i.x][i.y];
-		const Corner& bottom_right = corners[std::min(64, i.x + 1)][i.y];
+		const Corner& bottom_right = corners[i.x + 1][i.y];
 		const Corner& top_left = corners[i.x][i.y + 1];
-		const Corner& top_right = corners[std::min(64, i.x + 1)][i.y + 1];
+		const Corner& top_right = corners[i.x + 1][i.y + 1];
 
 		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
 									top_left.layer_height - 2,		top_right.layer_height - 2 });
@@ -507,6 +504,27 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
+bool Terrain::is_corner_ramp_mesh(int x, int y) {
+
+}
+
+bool Terrain::is_corner_ramp_entrance(int x, int y) {
+	if (x == width || y == height) {
+		return false;
+	}
+
+	Corner& bottom_left = corners[x][y];
+	Corner& bottom_right = corners[x + 1][y];
+	Corner& top_left = corners[x][y + 1];
+	Corner& top_right = corners[x + 1][y + 1];
+
+	return bottom_left.ramp && top_left.ramp&& bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height);
+}
+
+bool Terrain::is_corner_cliff(int x, int y) {
+
+}
+
 /// Constructs a minimap image with tile, cliff, and water colors. Other objects such as doodads will not be added here
 Texture Terrain::minimap_image() {
 	Texture new_minimap_image;
@@ -621,7 +639,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 							continue;
 						}
 
-						if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp /*optional part? >>*/ && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+						if (is_corner_ramp_entrance(i + x_offset, j + y_offset)) {
 							ramp_height = 0.5f;
 							goto exit_loop;
 						}
@@ -652,7 +670,7 @@ void Terrain::update_ground_textures(const QRect& area) {
 			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
 
 			if (corners[i][j].cliff || corners[i][j].romp) {
-				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp /*optional part? >>*/ && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+				if (is_corner_ramp_entrance(i, j)) {
 					continue;
 				}
 				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
@@ -745,7 +763,7 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 					}
 				}
 
-				if (bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height)) {
+				if (is_corner_ramp_entrance(i, j)) {
 					continue;
 				}
 

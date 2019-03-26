@@ -65,8 +65,6 @@ void PathingMap::dynamic_clear_area(const QRect& area) {
 /// Rotation in multiples of 90
 /// Blits the texture upside down as OpenGL uses the bottom-left as 0,0
 void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<Texture>& pathing_texture) {
-	std::cout << position.x << "   " << position.y << "\n";
-
 	for (int j = 0; j < pathing_texture->height; j++) {
 		for (int i = 0; i < pathing_texture->width; i++) {
 			int x = i;

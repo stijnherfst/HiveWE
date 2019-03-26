@@ -41,29 +41,29 @@ extern "C" {
   #ifdef _DEBUG                                 // DEBUG VERSIONS
     #ifndef _UNICODE
       #ifdef _DLL
-        #pragma comment(lib, "CascLibDAD.lib") // Debug Ansi CRT-DLL version
+        #pragma comment(lib, "casc.lib") // Debug Ansi CRT-DLL version
       #else
-        #pragma comment(lib, "CascLibDAS.lib") // Debug Ansi CRT-LIB version
+        #pragma comment(lib, "casc.lib") // Debug Ansi CRT-LIB version
       #endif
     #else
       #ifdef _DLL
-        #pragma comment(lib, "CascLibDUD.lib") // Debug Unicode CRT-DLL version
+        #pragma comment(lib, "casc.lib") // Debug Unicode CRT-DLL version
       #else
-        #pragma comment(lib, "CascLibDUS.lib") // Debug Unicode CRT-LIB version
+        #pragma comment(lib, "casc.lib") // Debug Unicode CRT-LIB version
       #endif
     #endif
   #else                                         // RELEASE VERSIONS
     #ifndef _UNICODE
       #ifdef _DLL
-        #pragma comment(lib, "CascLibRAD.lib") // Release Ansi CRT-DLL version
+        #pragma comment(lib, "casc.lib") // Release Ansi CRT-DLL version
       #else
-        #pragma comment(lib, "CascLibRAS.lib") // Release Ansi CRT-LIB version
+        #pragma comment(lib, "casc.lib") // Release Ansi CRT-LIB version
       #endif
     #else
       #ifdef _DLL
-        #pragma comment(lib, "CascLibRUD.lib") // Release Unicode CRT-DLL version
+        #pragma comment(lib, "casc.lib") // Release Unicode CRT-DLL version
       #else
-        #pragma comment(lib, "CascLibRUS.lib") // Release Unicode CRT-LIB version
+        #pragma comment(lib, "casc.lib") // Release Unicode CRT-LIB version
       #endif
     #endif
   #endif

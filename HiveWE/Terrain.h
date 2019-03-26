@@ -128,6 +128,10 @@ public:
 	int get_tile_variation(int ground_texture, int variation) const;
 	glm::u16vec4 get_texture_variations(int x, int y) const;
 
+	bool is_corner_ramp_mesh(int x, int y);
+	bool is_corner_ramp_entrance(int x, int y);
+	bool is_corner_cliff(int x, int y);
+
 	Texture minimap_image();
 
 	enum class undo_type {

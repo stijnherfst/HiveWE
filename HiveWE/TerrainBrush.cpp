@@ -19,6 +19,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
 			if (std::abs(difference) > 2 && !contains(begx + (k - i), begy + (l - k))) {
 				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
+				map->terrain.corners[k][l].ramp = false;
 
 				area.setX(std::min(area.x(), k - 1));
 				area.setY(std::min(area.y(), l - 1));
@@ -41,7 +42,7 @@ void TerrainBrush::apply_begin() {
 	const QRect area = QRect(x, y, size / 4.f, size / 4.f).intersected({ 0, 0, width, height });
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
-
+	
 	// Setup for undo/redo
 	map->terrain_undo.new_undo_group();
 	map->terrain.new_undo_group();
@@ -203,14 +204,36 @@ void TerrainBrush::apply() {
 	QRect updated_area = QRect(x - 1, y - 1, size / 4.f + 1, size / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
-		if (cliff_operation_type == cliff_operation::ramp) {
-			const int center_x = area.x() + area.width() * 0.5f;
-			const int center_y = area.y() + area.height() * 0.5f;
+		
+		//if (cliff_operation_type == cliff_operation::ramp) {
+		//	const int center_x = area.x() + area.width() * 0.5f;
+		//	const int center_y = area.y() + area.height() * 0.5f;
 
-			if (corners[center_x][center_y].cliff) {
-			//	corners[i][j].ramp = true;
-			}
-		} else {
+		//	glm::vec2 p = glm::vec2(input_handler.mouse_world) - get_position();
+
+		//	int cliff_count = corners[center_x][center_y].cliff + corners[center_x - 1][center_y].cliff + corners[center_x][center_y - 1].cliff + corners[center_x - 1][center_y - 1].cliff;
+
+		//	// Cliff count 1 and 4 are nothing
+
+		//	if (cliff_count == 2 ) {
+		//		corners[center_x][center_y].ramp = true;
+
+		//		// possibly place a new ramp
+		//	} else if (cliff_count == 3) {
+		//		// Target for whole rampification
+		//	}
+
+		//	std::cout << cliff_count << "\n";
+
+		//	if (corners[center_x - (p.x < 1)][center_y - (p.y < 1)].cliff) {
+		//	//	corners[center_x][center_y].ramp = true;
+		//	//	std::cout << "Ramp set\n";
+		//	}
+
+		//	//if (corners[center_x][center_y].cliff) {
+		//	//	corners[i][j].ramp = true;
+		//	//}
+		//} else {
 			for (int i = area.x(); i < area.x() + area.width(); i++) {
 				for (int j = area.y(); j < area.y() + area.height(); j++) {
 					const int xx = i - area.x() - std::min(position.x + 1, 0);
@@ -218,7 +241,7 @@ void TerrainBrush::apply() {
 					if (!contains(xx, yy)) {
 						continue;
 					}
-
+					corners[i][j].ramp = false;
 					corners[i][j].layer_height = layer_height;
 
 					switch (cliff_operation_type) {
@@ -246,7 +269,7 @@ void TerrainBrush::apply() {
 					check_nearby(x, y, i, j, updated_area);
 				}
 			}
-		}
+		//}
 
 		// Bounds check
 		updated_area = updated_area.intersected({ 0, 0, width - 1, height - 1 });
@@ -293,12 +316,12 @@ void TerrainBrush::apply() {
 					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
 
 					uint8_t mask = 0;
-					if ((bottom_left.cliff || bottom_left.romp) && apply_cliff_pathing) {
+					if ((bottom_left.cliff || bottom_left.romp) && !map->terrain.is_corner_ramp_entrance(i, j) && apply_cliff_pathing) {
 						mask = 0b00001010;
 					} 
 					
-					if (!bottom_left.cliff) {
-						Corner& corner = map->terrain.corners[i + k / 3][j + l / 3];
+					if (!bottom_left.cliff || (bottom_left.ramp && !bottom_left.romp)) {
+						Corner& corner = map->terrain.corners[i + k / 2][j + l / 2];
 						if (apply_tile_pathing) {
 							const int id = corner.ground_texture;
 							mask |= map->terrain.pathing_options[map->terrain.tileset_ids[id]].mask();

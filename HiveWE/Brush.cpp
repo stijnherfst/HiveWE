@@ -83,7 +83,9 @@ bool Brush::contains(const int x, const int y) const {
 			return distance <= half_size * half_size;
 		}
 		case Shape::diamond:
-			return std::abs(x - size) + std::abs(y - size) <= size;
+			int half_size = (size / 2) / size_granularity;
+
+			return std::abs(x - half_size) + std::abs(y - half_size) <= half_size;
 	}
 	return true;
 }

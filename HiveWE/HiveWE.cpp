@@ -62,6 +62,16 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(new QShortcut(Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_F3, this), &QShortcut::activated, ui.ribbon->debug_visible, &QPushButton::click);
 
+	// Reload theme
+	connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, [&]() {
+		QSettings settings;
+		QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
+		file.open(QFile::ReadOnly);
+		QString StyleSheet = QLatin1String(file.readAll());
+
+		qApp->setStyleSheet(StyleSheet);
+	});
+
 	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera->reset(); });
 	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
 	setAutoFillBackground(true);
@@ -113,15 +123,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 	setAutoFillBackground(true);
 
-	// Temporary Temporary
-
-	//QTimer::singleShot(5, [this]() {
-	//	auto editor = window_handler.create_or_raise<TriggerEditor>();
-	//	connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
-	//});
-
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
-	connect(ui.ribbon->trigger_viewer, &QRibbonButton::clicked, [this]() { 
+	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() { 
 		auto editor = window_handler.create_or_raise<TriggerEditor>();
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
@@ -130,20 +133,22 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->move(10, 10);
 	minimap->show();
 
+	// Temporary Temporary
+	QTimer::singleShot(5, [this]() {
+		auto editor = window_handler.create_or_raise<TriggerEditor>();
+		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
+	});
+
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	map->load("Data/Test.w3x");
 
-	QTimer::singleShot(50, [this]() {
-		auto palette = new DoodadPalette(this);
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
-		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-		connect(palette, &Palette::finished, [&]() {
-			remove_custom_tab();
-			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-		});
-	});
+	//QTimer::singleShot(50, [this]() {
+	//	auto palette = new TerrainPalette(this);
+	//	palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
+	//	connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+	//	connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	//});
 }
 
 void HiveWE::load() {

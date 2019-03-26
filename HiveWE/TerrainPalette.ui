@@ -601,7 +601,7 @@
      <item>
       <widget class="QPushButton" name="cliffRamp">
        <property name="enabled">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -1020,7 +1020,7 @@
            <string>Sets the brush size to 3x3.</string>
           </property>
           <property name="text">
-           <string>2</string>
+           <string>3</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1042,7 +1042,7 @@
            <string>Sets the brush size to 5x5.</string>
           </property>
           <property name="text">
-           <string>3</string>
+           <string>5</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1064,7 +1064,7 @@
            <string>Sets the brush size to 9x9.</string>
           </property>
           <property name="text">
-           <string>5</string>
+           <string>7</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1086,7 +1086,7 @@
            <string>Sets the brush size to 15x15.</string>
           </property>
           <property name="text">
-           <string>8</string>
+           <string>9</string>
           </property>
           <property name="checkable">
            <bool>true</bool>
@@ -1159,7 +1159,7 @@
            <number>128</number>
           </property>
           <property name="singleStep">
-           <number>1</number>
+           <number>2</number>
           </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -1312,9 +1312,9 @@
  <resources/>
  <connections/>
  <buttongroups>
-  <buttongroup name="brushShapeButtonGroup"/>
-  <buttongroup name="cliffButtonGroup"/>
   <buttongroup name="brushSizeButtonGroup"/>
+  <buttongroup name="brushShapeButtonGroup"/>
   <buttongroup name="deformationButtonGroup"/>
+  <buttongroup name="cliffButtonGroup"/>
  </buttongroups>
 </ui>

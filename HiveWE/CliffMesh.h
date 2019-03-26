@@ -10,7 +10,7 @@ public:
 	size_t indices;
 
 	static constexpr const char* name = "CliffMesh";
-	fs::path pathi;
+
 	std::vector<glm::vec4> render_jobs;
 
 	explicit CliffMesh(const fs::path& path);
