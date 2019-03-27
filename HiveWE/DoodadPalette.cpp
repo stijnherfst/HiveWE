@@ -189,8 +189,16 @@ void DoodadPalette::update_list() {
 			continue;
 		}
 
+
+
 		std::string text = slk.data("Name", i);
-		if (!is_doodad) {
+
+		const std::string trigstr = map->trigger_strings.string(text);
+		if (!trigstr.empty()) {
+			text = trigstr;
+		}
+
+		if (!is_doodad) { 
 			text += " " + destructibles_slk.data("EditorSuffix", i);
 		}
 

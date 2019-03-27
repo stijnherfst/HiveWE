@@ -504,9 +504,9 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
-bool Terrain::is_corner_ramp_mesh(int x, int y) {
-
-}
+//bool Terrain::is_corner_ramp_mesh(int x, int y) {
+//	return false;
+//}
 
 bool Terrain::is_corner_ramp_entrance(int x, int y) {
 	if (x == width || y == height) {
@@ -521,9 +521,9 @@ bool Terrain::is_corner_ramp_entrance(int x, int y) {
 	return bottom_left.ramp && top_left.ramp&& bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height);
 }
 
-bool Terrain::is_corner_cliff(int x, int y) {
-
-}
+//bool Terrain::is_corner_cliff(int x, int y) {
+//	return
+//}
 
 /// Constructs a minimap image with tile, cliff, and water colors. Other objects such as doodads will not be added here
 Texture Terrain::minimap_image() {

@@ -45,7 +45,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 			i.item_sets.resize(reader.read<uint32_t>());
 			for (auto&& j : i.item_sets) {
 				j.items.resize(reader.read<uint32_t>());
-				for (auto&& [id, chance] : j.items) {
+				for (auto& [id, chance] : j.items) {
 					id = reader.read_string(4);
 					chance = reader.read<uint32_t>();
 				}
@@ -90,7 +90,7 @@ void Doodads::save() const {
 		writer.write<uint32_t>(i.item_sets.size());
 		for (auto&& j : i.item_sets) {
 			writer.write<uint32_t>(j.items.size());
-			for (auto&& [id, chance] : j.items) {
+			for (const auto& [id, chance] : j.items) {
 				writer.write_string(id);
 				writer.write<uint32_t>(chance);
 			}
@@ -153,8 +153,8 @@ void Doodads::create() {
 		i.mesh = get_mesh(i.id, i.variation);
 
 		// Get pathing map
-		bool is_doodad = doodads_slk.row_header_exists(i.id);
-		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		const bool is_doodad = doodads_slk.row_header_exists(i.id);
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 		std::string pathing_texture_path = slk.data("pathTex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
@@ -189,8 +189,8 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
 
-	bool is_doodad = doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	const bool is_doodad = doodads_slk.row_header_exists(id);
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 	std::string pathing_texture_path = slk.data("pathTex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		doodad.pathing = resource_manager.load<Texture>(pathing_texture_path);
@@ -224,7 +224,7 @@ void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
 	}), doodads.end());
 }
 
-void update_doodad_pathing(const QRectF& area) {
+void Doodads::update_doodad_pathing(const QRectF& area) {
 	QRectF new_area = area.adjusted(-6, -6, 6, 6);
 	map->pathing_map.dynamic_clear_area(new_area.toRect());
 
@@ -310,7 +310,7 @@ void DoodadAddAction::undo() {
 		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
 	}
 
-	update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadAddAction::redo() {
@@ -326,7 +326,7 @@ void DoodadAddAction::redo() {
 	}
 
 	// Update pathing
-	update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadDeleteAction::undo() {
@@ -342,7 +342,7 @@ void DoodadDeleteAction::undo() {
 	}
 
 	// Update pathing
-	update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 void DoodadDeleteAction::redo() {
 	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
@@ -357,7 +357,7 @@ void DoodadDeleteAction::redo() {
 	}
 
 	// Update pathing
-	update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadStateAction::undo() {

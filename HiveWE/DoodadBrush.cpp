@@ -23,8 +23,6 @@ int DoodadBrush::get_random_variation() {
 void DoodadBrush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
-	//int offset_x = pathing_texture->width
-
 	if (pathing_texture) {
 		for (int i = 0; i < pathing_texture->width; i++) {
 			for (int j = 0; j < pathing_texture->height; j++) {
@@ -97,15 +95,15 @@ void DoodadBrush::mouse_release_event(QMouseEvent* event) {
 void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 	Brush::mouse_move_event(event);
 
-	if (mode == Mode::selection && selection_started) {
-		if (event->buttons() == Qt::LeftButton) {
+	if (event->buttons() == Qt::LeftButton) {
+		if (mode == Mode::selection) {
 			if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
 					i->angle = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
 					i->update();
 				}
-			} else {
-				glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
+			} else if (selection_started) {
+				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 			}
 		}
@@ -268,8 +266,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	if (random_variation) {
 		set_random_variation();
 	}
-	bool is_doodad = doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	const bool is_doodad = doodads_slk.row_header_exists(id);
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 
 	min_scale = slk.data<float>("minScale", id);

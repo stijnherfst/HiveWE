@@ -22,6 +22,7 @@ struct Doodad {
 
 	int editor_id;
 
+	// Auxilirary data
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
 	std::shared_ptr<Texture> pathing;

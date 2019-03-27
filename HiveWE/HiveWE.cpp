@@ -134,10 +134,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->show();
 
 	// Temporary Temporary
-	QTimer::singleShot(5, [this]() {
-		auto editor = window_handler.create_or_raise<TriggerEditor>();
-		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
-	});
+	//QTimer::singleShot(5, [this]() {
+	//	auto editor = window_handler.create_or_raise<TriggerEditor>();
+	//	connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
+	//});
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
@@ -195,11 +195,13 @@ void HiveWE::save_as() {
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
-	//int choice = QMessageBox::question(this, "Do you want to quit?", "Are you sure you want to quit?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+	int choice = QMessageBox::question(this, "Do you want to quit?", "Are you sure you want to quit?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
-	//if (choice == QMessageBox::Yes) {
-	//}
-	event->accept();
+	if (choice == QMessageBox::Yes) {
+		event->accept();
+	} else {
+		event->ignore();
+	}
 }
 
 void HiveWE::switch_warcraft() {

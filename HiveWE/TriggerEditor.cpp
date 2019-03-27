@@ -68,8 +68,6 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		layout->addWidget(edit);
 		edit->setText(QString::fromStdString(trigger.custom_text));
 		connect(this, &TriggerEditor::save_changes, [=]() {
-			std::cout << "save test\n";
-			
 			files.at(item).get().custom_text = edit->text().toStdString();
 		});
 	} else {
