@@ -4,6 +4,7 @@ SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 	QSettings settings;
 	ui.testArgs->setText(settings.value("testArgs").toString());
+	ui.theme->setCurrentIndex((settings.value("theme").toString())=="Dark");
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();
@@ -21,4 +22,5 @@ SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 void SettingsEditor::save() const {
 	QSettings settings;
 	settings.setValue("testArgs", ui.testArgs->text());
+	settings.setValue("theme", ui.theme->currentText());
 }
