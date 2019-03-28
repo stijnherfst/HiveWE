@@ -504,6 +504,28 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
+float Terrain::interpolated_height(float x, float y) const {
+	x = std::clamp(x, 0.f, width - 1.01f);
+	y = std::clamp(y, 0.f, height - 1.01f);
+
+	// Biliniear interpolation
+	corners[std::ceil(x)][y].final_ground_height();
+	corners[x][std::ceil(y)].final_ground_height();
+	corners[std::ceil(x)][std::ceil(y)].final_ground_height();
+
+	float xx = glm::mix(corners[x][y].final_ground_height(), corners[std::ceil(x)][y].final_ground_height(), x - floor(x));
+	float yy = glm::mix(corners[x][std::ceil(y)].final_ground_height(), corners[std::ceil(x)][std::ceil(y)].final_ground_height(), x - floor(x));
+	return glm::mix(xx, yy, y - floor(y));
+}
+
+
+//vec4 biLerp(vec4 a, vec4 b, vec4 c, vec4 d, float s, float t)
+//{
+//	vec4 x = mix(a, b, t);
+//	vec4 y = mix(c, d, t);
+//	return mix(x, y, s);
+//}
+
 //bool Terrain::is_corner_ramp_mesh(int x, int y) {
 //	return false;
 //}

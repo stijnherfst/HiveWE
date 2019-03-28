@@ -3,7 +3,11 @@
 struct Camera {
 	virtual ~Camera() = default;
 
-	glm::vec3 position = { 0, 0, 6 };
+	glm::vec3 position = { 0, 0, 0 };
+
+
+	float distance = 20;
+
 	glm::vec3 direction = { 0, 1, 0 };
 	glm::vec3 X = { 1, 0, 0 };
 	glm::vec3 Y = { 0, 1, 0 };
@@ -18,7 +22,7 @@ struct Camera {
 	double tan_height = 2.0 * glm::tan(fov_rad * 0.5);
 
 	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance, draw_distance_close);
-	glm::mat4 view = glm::lookAt(position, position + direction, glm::vec3(0, 0, 1));
+	glm::mat4 view = glm::lookAt(position - direction * distance, position, up);
 	glm::mat4 projection_view;
 
 	double horizontal_angle = 0.0;

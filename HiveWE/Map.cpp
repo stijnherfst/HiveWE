@@ -184,7 +184,6 @@ void Map::load(const fs::path& path) {
 		sounds.load(war3map_w3s);
 	}
 
-	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 10);
 	camera->reset();
 
 	loaded = true;

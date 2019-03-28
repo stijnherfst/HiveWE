@@ -207,7 +207,7 @@ void Units::load_item_modifications(BinaryReader& reader) {
 
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
-		i->position.z = map->terrain.corners[i->position.x][i->position.y].final_ground_height();
+		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
 		i->update();
 	}
 }
