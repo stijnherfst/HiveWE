@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-Map* map = new Map();
+Map* map = nullptr;// = new Map();
 ini::INI world_edit_strings;
 ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
@@ -140,8 +140,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	//});
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+	map = new Map();
 	map->load("Data/Test.w3x");
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	//QTimer::singleShot(50, [this]() {
 	//	auto palette = new TerrainPalette(this);

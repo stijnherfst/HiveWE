@@ -6,7 +6,7 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		|| id == 131169 // ?
 		|| id == 131204 // ?
 		|| id == 8 // ?
-		|| 131218) // Unexplainable performance warnings
+		|| id == 131218) // Unexplainable performance warnings
 	{
 		return;
 	}
@@ -87,6 +87,7 @@ void GLWidget::resizeGL(const int w, const int h) {
 
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	camera->aspect_ratio = double(w) / h;
+
 	camera->update(delta);
 }
 
@@ -94,18 +95,28 @@ void GLWidget::update_scene() {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	camera->update(delta);
+	if (map) {
+		camera->update(delta);
 
-	map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);
-	if (map->terrain.current_texture >= map->terrain.water_textures_nr) {
-		map->terrain.current_texture = 0;
+		map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);
+		if (map->terrain.current_texture >= map->terrain.water_textures_nr) {
+			map->terrain.current_texture = 0;
+		}
 	}
 
 	update();
-	QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
+	if (map) {
+		QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
+	} else {
+		QTimer::singleShot(std::max(0.0, 16.0), this, &GLWidget::update_scene);
+	}
 }
 
 void GLWidget::paintGL() {
+	if (!map) {
+		return;
+	}
+
 	gl->glClearColor(0, 0, 0, 1);
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -141,7 +152,12 @@ void GLWidget::paintGL() {
 }
 
 void GLWidget::keyPressEvent(QKeyEvent* event) {
+	if (!map) {
+		return;
+	}
+
 	input_handler.keys_pressed.emplace(event->key());
+
 	switch (event->key()) {
 		case Qt::Key_Escape:
 			exit(0);
@@ -154,10 +170,18 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent* event) {
+	if (!map) {
+		return;
+	}
+
 	input_handler.keys_pressed.erase(event->key());
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event) {
+	if (!map) {
+		return;
+	}
+
 	input_handler.mouse_move_event(event);
 	camera->mouse_move_event(event);
 
@@ -167,6 +191,10 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void GLWidget::mousePressEvent(QMouseEvent* event) {
+	if (!map) {
+		return;
+	}
+
 	camera->mouse_press_event(event);
 	if (map->brush) {
 		map->brush->mouse_press_event(event);
@@ -174,6 +202,10 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event) {
+	if (!map) {
+		return;
+
+	}
 	camera->mouse_release_event(event);
 	if (map->brush) {
 		map->brush->mouse_release_event(event);
@@ -181,5 +213,9 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void GLWidget::wheelEvent(QWheelEvent* event) {
+	if (!map) {
+		return;
+	}
+
 	camera->mouse_scroll_event(event);
 }
