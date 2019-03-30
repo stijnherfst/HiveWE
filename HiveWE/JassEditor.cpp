@@ -223,6 +223,13 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	QStringList functions;
 	QStringList constants;
 
+	// Primitive types
+	types.append("code");
+	types.append("integer");
+	types.append("real");
+	types.append("string");
+	types.append("handle");
+
 	auto apis = new QsciAPIs(lexer);
 	lexer->setAPIs(apis);
 
