@@ -218,6 +218,10 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
 	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
 
+	QStringList types;
+	QStringList natives;
+	QStringList functions;
+	QStringList constants;
 
 	auto apis = new QsciAPIs(lexer);
 	lexer->setAPIs(apis);
@@ -235,15 +239,19 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 		if (linee.startsWith("type")) {
 			QString type = linee.mid(5, linee.indexOf(' ', 5) + 1 - 5).trimmed();
 			apis->add(type);
+			types.append(type);
 		}
 		if (linee.startsWith("native")) {
 			QString native = linee.mid(7, linee.indexOf(' ', 7) + 1 - 7).trimmed();
 			apis->add(native);
+			natives.append(native);
 		}
 
 		if (linee.startsWith("function")) {
 			QString function = linee.mid(9, linee.indexOf(' ', 9) + 1 - 9).trimmed();
 			apis->add(function);
+			functions.append(function);
+			
 			auto splito = linee.splitRef(',');
 
 		}
@@ -253,9 +261,15 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 
 			QString constant = linee.mid(index, linee.indexOf(' ', index) + 1 - index).trimmed();
 			apis->add(constant);
+			constants.append(constant);
 		}
 	}
 	apis->prepare();
+
+	lexer->setTypes(types);
+	lexer->setNatives(natives);
+	lexer->setFunctions(functions);
+	lexer->setConstants(constants);
 
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
