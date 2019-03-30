@@ -53,18 +53,28 @@ const char* Styling::language() const {
 
 QString Styling::description(int style) const {
 	switch (style) {
-		case 0:
-			return "Style0";
-		case 1:
-			return "Style1";		
-		case 2:
-			return "Style2";
-		case 3:
-			return "Style3";
-		case 4:
-			return "Style4";
+	case JASS_DEFAULT:
+		return "Default";
+	case JASS_COMMENT:
+		return "Comment";
+	case JASS_PREPROCESSOR_COMMENT:
+		return "Preprocessor comment";
+	case JASS_STRING:
+		return "String literal";
+	case JASS_NUMBER:
+		return "Numbers";
+	case JASS_OPERATOR:
+		return "Operators";
+	case JASS_NATIVE:
+		return "Natives";
+	case JASS_FUNCTION:
+		return "Functions";
+	case JASS_CONSTANT:
+		return "Constant globals";
+	case JASS_TYPE:
+		return "Types and structs";
 	}
-	return "Style0";
+	return "Unknown";
 }
 
 void Styling::styleText(int start, int end) {
