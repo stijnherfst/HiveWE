@@ -28,11 +28,11 @@ void Styling::setTypes(QStringList list) {
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
 
-	setColor(QColor(181, 206, 168), 1); // numbers
-	setColor(QColor(56, 156, 214), 2); // keywords
-	setColor(QColor(214, 157, 133), 3); // string
-	setColor(QColor(87, 166, 74), 4); // comment
-	
+	setColor(QColor(181, 206, 168), JASS_NUMBER); // numbers
+	setColor(QColor(56, 156, 214), JASS_KEYWORD); // keywords
+	setColor(QColor(214, 157, 133), JASS_STRING); // string
+	setColor(QColor(87, 166, 74), JASS_COMMENT); // comment
+
 	std::vector<std::string> operators = { "+", "-", "/", "*", ",", "=", ":", "(", ")", ">=", "<=", "!=", "[", "]", "<", ">", "&" };
 	blocks = QStringList({ "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage", 
 		"function", "returns", "public", "private", "protected", "import", "initlater", "native", "nativetype", "extends", "interface", 
