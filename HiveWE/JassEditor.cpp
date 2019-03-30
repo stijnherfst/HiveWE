@@ -166,6 +166,10 @@ void Styling::styleText(int start, int end) {
 			{
 				style = JASS_CONSTANT;
 			}
+			else if (types_.contains(token.value()))
+			{
+				style = JASS_TYPE;
+			}
 			break;
 		}
 
