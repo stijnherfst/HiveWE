@@ -387,6 +387,9 @@
     <ClCompile Include="GeneratedFiles\Debug\moc_SettingsEditor.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="JassTokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -544,6 +547,9 @@
     </ClInclude>
     <ClInclude Include="GeneratedFiles\ui_SettingsEditor.h">
       <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JassTokenizer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
