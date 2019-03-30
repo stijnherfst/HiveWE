@@ -30,10 +30,19 @@ void Styling::setTypes(QStringList list) {
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
 
+	// TODO@Daniel:
+	// Set from external configuration
+	// I suggest YAML since it is very intuitive to use, though that may be just a personal preference
 	setColor(QColor(181, 206, 168), JASS_NUMBER); // numbers
 	setColor(QColor(56, 156, 214), JASS_KEYWORD); // keywords
 	setColor(QColor(214, 157, 133), JASS_STRING); // string
+	setColor(QColor(214, 157, 133), JASS_RAWCODE); // rawcode
 	setColor(QColor(87, 166, 74), JASS_COMMENT); // comment
+	setColor(QColor(155, 155, 155), JASS_PREPROCESSOR_COMMENT); // preprocessor comment
+	setColor(QColor(189, 99, 197), JASS_NATIVE); // native
+	setColor(QColor(200, 100, 100), JASS_FUNCTION); // function
+	setColor(QColor(184, 215, 163), JASS_CONSTANT); // constant
+	setColor(QColor(78, 201, 176), JASS_TYPE); // type
 
 	std::vector<std::string> operators = { "+", "-", "/", "*", ",", "=", ":", "(", ")", ">=", "<=", "!=", "[", "]", "<", ">", "&" };
 
