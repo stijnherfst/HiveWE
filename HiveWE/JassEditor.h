@@ -1,9 +1,17 @@
 #pragma once
 
 class Styling : public QsciLexerCustom {
+private:
 	Q_OBJECT
 
-	QStringList blocks;
+	// TODO@Daniel:
+	// Rearrange
+	QStringList keywords_;
+	QStringList natives_;
+	QStringList functions_;
+	QStringList constants_;
+	QStringList operators_;
+	QStringList types_;
 
 	enum JassStyle {
 		// NOTE@Daniel:
@@ -30,6 +38,13 @@ class Styling : public QsciLexerCustom {
 	};
 
 public:
+	void setKeywords(QStringList list);
+	void setOperators(QStringList list);
+	void setNatives(QStringList list);
+	void setFunctions(QStringList list);
+	void setConstants(QStringList list);
+	void setTypes(QStringList list);
+
 	Styling(QWidget* parent);
 	const char* language() const override;
 	QString description(int style) const override;

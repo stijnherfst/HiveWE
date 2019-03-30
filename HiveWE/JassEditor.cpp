@@ -1,6 +1,29 @@
 #include "stdafx.h"
 #include <Qsci/qsciapis.h>
 
+void Styling::setKeywords(QStringList list) {
+	keywords_ = std::move(list);
+}
+
+void Styling::setOperators(QStringList list) {
+	operators_ = std::move(list);
+}
+
+void Styling::setNatives(QStringList list) {
+	natives_ = std::move(list);
+}
+
+void Styling::setFunctions(QStringList list) {
+	functions_ = std::move(list);
+}
+
+void Styling::setConstants(QStringList list) {
+	constants_ = std::move(list);
+}
+
+void Styling::setTypes(QStringList list) {
+	types_ = std::move(list);
+}
 
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
