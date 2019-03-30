@@ -150,11 +150,7 @@ void Styling::styleText(int start, int end) {
 			break;
 		case TOKEN_IDENTIFIER:
 			JassToken const &token = tokenizer[idx];
-			if (keywords_.contains(token.value()))
-			{
-				style = JASS_KEYWORD;
-			}
-			else if (natives_.contains(token.value()))
+			if (natives_.contains(token.value()))
 			{
 				style = JASS_NATIVE;
 			}
@@ -169,6 +165,10 @@ void Styling::styleText(int start, int end) {
 			else if (types_.contains(token.value()))
 			{
 				style = JASS_TYPE;
+			}
+			else if (keywords_.contains(token.value()))
+			{
+				style = JASS_KEYWORD;
 			}
 			break;
 		}
