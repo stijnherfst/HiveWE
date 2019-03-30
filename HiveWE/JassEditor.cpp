@@ -233,21 +233,26 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 		QString linee = QString::fromStdString(line).simplified();
 
 		if (linee.startsWith("type")) {
-			apis->add(linee.mid(5, linee.indexOf(' ', 5) + 1 - 5));
+			QString type = linee.mid(5, linee.indexOf(' ', 5) + 1 - 5).trimmed();
+			apis->add(type);
 		}
 		if (linee.startsWith("native")) {
-			apis->add(linee.mid(7, linee.indexOf(' ', 7) + 1 - 7));
+			QString native = linee.mid(7, linee.indexOf(' ', 7) + 1 - 7).trimmed();
+			apis->add(native);
 		}
 
 		if (linee.startsWith("function")) {
-			apis->add(linee.mid(9, linee.indexOf(' ', 9) + 1 - 9));
+			QString function = linee.mid(9, linee.indexOf(' ', 9) + 1 - 9).trimmed();
+			apis->add(function);
 			auto splito = linee.splitRef(',');
 
 		}
 
 		if (linee.startsWith("constant")) {
 			int index = linee.indexOf(' ', 9) + 1;
-			apis->add(linee.mid(index, linee.indexOf(' ', index) + 1 - index));
+
+			QString constant = linee.mid(index, linee.indexOf(' ', index) + 1 - index).trimmed();
+			apis->add(constant);
 		}
 	}
 	apis->prepare();
