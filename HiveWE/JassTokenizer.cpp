@@ -46,6 +46,8 @@ JassTokenizer::JassTokenizer(QString const &str)
 
 		JassTokenType type = TOKEN_OTHER;
 
+		// TODO@Daniel:
+		// Properly handle whitespace
 		switch (str[start].toLatin1())
 		{
 		case '/':
