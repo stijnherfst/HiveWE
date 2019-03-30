@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include <Qsci/qsciapis.h>
 
+#include "JassTokenizer.h"
+
 void Styling::setKeywords(QStringList list) {
 	keywords_ = std::move(list);
 }
@@ -82,46 +84,87 @@ void Styling::styleText(int start, int end) {
 
 	QString text = editor()->text().mid(start, end - start);
 
-	QRegExp expression(R"((\"\S*\"|\/\/[^\r\n]+|[*]\/|\/[*]|\w+|\W|[*]\/|\/[*]))");
-	QStringList tokens;
-	int pos = 0;
-	while ((pos = expression.indexIn(text, pos)) != -1) {
-		tokens << expression.cap(1);
-		pos += expression.matchedLength();
-	}
+	JassTokenizer tokenizer(text);
 
-	bool multiline = false;
-	if (start > 0) {
-		int previous_style_nr = editor()->SendScintilla(QsciScintilla::SCI_GETSTYLEAT, start - 1);
-		if (previous_style_nr == 4) {
-			multiline = true;
-		}
-	}
+	int idx = 0;
+	while (tokenizer[idx].type() != TOKEN_EOF)
+	{
+		int start = tokenizer[idx].start();
+		int next_idx = idx + 1;
 
-	for (auto&& i : tokens) {
-		if (multiline) {
-			setStyling(i.length(), 4);
+		JassStyle style = JASS_DEFAULT;
 
-			if (i == "*/") {
-				multiline = false;
+		// TODO@Daniel:
+		// The token type checks should probably be moved to a member function in Token
+
+		switch (tokenizer[idx].type())
+		{
+		case TOKEN_COMMENT_START:
+			style = JASS_COMMENT;
+			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF)
+			{
+				next_idx++;
 			}
-			continue;
+			break;
+		case TOKEN_PREPROCESSOR_COMMENT_START:
+			style = JASS_PREPROCESSOR_COMMENT;
+			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF)
+			{
+				next_idx++;
+			}
+			break;
+		case TOKEN_COMMENT_BLOCK_START:
+			style = JASS_COMMENT;
+			while (tokenizer[next_idx].type() != TOKEN_COMMENT_BLOCK_END && tokenizer[next_idx].type() != TOKEN_EOF)
+			{
+				next_idx++;
+			}
+			break;
+		case TOKEN_DOUBLE_QUOTE:
+			style = JASS_STRING;
+			while (tokenizer[next_idx].type() != TOKEN_DOUBLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF)
+			{
+				next_idx++;
+			}
+			next_idx++;
+			break;
+		case TOKEN_SINGLE_QUOTE:
+			style = JASS_RAWCODE;
+			while (tokenizer[next_idx].type() != TOKEN_SINGLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF)
+			{
+				next_idx++;
+			}
+			next_idx++;
+			break;
+		case TOKEN_NUMBER:
+			style = JASS_NUMBER;
+			break;
+		case TOKEN_IDENTIFIER:
+			JassToken const &token = tokenizer[idx];
+			if (keywords_.contains(token.value()))
+			{
+				style = JASS_KEYWORD;
+			}
+			else if (natives_.contains(token.value()))
+			{
+				style = JASS_NATIVE;
+			}
+			else if (functions_.contains(token.value()))
+			{
+				style = JASS_FUNCTION;
+			}
+			else if (constants_.contains(token.value()))
+			{
+				style = JASS_CONSTANT;
+			}
+			break;
 		}
 
-		if (i.startsWith("//")) { // Comments
-			setStyling(i.length(), 4); 
-		} else if (i == "/*") { // Multiline Comments
-			multiline = true;
-			setStyling(i.length(), 4); 
-		} else if (blocks.contains(i)) { // Keywords
-			setStyling(i.length(), 2);
-		} else if (i.contains(QRegExp(R"(^[0-9]+$)"))) { // Numbers
-			setStyling(i.length(), 1);
-		} else if (i.contains(QRegExp(R"(^\".*\"$)"))) { // Strings
-			setStyling(i.length(), 3);
-		} else {
-			setStyling(i.length(), 0);
-		}
+		int length = tokenizer[next_idx].start() - start;
+
+		setStyling(length, style);
+
+		idx = next_idx;
 	}
 }
 
@@ -175,7 +218,7 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	std::string line;
 	while (std::getline(file, line)) {
 		QString linee = QString::fromStdString(line).simplified();
-		
+
 		if (linee.startsWith("type")) {
 			apis->add(linee.mid(5, linee.indexOf(' ', 5) + 1 - 5));
 		}
