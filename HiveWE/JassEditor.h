@@ -5,6 +5,30 @@ class Styling : public QsciLexerCustom {
 
 	QStringList blocks;
 
+	enum JassStyle {
+		// NOTE@Daniel:
+		// Style IDs may change
+		JASS_DEFAULT = QsciScintilla::STYLE_DEFAULT,
+		JASS_COMMENT = QsciScintilla::STYLE_LASTPREDEFINED,
+		JASS_PREPROCESSOR_COMMENT,
+		JASS_STRING,
+		JASS_RAWCODE,
+		JASS_KEYWORD,
+		JASS_NUMBER,
+
+		// NOTE@Daniel:
+		// Having a separate style is really useful, in my opinion
+		// However, I don't know if there should be a distinction between different operators
+		JASS_OPERATOR,
+
+		// TODO@Daniel:
+		// Make distinction between user declared natives/functions and those in common.j/common.ai/blizzard.j
+		JASS_NATIVE,
+		JASS_FUNCTION,
+		JASS_CONSTANT,
+		JASS_TYPE
+	};
+
 public:
 	Styling(QWidget* parent);
 	const char* language() const override;
