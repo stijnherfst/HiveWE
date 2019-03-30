@@ -107,10 +107,10 @@ JassTokenizer::JassTokenizer(QString const &str)
 			}
 			break;
 		default:
-			if (str[start].isLetter())
+			if (str[start].isLetter() || str[start] == '_')
 			{
 				type = TOKEN_IDENTIFIER;
-				while (stop < str.size() && str[stop].isLetter())
+				while (stop < str.size() && (str[stop].isLetter() || str[stop].isDigit() || str[stop] == '_'))
 				{
 					stop++;
 				}
