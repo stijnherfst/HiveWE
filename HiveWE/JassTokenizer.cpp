@@ -36,7 +36,10 @@ int JassToken::length() const {
 	return stop() - start();
 }
 
-JassTokenizer::JassTokenizer(QString const &str) {
+JassTokenizer::JassTokenizer(QString str, int start) :
+	text_(std::move(str)),
+	idx_(start) {
+}
 
 int JassTokenizer::text_size() const
 {
@@ -155,93 +158,90 @@ JassToken JassTokenizer::eat_rawcode()
 	return token;
 }
 
+JassToken JassTokenizer::next() {
+	if (idx_ >= text_size())
+	{
+		return JassToken("", text_size(), text_size(), TOKEN_EOF);
+	}
+
+	// Skipping leading whitespace
+	while (text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n')
+	{
+		idx_++;
+	}
+
+	int stop = idx_ + 1;
 
 	JassTokenType type = TOKEN_OTHER;
 
-		// TODO@Daniel:
-		// Properly handle whitespace
-		switch (str[start].toLatin1()) {
+	QList<JassToken> nested_tokens;
+
+	switch (text_[idx_].toLatin1()) {
 	case '/':
-			if (start + 1 >= str.size()) {
+		if (idx_ + 1 >= text_.size()) {
 			break;
 		}
 
-			switch (str[start + 1].toLatin1()) {
+		switch (text_[idx_ + 1].toLatin1()) {
 		case '/':
-				if (start + 2 < str.size() && str[start + 2] == '!') {
-					type = TOKEN_PREPROCESSOR_COMMENT_START;
-					stop = start + 3;
+			// Technically, changing stop here isn't needed but keeps it somewhat consistent
+			if (idx_ + 2 < text_.size() && text_[idx_ + 2] == '!') {
+				type = TOKEN_PREPROCESSOR_COMMENT;
+				stop = idx_ + 3;
 			}
 			else {
-					type = TOKEN_COMMENT_START;
-					stop = start + 2;
+				type = TOKEN_COMMENT_LINE;
+				stop = idx_ + 2;
 			}
-				break;
-			case '*':
-				type = TOKEN_COMMENT_BLOCK_START;
-				stop = start + 2;
-				break;
+
+			while (stop < text_.size() && text_[stop] != '\r' && text_[stop] != '\n')
+			{
+				stop++;
 			}
 			break;
 		case '*':
-			if (start + 1 < str.size() && str[start + 1] == '/') {
-				type = TOKEN_COMMENT_BLOCK_END;
-				stop = start + 2;
+			return eat_comment_block();
 		}
 		break;
 	case '"':
-			type = TOKEN_DOUBLE_QUOTE;
-			stop = start + 1;
-			break;
+		return eat_string();
 	case '\'':
-			type = TOKEN_SINGLE_QUOTE;
-			stop = start + 1;
-			break;
+		return eat_rawcode();
 	case '\n':
 		type = TOKEN_NEWLINE;
-			stop = start + 1;
+		stop = idx_ + 1;
 		break;
 	case '\r':
 		type = TOKEN_NEWLINE;
-			if (start + 1 < str.size() && str[start + 1] == '\n') {
-				stop = start + 2;
+		if (idx_ + 1 < text_.size() && text_[idx_ + 1] == '\n') {
+			stop = idx_ + 2;
 		}
 		else {
-				stop = start + 1;
+			stop = idx_ + 1;
 		}
 		break;
 	default:
-			if (str[start].isLetter() || str[start] == '_') {
+		// TODO@Daniel:
+		// Move these out since they will be needed elsewhere as well
+		if (text_[idx_].isLetter() || text_[idx_] == '_') {
 			type = TOKEN_IDENTIFIER;
-				while (stop < str.size() && (str[stop].isLetter() || str[stop].isDigit() || str[stop] == '_')) {
+			while (stop < text_.size() && (text_[stop].isLetter() || text_[stop].isDigit() || text_[stop] == '_')) {
 				stop++;
 			}
 		}
-			else if (str[start].isDigit()) {
+		else if (text_[idx_].isDigit()) {
 			type = TOKEN_NUMBER;
-				while (stop < str.size() && str[stop].isDigit()) {
+			while (stop < text_.size() && text_[stop].isDigit()) {
 				stop++;
 			}
 		}
 		break;
 	}
 
-		QString value = str.mid(start, stop - start);
+	QString value = text_.mid(idx_, stop - idx_);
 
-		JassToken token(value, start, stop, type);
-		tokens_.append(token);
+	JassToken token(value, idx_, stop, type);
+	idx_ = stop;
 
-		start = stop;
-	}
-
-	JassToken eof("", str.size(), str.size(), TOKEN_EOF);
-	tokens_.append(eof);
-}
-
-int JassTokenizer::count() const {
-	return tokens_.count();
-}
-
-JassToken const &JassTokenizer::operator[](int idx) const {
-	return tokens_[std::min(idx, tokens_.size() - 1)];
+	return token;
 }
