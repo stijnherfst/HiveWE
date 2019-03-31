@@ -1,16 +1,13 @@
 #include "stdafx.h"
 
-int Styling::styleAt(int idx) const
-{
-	if (idx > 0)
-	{
+int Styling::styleAt(int idx) const {
+	if (idx > 0) {
 		return editor()->SendScintilla(QsciScintilla::SCI_GETSTYLEAT, idx);
 	}
 	return JASS_DEFAULT;
 }
 
-int Styling::styleToken(JassToken const& token, int start)
-{
+int Styling::styleToken(JassToken const& token, int start) {
 	JassStyle style = JASS_DEFAULT;
 
 	switch (token.type()) {
@@ -27,8 +24,7 @@ int Styling::styleToken(JassToken const& token, int start)
 		style = JASS_COMMENT;
 		break;
 	case TOKEN_STRING:
-		for (JassToken const& sequence : token.nested_tokens())
-		{
+		for (JassToken const& sequence : token.nested_tokens()) {
 			setStyling(sequence.start() - start, JASS_STRING);
 			setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
 
@@ -166,8 +162,7 @@ void Styling::styleText(int start, int end) {
 	JassTokenizer tokenizer(editor()->text().mid(start));
 
 	int idx = 0;
-	switch (starting_style)
-	{
+	switch (starting_style) {
 	case JASS_COMMENT:
 		idx = styleToken(tokenizer.eat_comment_block(), idx);
 		break;
@@ -244,32 +239,28 @@ JassEditor::JassEditor(QWidget* parent) :
 	// NOTE@Daniel:
 	// I hadn't noticed that this wasn't a QString before I finished JassTokenizer
 	std::vector<uint8_t> common_data = hierarchy.open_file("Scripts/common.j").buffer;
-	QString common_script(QByteArray((char const*)common_data.data(), common_data.size()));
+	QString common_script(QByteArray((char const*)common_data.data(), (int)common_data.size()));
 
 	std::vector<uint8_t> blizzard_data = hierarchy.open_file("Scripts/blizzard.j").buffer;
-	QString blizzard_script(QByteArray((char const*)blizzard_data.data(), blizzard_data.size()));
+	QString blizzard_script(QByteArray((char const*)blizzard_data.data(), (int)blizzard_data.size()));
 
 	std::vector<uint8_t> cheat_data = hierarchy.open_file("Scripts/cheats.j").buffer;
-	QString cheat_script(QByteArray((char const*)cheat_data.data(), cheat_data.size()));
+	QString cheat_script(QByteArray((char const*)cheat_data.data(), (int)cheat_data.size()));
 
 	// TODO@Daniel:
 	// This should be in it's own class
 	JassTokenizer tokenizer(common_script + '\n' + blizzard_script + '\n' + cheat_script);
 
 	JassToken token = tokenizer.next();
-	while (token.type() != TOKEN_EOF)
-	{
-		if (token.value() == "function")
-		{
+	while (token.type() != TOKEN_EOF) {
+		if (token.value() == "function") {
 			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-			if (token.type() == TOKEN_IDENTIFIER)
-			{
+			if (token.type() == TOKEN_IDENTIFIER) {
 				QString value = token.value();
 
 				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
-				if (token.value() == "takes")
-				{
+				if (token.value() == "takes") {
 					QStringList parameters;
 
 					do {
@@ -288,17 +279,14 @@ JassEditor::JassEditor(QWidget* parent) :
 				}
 			}
 		}
-		else if (token.value() == "native")
-		{
+		else if (token.value() == "native") {
 			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-			if (token.type() == TOKEN_IDENTIFIER)
-			{
+			if (token.type() == TOKEN_IDENTIFIER) {
 				QString value = token.value();
 
 				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
-				if (token.value() == "takes")
-				{
+				if (token.value() == "takes") {
 					QStringList parameters;
 
 					do {
@@ -317,24 +305,20 @@ JassEditor::JassEditor(QWidget* parent) :
 				}
 			}
 		}
-		else if (token.value() == "type" || token.value() == "struct")
-		{
+		else if (token.value() == "type" || token.value() == "struct") {
 			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-			if (token.type() == TOKEN_IDENTIFIER)
-			{
+			if (token.type() == TOKEN_IDENTIFIER) {
 				types.append(token.value());
 				api.add(token.value());
 
 				token = tokenizer.next();
 			}
 		}
-		else if (token.value() == "constant")
-		{
+		else if (token.value() == "constant") {
 			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-			if (token.value() != "function" && token.value() != "native" && types.contains(token.value()))
-			{
+			if (token.value() != "function" && token.value() != "native" && types.contains(token.value())) {
 				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
 				constants.append(token.value());
@@ -343,8 +327,7 @@ JassEditor::JassEditor(QWidget* parent) :
 				token = tokenizer.next();
 			}
 		}
-		else
-		{
+		else {
 			token = tokenizer.next();
 		}
 	}

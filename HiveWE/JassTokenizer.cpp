@@ -10,7 +10,6 @@ JassToken::JassToken(QString value, int start, int stop, JassTokenType type, QLi
 
 }
 
-
 QString const& JassToken::value() const {
 	return value_;
 }
@@ -41,31 +40,25 @@ JassTokenizer::JassTokenizer(QString str) :
 	idx_(0) {
 }
 
-int JassTokenizer::text_size() const
-{
+int JassTokenizer::text_size() const {
 	return text_.size();
 }
 
-JassToken JassTokenizer::eat_comment_block()
-{
+JassToken JassTokenizer::eat_comment_block() {
 	JassTokenType type = TOKEN_COMMENT_BLOCK;
 	int stop = idx_;
-	if (stop + 2 < text_size() && text_[stop] == '/' && text_[stop + 1] == '*')
-	{
+	if (stop + 2 < text_size() && text_[stop] == '/' && text_[stop + 1] == '*') {
 		stop += 2;
 	}
 
-	while (stop + 1 < text_size())
-	{
+	while (stop + 1 < text_size()) {
 		// TODO@Daniel:
 		// Handle docstring parameters
-		if (text_[stop] == '*' && text_[stop + 1] == '/')
-		{
+		if (text_[stop] == '*' && text_[stop + 1] == '/') {
 			stop++;
 			break;
 		}
-		else
-		{
+		else {
 			stop++;
 		}
 	}
@@ -79,8 +72,7 @@ JassToken JassTokenizer::eat_comment_block()
 	return token;
 }
 
-JassToken JassTokenizer::eat_string()
-{
+JassToken JassTokenizer::eat_string() {
 	QString slash_escapes = "\\nt\"";
 	QString pipe_escapes = "cnr";
 
@@ -88,26 +80,21 @@ JassToken JassTokenizer::eat_string()
 	QList<JassToken> nested_tokens;
 
 	int stop = idx_;
-	if (stop < text_size() && text_[stop] == '"')
-	{
+	if (stop < text_size() && text_[stop] == '"') {
 		stop++;
 	}
 
-	while (stop < text_size())
-	{
-		if (text_[stop] == '"')
-		{
+	while (stop < text_size()) {
+		if (text_[stop] == '"') {
 			stop++;
 			break;
 		}
 
-		if (stop + 1 < text_size())
-		{
+		if (stop + 1 < text_size()) {
 			// Iirc, there are only single character escapes
 			bool is_slash_escape = text_[stop] == '\\' && slash_escapes.contains(text_[stop + 1]);
 			bool is_pipe_escape = text_[stop] == '|' && pipe_escapes.contains(text_[stop + 1]);
-			if (is_pipe_escape || is_slash_escape)
-			{
+			if (is_pipe_escape || is_slash_escape) {
 				QString value = text_.mid(stop, stop + 2);
 				JassToken token(value, stop, stop + 2, TOKEN_ESCAPE_SEQUENCE);
 				nested_tokens.append(token);
@@ -127,25 +114,20 @@ JassToken JassTokenizer::eat_string()
 	return token;
 }
 
-JassToken JassTokenizer::eat_rawcode()
-{
+JassToken JassTokenizer::eat_rawcode() {
 	JassTokenType type = TOKEN_RAWCODE;
 	int stop = idx_;
-	if (stop < text_size() && text_[stop] == '\'')
-	{
+	if (stop < text_size() && text_[stop] == '\'') {
 		stop++;
 	}
 
-	while (stop < text_size())
-	{
+	while (stop < text_size()) {
 		// Iirc, there are no escape sequences in rawcodes
-		if (text_[stop] == '\'')
-		{
+		if (text_[stop] == '\'') {
 			stop++;
 			break;
 		}
-		else
-		{
+		else {
 			stop++;
 		}
 	}
@@ -158,11 +140,9 @@ JassToken JassTokenizer::eat_rawcode()
 	return token;
 }
 
-JassToken JassTokenizer::eat_all_of(JassTokenType token_type)
-{
+JassToken JassTokenizer::eat_all_of(JassTokenType token_type) {
 	JassToken token = next();
-	while (token.type() == token_type)
-	{
+	while (token.type() == token_type) {
 		token = next();
 	}
 	return token;
@@ -170,13 +150,11 @@ JassToken JassTokenizer::eat_all_of(JassTokenType token_type)
 
 JassToken JassTokenizer::next() {
 	// Skipping leading whitespace
-	while (idx_ < text_size() && text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n')
-	{
+	while (idx_ < text_size() && text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n') {
 		idx_++;
 	}
 
-	if (idx_ >= text_size())
-	{
+	if (idx_ >= text_size()) {
 		return JassToken("", text_size(), text_size(), TOKEN_EOF);
 	}
 
@@ -204,8 +182,7 @@ JassToken JassTokenizer::next() {
 				stop = idx_ + 2;
 			}
 
-			while (stop < text_size() && text_[stop] != '\r' && text_[stop] != '\n')
-			{
+			while (stop < text_size() && text_[stop] != '\r' && text_[stop] != '\n') {
 				stop++;
 			}
 			break;
