@@ -42,6 +42,8 @@ private:
 public:
 	int styleAt(int idx) const;
 
+	int styleToken(JassToken const& token, int start);
+
 	void setKeywords(QStringList list);
 	void setOperators(QStringList list);
 	void setNatives(QStringList list);

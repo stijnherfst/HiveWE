@@ -10,6 +10,64 @@ int Styling::styleAt(int idx) const
 	return JASS_DEFAULT;
 }
 
+int Styling::styleToken(JassToken const& token, int start)
+{
+	JassStyle style = JASS_DEFAULT;
+
+	switch (token.type()) {
+	case TOKEN_COMMENT_LINE:
+		style = JASS_COMMENT;
+		break;
+	case TOKEN_PREPROCESSOR_COMMENT:
+		style = JASS_PREPROCESSOR_COMMENT;
+		break;
+	case TOKEN_COMMENT_BLOCK:
+		// TODO@Daniel:
+		// Style docstring parameters
+
+		style = JASS_COMMENT;
+		break;
+	case TOKEN_STRING:
+		for (JassToken const& sequence : token.nested_tokens())
+		{
+			setStyling(sequence.start() - start, JASS_STRING);
+			setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
+
+			start = sequence.stop();
+		}
+
+		style = JASS_STRING;
+		break;
+	case TOKEN_RAWCODE:
+		style = JASS_RAWCODE;
+		break;
+	case TOKEN_NUMBER:
+		style = JASS_NUMBER;
+		break;
+	case TOKEN_IDENTIFIER:
+		if (natives_.contains(token.value())) {
+			style = JASS_NATIVE;
+		}
+		else if (functions_.contains(token.value())) {
+			style = JASS_FUNCTION;
+		}
+		else if (constants_.contains(token.value())) {
+			style = JASS_CONSTANT;
+		}
+		else if (types_.contains(token.value())) {
+			style = JASS_TYPE;
+		}
+		else if (keywords_.contains(token.value())) {
+			style = JASS_KEYWORD;
+		}
+		break;
+	}
+
+	setStyling(token.stop() - start, style);
+
+	return token.stop();
+}
+
 void Styling::setKeywords(QStringList list) {
 	keywords_ = std::move(list);
 }
@@ -102,65 +160,12 @@ void Styling::styleText(int start, int end) {
 	// TODO@Daniel:
 	// Eat up unfinished string/rawcode/comment block 
 
-	JassTokenizer tokenizer(editor()->text(), start);
+	JassTokenizer tokenizer(editor()->text().mid(start));
 
+	int idx = 0;
 	do {
-		JassStyle style = JASS_DEFAULT;
-
-		JassToken token = tokenizer.next();
-
-		switch (token.type()) {
-		case TOKEN_COMMENT_LINE:
-			style = JASS_COMMENT;
-			break;
-		case TOKEN_PREPROCESSOR_COMMENT:
-			style = JASS_PREPROCESSOR_COMMENT;
-			break;
-		case TOKEN_COMMENT_BLOCK:
-			style = JASS_COMMENT;
-			break;
-		case TOKEN_STRING:
-			for (JassToken const& sequence : token.nested_tokens())
-			{
-				setStyling(sequence.start() - start, JASS_STRING);
-				setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
-
-				start = sequence.stop();
-			}
-			style = JASS_STRING;
-			break;
-		case TOKEN_RAWCODE:
-			style = JASS_RAWCODE;
-			break;
-		case TOKEN_NUMBER:
-			style = JASS_NUMBER;
-			break;
-		case TOKEN_IDENTIFIER:
-			if (natives_.contains(token.value())) {
-				style = JASS_NATIVE;
-			}
-			else if (functions_.contains(token.value())) {
-				style = JASS_FUNCTION;
-			}
-			else if (constants_.contains(token.value())) {
-				style = JASS_CONSTANT;
-			}
-			else if (types_.contains(token.value())) {
-				style = JASS_TYPE;
-			}
-			else if (keywords_.contains(token.value())) {
-				style = JASS_KEYWORD;
-			}
-			break;
-		}
-
-		int length = token.stop() - start;
-
-		setStyling(length, style);
-
-		start = token.stop();
-	}
-	while (start < tokenizer.text_size());
+		idx = styleToken(tokenizer.next(), idx);
+	} while (idx < tokenizer.text_size());
 }
 
 bool Styling::caseSensitive() const {
