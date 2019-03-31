@@ -1,13 +1,15 @@
 #include "stdafx.h"
 #include "JassTokenizer.h"
 
-JassToken::JassToken(QString value, int start, int stop, JassTokenType type) :
+JassToken::JassToken(QString value, int start, int stop, JassTokenType type, QList<JassToken> nested_tokens) :
 	value_(std::move(value)),
 	start_(start),
 	stop_(stop),
-	type_(type) {
+	type_(type),
+	nested_tokens_(std::move(nested_tokens)) {
 
 }
+
 
 QString const& JassToken::value() const {
 	return value_;
@@ -23,6 +25,11 @@ int JassToken::stop() const {
 
 JassTokenType JassToken::type() const {
 	return type_;
+}
+
+QList<JassToken> const& JassToken::nested_tokens() const
+{
+	return nested_tokens_;
 }
 
 int JassToken::length() const {
