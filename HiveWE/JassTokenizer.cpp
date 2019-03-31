@@ -100,7 +100,7 @@ JassToken JassTokenizer::eat_string()
 			break;
 		}
 
-		if (stop + 1 < text_.size())
+		if (stop + 1 < text_size())
 		{
 			// Iirc, there are only single character escapes
 			bool is_slash_escape = text_[stop] == '\\' && slash_escapes.contains(text_[stop + 1]);
@@ -177,14 +177,14 @@ JassToken JassTokenizer::next() {
 
 	switch (text_[idx_].toLatin1()) {
 	case '/':
-		if (idx_ + 1 >= text_.size()) {
+		if (idx_ + 1 >= text_size()) {
 			break;
 		}
 
 		switch (text_[idx_ + 1].toLatin1()) {
 		case '/':
 			// Technically, changing stop here isn't needed but keeps it somewhat consistent
-			if (idx_ + 2 < text_.size() && text_[idx_ + 2] == '!') {
+			if (idx_ + 2 < text_size() && text_[idx_ + 2] == '!') {
 				type = TOKEN_PREPROCESSOR_COMMENT;
 				stop = idx_ + 3;
 			}
@@ -193,7 +193,7 @@ JassToken JassTokenizer::next() {
 				stop = idx_ + 2;
 			}
 
-			while (stop < text_.size() && text_[stop] != '\r' && text_[stop] != '\n')
+			while (stop < text_size() && text_[stop] != '\r' && text_[stop] != '\n')
 			{
 				stop++;
 			}
@@ -212,7 +212,7 @@ JassToken JassTokenizer::next() {
 		break;
 	case '\r':
 		type = TOKEN_NEWLINE;
-		if (idx_ + 1 < text_.size() && text_[idx_ + 1] == '\n') {
+		if (idx_ + 1 < text_size() && text_[idx_ + 1] == '\n') {
 			stop = idx_ + 2;
 		}
 		else {
@@ -224,13 +224,13 @@ JassToken JassTokenizer::next() {
 		// Move these out since they will be needed elsewhere as well
 		if (text_[idx_].isLetter() || text_[idx_] == '_') {
 			type = TOKEN_IDENTIFIER;
-			while (stop < text_.size() && (text_[stop].isLetter() || text_[stop].isDigit() || text_[stop] == '_')) {
+			while (stop < text_size() && (text_[stop].isLetter() || text_[stop].isDigit() || text_[stop] == '_')) {
 				stop++;
 			}
 		}
 		else if (text_[idx_].isDigit()) {
 			type = TOKEN_NUMBER;
-			while (stop < text_.size() && text_[stop].isDigit()) {
+			while (stop < text_size() && text_[stop].isDigit()) {
 				stop++;
 			}
 		}
