@@ -45,14 +45,18 @@ public:
 	int length() const;
 };
 
+// TODO@Daniel:
+// Add iterator for convenience
 class JassTokenizer {
 private:
-	QList<JassToken> tokens_;
+	QString text_;
+
+	int idx_;
 
 public:
-	JassTokenizer(QString const &str);
+	JassTokenizer(QString str, int start = 0);
 
-	int count() const;
+	int text_size() const;
 
-	JassToken const &operator[](int idx) const;
+	JassToken next();
 };
