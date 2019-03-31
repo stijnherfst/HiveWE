@@ -199,8 +199,8 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	types.append("string");
 	types.append("handle");
 
-	auto apis = new QsciAPIs(lexer);
-	lexer->setAPIs(apis);
+	//auto apis = new QsciAPIs(lexer);
+	//lexer->setAPIs(apis);
 
 	// Very rough and temporary parsing of the script files
 	std::stringstream file;
@@ -214,18 +214,18 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 
 		if (linee.startsWith("type")) {
 			QString type = linee.mid(5, linee.indexOf(' ', 5) + 1 - 5).trimmed();
-			apis->add(type);
+			//apis->add(type);
 			types.append(type);
 		}
 		if (linee.startsWith("native")) {
 			QString native = linee.mid(7, linee.indexOf(' ', 7) + 1 - 7).trimmed();
-			apis->add(native);
+			//apis->add(native);
 			natives.append(native);
 		}
 
 		if (linee.startsWith("function")) {
 			QString function = linee.mid(9, linee.indexOf(' ', 9) + 1 - 9).trimmed();
-			apis->add(function);
+			//apis->add(function);
 			functions.append(function);
 
 			auto splito = linee.splitRef(',');
@@ -236,11 +236,11 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 			int index = linee.indexOf(' ', 9) + 1;
 
 			QString constant = linee.mid(index, linee.indexOf(' ', index) + 1 - index).trimmed();
-			apis->add(constant);
+			//apis->add(constant);
 			constants.append(constant);
 		}
 	}
-	apis->prepare();
+	//apis->prepare();
 
 	lexer->setTypes(types);
 	lexer->setNatives(natives);
