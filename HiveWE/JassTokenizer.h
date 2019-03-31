@@ -12,7 +12,9 @@ enum JassTokenType {
 	TOKEN_PREPROCESSOR_COMMENT,
 	TOKEN_NEWLINE,
 	TOKEN_COMMENT_BLOCK,
-	TOKEN_COMMENT_BLOCK_END,
+	// TODO@Daniel:
+	// Ideally, operators should each have their own token type
+	TOKEN_OPERATOR,
 	TOKEN_STRING,
 	TOKEN_RAWCODE,
 	TOKEN_ESCAPE_SEQUENCE,

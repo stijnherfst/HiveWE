@@ -219,6 +219,15 @@ JassToken JassTokenizer::next() {
 			stop = idx_ + 1;
 		}
 		break;
+	case ',':
+	case '.':
+	case '[':
+	case ']':
+	case '(':
+	case ')':
+		type = TOKEN_OPERATOR;
+		stop = idx_ + 1;
+		break;
 	default:
 		// TODO@Daniel:
 		// Move these out since they will be needed elsewhere as well
