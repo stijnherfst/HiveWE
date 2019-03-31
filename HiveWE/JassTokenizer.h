@@ -3,8 +3,7 @@
 #include <QString>
 #include <QList>
 
-enum JassTokenType
-{
+enum JassTokenType {
 	TOKEN_NUMBER,
 	TOKEN_IDENTIFIER,
 	TOKEN_COMMENT_START,
@@ -18,8 +17,7 @@ enum JassTokenType
 	TOKEN_EOF
 };
 
-class JassToken
-{
+class JassToken {
 private:
 	QString value_;
 	int start_;

@@ -5,67 +5,54 @@ JassToken::JassToken(QString value, int start, int stop, JassTokenType type) :
 	value_(std::move(value)),
 	start_(start),
 	stop_(stop),
-	type_(type)
-{
+	type_(type) {
 
 }
 
-QString const &JassToken::value() const
-{
+QString const &JassToken::value() const {
 	return value_;
 }
 
-int JassToken::start() const
-{
+int JassToken::start() const {
 	return start_;
 }
 
-int JassToken::stop() const
-{
+int JassToken::stop() const {
 	return stop_;
 }
 
-JassTokenType JassToken::type() const
-{
+JassTokenType JassToken::type() const {
 	return type_;
 }
 
-int JassToken::length() const
-{
+int JassToken::length() const {
 	return stop() - start();
 }
 
-JassTokenizer::JassTokenizer(QString const &str)
-{
+JassTokenizer::JassTokenizer(QString const &str) {
 	// TODO@Daniel:
 	// Maybe an easier to read equivalent would be sufficient
 	int start = 0;
-	while (start < str.size())
-	{
+	while (start < str.size()) {
 		int stop = start + 1;
 
 		JassTokenType type = TOKEN_OTHER;
 
 		// TODO@Daniel:
 		// Properly handle whitespace
-		switch (str[start].toLatin1())
-		{
+		switch (str[start].toLatin1()) {
 		case '/':
-			if (start + 1 >= str.size())
-			{
+			if (start + 1 >= str.size()) {
 				break;
 			}
 
-			switch (str[start + 1].toLatin1())
-			{
+			switch (str[start + 1].toLatin1()) {
 			case '/':
-				if (start + 2 < str.size() && str[start + 2] == '!')
-				{
+				if (start + 2 < str.size() && str[start + 2] == '!') {
 					type = TOKEN_PREPROCESSOR_COMMENT_START;
 					stop = start + 3;
 				}
-				else
-				{
+				else {
 					type = TOKEN_COMMENT_START;
 					stop = start + 2;
 				}
@@ -77,8 +64,7 @@ JassTokenizer::JassTokenizer(QString const &str)
 			}
 			break;
 		case '*':
-			if (start + 1 < str.size() && str[start + 1] == '/')
-			{
+			if (start + 1 < str.size() && str[start + 1] == '/') {
 				type = TOKEN_COMMENT_BLOCK_END;
 				stop = start + 2;
 			}
@@ -97,29 +83,23 @@ JassTokenizer::JassTokenizer(QString const &str)
 			break;
 		case '\r':
 			type = TOKEN_NEWLINE;
-			if (start + 1 < str.size() && str[start + 1] == '\n')
-			{
+			if (start + 1 < str.size() && str[start + 1] == '\n') {
 				stop = start + 2;
 			}
-			else
-			{
+			else {
 				stop = start + 1;
 			}
 			break;
 		default:
-			if (str[start].isLetter() || str[start] == '_')
-			{
+			if (str[start].isLetter() || str[start] == '_') {
 				type = TOKEN_IDENTIFIER;
-				while (stop < str.size() && (str[stop].isLetter() || str[stop].isDigit() || str[stop] == '_'))
-				{
+				while (stop < str.size() && (str[stop].isLetter() || str[stop].isDigit() || str[stop] == '_')) {
 					stop++;
 				}
 			}
-			else if (str[start].isDigit())
-			{
+			else if (str[start].isDigit()) {
 				type = TOKEN_NUMBER;
-				while (stop < str.size() && str[stop].isDigit())
-				{
+				while (stop < str.size() && str[stop].isDigit()) {
 					stop++;
 				}
 			}
@@ -138,12 +118,10 @@ JassTokenizer::JassTokenizer(QString const &str)
 	tokens_.append(eof);
 }
 
-int JassTokenizer::count() const
-{
+int JassTokenizer::count() const {
 	return tokens_.count();
 }
 
-JassToken const &JassTokenizer::operator[](int idx) const
-{
+JassToken const &JassTokenizer::operator[](int idx) const {
 	return tokens_[std::min(idx, tokens_.size() - 1)];
 }

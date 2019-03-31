@@ -96,8 +96,7 @@ void Styling::styleText(int start, int end) {
 	JassTokenizer tokenizer(text);
 
 	int idx = 0;
-	while (tokenizer[idx].type() != TOKEN_EOF)
-	{
+	while (tokenizer[idx].type() != TOKEN_EOF) {
 		int start = tokenizer[idx].start();
 		int next_idx = idx + 1;
 
@@ -106,41 +105,35 @@ void Styling::styleText(int start, int end) {
 		// TODO@Daniel:
 		// The token type checks should probably be moved to a member function in Token
 
-		switch (tokenizer[idx].type())
-		{
+		switch (tokenizer[idx].type()) {
 		case TOKEN_COMMENT_START:
 			style = JASS_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF)
-			{
+			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF) {
 				next_idx++;
 			}
 			break;
 		case TOKEN_PREPROCESSOR_COMMENT_START:
 			style = JASS_PREPROCESSOR_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF)
-			{
+			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF) {
 				next_idx++;
 			}
 			break;
 		case TOKEN_COMMENT_BLOCK_START:
 			style = JASS_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_COMMENT_BLOCK_END && tokenizer[next_idx].type() != TOKEN_EOF)
-			{
+			while (tokenizer[next_idx].type() != TOKEN_COMMENT_BLOCK_END && tokenizer[next_idx].type() != TOKEN_EOF) {
 				next_idx++;
 			}
 			break;
 		case TOKEN_DOUBLE_QUOTE:
 			style = JASS_STRING;
-			while (tokenizer[next_idx].type() != TOKEN_DOUBLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF)
-			{
+			while (tokenizer[next_idx].type() != TOKEN_DOUBLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF) {
 				next_idx++;
 			}
 			next_idx++;
 			break;
 		case TOKEN_SINGLE_QUOTE:
 			style = JASS_RAWCODE;
-			while (tokenizer[next_idx].type() != TOKEN_SINGLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF)
-			{
+			while (tokenizer[next_idx].type() != TOKEN_SINGLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF) {
 				next_idx++;
 			}
 			next_idx++;
@@ -150,24 +143,19 @@ void Styling::styleText(int start, int end) {
 			break;
 		case TOKEN_IDENTIFIER:
 			JassToken const &token = tokenizer[idx];
-			if (natives_.contains(token.value()))
-			{
+			if (natives_.contains(token.value())) {
 				style = JASS_NATIVE;
 			}
-			else if (functions_.contains(token.value()))
-			{
+			else if (functions_.contains(token.value())) {
 				style = JASS_FUNCTION;
 			}
-			else if (constants_.contains(token.value()))
-			{
+			else if (constants_.contains(token.value())) {
 				style = JASS_CONSTANT;
 			}
-			else if (types_.contains(token.value()))
-			{
+			else if (types_.contains(token.value())) {
 				style = JASS_TYPE;
 			}
-			else if (keywords_.contains(token.value()))
-			{
+			else if (keywords_.contains(token.value())) {
 				style = JASS_KEYWORD;
 			}
 			break;
@@ -260,7 +248,7 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 			QString function = linee.mid(9, linee.indexOf(' ', 9) + 1 - 9).trimmed();
 			apis->add(function);
 			functions.append(function);
-			
+
 			auto splito = linee.splitRef(',');
 
 		}
