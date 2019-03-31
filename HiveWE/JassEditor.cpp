@@ -254,22 +254,22 @@ JassEditor::JassEditor(QWidget * parent) :
 	JassToken token = tokenizer.next();
 	while (token.type() != TOKEN_EOF) {
 		if (token.value() == "function") {
-			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+			token = tokenizer.eat_comment_blocks();
 
 			if (token.type() == TOKEN_IDENTIFIER) {
 				QString value = token.value();
 
-				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+				token = tokenizer.eat_comment_blocks();
 				if (token.value() == "takes") {
 					QStringList parameters;
 
 					do {
-						JassToken type_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
-						JassToken identifier_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						JassToken type_name = tokenizer.eat_comment_blocks();
+						JassToken identifier_name = tokenizer.eat_comment_blocks();
 
 						parameters.append(type_name.value() + ' ' + identifier_name.value());
 
-						token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						token = tokenizer.eat_comment_blocks();
 					} while (token.type() == TOKEN_OPERATOR);
 
 					QString parameter_string = parameters.join(", ");
@@ -280,22 +280,22 @@ JassEditor::JassEditor(QWidget * parent) :
 			}
 		}
 		else if (token.value() == "native") {
-			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+			token = tokenizer.eat_comment_blocks();
 
 			if (token.type() == TOKEN_IDENTIFIER) {
 				QString value = token.value();
 
-				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+				token = tokenizer.eat_comment_blocks();
 				if (token.value() == "takes") {
 					QStringList parameters;
 
 					do {
-						JassToken type_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
-						JassToken identifier_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						JassToken type_name = tokenizer.eat_comment_blocks();
+						JassToken identifier_name = tokenizer.eat_comment_blocks();
 
 						parameters.append(type_name.value() + ' ' + identifier_name.value());
 
-						token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						token = tokenizer.eat_comment_blocks();
 					} while (token.type() == TOKEN_OPERATOR);
 
 					QString parameter_string = parameters.join(", ");
@@ -306,7 +306,7 @@ JassEditor::JassEditor(QWidget * parent) :
 			}
 		}
 		else if (token.value() == "type" || token.value() == "struct") {
-			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+			token = tokenizer.eat_comment_blocks();
 
 			if (token.type() == TOKEN_IDENTIFIER) {
 				types.insert(token.value());
@@ -316,10 +316,10 @@ JassEditor::JassEditor(QWidget * parent) :
 			}
 		}
 		else if (token.value() == "constant") {
-			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+			token = tokenizer.eat_comment_blocks();
 
 			if (token.value() != "function" && token.value() != "native" && types.contains(token.value())) {
-				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+				token = tokenizer.eat_comment_blocks();
 
 				constants.insert(token.value());
 				api.add(token.value());

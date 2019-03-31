@@ -147,6 +147,18 @@ JassToken JassTokenizer::eat_all_of(JassTokenType token_type) {
 	return token;
 }
 
+JassToken JassTokenizer::eat_until(JassTokenType token_type) {
+	JassToken token = next();
+	while (token.type() != token_type) {
+		token = next();
+	}
+	return token;
+}
+
+JassToken JassTokenizer::eat_comment_blocks() {
+	return eat_all_of(TOKEN_COMMENT_BLOCK);
+}
+
 JassToken JassTokenizer::next() {
 	// Skipping leading whitespace
 	while (idx_ < text_size() && text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n') {
