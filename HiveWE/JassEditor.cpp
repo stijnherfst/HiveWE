@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include <Qsci/qsciapis.h>
 
-#include "JassTokenizer.h"
 int Styling::styleAt(int idx) const
 {
 	if (idx > 0)

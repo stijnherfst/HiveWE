@@ -1,5 +1,7 @@
 #pragma once
 
+#include "JassTokenizer.h"
+
 class Styling : public QsciLexerCustom {
 private:
 	Q_OBJECT
