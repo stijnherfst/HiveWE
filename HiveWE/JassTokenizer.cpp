@@ -104,7 +104,6 @@ JassToken JassTokenizer::eat_string() {
 		}
 		stop++;
 	}
-	stop++;
 
 	QString value = text_.mid(idx_, stop - idx_);
 	JassToken token(value, idx_, stop, type, nested_tokens);
