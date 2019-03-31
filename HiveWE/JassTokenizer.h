@@ -27,15 +27,20 @@ private:
 
 	JassTokenType type_;
 
-public:
-	JassToken(QString value, int start, int stop, JassTokenType type);
+	// For escape sequences in strings, parameters in docstring and similar
+	QList<JassToken> nested_tokens_;
 
-	QString const &value() const;
+public:
+	JassToken(QString value, int start, int stop, JassTokenType type, QList<JassToken> nested_tokens = QList<JassToken>());
+
+	QString const& value() const;
 
 	int start() const;
 	int stop() const;
 
 	JassTokenType type() const;
+
+	QList<JassToken> const& nested_tokens() const;
 
 	int length() const;
 };
