@@ -1,6 +1,7 @@
 #pragma once
 
 #pragma warning(push, 0)
+#include <QChar>
 #include <QString>
 #include <QList>
 #pragma warning(pop) 
@@ -53,9 +54,14 @@ public:
 // Add iterator for convenience
 class JassTokenizer {
 private:
+	// TODO@Daniel:
+	// Support multiple 'files' instead of just one
+	// Will help with block comments across files and such
 	QString text_;
 
 	int idx_;
+
+	QChar at(int idx) const;
 
 public:
 	JassTokenizer(QString str);

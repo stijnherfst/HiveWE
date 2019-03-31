@@ -35,6 +35,16 @@ int JassToken::length() const {
 	return stop() - start();
 }
 
+QChar JassTokenizer::at(int idx) const
+{
+	if (idx < 0 || idx >= text_size())
+	{
+		return '\0';
+	}
+
+	return text_[idx];
+}
+
 JassTokenizer::JassTokenizer(QString str) :
 	text_(std::move(str)),
 	idx_(0) {
@@ -47,14 +57,14 @@ int JassTokenizer::text_size() const {
 JassToken JassTokenizer::parse_comment_block() {
 	JassTokenType type = TOKEN_COMMENT_BLOCK;
 	int stop = idx_;
-	if (stop + 2 < text_size() && text_[stop] == '/' && text_[stop + 1] == '*') {
+	if (at(stop) == '/' && at(stop + 1) == '*') {
 		stop += 2;
 	}
 
 	while (stop + 1 < text_size()) {
 		// TODO@Daniel:
 		// Handle docstring parameters
-		if (text_[stop] == '*' && text_[stop + 1] == '/') {
+		if (at(stop) == '*' && at(stop + 1) == '/') {
 			stop++;
 			break;
 		}
@@ -80,27 +90,25 @@ JassToken JassTokenizer::parse_string() {
 	QList<JassToken> nested_tokens;
 
 	int stop = idx_;
-	if (stop < text_size() && text_[stop] == '"') {
+	if (at(stop) == '"') {
 		stop++;
 	}
 
 	while (stop < text_size()) {
-		if (text_[stop] == '"') {
+		if (at(stop) == '"') {
 			stop++;
 			break;
 		}
 
-		if (stop + 1 < text_size()) {
-			// Iirc, there are only single character escapes
-			bool is_slash_escape = text_[stop] == '\\' && slash_escapes.contains(text_[stop + 1]);
-			bool is_pipe_escape = text_[stop] == '|' && pipe_escapes.contains(text_[stop + 1]);
-			if (is_pipe_escape || is_slash_escape) {
-				QString value = text_.mid(stop, stop + 2);
-				JassToken token(value, stop, stop + 2, TOKEN_ESCAPE_SEQUENCE);
-				nested_tokens.append(token);
+		// Iirc, there are only single character escapes
+		bool is_slash_escape = at(stop) == '\\' && slash_escapes.contains(at(stop + 1));
+		bool is_pipe_escape = at(stop) == '|' && pipe_escapes.contains(at(stop + 1));
+		if (is_pipe_escape || is_slash_escape) {
+			QString value = text_.mid(stop, stop + 2);
+			JassToken token(value, stop, stop + 2, TOKEN_ESCAPE_SEQUENCE);
+			nested_tokens.append(token);
 
-				stop++;
-			}
+			stop++;
 		}
 		stop++;
 	}
@@ -116,13 +124,13 @@ JassToken JassTokenizer::parse_string() {
 JassToken JassTokenizer::parse_rawcode() {
 	JassTokenType type = TOKEN_RAWCODE;
 	int stop = idx_;
-	if (stop < text_size() && text_[stop] == '\'') {
+	if (at(stop) == '\'') {
 		stop++;
 	}
 
 	while (stop < text_size()) {
 		// Iirc, there are no escape sequences in rawcodes
-		if (text_[stop] == '\'') {
+		if (at(stop) == '\'') {
 			stop++;
 			break;
 		}
@@ -161,7 +169,7 @@ JassToken JassTokenizer::eat_comment_blocks() {
 
 JassToken JassTokenizer::next() {
 	// Skipping leading whitespace
-	while (idx_ < text_size() && text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n') {
+	while (at(idx_).isSpace() && at(idx_) != '\r' && at(idx_) != '\n') {
 		idx_++;
 	}
 
@@ -175,16 +183,16 @@ JassToken JassTokenizer::next() {
 
 	QList<JassToken> nested_tokens;
 
-	switch (text_[idx_].toLatin1()) {
+	switch (at(idx_).toLatin1()) {
 	case '/':
 		if (idx_ + 1 >= text_size()) {
 			break;
 		}
 
-		switch (text_[idx_ + 1].toLatin1()) {
+		switch (at(idx_ + 1).toLatin1()) {
 		case '/':
 			// Technically, changing stop here isn't needed but keeps it somewhat consistent
-			if (idx_ + 2 < text_size() && text_[idx_ + 2] == '!') {
+			if (at(idx_ + 2) == '!') {
 				type = TOKEN_PREPROCESSOR_COMMENT;
 				stop = idx_ + 3;
 			}
@@ -193,7 +201,7 @@ JassToken JassTokenizer::next() {
 				stop = idx_ + 2;
 			}
 
-			while (stop < text_size() && text_[stop] != '\r' && text_[stop] != '\n') {
+			while (at(stop) != '\r' && at(stop) != '\n') {
 				stop++;
 			}
 			break;
@@ -211,7 +219,7 @@ JassToken JassTokenizer::next() {
 		break;
 	case '\r':
 		type = TOKEN_NEWLINE;
-		if (idx_ + 1 < text_size() && text_[idx_ + 1] == '\n') {
+		if (at(idx_ + 1) == '\n') {
 			stop = idx_ + 2;
 		}
 		else {
@@ -230,15 +238,15 @@ JassToken JassTokenizer::next() {
 	default:
 		// TODO@Daniel:
 		// Move these out since they will be needed elsewhere as well
-		if (text_[idx_].isLetter() || text_[idx_] == '_') {
+		if (at(idx_).isLetter() || at(idx_) == '_') {
 			type = TOKEN_IDENTIFIER;
-			while (stop < text_size() && (text_[stop].isLetter() || text_[stop].isDigit() || text_[stop] == '_')) {
+			while (at(stop).isLetter() || at(stop).isDigit() || at(stop) == '_') {
 				stop++;
 			}
 		}
-		else if (text_[idx_].isDigit()) {
+		else if (at(idx_).isDigit()) {
 			type = TOKEN_NUMBER;
-			while (stop < text_size() && text_[stop].isDigit()) {
+			while (at(stop).isDigit()) {
 				stop++;
 			}
 		}
