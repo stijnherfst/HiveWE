@@ -62,9 +62,9 @@ public:
 
 	int text_size() const;
 
-	JassToken eat_comment_block();
-	JassToken eat_string();
-	JassToken eat_rawcode();
+	JassToken parse_comment_block();
+	JassToken parse_string();
+	JassToken parse_rawcode();
 
 	JassToken eat_all_of(JassTokenType token_type);
 

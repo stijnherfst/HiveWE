@@ -164,13 +164,13 @@ void Styling::styleText(int start, int end) {
 	int idx = 0;
 	switch (starting_style) {
 	case JASS_COMMENT:
-		idx = styleToken(tokenizer.eat_comment_block(), idx);
+		idx = styleToken(tokenizer.parse_comment_block(), idx);
 		break;
 	case JASS_STRING:
-		idx = styleToken(tokenizer.eat_string(), idx);
+		idx = styleToken(tokenizer.parse_string(), idx);
 		break;
 	case JASS_RAWCODE:
-		idx = styleToken(tokenizer.eat_rawcode(), idx);
+		idx = styleToken(tokenizer.parse_rawcode(), idx);
 		break;
 	default:
 		break;

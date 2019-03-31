@@ -44,7 +44,7 @@ int JassTokenizer::text_size() const {
 	return text_.size();
 }
 
-JassToken JassTokenizer::eat_comment_block() {
+JassToken JassTokenizer::parse_comment_block() {
 	JassTokenType type = TOKEN_COMMENT_BLOCK;
 	int stop = idx_;
 	if (stop + 2 < text_size() && text_[stop] == '/' && text_[stop + 1] == '*') {
@@ -72,7 +72,7 @@ JassToken JassTokenizer::eat_comment_block() {
 	return token;
 }
 
-JassToken JassTokenizer::eat_string() {
+JassToken JassTokenizer::parse_string() {
 	QString slash_escapes = "\\nt\"";
 	QString pipe_escapes = "cnr";
 
@@ -113,7 +113,7 @@ JassToken JassTokenizer::eat_string() {
 	return token;
 }
 
-JassToken JassTokenizer::eat_rawcode() {
+JassToken JassTokenizer::parse_rawcode() {
 	JassTokenType type = TOKEN_RAWCODE;
 	int stop = idx_;
 	if (stop < text_size() && text_[stop] == '\'') {
@@ -186,13 +186,13 @@ JassToken JassTokenizer::next() {
 			}
 			break;
 		case '*':
-			return eat_comment_block();
+			return parse_comment_block();
 		}
 		break;
 	case '"':
-		return eat_string();
+		return parse_string();
 	case '\'':
-		return eat_rawcode();
+		return parse_rawcode();
 	case '\n':
 		type = TOKEN_NEWLINE;
 		stop = idx_ + 1;
