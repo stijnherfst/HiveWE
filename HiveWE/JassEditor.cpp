@@ -187,7 +187,7 @@ void Styling::styleText(int start, int end) {
 }
 
 bool Styling::caseSensitive() const {
-	return false;
+	return true;
 }
 
 JassEditor::JassEditor(QWidget* parent) :
