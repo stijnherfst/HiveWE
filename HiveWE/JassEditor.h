@@ -66,6 +66,8 @@ private:
 	Q_OBJECT
 
 	Styling lexer;
+	QsciAPIs api;
+
 public:
 	JassEditor(QWidget* parent = nullptr);
 

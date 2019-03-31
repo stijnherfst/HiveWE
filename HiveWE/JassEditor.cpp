@@ -190,7 +190,11 @@ bool Styling::caseSensitive() const {
 	return false;
 }
 
-JassEditor::JassEditor(QWidget* parent) : QsciScintilla(parent), lexer(this) {
+JassEditor::JassEditor(QWidget* parent) :
+	QsciScintilla(parent),
+	lexer(this),
+	api(&lexer) {
+
 	setLexer(&lexer);
 	setCaretForegroundColor(QColor(255, 255, 255));
 	setMargins(1);
