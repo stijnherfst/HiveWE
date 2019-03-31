@@ -224,6 +224,8 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	QStringList constants;
 
 	// Primitive types
+	types.append("nothing");
+	types.append("boolean");
 	types.append("code");
 	types.append("integer");
 	types.append("real");
