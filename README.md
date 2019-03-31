@@ -12,7 +12,7 @@ A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threa
 - Edit the terrain
 ![Edit the Terrain](http://g2f.nl/0nfvw4c)
 - Edit JASS with syntax hightlighting, tabs, code completion and more.
-![Jass Editor](https://i.imgur.com/nMa3qWV.png)
+![Jass Editor](https://i.imgur.com/CFA5DQU.png)
 - Manage your imports with folders!
 ![Manage imports](http://g2f.nl/0j59f6v)
 - Edit global tile pathing  
