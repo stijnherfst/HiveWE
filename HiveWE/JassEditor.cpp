@@ -91,58 +91,36 @@ QString Styling::description(int style) const {
 void Styling::styleText(int start, int end) {
 	startStyling(start);
 
-	QString text = editor()->text().mid(start, end - start);
+	// TODO@Daniel:
+	// Eat up unfinished string/rawcode/comment block 
 
-	JassTokenizer tokenizer(text);
+	JassTokenizer tokenizer(editor()->text(), start);
 
-	int idx = 0;
-	while (tokenizer[idx].type() != TOKEN_EOF) {
-		int start = tokenizer[idx].start();
-		int next_idx = idx + 1;
-
+	do {
 		JassStyle style = JASS_DEFAULT;
 
-		// TODO@Daniel:
-		// The token type checks should probably be moved to a member function in Token
+		JassToken token = tokenizer.next();
 
-		switch (tokenizer[idx].type()) {
-		case TOKEN_COMMENT_START:
+		switch (token.type()) {
+		case TOKEN_COMMENT_LINE:
 			style = JASS_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF) {
-				next_idx++;
-			}
 			break;
-		case TOKEN_PREPROCESSOR_COMMENT_START:
+		case TOKEN_PREPROCESSOR_COMMENT:
 			style = JASS_PREPROCESSOR_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_NEWLINE && tokenizer[next_idx].type() != TOKEN_EOF) {
-				next_idx++;
-			}
 			break;
-		case TOKEN_COMMENT_BLOCK_START:
+		case TOKEN_COMMENT_BLOCK:
 			style = JASS_COMMENT;
-			while (tokenizer[next_idx].type() != TOKEN_COMMENT_BLOCK_END && tokenizer[next_idx].type() != TOKEN_EOF) {
-				next_idx++;
-			}
 			break;
-		case TOKEN_DOUBLE_QUOTE:
+		case TOKEN_STRING:
 			style = JASS_STRING;
-			while (tokenizer[next_idx].type() != TOKEN_DOUBLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF) {
-				next_idx++;
-			}
-			next_idx++;
 			break;
-		case TOKEN_SINGLE_QUOTE:
+		case TOKEN_RAWCODE:
 			style = JASS_RAWCODE;
-			while (tokenizer[next_idx].type() != TOKEN_SINGLE_QUOTE && tokenizer[next_idx].type() != TOKEN_EOF) {
-				next_idx++;
-			}
-			next_idx++;
 			break;
 		case TOKEN_NUMBER:
 			style = JASS_NUMBER;
 			break;
 		case TOKEN_IDENTIFIER:
-			JassToken const &token = tokenizer[idx];
 			if (natives_.contains(token.value())) {
 				style = JASS_NATIVE;
 			}
@@ -161,12 +139,13 @@ void Styling::styleText(int start, int end) {
 			break;
 		}
 
-		int length = tokenizer[next_idx].start() - start;
+		int length = token.stop() - start;
 
 		setStyling(length, style);
 
-		idx = next_idx;
+		start = token.stop();
 	}
+	while (start < tokenizer.text_size());
 }
 
 bool Styling::caseSensitive() const {
