@@ -240,7 +240,7 @@ JassToken JassTokenizer::next() {
 
 	QString value = text_.mid(idx_, stop - idx_);
 
-	JassToken token(value, idx_, stop, type);
+	JassToken token(value, idx_, stop, type, nested_tokens);
 	idx_ = stop;
 
 	return token;
