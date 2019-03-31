@@ -241,48 +241,114 @@ JassEditor::JassEditor(QWidget* parent) :
 	types.append("string");
 	types.append("handle");
 
-	//auto apis = new QsciAPIs(lexer);
-	//lexer->setAPIs(apis);
+	// NOTE@Daniel:
+	// I hadn't noticed that this wasn't a QString before I finished JassTokenizer
+	std::vector<uint8_t> common_data = hierarchy.open_file("Scripts/common.j").buffer;
+	QString common_script(QByteArray((char const*)common_data.data(), common_data.size()));
 
-	// Very rough and temporary parsing of the script files
-	std::stringstream file;
-	file << hierarchy.open_file("Scripts/common.j").buffer.data();
-	file << hierarchy.open_file("Scripts/blizzard.j").buffer.data();
-	file << hierarchy.open_file("Scripts/cheats.j").buffer.data();
+	std::vector<uint8_t> blizzard_data = hierarchy.open_file("Scripts/blizzard.j").buffer;
+	QString blizzard_script(QByteArray((char const*)blizzard_data.data(), blizzard_data.size()));
 
-	std::string line;
-	while (std::getline(file, line)) {
-		QString linee = QString::fromStdString(line).simplified();
+	std::vector<uint8_t> cheat_data = hierarchy.open_file("Scripts/cheats.j").buffer;
+	QString cheat_script(QByteArray((char const*)cheat_data.data(), cheat_data.size()));
 
-		if (linee.startsWith("type")) {
-			QString type = linee.mid(5, linee.indexOf(' ', 5) + 1 - 5).trimmed();
-			//apis->add(type);
-			types.append(type);
+	// TODO@Daniel:
+	// This should be in it's own class
+	JassTokenizer tokenizer(common_script + '\n' + blizzard_script + '\n' + cheat_script);
+
+	JassToken token = tokenizer.next();
+	while (token.type() != TOKEN_EOF)
+	{
+		if (token.value() == "function")
+		{
+			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+
+			if (token.type() == TOKEN_IDENTIFIER)
+			{
+				QString value = token.value();
+
+				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+				if (token.value() == "takes")
+				{
+					QStringList parameters;
+
+					do {
+						JassToken type_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						JassToken identifier_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+
+						parameters.append(type_name.value() + ' ' + identifier_name.value());
+
+						token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+					} while (token.type() == TOKEN_OPERATOR);
+
+					QString parameter_string = parameters.join(", ");
+					QString declaration = value + '(' + parameter_string + ')';
+					functions.append(value);
+					api.add(declaration);
+				}
+			}
 		}
-		if (linee.startsWith("native")) {
-			QString native = linee.mid(7, linee.indexOf(' ', 7) + 1 - 7).trimmed();
-			//apis->add(native);
-			natives.append(native);
+		else if (token.value() == "native")
+		{
+			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+
+			if (token.type() == TOKEN_IDENTIFIER)
+			{
+				QString value = token.value();
+
+				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+				if (token.value() == "takes")
+				{
+					QStringList parameters;
+
+					do {
+						JassToken type_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+						JassToken identifier_name = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+
+						parameters.append(type_name.value() + ' ' + identifier_name.value());
+
+						token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
+					} while (token.type() == TOKEN_OPERATOR);
+
+					QString parameter_string = parameters.join(", ");
+					QString declaration = value + '(' + parameter_string + ')';
+					natives.append(value);
+					api.add(declaration);
+				}
+			}
 		}
+		else if (token.value() == "type" || token.value() == "struct")
+		{
+			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-		if (linee.startsWith("function")) {
-			QString function = linee.mid(9, linee.indexOf(' ', 9) + 1 - 9).trimmed();
-			//apis->add(function);
-			functions.append(function);
+			if (token.type() == TOKEN_IDENTIFIER)
+			{
+				types.append(token.value());
+				api.add(token.value());
 
-			auto splito = linee.splitRef(',');
-
+				token = tokenizer.next();
+			}
 		}
+		else if (token.value() == "constant")
+		{
+			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-		if (linee.startsWith("constant")) {
-			int index = linee.indexOf(' ', 9) + 1;
+			if (token.value() != "function" && token.value() != "native" && types.contains(token.value()))
+			{
+				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-			QString constant = linee.mid(index, linee.indexOf(' ', index) + 1 - index).trimmed();
-			//apis->add(constant);
-			constants.append(constant);
+				constants.append(token.value());
+				api.add(token.value());
+
+				token = tokenizer.next();
+			}
+		}
+		else
+		{
+			token = tokenizer.next();
 		}
 	}
-	//apis->prepare();
+	api.prepare();
 
 	lexer.setTypes(types);
 	lexer.setNatives(natives);
