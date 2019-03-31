@@ -36,6 +36,7 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setColor(QColor(181, 206, 168), JASS_NUMBER); // numbers
 	setColor(QColor(56, 156, 214), JASS_KEYWORD); // keywords
 	setColor(QColor(214, 157, 133), JASS_STRING); // string
+	setColor(QColor(255, 204, 0), JASS_ESCAPE_SEQUENCE); // character escape sequences
 	setColor(QColor(214, 157, 133), JASS_RAWCODE); // rawcode
 	setColor(QColor(87, 166, 74), JASS_COMMENT); // comment
 	setColor(QColor(155, 155, 155), JASS_PREPROCESSOR_COMMENT); // preprocessor comment
@@ -112,6 +113,13 @@ void Styling::styleText(int start, int end) {
 			style = JASS_COMMENT;
 			break;
 		case TOKEN_STRING:
+			for (JassToken const& sequence : token.nested_tokens())
+			{
+				setStyling(sequence.start() - start, JASS_STRING);
+				setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
+
+				start = sequence.stop();
+			}
 			style = JASS_STRING;
 			break;
 		case TOKEN_RAWCODE:
