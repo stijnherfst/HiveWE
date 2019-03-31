@@ -162,9 +162,26 @@ void Styling::styleText(int start, int end) {
 	// TODO@Daniel:
 	// Eat up unfinished string/rawcode/comment block 
 
+	int starting_style = styleAt(start - 1);
+
 	JassTokenizer tokenizer(editor()->text().mid(start));
 
 	int idx = 0;
+	switch (starting_style)
+	{
+	case JASS_COMMENT:
+		idx = styleToken(tokenizer.eat_comment_block(), idx);
+		break;
+	case JASS_STRING:
+		idx = styleToken(tokenizer.eat_string(), idx);
+		break;
+	case JASS_RAWCODE:
+		idx = styleToken(tokenizer.eat_rawcode(), idx);
+		break;
+	default:
+		break;
+	}
+
 	do {
 		idx = styleToken(tokenizer.next(), idx);
 	} while (idx < tokenizer.text_size());
