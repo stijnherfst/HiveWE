@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Qsci/qsciapis.h>
+
 #include "JassTokenizer.h"
 
 class Styling : public QsciLexerCustom {

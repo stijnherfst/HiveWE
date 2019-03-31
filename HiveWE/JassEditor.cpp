@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include <Qsci/qsciapis.h>
 
 int Styling::styleAt(int idx) const
 {
