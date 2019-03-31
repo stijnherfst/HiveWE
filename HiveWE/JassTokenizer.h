@@ -56,7 +56,7 @@ private:
 	int idx_;
 
 public:
-	JassTokenizer(QString str, int start = 0);
+	JassTokenizer(QString str);
 
 	int text_size() const;
 
