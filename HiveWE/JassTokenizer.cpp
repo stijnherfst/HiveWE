@@ -37,6 +37,12 @@ int JassToken::length() const {
 }
 
 JassTokenizer::JassTokenizer(QString const &str) {
+
+int JassTokenizer::text_size() const
+{
+	return text_.size();
+}
+
 JassToken JassTokenizer::eat_comment_block()
 {
 	JassTokenType type = TOKEN_COMMENT_BLOCK;
