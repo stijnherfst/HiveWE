@@ -2,20 +2,23 @@
 
 #include <Qsci/qsciapis.h>
 
+#include <QSet>
+#include <QString>
+
 #include "JassTokenizer.h"
 
 class Styling : public QsciLexerCustom {
 private:
 	Q_OBJECT
 
-	// TODO@Daniel:
-	// Rearrange
-	QStringList keywords_;
-	QStringList natives_;
-	QStringList functions_;
-	QStringList constants_;
-	QStringList operators_;
-	QStringList types_;
+		// TODO@Daniel:
+		// Rearrange
+		QSet<QString> keywords_;
+	QSet<QString> natives_;
+	QSet<QString> functions_;
+	QSet<QString> constants_;
+	QSet<QString> operators_;
+	QSet<QString> types_;
 
 	enum JassStyle {
 		// NOTE@Daniel:
@@ -47,12 +50,12 @@ public:
 
 	int styleToken(JassToken const& token, int start);
 
-	void setKeywords(QStringList list);
-	void setOperators(QStringList list);
-	void setNatives(QStringList list);
-	void setFunctions(QStringList list);
-	void setConstants(QStringList list);
-	void setTypes(QStringList list);
+	void setKeywords(QSet<QString> list);
+	void setOperators(QSet<QString> list);
+	void setNatives(QSet<QString> list);
+	void setFunctions(QSet<QString> list);
+	void setConstants(QSet<QString> list);
+	void setTypes(QSet<QString> list);
 
 	Styling(QWidget* parent);
 	const char* language() const override;
@@ -65,7 +68,7 @@ class JassEditor : public QsciScintilla {
 private:
 	Q_OBJECT
 
-	Styling lexer;
+		Styling lexer;
 	QsciAPIs api;
 
 public:

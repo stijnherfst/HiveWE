@@ -63,27 +63,27 @@ int Styling::styleToken(JassToken const& token, int start) {
 	return token.stop();
 }
 
-void Styling::setKeywords(QStringList list) {
+void Styling::setKeywords(QSet<QString> list) {
 	keywords_ = std::move(list);
 }
 
-void Styling::setOperators(QStringList list) {
+void Styling::setOperators(QSet<QString> list) {
 	operators_ = std::move(list);
 }
 
-void Styling::setNatives(QStringList list) {
+void Styling::setNatives(QSet<QString> list) {
 	natives_ = std::move(list);
 }
 
-void Styling::setFunctions(QStringList list) {
+void Styling::setFunctions(QSet<QString> list) {
 	functions_ = std::move(list);
 }
 
-void Styling::setConstants(QStringList list) {
+void Styling::setConstants(QSet<QString> list) {
 	constants_ = std::move(list);
 }
 
-void Styling::setTypes(QStringList list) {
+void Styling::setTypes(QSet<QString> list) {
 	types_ = std::move(list);
 }
 
@@ -109,14 +109,14 @@ Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 
 	// TODO@Daniel:
 	// Types should be in their own list
-	keywords_ = QStringList({ "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage",
+	keywords_ = { "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage",
 		"function", "returns", "public", "private", "protected", "import", "initlater", "native", "nativetype", "extends", "interface",
 		"implements", "module", "use", "abstract", "static", "thistype", "override", "immutable", "it", "array", "and", "or", "not",
 		"this", "construct", "ondestroy", "destroy", "type", "constant", "endfunction", "nothing", "init", "castTo", "tuple", "div",
 		"mod", "let", "from", "to", "downto", "step", "endpackage", "skip", "true", "false", "var", "instanceof", "super", "enum",
 		"switch", "case", "default", "typeId", "begin", "end", "compiletime", "library", "endlibrary", "scope", "endscope", "requires",
 		"uses", "needs", "struct", "endstruct", "then", "endif", "loop", "exitwhen", "endloop", "method", "takes", "endmethod", "set",
-		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" });
+		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" };
 }
 
 const char* Styling::language() const {
@@ -185,7 +185,7 @@ bool Styling::caseSensitive() const {
 	return true;
 }
 
-JassEditor::JassEditor(QWidget* parent) :
+JassEditor::JassEditor(QWidget * parent) :
 	QsciScintilla(parent),
 	lexer(this),
 	api(&lexer) {
@@ -222,19 +222,19 @@ JassEditor::JassEditor(QWidget* parent) :
 	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
 	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
 
-	QStringList types;
-	QStringList natives;
-	QStringList functions;
-	QStringList constants;
+	QSet<QString> types;
+	QSet<QString> natives;
+	QSet<QString> functions;
+	QSet<QString> constants;
 
 	// Primitive types
-	types.append("nothing");
-	types.append("boolean");
-	types.append("code");
-	types.append("integer");
-	types.append("real");
-	types.append("string");
-	types.append("handle");
+	types.insert("nothing");
+	types.insert("boolean");
+	types.insert("code");
+	types.insert("integer");
+	types.insert("real");
+	types.insert("string");
+	types.insert("handle");
 
 	// NOTE@Daniel:
 	// I hadn't noticed that this wasn't a QString before I finished JassTokenizer
@@ -274,7 +274,7 @@ JassEditor::JassEditor(QWidget* parent) :
 
 					QString parameter_string = parameters.join(", ");
 					QString declaration = value + '(' + parameter_string + ')';
-					functions.append(value);
+					functions.insert(value);
 					api.add(declaration);
 				}
 			}
@@ -300,7 +300,7 @@ JassEditor::JassEditor(QWidget* parent) :
 
 					QString parameter_string = parameters.join(", ");
 					QString declaration = value + '(' + parameter_string + ')';
-					natives.append(value);
+					natives.insert(value);
 					api.add(declaration);
 				}
 			}
@@ -309,7 +309,7 @@ JassEditor::JassEditor(QWidget* parent) :
 			token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
 			if (token.type() == TOKEN_IDENTIFIER) {
-				types.append(token.value());
+				types.insert(token.value());
 				api.add(token.value());
 
 				token = tokenizer.next();
@@ -321,7 +321,7 @@ JassEditor::JassEditor(QWidget* parent) :
 			if (token.value() != "function" && token.value() != "native" && types.contains(token.value())) {
 				token = tokenizer.eat_all_of(TOKEN_COMMENT_BLOCK);
 
-				constants.append(token.value());
+				constants.insert(token.value());
 				api.add(token.value());
 
 				token = tokenizer.next();
