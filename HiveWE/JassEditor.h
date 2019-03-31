@@ -38,6 +38,8 @@ private:
 	};
 
 public:
+	int styleAt(int idx) const;
+
 	void setKeywords(QStringList list);
 	void setOperators(QStringList list);
 	void setNatives(QStringList list);

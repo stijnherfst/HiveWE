@@ -2,6 +2,14 @@
 #include <Qsci/qsciapis.h>
 
 #include "JassTokenizer.h"
+int Styling::styleAt(int idx) const
+{
+	if (idx > 0)
+	{
+		return editor()->SendScintilla(QsciScintilla::SCI_GETSTYLEAT, idx);
+	}
+	return JASS_DEFAULT;
+}
 
 void Styling::setKeywords(QStringList list) {
 	keywords_ = std::move(list);
