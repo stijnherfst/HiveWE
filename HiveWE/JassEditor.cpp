@@ -138,6 +138,8 @@ QString Styling::description(int style) const {
 		return "Preprocessor comment";
 	case JASS_STRING:
 		return "String literal";
+	case JASS_ESCAPE_SEQUENCE:
+		return "Character escape sequence";
 	case JASS_NUMBER:
 		return "Numbers";
 	case JASS_OPERATOR:
