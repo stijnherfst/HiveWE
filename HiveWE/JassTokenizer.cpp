@@ -37,7 +37,8 @@ int JassToken::length() const {
 }
 
 JassTokenizer::JassTokenizer(QString str) :
-	text_(std::move(str)) {
+	text_(std::move(str)),
+	idx_(0) {
 }
 
 int JassTokenizer::text_size() const
