@@ -178,7 +178,7 @@ void Styling::styleText(int start, int end) {
 
 	do {
 		idx = styleToken(tokenizer.next(), idx);
-	} while (idx < tokenizer.text_size());
+	} while (idx < tokenizer.text_size() && idx + start < end);
 }
 
 bool Styling::caseSensitive() const {
