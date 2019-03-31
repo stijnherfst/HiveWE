@@ -65,5 +65,8 @@ public:
 	JassToken eat_comment_block();
 	JassToken eat_string();
 	JassToken eat_rawcode();
+
+	JassToken eat_all_of(JassTokenType token_type);
+
 	JassToken next();
 };

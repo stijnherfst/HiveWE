@@ -159,9 +159,16 @@ JassToken JassTokenizer::eat_rawcode()
 
 JassToken JassTokenizer::next() {
 	if (idx_ >= text_size())
-	{
+JassToken JassTokenizer::eat_all_of(JassTokenType token_type)
+{
 		return JassToken("", text_size(), text_size(), TOKEN_EOF);
+	JassToken token = next();
+	while (token.type() == token_type)
+	{
+		token = next();
 	}
+	return token;
+}
 
 	// Skipping leading whitespace
 	while (text_[idx_].isSpace() && text_[idx_] != '\r' && text_[idx_] != '\n')
