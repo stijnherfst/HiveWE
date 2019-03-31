@@ -1,7 +1,9 @@
 #pragma once
 
+#pragma warning(push, 0)
 #include <QString>
 #include <QList>
+#pragma warning(pop) 
 
 enum JassTokenType {
 	TOKEN_NUMBER,
