@@ -53,12 +53,13 @@ public:
 };
 
 class JassEditor : public QsciScintilla {
+private:
 	Q_OBJECT
 
+	Styling lexer;
 public:
 	JassEditor(QWidget* parent = nullptr);
 
-	Styling* lexer = new Styling(this);
 	int max_line_number_width;
 
 	void calculate_margin_width();

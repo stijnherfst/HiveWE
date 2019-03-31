@@ -160,8 +160,8 @@ bool Styling::caseSensitive() const {
 	return false;
 }
 
-JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
-	setLexer(lexer);
+JassEditor::JassEditor(QWidget* parent) : QsciScintilla(parent), lexer(this) {
+	setLexer(&lexer);
 	setCaretForegroundColor(QColor(255, 255, 255));
 	setMargins(1);
 	setMarginType(0, QsciScintilla::MarginType::NumberMargin);
@@ -250,10 +250,10 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	}
 	//apis->prepare();
 
-	lexer->setTypes(types);
-	lexer->setNatives(natives);
-	lexer->setFunctions(functions);
-	lexer->setConstants(constants);
+	lexer.setTypes(types);
+	lexer.setNatives(natives);
+	lexer.setFunctions(functions);
+	lexer.setConstants(constants);
 
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
