@@ -1,24 +1,122 @@
 #include "stdafx.h"
-#include <Qsci/qsciapis.h>
 
+int Styling::styleAt(int idx) const {
+	if (idx > 0) {
+		return editor()->SendScintilla(QsciScintilla::SCI_GETSTYLEAT, idx);
+	}
+	return JASS_DEFAULT;
+}
+
+int Styling::styleToken(JassToken const& token, int start) {
+	JassStyle style = JASS_DEFAULT;
+
+	switch (token.type()) {
+	case TOKEN_COMMENT_LINE:
+		style = JASS_COMMENT;
+		break;
+	case TOKEN_PREPROCESSOR_COMMENT:
+		style = JASS_PREPROCESSOR_COMMENT;
+		break;
+	case TOKEN_COMMENT_BLOCK:
+		// TODO@Daniel:
+		// Style docstring parameters
+
+		style = JASS_COMMENT;
+		break;
+	case TOKEN_STRING:
+		for (JassToken const& sequence : token.nested_tokens()) {
+			setStyling(sequence.start() - start, JASS_STRING);
+			setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
+
+			start = sequence.stop();
+		}
+
+		style = JASS_STRING;
+		break;
+	case TOKEN_RAWCODE:
+		style = JASS_RAWCODE;
+		break;
+	case TOKEN_NUMBER:
+		style = JASS_NUMBER;
+		break;
+	case TOKEN_IDENTIFIER:
+		if (natives_.contains(token.value())) {
+			style = JASS_NATIVE;
+		}
+		else if (functions_.contains(token.value())) {
+			style = JASS_FUNCTION;
+		}
+		else if (constants_.contains(token.value())) {
+			style = JASS_CONSTANT;
+		}
+		else if (types_.contains(token.value())) {
+			style = JASS_TYPE;
+		}
+		else if (keywords_.contains(token.value())) {
+			style = JASS_KEYWORD;
+		}
+		break;
+	}
+
+	setStyling(token.stop() - start, style);
+
+	return token.stop();
+}
+
+void Styling::setKeywords(QSet<QString> list) {
+	keywords_ = std::move(list);
+}
+
+void Styling::setOperators(QSet<QString> list) {
+	operators_ = std::move(list);
+}
+
+void Styling::setNatives(QSet<QString> list) {
+	natives_ = std::move(list);
+}
+
+void Styling::setFunctions(QSet<QString> list) {
+	functions_ = std::move(list);
+}
+
+void Styling::setConstants(QSet<QString> list) {
+	constants_ = std::move(list);
+}
+
+void Styling::setTypes(QSet<QString> list) {
+	types_ = std::move(list);
+}
 
 Styling::Styling(QWidget* parent) : QsciLexerCustom(parent) {
 	setDefaultFont(QFont("Consolas", 10));
 
-	setColor(QColor(181, 206, 168), 1); // numbers
-	setColor(QColor(56, 156, 214), 2); // keywords
-	setColor(QColor(214, 157, 133), 3); // string
-	setColor(QColor(87, 166, 74), 4); // comment
-	
+	// TODO@Daniel:
+	// Set from external configuration
+	// I suggest YAML since it is very intuitive to use, though that may be just a personal preference
+	setColor(QColor(181, 206, 168), JASS_NUMBER); // numbers
+	setColor(QColor(56, 156, 214), JASS_KEYWORD); // keywords
+	setColor(QColor(214, 157, 133), JASS_STRING); // string
+	setColor(QColor(255, 204, 0), JASS_ESCAPE_SEQUENCE); // character escape sequences
+	setColor(QColor(214, 157, 133), JASS_RAWCODE); // rawcode
+	setColor(QColor(87, 166, 74), JASS_COMMENT); // comment
+	setColor(QColor(155, 155, 155), JASS_PREPROCESSOR_COMMENT); // preprocessor comment
+	setColor(QColor(189, 99, 197), JASS_NATIVE); // native
+	setColor(QColor(200, 100, 100), JASS_FUNCTION); // function
+	setColor(QColor(184, 215, 163), JASS_CONSTANT); // constant
+	setColor(QColor(78, 201, 176), JASS_TYPE); // type
+
 	std::vector<std::string> operators = { "+", "-", "/", "*", ",", "=", ":", "(", ")", ">=", "<=", "!=", "[", "]", "<", ">", "&" };
-	blocks = QStringList({ "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage", 
-		"function", "returns", "public", "private", "protected", "import", "initlater", "native", "nativetype", "extends", "interface", 
-		"implements", "module", "use", "abstract", "static", "thistype", "override", "immutable", "it", "array", "and", "or", "not", 
-		"this", "construct", "ondestroy", "destroy", "type", "constant", "endfunction", "nothing", "init", "castTo", "tuple", "div", 
-		"mod", "let", "from", "to", "downto", "step", "endpackage", "skip", "true", "false", "var", "instanceof", "super", "enum", 
-		"switch", "case", "default", "typeId", "begin", "end", "compiletime", "library", "endlibrary", "scope", "endscope", "requires", 
-		"uses", "needs", "struct", "endstruct", "then", "endif", "loop", "exitwhen", "endloop", "method", "takes", "endmethod", "set", 
-		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" });
+
+	// TODO@Daniel:
+	// Types should be in their own list
+	keywords_ = { "class", "return", "if", "else", "while", "for", "in", "break", "new", "null", "package", "endpackage",
+		"function", "returns", "public", "private", "protected", "import", "initlater", "native", "nativetype", "extends", "interface",
+		"implements", "module", "use", "abstract", "static", "thistype", "override", "immutable", "it", "array", "and", "or", "not",
+		"this", "construct", "ondestroy", "destroy", "type", "constant", "endfunction", "nothing", "init", "castTo", "tuple", "div",
+		"mod", "let", "from", "to", "downto", "step", "endpackage", "skip", "true", "false", "var", "instanceof", "super", "enum",
+		"switch", "case", "default", "typeId", "begin", "end", "compiletime", "library", "endlibrary", "scope", "endscope", "requires",
+		"uses", "needs", "struct", "endstruct", "then", "endif", "loop", "exitwhen", "endloop", "method", "takes", "endmethod", "set",
+		"call", "globals", "endglobals", "initializer", "elseif", "vararg", "local" };
 }
 
 const char* Styling::language() const {
@@ -27,74 +125,72 @@ const char* Styling::language() const {
 
 QString Styling::description(int style) const {
 	switch (style) {
-		case 0:
-			return "Style0";
-		case 1:
-			return "Style1";		
-		case 2:
-			return "Style2";
-		case 3:
-			return "Style3";
-		case 4:
-			return "Style4";
+	case JASS_DEFAULT:
+		return "Default";
+	case JASS_COMMENT:
+		return "Comment";
+	case JASS_PREPROCESSOR_COMMENT:
+		return "Preprocessor comment";
+	case JASS_STRING:
+		return "String literal";
+	case JASS_ESCAPE_SEQUENCE:
+		return "Character escape sequence";
+	case JASS_NUMBER:
+		return "Numbers";
+	case JASS_OPERATOR:
+		return "Operators";
+	case JASS_NATIVE:
+		return "Natives";
+	case JASS_FUNCTION:
+		return "Functions";
+	case JASS_CONSTANT:
+		return "Constant globals";
+	case JASS_TYPE:
+		return "Types and structs";
 	}
-	return "Style0";
+	return "Unknown";
 }
 
 void Styling::styleText(int start, int end) {
 	startStyling(start);
 
-	QString text = editor()->text().mid(start, end - start);
+	// TODO@Daniel:
+	// Eat up unfinished string/rawcode/comment block 
 
-	QRegExp expression(R"((\"\S*\"|\/\/[^\r\n]+|[*]\/|\/[*]|\w+|\W|[*]\/|\/[*]))");
-	QStringList tokens;
-	int pos = 0;
-	while ((pos = expression.indexIn(text, pos)) != -1) {
-		tokens << expression.cap(1);
-		pos += expression.matchedLength();
+	int starting_style = styleAt(start - 1);
+
+	JassTokenizer tokenizer(editor()->text().mid(start));
+
+	int idx = 0;
+	switch (starting_style) {
+	case JASS_COMMENT:
+		idx = styleToken(tokenizer.parse_comment_block(), idx);
+		break;
+	case JASS_STRING:
+		idx = styleToken(tokenizer.parse_string(), idx);
+		break;
+	case JASS_RAWCODE:
+		idx = styleToken(tokenizer.parse_rawcode(), idx);
+		break;
+	default:
+		break;
 	}
 
-	bool multiline = false;
-	if (start > 0) {
-		int previous_style_nr = editor()->SendScintilla(QsciScintilla::SCI_GETSTYLEAT, start - 1);
-		if (previous_style_nr == 4) {
-			multiline = true;
-		}
-	}
-
-	for (auto&& i : tokens) {
-		if (multiline) {
-			setStyling(i.length(), 4);
-
-			if (i == "*/") {
-				multiline = false;
-			}
-			continue;
-		}
-
-		if (i.startsWith("//")) { // Comments
-			setStyling(i.length(), 4); 
-		} else if (i == "/*") { // Multiline Comments
-			multiline = true;
-			setStyling(i.length(), 4); 
-		} else if (blocks.contains(i)) { // Keywords
-			setStyling(i.length(), 2);
-		} else if (i.contains(QRegExp(R"(^[0-9]+$)"))) { // Numbers
-			setStyling(i.length(), 1);
-		} else if (i.contains(QRegExp(R"(^\".*\"$)"))) { // Strings
-			setStyling(i.length(), 3);
-		} else {
-			setStyling(i.length(), 0);
-		}
-	}
+	do {
+		idx = styleToken(tokenizer.next(), idx);
+	} while (idx < tokenizer.text_size() && idx + start < end);
 }
 
 bool Styling::caseSensitive() const {
-	return false;
+	return true;
 }
 
-JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
-	setLexer(lexer);
+JassEditor::JassEditor(QWidget * parent) :
+	QsciScintilla(parent),
+	lexer(this),
+	api(&lexer) {
+
+	setLexer(&lexer);
 	setCaretForegroundColor(QColor(255, 255, 255));
 	setMargins(1);
 	setMarginType(0, QsciScintilla::MarginType::NumberMargin);
@@ -126,39 +222,121 @@ JassEditor::JassEditor(QWidget *parent) : QsciScintilla(parent) {
 	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
 	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
 
+	QSet<QString> types;
+	QSet<QString> natives;
+	QSet<QString> functions;
+	QSet<QString> constants;
 
-	auto apis = new QsciAPIs(lexer);
-	lexer->setAPIs(apis);
+	// Primitive types
+	types.insert("nothing");
+	types.insert("boolean");
+	types.insert("code");
+	types.insert("integer");
+	types.insert("real");
+	types.insert("string");
+	types.insert("handle");
 
-	// Very rough and temporary parsing of the script files
-	std::stringstream file;
-	file << hierarchy.open_file("Scripts/common.j").buffer.data();
-	file << hierarchy.open_file("Scripts/blizzard.j").buffer.data();
-	file << hierarchy.open_file("Scripts/cheats.j").buffer.data();
+	// NOTE@Daniel:
+	// I hadn't noticed that this wasn't a QString before I finished JassTokenizer
+	std::vector<uint8_t> common_data = hierarchy.open_file("Scripts/common.j").buffer;
+	QString common_script(QByteArray((char const*)common_data.data(), (int)common_data.size()));
 
-	std::string line;
-	while (std::getline(file, line)) {
-		QString linee = QString::fromStdString(line).simplified();
-		
-		if (linee.startsWith("type")) {
-			apis->add(linee.mid(5, linee.indexOf(' ', 5) + 1 - 5));
+	std::vector<uint8_t> blizzard_data = hierarchy.open_file("Scripts/blizzard.j").buffer;
+	QString blizzard_script(QByteArray((char const*)blizzard_data.data(), (int)blizzard_data.size()));
+
+	std::vector<uint8_t> cheat_data = hierarchy.open_file("Scripts/cheats.j").buffer;
+	QString cheat_script(QByteArray((char const*)cheat_data.data(), (int)cheat_data.size()));
+
+	// TODO@Daniel:
+	// This should be in it's own class
+	JassTokenizer tokenizer(common_script + '\n' + blizzard_script + '\n' + cheat_script);
+
+	JassToken token = tokenizer.next();
+	while (token.type() != TOKEN_EOF) {
+		if (token.value() == "function") {
+			token = tokenizer.eat_comment_blocks();
+
+			if (token.type() == TOKEN_IDENTIFIER) {
+				QString value = token.value();
+
+				token = tokenizer.eat_comment_blocks();
+				if (token.value() == "takes") {
+					QStringList parameters;
+
+					do {
+						JassToken type_name = tokenizer.eat_comment_blocks();
+						JassToken identifier_name = tokenizer.eat_comment_blocks();
+
+						parameters.append(type_name.value() + ' ' + identifier_name.value());
+
+						token = tokenizer.eat_comment_blocks();
+					} while (token.type() == TOKEN_OPERATOR);
+
+					QString parameter_string = parameters.join(", ");
+					QString declaration = value + '(' + parameter_string + ')';
+					functions.insert(value);
+					api.add(declaration);
+				}
+			}
 		}
-		if (linee.startsWith("native")) {
-			apis->add(linee.mid(7, linee.indexOf(' ', 7) + 1 - 7));
+		else if (token.value() == "native") {
+			token = tokenizer.eat_comment_blocks();
+
+			if (token.type() == TOKEN_IDENTIFIER) {
+				QString value = token.value();
+
+				token = tokenizer.eat_comment_blocks();
+				if (token.value() == "takes") {
+					QStringList parameters;
+
+					do {
+						JassToken type_name = tokenizer.eat_comment_blocks();
+						JassToken identifier_name = tokenizer.eat_comment_blocks();
+
+						parameters.append(type_name.value() + ' ' + identifier_name.value());
+
+						token = tokenizer.eat_comment_blocks();
+					} while (token.type() == TOKEN_OPERATOR);
+
+					QString parameter_string = parameters.join(", ");
+					QString declaration = value + '(' + parameter_string + ')';
+					natives.insert(value);
+					api.add(declaration);
+				}
+			}
 		}
+		else if (token.value() == "type" || token.value() == "struct") {
+			token = tokenizer.eat_comment_blocks();
 
-		if (linee.startsWith("function")) {
-			apis->add(linee.mid(9, linee.indexOf(' ', 9) + 1 - 9));
-			auto splito = linee.splitRef(',');
+			if (token.type() == TOKEN_IDENTIFIER) {
+				types.insert(token.value());
+				api.add(token.value());
 
+				token = tokenizer.next();
+			}
 		}
+		else if (token.value() == "constant") {
+			token = tokenizer.eat_comment_blocks();
 
-		if (linee.startsWith("constant")) {
-			int index = linee.indexOf(' ', 9) + 1;
-			apis->add(linee.mid(index, linee.indexOf(' ', index) + 1 - index));
+			if (token.value() != "function" && token.value() != "native" && types.contains(token.value())) {
+				token = tokenizer.eat_comment_blocks();
+
+				constants.insert(token.value());
+				api.add(token.value());
+
+				token = tokenizer.next();
+			}
+		}
+		else {
+			token = tokenizer.next();
 		}
 	}
-	apis->prepare();
+	api.prepare();
+
+	lexer.setTypes(types);
+	lexer.setNatives(natives);
+	lexer.setFunctions(functions);
+	lexer.setConstants(constants);
 
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
