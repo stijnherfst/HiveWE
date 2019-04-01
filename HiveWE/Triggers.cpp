@@ -348,8 +348,8 @@ void Triggers::generate_map_script() {
 		std::string sound_name = i.name;
 		// Replace spaces by underscores
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
-		writer.write_string("\tset " + sound_name + " = CreateSound(" + 
-			i.file + ", " + 
+		writer.write_string("\tset " + sound_name + " = CreateSound(\"" + 
+			i.file + "\", " + 
 			(i.looping ? "true" : "false") + ", " + 
 			(i.is_3d ? "true" : "false") + ", " +
 			(i.stop_out_of_range ? "true" : "false") + ", " +
@@ -358,10 +358,10 @@ void Triggers::generate_map_script() {
 			i.eax_effect +
 			")\n");
 
-
-		writer.write_string("call SetSoundChannel(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
-		writer.write_string("call SetSoundVolume(" + sound_name + ", " + std::to_string(i.volume) + ")\n");
-		writer.write_string("call SetSoundPitch(" + sound_name + ", " + std::to_string(i.pitch) + ")\n");
+		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n"); // Sound duration
+		writer.write_string("\tcall SetSoundChannel(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
+		writer.write_string("\tcall SetSoundVolume(" + sound_name + ", " + std::to_string(i.volume) + ")\n");
+		writer.write_string("\tcall SetSoundPitch(" + sound_name + ", " + std::to_string(i.pitch) + ")\n");
 	}
 
 	//string_replaced(parameter.value, "\\", "\\\\")
@@ -479,11 +479,28 @@ void Triggers::generate_map_script() {
 		}
 
 		for (const auto& j : i.items) {
-			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", " + j.second + ", " + std::to_string(j.first) + ")\n");
+			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", \"" + j.second + "\", " + std::to_string(j.first) + ")\n");
 		}
 	}
 
 	writer.write_string("endfunction\n");
+
+	writer.write_string("function CreateRegion takes nothing returns nothing\n");
+	writer.write_string("\tlocal weathereffect we\n");
+
+	
+	for (const auto& i : map->regions.regions) {
+		writer.write_string("\tset " + i.name + "= Rect(" + 
+			std::to_string(i.left) + "," +
+			std::to_string(i.top) + "," + 
+			std::to_string(i.bottom) + "," +
+			std::to_string(i.right));
+
+		if (!i.weather_id.empty()) {
+			writer.write_string("\tset we = AddWeatherEffect(" + i.name + "," + i.weather_id + ")\n");
+			//call EnableWeatherEffect(we, true)
+		}
+	}
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -561,6 +578,7 @@ void Triggers::generate_map_script() {
 
 	int current_force = 0;
 	for (const auto& i : map->info.forces) {
+		writer.write_string("\n");
 		writer.write_string("\t// Force: " + i.name + "\n");
 
 		std::string post_state;
@@ -642,29 +660,76 @@ void Triggers::generate_map_script() {
 	writer.write_string("function main takes nothing returns nothing\n");
 
 
-	//std::string soto = "call SetCameraBounds("
-	//	std::to_string( "-3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT),"
-	//	"-3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM),"
-	//	"3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT)," 
-	//	"3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP),"
-	//	"-3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT),"
-	//	"3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP),"
-	//	"3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT),"
-	//	"-3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM))";
+	std::string soto = "\tcall SetCameraBounds(" +
+		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
+		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), "  +
+		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
+		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM))\n";
 
+	writer.write_string(soto);
 
-	//writer.write_string(std::to_string(map->info.camera_bottom_left.x) + " " + std::to_string(map->info.camera_bottom_left.y) + "\n");
-	//writer.write_string(std::to_string(map->info.camera_bottom_right.x) + " " + std::to_string(map->info.camera_bottom_right.y) + "\n");
-	//writer.write_string(std::to_string(map->info.camera_top_left.x) + " " + std::to_string(map->info.camera_top_left.y) + "\n");
-	//writer.write_string(std::to_string(map->info.camera_top_right.x) + " " + std::to_string(map->info.camera_top_right.y) + "\n");
+	const std::string terrain_lights = world_edit_data.data("TerrainLights", std::to_string(map->terrain.tileset));
+	const std::string unit_lights = world_edit_data.data("TerrainLights", std::to_string(map->terrain.tileset));
+	writer.write_string("\tcall SetDayNightModels(\"" + terrain_lights + "\", \"" + unit_lights + "\")\n");
 
-	//writer.write_string(std::to_string(map->info.camera_complements.x) + " " + std::to_string(map->info.camera_complements.y) + "\n");
-	//writer.write_string(std::to_string(map->info.camera_complements.z) + " " + std::to_string(map->info.camera_complements.w) + "\n");
+	const std::string sound_environment = world_edit_data.data("SoundEnvironment", std::to_string(map->terrain.tileset));
+	writer.write_string("\tcall NewSoundEnvironment(\"" + sound_environment + "\")\n");
 
-	writer.write_string("call CreateAllDestructables()");
-	writer.write_string("call CreateUnits()");
+	const std::string ambient_day = world_edit_data.data("DayAmbience", std::to_string(map->terrain.tileset));
+	writer.write_string("\tcall SetAmbientDaySound(\"" + ambient_day + "\")\n");
+
+	const std::string ambient_night = world_edit_data.data("NightAmbience", std::to_string(map->terrain.tileset));
+	writer.write_string("\tcall SetAmbientNightSound(\"" + ambient_night + "\")\n");
+
+	writer.write_string("\tcall SetMapMusic(\"Music\", true, 0)\n");
+	writer.write_string("\tcall InitSounds()\n");
+	writer.write_string("\tcall CreateRegions()\n");
+	writer.write_string("\tcall CreateCameras()\n");
+	writer.write_string("\tcall CreateDestructibles()\n");
+	writer.write_string("\tcall CreateItems()\n");
+	writer.write_string("\tcall CreateUnits()\n");
+	writer.write_string("\tcall InitBlizzard()\n");
+
+	//std::cout << std::to_string(map->info.camera_bottom_left.x) + " " + std::to_string(map->info.camera_bottom_left.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_bottom_right.x) + " " + std::to_string(map->info.camera_bottom_right.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_top_left.x) + " " + std::to_string(map->info.camera_top_left.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_top_right.x) + " " + std::to_string(map->info.camera_top_right.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_complements.x) + " " + std::to_string(map->info.camera_complements.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_complements.z) + " " + std::to_string(map->info.camera_complements.w) + "\n";
+
+	//writer.write_string("\tcall CreateAllDestructables()\n");
+	//writer.write_string("\tcall CreateUnits()\n");
+
+	writer.write_string("\tcall InitGlobals()\n");
+	writer.write_string("\tcall InitCustomTriggers()\n");
+	writer.write_string("\tcall RunInitializationTriggers()\n");
 
 	writer.write_string("endfunction\n");
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Map Configuration\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	writer.write_string("function config takes nothing returns nothing\n");
+
+	writer.write_string("\tcall SetMapName(\"" + map->info.name + " \")");
+	writer.write_string("\tcall SetMapDescription(\"" + map->info.description + " \")");
+	writer.write_string("\tSetPlayers(" + std::to_string(map->info.players.size()) + ")\n");
+	writer.write_string("\tSetPlayers(" + std::to_string(map->info.forces.size()) + ")\n");
+	writer.write_string("\tcall SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)\n");
+
+	writer.write_string("\tcall InitCustomPlayerSlots()\n");
+	writer.write_string("\tcall InitCustomTeams()\n");
+	writer.write_string("\tcall InitAllyPriorities()\n");
+
+	writer.write_string("endfunction\n");
+
 
 	std::ofstream output("C:/Users/User/Desktop/testy.txt");
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
@@ -954,6 +1019,8 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 				}
 		}
 	}
+	assert(false, "error");
+	return "";
 }
 
 std::string Triggers::get_type(const std::string& function_name, int parameter) const {

@@ -72,7 +72,6 @@ void TPSCamera::update(double delta) {
 		std::sin(vertical_angle)
 	);
 
-
 	direction = glm::normalize(direction);
 	// Calculate axis directions for camera as referential point:
 	// Z axis is simply the direction we are facing
@@ -109,8 +108,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
 	if (rolling || (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier)) {
-		horizontal_angle += -diffx * 0.0025;
-		vertical_angle += diffy * 0.0025;
+		horizontal_angle += -diffx * 0.0025f;
+		vertical_angle += diffy * 0.0025f;
 		vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 		update(0);
 	} else if (event->buttons() == Qt::RightButton) {

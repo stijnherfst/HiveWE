@@ -188,7 +188,7 @@ void Map::load(const fs::path& path) {
 
 	loaded = true;
 
-	//triggers.generate_map_script();
+	triggers.generate_map_script();
 }
 
 bool Map::save(const fs::path& path, bool switch_working) {
