@@ -177,7 +177,7 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, Trigger& trigger) {
 	}
 }
 
-std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_parameters, std::vector<TriggerParameter>& parameters) {
+std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const {
 	std::string result;
 
 	int current_parameter = 0;
@@ -186,7 +186,7 @@ std::string TriggerEditor::get_parameters_names(std::vector<std::string> string_
 			result += i;
 			continue;
 		}
-		TriggerParameter& j = parameters[current_parameter];
+		const TriggerParameter& j = parameters.at(current_parameter);
 
 		std::vector<std::string> sub_string_parameters;
 		if (j.has_sub_parameter) {
