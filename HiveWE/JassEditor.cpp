@@ -11,51 +11,47 @@ int Styling::styleToken(JassToken const& token, int start) {
 	JassStyle style = JASS_DEFAULT;
 
 	switch (token.type()) {
-	case TOKEN_COMMENT_LINE:
-		style = JASS_COMMENT;
-		break;
-	case TOKEN_PREPROCESSOR_COMMENT:
-		style = JASS_PREPROCESSOR_COMMENT;
-		break;
-	case TOKEN_COMMENT_BLOCK:
-		// TODO@Daniel:
-		// Style docstring parameters
+		case TOKEN_COMMENT_LINE:
+			style = JASS_COMMENT;
+			break;
+		case TOKEN_PREPROCESSOR_COMMENT:
+			style = JASS_PREPROCESSOR_COMMENT;
+			break;
+		case TOKEN_COMMENT_BLOCK:
+			// TODO@Daniel:
+			// Style docstring parameters
 
-		style = JASS_COMMENT;
-		break;
-	case TOKEN_STRING:
-		for (JassToken const& sequence : token.nested_tokens()) {
-			setStyling(sequence.start() - start, JASS_STRING);
-			setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
+			style = JASS_COMMENT;
+			break;
+		case TOKEN_STRING:
+			for (JassToken const& sequence : token.nested_tokens()) {
+				setStyling(sequence.start() - start, JASS_STRING);
+				setStyling(sequence.length(), JASS_ESCAPE_SEQUENCE);
 
-			start = sequence.stop();
-		}
+				start = sequence.stop();
+			}
 
-		style = JASS_STRING;
-		break;
-	case TOKEN_RAWCODE:
-		style = JASS_RAWCODE;
-		break;
-	case TOKEN_NUMBER:
-		style = JASS_NUMBER;
-		break;
-	case TOKEN_IDENTIFIER:
-		if (natives_.contains(token.value())) {
-			style = JASS_NATIVE;
-		}
-		else if (functions_.contains(token.value())) {
-			style = JASS_FUNCTION;
-		}
-		else if (constants_.contains(token.value())) {
-			style = JASS_CONSTANT;
-		}
-		else if (types_.contains(token.value())) {
-			style = JASS_TYPE;
-		}
-		else if (keywords_.contains(token.value())) {
-			style = JASS_KEYWORD;
-		}
-		break;
+			style = JASS_STRING;
+			break;
+		case TOKEN_RAWCODE:
+			style = JASS_RAWCODE;
+			break;
+		case TOKEN_NUMBER:
+			style = JASS_NUMBER;
+			break;
+		case TOKEN_IDENTIFIER:
+			if (natives_.contains(token.value())) {
+				style = JASS_NATIVE;
+			} else if (functions_.contains(token.value())) {
+				style = JASS_FUNCTION;
+			} else if (constants_.contains(token.value())) {
+				style = JASS_CONSTANT;
+			} else if (types_.contains(token.value())) {
+				style = JASS_TYPE;
+			} else if (keywords_.contains(token.value())) {
+				style = JASS_KEYWORD;
+			}
+			break;
 	}
 
 	setStyling(token.stop() - start, style);
@@ -125,28 +121,28 @@ const char* Styling::language() const {
 
 QString Styling::description(int style) const {
 	switch (style) {
-	case JASS_DEFAULT:
-		return "Default";
-	case JASS_COMMENT:
-		return "Comment";
-	case JASS_PREPROCESSOR_COMMENT:
-		return "Preprocessor comment";
-	case JASS_STRING:
-		return "String literal";
-	case JASS_ESCAPE_SEQUENCE:
-		return "Character escape sequence";
-	case JASS_NUMBER:
-		return "Numbers";
-	case JASS_OPERATOR:
-		return "Operators";
-	case JASS_NATIVE:
-		return "Natives";
-	case JASS_FUNCTION:
-		return "Functions";
-	case JASS_CONSTANT:
-		return "Constant globals";
-	case JASS_TYPE:
-		return "Types and structs";
+		case JASS_DEFAULT:
+			return "Default";
+		case JASS_COMMENT:
+			return "Comment";
+		case JASS_PREPROCESSOR_COMMENT:
+			return "Preprocessor comment";
+		case JASS_STRING:
+			return "String literal";
+		case JASS_ESCAPE_SEQUENCE:
+			return "Character escape sequence";
+		case JASS_NUMBER:
+			return "Numbers";
+		case JASS_OPERATOR:
+			return "Operators";
+		case JASS_NATIVE:
+			return "Natives";
+		case JASS_FUNCTION:
+			return "Functions";
+		case JASS_CONSTANT:
+			return "Constant globals";
+		case JASS_TYPE:
+			return "Types and structs";
 	}
 	return "Unknown";
 }
@@ -163,17 +159,17 @@ void Styling::styleText(int start, int end) {
 
 	int idx = 0;
 	switch (starting_style) {
-	case JASS_COMMENT:
-		idx = styleToken(tokenizer.parse_comment_block(), idx);
-		break;
-	case JASS_STRING:
-		idx = styleToken(tokenizer.parse_string(), idx);
-		break;
-	case JASS_RAWCODE:
-		idx = styleToken(tokenizer.parse_rawcode(), idx);
-		break;
-	default:
-		break;
+		case JASS_COMMENT:
+			idx = styleToken(tokenizer.parse_comment_block(), idx);
+			break;
+		case JASS_STRING:
+			idx = styleToken(tokenizer.parse_string(), idx);
+			break;
+		case JASS_RAWCODE:
+			idx = styleToken(tokenizer.parse_rawcode(), idx);
+			break;
+		default:
+			break;
 	}
 
 	do {
@@ -278,8 +274,7 @@ JassEditor::JassEditor(QWidget * parent) :
 					api.add(declaration);
 				}
 			}
-		}
-		else if (token.value() == "native") {
+		} else if (token.value() == "native") {
 			token = tokenizer.eat_comment_blocks();
 
 			if (token.type() == TOKEN_IDENTIFIER) {
@@ -304,8 +299,7 @@ JassEditor::JassEditor(QWidget * parent) :
 					api.add(declaration);
 				}
 			}
-		}
-		else if (token.value() == "type" || token.value() == "struct") {
+		} else if (token.value() == "type" || token.value() == "struct") {
 			token = tokenizer.eat_comment_blocks();
 
 			if (token.type() == TOKEN_IDENTIFIER) {
@@ -314,8 +308,7 @@ JassEditor::JassEditor(QWidget * parent) :
 
 				token = tokenizer.next();
 			}
-		}
-		else if (token.value() == "constant") {
+		} else if (token.value() == "constant") {
 			token = tokenizer.eat_comment_blocks();
 
 			if (token.value() != "function" && token.value() != "native" && types.contains(token.value())) {
@@ -326,8 +319,7 @@ JassEditor::JassEditor(QWidget * parent) :
 
 				token = tokenizer.next();
 			}
-		}
-		else {
+		} else {
 			token = tokenizer.next();
 		}
 	}

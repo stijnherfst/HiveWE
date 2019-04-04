@@ -41,7 +41,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.life = reader.read<uint8_t>();
 
 		if (version >= 8) {
-			i.item_table_pointer = reader.read<uint32_t>();
+			i.item_table_pointer = reader.read<int32_t>();
 			i.item_sets.resize(reader.read<uint32_t>());
 			for (auto&& j : i.item_sets) {
 				j.items.resize(reader.read<uint32_t>());
@@ -52,8 +52,8 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 			}
 		}
 
-		i.editor_id = reader.read<uint32_t>();
-		Doodad::auto_increment = std::max(Doodad::auto_increment, i.editor_id);
+		i.creation_number = reader.read<uint32_t>();
+		Doodad::auto_increment = std::max(Doodad::auto_increment, i.creation_number);
 	}
 
 	// Terrain Doodads
@@ -96,7 +96,7 @@ void Doodads::save() const {
 			}
 		}
 
-		writer.write<uint32_t>(i.editor_id);
+		writer.write<uint32_t>(i.creation_number);
 	}
 
 	writer.write<uint32_t>(write_special_version);
@@ -363,7 +363,7 @@ void DoodadDeleteAction::redo() {
 void DoodadStateAction::undo() {
 	for (auto& i : old_doodads) {
 		for (auto& j : map->doodads.doodads) {
-			if (i.editor_id == j.editor_id) {
+			if (i.creation_number == j.creation_number) {
 				j = i;
 			}
 		}
@@ -373,7 +373,7 @@ void DoodadStateAction::undo() {
 void DoodadStateAction::redo() {
 	for (auto& i : new_doodads) {
 		for (auto& j : map->doodads.doodads) {
-			if (i.editor_id == j.editor_id) {
+			if (i.creation_number == j.creation_number) {
 				j = i;
 			}
 		}

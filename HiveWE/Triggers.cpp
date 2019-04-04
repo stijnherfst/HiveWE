@@ -172,6 +172,8 @@ void Triggers::save() const {
 
 }
 
+
+
 void Triggers::save_jass() const {
 	BinaryWriter writer;
 
@@ -219,8 +221,9 @@ void Triggers::generate_map_script() {
 
 	pos = trigger_script.find("gg_dest", 0);
 	while (pos != std::string::npos) {	
+		
 		std::string type = trigger_script.substr(pos + 8, 4);
-		std::string creation_number = trigger_script.substr(pos + 13, 4);
+		std::string creation_number = trigger_script.substr(pos + 13, trigger_script.find_first_not_of("0123456789", pos + 13) - pos - 13);
 		destructable_variables[creation_number] = type;
 		pos = trigger_script.find("gg_dest", pos + 17);
 	}
@@ -331,10 +334,187 @@ void Triggers::generate_map_script() {
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
+	writer.write_string("//*  Map Item Tables\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	for (const auto& i : map->info.random_item_tables) {
+
+		writer.write_string("function ItemTable_" + std::to_string(i.number) + " takes nothing returns nothing\n");
+
+		writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+		writer.write_string("\n");
+
+		for (const auto& j : i.item_sets) {
+			writer.write_string("\t\tcall RandomDistReset()\n");
+			for (const auto& [chance, id] : j.items) {
+				writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+			}
+
+			writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+		)");
+
+		}
+
+		writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+		writer.write_string("\n");
+	}
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
 	writer.write_string("//*  Unit Item Tables\n");
 	writer.write_string("//*\n");
 	writer.write_string(seperator);
 
+	for (const auto& i : map->units.units) {
+		if (i.item_sets.size()) {
+
+
+			writer.write_string("function UnitItemDrops_" + std::to_string(i.creation_number) + " takes nothing returns nothing\n");
+
+			writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+			writer.write_string("\n");
+
+			for (const auto& j : i.item_sets) {
+				writer.write_string("\t\tcall RandomDistReset()\n");
+				for (const auto& [id, chance] : j.items) {
+					writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+				}
+
+				writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+		)");
+
+			}
+
+			writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+			writer.write_string("\n");
+		}
+	}
+
+	for (const auto& i : map->doodads.doodads) {
+		if (i.item_sets.size()) {
+
+
+			writer.write_string("function UnitItemDrops_" + std::to_string(i.creation_number) + " takes nothing returns nothing\n");
+
+			writer.write_string(R"(
+	local widget trigWidget= null
+	local unit trigUnit= null
+	local integer itemID= 0
+	local boolean canDrop= true
+
+	set trigWidget=bj_lastDyingWidget
+	if ( trigWidget == null ) then
+		set trigUnit=GetTriggerUnit()
+	endif
+
+	if ( trigUnit != null ) then
+		set canDrop=not IsUnitHidden(trigUnit)
+		if ( canDrop and GetChangingUnit() != null ) then
+			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
+		endif
+	endif
+
+	if ( canDrop ) then
+		)");
+
+			writer.write_string("\n");
+
+			for (const auto& j : i.item_sets) {
+				writer.write_string("\t\tcall RandomDistReset()\n");
+				for (const auto& [id, chance] : j.items) {
+					writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+				}
+
+				writer.write_string(R"(
+		set itemID=RandomDistChoose()
+		if ( trigUnit != null ) then
+			call UnitDropItem(trigUnit, itemID)
+		else
+			call WidgetDropItem(trigWidget, itemID)
+		endif
+		)");
+
+			}
+
+			writer.write_string(R"(
+	endif
+
+	set bj_lastDyingWidget=null
+	call DestroyTrigger(GetTriggeringTrigger())
+endfunction
+		)");
+
+			writer.write_string("\n");
+		}
+	}
+	
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Sounds\n");
@@ -349,7 +529,7 @@ void Triggers::generate_map_script() {
 		// Replace spaces by underscores
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
 		writer.write_string("\tset " + sound_name + " = CreateSound(\"" + 
-			i.file + "\", " + 
+			string_replaced(i.file, "\\", "\\\\") + "\", " +
 			(i.looping ? "true" : "false") + ", " + 
 			(i.is_3d ? "true" : "false") + ", " +
 			(i.stop_out_of_range ? "true" : "false") + ", " +
@@ -357,7 +537,7 @@ void Triggers::generate_map_script() {
 			std::to_string(i.fade_out_rate) + ", " +
 			i.eax_effect +
 			")\n");
-
+	
 		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n"); // Sound duration
 		writer.write_string("\tcall SetSoundChannel(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
 		writer.write_string("\tcall SetSoundVolume(" + sound_name + ", " + std::to_string(i.volume) + ")\n");
@@ -374,21 +554,62 @@ void Triggers::generate_map_script() {
 	writer.write_string("//*\n");
 	writer.write_string(seperator);
 
-	writer.write_string("function CreateAllDestructables takes nothing returns nothing\n");
+	writer.write_string("function CreateDestructables takes nothing returns nothing\n");
 	writer.write_string("\tlocal destructable d\n");
 	writer.write_string("\tlocal trigger t\n");
 	writer.write_string("\tlocal real life\n");
 
 	for (const auto& i : map->doodads.doodads) {
-		if (destructable_variables.find(std::to_string(i.editor_id)) != destructable_variables.end()) {
-			writer.write_string("\tset gg_dest_" + i.id + "_" + std::to_string(i.editor_id) + " = CreateDestructable(" +
-				i.id + ", " +
-				std::to_string(i.position.x) + ", " +
-				std::to_string(i.position.y) + ", " +
-				std::to_string(i.angle) + ", " +
-				std::to_string(i.scale.x) + ", " +
-				std::to_string(i.variation) + ")\n");
+		std::string id = "d";
+
+		if (destructable_variables.find(std::to_string(i.creation_number)) != destructable_variables.end()) {
+			id = "gg_dest_" + i.id + "_" + std::to_string(i.creation_number);
+		} 
+
+		if (id == "d" && i.item_sets.empty() && i.item_table_pointer == -1) {
+			continue;
 		}
+
+		writer.write_string("\tset " + id + " = CreateDestructable('" +
+			i.id + "', " +
+			std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " +
+			std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ", " +
+			std::to_string(glm::degrees(i.angle)) + ", " +
+			std::to_string(i.scale.x) + ", " +
+			std::to_string(i.variation) + ")\n");
+
+		if (i.life != 100) {
+			writer.write_string("\tset life = GetDestructableLife(" + id + ")\n");
+			writer.write_string("\tcall SetDestructableLife(" + id + ", " + std::to_string(i.life / 100.f) + " * life)\n");
+		}
+
+		if (!i.item_sets.empty()) {
+			writer.write_string("\tset t = CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer.write_string("\tcall TriggerAddAction(t, function UnitItemDrops_" + std::to_string(i.creation_number) + ")\n");
+		} else if (i.item_table_pointer != -1) {
+			writer.write_string("\tset t = CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterDeathEvent(t, " + id + ")\n");
+			writer.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
+			writer.write_string("\tcall TriggerAddAction(t, function ItemTable_" + std::to_string(i.item_table_pointer) + ")\n");
+		}
+
+	}
+
+	writer.write_string("endfunction\n");
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Items\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	writer.write_string("function CreateItems takes nothing returns nothing\n");
+
+	writer.write_string("\tlocal integer itemID\n");
+	for (const auto& i : map->units.items) {
+		writer.write_string("\tcall CreateItem('" + i.id + "', " + std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " + std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ")\n");
 	}
 
 	writer.write_string("endfunction\n");
@@ -425,7 +646,7 @@ void Triggers::generate_map_script() {
 
 		if (i.health != -1) {
 			writer.write_string("\tset life = GetUnitState(" + unit_reference + ", UNIT_STATE_LIFE)\n");
-			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_LIFE, 0.50 * life)\n");
+			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_LIFE, " + std::to_string(i.health / 100.f) + "* life)\n");
 		}
 
 		if (i.mana != -1) {
@@ -481,26 +702,72 @@ void Triggers::generate_map_script() {
 		for (const auto& j : i.items) {
 			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", \"" + j.second + "\", " + std::to_string(j.first) + ")\n");
 		}
+
+		if (i.item_sets.size()) {
+			writer.write_string("\tcall CreateTrigger()\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_DEATH)\n");
+			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_CHANGE_OWNER)\n");
+			writer.write_string("\tcall TriggerAddAction(t, " + unit_reference + ", UnitItemDrops_" + std::to_string(i.creation_number) + ")\n");
+		}
 	}
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string("function CreateRegion takes nothing returns nothing\n");
-	writer.write_string("\tlocal weathereffect we\n");
+	writer.write_string("function CreateRegions takes nothing returns nothing\n");
+	writer.write_string("\tlocal weathereffect we\n\n");
 
 	
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Regions\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
 	for (const auto& i : map->regions.regions) {
-		writer.write_string("\tset " + i.name + "= Rect(" + 
+		std::string region_name = "gg_rct_" + i.name;
+		// Replace spaces by underscores
+		std::replace(region_name.begin(), region_name.end(), ' ', '_');
+
+		writer.write_string("\tset " + region_name + "= Rect(" +
 			std::to_string(i.left) + "," +
 			std::to_string(i.top) + "," + 
 			std::to_string(i.bottom) + "," +
-			std::to_string(i.right));
+			std::to_string(i.right) + ")\n");
 
 		if (!i.weather_id.empty()) {
-			writer.write_string("\tset we = AddWeatherEffect(" + i.name + "," + i.weather_id + ")\n");
-			//call EnableWeatherEffect(we, true)
+			writer.write_string("\tset we = AddWeatherEffect(" + region_name + ", '" + i.weather_id + "')\n");
+			writer.write_string("\tcall EnableWeatherEffect(we, true)\n");
 		}
 	}
+	
+
+	writer.write_string("endfunction\n");
+
+	writer.write_string(seperator);
+	writer.write_string("//*\n");
+	writer.write_string("//*  Cameras\n");
+	writer.write_string("//*\n");
+	writer.write_string(seperator);
+
+	writer.write_string("function CreateCameras takes nothing returns nothing\n");
+
+	for (const auto& i : map->cameras.cameras) {
+		std::string camera_name = "gg_cam_" + i.name;
+		std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
+
+		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset)  + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(i.rotation) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(i.angle_of_attack) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(i.distance) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ROLL, " + std::to_string(i.roll) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_FIELD_OF_VIEW, " + std::to_string(i.fov) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_FARZ, " + std::to_string(i.far_z) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(i.target_x) + ", " + std::to_string(i.target_y) + ")\n");
+
+	}
+	
+	writer.write_string("endfunction\n");
 
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -718,11 +985,21 @@ void Triggers::generate_map_script() {
 
 	writer.write_string("function config takes nothing returns nothing\n");
 
-	writer.write_string("\tcall SetMapName(\"" + map->info.name + " \")");
-	writer.write_string("\tcall SetMapDescription(\"" + map->info.description + " \")");
-	writer.write_string("\tSetPlayers(" + std::to_string(map->info.players.size()) + ")\n");
-	writer.write_string("\tSetPlayers(" + std::to_string(map->info.forces.size()) + ")\n");
+	writer.write_string("\tcall SetMapName(\"" + map->info.name + " \")\n");
+	writer.write_string("\tcall SetMapDescription(\"" + map->info.description + " \")\n");
+	writer.write_string("\tcall SetPlayers(" + std::to_string(map->info.players.size()) + ")\n");
+	writer.write_string("\tcall SetTeams(" + std::to_string(map->info.forces.size()) + ")\n");
 	writer.write_string("\tcall SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)\n");
+
+	writer.write_string("\n");
+
+	for (const auto& i : map->units.units) {
+		if (i.id == "sloc") {
+			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i.player) + ", " + std::to_string(i.position.x) + ", " + std::to_string(i.position.y) + ")\n");
+		}
+	}
+
+	writer.write_string("\n");
 
 	writer.write_string("\tcall InitCustomPlayerSlots()\n");
 	writer.write_string("\tcall InitCustomTeams()\n");
@@ -733,6 +1010,8 @@ void Triggers::generate_map_script() {
 
 	std::ofstream output("C:/Users/User/Desktop/testy.txt");
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
+
+
 
 	//hierarchy.map.file_write("war3map.test", writer.buffer);
 }

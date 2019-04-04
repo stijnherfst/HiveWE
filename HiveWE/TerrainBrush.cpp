@@ -348,12 +348,12 @@ void TerrainBrush::apply() {
 		if (change_doodad_heights) {
 			for (auto&& i : map->doodads.doodads) {
 				if (area.contains(i.position.x, i.position.y)) {
-					if (std::find_if(pre_change_doodads.begin(), pre_change_doodads.end(), [i](const Doodad& doodad) { return doodad.editor_id == i.editor_id; }) == pre_change_doodads.end()) {
+					if (std::find_if(pre_change_doodads.begin(), pre_change_doodads.end(), [i](const Doodad& doodad) { return doodad.creation_number == i.creation_number; }) == pre_change_doodads.end()) {
 						pre_change_doodads.push_back(i);
 					}
 					i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y);
 					i.update();
-					post_change_doodads[i.editor_id] = i;
+					post_change_doodads[i.creation_number] = i;
 				}
 			}
 		}

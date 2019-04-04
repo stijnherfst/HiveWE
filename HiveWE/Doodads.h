@@ -3,24 +3,24 @@
 
 struct Doodad {
 	static int auto_increment;
-	std::string id;
-	int variation;
-	glm::vec3 position;
-	glm::vec3 scale;
-	float angle;
+	std::string id = "";
+	int variation = 0;
+	glm::vec3 position = {0, 0, 0};
+	glm::vec3 scale = {0, 0, 0};
+	float angle = 0.f;
 
 	enum class State {
 		invisible_non_solid,
 		visible_non_solid,
 		visible_solid
 	};
-	State state;
-	int life;
+	State state = State::visible_solid;
+	int life = 100;
 
-	int item_table_pointer;
+	int item_table_pointer = -1;
 	std::vector<ItemSet> item_sets;
 
-	int editor_id;
+	int creation_number;
 
 	// Auxilirary data
 	glm::mat4 matrix = glm::mat4(1.f);
@@ -28,7 +28,7 @@ struct Doodad {
 	std::shared_ptr<Texture> pathing;
 
 	Doodad() {
-		editor_id = ++auto_increment;
+		creation_number = ++auto_increment;
 	}
 
 	void update();

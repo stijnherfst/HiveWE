@@ -26,8 +26,7 @@ JassTokenType JassToken::type() const {
 	return type_;
 }
 
-QList<JassToken> const& JassToken::nested_tokens() const
-{
+QList<JassToken> const& JassToken::nested_tokens() const {
 	return nested_tokens_;
 }
 
@@ -35,10 +34,8 @@ int JassToken::length() const {
 	return stop() - start();
 }
 
-QChar JassTokenizer::at(int idx) const
-{
-	if (idx < 0 || idx >= text_size())
-	{
+QChar JassTokenizer::at(int idx) const {
+	if (idx < 0 || idx >= text_size()) {
 		return '\0';
 	}
 
@@ -55,7 +52,6 @@ int JassTokenizer::text_size() const {
 }
 
 JassToken JassTokenizer::parse_comment_block() {
-	JassTokenType type = TOKEN_COMMENT_BLOCK;
 	int stop = idx_;
 	if (at(stop) == '/' && at(stop + 1) == '*') {
 		stop += 2;
@@ -67,15 +63,14 @@ JassToken JassTokenizer::parse_comment_block() {
 		if (at(stop) == '*' && at(stop + 1) == '/') {
 			stop++;
 			break;
-		}
-		else {
+		} else {
 			stop++;
 		}
 	}
 	stop++;
 
 	QString value = text_.mid(idx_, stop - idx_);
-	JassToken token(value, idx_, stop, type);
+	JassToken token(value, idx_, stop, TOKEN_COMMENT_BLOCK);
 
 	idx_ = stop;
 
@@ -86,7 +81,6 @@ JassToken JassTokenizer::parse_string() {
 	QString slash_escapes = "\\nt\"";
 	QString pipe_escapes = "cnr";
 
-	JassTokenType type = TOKEN_STRING;
 	QList<JassToken> nested_tokens;
 
 	int stop = idx_;
@@ -114,7 +108,7 @@ JassToken JassTokenizer::parse_string() {
 	}
 
 	QString value = text_.mid(idx_, stop - idx_);
-	JassToken token(value, idx_, stop, type, nested_tokens);
+	JassToken token(value, idx_, stop, TOKEN_STRING, nested_tokens);
 
 	idx_ = stop;
 
@@ -122,7 +116,6 @@ JassToken JassTokenizer::parse_string() {
 }
 
 JassToken JassTokenizer::parse_rawcode() {
-	JassTokenType type = TOKEN_RAWCODE;
 	int stop = idx_;
 	if (at(stop) == '\'') {
 		stop++;
@@ -133,14 +126,13 @@ JassToken JassTokenizer::parse_rawcode() {
 		if (at(stop) == '\'') {
 			stop++;
 			break;
-		}
-		else {
+		} else {
 			stop++;
 		}
 	}
 
 	QString value = text_.mid(idx_, stop - idx_);
-	JassToken token(value, idx_, stop, type);
+	JassToken token(value, idx_, stop, TOKEN_RAWCODE);
 
 	idx_ = stop;
 
@@ -184,73 +176,70 @@ JassToken JassTokenizer::next() {
 	QList<JassToken> nested_tokens;
 
 	switch (at(idx_).toLatin1()) {
-	case '/':
-		if (idx_ + 1 >= text_size()) {
-			break;
-		}
-
-		switch (at(idx_ + 1).toLatin1()) {
 		case '/':
-			// Technically, changing stop here isn't needed but keeps it somewhat consistent
-			if (at(idx_ + 2) == '!') {
-				type = TOKEN_PREPROCESSOR_COMMENT;
-				stop = idx_ + 3;
-			}
-			else {
-				type = TOKEN_COMMENT_LINE;
-				stop = idx_ + 2;
+			if (idx_ + 1 >= text_size()) {
+				break;
 			}
 
-			while (at(stop) != '\r' && at(stop) != '\n') {
-				stop++;
+			switch (at(idx_ + 1).toLatin1()) {
+				case '/':
+					// Technically, changing stop here isn't needed but keeps it somewhat consistent
+					if (at(idx_ + 2) == '!') {
+						type = TOKEN_PREPROCESSOR_COMMENT;
+						stop = idx_ + 3;
+					} else {
+						type = TOKEN_COMMENT_LINE;
+						stop = idx_ + 2;
+					}
+
+					while (at(stop) != '\r' && at(stop) != '\n') {
+						stop++;
+					}
+					break;
+				case '*':
+					return parse_comment_block();
 			}
 			break;
-		case '*':
-			return parse_comment_block();
-		}
-		break;
-	case '"':
-		return parse_string();
-	case '\'':
-		return parse_rawcode();
-	case '\n':
-		type = TOKEN_NEWLINE;
-		stop = idx_ + 1;
-		break;
-	case '\r':
-		type = TOKEN_NEWLINE;
-		if (at(idx_ + 1) == '\n') {
-			stop = idx_ + 2;
-		}
-		else {
+		case '"':
+			return parse_string();
+		case '\'':
+			return parse_rawcode();
+		case '\n':
+			type = TOKEN_NEWLINE;
 			stop = idx_ + 1;
-		}
-		break;
-	case ',':
-	case '.':
-	case '[':
-	case ']':
-	case '(':
-	case ')':
-		type = TOKEN_OPERATOR;
-		stop = idx_ + 1;
-		break;
-	default:
-		// TODO@Daniel:
-		// Move these out since they will be needed elsewhere as well
-		if (at(idx_).isLetter() || at(idx_) == '_') {
-			type = TOKEN_IDENTIFIER;
-			while (at(stop).isLetter() || at(stop).isDigit() || at(stop) == '_') {
-				stop++;
+			break;
+		case '\r':
+			type = TOKEN_NEWLINE;
+			if (at(idx_ + 1) == '\n') {
+				stop = idx_ + 2;
+			} else {
+				stop = idx_ + 1;
 			}
-		}
-		else if (at(idx_).isDigit()) {
-			type = TOKEN_NUMBER;
-			while (at(stop).isDigit()) {
-				stop++;
+			break;
+		case ',':
+		case '.':
+		case '[':
+		case ']':
+		case '(':
+		case ')':
+			type = TOKEN_OPERATOR;
+			stop = idx_ + 1;
+			break;
+		default:
+			// TODO@Daniel:
+			// Move these out since they will be needed elsewhere as well
+			if (at(idx_).isLetter() || at(idx_) == '_') {
+				type = TOKEN_IDENTIFIER;
+				while (at(stop).isLetter() || at(stop).isDigit() || at(stop) == '_') {
+					stop++;
+				}
+			} else if (at(idx_).isDigit()) {
+				type = TOKEN_NUMBER;
+				while (at(stop).isDigit()) {
+					stop++;
+				}
 			}
-		}
-		break;
+			break;
 	}
 
 	QString value = text_.mid(idx_, stop - idx_);
