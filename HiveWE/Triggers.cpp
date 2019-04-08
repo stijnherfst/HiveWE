@@ -203,8 +203,11 @@ void Triggers::generate_map_script() {
 
 	std::string trigger_script;
 	for (const auto& i : triggers) {
+		if (i.is_comment || !i.is_enabled) {
+			continue;
+		}
 		if (!i.custom_text.empty()) {
-			trigger_script += i.custom_text;
+			trigger_script += i.custom_text + "\n";
 		} else {
 			trigger_script += convert_gui_to_jass(i, initialization_triggers);
 		}
@@ -240,18 +243,17 @@ void Triggers::generate_map_script() {
 	writer.write_string("globals\n");
 
 	for (const auto&[name, variable] : variables) {
+		std::string base_type = get_base_type(variable.type);
 		if (variable.is_array) {
-			writer.write_string("\t" + variable.type + " array udg_" + name + "\n");
+			writer.write_string("\t" + base_type + " array udg_" + name + "\n");
 		} else {
-			std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
-			std::string type = base_type.empty() ? variable.type : base_type;
-			std::string default_value = trigger_data.data("TriggerTypeDefaults", type);
+			std::string default_value = trigger_data.data("TriggerTypeDefaults", base_type);
 
 			if (default_value.empty()) { // handle?
 				default_value = "null";
 			}
 
-			writer.write_string("\t" + variable.type + " udg_" + name + " = " + default_value + "\n");
+			writer.write_string("\t" + base_type + " udg_" + name + " = " + default_value + "\n");
 		}
 	}
 
@@ -277,7 +279,7 @@ void Triggers::generate_map_script() {
 	}
 
 	for (const auto& i : triggers) {
-		if (i.is_comment) {
+		if (i.is_comment || !i.is_enabled) {
 			continue;
 		}
 
@@ -306,7 +308,7 @@ void Triggers::generate_map_script() {
 			const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
 			const std::string type = base_type.empty() ? variable.type : base_type;
 			std::string default_value = trigger_data.data("TriggerTypeDefaults", type);
-			
+
 			if (!variable.is_initialized && default_value.empty()) {
 				continue;
 			}
@@ -315,9 +317,17 @@ void Triggers::generate_map_script() {
 			writer.write_string("\t\texitwhen(i > " + std::to_string(variable.array_size) + ")\n");
 
 			if (variable.is_initialized) {
-				writer.write_string("\t\tset udg_" + name + "[i] = " + variable.initial_value + "\n");
+				if (type == "string" && variable.initial_value.empty()) {
+					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				} else {
+					writer.write_string("\t\tset udg_" + name + "[i] = " + variable.initial_value + "\n");
+				}
 			} else {
-				writer.write_string("\t\tset udg_" + name + "[i] = " + default_value + "\n");
+				if (type == "string") {
+					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+				} else {
+					writer.write_string("\t\tset udg_" + name + "[i] = " + default_value + "\n");
+				}
 			}
 			writer.write_string("\t\tset i = i + 1\n");
 			writer.write_string("\tendloop\n");
@@ -368,7 +378,7 @@ void Triggers::generate_map_script() {
 		for (const auto& j : i.item_sets) {
 			writer.write_string("\t\tcall RandomDistReset()\n");
 			for (const auto& [chance, id] : j.items) {
-				writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+				writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
 			}
 
 			writer.write_string(R"(
@@ -431,7 +441,7 @@ endfunction
 			for (const auto& j : i.item_sets) {
 				writer.write_string("\t\tcall RandomDistReset()\n");
 				for (const auto& [id, chance] : j.items) {
-					writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -489,7 +499,7 @@ endfunction
 			for (const auto& j : i.item_sets) {
 				writer.write_string("\t\tcall RandomDistReset()\n");
 				for (const auto& [id, chance] : j.items) {
-					writer.write_string("\t\tcall RandomDistAdditem('" + id + "', " + std::to_string(chance) + ")\n");
+					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
 				}
 
 				writer.write_string(R"(
@@ -535,7 +545,7 @@ endfunction
 			(i.stop_out_of_range ? "true" : "false") + ", " +
 			std::to_string(i.fade_in_rate) + ", " +
 			std::to_string(i.fade_out_rate) + ", " +
-			i.eax_effect +
+			"\"" + i.eax_effect + "\"" +
 			")\n");
 	
 		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n"); // Sound duration
@@ -700,22 +710,18 @@ endfunction
 		}
 
 		for (const auto& j : i.items) {
-			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", \"" + j.second + "\", " + std::to_string(j.first) + ")\n");
+			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", '" + j.second + "', " + std::to_string(j.first) + ")\n");
 		}
 
 		if (i.item_sets.size()) {
-			writer.write_string("\tcall CreateTrigger()\n");
+			writer.write_string("\tset t = CreateTrigger()\n");
 			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_DEATH)\n");
 			writer.write_string("\tcall TriggerRegisterUnitEvent(t, " + unit_reference + ", EVENT_UNIT_CHANGE_OWNER)\n");
-			writer.write_string("\tcall TriggerAddAction(t, " + unit_reference + ", UnitItemDrops_" + std::to_string(i.creation_number) + ")\n");
+			writer.write_string("\tcall TriggerAddAction(t, function UnitItemDrops_" + std::to_string(i.creation_number) + ")\n");
 		}
 	}
 
 	writer.write_string("endfunction\n");
-
-	writer.write_string("function CreateRegions takes nothing returns nothing\n");
-	writer.write_string("\tlocal weathereffect we\n\n");
-
 	
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
@@ -723,16 +729,19 @@ endfunction
 	writer.write_string("//*\n");
 	writer.write_string(seperator);
 
+	writer.write_string("function CreateRegions takes nothing returns nothing\n");
+	writer.write_string("\tlocal weathereffect we\n\n");
+
 	for (const auto& i : map->regions.regions) {
 		std::string region_name = "gg_rct_" + i.name;
 		// Replace spaces by underscores
 		std::replace(region_name.begin(), region_name.end(), ' ', '_');
-
+		
 		writer.write_string("\tset " + region_name + "= Rect(" +
-			std::to_string(i.left) + "," +
-			std::to_string(i.top) + "," + 
-			std::to_string(i.bottom) + "," +
-			std::to_string(i.right) + ")\n");
+			std::to_string(std::min(i.left, i.right)) + "," +
+			std::to_string(std::min(i.bottom, i.top)) + "," + 
+			std::to_string(std::max(i.left, i.right)) + "," +
+			std::to_string(std::max(i.bottom, i.top)) + ")\n");
 
 		if (!i.weather_id.empty()) {
 			writer.write_string("\tset we = AddWeatherEffect(" + region_name + ", '" + i.weather_id + "')\n");
@@ -756,14 +765,14 @@ endfunction
 		std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
 
 		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset)  + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(i.rotation) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(i.angle_of_attack) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(i.distance) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_ROLL, " + std::to_string(i.roll) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_FIELD_OF_VIEW, " + std::to_string(i.fov) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupField(" + camera_name + ", CAMERA_FIELD_FARZ, " + std::to_string(i.far_z) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(i.target_x) + ", " + std::to_string(i.target_y) + ")\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset)  + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(i.rotation) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(i.angle_of_attack) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(i.distance) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROLL, " + std::to_string(i.roll) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FIELD_OF_VIEW, " + std::to_string(i.fov) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FARZ, " + std::to_string(i.far_z) + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(i.target_x) + ", " + std::to_string(i.target_y) + ", 0.0)\n");
 
 	}
 	
@@ -789,6 +798,9 @@ endfunction
 
 	writer.write_string("function InitCustomTriggers takes nothing returns nothing\n");
 	for (const auto& i : triggers) {
+		if (i.is_comment || !i.is_enabled) {
+			continue;
+		}
 		std::string trigger_name = i.name;
 		// Replace spaces by underscores
 		std::replace(trigger_name.begin(), trigger_name.end(), ' ', '_');
@@ -926,16 +938,26 @@ endfunction
 
 	writer.write_string("function main takes nothing returns nothing\n");
 
+	//std::cout << std::to_string(map->info.camera_bottom_left.x + map->info.camera_complements.x * 128.f - 512.f) << "\n";
+
+	//const float left = map->info.camera_left_top.x  - 512.f;
+	//const float right = map->info.camera_right_top.x  + 512.f;
+
+	//const float bottom = map->info.camera_left_bottom.y  - 256.f;
+	//const float top = map->info.camera_left_top.y  + 256.f;
 
 	std::string soto = "\tcall SetCameraBounds(" +
-		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
-		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
-		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), "  +
-		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
-		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
-		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
-		std::to_string(map->terrain.width * 64.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
-		std::to_string(-map->terrain.width * 64.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM))\n";
+		std::to_string(map->info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(map->info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
+
+		std::to_string(map->info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), "  +
+		std::to_string(map->info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+
+		std::to_string(map->info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
+		std::to_string(map->info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
+
+		std::to_string(map->info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
+		std::to_string(map->info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM))\n";
 
 	writer.write_string(soto);
 
@@ -956,20 +978,17 @@ endfunction
 	writer.write_string("\tcall InitSounds()\n");
 	writer.write_string("\tcall CreateRegions()\n");
 	writer.write_string("\tcall CreateCameras()\n");
-	writer.write_string("\tcall CreateDestructibles()\n");
+	writer.write_string("\tcall CreateDestructables()\n");
 	writer.write_string("\tcall CreateItems()\n");
 	writer.write_string("\tcall CreateUnits()\n");
 	writer.write_string("\tcall InitBlizzard()\n");
-
-	//std::cout << std::to_string(map->info.camera_bottom_left.x) + " " + std::to_string(map->info.camera_bottom_left.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_bottom_right.x) + " " + std::to_string(map->info.camera_bottom_right.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_top_left.x) + " " + std::to_string(map->info.camera_top_left.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_top_right.x) + " " + std::to_string(map->info.camera_top_right.y) + "\n";
+	
+	//std::cout << std::to_string(map->info.camera_left_top.x) + " " + std::to_string(map->info.camera_left_top.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_right_top.x) + " " + std::to_string(map->info.camera_right_top.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_left_bottom.x) + " " + std::to_string(map->info.camera_left_bottom.y) + "\n";
+	//std::cout << std::to_string(map->info.camera_right_bottom.x) + " " + std::to_string(map->info.camera_right_bottom.y) + "\n";
 	//std::cout << std::to_string(map->info.camera_complements.x) + " " + std::to_string(map->info.camera_complements.y) + "\n";
 	//std::cout << std::to_string(map->info.camera_complements.z) + " " + std::to_string(map->info.camera_complements.w) + "\n";
-
-	//writer.write_string("\tcall CreateAllDestructables()\n");
-	//writer.write_string("\tcall CreateUnits()\n");
 
 	writer.write_string("\tcall InitGlobals()\n");
 	writer.write_string("\tcall InitCustomTriggers()\n");
@@ -1043,7 +1062,9 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	}
 
 	if (eca.name == "ForLoopVarMultiple") {
-		std::string variable = "udg_" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer");
+		//std::string variable = "udg_" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer");
+		std::string variable = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer");
+
 		output += "set " + variable + " = ";
 		output += resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
 		output += "loop\n";
@@ -1092,7 +1113,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		std::string toto;
 		for (const auto& i : eca.ecas) {
-			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false);
+			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
 		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
 		pre_actions += toto;
@@ -1136,7 +1157,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	if (eca.name == "SetVariable") {
 		const std::string first = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0));
 		const std::string second = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1));
-		return "set udg_" + first + " = " + second;
+		return "set " + first + " = " + second;
 	}
 
 	return testt(trigger_name, eca.name, eca.parameters, pre_actions, !nested);
@@ -1162,8 +1183,17 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		return output;
 	}
 
+	if (parent_name == "OperatorString") {
+		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+		output += " + ";
+		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + ")";
+		return output;
+	}
+
 	if (parent_name == "ForLoopVar") {
-		std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+		//std::string variable = "udg_" + resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
+
 		output += "set " + variable + " = ";
 		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + "\n";
 		output += "loop\n";
@@ -1193,12 +1223,12 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		return output;
 	}
 
-	if (parent_name == "ForForce") {
+	if (parent_name == "ForForce" || parent_name == "ForGroup") {
 		std::string function_name = generate_function_name(trigger_name);
 
 		std::string tttt = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
 
-		output += "ForForce(";
+		output += parent_name + "(";
 		output += resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
 		output += ", function " + function_name;
 		output += ")";
@@ -1256,8 +1286,22 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 	for (int k = 0; k < parameters.size(); k++) {
 		const auto& i = parameters[k];
+		
+		const std::string type = get_type(parent_name, k);
 
-		output += resolve_parameter(i, trigger_name, pre_actions, get_type(parent_name, k));
+		if (type == "boolexpr") {
+			const std::string function_name = generate_function_name(trigger_name);
+
+			std::string tttt = resolve_parameter(parameters[k], trigger_name, pre_actions, get_type(parent_name, k));
+
+			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+			pre_actions += "\treturn " + tttt + "\n";
+			pre_actions += "endfunction\n\n";
+
+			output += "function " + function_name;
+		} else {
+			output += resolve_parameter(i, trigger_name, pre_actions, get_type(parent_name, k));
+		}
 
 		if (k < parameters.size() - 1) {
 			output += ", ";
@@ -1274,25 +1318,47 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			case TriggerParameter::Type::invalid:
 				std::cout << "Invalid parameter type\n";
 				return "";
-			case TriggerParameter::Type::preset:
+			case TriggerParameter::Type::preset: {
+				const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
+
+				if (get_base_type(preset_type) == "string") {
+					return string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "`", "\"");
+				}
+
 				return trigger_data.data("TriggerParams", parameter.value, 2);
+			}
 			case TriggerParameter::Type::function:
 				return parameter.value + "()";
 			case TriggerParameter::Type::variable: {
 				std::string output = parameter.value;
+
+				if (!output._Starts_with("gg_")) {
+					output = "udg_" + output;
+				}
+
+				if (parameter.value == "Armagedontimerwindow") {
+					puts("s");
+				}
 				if (parameter.is_array) {
 					output += "[" + resolve_parameter(parameter.parameters[0], trigger_name, pre_actions, "integer") + "]";
 				}
 				return output;
 			}
 			case TriggerParameter::Type::string:
-				std::string base_type = trigger_data.data("TriggerTypes", type, 4);
 				std::string import_type = trigger_data.data("TriggerTypes", type, 5);
 
 				if (not import_type.empty()) {
 					return "\"" + string_replaced(parameter.value, "\\", "\\\\") + "\"";
-				} else if (base_type == "string") {
+				} else if (get_base_type(type) == "string") {
 					return "\"" + parameter.value + "\"";
+				} else if (type == "abilcode" || // ToDo this seems like a hack?
+					type == "buffcode" ||
+					type == "destructablecode" ||
+					type == "itemcode" ||
+					type == "ordercode" ||
+					type == "techcode" ||
+					type == "unitcode") {
+					return "'" + parameter.value + "'";
 				} else {
 					return parameter.value;
 				}
@@ -1300,6 +1366,16 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 	}
 	assert(false, "error");
 	return "";
+}
+
+std::string Triggers::get_base_type(const std::string& type) const {
+	std::string base_type = trigger_data.data("TriggerTypes", type, 4);
+
+	if (base_type.empty()) {
+		return type;
+	}
+
+	return base_type;
 }
 
 std::string Triggers::get_type(const std::string& function_name, int parameter) const {
@@ -1387,5 +1463,5 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	return seperator + "// Trigger: " + trigger_name + "\n" + seperator + conditions + pre_actions + actions + seperator + events;
+	return seperator + "// Trigger: " + trigger_name + "\n" + seperator + pre_actions + conditions + actions + seperator + events;
 }

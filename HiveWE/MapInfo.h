@@ -79,10 +79,10 @@ public:
 	std::string description;
 	std::string suggested_players;
 
-	glm::vec2 camera_top_left;
-	glm::vec2 camera_top_right;
-	glm::vec2 camera_bottom_left;
-	glm::vec2 camera_bottom_right;
+	glm::vec2 camera_left_bottom;
+	glm::vec2 camera_right_top;
+	glm::vec2 camera_left_top;
+	glm::vec2 camera_right_bottom;
 
 	glm::ivec4 camera_complements;
 

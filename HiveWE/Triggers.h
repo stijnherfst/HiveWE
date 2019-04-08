@@ -84,6 +84,7 @@ class Triggers {
 	std::string convert_eca_to_jass(const ECA& lines, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
 	std::string testt(const std::string& trigger_name, const std::string& parent_name, const std::vector<TriggerParameter>& parameters, std::string& pre_actions, bool add_call) const;
 	std::string resolve_parameter(const TriggerParameter& parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& base_type, bool add_call = false) const;
+	std::string get_base_type(const std::string& type) const;
 	std::string get_type(const std::string& function_name, int parameter) const;
 	std::string generate_function_name(const std::string & trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;

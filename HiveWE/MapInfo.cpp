@@ -14,10 +14,10 @@ void MapInfo::load(BinaryReader& reader) {
 	description = reader.read_c_string();
 	suggested_players = reader.read_c_string();
 
-	camera_top_left = reader.read<glm::vec2>();
-	camera_top_right = reader.read<glm::vec2>();
-	camera_bottom_left = reader.read<glm::vec2>();
-	camera_bottom_right = reader.read<glm::vec2>();
+	camera_left_bottom = reader.read<glm::vec2>();
+	camera_right_top = reader.read<glm::vec2>();
+	camera_left_top = reader.read<glm::vec2>();
+	camera_right_bottom = reader.read<glm::vec2>();
 
 	camera_complements = reader.read<glm::ivec4>();
 
@@ -170,10 +170,10 @@ void MapInfo::save() const {
 	writer.write_c_string(description);
 	writer.write_c_string(suggested_players);
 
-	writer.write(camera_top_left);
-	writer.write(camera_top_right);
-	writer.write(camera_bottom_left);
-	writer.write(camera_bottom_right);
+	writer.write(camera_left_bottom);
+	writer.write(camera_right_top);
+	writer.write(camera_left_top);
+	writer.write(camera_right_bottom);
 
 	writer.write(camera_complements);
 
