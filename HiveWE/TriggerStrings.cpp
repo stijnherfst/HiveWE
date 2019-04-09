@@ -32,7 +32,8 @@ void TriggerStrings::load(BinaryReader& reader) {
 			}
 			strings.emplace(key, value);
 		} else {
-			auto found = line.find(' ') + 1;
+			size_t found = line.find(' ') + 1;
+			next_id = std::max(next_id, found);
 			int padsize = std::max(0, 3 - ((int)line.size() - (int)found));
 			key = "TRIGSTR_" + std::string(padsize, '0') + line.substr(found);
 		}
@@ -84,9 +85,19 @@ std::string TriggerStrings::string(const std::string& key) const {
 	return strings.at(key);
 }
 
-void TriggerStrings::set_string(const std::string& key, const std::string& value) {
+/// If the key exists then the correspending string in the trigger string file is set
+/// If the key does not exist AND the key empty AND the value is not empty then a string reference is created and assigned to the key variable
+void TriggerStrings::set_string(std::string& key, const std::string& value) {
 	if (key.rfind("TRIGSTR_", 0) != 0) {
-		std::cout << "Invalid TRIGSTR set: " << key << " --- " << value << "\n";
+		if (key.empty() && !value.empty()) {
+			const int padsize = std::max(0, 2 - static_cast<int>(std::log10(next_id)));
+			key = "TRIGSTR_" + std::string(padsize, '0') + std::to_string(++next_id);
+			strings[key] = value;
+			std::cout << "Creating key: " << key << "  " << value << "\n";
+
+			return;
+		}
+		std::cout << "Invalid TRIGSTR set: " << key << " " << value << "\n";
 		return;
 	}
 

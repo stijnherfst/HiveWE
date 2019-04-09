@@ -143,7 +143,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	connect(ui.doodads, &QListWidget::itemDoubleClicked, this, &DoodadPalette::selection_changed);
+	connect(ui.doodads, &QListWidget::itemClicked, this, &DoodadPalette::selection_changed);
 
 	update_list();
 }
