@@ -16,10 +16,14 @@ private:
 	Minimap* minimap = new Minimap(this);
 
 	void closeEvent(QCloseEvent* event) override;
+	void resizeEvent(QResizeEvent* event) override;
+	void moveEvent(QMoveEvent* event) override;
 
 	void switch_camera();
 	void switch_warcraft();
 	void import_heightmap();
+	void save_window_state();
+	void restore_window_state();
 
 	/// Adds the tab to the ribbon and sets the current index to this tab
 	void set_current_custom_tab(QRibbonTab* tab, QString name);

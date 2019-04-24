@@ -31,7 +31,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	hierarchy.init();
 
 	ui.setupUi(this);
-	showMaximized();
+	restore_window_state();
 
 	world_edit_strings.load("UI/WorldEditStrings.txt");
 	world_edit_game_strings.load("UI/WorldEditGameStrings.txt");
@@ -207,6 +207,16 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 	}
 }
 
+void HiveWE::resizeEvent(QResizeEvent* event) {
+	QMainWindow::resizeEvent(event);
+	QTimer::singleShot(0, [=] { save_window_state(); });
+}
+
+void HiveWE::moveEvent(QMoveEvent* event) {
+	QMainWindow::moveEvent(event);
+	QTimer::singleShot(0, [=] { save_window_state(); });
+}
+
 void HiveWE::switch_warcraft() {
 	fs::path directory;
 	do {
@@ -272,6 +282,35 @@ void HiveWE::import_heightmap() {
 	}
 
 	map->terrain.update_ground_heights({ 0, 0, width, height });
+}
+
+void HiveWE::save_window_state() {
+	QSettings settings;
+
+	if (!isMaximized()) {
+		settings.setValue("MainWindow/geometry", saveGeometry());
+	}
+
+	settings.setValue("MainWindow/maximized", isMaximized());
+	settings.setValue("MainWindow/windowState", saveState());
+}
+
+void HiveWE::restore_window_state() {
+	QSettings settings;
+
+	if (settings.contains("MainWindow/windowState")) {
+		restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
+		restoreState(settings.value("MainWindow/windowState").toByteArray());
+		if (settings.value("MainWindow/maximized").toBool()) {
+			showMaximized();
+		}
+		else {
+			showNormal();
+		}
+	}
+	else {
+		showMaximized();
+	}
 }
 
 void HiveWE::set_current_custom_tab(QRibbonTab* tab, QString name) {

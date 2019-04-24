@@ -65,6 +65,6 @@ int main(int argc, char *argv[]) {
 
 
 	HiveWE w;
-	w.showMaximized();
+
 	return QApplication::exec();
 }
