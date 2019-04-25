@@ -190,27 +190,22 @@ void Map::load(const fs::path& path) {
 }
 
 bool Map::save(const fs::path& path, bool switch_working) {
-	std::error_code t;
-
-	mpq::MPQ new_map;
 
 	// If the map is saved in another location we need to copy the map and switch our working W3X to that one
-	const fs::path complete_path = fs::absolute(path, t);
-	if (complete_path != filesystem_path) {
+	std::error_code t;
+	const fs::path temporary_archive = fs::absolute(path, t);
+	if (temporary_archive != filesystem_path) {
 		hierarchy.map.close();
 
 		try {
-			fs::copy_file(filesystem_path, complete_path, fs::copy_options::overwrite_existing);
+			fs::copy_file(filesystem_path, temporary_archive, fs::copy_options::overwrite_existing);
 		} catch (fs::filesystem_error& e) {
 			QMessageBox msgbox;
 			msgbox.setText(e.what());
 			msgbox.exec();
 			return false;
 		}
-
-		hierarchy.map.open(complete_path);
-		//new_map.open(complete_path);
-		//std::swap(new_map.handle, hierarchy.map.handle);
+		hierarchy.map.open(temporary_archive);
 	}
 
 	pathing_map.save();
@@ -233,13 +228,10 @@ bool Map::save(const fs::path& path, bool switch_working) {
 	}
 
 	// Switch back if we do not want to switch currently active W3X
-	if (!switch_working && complete_path != filesystem_path) {
-		//std::swap(new_map.handle, hierarchy.map.handle);
+	if (!switch_working && temporary_archive != filesystem_path) {
 		hierarchy.map.close();
 		hierarchy.map.open(filesystem_path);
 	}
-	
-	new_map.close();
 
 	return true;
 }
