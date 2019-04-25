@@ -28,7 +28,7 @@ bool PathingMap::load(BinaryReader& reader) {
 
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
 	gl->glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
-	uint8_t clear_color = 0;
+	const uint8_t clear_color = 0;
 	gl->glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
 	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -51,7 +51,7 @@ void PathingMap::save() const {
 
 /// Clears an area with zeroes
 void PathingMap::dynamic_clear_area(const QRect& area) {
-	QRect t = area.intersected({ 0, 0, width, height });
+	const QRect t = area.intersected({ 0, 0, width, height });
 
 	for (int j = t.top() * 4; j < t.bottom() * 4; j++) {
 		for (int i = t.left() * 4; i < t.right() * 4; i++) {

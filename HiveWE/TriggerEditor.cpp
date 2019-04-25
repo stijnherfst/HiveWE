@@ -38,6 +38,10 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
 	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { delete ui.editor->widget(index); });
+	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
+		save_changes();
+		map->triggers.generate_map_script();
+	});
 }
 
 void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
@@ -68,7 +72,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		layout->addWidget(edit);
 		edit->setText(QString::fromStdString(trigger.custom_text));
 		connect(this, &TriggerEditor::save_changes, [=]() {
-			files.at(item).get().custom_text = edit->text().toStdString();
+			files.at(item).get().custom_text = edit->text().replace("\r", "").toStdString();
 		});
 	} else {
 		QTreeWidget* edit = new QTreeWidget;

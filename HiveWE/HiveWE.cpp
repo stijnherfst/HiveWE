@@ -27,8 +27,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	}
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
-	hierarchy.warcraft_directory = directory;
-	hierarchy.init();
+	hierarchy.open_casc(directory);
+
+	// Place common.j and blizzard.j in the data folder. Needed by JassHelper
+	BinaryReader common = hierarchy.open_file("scripts/common.j");
+	std::ofstream output("Data/Tools/common.j");
+	output.write((char*)common.buffer.data(), common.buffer.size());
+	BinaryReader blizzard = hierarchy.open_file("scripts/blizzard.j");
+	std::ofstream output2("Data/Tools/blizzard.j");
+	output2.write((char*)blizzard.buffer.data(), blizzard.buffer.size());
 
 	ui.setupUi(this);
 	showMaximized();
@@ -81,11 +88,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
+
 	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.ribbon->open_map, &QPushButton::clicked, this, &HiveWE::load);
-	connect(ui.ribbon->save_map, &QPushButton::clicked, [&]() { map->save(map->filesystem_path); });
+	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
-	connect(ui.ribbon->test_map, &QPushButton::clicked, [&]() { map->play_test(); });
+	connect(ui.ribbon->test_map, &QPushButton::clicked, this, &HiveWE::play_test);
 	connect(ui.ribbon->settings, &QPushButton::clicked, [&]() { new SettingsEditor(this); });
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
 	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
@@ -183,6 +194,11 @@ void HiveWE::load() {
 	}
 }
 
+void HiveWE::save() {
+	emit saving_initiated();
+	map->save(map->filesystem_path);
+};
+
 void HiveWE::save_as() {
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
@@ -195,6 +211,24 @@ void HiveWE::save_as() {
 		emit saving_initiated();
 		map->save(file_name.toStdString());
 	}
+}
+
+void HiveWE::play_test() {
+	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
+	emit saving_initiated();
+	if (!map->save(path, false)) {
+		return;
+	}
+	QProcess* warcraft = new QProcess;
+	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
+	QStringList arguments;
+	arguments << "-loadfile" << QString::fromStdString(path.string());
+
+	QSettings settings;
+	if (settings.value("testArgs").toString() != "")
+		arguments << settings.value("testArgs").toString();
+
+	warcraft->start("\"" + warcraft_path + "\"", arguments);
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
@@ -219,8 +253,7 @@ void HiveWE::switch_warcraft() {
 
 	if (directory != hierarchy.warcraft_directory) {
 		hierarchy.game_data.close();
-		hierarchy.warcraft_directory = directory;
-		hierarchy.init();
+		hierarchy.open_casc(directory);
 	}
 }
 

@@ -61,7 +61,7 @@ public:
 
 	// Ground
 	std::shared_ptr<Shader> ground_shader;
-	std::map<std::string, size_t> ground_texture_to_id;
+	std::map<std::string, int> ground_texture_to_id;
 	std::vector<std::shared_ptr<GroundTexture>> ground_textures;
 	std::unordered_map<std::string, TilePathingg> pathing_options;
 

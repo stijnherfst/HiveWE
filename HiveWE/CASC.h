@@ -22,18 +22,18 @@ namespace casc {
 
 
 		std::vector<uint8_t> read() const;
-		size_t size() const;
-		void close() const;
+		size_t size() const noexcept;
+		void close() const noexcept;
 	};
 
 	class CASC {
 	public:
-		HANDLE handle;
+		HANDLE handle = nullptr;
 
 		CASC() = default;
 
 		explicit CASC(const fs::path& path);
-		explicit CASC(File archive);
+
 		~CASC();
 		CASC(CASC&& move) noexcept {
 			handle = move.handle;

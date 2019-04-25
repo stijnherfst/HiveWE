@@ -28,7 +28,7 @@ public:
 	void remove_file(const fs::path& file) const;
 	bool import_file(const fs::path& path, const fs::path& file) const;
 	void export_file(const fs::path& path, const fs::path& file) const;
-	int file_size(const fs::path& file) const;
+	size_t file_size(const fs::path& file) const;
 
 	/// Returns a flat list of references to ImportItems
 	std::vector<std::reference_wrapper<const ImportItem>> find(std::function<bool(const ImportItem&)> predicate) const;

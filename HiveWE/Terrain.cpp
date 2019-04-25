@@ -684,11 +684,6 @@ void Terrain::update_ground_textures(const QRect& area) {
 
 	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
 		for (int i = update_area.left(); i <= update_area.right(); i++) {
-			Corner& bottom_left = corners[i][j];
-			Corner& bottom_right = corners[i + 1][j];
-			Corner& top_left = corners[i][j + 1];
-			Corner& top_right = corners[i + 1][j + 1];
-
 			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
 
 			if (corners[i][j].cliff || corners[i][j].romp) {

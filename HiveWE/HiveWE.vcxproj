@@ -627,6 +627,7 @@
     </CustomBuild>
     <ClInclude Include="Quadtree.h" />
     <ClInclude Include="Regions.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceManager.h" />
     <CustomBuild Include="SettingsEditor.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
@@ -987,6 +988,14 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">Uic%27ing %(Identity)...</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='ReleaseSymbols|x64'">"$(QTDIR)\bin\uic.exe" -o ".\GeneratedFiles\ui_%(Filename).h" "%(FullPath)"</Command>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="HiveWE.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Data\Icons\Ribbon\icon-script[1].png" />
+    <Image Include="icon1.ico" />
+    <Image Include="icon2.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

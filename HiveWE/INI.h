@@ -15,8 +15,21 @@ namespace ini {
 		std::map<std::string, std::vector<std::string>> section(const std::string& section) const;
 
 		/// To access key data where the value of the key is comma seperated
-		std::string data(const std::string& section, const std::string& key, const int argument = 0) const;
-
+		template<typename T = std::string>
+		T data(const std::string & section, const std::string & key, const int argument = 0) const {
+			if (ini_data.count(section) && ini_data.at(section).count(key) && argument < ini_data.at(section).at(key).size()) { // ToDo C++20 contains
+				if constexpr (std::is_same<T, std::string>()) {
+					return ini_data.at(section).at(key)[argument];
+				} else if constexpr (std::is_same<T, int>()) {
+					return std::stoi(ini_data.at(section).at(key)[argument]);
+				} else if constexpr (std::is_same<T, float>()) {
+					return std::stof(ini_data.at(section).at(key)[argument]);
+				} 
+				static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
+			} else {
+				return T();
+			}
+		}
 
 		/// Retrieves the list of key values
 		std::vector<std::string> whole_data(const std::string& section, const std::string& key) const;

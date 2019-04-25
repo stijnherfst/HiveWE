@@ -2,7 +2,7 @@
 
 void Imports::load(BinaryReader& reader) {
 	int version = reader.read<uint32_t>(); // ToDo check version
-
+	std::cout << "Import version: " << version << "\n";
 	const int entries = reader.read<uint32_t>();
 	for (int i = 0; i < entries; i++) {
 		const int custom = reader.read<uint8_t>();
@@ -140,7 +140,7 @@ void Imports::export_file(const fs::path& path, const fs::path& file) const {
 	output.write(reinterpret_cast<char*>(buffer.data()), buffer.size());
 }
 
-int Imports::file_size(const fs::path& file) const {
+size_t Imports::file_size(const fs::path& file) const {
 	return hierarchy.map.file_open(file).size();
 }
 

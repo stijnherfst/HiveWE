@@ -2,7 +2,8 @@
 
 Hierarchy hierarchy;
 
-void Hierarchy::init() {
+void Hierarchy::open_casc(fs::path directory) {
+	warcraft_directory = directory;
 	std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
 	game_data.open(warcraft_directory / "Data");
 	aliases.load("filealiases.json");
@@ -17,10 +18,10 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	} else if (fs::exists((warcraft_directory / "War3Mod.mpq") / path)) {
 		std::ifstream fin(((warcraft_directory / "War3Mod.mpq") / path).string(), std::ios_base::binary);
 		fin.seekg(0, std::ios::end);
-		size_t fileSize = fin.tellg();
+		const size_t fileSize = fin.tellg();
 		fin.seekg(0, std::ios::beg);
 		std::vector<uint8_t> buffer(fileSize);
-		fin.read(reinterpret_cast<char*>(&buffer[0]), fileSize);
+		fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
 		fin.close();
 		return BinaryReader(buffer);
 	} else if (game_data.file_exists("war3.mpq:"s + tileset + ".mpq:"s + path.string())) {
@@ -35,8 +36,7 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		if (aliases.exists(path.string())) {
 			return open_file(aliases.alias(path.string()));
 		} else {
-			std::cout << "Unable to find file in hierarchy: " << path << "\n";
-			return BinaryReader(std::vector<uint8_t>());
+			throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
 		}
 	}
 	return BinaryReader(file.read());

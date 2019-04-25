@@ -14,18 +14,18 @@ namespace casc {
 		#else
 		unsigned bytes_read;
 		#endif
-		const bool success = CascReadFile(handle, &buffer[0], size, &bytes_read);
+		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
 		if (!success) {
 			std::cout << "Failed to read file: " << GetLastError() << std::endl;
 		}
 		return buffer;
 	}
 
-	size_t File::size() const {
+	size_t File::size() const noexcept {
 		return CascGetFileSize(handle, 0);
 	}
 
-	void File::close() const {
+	void File::close() const noexcept {
 		CascCloseFile(handle);
 	}
 

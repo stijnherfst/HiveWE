@@ -83,14 +83,6 @@ namespace ini {
 		}
 	}
 
-	std::string INI::data(const std::string& section, const std::string& key, const int argument) const {
-		if (ini_data.count(section) && ini_data.at(section).count(key) && argument < ini_data.at(section).at(key).size()) { // ToDo C++20 contains
-			return ini_data.at(section).at(key)[argument];
-		} else {
-			return "";
-		}
-	}
-
 	void INI::set_whole_data(const std::string& section, const std::string& key, const std::string& value) {
 		ini_data[section][key] = { value };
 	}

@@ -9,7 +9,7 @@ public:
 
 	fs::path warcraft_directory;
 
-	void init();
+	void open_casc(fs::path directory);
 
 	BinaryReader open_file(const fs::path& path) const;
 	bool file_exists(const fs::path& path) const;

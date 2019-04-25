@@ -44,6 +44,5 @@ public:
 
 	void load(const fs::path& path);
 	bool save(const fs::path& path, bool switch_working = true);
-	void play_test();
 	void render(int width, int height);
 };

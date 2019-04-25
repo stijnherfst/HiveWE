@@ -938,15 +938,7 @@ endfunction
 
 	writer.write_string("function main takes nothing returns nothing\n");
 
-	//std::cout << std::to_string(map->info.camera_bottom_left.x + map->info.camera_complements.x * 128.f - 512.f) << "\n";
-
-	//const float left = map->info.camera_left_top.x  - 512.f;
-	//const float right = map->info.camera_right_top.x  + 512.f;
-
-	//const float bottom = map->info.camera_left_bottom.y  - 256.f;
-	//const float top = map->info.camera_left_top.y  + 256.f;
-
-	std::string soto = "\tcall SetCameraBounds(" +
+	const std::string camera_bounds = "\tcall SetCameraBounds(" +
 		std::to_string(map->info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
 		std::to_string(map->info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
 
@@ -959,19 +951,19 @@ endfunction
 		std::to_string(map->info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
 		std::to_string(map->info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM))\n";
 
-	writer.write_string(soto);
+	writer.write_string(camera_bounds);
 
-	const std::string terrain_lights = world_edit_data.data("TerrainLights", std::to_string(map->terrain.tileset));
-	const std::string unit_lights = world_edit_data.data("TerrainLights", std::to_string(map->terrain.tileset));
+	const std::string terrain_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + map->terrain.tileset), "\\", "/");
+	const std::string unit_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + map->terrain.tileset), "\\", "/");
 	writer.write_string("\tcall SetDayNightModels(\"" + terrain_lights + "\", \"" + unit_lights + "\")\n");
 
-	const std::string sound_environment = world_edit_data.data("SoundEnvironment", std::to_string(map->terrain.tileset));
+	const std::string sound_environment = string_replaced(world_edit_data.data("SoundEnvironment", ""s + map->terrain.tileset), "\\", "/");
 	writer.write_string("\tcall NewSoundEnvironment(\"" + sound_environment + "\")\n");
 
-	const std::string ambient_day = world_edit_data.data("DayAmbience", std::to_string(map->terrain.tileset));
+	const std::string ambient_day = string_replaced(world_edit_data.data("DayAmbience", ""s + map->terrain.tileset), "\\", "/");
 	writer.write_string("\tcall SetAmbientDaySound(\"" + ambient_day + "\")\n");
 
-	const std::string ambient_night = world_edit_data.data("NightAmbience", std::to_string(map->terrain.tileset));
+	const std::string ambient_night = string_replaced(world_edit_data.data("NightAmbience", ""s + map->terrain.tileset), "\\", "/");
 	writer.write_string("\tcall SetAmbientNightSound(\"" + ambient_night + "\")\n");
 
 	writer.write_string("\tcall SetMapMusic(\"Music\", true, 0)\n");
@@ -982,13 +974,6 @@ endfunction
 	writer.write_string("\tcall CreateItems()\n");
 	writer.write_string("\tcall CreateUnits()\n");
 	writer.write_string("\tcall InitBlizzard()\n");
-	
-	//std::cout << std::to_string(map->info.camera_left_top.x) + " " + std::to_string(map->info.camera_left_top.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_right_top.x) + " " + std::to_string(map->info.camera_right_top.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_left_bottom.x) + " " + std::to_string(map->info.camera_left_bottom.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_right_bottom.x) + " " + std::to_string(map->info.camera_right_bottom.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_complements.x) + " " + std::to_string(map->info.camera_complements.y) + "\n";
-	//std::cout << std::to_string(map->info.camera_complements.z) + " " + std::to_string(map->info.camera_complements.w) + "\n";
 
 	writer.write_string("\tcall InitGlobals()\n");
 	writer.write_string("\tcall InitCustomTriggers()\n");
@@ -1014,7 +999,7 @@ endfunction
 
 	for (const auto& i : map->units.units) {
 		if (i.id == "sloc") {
-			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i.player) + ", " + std::to_string(i.position.x) + ", " + std::to_string(i.position.y) + ")\n");
+			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i.player) + ", " + std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " + std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ")\n");
 		}
 	}
 
@@ -1025,14 +1010,23 @@ endfunction
 	writer.write_string("\tcall InitAllyPriorities()\n");
 
 	writer.write_string("endfunction\n");
-
-
-	std::ofstream output("C:/Users/User/Desktop/testy.txt");
+	
+	fs::path path = QDir::tempPath().toStdString() + "/input.j";
+	std::ofstream output(path);
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
+	output.close();
 
+	QProcess* proc = new QProcess();
+	proc->setWorkingDirectory("Data/Tools");
+	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
+	proc->waitForFinished();
+	QString result = proc->readAllStandardOutput();
 
+	if (result.contains("Compile error")) {
+		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
+	}
 
-	//hierarchy.map.file_write("war3map.test", writer.buffer);
+	hierarchy.map.file_add("Data/Tools/war3map.j", "war3map.j");
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {
@@ -1336,9 +1330,6 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 					output = "udg_" + output;
 				}
 
-				if (parameter.value == "Armagedontimerwindow") {
-					puts("s");
-				}
 				if (parameter.is_array) {
 					output += "[" + resolve_parameter(parameter.parameters[0], trigger_name, pre_actions, "integer") + "]";
 				}
@@ -1364,7 +1355,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 				}
 		}
 	}
-	assert(false, "error");
+	std::cout << "Unable to resolve parameter for trigger: " << trigger_name << " and parameter value " << parameter.value << "\n";
 	return "";
 }
 
