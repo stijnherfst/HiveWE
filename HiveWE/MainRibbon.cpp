@@ -120,11 +120,17 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	new_map->setDisabled(true);
 	addMenuItem(new_map);
 
-	open_map->setText("Open Map");
-	open_map->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
-	open_map->setIconSize({ 32, 32 });
-	open_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	addMenuItem(open_map);
+	open_map_mpq->setText("Open Map (MPQ)");
+	open_map_mpq->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
+	open_map_mpq->setIconSize({ 32, 32 });
+	open_map_mpq->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(open_map_mpq);
+
+	open_map_folder->setText("Open Map (Folder)");
+	open_map_folder->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
+	open_map_folder->setIconSize({ 32, 32 });
+	open_map_folder->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(open_map_folder);
 
 	save_map->setText("Save Map");
 	save_map->setIcon(QIcon("Data/Icons/Ribbon/save32x32.png"));

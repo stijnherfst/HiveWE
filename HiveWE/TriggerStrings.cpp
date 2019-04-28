@@ -74,7 +74,7 @@ void TriggerStrings::save() const {
 		writer.write_string("\r\n}\r\n\r\n");
 	}
 
-	hierarchy.map.file_write("war3map.wts", writer.buffer);
+	hierarchy.map_file_write("war3map.wts", writer.buffer);
 }
 
 std::string TriggerStrings::string(const std::string& key) const {

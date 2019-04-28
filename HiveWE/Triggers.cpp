@@ -192,7 +192,7 @@ void Triggers::save_jass() const {
 		}
 	}
 
-	hierarchy.map.file_write("war3map.wct", writer.buffer);
+	hierarchy.map_file_write("war3map.wct", writer.buffer);
 }
 
 void Triggers::generate_map_script() {
@@ -1026,7 +1026,8 @@ endfunction
 		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
 	}
 
-	hierarchy.map.file_add("Data/Tools/war3map.j", "war3map.j");
+	// ToDo
+	//hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {

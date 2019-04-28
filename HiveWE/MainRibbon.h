@@ -42,7 +42,9 @@ public:
 	QRibbonButton* pathing_palette = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;
-	QToolButton* open_map = new QToolButton;
+	QToolButton* open_map_mpq = new QToolButton;
+	QToolButton* open_map_folder = new QToolButton;
+
 	QToolButton* save_map = new QToolButton;
 	QToolButton* save_map_as = new QToolButton;
 	QToolButton* test_map = new QToolButton;

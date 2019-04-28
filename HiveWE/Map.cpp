@@ -1,11 +1,11 @@
 #include "stdafx.h"
 
 Map::~Map() {
-	hierarchy.map.close();
+//	hierarchy.map.close();
 }
 
 void Map::load(const fs::path& path) {
-	hierarchy.map = mpq::MPQ(path);
+	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path);
 
 	// Units
@@ -70,34 +70,34 @@ void Map::load(const fs::path& path) {
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 	// Trigger strings
-	if (hierarchy.map.file_exists("war3map.wts")) {
-		if (auto t = hierarchy.map.file_open("war3map.wts").read2(); t) {
-			BinaryReader war3map_wts(t.value());
+	if (hierarchy.map_file_exists("war3map.wts")) {
+		//if (auto t = .read2(); t) {
+			BinaryReader war3map_wts = hierarchy.map_file_read("war3map.wts");
 			trigger_strings.load(war3map_wts);
-		}
+		//}
 	}
 
 	// Triggers (GUI and JASS)
-	if (hierarchy.map.file_exists("war3map.wtg")) {
-		BinaryReader war3map_wtg = BinaryReader(hierarchy.map.file_open("war3map.wtg").read());
+	if (hierarchy.map_file_exists("war3map.wtg")) {
+		BinaryReader war3map_wtg = hierarchy.map_file_read("war3map.wtg");
 		triggers.load(war3map_wtg);
 
 		// Custom text triggers (JASS)
-		if (hierarchy.map.file_exists("war3map.wct")) {
-			BinaryReader war3map_wct = BinaryReader(hierarchy.map.file_open("war3map.wct").read());
+		if (hierarchy.map_file_exists("war3map.wct")) {
+			BinaryReader war3map_wct = hierarchy.map_file_read("war3map.wct");
 			triggers.load_jass(war3map_wct);
 		}
 	}
 
 	// Protection check
-	is_protected = !hierarchy.map.file_exists("war3map.wtg");
+	is_protected = !hierarchy.map_file_exists("war3map.wtg");
 	std::cout << "Protected: " << (is_protected ? "True\n" : " Possibly False\n");
 
-	BinaryReader war3map_w3i(hierarchy.map.file_open("war3map.w3i").read());
+	BinaryReader war3map_w3i = hierarchy.map_file_read("war3map.w3i");
 	info.load(war3map_w3i);
 
 	// Terrain
-	BinaryReader war3map_w3e(hierarchy.map.file_open("war3map.w3e").read());
+	BinaryReader war3map_w3e = hierarchy.map_file_read("war3map.w3e");
 	bool success = terrain.load(war3map_w3e);
 	if (!success) {
 		return;
@@ -106,35 +106,35 @@ void Map::load(const fs::path& path) {
 	units.tree.resize(terrain.width, terrain.height);
 
 	// Pathing Map
-	BinaryReader war3map_wpm(hierarchy.map.file_open("war3map.wpm").read());
+	BinaryReader war3map_wpm = hierarchy.map_file_read("war3map.wpm");
 	success = pathing_map.load(war3map_wpm);
 	if (!success) {
 		return;
 	}
 
 	// Imported Files
-	if (hierarchy.map.file_exists("war3map.imp")) {
-		BinaryReader war3map_imp = BinaryReader(hierarchy.map.file_open("war3map.imp").read());
+	if (hierarchy.map_file_exists("war3map.imp")) {
+		BinaryReader war3map_imp = hierarchy.map_file_read("war3map.imp");
 		imports.load(war3map_imp);
 	}
-	if (hierarchy.map.file_exists("war3map.dir")) {
-		BinaryReader war3map_dir = BinaryReader(hierarchy.map.file_open("war3map.dir").read());
+	if (hierarchy.map_file_exists("war3map.dir")) {
+		BinaryReader war3map_dir = hierarchy.map_file_read("war3map.dir");
 		imports.load_dir_file(war3map_dir);
 	}
 
 	imports.populate_uncategorized();
 
 	// Doodads
-	BinaryReader war3map_doo(hierarchy.map.file_open("war3map.doo").read());
+	BinaryReader war3map_doo = hierarchy.map_file_read("war3map.doo");
 	success = doodads.load(war3map_doo, terrain);
 
-	if (hierarchy.map.file_exists("war3map.w3d")) {
-		BinaryReader war3map_w3d = BinaryReader(hierarchy.map.file_open("war3map.w3d").read());
+	if (hierarchy.map_file_exists("war3map.w3d")) {
+		BinaryReader war3map_w3d = hierarchy.map_file_read("war3map.w3d");
 		doodads.load_doodad_modifications(war3map_w3d);
 	}
 
-	if (hierarchy.map.file_exists("war3map.w3b")) {
-		BinaryReader war3map_w3b = BinaryReader(hierarchy.map.file_open("war3map.w3b").read());
+	if (hierarchy.map_file_exists("war3map.w3b")) {
+		BinaryReader war3map_w3b = hierarchy.map_file_read("war3map.w3b");
 		doodads.load_destructible_modifications(war3map_w3b);
 	}
 
@@ -150,18 +150,18 @@ void Map::load(const fs::path& path) {
 	pathing_map.upload_dynamic_pathing();
 
 	// Units/Items
-	if (hierarchy.map.file_exists("war3map.w3u")) {
-		BinaryReader war3map_w3u = BinaryReader(hierarchy.map.file_open("war3map.w3u").read());
+	if (hierarchy.map_file_exists("war3map.w3u")) {
+		BinaryReader war3map_w3u = hierarchy.map_file_read("war3map.w3u");
 		units.load_unit_modifications(war3map_w3u);
 	}
 
-	if (hierarchy.map.file_exists("war3map.w3t")) {
-		BinaryReader war3map_w3t = BinaryReader(hierarchy.map.file_open("war3map.w3t").read());
+	if (hierarchy.map_file_exists("war3map.w3t")) {
+		BinaryReader war3map_w3t = hierarchy.map_file_read("war3map.w3t");
 		units.load_item_modifications(war3map_w3t);
 	}
 
-	if (hierarchy.map.file_exists("war3mapUnits.doo")) {
-		BinaryReader war3mapUnits_doo(hierarchy.map.file_open("war3mapUnits.doo").read());
+	if (hierarchy.map_file_exists("war3mapUnits.doo")) {
+		BinaryReader war3mapUnits_doo = hierarchy.map_file_read("war3mapUnits.doo");
 		units_loaded = units.load(war3mapUnits_doo, terrain);
 
 		if (units_loaded) {
@@ -169,18 +169,18 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-	if (hierarchy.map.file_exists("war3map.w3r")) {
-		BinaryReader war3map_w3r(hierarchy.map.file_open("war3map.w3r").read());
+	if (hierarchy.map_file_exists("war3map.w3r")) {
+		BinaryReader war3map_w3r = hierarchy.map_file_read("war3map.w3r");
 		regions.load(war3map_w3r);
 	}
 
-	if (hierarchy.map.file_exists("war3map.w3c")) {
-		BinaryReader war3map_w3c(hierarchy.map.file_open("war3map.w3c").read());
+	if (hierarchy.map_file_exists("war3map.w3c")) {
+		BinaryReader war3map_w3c = hierarchy.map_file_read("war3map.w3c");
 		cameras.load(war3map_w3c);
 	}
 
-	if (hierarchy.map.file_exists("war3map.w3s")) {
-		BinaryReader war3map_w3s(hierarchy.map.file_open("war3map.w3s").read());
+	if (hierarchy.map_file_exists("war3map.w3s")) {
+		BinaryReader war3map_w3s = hierarchy.map_file_read("war3map.w3s");
 		sounds.load(war3map_w3s);
 	}
 
@@ -190,23 +190,26 @@ void Map::load(const fs::path& path) {
 }
 
 bool Map::save(const fs::path& path, bool switch_working) {
+	//fs::create_directory(path);
+	//// If the map is saved in another location we need to copy the map and switch our working W3X to that one
+	//std::error_code t;
+	//const fs::path temporary_archive = fs::absolute(path, t);
+	//if (temporary_archive != filesystem_path) {
+	//	hierarchy.map_directory = temporary_archive;
 
-	// If the map is saved in another location we need to copy the map and switch our working W3X to that one
-	std::error_code t;
-	const fs::path temporary_archive = fs::absolute(path, t);
-	if (temporary_archive != filesystem_path) {
-		hierarchy.map.close();
+	//	try {
+	//		fs::copy_file(filesystem_path, temporary_archive, fs::copy_options::recursive);
+	//	} catch (fs::filesystem_error& e) {
+	//		QMessageBox msgbox;
+	//		msgbox.setText(e.what());
+	//		msgbox.exec();
+	//		return false;
+	//	}
 
-		try {
-			fs::copy_file(filesystem_path, temporary_archive, fs::copy_options::overwrite_existing);
-		} catch (fs::filesystem_error& e) {
-			QMessageBox msgbox;
-			msgbox.setText(e.what());
-			msgbox.exec();
-			return false;
-		}
-		hierarchy.map.open(temporary_archive);
-	}
+	//}
+
+	//fs::create_directory(path / "test");
+	//hierarchy.map_directory = path / "test";
 
 	pathing_map.save();
 	terrain.save();
@@ -221,17 +224,17 @@ bool Map::save(const fs::path& path, bool switch_working) {
 	imports.save();
 	imports.save_dir_file();
 
-	bool result = SFileCompactArchive(hierarchy.map.handle, nullptr, false);
-	if (!result) {
-		std::cout << "Compacting error code: " << GetLastError() << "\n";
-		QMessageBox::information(nullptr, "Compacting archive failed", "Compacting the map archive failed. This is not a crucial error, but the size of your map file will be slightly bigger");
-	}
+	//bool result = SFileCompactArchive(hierarchy.map.handle, nullptr, false);
+	//if (!result) {
+	//	std::cout << "Compacting error code: " << GetLastError() << "\n";
+	//	QMessageBox::information(nullptr, "Compacting archive failed", "Compacting the map archive failed. This is not a crucial error, but the size of your map file will be slightly bigger");
+	//}
 
-	// Switch back if we do not want to switch currently active W3X
-	if (!switch_working && temporary_archive != filesystem_path) {
-		hierarchy.map.close();
-		hierarchy.map.open(filesystem_path);
-	}
+	//// Switch back if we do not want to switch currently active W3X
+	//if (!switch_working && temporary_archive != filesystem_path) {
+	//	hierarchy.map.close();
+	//	hierarchy.map.open(filesystem_path);
+	//}
 
 	return true;
 }

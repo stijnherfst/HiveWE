@@ -182,7 +182,7 @@ void Units::save() const {
 	write_units(units);
 	write_units(items);
 
-	hierarchy.map.file_write("war3mapUnits.doo", writer.buffer);
+	hierarchy.map_file_write("war3mapUnits.doo", writer.buffer);
 }
 
 void Units::load_unit_modifications(BinaryReader& reader) {

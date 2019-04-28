@@ -292,5 +292,5 @@ void MapInfo::save() const {
 		}
 	}
 
-	hierarchy.map.file_write("war3map.w3i", writer.buffer);
+	hierarchy.map_file_write("war3map.w3i", writer.buffer);
 }

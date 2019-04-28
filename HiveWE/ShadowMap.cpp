@@ -21,5 +21,5 @@ void ShadowMap::save() const {
 	BinaryWriter writer;
 	writer.write_vector<uint8_t>(cells);
 
-	hierarchy.map.file_write("war3map.shd", writer.buffer);
+	hierarchy.map_file_write("war3map.shd", writer.buffer);
 }

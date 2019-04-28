@@ -46,7 +46,7 @@ void PathingMap::save() const {
 	writer.write<uint32_t>(height);
 	writer.write_vector<uint8_t>(pathing_cells_static);
 
-	hierarchy.map.file_write("war3map.wpm", writer.buffer);
+	hierarchy.map_file_write("war3map.wpm", writer.buffer);
 }
 
 /// Clears an area with zeroes

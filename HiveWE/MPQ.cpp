@@ -81,7 +81,7 @@ namespace mpq {
 		return file;
 	}
 	
-	void MPQ::file_write(const fs::path& path, const std::vector<uint8_t>& data) {
+	void MPQ::file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
 		HANDLE out_handle;
 		bool success = SFileCreateFile(handle , path.string().c_str(), 0, static_cast<DWORD>(data.size()), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &out_handle);
 		if (!success) {

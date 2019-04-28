@@ -8,7 +8,8 @@ class HiveWE : public QMainWindow {
 public:
 	explicit HiveWE(QWidget* parent = nullptr);
 
-	void load();
+	void load_folder();
+	void load_mpq();
 	void save();
 	void save_as();
 	void play_test();

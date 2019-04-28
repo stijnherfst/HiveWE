@@ -1,0 +1,47 @@
+﻿STRING 1
+{
+Player 1
+}
+
+STRING 2
+{
+Force 1
+}
+
+STRING 3
+// Units: h000 (gfh), Name (Name)
+{
+gfh
+}
+
+STRING 4
+{
+Just another Warcraft III map
+}
+
+STRING 5
+{
+Any
+}
+
+STRING 6
+{
+Nondescript
+}
+
+STRING 7
+{
+Unknown
+}
+
+STRING 46
+{
+Inventory
+type -inventory to go to your inventory pick up an item to return to town if you get stuck somewhere you might have to use -suicide to kill yourself
+}
+
+STRING 47
+{
+Becoming a master isn't easy maximum level is 9999 though so theres always room for improvement!
+}
+

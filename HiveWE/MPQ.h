@@ -52,10 +52,9 @@ namespace mpq {
 		bool compact();
 
 		File file_open(const fs::path& path) const;
-		void file_write(const fs::path& path, const std::vector<uint8_t>& data);
+		void file_write(const fs::path& path, const std::vector<uint8_t>& data) const;
 		void file_remove(const fs::path& path) const;
 		bool file_exists(const fs::path& path) const;
 		void file_add(const fs::path& path, const fs::path& new_path) const;
 	};
-
 }

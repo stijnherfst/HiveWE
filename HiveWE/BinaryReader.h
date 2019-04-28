@@ -5,7 +5,7 @@ public:
 	std::vector<uint8_t> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(const std::vector<uint8_t>& buffer) : buffer(buffer) {}
+	explicit BinaryReader(std::vector<uint8_t> buffer) : buffer(buffer) {}
 
 	template<typename T>
 	T read() {

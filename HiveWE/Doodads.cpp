@@ -108,7 +108,7 @@ void Doodads::save() const {
 		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y) - 2);
 	}
 
-	hierarchy.map.file_write("war3map.doo", writer.buffer);
+	hierarchy.map_file_write("war3map.doo", writer.buffer);
 }
 
 

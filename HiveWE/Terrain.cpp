@@ -297,7 +297,7 @@ void Terrain::save() const {
 		}
 	}
 
-	hierarchy.map.file_write("war3map.w3e", writer.buffer);
+	hierarchy.map_file_write("war3map.w3e", writer.buffer);
 }
 
 void Terrain::render() const {

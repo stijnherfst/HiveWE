@@ -98,7 +98,7 @@ void ImportManager::remove_item(QTreeWidgetItem* item) {
 					QMessageBox::Yes | QMessageBox::No);
 
 	if (choice == QMessageBox::Yes) {
-		hierarchy.map.file_remove(item->text(0).toStdString());
+		hierarchy.map_file_remove(item->text(0).toStdString());
 		delete item;
 		items_changed();
 	}
@@ -119,7 +119,7 @@ void ImportManager::edit_item(QTreeWidgetItem* item) {
 	editor->ui.customPath->setChecked(item->text(3) == "Yes");
 
 	connect(editor, &ImportManagerEdit::accepted, [&](bool custom, QString full_path) {
-		SFileRenameFile(hierarchy.map.handle, item->text(4).toStdString().c_str(), full_path.toStdString().c_str());
+//		SFileRenameFile(hierarchy.map.handle, item->text(4).toStdString().c_str(), full_path.toStdString().c_str());
 		item->setText(4, full_path);
 		item->setText(3, custom ? "Yes" : "No");
 		editor->close();

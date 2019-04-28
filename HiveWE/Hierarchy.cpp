@@ -12,11 +12,10 @@ void Hierarchy::open_casc(fs::path directory) {
 BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	casc::File file;
 
-	if (map.file_exists(path)) {
-		auto file_content = map.file_open(path).read();
-		return BinaryReader(file_content);
-	} else if (fs::exists((warcraft_directory / "War3Mod.mpq") / path)) {
-		std::ifstream fin(((warcraft_directory / "War3Mod.mpq") / path).string(), std::ios_base::binary);
+	if (map_file_exists(path)) {
+		return map_file_read(path);
+	} else if (fs::exists(warcraft_directory / "War3Mod.mpq" / path)) {
+		std::ifstream fin(warcraft_directory / "War3Mod.mpq" / path, std::ios_base::binary);
 		fin.seekg(0, std::ios::end);
 		const size_t fileSize = fin.tellg();
 		fin.seekg(0, std::ios::beg);
@@ -43,11 +42,48 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 }
 
 bool Hierarchy::file_exists(const fs::path& path) const {
-	return map.file_exists(path)
+	if (path.empty()) {
+		return false;
+	}
+
+	return map_file_exists(path)
 		|| fs::exists((warcraft_directory / "War3Mod.mpq") / path)
 		|| game_data.file_exists("war3.mpq:"s + tileset + ".mpq:"s + path.string())
 		|| game_data.file_exists("enus-war3local.mpq:"s + path.string())
 		|| game_data.file_exists("war3.mpq:"s + path.string())
 		|| game_data.file_exists("deprecated.mpq:"s + path.string())
 		|| ((aliases.exists(path.string())) ? file_exists(aliases.alias(path.string())) : false );
+}
+
+BinaryReader Hierarchy::map_file_read(const fs::path& path) const {
+	std::ifstream fin(map_directory / path, std::ios_base::binary);
+	fin.seekg(0, std::ios::end);
+	const size_t fileSize = fin.tellg();
+	fin.seekg(0, std::ios::beg);
+	std::vector<uint8_t> buffer(fileSize);
+	fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+	fin.close();
+	return BinaryReader(buffer);
+}
+
+void Hierarchy::map_file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
+	std::ofstream outfile(map_directory / path, std::ios::binary);
+
+	if (!outfile) { 
+		throw std::runtime_error("Error writing file " + path.string());
+	}
+
+	outfile.write(reinterpret_cast<char const*>(data.data()), data.size());
+}
+
+void Hierarchy::map_file_remove(const fs::path& path) const {
+	fs::remove(map_directory / path);
+}
+
+bool Hierarchy::map_file_exists(const fs::path& path) const {
+	return fs::exists(map_directory / path);
+}
+
+void Hierarchy::map_file_rename(const fs::path& original, const fs::path& renamed) const {
+	fs::rename(map_directory / original, map_directory / renamed);
 }
