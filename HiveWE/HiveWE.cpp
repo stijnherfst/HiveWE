@@ -88,16 +88,17 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_folder, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
 
 	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
-	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
+	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
+	connect(ui.ribbon->export_mpq, &QPushButton::clicked, this, &HiveWE::export_mpq);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, this, &HiveWE::play_test);
 	connect(ui.ribbon->settings, &QPushButton::clicked, [&]() { new SettingsEditor(this); });
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
@@ -156,7 +157,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	//map->load("C:\\Users\\User\\stack\\Projects\\MCFC\\7.3\\Backup\\MCFC 7.3.w3x");
-	map->load("Data/Test Map");
+	map->load("Data/Test Map/");
 
 
 	//QTimer::singleShot(50, [this]() {
@@ -175,71 +176,87 @@ void HiveWE::load_folder() {
 		QFileDialog::ShowDirsOnly
 		| QFileDialog::DontResolveSymlinks);
 
-
-
-	if (folder_name != "") {
-		settings.setValue("openDirectory", folder_name);
-
-		fs::path directory = folder_name.toStdString();
-
-		if (!fs::exists(directory / "war3map.w3i")) {
-			QMessageBox::information(this, "Opening map failed", "Opening the map failed. Select a map that is saved in folder mode or use the Open Map (MPQ) option");
-			return;
-		}
-		auto t = std::chrono::steady_clock::now();
-
-		delete map;
-		map = new Map();
-
-		connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-		
-		map->load(directory);
-		std::cout << (std::chrono::steady_clock::now() - t).count() / 1'000'000;
-
+	if (folder_name == "") {
+		return;
 	}
+
+	settings.setValue("openDirectory", folder_name);
+
+	fs::path directory = folder_name.toStdString();
+
+	if (!fs::exists(directory / "war3map.w3i")) {
+		QMessageBox::information(this, "Opening map failed", "Opening the map failed. Select a map that is saved in folder mode or use the Open Map (MPQ) option");
+		return;
+	}
+
+	delete map;
+	map = new Map();
+
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+		
+	map->load(directory);
+	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
-/// Load MPQ is a prestep to the load_folder as in that it will extract the files from the MPQ
+/// Load MPQ will extract all files from the archive in a user specified location
 void HiveWE::load_mpq() {
 	QSettings settings;
 
+	// Choose an MPQ
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
 		"Warcraft III Scenario (*.w3m *.w3x)");
-	if (file_name != "") {
-		settings.setValue("openDirectory", file_name);
 
-		auto t = std::chrono::steady_clock::now();
-		// Try opening the archive
-		HANDLE handle;
-		bool success = SFileOpenArchive(fs::path(file_name.toStdString()).c_str(), 0, 0, &handle);
-		if (!success) {
-			QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
-			return;
-		}
-
-		SFILE_FIND_DATA file_data;
-		HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
-
-		fs::path dir = "C:/Users/User/Desktop/Test";
-
-		fs::create_directories(dir / file_data.cFileName);
-		SFileExtractFile(handle, file_data.cFileName, (dir / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
-
-		while (SFileFindNextFile(find_handle, &file_data)) {
-			SFileExtractFile(handle, file_data.cFileName, (dir / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
-		}
-		SFileFindClose(find_handle);
-		SFileCloseArchive(handle);
-		std::cout << (std::chrono::steady_clock::now() - t).count() / 1'000'000;
-		delete map;
-		map = new Map();
-
-		connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-
-		map->load(dir);
-		std::cout << (std::chrono::steady_clock::now() - t).count() / 1'000'000;
+	if (file_name == "") {
+		return;
 	}
+
+	settings.setValue("openDirectory", file_name);
+
+	fs::path mpq = file_name.toStdString();
+
+	// Try opening the archive
+	HANDLE handle;
+	bool success = SFileOpenArchive(mpq.c_str(), 0, 0, &handle);
+	if (!success) {
+		QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+		return;
+	}
+
+	// Select a location to unpack the map
+	fs::path unpack_location = QFileDialog::getExistingDirectory(this, "Choose Unpacking Location",
+		settings.value("openDirectory", QDir::current().path()).toString(),
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks).toStdString();
+
+	if (unpack_location.empty()) {
+		return;
+	}
+
+	fs::path directory = unpack_location / mpq.filename();
+
+	// Unpack archive
+	SFILE_FIND_DATA file_data;
+	HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
+
+	fs::create_directories((directory / file_data.cFileName).parent_path());
+	SFileExtractFile(handle, file_data.cFileName, (directory / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
+
+	while (SFileFindNextFile(find_handle, &file_data)) {
+		fs::create_directories((directory / file_data.cFileName).parent_path());
+		SFileExtractFile(handle, file_data.cFileName, (directory / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
+	}
+	SFileFindClose(find_handle);
+	SFileCloseArchive(handle);
+
+	// Load map
+	delete map;
+	map = new Map();
+
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+
+	map->load(directory);
+	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::save() {
@@ -249,28 +266,60 @@ void HiveWE::save() {
 
 void HiveWE::save_as() {
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->name);
 
-	QString file_name = QFileDialog::getSaveFileName(this, "Save File",
+	fs::path file_name = QFileDialog::getExistingDirectory(this, "Choose Save Location",
+		settings.value("openDirectory", QDir::current().path()).toString(),
+		QFileDialog::ShowDirsOnly
+		| QFileDialog::DontResolveSymlinks).toStdString();
+
+	if (file_name.empty()) {
+		return;
+	}
+
+	fs::create_directory(file_name / map->name);
+	emit saving_initiated();
+	map->save(file_name / map->name);
+
+	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
+}
+
+void HiveWE::export_mpq() {
+	QSettings settings;
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
+	QString file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ",
 		directory,
 		"Warcraft III Scenario (*.w3x)");
 
-	if (file_name != "") {
-		emit saving_initiated();
-		map->save(file_name.toStdString());
+	if (file_name == "") {
+		return;
 	}
+
+	emit saving_initiated();
+	map->save(file_name.toStdString());
+
+	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
+
+	HANDLE handle;
+	SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+
+	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
+		if (entry.is_regular_file()) {
+			SFileAddFileEx(handle, entry.path().c_str(), entry.path().lexically_relative(map->filesystem_path).string().c_str(), MPQ_FILE_COMPRESS, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+		}
+	}
+	SFileCloseArchive(handle);
 }
 
 void HiveWE::play_test() {
-	fs::path path = QDir::tempPath().toStdString() + "/temp.w3x";
 	emit saving_initiated();
-	if (!map->save(path, false)) {
+	if (!map->save(map->filesystem_path)) {
 		return;
 	}
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
 	QStringList arguments;
-	arguments << "-loadfile" << QString::fromStdString(path.string());
+	arguments << "-loadfile" << QString::fromStdString(map->filesystem_path.string());
 
 	QSettings settings;
 	if (settings.value("testArgs").toString() != "")

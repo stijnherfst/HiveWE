@@ -33,6 +33,7 @@ public:
 	bool render_debug = false;
 
 	fs::path filesystem_path;
+	std::string name;
 
 	// For instancing
 	std::vector<StaticMesh*> meshes;
@@ -40,9 +41,7 @@ public:
 	std::chrono::steady_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 	double total_time;
 
-	~Map();
-
 	void load(const fs::path& path);
-	bool save(const fs::path& path, bool switch_working = true);
+	bool save(const fs::path& path);
 	void render(int width, int height);
 };

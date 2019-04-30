@@ -12,6 +12,7 @@ public:
 	void load_mpq();
 	void save();
 	void save_as();
+	void export_mpq();
 	void play_test();
 
 private:

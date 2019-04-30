@@ -120,17 +120,17 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	new_map->setDisabled(true);
 	addMenuItem(new_map);
 
-	open_map_mpq->setText("Open Map (MPQ)");
-	open_map_mpq->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
-	open_map_mpq->setIconSize({ 32, 32 });
-	open_map_mpq->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	addMenuItem(open_map_mpq);
-
 	open_map_folder->setText("Open Map (Folder)");
 	open_map_folder->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
 	open_map_folder->setIconSize({ 32, 32 });
 	open_map_folder->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 	addMenuItem(open_map_folder);
+
+	open_map_mpq->setText("Open Map (MPQ)");
+	open_map_mpq->setIcon(QIcon("Data/Icons/Ribbon/open32x32.png"));
+	open_map_mpq->setIconSize({ 32, 32 });
+	open_map_mpq->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(open_map_mpq);
 
 	save_map->setText("Save Map");
 	save_map->setIcon(QIcon("Data/Icons/Ribbon/save32x32.png"));
@@ -143,6 +143,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	save_map_as->setIconSize({ 32, 32 });
 	save_map_as->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
 	addMenuItem(save_map_as);
+
+	export_mpq->setText("Export MPQ");
+	export_mpq->setIcon(QIcon("Data/Icons/Ribbon/saveas32x32.png"));
+	export_mpq->setIconSize({ 32, 32 });
+	export_mpq->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+	addMenuItem(export_mpq);
 
 	test_map->setText("Test Map");
 	test_map->setIcon(QIcon("Data/Icons/Ribbon/test32x32.ico"));

@@ -1,12 +1,9 @@
 #include "stdafx.h"
 
-Map::~Map() {
-//	hierarchy.map.close();
-}
-
 void Map::load(const fs::path& path) {
 	hierarchy.map_directory = path;
-	filesystem_path = fs::absolute(path);
+	filesystem_path = fs::absolute(path) / "";
+	name = (*--(--filesystem_path.end())).string();
 
 	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
@@ -189,27 +186,21 @@ void Map::load(const fs::path& path) {
 	loaded = true;
 }
 
-bool Map::save(const fs::path& path, bool switch_working) {
-	//fs::create_directory(path);
-	//// If the map is saved in another location we need to copy the map and switch our working W3X to that one
-	//std::error_code t;
-	//const fs::path temporary_archive = fs::absolute(path, t);
-	//if (temporary_archive != filesystem_path) {
-	//	hierarchy.map_directory = temporary_archive;
+bool Map::save(const fs::path& path) {
+	if (!fs::equivalent(path, filesystem_path)) {
+		try {
+			fs::copy(filesystem_path, fs::absolute(path), fs::copy_options::recursive);
+		} catch (fs::filesystem_error& e) {
+			QMessageBox msgbox;
+			msgbox.setText(e.what());
+			msgbox.exec();
+			return false;
+		}
 
-	//	try {
-	//		fs::copy_file(filesystem_path, temporary_archive, fs::copy_options::recursive);
-	//	} catch (fs::filesystem_error& e) {
-	//		QMessageBox msgbox;
-	//		msgbox.setText(e.what());
-	//		msgbox.exec();
-	//		return false;
-	//	}
+	}
 
-	//}
-
-	//fs::create_directory(path / "test");
-	//hierarchy.map_directory = path / "test";
+	filesystem_path = fs::absolute(path) / "";
+	name = (*--(--filesystem_path.end())).string();
 
 	pathing_map.save();
 	terrain.save();
@@ -223,18 +214,6 @@ bool Map::save(const fs::path& path, bool switch_working) {
 
 	imports.save();
 	imports.save_dir_file();
-
-	//bool result = SFileCompactArchive(hierarchy.map.handle, nullptr, false);
-	//if (!result) {
-	//	std::cout << "Compacting error code: " << GetLastError() << "\n";
-	//	QMessageBox::information(nullptr, "Compacting archive failed", "Compacting the map archive failed. This is not a crucial error, but the size of your map file will be slightly bigger");
-	//}
-
-	//// Switch back if we do not want to switch currently active W3X
-	//if (!switch_working && temporary_archive != filesystem_path) {
-	//	hierarchy.map.close();
-	//	hierarchy.map.open(filesystem_path);
-	//}
 
 	return true;
 }
