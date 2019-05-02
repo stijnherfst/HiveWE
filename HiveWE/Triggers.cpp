@@ -37,15 +37,30 @@ void Triggers::load(BinaryReader& reader) {
 		return;
 	}
 
-	int version = reader.read<uint32_t>();
+	const int version = reader.read<uint32_t>();
+	if (version != 8) {
+		std::cout << "Unknown war3map.wtg version: " << version << "\n";
+	}
+	const int categories_count = reader.read<uint32_t>();
+	for (int i = 0; i < categories_count; i++) {
+		TriggerCategory category;
+		category.id = reader.read<uint32_t>();
 
-	categories.resize(reader.read<uint32_t>());
-	for (auto&& i : categories) {
-		i.id = reader.read<uint32_t>();
-		i.name = reader.read_c_string();
+		category.name = reader.read_c_string();
+		std::replace(category.name.begin(), category.name.end(), '/', '-');
+		std::replace(category.name.begin(), category.name.end(), '\\', '-');
+		std::replace(category.name.begin(), category.name.end(), '?', '-');
+		std::replace(category.name.begin(), category.name.end(), '*', '-');
+		std::replace(category.name.begin(), category.name.end(), '<', '-');
+		std::replace(category.name.begin(), category.name.end(), '>', '-');
+		std::replace(category.name.begin(), category.name.end(), '|', '-');
+		std::replace(category.name.begin(), category.name.end(), ':', '-');
+		std::replace(category.name.begin(), category.name.end(), '\"', '-');
+
 		if (version == 7) {
-			i.is_comment = reader.read<uint32_t>();
+			category.is_comment = reader.read<uint32_t>();
 		}
+		categories.emplace(category.id, category);
 	}
 
 	reader.advance(4); // Unknown always 0
@@ -131,6 +146,8 @@ void Triggers::load(BinaryReader& reader) {
 		}
 	};
 
+	fs::create_directory(map->filesystem_path / "Triggers");
+
 	triggers.resize(reader.read<uint32_t>());
 	for (auto&& i : triggers) {
 		i.id = next_id++;
@@ -148,6 +165,13 @@ void Triggers::load(BinaryReader& reader) {
 		for (auto&& j : i.lines) {
 			parse_eca_structure(j, false);
 		}
+		if (i.lines.size()) {
+			BinaryWriter writer;
+			writer.write_string("This is a GUI file that is just used so that something appears in the trigger editor");
+
+			fs::create_directory(map->filesystem_path / "Triggers" / categories[i.category_id].name);
+			hierarchy.map_file_write("Triggers/" + categories[i.category_id].name + "/" + i.name + ".gui", {});
+		}
 	}
 }
 
@@ -155,15 +179,27 @@ void Triggers::load_jass(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
 	if (version == 1) {
-		global_jass_comment = reader.read_c_string();
-		global_jass = reader.read_string(reader.read<uint32_t>());
+		//global_jass_comment = reader.read_c_string();
+		//global_jass = reader.read_string(reader.read<uint32_t>());
+		//hierarchy.map_file_write("global jass.j", reader.read_vector<uint8_t>(reader.read<uint32_t>()));
+		BinaryWriter writer;
+		writer.write_string("/*");
+		writer.write_string(reader.read_c_string());
+		writer.write_string("*/\n\n");
+
+		writer.write_string(reader.read_string(reader.read<uint32_t>()));
+		hierarchy.map_file_write("Triggers/global jass.j", writer.buffer);
 	}
 
 	reader.advance(4);
 	for (auto&& i : triggers) {
 		const int size = reader.read<uint32_t>();
 		if (size > 0) {
-			i.custom_text = reader.read_string(size);
+			//i.custom_text = reader.read_string(size);
+
+
+			fs::create_directory(map->filesystem_path / "Triggers" / categories[i.category_id].name);
+			hierarchy.map_file_write("Triggers/" + categories[i.category_id].name + "/" + i.name + ".j", reader.read_vector<uint8_t>(size));
 		}
 	}
 }
@@ -1011,23 +1047,17 @@ endfunction
 
 	writer.write_string("endfunction\n");
 	
-	fs::path path = QDir::tempPath().toStdString() + "/input.j";
-	std::ofstream output(path);
-	output.write((char*)writer.buffer.data(), writer.buffer.size());
-	output.close();
+	hierarchy.map_file_write("war3map.j", writer.buffer);
 
 	QProcess* proc = new QProcess();
 	proc->setWorkingDirectory("Data/Tools");
-	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
+	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", (map->filesystem_path / "war3map.j").string().c_str(), (map->filesystem_path / "war3map.j").string().c_str() });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
 
 	if (result.contains("Compile error")) {
 		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
 	}
-
-	// ToDo
-	//hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {

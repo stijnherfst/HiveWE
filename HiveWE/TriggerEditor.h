@@ -24,8 +24,11 @@ private:
 	std::unordered_map<int, QTreeWidgetItem*> folders;
 	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
 
-	void item_clicked(QTreeWidgetItem* item);
-	void show_gui_trigger(QTreeWidget* edit, Trigger& trigger);
+	std::unordered_map<std::string, QWidget*> open_files;
+
+	void item_clicked(const QModelIndex& index);
+	
+	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);
 
 	std::string get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const ;
 

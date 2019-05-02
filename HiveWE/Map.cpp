@@ -68,10 +68,8 @@ void Map::load(const fs::path& path) {
 
 	// Trigger strings
 	if (hierarchy.map_file_exists("war3map.wts")) {
-		//if (auto t = .read2(); t) {
-			BinaryReader war3map_wts = hierarchy.map_file_read("war3map.wts");
-			trigger_strings.load(war3map_wts);
-		//}
+		BinaryReader war3map_wts = hierarchy.map_file_read("war3map.wts");
+		trigger_strings.load(war3map_wts);
 	}
 
 	// Triggers (GUI and JASS)
@@ -109,17 +107,17 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 
-	// Imported Files
-	if (hierarchy.map_file_exists("war3map.imp")) {
-		BinaryReader war3map_imp = hierarchy.map_file_read("war3map.imp");
-		imports.load(war3map_imp);
-	}
-	if (hierarchy.map_file_exists("war3map.dir")) {
-		BinaryReader war3map_dir = hierarchy.map_file_read("war3map.dir");
-		imports.load_dir_file(war3map_dir);
-	}
+	//// Imported Files
+	//if (hierarchy.map_file_exists("war3map.imp")) {
+	//	BinaryReader war3map_imp = hierarchy.map_file_read("war3map.imp");
+	//	imports.load(war3map_imp);
+	//}
+	//if (hierarchy.map_file_exists("war3map.dir")) {
+	//	BinaryReader war3map_dir = hierarchy.map_file_read("war3map.dir");
+	//	imports.load_dir_file(war3map_dir);
+	//}
 
-	imports.populate_uncategorized();
+	//imports.populate_uncategorized();
 
 	// Doodads
 	BinaryReader war3map_doo = hierarchy.map_file_read("war3map.doo");
@@ -212,8 +210,8 @@ bool Map::save(const fs::path& path) {
 	triggers.save_jass();
 	triggers.generate_map_script();
 
-	imports.save();
-	imports.save_dir_file();
+	//imports.save();
+	//imports.save_dir_file();
 
 	return true;
 }

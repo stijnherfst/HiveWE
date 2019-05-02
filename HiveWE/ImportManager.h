@@ -17,8 +17,8 @@ class ImportManager : public QMainWindow {
 
 	void load_files(const std::vector<ImportItem>& items) const;
 
-	static QString generate_full_path(QString file_name);
-	static QString get_file_type(const fs::path& path);
+	//static QString generate_full_path(QString file_name);
+	//static QString get_file_type(const fs::path& path);
 
 	Ui::ImportManager ui;
 

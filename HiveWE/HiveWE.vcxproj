@@ -992,11 +992,6 @@
   <ItemGroup>
     <ResourceCompile Include="HiveWE.rc" />
   </ItemGroup>
-  <ItemGroup>
-    <Image Include="Data\Icons\Ribbon\icon-script[1].png" />
-    <Image Include="icon1.ico" />
-    <Image Include="icon2.ico" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
   <ProjectExtensions>

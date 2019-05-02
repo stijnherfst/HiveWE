@@ -19,6 +19,9 @@
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
        <widget class="QPushButton" name="createDirectory">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>New Folder</string>
         </property>
@@ -26,6 +29,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="importFiles">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Import Files</string>
         </property>
@@ -33,6 +39,9 @@
       </item>
       <item>
        <widget class="QPushButton" name="exportAll">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string>Export All</string>
         </property>
@@ -51,30 +60,32 @@
         </property>
        </spacer>
       </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>To Import/Export files simply use the explorer window &gt;&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Open in Explorer</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </item>
     <item>
-     <widget class="QTreeWidget" name="treeWidget">
-      <property name="focusPolicy">
-       <enum>Qt::ClickFocus</enum>
-      </property>
-      <property name="contextMenuPolicy">
-       <enum>Qt::CustomContextMenu</enum>
-      </property>
-      <property name="editTriggers">
-       <set>QAbstractItemView::NoEditTriggers</set>
-      </property>
+     <widget class="QTreeView" name="treeView">
       <property name="dragEnabled">
        <bool>true</bool>
       </property>
       <property name="dragDropMode">
        <enum>QAbstractItemView::InternalMove</enum>
       </property>
-      <property name="defaultDropAction">
-       <enum>Qt::MoveAction</enum>
-      </property>
-      <property name="indentation">
-       <number>10</number>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::ExtendedSelection</enum>
       </property>
       <property name="uniformRowHeights">
        <bool>true</bool>
@@ -82,40 +93,6 @@
       <property name="sortingEnabled">
        <bool>true</bool>
       </property>
-      <property name="wordWrap">
-       <bool>true</bool>
-      </property>
-      <attribute name="headerDefaultSectionSize">
-       <number>120</number>
-      </attribute>
-      <attribute name="headerMinimumSectionSize">
-       <number>100</number>
-      </attribute>
-      <column>
-       <property name="text">
-        <string>Name</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Type</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Size</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Custom</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Full Path</string>
-       </property>
-      </column>
      </widget>
     </item>
    </layout>

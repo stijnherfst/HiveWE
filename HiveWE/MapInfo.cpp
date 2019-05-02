@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 void MapInfo::load(BinaryReader& reader) {
-	int version = reader.read<uint32_t>();
+	const int version = reader.read<uint32_t>();
 
 	if (version != 18 && version != 25) {
 		std::cout << "Unknown war3map.w3i version\n";

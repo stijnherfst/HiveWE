@@ -114,7 +114,7 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 	return shader;
 }
 
-std::string read_text_file(const std::string& path) {
+std::string read_text_file(const fs::path& path) {
 	std::ifstream textfile(path.c_str());
 	std::string line;
 	std::string text;

@@ -249,6 +249,11 @@ void HiveWE::load_mpq() {
 	SFileFindClose(find_handle);
 	SFileCloseArchive(handle);
 
+	// Delete unneeded files
+	fs::remove(directory / "(listfile)");
+	fs::remove(directory / "(attributes)");
+	fs::remove(directory / "(war3map.imp)");
+
 	// Load map
 	delete map;
 	map = new Map();
