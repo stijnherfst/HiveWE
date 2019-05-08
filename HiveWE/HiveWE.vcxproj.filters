@@ -64,6 +64,9 @@
     <Filter Include="Source Files\Base\File Formats">
       <UniqueIdentifier>{2208b338-dbe9-43b8-9e1c-c4a8ed392b14}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Form Files\Menus">
+      <UniqueIdentifier>{cd8cf88c-0492-45ed-8397-c6b58d407991}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -81,200 +84,20 @@
     <ClCompile Include="Utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Hierarchy.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourceManager.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="StaticMesh.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="Doodads.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_HiveWE.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_HiveWE.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="CliffMesh.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PathingMap.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Terrain.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Map.cpp">
-      <Filter>Source Files\Base</Filter>
     </ClCompile>
     <ClCompile Include="InputHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TileSetter.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TileSetter.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TilePicker.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TilePicker.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Units.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="TilePicker.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="TileSetter.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="PathingPallete.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TilePather.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TilePather.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TerrainPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TerrainPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TilePather.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="TerrainPalette.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="Brush.cpp">
-      <Filter>Source Files\Base\Brush</Filter>
-    </ClCompile>
-    <ClCompile Include="PathingBrush.cpp">
-      <Filter>Source Files\Base\Brush</Filter>
-    </ClCompile>
-    <ClCompile Include="TerrainBrush.cpp">
-      <Filter>Source Files\Base\Brush</Filter>
-    </ClCompile>
-    <ClCompile Include="GPUTexture.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="GroundTexture.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="Imports.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManager.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ImportManager.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ImportManager.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManagerEdit.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ImportManagerEdit.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ImportManagerEdit.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
     <ClCompile Include="Quadtree.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ShadowMap.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="MapInfo.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_MapInfoEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_MapInfoEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TriggerStrings.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_ColorButton.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MapInfoEditor.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="ColorButton.cpp">
-      <Filter>Source Files\Menus\Custom Widgets</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_ColorButton.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GLWidget.cpp">
-      <Filter>Source Files\Menus\Custom Widgets</Filter>
-    </ClCompile>
-    <ClCompile Include="Triggers.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="TriggerEditor.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="BLP.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="CASC.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="INI.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="MDX.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="MPQ.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="SLK.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="JassEditor.cpp">
-      <Filter>Source Files\Menus\Custom Widgets</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_JassEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_JassEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_DoodadPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_DoodadPalette.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DoodadPalette.cpp">
-      <Filter>Source Files\Menus</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_WindowHandler.cpp">
       <Filter>Generated Files</Filter>
@@ -285,67 +108,208 @@
     <ClCompile Include="WindowHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_GLWidget.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="TerrainUndo.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_GLWidget.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="JassTokenizer.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="JSON.cpp">
-      <Filter>Source Files\Base\File Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="DoodadBrush.cpp">
-      <Filter>Source Files\Base\Brush</Filter>
-    </ClCompile>
-    <ClCompile Include="SkinnedMesh.cpp">
-      <Filter>Source Files\Base\Resources</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_PathingPallete.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_TriggerEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_TriggerEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_QRibbon.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_QRibbon.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QRibbon.cpp">
+    <ClCompile Include="Menus\Custom Widgets\AspectRatioPixmapLabel.cpp">
       <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_MainRibbon.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_MainRibbon.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MainRibbon.cpp">
+    <ClCompile Include="Menus\Custom Widgets\ColorButton.cpp">
       <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="FlowLayout.cpp">
+    <ClCompile Include="Menus\Custom Widgets\FlowLayout.cpp">
       <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_Palette.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="Menus\Custom Widgets\GLWidget.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_Palette.cpp">
-      <Filter>Generated Files</Filter>
+    <ClCompile Include="Menus\Custom Widgets\JassEditor.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
     </ClCompile>
-    <ClCompile Include="Palette.cpp">
+    <ClCompile Include="Menus\Custom Widgets\MainRibbon.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\Custom Widgets\QRibbon.cpp">
+      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\DoodadPalette.cpp">
       <Filter>Source Files\Menus</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_AspectRatioPixmapLabel.cpp">
+    <ClCompile Include="Menus\ImportManager.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\ImportManagerEdit.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\MapInfoEditor.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\Minimap.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\Palette.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\PathingPallete.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\SettingsEditor.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TerrainPalette.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TilePather.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TilePicker.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TileSetter.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Menus\TriggerEditor.cpp">
+      <Filter>Source Files\Menus</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Brush\Brush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Brush\DoodadBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Brush\PathingBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Brush\TerrainBrush.cpp">
+      <Filter>Source Files\Base\Brush</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\BLP.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\CASC.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\INI.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\JSON.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\MDX.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\MPQ.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\File Formats\SLK.cpp">
+      <Filter>Source Files\Base\File Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\CliffMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\GPUTexture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\GroundTexture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\Shader.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\SkinnedMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\StaticMesh.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Resources\Texture.cpp">
+      <Filter>Source Files\Base\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Doodads.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\GameCameras.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Hierarchy.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Imports.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Map.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\MapInfo.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\PathingMap.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Regions.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\ResourceManager.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\ShadowMap.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Sounds.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Terrain.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Triggers.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\TriggerStrings.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Base\Units.cpp">
+      <Filter>Source Files\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_DoodadPalette.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_AspectRatioPixmapLabel.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_DoodadPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_DoodadPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ImportManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ImportManagerEdit.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ImportManagerEdit.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ImportManagerEdit.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_MapInfoEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_MapInfoEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_MapInfoEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_Minimap.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_Minimap.cpp">
@@ -354,41 +318,140 @@
     <ClCompile Include="GeneratedFiles\Release\moc_Minimap.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="AspectRatioPixmapLabel.cpp">
-      <Filter>Source Files\Menus\Custom Widgets</Filter>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_Palette.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="Minimap.cpp">
-      <Filter>Source Files\Menus</Filter>
+    <ClCompile Include="GeneratedFiles\Debug\moc_Palette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_Palette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_PathingPallete.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_PathingPallete.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_PathingPallete.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_SettingsEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_SettingsEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_SettingsEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TerrainPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TerrainPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TerrainPalette.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TilePather.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TilePather.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TilePather.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TilePicker.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TilePicker.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TilePicker.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TileSetter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TileSetter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TileSetter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_TriggerEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_TriggerEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_TriggerEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_AspectRatioPixmapLabel.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_ColorButton.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ColorButton.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ColorButton.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_GLWidget.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_GLWidget.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_GLWidget.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_JassEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_JassEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_JassEditor.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_MainRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_MainRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_MainRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_QRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_QRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_QRibbon.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\ReleaseSymbols\moc_Terrain.cpp">
+      <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_Terrain.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_Terrain.cpp">
       <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TerrainUndo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Regions.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="GameCameras.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Sounds.cpp">
-      <Filter>Source Files\Base</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingsEditor.cpp">
-      <Filter>Source Files\Menus</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_SettingsEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_SettingsEditor.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="JassTokenizer.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -404,155 +467,155 @@
     <ClInclude Include="Utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Hierarchy.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceManager.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryReader.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="StaticMesh.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Doodads.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="CliffMesh.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="PathingMap.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Map.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
     <ClInclude Include="InputHandler.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryWriter.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TileSetter.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TilePicker.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Units.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TilePather.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TerrainPalette.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Brush.h">
-      <Filter>Header Files\Base\Brush</Filter>
-    </ClInclude>
-    <ClInclude Include="PathingBrush.h">
-      <Filter>Header Files\Base\Brush</Filter>
-    </ClInclude>
-    <ClInclude Include="TerrainBrush.h">
-      <Filter>Header Files\Base\Brush</Filter>
-    </ClInclude>
-    <ClInclude Include="GPUTexture.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="GroundTexture.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Imports.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_ImportManagerEdit.h">
-      <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="Quadtree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_TriggerEditor.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_ImportManager.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ShadowMap.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="MapInfo.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_MapInfoEditor.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TriggerStrings.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Triggers.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="BLP.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="CASC.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="MDX.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="MPQ.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="SLK.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="INI.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_DoodadPalette.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="JSON.h">
-      <Filter>Header Files\Base\File Formats</Filter>
-    </ClInclude>
-    <ClInclude Include="DoodadBrush.h">
-      <Filter>Header Files\Base\Brush</Filter>
-    </ClInclude>
-    <ClInclude Include="SkinnedMesh.h">
-      <Filter>Header Files\Base\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_Minimap.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="TerrainUndo.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Regions.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GameCameras.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Sounds.h">
-      <Filter>Header Files\Base</Filter>
-    </ClInclude>
-    <ClInclude Include="GeneratedFiles\ui_SettingsEditor.h">
-      <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="JassTokenizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Brush\Brush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Brush\DoodadBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Brush\PathingBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Brush\TerrainBrush.h">
+      <Filter>Header Files\Base\Brush</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\BLP.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\CASC.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\INI.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\JSON.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\MDX.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\MPQ.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\File Formats\SLK.h">
+      <Filter>Header Files\Base\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\CliffMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\GPUTexture.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\GroundTexture.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\Shader.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\SkinnedMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\StaticMesh.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Resources\Texture.h">
+      <Filter>Header Files\Base\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_DoodadPalette.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_ImportManager.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_ImportManagerEdit.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_MapInfoEditor.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_Minimap.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_PathingPallete.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_SettingsEditor.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TerrainPalette.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TilePather.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TilePicker.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TileSetter.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeneratedFiles\ui_TriggerEditor.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Menus\Custom Widgets\FlowLayout.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Doodads.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\GameCameras.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Hierarchy.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Imports.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Map.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\MapInfo.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\PathingMap.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Regions.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\ResourceManager.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\ShadowMap.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Sounds.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Triggers.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\TriggerStrings.h">
+      <Filter>Header Files\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Base\Units.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -562,110 +625,107 @@
     <CustomBuild Include="HiveWE.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="PathingPallete.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TileSetter.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TilePicker.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TilePicker.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TileSetter.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="PathingPallete.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TilePather.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TerrainPalette.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TerrainPalette.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TilePather.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
     <CustomBuild Include="HiveWE.qrc">
       <Filter>Source Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ImportManager.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ImportManager.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ImportManagerEdit.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ImportManagerEdit.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TriggerEditor.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="MapInfoEditor.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="MapInfoEditor.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="ColorButton.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
-    </CustomBuild>
-    <CustomBuild Include="GLWidget.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
-    </CustomBuild>
-    <CustomBuild Include="TriggerEditor.h">
-      <Filter>Header Files\Menus</Filter>
-    </CustomBuild>
-    <CustomBuild Include="JassEditor.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
-    </CustomBuild>
-    <CustomBuild Include="DoodadPalette.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="DoodadPalette.h">
-      <Filter>Header Files\Menus</Filter>
     </CustomBuild>
     <CustomBuild Include="WindowHandler.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="QRibbon.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    <CustomBuild Include="Menus\DoodadPalette.ui">
+      <Filter>Form Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="MainRibbon.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    <CustomBuild Include="Menus\ImportManager.ui">
+      <Filter>Form Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="FlowLayout.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    <CustomBuild Include="Menus\ImportManagerEdit.ui">
+      <Filter>Form Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="Palette.h">
+    <CustomBuild Include="Menus\MapInfoEditor.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Minimap.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\PathingPallete.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\SettingsEditor.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TerrainPalette.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TilePather.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TilePicker.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TileSetter.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TriggerEditor.ui">
+      <Filter>Form Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\DoodadPalette.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="Minimap.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="AspectRatioPixmapLabel.h">
-      <Filter>Header Files\Menus\Custom Widgets</Filter>
-    </CustomBuild>
-    <CustomBuild Include="Minimap.h">
+    <CustomBuild Include="Menus\ImportManager.h">
       <Filter>Header Files\Menus</Filter>
     </CustomBuild>
-    <CustomBuild Include="Terrain.h">
+    <CustomBuild Include="Menus\ImportManagerEdit.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\MapInfoEditor.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Minimap.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Palette.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\PathingPallete.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\SettingsEditor.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TerrainPalette.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TilePather.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TilePicker.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TileSetter.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\TriggerEditor.h">
+      <Filter>Header Files\Menus</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\AspectRatioPixmapLabel.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\ColorButton.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\GLWidget.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\JassEditor.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\MainRibbon.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Menus\Custom Widgets\QRibbon.h">
+      <Filter>Header Files\Menus\Custom Widgets</Filter>
+    </CustomBuild>
+    <CustomBuild Include="Base\Terrain.h">
       <Filter>Header Files\Base</Filter>
-    </CustomBuild>
-    <CustomBuild Include="SettingsEditor.ui">
-      <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="SettingsEditor.h">
-      <Filter>Header Files\Menus</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

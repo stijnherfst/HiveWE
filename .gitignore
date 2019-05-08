@@ -329,3 +329,4 @@ ASALocalRun/
 !HiveWE/[Dd]ependencies/**/*
 !HiveWE/[Dd]ependencies/**/**/*
 HiveWE/Linux/
+Build/

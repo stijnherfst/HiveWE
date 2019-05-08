@@ -1,0 +1,2 @@
+
+require('premake-qt.qt')
