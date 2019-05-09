@@ -268,7 +268,23 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	addTab(tools_tab, "Tools");
 	addTab(window_tab, "Window");
 
+    connect(this, &QTabWidget::tabBarClicked, this, &MainRibbon::TabClicked);
 }
 
 MainRibbon::~MainRibbon() {
+}
+
+void MainRibbon::TabClicked(int index) {
+    QWidget* showTab = widget(index);
+    if (showTab && (!last_active_tab || showTab == last_active_tab) && showTab->isVisibleTo(this)) {
+        last_height = height();
+        showTab->hide();
+        setMaximumHeight(tabBar()->height());
+    }
+    else if (last_height > 0) {
+        last_height = 0;
+        showTab->show();
+        setMaximumHeight(last_height);
+    }
+    last_active_tab = showTab;
 }

@@ -55,4 +55,11 @@ public:
 
 	MainRibbon(QWidget* parent);
 	~MainRibbon();
+
+protected Q_SLOTS:
+    void TabClicked(int index);
+
+private:
+    QWidget* last_active_tab = nullptr;
+    int last_height = 0;
 };
