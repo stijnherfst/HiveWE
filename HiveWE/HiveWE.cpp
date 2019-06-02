@@ -19,7 +19,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "Data") || directory == "") {
+	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "x86_64")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
@@ -322,7 +322,7 @@ void HiveWE::play_test() {
 		return;
 	}
 	QProcess* warcraft = new QProcess;
-	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "Warcraft III.exe").string());
+	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "x86_64" / "Warcraft III.exe").string());
 	QStringList arguments;
 	arguments << "-loadfile" << QString::fromStdString(map->filesystem_path.string());
 
@@ -359,7 +359,7 @@ void HiveWE::switch_warcraft() {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "")
 			directory = hierarchy.warcraft_directory;
-	} while (!fs::exists(directory / "Data"));
+	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "x86_64"));
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 

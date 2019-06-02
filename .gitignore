@@ -329,3 +329,5 @@ ASALocalRun/
 !HiveWE/[Dd]ependencies/**/*
 !HiveWE/[Dd]ependencies/**/**/*
 HiveWE/Linux/
+HiveWE/Data/Tools/common.j
+HiveWE/Data/Tools/blizzard.j

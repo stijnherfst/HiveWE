@@ -74,6 +74,7 @@ class MapInfo {
 public:
 	int map_version;
 	int editor_version;
+	int unknowns1, unknowns2, unknowns3, unknowns4; //only here until researched
 	std::string name;
 	std::string author;
 	std::string description;
@@ -132,6 +133,8 @@ public:
 	char custom_light_tileset;
 	glm::u8vec4 water_color;
 
+	bool lua;
+
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
 	std::vector<UpgradeAvailability> available_upgrades;
@@ -139,7 +142,7 @@ public:
 	std::vector<RandomUnitTable> random_unit_tables;
 	std::vector<RandomItemTable> random_item_tables;
 
-	static constexpr int write_version = 25;
+	static constexpr int write_version = 28;
 
 	void load(BinaryReader& reader);
 	void save() const;
