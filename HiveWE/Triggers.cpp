@@ -4,7 +4,7 @@
 // Initial version of map script generation
 // Not very readable
 
-void Triggers::load(BinaryReader& reader) {
+void Triggers::load_gui_mpq_format(BinaryReader& reader) {
 	trigger_strings.load("UI/TriggerStrings.txt");
 	trigger_data.load("UI/TriggerData.txt");
 	trigger_data.substitute(world_edit_strings, "WorldEditStrings");
@@ -148,6 +148,8 @@ void Triggers::load(BinaryReader& reader) {
 
 	fs::create_directory(map->filesystem_path / "Triggers");
 
+	BinaryWriter include_order;
+
 	triggers.resize(reader.read<uint32_t>());
 	for (auto&& i : triggers) {
 		i.id = next_id++;
@@ -166,16 +168,20 @@ void Triggers::load(BinaryReader& reader) {
 			parse_eca_structure(j, false);
 		}
 		if (i.lines.size()) {
-			BinaryWriter writer;
-			writer.write_string("This is a GUI file that is just used so that something appears in the trigger editor");
+			//BinaryWriter writer;
+			//writer.write_string("This is a GUI file that is just used so that something appears in the trigger editor");
 
 			fs::create_directory(map->filesystem_path / "Triggers" / categories[i.category_id].name);
 			hierarchy.map_file_write("Triggers/" + categories[i.category_id].name + "/" + i.name + ".gui", {});
+			include_order.write_string(categories[i.category_id].name + "/" + i.name + ".gui\n");
+		} else {
+			include_order.write_string(categories[i.category_id].name + "/" + i.name + ".j\n");
 		}
 	}
+	hierarchy.map_file_write("Triggers/include_order.txt", include_order.buffer);
 }
 
-void Triggers::load_jass(BinaryReader& reader) {
+void Triggers::load_jass_mpq_format(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
 	if (version == 1) {
@@ -237,6 +243,8 @@ void Triggers::generate_map_script() {
 	std::vector<std::string> initialization_triggers;
 
 
+//	std::ifstream include_order
+
 	std::string trigger_script;
 	for (const auto& i : triggers) {
 		if (i.is_comment || !i.is_enabled) {
@@ -249,7 +257,7 @@ void Triggers::generate_map_script() {
 		}
 	}
 
-	// Search the trigger script for global unit/destructible definitons
+	// Search the trigger script for global unit/destructible definitions
 	size_t pos = trigger_script.find("gg_unit", 0);
 	while (pos != std::string::npos) {
 		std::string type = trigger_script.substr(pos + 8, 4);

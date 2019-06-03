@@ -101,8 +101,8 @@ public:
 	std::unordered_map<std::string, TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
-	void load(BinaryReader& reader);
-	void load_jass(BinaryReader& reader);
+	void load_gui_mpq_format(BinaryReader& reader);
+	void load_jass_mpq_format(BinaryReader& reader);
 	void save() const;
 	void save_jass() const;
 

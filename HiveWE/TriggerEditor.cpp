@@ -44,7 +44,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 	}
 
 	QWidget* tab = new QWidget;
-
 	QVBoxLayout* layout = new QVBoxLayout(tab);
 
 	if (fs::path(path).extension() == ".gui") {
@@ -58,7 +57,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 				break;
 			}
 		}
-		//
 		edit->expandAll();
 	} else {
 		JassEditor* edit = new JassEditor;
