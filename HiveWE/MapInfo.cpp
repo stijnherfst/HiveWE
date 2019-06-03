@@ -10,10 +10,10 @@ void MapInfo::load(BinaryReader& reader) {
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
 	if (version == 28) {
-		unknowns1 = reader.read<uint32_t>(); //new fields, research needed
-		unknowns2 = reader.read<uint32_t>();
-		unknowns3 = reader.read<uint32_t>();
-		unknowns4 = reader.read<uint32_t>();
+		game_version_major = reader.read<uint32_t>();
+		game_version_minor = reader.read<uint32_t>();
+		game_version_patch = reader.read<uint32_t>();
+		game_version_build = reader.read<uint32_t>();
 	}
 	name = reader.read_c_string();
 	author = reader.read_c_string();
@@ -77,10 +77,8 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
 
-		if (version == 28)
-		{
+		if (version == 28) {
 			lua = reader.read<uint32_t>() == 1;
-			std::cout << "Map script should be: " << (lua ? "Lua\n" : "JASS\n");
 		}
 	} else if (version == 18) { // RoC
 		loading_screen_number = reader.read<uint32_t>();
@@ -177,10 +175,10 @@ void MapInfo::save() const {
 	writer.write(write_version);
 	writer.write(map_version);
 	writer.write(editor_version);
-	writer.write(unknowns1);
-	writer.write(unknowns2);
-	writer.write(unknowns3);
-	writer.write(unknowns4);
+	writer.write(game_version_major);
+	writer.write(game_version_minor);
+	writer.write(game_version_patch);
+	writer.write(game_version_build);
 	writer.write_c_string(name);
 	writer.write_c_string(author);
 	writer.write_c_string(description);

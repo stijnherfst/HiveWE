@@ -758,7 +758,7 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 						file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
 						if (hierarchy.file_exists(file_name)) {
 
-							if (path_to_cliff.find(file_name) == path_to_cliff.end()) {
+							if (!path_to_cliff.contains(file_name)) {
 								cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
 								path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
 							}

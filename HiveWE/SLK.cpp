@@ -145,7 +145,7 @@ namespace slk {
 	}
 
 	bool SLK::row_header_exists(const std::string& row_header) const {
-		return header_to_row.find(row_header) != header_to_row.end();
+		return header_to_row.contains(row_header);
 	}
 
 	/// Merges the data of the files. Any unknown columns are appended
@@ -172,11 +172,11 @@ namespace slk {
 	void SLK::merge(const ini::INI & ini) {
 		for (auto&& [section_key, section_value] : ini.ini_data) {
 			// If id does not exist
-			if (header_to_row.find(section_key) == header_to_row.end()) {
+			if (!header_to_row.contains(section_key)) {
 				continue;
 			}
 			for (auto&& [key, value] : section_value) {
-				if (header_to_column.find(key) == header_to_column.end()) {
+				if (!header_to_column.contains(key)) {
 					add_column(key);
 				}
 				table_data[header_to_row[section_key]][header_to_column[key]] = std::accumulate(value.begin(), value.end(), ""s);;
@@ -199,7 +199,7 @@ namespace slk {
 
 	/// Copies the row with header row_header to a new line with the new header as new_row_header
 	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
-		if (header_to_row.find(row_header) == header_to_row.end()) {
+		if (!header_to_row.contains(row_header)) {
 			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}
@@ -225,12 +225,12 @@ namespace slk {
 	}
 
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
-		if (header_to_column.find(column_header) == header_to_column.end()) {
+		if (!header_to_column.contains(column_header)) {
 			std::cout << "Unknown column header: " << column_header << "\n";
 			return;
 		}
 
-		if (header_to_row.find(row_header) == header_to_row.end()) {
+		if (!header_to_row.contains(row_header)) {
 			std::cout << "Unknown row header: " << row_header << "\n";
 			return;
 		}

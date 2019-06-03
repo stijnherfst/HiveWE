@@ -147,14 +147,14 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 
 		eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
 
-		if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
+		if (!trigger_icons.contains(category)) {
 			std::string icon_path = map->triggers.trigger_data.data("TriggerCategories", category, 1);
 			std::string final_path = icon_path + ".blp";
 			QIcon icon = texture_to_icon(final_path);
 			trigger_icons[category] = icon;
 			eca->setIcon(0, icon);
 		} else {
-			eca->setIcon(0, found->second);
+			eca->setIcon(0, trigger_icons[category]);
 		}
 
 		QTreeWidgetItem* sub1 = eca;

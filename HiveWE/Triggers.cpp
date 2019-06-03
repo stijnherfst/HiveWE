@@ -616,7 +616,7 @@ endfunction
 	for (const auto& i : map->doodads.doodads) {
 		std::string id = "d";
 
-		if (destructable_variables.find(std::to_string(i.creation_number)) != destructable_variables.end()) {
+		if (destructable_variables.contains(std::to_string(i.creation_number))) {
 			id = "gg_dest_" + i.id + "_" + std::to_string(i.creation_number);
 		} 
 
@@ -687,7 +687,7 @@ endfunction
 		}
 
 		std::string unit_reference = "u";
-		if (unit_variables.find(std::to_string(i.creation_number)) != unit_variables.end()) {
+		if (unit_variables.contains(std::to_string(i.creation_number))) {
 			unit_reference = "gg_unit_" + i.id + "_" + std::to_string(i.creation_number);
 		}
 

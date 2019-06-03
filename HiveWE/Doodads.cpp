@@ -242,7 +242,7 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string full_id = id + std::to_string(variation);
-	if (id_to_mesh.find(full_id) != id_to_mesh.end()) {
+	if (id_to_mesh.contains(full_id)) {
 		return id_to_mesh[full_id];
 	}
 

@@ -28,7 +28,7 @@ namespace json {
 						std::string key = line.substr(12, end1 - 12);
 						std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 						// If the segment already exists
-						if (json_data.count(key)) {
+						if (json_data.contains(key)) {
 							continue;
 						}
 						json_data[key] = line.substr(end1 + 11, line.find('\"', end1 + 12) - end1 - 11);
@@ -38,7 +38,7 @@ namespace json {
 					end1 = line.find('\"', 13);
 					const std::string key = line.substr(12, end1 - 12);
 					// If the segment already exists
-					if (json_data.count(key)) {
+					if (json_data.contains(key)) {
 					}
 					else {
 						json_data[key] = line.substr(end1 + 11, line.find('\"', end1 + 12) - end1 - 11);
@@ -54,7 +54,7 @@ namespace json {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
 
-		if (json_data.count(file_lower_case)) {
+		if (json_data.contains(file_lower_case)) {
 			return true;
 		}
 		return false;

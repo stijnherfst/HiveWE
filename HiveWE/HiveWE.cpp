@@ -219,7 +219,7 @@ void HiveWE::load_mpq() {
 	HANDLE handle;
 	bool success = SFileOpenArchive(mpq.c_str(), 0, 0, &handle);
 	if (!success) {
-		QMessageBox::information(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+		QMessageBox::critical(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
 		return;
 	}
 
@@ -233,12 +233,18 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	fs::path directory = unpack_location / mpq.filename();
+	fs::path directory = unpack_location / mpq.stem();
 
+	try {
+		fs::create_directory(directory);
+	} catch (std::filesystem::filesystem_error& e) {
+		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(directory.string()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+		return;
+	}
+	
 	// Unpack archive
 	SFILE_FIND_DATA file_data;
 	HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
-
 	fs::create_directories((directory / file_data.cFileName).parent_path());
 	SFileExtractFile(handle, file_data.cFileName, (directory / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
 

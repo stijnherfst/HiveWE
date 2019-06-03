@@ -74,7 +74,10 @@ class MapInfo {
 public:
 	int map_version;
 	int editor_version;
-	int unknowns1, unknowns2, unknowns3, unknowns4; //only here until researched
+	int game_version_major;
+	int game_version_minor;
+	int game_version_patch;
+	int game_version_build;
 	std::string name;
 	std::string author;
 	std::string description;

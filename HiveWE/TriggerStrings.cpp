@@ -78,7 +78,7 @@ void TriggerStrings::save() const {
 }
 
 std::string TriggerStrings::string(const std::string& key) const {
-	if (strings.find(key) == strings.end()) {
+	if (!strings.contains(key)) {
 		return "";
 	}
 

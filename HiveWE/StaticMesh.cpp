@@ -75,7 +75,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		}
 
 		if (model.has_chunk<mdx::GEOA>()) {
-			if (animations.find("stand") != animations.end()) {
+			if (animations.contains("stand")) {
 				for (auto&& i : model.chunk<mdx::GEOA>()->animations) {
 					if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
 						for (auto&& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
@@ -91,7 +91,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		if (model.has_chunk<mdx::TEXS>()) {
 			for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
 				if (i.replaceable_id != 0) {
-					if (mdx::replacable_id_to_texture.find(i.replaceable_id) == mdx::replacable_id_to_texture.end()) {
+					if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
 						std::cout << "Unknown replacable ID found\n";
 					}
 					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));

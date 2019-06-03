@@ -91,7 +91,7 @@ void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const st
 			const int xx = position.x * 4 + x - div_w / 2;
 			const int yy = position.y * 4 + y - div_h / 2;
 
-			if (xx < 0 || xx > width || yy < 0 || yy > height) {
+			if (xx < 0 || xx > width - 1 || yy < 0 || yy > height - 1) {
 				continue;
 			}
 

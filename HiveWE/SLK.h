@@ -22,7 +22,7 @@ namespace slk {
 
 		template<typename T = std::string>
 		T data(const std::string& column_header, size_t row) const {
-			if (header_to_column.find(column_header) == header_to_column.end()) {
+			if (!header_to_column.contains(column_header)) {
 				return T();
 			}
 
@@ -56,7 +56,7 @@ namespace slk {
 
 		template<typename T = std::string>
 		T data(const std::string& column_header, const std::string& row_header) const {
-			if (header_to_row.find(row_header) == header_to_row.end()) {
+			if (!header_to_row.contains(row_header)) {
 				return T();
 			}
 

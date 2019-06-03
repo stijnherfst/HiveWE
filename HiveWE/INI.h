@@ -17,7 +17,7 @@ namespace ini {
 		/// To access key data where the value of the key is comma seperated
 		template<typename T = std::string>
 		T data(const std::string & section, const std::string & key, const int argument = 0) const {
-			if (ini_data.count(section) && ini_data.at(section).count(key) && argument < ini_data.at(section).at(key).size()) { // ToDo C++20 contains
+			if (ini_data.contains(section) && ini_data.at(section).contains(key) && argument < ini_data.at(section).at(key).size()) {
 				if constexpr (std::is_same<T, std::string>()) {
 					return ini_data.at(section).at(key)[argument];
 				} else if constexpr (std::is_same<T, int>()) {

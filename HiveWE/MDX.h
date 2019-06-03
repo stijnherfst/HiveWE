@@ -119,7 +119,7 @@ namespace mdx {
 		}
 
 		bool has_track(const TrackTag track) {
-			return tracks.find(track) != tracks.end();
+			return tracks.contains(track);
 		}
 
 	};
@@ -305,7 +305,7 @@ namespace mdx {
 		bool has_chunk() {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
-			return chunks.find(static_cast<ChunkTag>(T::tag)) != chunks.end();
+			return chunks.contains(static_cast<ChunkTag>(T::tag));
 		}
 	};
 }

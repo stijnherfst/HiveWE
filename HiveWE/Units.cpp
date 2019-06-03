@@ -252,7 +252,7 @@ void Units::render() const {
 }
 
 std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
-	if (id_to_mesh.find(id) != id_to_mesh.end()) {
+	if (id_to_mesh.contains(id)) {
 		return id_to_mesh[id];
 	}
 
