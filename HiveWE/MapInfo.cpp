@@ -3,12 +3,18 @@
 void MapInfo::load(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
-	if (version != 18 && version != 25) {
+	if (version != 18 && version != 25 && version != 28) {
 		std::cout << "Unknown war3map.w3i version\n";
 	}
 
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
+	if (version == 28) {
+		unknowns1 = reader.read<uint32_t>(); //new fields, research needed
+		unknowns2 = reader.read<uint32_t>();
+		unknowns3 = reader.read<uint32_t>();
+		unknowns4 = reader.read<uint32_t>();
+	}
 	name = reader.read_c_string();
 	author = reader.read_c_string();
 	description = reader.read_c_string();
@@ -46,7 +52,7 @@ void MapInfo::load(BinaryReader& reader) {
 	// Tileset
 	reader.advance(1);
 
-	if (version == 25) { // TFT
+	if (version == 25 || version == 28) { // TFT
 		loading_screen_number = reader.read<uint32_t>();
 		loading_screen_model = reader.read_c_string();
 		loading_screen_text = reader.read_c_string();
@@ -70,6 +76,12 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_sound_environment = reader.read_c_string();
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
+
+		if (version == 28)
+		{
+			lua = reader.read<uint32_t>() == 1;
+			std::cout << "Map script should be: " << (lua ? "Lua\n" : "JASS\n");
+		}
 	} else if (version == 18) { // RoC
 		loading_screen_number = reader.read<uint32_t>();
 		loading_screen_text = reader.read_c_string();
@@ -142,7 +154,7 @@ void MapInfo::load(BinaryReader& reader) {
 		}
 	}
 
-	if (version == 25) {
+	if (version == 25 || version == 28) {
 		random_item_tables.resize(reader.read<uint32_t>());
 		for (auto&& i : random_item_tables) {
 			i.number = reader.read<uint32_t>();
@@ -165,6 +177,10 @@ void MapInfo::save() const {
 	writer.write(write_version);
 	writer.write(map_version);
 	writer.write(editor_version);
+	writer.write(unknowns1);
+	writer.write(unknowns2);
+	writer.write(unknowns3);
+	writer.write(unknowns4);
 	writer.write_c_string(name);
 	writer.write_c_string(author);
 	writer.write_c_string(description);
@@ -224,6 +240,8 @@ void MapInfo::save() const {
 	writer.write_c_string(custom_sound_environment);
 	writer.write(custom_light_tileset);
 	writer.write(water_color);
+	
+	writer.write((uint32_t)lua);
 
 	writer.write<uint32_t>(players.size());
 	for (const auto& i : players) {
