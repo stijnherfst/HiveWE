@@ -46,17 +46,17 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 				const int in = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
 				
-				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
-					pathing_texture->data[in + 1] > 250 ? 255 : 0,
-					pathing_texture->data[in] > 250 ? 255 : 0,
-					0 };
 
 				const int div_w = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->height : pathing_texture->width;
 				const int div_h = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->width : pathing_texture->height;
 				const int index = (y + std::max(0, div_w - div_h) / 2) * size + x + std::max(0, div_h - div_w) / 2;
 
+				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
+					pathing_texture->data[in + 1] > 250 ? 255 : 0,
+					pathing_texture->data[in] > 250 ? 255 : 0,
+					128 };
+
 				if (color.r || color.g || color.b) {
-					color.a = 128;
 					brush[index] = color;
 				} else {
 					brush[index] = { 0, 0, 0, 0 };
@@ -77,6 +77,24 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 		case Qt::Key_A:
 			if (event->modifiers() & Qt::ControlModifier) {
 				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
+			}
+			break;
+		case Qt::Key_C:
+			if (event->modifiers() & Qt::ControlModifier) {
+				clipboard.clear();
+				for (const auto& i : selections) {
+					clipboard.push_back(*i);
+				}
+			}
+			break;
+		case Qt::Key_V:
+			if (event->modifiers() & Qt::ControlModifier) {
+				selections.clear();
+				for (auto i : clipboard) {
+					map->doodads.add_doodad(i);
+
+
+				}
 			}
 			break;
 		default:
@@ -228,7 +246,7 @@ void DoodadBrush::render_selection() const {
 	selection_shader->use();
 	gl->glEnableVertexAttribArray(0);
 
-	for (auto&& i : selections) {
+	for (const auto& i : selections) {
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(0.5f, 0.5f, 0.f));
 
@@ -285,21 +303,17 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	pathing_texture.reset();
 	std::string pathing_texture_path = slk.data("pathTex", id);
-	if (pathing_texture_path.empty() || !hierarchy.file_exists(pathing_texture_path)) {
+	if (hierarchy.file_exists(pathing_texture_path)) {
+		free_placement = false;
+		pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
+
+		set_size(std::max(pathing_texture->width, pathing_texture->height));
+
+		free_rotation = pathing_texture->width == pathing_texture->height;
+		free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
+	} else {
 		free_placement = true;
 		free_rotation = true;
-	} else {
-		if (hierarchy.file_exists(pathing_texture_path)) {
-			free_placement = false;
-			pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
-
-			set_size(pathing_texture->width);
-
-			free_rotation = pathing_texture->width == pathing_texture->height;
-			free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
-		} else {
-			free_placement = true;
-		}
 	}
 
 	possible_variations.clear();

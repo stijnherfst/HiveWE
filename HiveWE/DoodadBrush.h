@@ -5,15 +5,15 @@ class DoodadBrush : public Brush {
 	int get_random_variation();
 
 	std::string id;
-	int variation;
+	int variation = 0;
 
 	std::shared_ptr<StaticMesh> mesh;
 public:
 	Doodad::State state = Doodad::State::visible_solid;
 	std::shared_ptr<Texture> pathing_texture;
 
-	bool free_placement;
-	bool free_rotation;
+	bool free_placement = false;
+	bool free_rotation = false;
 
 	bool random_variation = true;
 	bool random_scale = true;
@@ -26,6 +26,8 @@ public:
 	float rotation = 0.f;
 
 	std::vector<Doodad*> selections;
+	std::vector<Doodad> clipboard;
+
 	std::unique_ptr<DoodadAddAction> doodad_undo;
 
 	DoodadBrush();

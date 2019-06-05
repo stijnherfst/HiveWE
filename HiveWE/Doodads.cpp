@@ -202,6 +202,11 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	return doodads.back();
 }
 
+Doodad& Doodads::add_doodad(Doodad doodad) {
+	doodads.push_back(doodad);
+	return doodads.back();
+}
+
 void Doodads::remove_doodad(Doodad* doodad) {
 	auto iterator = doodads.begin() + std::distance(doodads.data(), doodad);
 	doodads.erase(iterator);
