@@ -7,7 +7,7 @@ struct TriggerCategory {
 };
 
 struct TriggerVariable {
-//	std::string name;
+	//	std::string name;
 	std::string type;
 	bool is_array;
 	int array_size = 0;
@@ -86,7 +86,7 @@ class Triggers {
 	std::string resolve_parameter(const TriggerParameter& parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& base_type, bool add_call = false) const;
 	std::string get_base_type(const std::string& type) const;
 	std::string get_type(const std::string& function_name, int parameter) const;
-	std::string generate_function_name(const std::string & trigger_name) const;
+	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
 public:
 	ini::INI trigger_strings;
@@ -95,19 +95,15 @@ public:
 	std::string global_jass_comment;
 	std::string global_jass;
 
-	std::unordered_map<int, TriggerCategory> categories;
-	//std::vector<TriggerCategory> categories;
+	std::vector<TriggerCategory> categories;
 	//std::vector<TriggerVariable> variables;
 	std::unordered_map<std::string, TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
-	void load_gui_mpq_format(BinaryReader& reader);
-	void load_jass_mpq_format(BinaryReader& reader);
+	void load(BinaryReader& reader);
+	void load_jass(BinaryReader& reader);
 	void save() const;
 	void save_jass() const;
-
-	void convert_from_mpq();
-	void conver_to_mpq();
 
 	void generate_map_script();
 

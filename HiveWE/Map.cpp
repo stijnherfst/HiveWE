@@ -75,12 +75,12 @@ void Map::load(const fs::path& path) {
 	// Triggers (GUI and JASS)
 	if (hierarchy.map_file_exists("war3map.wtg")) {
 		BinaryReader war3map_wtg = hierarchy.map_file_read("war3map.wtg");
-		triggers.load_gui_mpq_format(war3map_wtg);
+		triggers.load(war3map_wtg);
 
 		// Custom text triggers (JASS)
 		if (hierarchy.map_file_exists("war3map.wct")) {
 			BinaryReader war3map_wct = hierarchy.map_file_read("war3map.wct");
-			triggers.load_jass_mpq_format(war3map_wct);
+			triggers.load_jass(war3map_wct);
 		}
 	}
 

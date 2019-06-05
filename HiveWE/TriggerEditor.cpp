@@ -7,111 +7,87 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.splitter->setSizes({ 10000, 20000 });
 	show();
 
-	//QFileIconProvider icons;
-	//folder_icon = icons.icon(QFileIconProvider::Folder);
-	//file_icon = icons.icon(QFileIconProvider::File);
+	QFileIconProvider icons;
+	folder_icon = icons.icon(QFileIconProvider::Folder);
+	file_icon = icons.icon(QFileIconProvider::File);
 
-	//trigger_comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
+	trigger_comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
 
 	event_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Event"));
 	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
 	action_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Action"));
 
-	QFileSystemModel* model = new QFileSystemModel;
-	model->setRootPath((map->filesystem_path / "Triggers").string().c_str());
-	ui.folder_explorer->setModel(model);
-	ui.folder_explorer->setRootIndex(model->index((map->filesystem_path / "Triggers").string().c_str()));
-	ui.folder_explorer->header()->hideSection(1);
-	ui.folder_explorer->header()->hideSection(2);
-	ui.folder_explorer->header()->hideSection(3);
-	ui.folder_explorer->header()->hide();
+	for (const auto& i : map->triggers.categories) {
+		QTreeWidgetItem* item = new QTreeWidgetItem(ui.explorer);
+		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
+		item->setIcon(0, folder_icon);
+		folders[i.id] = item;
+	}
 
+	for (auto&& i : map->triggers.triggers) {
+		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.category_id]);
+		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
+		if (i.is_comment) {
+			item->setIcon(0, trigger_comment_icon);
+		} else {
+			item->setIcon(0, file_icon);
+		}
 
-	connect(ui.folder_explorer, &QTreeView::doubleClicked, this, &TriggerEditor::item_clicked);
+		files.emplace(item, i);
+	}
+
+	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
 	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { delete ui.editor->widget(index); });
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
 		save_changes();
 		map->triggers.generate_map_script();
-	});
+		});
 }
 
-void TriggerEditor::item_clicked(const QModelIndex& index) {
-	std::string path = index.data(QFileSystemModel::FilePathRole).toString().toStdString();
+void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
+	if (files.find(item) == files.end()) {
+		return;
+	}
+	Trigger& trigger = files.at(item).get();
 
-	if (open_files.count(path)) {
-		ui.editor->setCurrentWidget(open_files.at(path));
+	if (trigger.is_comment) {
 		return;
 	}
 
+	// Check if trigger is already open and if so focus it
+	for (int i = 0; i < ui.editor->count(); i++) {
+		if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
+			ui.editor->setCurrentIndex(i);
+			return;
+		}
+	}
+
 	QWidget* tab = new QWidget;
+	tab->setProperty("TriggerID", trigger.id);
+
 	QVBoxLayout* layout = new QVBoxLayout(tab);
 
-	if (fs::path(path).extension() == ".gui") {
+	if (!trigger.custom_text.empty()) {
+		JassEditor* edit = new JassEditor;
+		layout->addWidget(edit);
+		edit->setText(QString::fromStdString(trigger.custom_text));
+		connect(this, &TriggerEditor::save_changes, [=]() {
+			files.at(item).get().custom_text = edit->text().replace("\r", "").toStdString();
+			});
+	} else {
 		QTreeWidget* edit = new QTreeWidget;
 		edit->setHeaderHidden(true);
 		edit->setUniformRowHeights(true);
 		layout->addWidget(edit);
-		for (const auto& i : map->triggers.triggers) {
-			if (i.name == fs::path(path).stem()) {
-				show_gui_trigger(edit, i);
-				break;
-			}
-		}
+		show_gui_trigger(edit, trigger);
 		edit->expandAll();
-	} else {
-		JassEditor* edit = new JassEditor;
-		layout->addWidget(edit);
-		edit->setText(QString::fromStdString(read_text_file(path)));
 	}
 
-	open_files[path] = tab;
-	//connect(this, &TriggerEditor::save_changes, [=]() {
-	//	files.at(item).get().custom_text = edit->text().replace("\r", "").toStdString();
-	//});
-
-	////if (files.find(item) == files.end()) {
-	////	return;
-	////}
-	////Trigger& trigger = files.at(item).get();
-
-	////if (trigger.is_comment) {
-	////	return;
-	////}
-
-	////// Check if trigger is already open and if so focus it
-	////for (int i = 0; i < ui.editor->count(); i++) {
-	////	if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
-	////		ui.editor->setCurrentIndex(i);
-	////		return;
-	////	}
-	////}
-
-	////QWidget* tab = new QWidget;
-	//////tab->setProperty("TriggerID", trigger.id);
-
-	////QVBoxLayout* layout = new QVBoxLayout(tab);
-
-	////if (!trigger.custom_text.empty()) {
-	////	JassEditor* edit = new JassEditor;
-	////	layout->addWidget(edit);
-	////	edit->setText(QString::fromStdString(trigger.custom_text));
-	////	connect(this, &TriggerEditor::save_changes, [=]() {
-	////		files.at(item).get().custom_text = edit->text().replace("\r", "").toStdString();
-	////	});
-	////} else {
-	////	QTreeWidget* edit = new QTreeWidget;
-	////	edit->setHeaderHidden(true);
-	////	edit->setUniformRowHeights(true);
-	////	layout->addWidget(edit);
-	////	show_gui_trigger(edit, trigger);
-	////	edit->expandAll();
-	////}
-
-	ui.editor->addTab(tab, index.data(QFileSystemModel::FileNameRole).toString());
+	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
 	ui.editor->setCurrentWidget(tab);
 }
 
-void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) {
+void TriggerEditor::show_gui_trigger(QTreeWidget* edit, Trigger& trigger) {
 	QTreeWidgetItem* events = new QTreeWidgetItem(edit);
 	events->setText(0, "Events");
 	events->setIcon(0, event_icon);
@@ -124,7 +100,7 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 	actions->setText(0, "Actions");
 	actions->setIcon(0, action_icon);
 
-	std::function<void(QTreeWidgetItem*, const ECA&)> recurse = [&](QTreeWidgetItem* parent, const ECA& i) {
+	std::function<void(QTreeWidgetItem*, ECA&)> recurse = [&](QTreeWidgetItem* parent, ECA& i) {
 		QTreeWidgetItem* eca = new QTreeWidgetItem(parent);
 		std::string category;
 
@@ -147,14 +123,14 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 
 		eca->setText(0, QString::fromStdString(get_parameters_names(string_parameters, i.parameters)));
 
-		if (!trigger_icons.contains(category)) {
+		if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
 			std::string icon_path = map->triggers.trigger_data.data("TriggerCategories", category, 1);
 			std::string final_path = icon_path + ".blp";
 			QIcon icon = texture_to_icon(final_path);
 			trigger_icons[category] = icon;
 			eca->setIcon(0, icon);
 		} else {
-			eca->setIcon(0, trigger_icons[category]);
+			eca->setIcon(0, found->second);
 		}
 
 		QTreeWidgetItem* sub1 = eca;
@@ -194,7 +170,7 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 		}
 	};
 
-	for (const auto& i : trigger.lines) {
+	for (auto&& i : trigger.lines) {
 		if (i.type == ECA::Type::event) {
 			recurse(events, i);
 		} else if (i.type == ECA::Type::condition) {
@@ -238,7 +214,8 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 				case TriggerParameter::Type::preset:
 					result += map->triggers.trigger_data.data("TriggerParams", j.value, 3);
 					break;
-				case TriggerParameter::Type::string: {
+				case TriggerParameter::Type::string:
+				{
 					std::string pre_result;
 					if (j.value.size() == 4) {
 						if (units_slk.row_header_exists(j.value)) {
@@ -261,7 +238,8 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 					}
 					break;
 				}
-				case TriggerParameter::Type::variable: {
+				case TriggerParameter::Type::variable:
+				{
 					if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
 						std::string type = j.value.substr(8, 4);
 						std::string instance = j.value.substr(13);

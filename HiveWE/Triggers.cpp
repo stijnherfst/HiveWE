@@ -4,7 +4,7 @@
 // Initial version of map script generation
 // Not very readable
 
-void Triggers::load_gui_mpq_format(BinaryReader& reader) {
+void Triggers::load(BinaryReader& reader) {
 	trigger_strings.load("UI/TriggerStrings.txt");
 	trigger_data.load("UI/TriggerData.txt");
 	trigger_data.substitute(world_edit_strings, "WorldEditStrings");
@@ -13,14 +13,14 @@ void Triggers::load_gui_mpq_format(BinaryReader& reader) {
 	trigger_data.set_whole_data("TriggerTypeDefaults", "string", "\"\"");
 
 	for (auto&& section : { "TriggerActions"s, "TriggerEvents"s, "TriggerConditions"s, "TriggerCalls"s }) {
-		for (auto&&[key, value] : trigger_data.section(section)) {
+		for (auto&& [key, value] : trigger_data.section(section)) {
 			if (key.front() == '_') {
 				continue;
 			}
 
 			int arguments = 0;
 			for (auto&& j : value) {
-				arguments += !j.empty() && !is_number(j) && j!= "nothing";
+				arguments += !j.empty() && !is_number(j) && j != "nothing";
 			}
 
 			if (section == "TriggerCalls") {
@@ -37,30 +37,15 @@ void Triggers::load_gui_mpq_format(BinaryReader& reader) {
 		return;
 	}
 
-	const int version = reader.read<uint32_t>();
-	if (version != 8) {
-		std::cout << "Unknown war3map.wtg version: " << version << "\n";
-	}
-	const int categories_count = reader.read<uint32_t>();
-	for (int i = 0; i < categories_count; i++) {
-		TriggerCategory category;
-		category.id = reader.read<uint32_t>();
+	int version = reader.read<uint32_t>();
 
-		category.name = reader.read_c_string();
-		std::replace(category.name.begin(), category.name.end(), '/', '-');
-		std::replace(category.name.begin(), category.name.end(), '\\', '-');
-		std::replace(category.name.begin(), category.name.end(), '?', '-');
-		std::replace(category.name.begin(), category.name.end(), '*', '-');
-		std::replace(category.name.begin(), category.name.end(), '<', '-');
-		std::replace(category.name.begin(), category.name.end(), '>', '-');
-		std::replace(category.name.begin(), category.name.end(), '|', '-');
-		std::replace(category.name.begin(), category.name.end(), ':', '-');
-		std::replace(category.name.begin(), category.name.end(), '\"', '-');
-
+	categories.resize(reader.read<uint32_t>());
+	for (auto&& i : categories) {
+		i.id = reader.read<uint32_t>();
+		i.name = reader.read_c_string();
 		if (version == 7) {
-			category.is_comment = reader.read<uint32_t>();
+			i.is_comment = reader.read<uint32_t>();
 		}
-		categories.emplace(category.id, category);
 	}
 
 	reader.advance(4); // Unknown always 0
@@ -146,10 +131,6 @@ void Triggers::load_gui_mpq_format(BinaryReader& reader) {
 		}
 	};
 
-	fs::create_directory(map->filesystem_path / "Triggers");
-
-	BinaryWriter include_order;
-
 	triggers.resize(reader.read<uint32_t>());
 	for (auto&& i : triggers) {
 		i.id = next_id++;
@@ -167,45 +148,22 @@ void Triggers::load_gui_mpq_format(BinaryReader& reader) {
 		for (auto&& j : i.lines) {
 			parse_eca_structure(j, false);
 		}
-		if (i.lines.size()) {
-			//BinaryWriter writer;
-			//writer.write_string("This is a GUI file that is just used so that something appears in the trigger editor");
-
-			fs::create_directory(map->filesystem_path / "Triggers" / categories[i.category_id].name);
-			hierarchy.map_file_write("Triggers/" + categories[i.category_id].name + "/" + i.name + ".gui", {});
-			include_order.write_string(categories[i.category_id].name + "/" + i.name + ".gui\n");
-		} else {
-			include_order.write_string(categories[i.category_id].name + "/" + i.name + ".j\n");
-		}
 	}
-	hierarchy.map_file_write("Triggers/include_order.txt", include_order.buffer);
 }
 
-void Triggers::load_jass_mpq_format(BinaryReader& reader) {
+void Triggers::load_jass(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
 	if (version == 1) {
-		//global_jass_comment = reader.read_c_string();
-		//global_jass = reader.read_string(reader.read<uint32_t>());
-		//hierarchy.map_file_write("global jass.j", reader.read_vector<uint8_t>(reader.read<uint32_t>()));
-		BinaryWriter writer;
-		writer.write_string("/*");
-		writer.write_string(reader.read_c_string());
-		writer.write_string("*/\n\n");
-
-		writer.write_string(reader.read_string(reader.read<uint32_t>()));
-		hierarchy.map_file_write("Triggers/global jass.j", writer.buffer);
+		global_jass_comment = reader.read_c_string();
+		global_jass = reader.read_string(reader.read<uint32_t>());
 	}
 
 	reader.advance(4);
 	for (auto&& i : triggers) {
 		const int size = reader.read<uint32_t>();
 		if (size > 0) {
-			//i.custom_text = reader.read_string(size);
-
-
-			fs::create_directory(map->filesystem_path / "Triggers" / categories[i.category_id].name);
-			hierarchy.map_file_write("Triggers/" + categories[i.category_id].name + "/" + i.name + ".j", reader.read_vector<uint8_t>(size));
+			i.custom_text = reader.read_string(size);
 		}
 	}
 }
@@ -243,8 +201,6 @@ void Triggers::generate_map_script() {
 	std::vector<std::string> initialization_triggers;
 
 
-//	std::ifstream include_order
-
 	std::string trigger_script;
 	for (const auto& i : triggers) {
 		if (i.is_comment || !i.is_enabled) {
@@ -257,7 +213,7 @@ void Triggers::generate_map_script() {
 		}
 	}
 
-	// Search the trigger script for global unit/destructible definitions
+	// Search the trigger script for global unit/destructible definitons
 	size_t pos = trigger_script.find("gg_unit", 0);
 	while (pos != std::string::npos) {
 		std::string type = trigger_script.substr(pos + 8, 4);
@@ -267,8 +223,8 @@ void Triggers::generate_map_script() {
 	}
 
 	pos = trigger_script.find("gg_dest", 0);
-	while (pos != std::string::npos) {	
-		
+	while (pos != std::string::npos) {
+
 		std::string type = trigger_script.substr(pos + 8, 4);
 		std::string creation_number = trigger_script.substr(pos + 13, trigger_script.find_first_not_of("0123456789", pos + 13) - pos - 13);
 		destructable_variables[creation_number] = type;
@@ -286,7 +242,7 @@ void Triggers::generate_map_script() {
 
 	writer.write_string("globals\n");
 
-	for (const auto&[name, variable] : variables) {
+	for (const auto& [name, variable] : variables) {
 		std::string base_type = get_base_type(variable.type);
 		if (variable.is_array) {
 			writer.write_string("\t" + base_type + " array udg_" + name + "\n");
@@ -334,11 +290,11 @@ void Triggers::generate_map_script() {
 		writer.write_string("\ttrigger gg_trg_" + trigger_name + " = null\n");
 	}
 
-	for (const auto&[creation_number, type] : unit_variables) {
+	for (const auto& [creation_number, type] : unit_variables) {
 		writer.write_string("\tunit gg_unit_" + type + "_" + creation_number + " = null\n");
 	}
 
-	for (const auto&[creation_number, type] : destructable_variables) {
+	for (const auto& [creation_number, type] : destructable_variables) {
 		writer.write_string("\tdestructable gg_dest_" + type + "_" + creation_number + " = null\n");
 	}
 
@@ -347,7 +303,7 @@ void Triggers::generate_map_script() {
 	// init globals
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
-	for (const auto&[name, variable] : variables) {
+	for (const auto& [name, variable] : variables) {
 		if (variable.is_array) {
 			const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
 			const std::string type = base_type.empty() ? variable.type : base_type;
@@ -568,7 +524,7 @@ endfunction
 			writer.write_string("\n");
 		}
 	}
-	
+
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Sounds\n");
@@ -578,20 +534,20 @@ endfunction
 	writer.write_string("function InitSounds takes nothing returns nothing\n");
 
 	for (const auto& i : map->sounds.sounds) {
-		
+
 		std::string sound_name = i.name;
 		// Replace spaces by underscores
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
-		writer.write_string("\tset " + sound_name + " = CreateSound(\"" + 
+		writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
 			string_replaced(i.file, "\\", "\\\\") + "\", " +
-			(i.looping ? "true" : "false") + ", " + 
+			(i.looping ? "true" : "false") + ", " +
 			(i.is_3d ? "true" : "false") + ", " +
 			(i.stop_out_of_range ? "true" : "false") + ", " +
 			std::to_string(i.fade_in_rate) + ", " +
 			std::to_string(i.fade_out_rate) + ", " +
 			"\"" + i.eax_effect + "\"" +
 			")\n");
-	
+
 		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n"); // Sound duration
 		writer.write_string("\tcall SetSoundChannel(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
 		writer.write_string("\tcall SetSoundVolume(" + sound_name + ", " + std::to_string(i.volume) + ")\n");
@@ -616,9 +572,9 @@ endfunction
 	for (const auto& i : map->doodads.doodads) {
 		std::string id = "d";
 
-		if (destructable_variables.contains(std::to_string(i.creation_number))) {
+		if (destructable_variables.find(std::to_string(i.creation_number)) != destructable_variables.end()) {
 			id = "gg_dest_" + i.id + "_" + std::to_string(i.creation_number);
-		} 
+		}
 
 		if (id == "d" && i.item_sets.empty() && i.item_table_pointer == -1) {
 			continue;
@@ -687,11 +643,11 @@ endfunction
 		}
 
 		std::string unit_reference = "u";
-		if (unit_variables.contains(std::to_string(i.creation_number))) {
+		if (unit_variables.find(std::to_string(i.creation_number)) != unit_variables.end()) {
 			unit_reference = "gg_unit_" + i.id + "_" + std::to_string(i.creation_number);
 		}
 
-		writer.write_string("\tset " + unit_reference + " = CreateUnit(Player(" + 
+		writer.write_string("\tset " + unit_reference + " = CreateUnit(Player(" +
 			std::to_string(i.player) + "), " +
 			"\'" + i.id + "\', " +
 			std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " +
@@ -750,7 +706,7 @@ endfunction
 					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_off + "\")\n");
 				}
 			}
-			
+
 		}
 
 		for (const auto& j : i.items) {
@@ -766,7 +722,7 @@ endfunction
 	}
 
 	writer.write_string("endfunction\n");
-	
+
 	writer.write_string(seperator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Regions\n");
@@ -780,10 +736,10 @@ endfunction
 		std::string region_name = "gg_rct_" + i.name;
 		// Replace spaces by underscores
 		std::replace(region_name.begin(), region_name.end(), ' ', '_');
-		
+
 		writer.write_string("\tset " + region_name + "= Rect(" +
 			std::to_string(std::min(i.left, i.right)) + "," +
-			std::to_string(std::min(i.bottom, i.top)) + "," + 
+			std::to_string(std::min(i.bottom, i.top)) + "," +
 			std::to_string(std::max(i.left, i.right)) + "," +
 			std::to_string(std::max(i.bottom, i.top)) + ")\n");
 
@@ -792,7 +748,7 @@ endfunction
 			writer.write_string("\tcall EnableWeatherEffect(we, true)\n");
 		}
 	}
-	
+
 
 	writer.write_string("endfunction\n");
 
@@ -809,7 +765,7 @@ endfunction
 		std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
 
 		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset)  + ", 0.0)\n");
+		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset) + ", 0.0)\n");
 		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(i.rotation) + ", 0.0)\n");
 		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(i.angle_of_attack) + ", 0.0)\n");
 		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(i.distance) + ", 0.0)\n");
@@ -819,7 +775,7 @@ endfunction
 		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(i.target_x) + ", " + std::to_string(i.target_y) + ", 0.0)\n");
 
 	}
-	
+
 	writer.write_string("endfunction\n");
 
 	writer.write_string(seperator);
@@ -956,7 +912,7 @@ endfunction
 	current_player = 0;
 	for (const auto& i : map->info.players) {
 		std::string player_text;
-		
+
 		int current_index = 0;
 		for (const auto& j : map->info.players) {
 			if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
@@ -986,7 +942,7 @@ endfunction
 		std::to_string(map->info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
 		std::to_string(map->info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM), " +
 
-		std::to_string(map->info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), "  +
+		std::to_string(map->info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT), " +
 		std::to_string(map->info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP), " +
 
 		std::to_string(map->info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT), " +
@@ -1054,18 +1010,24 @@ endfunction
 	writer.write_string("\tcall InitAllyPriorities()\n");
 
 	writer.write_string("endfunction\n");
-	
-	hierarchy.map_file_write("war3map.j", writer.buffer);
+
+	fs::path path = QDir::tempPath().toStdString() + "/input.j";
+	std::ofstream output(path);
+	output.write((char*)writer.buffer.data(), writer.buffer.size());
+	output.close();
 
 	QProcess* proc = new QProcess();
 	proc->setWorkingDirectory("Data/Tools");
-	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", (map->filesystem_path / "war3map.j").string().c_str(), (map->filesystem_path / "war3map.j").string().c_str() });
+	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
 
 	if (result.contains("Compile error")) {
 		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
 	}
+
+	// ToDo
+	//hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {
@@ -1136,8 +1098,8 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		pre_actions += iftext;
 
 		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tendif";
-	} 
-	
+	}
+
 	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple") {
 		const std::string function_name = generate_function_name(trigger_name);
 
@@ -1153,8 +1115,8 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		pre_actions += "\nendfunction\n";
 
 		return output;
-	} 
-	
+	}
+
 	if (eca.name == "AndMultiple") {
 		const std::string function_name = generate_function_name(trigger_name);
 
@@ -1169,7 +1131,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		pre_actions += iftext;
 
 		return function_name + "()";
-	} 
+	}
 
 	if (eca.name == "OrMultiple") {
 		const std::string function_name = generate_function_name(trigger_name);
@@ -1186,7 +1148,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		return function_name + "()";
 	}
-	
+
 	if (eca.name == "SetVariable") {
 		const std::string first = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0));
 		const std::string second = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1));
@@ -1319,7 +1281,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 	for (int k = 0; k < parameters.size(); k++) {
 		const auto& i = parameters[k];
-		
+
 		const std::string type = get_type(parent_name, k);
 
 		if (type == "boolexpr") {
@@ -1351,7 +1313,8 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			case TriggerParameter::Type::invalid:
 				std::cout << "Invalid parameter type\n";
 				return "";
-			case TriggerParameter::Type::preset: {
+			case TriggerParameter::Type::preset:
+			{
 				const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
 
 				if (get_base_type(preset_type) == "string") {
@@ -1362,7 +1325,8 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			}
 			case TriggerParameter::Type::function:
 				return parameter.value + "()";
-			case TriggerParameter::Type::variable: {
+			case TriggerParameter::Type::variable:
+			{
 				std::string output = parameter.value;
 
 				if (!output._Starts_with("gg_")) {
@@ -1423,7 +1387,7 @@ std::string Triggers::get_type(const std::string& function_name, int parameter) 
 	return type;
 }
 
-std::string Triggers::generate_function_name(const std::string & trigger_name) const {
+std::string Triggers::generate_function_name(const std::string& trigger_name) const {
 	auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	return "Trig_" + trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
 }
@@ -1435,7 +1399,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 
 	std::string trigger_variable_name = "gg_trg_" + trigger_name;
 	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
-	
+
 	std::string events;
 	std::string conditions;
 	std::string pre_actions;
@@ -1479,7 +1443,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 				break;
 		}
 	}
-	
+
 	actions += "endfunction\n\n";
 
 	if (!conditions.empty()) {

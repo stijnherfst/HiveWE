@@ -43,6 +43,8 @@ namespace fs = std::filesystem;
 #endif
 #include <turbojpeg.h>
 
+#include "json.hpp"
+
 // Custom Qt Widgets
 #ifdef _DEBUG
 #define QSCINTILLA_DLL
