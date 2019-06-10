@@ -44,6 +44,7 @@ namespace fs = std::filesystem;
 #include <turbojpeg.h>
 
 #include "json.hpp"
+#include "plf_colony.h"
 
 // Custom Qt Widgets
 #ifdef _DEBUG

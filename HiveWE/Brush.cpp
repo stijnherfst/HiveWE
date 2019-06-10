@@ -112,6 +112,22 @@ void Brush::key_press_event(QKeyEvent* event) {
 		case Qt::Key_Minus:
 			decrease_size(1);
 			break;
+		case Qt::Key_Delete:
+			delete_selection();
+			break;
+		case Qt::Key_C:
+			if (event->modifiers() & Qt::ControlModifier) {
+				//clear_clipboard();
+				copy_selection();
+			}
+			break;
+		case Qt::Key_V:
+			if (event->modifiers() & Qt::ControlModifier) {
+				//clear_clipboard();
+				mode = Mode::pasting;
+				paste_selection();
+			}
+			break;
 	}
 }
 
@@ -141,6 +157,10 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 			apply_begin();
 			apply();
 		}
+	} else if (mode == Mode::pasting) {
+		clear_selection();
+		place_clipboard();
+		mode == Mode::selection;
 	}
 }
 
@@ -157,8 +177,12 @@ void Brush::mouse_release_event(QMouseEvent* event) {
 void Brush::render() const {
 	if (mode == Mode::selection) {
 		render_selector();
-	} else {
+	} 
+	if (mode == Mode::placement) {
 		render_brush();
+	}
+	if (mode == Mode::pasting) {
+		render_clipboard();
 	}
 	render_selection();
 }

@@ -71,30 +71,9 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
-		case Qt::Key_Delete:
-			delete_selection();
-			break;
 		case Qt::Key_A:
 			if (event->modifiers() & Qt::ControlModifier) {
 				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
-			}
-			break;
-		case Qt::Key_C:
-			if (event->modifiers() & Qt::ControlModifier) {
-				clipboard.clear();
-				for (const auto& i : selections) {
-					clipboard.push_back(*i);
-				}
-			}
-			break;
-		case Qt::Key_V:
-			if (event->modifiers() & Qt::ControlModifier) {
-				selections.clear();
-				for (auto i : clipboard) {
-					map->doodads.add_doodad(i);
-
-
-				}
 			}
 			break;
 		default:
@@ -120,7 +99,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 					i->angle = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
 					i->update();
 				}
-			} else if (selection_started) {
+			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 			}
@@ -164,8 +143,37 @@ void DoodadBrush::delete_selection() {
 	}
 }
 
+void DoodadBrush::copy_selection() {
+	clipboard.clear();
+	clipboard_mouse_position = position;
+	for (const auto& i : selections) {
+		clipboard.push_back(*i);
+	}
+}
+
+void DoodadBrush::cut_selection() {
+	copy_selection();
+	// Delete selection will add to the undo/redo tree
+	delete_selection();
+}
+
+void DoodadBrush::paste_selection() {
+	selections.clear();
+	for (auto i : clipboard) {
+		map->doodads.add_doodad(i);
+	}
+}
+
 void DoodadBrush::clear_selection() {
 	selections.clear();
+}
+
+void DoodadBrush::place_clipboard() {
+	for (const auto& i : clipboard) {
+		Doodad& new_doodad = map->doodads.add_doodad(i);
+		new_doodad.position = i.position + glm::vec3(glm::vec2(position) - clipboard_mouse_position, 0);
+		new_doodad.update();
+	}
 }
 
 void DoodadBrush::apply_begin() {
@@ -261,6 +269,24 @@ void DoodadBrush::render_selection() const {
 
 	gl->glDisableVertexAttribArray(0);
 	gl->glEnable(GL_DEPTH_TEST);
+}
+
+void DoodadBrush::render_clipboard() const {
+	for (const auto& i : clipboard) {
+
+		glm::vec3 base_scale = glm::vec3(1.f);
+
+		if (doodads_slk.row_header_exists(id)) {
+			base_scale = glm::vec3(doodads_slk.data<float>("defScale", i.id));
+		}
+
+		glm::mat4 matrix = glm::translate(glm::mat4(1.f), glm::vec3(position, 2) + (i.position - glm::vec3(clipboard_mouse_position, 2))); // ToDo fix
+		matrix = glm::scale(matrix, (base_scale - 1.f + i.scale) / 128.f);
+		matrix = glm::rotate(matrix, i.angle, glm::vec3(0, 0, 1));
+
+		i.mesh->render_queue(matrix);
+
+	}
 }
 
 void DoodadBrush::set_random_variation() {

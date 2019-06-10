@@ -26,6 +26,7 @@ public:
 	float rotation = 0.f;
 
 	std::vector<Doodad*> selections;
+	glm::vec2 clipboard_mouse_position;
 	std::vector<Doodad> clipboard;
 
 	std::unique_ptr<DoodadAddAction> doodad_undo;
@@ -38,14 +39,19 @@ public:
 	void mouse_release_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
 
-	void delete_selection();
+	void delete_selection() override;
+	void copy_selection() override;
+	void cut_selection() override;
+	void paste_selection() override;
 	void clear_selection() override;
+	void place_clipboard() override;
 
 	void apply_begin() override;
 	void apply() override;
 	void apply_end() override;
 	void render_brush() const override;
 	void render_selection() const override;
+	void render_clipboard() const override;
 
 	void set_random_variation();
 	void add_variation(int variation);
