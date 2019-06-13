@@ -145,10 +145,18 @@ void DoodadBrush::delete_selection() {
 
 void DoodadBrush::copy_selection() {
 	clipboard.clear();
-	clipboard_mouse_position = position;
+
+	// Mouse position is average location
+	clipboard_free_placement = true;
+	glm::vec3 average_position = {};
 	for (const auto& i : selections) {
+		if (i->pathing) {
+			clipboard_free_placement = false;
+		}
 		clipboard.push_back(*i);
+		average_position += i->position;
 	}
+	clipboard_mouse_position = average_position / static_cast<float>(clipboard.size());
 }
 
 void DoodadBrush::cut_selection() {
@@ -157,23 +165,33 @@ void DoodadBrush::cut_selection() {
 	delete_selection();
 }
 
-void DoodadBrush::paste_selection() {
-	selections.clear();
-	for (auto i : clipboard) {
-		map->doodads.add_doodad(i);
-	}
-}
-
 void DoodadBrush::clear_selection() {
 	selections.clear();
 }
 
 void DoodadBrush::place_clipboard() {
+	apply_begin();
 	for (const auto& i : clipboard) {
 		Doodad& new_doodad = map->doodads.add_doodad(i);
-		new_doodad.position = i.position + glm::vec3(glm::vec2(position) - clipboard_mouse_position, 0);
+
+		glm::vec3 final_position;
+		if (clipboard_free_placement) {
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+		} else {
+			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
+		}
+		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+
+		new_doodad.position = final_position;
 		new_doodad.update();
+		doodad_undo->doodads.push_back(new_doodad);
+		
+		if (new_doodad.pathing) {
+			map->pathing_map.blit_pathing_texture(new_doodad.position, glm::degrees(rotation) + 90, new_doodad.pathing);
+		}
 	}
+	map->pathing_map.upload_dynamic_pathing();
+	apply_end();
 }
 
 void DoodadBrush::apply_begin() {
@@ -273,19 +291,26 @@ void DoodadBrush::render_selection() const {
 
 void DoodadBrush::render_clipboard() const {
 	for (const auto& i : clipboard) {
-
 		glm::vec3 base_scale = glm::vec3(1.f);
 
-		if (doodads_slk.row_header_exists(id)) {
+		if (doodads_slk.row_header_exists(i.id)) {
 			base_scale = glm::vec3(doodads_slk.data<float>("defScale", i.id));
 		}
 
-		glm::mat4 matrix = glm::translate(glm::mat4(1.f), glm::vec3(position, 2) + (i.position - glm::vec3(clipboard_mouse_position, 2))); // ToDo fix
-		matrix = glm::scale(matrix, (base_scale - 1.f + i.scale) / 128.f);
-		matrix = glm::rotate(matrix, i.angle, glm::vec3(0, 0, 1));
+		glm::vec3 final_position;
+		if (clipboard_free_placement) {
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+		} else {
+			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
+		}
+		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 
-		i.mesh->render_queue(matrix);
+		glm::mat4 model(1.f);
+		model = glm::translate(model, final_position);
+		model = glm::scale(model, (base_scale - 1.f + i.scale) / 128.f);
+		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
+		i.mesh->render_queue(model);
 	}
 }
 

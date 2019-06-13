@@ -13,6 +13,7 @@
 #include <sstream>
 #include <queue>
 #include <string>
+#include <stack>
 #include <variant>
 #include <regex>
 #include <random>

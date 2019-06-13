@@ -27,6 +27,7 @@ public:
 
 	std::vector<Doodad*> selections;
 	glm::vec2 clipboard_mouse_position;
+	bool clipboard_free_placement = false;
 	std::vector<Doodad> clipboard;
 
 	std::unique_ptr<DoodadAddAction> doodad_undo;
@@ -42,7 +43,6 @@ public:
 	void delete_selection() override;
 	void copy_selection() override;
 	void cut_selection() override;
-	void paste_selection() override;
 	void clear_selection() override;
 	void place_clipboard() override;
 

@@ -42,12 +42,11 @@ public:
 	virtual void delete_selection() {};
 	virtual void copy_selection() {};
 	virtual void cut_selection() {};
-	virtual void paste_selection() {};
 	virtual void clear_selection() {};
 	virtual void place_clipboard() {};
 
 	virtual void clear_clipboard() {};
-
+	
 	void render() const;
 	virtual void render_selector() const;
 	virtual void render_selection() const {};
@@ -60,6 +59,7 @@ public:
 protected:
 	Shape shape = Shape::circle;
 	Mode mode = Mode::placement;
+	Mode return_mode = Mode::placement;
 
 	int size = 1;
 	glm::ivec2 position;

@@ -98,6 +98,9 @@ void Brush::decrease_size(const int new_size) {
 }
 
 void Brush::switch_mode() {
+	if (mode != Mode::placement && mode != Mode::selection) {
+		mode = return_mode;
+	}
 	mode = (mode == Mode::placement) ? Mode::selection : Mode::placement;
 
 	clear_selection();
@@ -117,15 +120,13 @@ void Brush::key_press_event(QKeyEvent* event) {
 			break;
 		case Qt::Key_C:
 			if (event->modifiers() & Qt::ControlModifier) {
-				//clear_clipboard();
 				copy_selection();
 			}
 			break;
 		case Qt::Key_V:
 			if (event->modifiers() & Qt::ControlModifier) {
-				//clear_clipboard();
+				return_mode = mode;
 				mode = Mode::pasting;
-				paste_selection();
 			}
 			break;
 	}
@@ -136,7 +137,7 @@ void Brush::mouse_move_event(QMouseEvent* event) {
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
-		} else {
+		} else if (mode == Mode::placement) {
 			apply();
 		}
 	}
