@@ -301,7 +301,8 @@ void DoodadBrush::render_clipboard() const {
 		if (clipboard_free_placement) {
 			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
 		} else {
-			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
+			// clipboard_mouse_position only per 0.5 units?
+			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 2.f)) / 2.f, 0) + i.position;
 		}
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 

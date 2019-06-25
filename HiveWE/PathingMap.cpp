@@ -51,10 +51,10 @@ void PathingMap::save() const {
 
 /// Clears an area with zeroes
 void PathingMap::dynamic_clear_area(const QRect& area) {
-	const QRect t = area.intersected({ 0, 0, width, height });
+	const QRect t = QRect(area.left() * 4, area.top() * 4, area.width() * 4, area.height() * 4).intersected({ 0, 0, width, height });
 
-	for (int j = t.top() * 4; j < t.bottom() * 4; j++) {
-		for (int i = t.left() * 4; i < t.right() * 4; i++) {
+	for (int j = t.top(); j < t.bottom(); j++) {
+		for (int i = t.left(); i < t.right(); i++) {
 			pathing_cells_dynamic[j * width + i] = 0;
 		}
 	}
