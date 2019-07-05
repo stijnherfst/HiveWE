@@ -1328,8 +1328,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			case TriggerParameter::Type::variable:
 			{
 				std::string output = parameter.value;
-
-				if (!output._Starts_with("gg_")) {
+				if (!output.starts_with("gg_")) {
 					output = "udg_" + output;
 				}
 

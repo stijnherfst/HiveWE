@@ -123,7 +123,7 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 }
 
 void TPSCamera::mouse_scroll_event(QWheelEvent* event) {
-	distance = std::clamp(distance * std::pow(0.999f, event->angleDelta().y()), 0.001f, 1000.f);
+	distance = std::clamp(distance * std::pow(0.999f, (float)event->angleDelta().y()), 0.001f, 1000.f);
 	update(0);
 }
 

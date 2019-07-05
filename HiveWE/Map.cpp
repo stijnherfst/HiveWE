@@ -55,7 +55,7 @@ void Map::load(const fs::path& path) {
 	// Doodads
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
-	
+
 	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -222,8 +222,8 @@ void Map::render(int width, int height) {
 		return;
 	}
 
-	total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
-	last_time = std::chrono::high_resolution_clock::now();
+	total_time = (std::chrono::steady_clock::now() - last_time).count() / 1'000'000.0;
+	last_time = std::chrono::steady_clock::now();
 
 
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

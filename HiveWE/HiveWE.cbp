@@ -58,10 +58,11 @@
 				<Compiler>
 					<Add option="-Wextra" />
 					<Add option="-Wall" />
-					<Add option="-std=c++1z" />
 					<Add option="-fPIC" />
 					<Add option="-g" />
 					<Add option="-O0" />
+					<Add option="-std=c++2a" />
+					<Add option="-Winvalid-pch" />
 					<Add option="-DUNICODE" />
 					<Add option="-DQT_CORE_LIB" />
 					<Add option="-DQT_GUI_LIB" />
@@ -77,6 +78,8 @@
 					<Add directory="/usr/include/qt/QtOpenGL/" />
 					<Add directory="/usr/include/qt/QtWidgets/" />
 					<Add directory="/usr/include/glm" />
+					<Add directory="./Dependencies/nlohmann" />
+					<Add directory="./Dependencies/plf" />
 				</Compiler>
 				<Linker>
 					<Add library="SOIL" />
@@ -200,6 +203,12 @@
 		<Unit filename="GPUTexture.h">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GameCameras.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="GameCameras.h">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_AspectRatioPixmapLabel.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -242,6 +251,9 @@
 		<Unit filename="GeneratedFiles/Linux/moc_QRibbon.cpp">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GeneratedFiles/Linux/moc_SettingsEditor.cpp">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_Terrain.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -261,9 +273,6 @@
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="GeneratedFiles/Linux/moc_WindowHandler.cpp">
-			<Option target="Executable" />
-		</Unit>
-		<Unit filename="GeneratedFiles/qrc_HiveWE.cpp">
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="GeneratedFiles/ui_DoodadPalette.h">
@@ -287,6 +296,7 @@
 		<Unit filename="GeneratedFiles/ui_PathingPallete.h">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="GeneratedFiles/ui_SettingsEditor.h" />
 		<Unit filename="GeneratedFiles/ui_TerrainPalette.h">
 			<Option target="Executable" />
 		</Unit>
@@ -392,6 +402,10 @@
 			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
 			<Option target="Pre-Generate" />
 		</Unit>
+		<Unit filename="JassTokenizer.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="JassTokenizer.h" />
 		<Unit filename="MDX.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -449,7 +463,10 @@
 			<Option target="Pre-Generate" />
 		</Unit>
 		<Unit filename="Minimap.ui">
-			<Option target="Executable" />
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='uic -o &quot;./GeneratedFiles/ui_$file_name.h&quot; $file ' />
+			<Option target="Pre-Generate" />
 		</Unit>
 		<Unit filename="Palette.cpp">
 			<Option target="Executable" />
@@ -502,6 +519,12 @@
 		<Unit filename="Quadtree.h">
 			<Option target="Executable" />
 		</Unit>
+		<Unit filename="Regions.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="Regions.h">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="ResourceManager.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -510,6 +533,21 @@
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="SLK.h" />
+		<Unit filename="SettingsEditor.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="SettingsEditor.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='moc $file -o &quot;./GeneratedFiles/Linux/moc_$file_name.cpp&quot; &quot;-fstdafx.h&quot; &quot;-f../../$file_name.$file_ext&quot;  -DUNICODE -DQT_CORE_LIB -DQT_GUI_LIB -DQT_OPENGL_LIB -DQT_WIDGETS_LIB -D_UNICODE &quot;-I./GeneratedFiles&quot; &quot;-I.&quot; &quot;-I./GeneratedFiles/Linux/.&quot; &quot;-I/usr/include/qt/QtCore&quot; &quot;-I/usr/include/qt/QtGui&quot; &quot;-I/usr/include/qt/QtANGLE&quot; &quot;-I/usr/include/qt/QtOpenGL&quot; &quot;-I/usr/include/qt/QtWidgets&quot;\n' />
+			<Option target="Pre-Generate" />
+		</Unit>
+		<Unit filename="SettingsEditor.ui">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option compiler="gcc" use="1" buildCommand='uic -o &quot;./GeneratedFiles/ui_$file_name.h&quot; $file ' />
+			<Option target="Pre-Generate" />
+		</Unit>
 		<Unit filename="Shader.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -518,6 +556,12 @@
 			<Option target="Executable" />
 		</Unit>
 		<Unit filename="ShadowMap.h" />
+		<Unit filename="Sounds.cpp">
+			<Option target="Executable" />
+		</Unit>
+		<Unit filename="Sounds.h">
+			<Option target="Executable" />
+		</Unit>
 		<Unit filename="StaticMesh.cpp">
 			<Option target="Executable" />
 		</Unit>
@@ -652,7 +696,11 @@
 		<Unit filename="stdafx.cpp">
 			<Option target="Executable" />
 		</Unit>
-		<Unit filename="stdafx.h" />
+		<Unit filename="stdafx.h">
+			<Option compile="1" />
+			<Option weight="0" />
+			<Option target="Executable" />
+		</Unit>
 		<Extensions>
 			<envvars />
 			<code_completion />

@@ -138,7 +138,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
-	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() { 
+	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
 		auto editor = window_handler.create_or_raise<TriggerEditor>();
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
@@ -193,7 +193,7 @@ void HiveWE::load_folder() {
 	map = new Map();
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-		
+
 	map->load(directory);
 	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
 }
@@ -241,7 +241,7 @@ void HiveWE::load_mpq() {
 		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(directory.string()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
 		return;
 	}
-	
+
 	// Unpack archive
 	SFILE_FIND_DATA file_data;
 	HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
@@ -312,7 +312,11 @@ void HiveWE::export_mpq() {
 	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
 
 	HANDLE handle;
+	#ifdef _MSC_VER
 	SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	#else
+	SFileCreateArchive(file_name.toStdString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	#endif
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {

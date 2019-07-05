@@ -12,7 +12,7 @@ namespace mpq {
 		}
 
 		std::vector<uint8_t> buffer(size);
-		
+
 		#ifdef _MSC_VER
 		unsigned long bytes_read;
 		#else
@@ -45,7 +45,7 @@ namespace mpq {
 		}
 		return buffer;
 	}
-	
+
 	size_t File::size() const {
 		return SFileGetFileSize(handle, nullptr);
 	}
@@ -80,7 +80,7 @@ namespace mpq {
 		}
 		return file;
 	}
-	
+
 	void MPQ::file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
 		HANDLE out_handle;
 		bool success = SFileCreateFile(handle , path.string().c_str(), 0, static_cast<DWORD>(data.size()), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &out_handle);
@@ -112,7 +112,11 @@ namespace mpq {
 	}
 
 	void MPQ::file_add(const fs::path& path, const fs::path& new_path) const {
+		#ifdef _MSC_VER
 		bool success = SFileAddFileEx(handle, path.wstring().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		#else
+		bool success = SFileAddFileEx(handle, path.string().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		#endif
 		if (!success) {
 			std::cout << "Error adding file: " << GetLastError() << "\n";
 		}

@@ -161,7 +161,7 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 	} else if (mode == Mode::pasting) {
 		clear_selection();
 		place_clipboard();
-		mode == Mode::selection;
+		mode = Mode::selection;
 	}
 }
 

@@ -331,3 +331,4 @@ ASALocalRun/
 HiveWE/Linux/
 HiveWE/Data/Tools/common.j
 HiveWE/Data/Tools/blizzard.j
+*.gch

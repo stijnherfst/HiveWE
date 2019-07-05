@@ -35,7 +35,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		//i.scale = reader.read<glm::vec3>() / 128.f;
 		reader.advance(12);
 		i.scale = glm::vec3(1.f);
-		
+
 		i.flags = reader.read<uint8_t>();
 
 		i.player = reader.read<uint32_t>();
@@ -227,7 +227,7 @@ void Units::create() {
 
 		tree.insert(&i);
 		i.mesh = get_mesh(i.id);
-	}	
+	}
 	for (auto&& i : items) {
 		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
 
@@ -261,6 +261,8 @@ std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 		mesh_path = items_slk.data("file", id);
 	}
 	mesh_path.replace_extension(".mdx");
+
+	mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
 
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
