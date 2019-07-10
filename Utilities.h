@@ -1,5 +1,16 @@
 #pragma once
 
+#include <vector>
+
+#include <QOpenGLFunctions_4_5_Core>
+
+#define GLM_FORCE_CXX17
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_SILENT_WARNINGS
+#include <glm/glm.hpp>
+#include "BinaryReader.h"
+#include "SLK.h"
+
 class Shapes {
 public:
 	void init();

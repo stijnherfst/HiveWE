@@ -2,6 +2,14 @@
 
 #include "ui_HiveWE.h"
 
+#include <QMainWindow>
+#include "WindowHandler.h"
+#include "QRibbon.h"
+#include "Minimap.h"
+#include "Map.h"
+#include "INI.h"
+
+
 class HiveWE : public QMainWindow {
 	Q_OBJECT
 

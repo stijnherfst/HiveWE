@@ -1,4 +1,16 @@
-#include "stdafx.h"
+#include "utilities.h"
+
+#include <sstream>
+#include <iostream>
+#include <fstream>
+
+#include <QSettings>
+#include <QPainter>
+#include <QIcon>
+#include <QOpenGLFunctions_4_5_Core>
+
+#include "Texture.h"
+#include "ResourceManager.h"
 
 QOpenGLFunctions_4_5_Core* gl;
 Shapes shapes;

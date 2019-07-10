@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "TerrainUndo.h"
 
 void TerrainUndo::undo() {
 	if (undo_actions.empty()) {

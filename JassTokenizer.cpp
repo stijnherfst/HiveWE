@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "JassTokenizer.h"
 
 JassToken::JassToken(QString value, int start, int stop, JassTokenType type, QList<JassToken> nested_tokens) :

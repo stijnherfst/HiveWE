@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QRect>
+
 template <typename T>
 class QuadTree {
 	QuadTree* top_left = nullptr;

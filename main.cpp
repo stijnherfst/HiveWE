@@ -1,4 +1,13 @@
-#include "stdafx.h"
+#include <QPalette>
+#include <QCoreApplication>
+#include <QApplication>
+#include <QSurfaceFormat>
+#include <QFont>
+#include <QStyleFactory>
+#include <QSettings>
+#include <QFile>
+
+#include "HiveWE.h"
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available

@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "InputHandler.h"
+
 
 bool InputHandler::key_pressed(const Qt::Key key) const {
 	return keys_pressed.count(key);

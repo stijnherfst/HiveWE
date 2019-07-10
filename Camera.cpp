@@ -1,4 +1,7 @@
-#include "stdafx.h"
+#include "camera.h"
+
+#include "HiveWE.h"
+#include "InputHandler.h"
 
 void Camera::reset() {
 	position = glm::vec3(map->terrain.width / 2, map->terrain.height / 2, 0);

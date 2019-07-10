@@ -1,4 +1,34 @@
-#include "stdafx.h"
+#include "HiveWE.h"
+
+#include <fstream>
+
+#include <QFileDialog>
+#include <QSettings>
+#include <QObject>
+#include <QMessageBox>
+#include <QTimer>
+#include <QProcess>
+#include <QPushButton>
+#include <QApplication>
+
+#include <SOIL2/SOIL2.h>
+
+#include <StormLib.h>
+
+
+#include "Hierarchy.h"
+#include "TriggerEditor.h"
+#include "TileSetter.h"
+#include "MapInfoEditor.h"
+#include "TerrainPalette.h"
+#include "SettingsEditor.h"
+#include "TilePather.h"
+#include "DoodadPalette.h"
+#include "TerrainPalette.h"
+#include "PathingPalette.h"
+#include "Palette.h"
+#include "ImportManager.h"
+#include "Camera.h"
 
 Map* map = nullptr;// = new Map();
 ini::INI world_edit_strings;
@@ -238,7 +268,7 @@ void HiveWE::load_mpq() {
 	try {
 		fs::create_directory(directory);
 	} catch (std::filesystem::filesystem_error& e) {
-		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(directory.string()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(e.what()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
 		return;
 	}
 	

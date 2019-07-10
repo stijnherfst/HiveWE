@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vector>
+#include <memory>
+
 class TerrainUndoAction {
 public:
 	virtual void undo() = 0;
