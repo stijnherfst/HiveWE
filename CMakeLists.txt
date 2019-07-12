@@ -191,6 +191,8 @@ target_link_libraries(HiveWE
 	soil2
 	stormlib
 	casclib
+	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/debug/lib/turbojpegd.lib"
+	"C:/vcpkg/packages/qscintilla_x64-windows/debug/lib/qscintilla2.lib"
 	${JPEG_LIBRARIES}
 	${QSCINTILLA_LIBRARIES}
 )

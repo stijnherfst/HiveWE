@@ -1,13 +1,12 @@
 #pragma once
 
-#include <Qsci/qsciapis.h>
-
 #include <QSet>
 #include <QString>
 
 #include "JassTokenizer.h"
 
 #define QSCINTILLA_DLL
+#include <Qsci/qsciapis.h>
 #include <Qsci/qsciscintilla.h>
 #include <Qsci/qscilexercustom.h>
 
