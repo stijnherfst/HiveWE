@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utilities.h"
+#include "Utilities.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;

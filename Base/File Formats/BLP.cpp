@@ -1,6 +1,7 @@
 #include "BLP.h"
 
 #include <iostream>
+#include <cmath>
 
 #include <turbojpeg.h>
 

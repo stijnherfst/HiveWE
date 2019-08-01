@@ -2,8 +2,8 @@
 
 #include <sstream>
 
-#include "hierarchy.h"
-#include "utilities.h"
+#include "Hierarchy.h"
+#include "Utilities.h"
 
 namespace ini {
 	INI::INI(const fs::path& path) {

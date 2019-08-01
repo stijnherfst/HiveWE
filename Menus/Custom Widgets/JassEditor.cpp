@@ -1,5 +1,7 @@
 #include "JassEditor.h"
 
+#include <cmath>
+
 #include "Hierarchy.h"
 
 int Styling::styleAt(int idx) const {

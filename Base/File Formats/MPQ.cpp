@@ -22,7 +22,7 @@ namespace mpq {
 		}
 
 		std::vector<uint8_t> buffer(size);
-		
+
 		#ifdef _MSC_VER
 		unsigned long bytes_read;
 		#else
@@ -122,7 +122,11 @@ namespace mpq {
 	}
 
 	void MPQ::file_add(const fs::path& path, const fs::path& new_path) const {
-		bool success = SFileAddFileEx(handle, path.wstring().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		#ifdef _MSC_VER
+				bool success = SFileAddFileEx(handle, path.wstring().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		#else
+				bool success = SFileAddFileEx(handle, path.string().c_str(), new_path.string().c_str(), MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_ZLIB);
+		#endif
 		if (!success) {
 			std::cout << "Error adding file: " << GetLastError() << "\n";
 		}

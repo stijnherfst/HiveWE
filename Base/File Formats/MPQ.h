@@ -6,6 +6,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 
 // A thin wrapper around StormLib https://github.com/ladislav-zezula/StormLib

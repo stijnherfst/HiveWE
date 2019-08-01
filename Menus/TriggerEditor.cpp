@@ -1,7 +1,7 @@
 #include "TriggerEditor.h"
 
 #include <QFileIconProvider>
-#include "utilities.h"
+#include "Utilities.h"
 #include "HiveWE.h"
 #include "Triggers.h"
 #include "JassEditor.h"

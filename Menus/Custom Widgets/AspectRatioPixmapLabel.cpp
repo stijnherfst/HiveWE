@@ -1,7 +1,7 @@
 #include "AspectRatioPixmapLabel.h"
 
 #include <QPainter>
-#include <QPixMap>
+#include <QPixmap>
 
 QPixmap AspectRatioPixmapLabel::get_scaled_pixmap(bool grid_lines) {
 	QPixmap new_pixmap(width(), height());

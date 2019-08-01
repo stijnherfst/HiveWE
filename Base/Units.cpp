@@ -274,6 +274,8 @@ std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	}
 	mesh_path.replace_extension(".mdx");
 
+	mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
+
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";

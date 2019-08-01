@@ -6,7 +6,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 #include <QPainter>
 
-#include "utilities.h"
+#include "Utilities.h"
 #include "InputHandler.h"
 
 #include "HiveWE.h"

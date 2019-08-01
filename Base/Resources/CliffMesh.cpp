@@ -1,7 +1,7 @@
 #include "CliffMesh.h"
 
 #include <QOpenGLFunctions_4_5_Core>
-#include "utilities.h"
+#include "Utilities.h"
 
 #include "BinaryReader.h"
 #include "MDX.h"

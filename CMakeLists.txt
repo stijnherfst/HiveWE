@@ -40,7 +40,7 @@ add_executable(HiveWE
 	TerrainUndo.cpp
 	TerrainUndo.h
 	Utilities.cpp
-	utilities.h
+	Utilities.h
 	WindowHandler.h
 
 	Base/BinaryReader.h
@@ -172,17 +172,8 @@ add_executable(HiveWE
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
-# target_include_directories(HiveWE PRIVATE ${CASCLIB_INCLUDE_DIRS})
-# target_include_directories(HiveWE PRIVATE ${STORMLIB_INCLUDE_DIRS})
 
 target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
-
-message("Ayyyyyyyyy")
-message(${JPEG_LIBRARIES})
-message("Ayyyyyyyyy")
-message(${JPEG_INCLUDE_DIR}})
-message("Ayyyyyyyyy")
-
 
 target_link_libraries(HiveWE
 	Qt5::Gui

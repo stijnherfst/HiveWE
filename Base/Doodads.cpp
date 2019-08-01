@@ -185,7 +185,7 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		i.mesh->render_queue(i.matrix);	
+		i.mesh->render_queue(i.matrix);
 	}
 	for (auto&& i : special_doodads) {
 		i.mesh->render_queue(i.matrix);
@@ -290,6 +290,8 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	if (!hierarchy.file_exists(mesh_path)) {
 		mesh_path.remove_filename() /= stem + ".mdx";
 	}
+
+	mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
 
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {

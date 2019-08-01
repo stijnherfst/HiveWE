@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "utilities.h"
+#include "Utilities.h"
 #include "Texture.h"
 #include "Hierarchy.h"
 #include "BinaryWriter.h"

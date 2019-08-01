@@ -59,7 +59,7 @@ public:
 	// For instancing
 	std::vector<StaticMesh*> meshes;
 
-	std::chrono::steady_clock::time_point last_time = std::chrono::high_resolution_clock::now();
+	std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 	double total_time;
 
 	void load(const fs::path& path);

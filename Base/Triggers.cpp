@@ -8,8 +8,8 @@
 #include <QDir>
 
 #include "HiveWE.h"
-#include "utilities.h"
-#include "hierarchy.h"
+#include "Utilities.h"
+#include "Hierarchy.h"
 #include <fstream>
 
 // Initial version of map script generation
@@ -1344,7 +1344,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			{
 				std::string output = parameter.value;
 
-				if (!output._Starts_with("gg_")) {
+				if (!output.starts_with("gg_")) {
 					output = "udg_" + output;
 				}
 

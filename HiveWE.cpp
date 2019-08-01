@@ -13,8 +13,8 @@
 
 #include <SOIL2/SOIL2.h>
 
+#define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
-
 
 #include "Hierarchy.h"
 #include "TriggerEditor.h"
@@ -30,7 +30,7 @@
 #include "ImportManager.h"
 #include "Camera.h"
 
-Map* map = nullptr;// = new Map();
+Map* map = nullptr;
 ini::INI world_edit_strings;
 ini::INI world_edit_game_strings;
 ini::INI world_edit_data;
@@ -168,7 +168,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
-	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() { 
+	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
 		auto editor = window_handler.create_or_raise<TriggerEditor>();
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
@@ -188,7 +188,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	//map->load("C:\\Users\\User\\stack\\Projects\\MCFC\\7.3\\Backup\\MCFC 7.3.w3x");
 	map->load("Data/Test Map/");
-
 
 	//QTimer::singleShot(50, [this]() {
 	//	auto palette = new TerrainPalette(this);
@@ -342,7 +341,12 @@ void HiveWE::export_mpq() {
 	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
 
 	HANDLE handle;
-	SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+
+	#ifdef _MSC_VER
+		SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	#else
+		SFileCreateArchive(file_name.toStdString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	#endif
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {

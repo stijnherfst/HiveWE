@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <cmath>
 
 #include "BinaryWriter.h"
 #include "Hierarchy.h"

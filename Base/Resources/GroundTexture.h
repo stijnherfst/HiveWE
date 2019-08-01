@@ -2,7 +2,7 @@
 
 #include "ResourceManager.h"
 
-#include "utilities.h"
+#include "Utilities.h"
 #include <QOpenGLFunctions_4_5_Core>
 
 class GroundTexture : public Resource {
