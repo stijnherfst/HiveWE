@@ -5,6 +5,7 @@
 
 namespace fs = std::filesystem;
 
+#define __CASCLIB_SELF__
 #include <CascLib.h>
 
 // A thin wrapper around CascLib https://github.com/ladislav-zezula/CascLib

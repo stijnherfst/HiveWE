@@ -25,149 +25,87 @@ add_executable(HiveWE
 	${QT_RESOURCES}
 
 	Camera.cpp
-	Camera.h
 	HiveWE.cpp
-	HiveWE.h
 	HiveWE.qrc
 	HiveWE.rc
 	InputHandler.cpp
-	InputHandler.h
 	JassTokenizer.cpp
-	JassTokenizer.h
 	main.cpp
-	QuadTree.h
 	resource.h
 	TerrainUndo.cpp
-	TerrainUndo.h
 	Utilities.cpp
-	Utilities.h
 	WindowHandler.h
 
-	Base/BinaryReader.h
-	Base/BinaryWriter.h
 	Base/Doodads.cpp
-	Base/Doodads.h
 	Base/FlowLayout.cpp
-	Base/FlowLayout.h
 	Base/GameCameras.cpp
-	Base/GameCameras.h
 	Base/Hierarchy.cpp
-	Base/Hierarchy.h
 	Base/Imports.cpp
-	Base/Imports.h
 	Base/Map.cpp
-	Base/Map.h
 	Base/MapInfo.cpp
-	Base/MapInfo.h
 	Base/PathingMap.cpp
-	Base/PathingMap.h
 	Base/QRibbon.cpp
-	Base/QRibbon.h
 	Base/Regions.cpp
-	Base/Regions.h
 	Base/ResourceManager.cpp
-	Base/ResourceManager.h
 	Base/ShadowMap.cpp
-	Base/ShadowMap.h
 	Base/Sounds.cpp
-	Base/Sounds.h
 	Base/Terrain.cpp
-	Base/Terrain.h
 	Base/Triggers.cpp
-	Base/Triggers.h
 	Base/TriggerStrings.cpp
-	Base/TriggerStrings.h
 	Base/Units.cpp
-	Base/Units.h
 
 	Base/Brush/Brush.cpp
-	Base/Brush/Brush.h
 	Base/Brush/DoodadBrush.cpp
-	Base/Brush/DoodadBrush.h
 	Base/Brush/PathingBrush.cpp
-	Base/Brush/PathingBrush.h
 	Base/Brush/TerrainBrush.cpp
-	Base/Brush/TerrainBrush.h
 
 	"Base/File Formats/BLP.cpp"
-	"Base/File Formats/BLP.h"
 	"Base/File Formats/CASC.cpp"
-	"Base/File Formats/CASC.h"
 	"Base/File Formats/INI.cpp"
-	"Base/File Formats/INI.h"
 	"Base/File Formats/JSON.cpp"
-	"Base/File Formats/JSON.h"
 	"Base/File Formats/MDX.cpp"
-	"Base/File Formats/MDX.h"
 	"Base/File Formats/MPQ.cpp"
-	"Base/File Formats/MPQ.h"
 	"Base/File Formats/SLK.cpp"
-	"Base/File Formats/SLK.h"
 
 	Base/Resources/CliffMesh.cpp
-	Base/Resources/CliffMesh.h
 	Base/Resources/GPUTexture.cpp
-	Base/Resources/GPUTexture.h
 	Base/Resources/GroundTexture.cpp
-	Base/Resources/GroundTexture.h
 	Base/Resources/Shader.cpp
-	Base/Resources/Shader.h
 	Base/Resources/SkinnedMesh.cpp
-	Base/Resources/SkinnedMesh.h
 	Base/Resources/StaticMesh.cpp
-	Base/Resources/StaticMesh.h
 	Base/Resources/Texture.cpp
-	Base/Resources/Texture.h
 
 	Menus/DoodadPalette.cpp
-	Menus/DoodadPalette.h
 	Menus/DoodadPalette.ui
 	Menus/ImportManager.cpp
-	Menus/ImportManager.h
 	Menus/ImportManager.ui
 	Menus/ImportManagerEdit.cpp
-	Menus/ImportManagerEdit.h
 	Menus/ImportManagerEdit.ui
 	Menus/MapInfoEditor.cpp
-	Menus/MapInfoEditor.h
 	Menus/MapInfoEditor.ui
 	Menus/Minimap.cpp
-	Menus/Minimap.h
 	Menus/Minimap.ui
 	Menus/Palette.cpp
-	Menus/Palette.h
 	Menus/PathingPalette.cpp
-	Menus/PathingPalette.h
 	Menus/PathingPalette.ui
 	Menus/SettingsEditor.cpp
-	Menus/SettingsEditor.h
 	Menus/SettingsEditor.ui
 	Menus/TerrainPalette.cpp
-	Menus/TerrainPalette.h
 	Menus/TerrainPalette.ui
 	Menus/TilePather.cpp
-	Menus/TilePather.h
 	Menus/TilePather.ui
 	Menus/TilePicker.cpp
-	Menus/TilePicker.h
 	Menus/TilePicker.ui
 	Menus/TileSetter.cpp
-	Menus/TileSetter.h
 	Menus/TileSetter.ui
 	Menus/TriggerEditor.cpp
-	Menus/TriggerEditor.h
 	Menus/TriggerEditor.ui
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
-	"Menus/Custom Widgets/AspectRatioPixmapLabel.h"
 	"Menus/Custom Widgets/ColorButton.cpp"
-	"Menus/Custom Widgets/ColorButton.h"
 	"Menus/Custom Widgets/GLWidget.cpp"
-	"Menus/Custom Widgets/GLWidget.h"
 	"Menus/Custom Widgets/JassEditor.cpp"
-	"Menus/Custom Widgets/JassEditor.h"
 	"Menus/Custom Widgets/MainRibbon.cpp"
-	"Menus/Custom Widgets/MainRibbon.h"
 )
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
@@ -185,7 +123,6 @@ target_link_libraries(HiveWE
 	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/debug/lib/turbojpegd.lib"
 	"C:/vcpkg/packages/qscintilla_x64-windows/debug/lib/qscintilla2.lib"
 	${JPEG_LIBRARIES}
-	${QSCINTILLA_LIBRARIES}
 )
 
 if(WIN32)
