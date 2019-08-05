@@ -47,6 +47,7 @@ public:
 	virtual void switch_mode();
 
 	virtual void key_press_event(QKeyEvent* event);
+	virtual void key_release_event(QKeyEvent* event) {}
 	virtual void mouse_move_event(QMouseEvent* event);
 	virtual void mouse_press_event(QMouseEvent* event);
 	virtual void mouse_release_event(QMouseEvent* event);

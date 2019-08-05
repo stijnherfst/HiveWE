@@ -86,18 +86,29 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
+		if (!event->isAutoRepeat()) {
+			map->terrain_undo.new_undo_group();
+			doodad_state_undo = std::make_unique<DoodadStateAction>();
+			for (const auto& i : selections) {
+				doodad_state_undo->old_doodads.push_back(*i);
+			}
+		}
+
 		bool left = event->key() == Qt::Key_1 || event->key() == Qt::Key_4 || event->key() == Qt::Key_7;
 		bool right = event->key() == Qt::Key_3 || event->key() == Qt::Key_6 || event->key() == Qt::Key_9;
-		bool up = event->key() == Qt::Key_7 || event->key() == Qt::Key_8 || event->key() == Qt::Key_9;
-		bool down = event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3;
+		bool down = event->key() == Qt::Key_7 || event->key() == Qt::Key_8 || event->key() == Qt::Key_9;
+		bool up = event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3;
 
-		float x_displacement = -0.1f * left + 0.1f * right;
-		float y_displacement = -0.1f * up + 0.1f * down;
+		float x_displacement = -0.25f * left + 0.25f * right;
+		float y_displacement = -0.25f * up + 0.25f * down;
 
 		for (const auto& i : selections) {
 			i->position.x += x_displacement;
 			i->position.y += y_displacement;
+			i->update();
 		}
+
+		map->doodads.update_doodad_pathing(selections);
 	}
 
 
@@ -119,6 +130,19 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			break;
 		default:
 			Brush::key_press_event(event);
+	}
+}
+
+void DoodadBrush::key_release_event(QKeyEvent* event) {
+	if (!event->isAutoRepeat()) {
+		if (doodad_state_undo) {
+			std::cout << "undo added\n";
+			for (const auto& i : selections) {
+				doodad_state_undo->new_doodads.push_back(*i);
+			}
+			map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
+		}
+		//doodad_state_undo
 	}
 }
 
@@ -165,20 +189,7 @@ void DoodadBrush::delete_selection() {
 		map->terrain_undo.add_undo_action(std::move(action));
 		map->doodads.remove_doodads(selections);
 
-		// Update pathing
-		update_pathing_area.adjust(-6, -6, 6, 6);
-		map->pathing_map.dynamic_clear_area(update_pathing_area.toRect());
-
-		update_pathing_area.adjust(-6, -6, 6, 6);
-
-		const auto doodads_to_blit = map->doodads.query_area(update_pathing_area);
-		for (const auto& i : doodads_to_blit) {
-			if (!i->pathing) {
-				continue;
-			}
-			map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
-		}
-		map->pathing_map.upload_dynamic_pathing();
+		map->doodads.update_doodad_pathing(update_pathing_area);
 
 		selections.clear();
 	}

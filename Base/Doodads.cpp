@@ -241,6 +241,30 @@ void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
 	}), doodads.end());
 }
 
+void Doodads::update_doodad_pathing(const std::vector<Doodad>& target_doodads) {
+	QRectF update_pathing_area;
+	for (const auto& i : target_doodads) {
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	}
+
+	update_doodad_pathing(update_pathing_area);
+}
+
+void Doodads::update_doodad_pathing(const std::vector<Doodad*>& target_doodads) {
+	QRectF update_pathing_area;
+	for (const auto& i : target_doodads) {
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
+	}
+
+	update_doodad_pathing(update_pathing_area);
+}
+
 void Doodads::update_doodad_pathing(const QRectF& area) {
 	QRectF new_area = area.adjusted(-6, -6, 6, 6);
 	map->pathing_map.dynamic_clear_area(new_area.toRect());
@@ -319,64 +343,30 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 void DoodadAddAction::undo() {
 	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
-
-	QRectF update_pathing_area;
-	for (const auto& i : doodads) {
-
-		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
-		}
-		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
-	}
-
-	map->doodads.update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(doodads);
 }
 
 void DoodadAddAction::redo() {
 	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
-
-	QRectF update_pathing_area;
-	for (const auto& i : doodads) {
-
-		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
-		}
-		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
-	}
-
-	// Update pathing
-	map->doodads.update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(doodads);
 }
 
 void DoodadDeleteAction::undo() {
+	if (map->brush) {
+		map->brush->clear_selection();
+	}
+
 	map->doodads.doodads.insert(map->doodads.doodads.end(), doodads.begin(), doodads.end());
-
-	QRectF update_pathing_area;
-	for (const auto& i : doodads) {
-
-		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
-		}
-		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
-	}
-
-	// Update pathing
-	map->doodads.update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(doodads);
 }
+
 void DoodadDeleteAction::redo() {
-	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
-
-	QRectF update_pathing_area;
-	for (const auto& i : doodads) {
-
-		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-			update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
-		}
-		update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+	if (map->brush) {
+		map->brush->clear_selection();
 	}
 
-	// Update pathing
-	map->doodads.update_doodad_pathing(update_pathing_area);
+	map->doodads.doodads.resize(map->doodads.doodads.size() - doodads.size());
+	map->doodads.update_doodad_pathing(doodads);
 }
 
 void DoodadStateAction::undo() {

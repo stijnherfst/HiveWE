@@ -78,7 +78,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() { map->terrain_undo.undo(); });
-	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() { map->terrain_undo.redo(); });
+	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {	map->terrain_undo.redo(); });
 
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Z), this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Y), this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);

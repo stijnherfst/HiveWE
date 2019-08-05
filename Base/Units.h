@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "QuadTree.h"
+#include "Quadtree.h"
 #include "BinaryReader.h"
 #include "StaticMesh.h"
 #include "Terrain.h"

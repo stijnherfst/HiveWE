@@ -80,6 +80,8 @@ public:
 	std::vector<Doodad*> query_area(const QRectF& area);
 	void remove_doodads(const std::vector<Doodad*>& list);
 
+	void update_doodad_pathing(const std::vector<Doodad*>& target_doodads);
+	void update_doodad_pathing(const std::vector<Doodad>& target_doodads);
 	void update_doodad_pathing(const QRectF& area);
 
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);

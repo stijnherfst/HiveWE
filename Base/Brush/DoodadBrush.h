@@ -39,12 +39,14 @@ public:
 	std::vector<Doodad> clipboard;
 
 	std::unique_ptr<DoodadAddAction> doodad_undo;
+	std::unique_ptr<DoodadStateAction> doodad_state_undo;
 
 	DoodadBrush();
 
 	void set_shape(const Shape new_shape) override;
 
 	void key_press_event(QKeyEvent* event) override;
+	void key_release_event(QKeyEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
 
