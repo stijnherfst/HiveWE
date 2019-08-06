@@ -110,6 +110,8 @@ public:
 	std::vector<Trigger> triggers;
 
 	void load(BinaryReader& reader);
+	void load_31(BinaryReader& reader);
+	void load_pre31(BinaryReader& reader);
 	void load_jass(BinaryReader& reader);
 	void save() const;
 	void save_jass() const;
