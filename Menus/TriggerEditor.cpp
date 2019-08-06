@@ -23,25 +23,40 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
 	action_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Action"));
 
+	QTreeWidgetItem* root = new QTreeWidgetItem(ui.explorer);
+	root->setData(0, Qt::EditRole, QString::fromStdString("Map Header"));
+	root->setIcon(0, folder_icon); //maybe use a special icon
+	root->setExpanded(true);
+	folders[0] = root;
+
 	for (const auto& i : map->triggers.categories) {
-		QTreeWidgetItem* item = new QTreeWidgetItem(ui.explorer);
+		QTreeWidgetItem* item  = new QTreeWidgetItem(folders[i.parent_id]);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		item->setIcon(0, folder_icon);
 		folders[i.id] = item;
 	}
 
 	for (auto&& i : map->triggers.triggers) {
-		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.category_id]);
+		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.parent_id]);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		if (i.is_comment) {
 			item->setIcon(0, trigger_comment_icon);
-		} else {
+		} else if (i.classifier == 0x20) {
+			item->setIcon(0, file_icon); //maybe give scripts a different icon
+		}
+		else {
 			item->setIcon(0, file_icon);
 		}
-
+		
 		files.emplace(item, i);
 	}
 
+	for (auto&& i : map->triggers.variables) {
+		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.second.parent_id]);
+		item->setData(0, Qt::EditRole, QString::fromStdString(i.first));
+		item->setIcon(0, file_icon);
+	}
+	
 	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
 	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { delete ui.editor->widget(index); });
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
@@ -51,14 +66,43 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 }
 
 void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
+	if (item == folders[0]) {
+		for (int i = 0; i < ui.editor->count(); i++) {
+			if (ui.editor->widget(i)->property("TriggerID").toInt() == 0) {
+				ui.editor->setCurrentIndex(i);
+				return;
+			}
+		}
+
+		QWidget* tab = new QWidget;
+		tab->setProperty("TriggerID", 0);
+		QVBoxLayout* layout = new QVBoxLayout(tab);
+		QSplitter* spiltter = new QSplitter(Qt::Orientation::Vertical);
+		JassEditor* edit = new JassEditor;
+		JassEditor* edit2 = new JassEditor;
+		spiltter->addWidget(edit);
+		spiltter->addWidget(edit2);
+		layout->addWidget(spiltter);
+		edit->setText(QString::fromStdString(map->triggers.global_jass_comment));
+		edit2->setText(QString::fromStdString(map->triggers.global_jass));
+		connect(this, &TriggerEditor::save_changes, [=]() {
+			map->triggers.global_jass_comment = edit->text().toStdString();
+		});
+		connect(this, &TriggerEditor::save_changes, [=]() {
+			map->triggers.global_jass = edit2->text().toStdString();
+		});
+
+		ui.editor->addTab(tab, QString::fromStdString("Map Header"));
+		ui.editor->setCurrentWidget(tab);
+		return;
+	}
+	
+	//add variable editor?
+
 	if (files.find(item) == files.end()) {
 		return;
 	}
 	Trigger& trigger = files.at(item).get();
-
-	if (trigger.is_comment) {
-		return;
-	}
 
 	// Check if trigger is already open and if so focus it
 	for (int i = 0; i < ui.editor->count(); i++) {
@@ -73,20 +117,34 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 	QVBoxLayout* layout = new QVBoxLayout(tab);
 
-	if (!trigger.custom_text.empty()) {
-		JassEditor* edit = new JassEditor;
-		layout->addWidget(edit);
-		edit->setText(QString::fromStdString(trigger.custom_text));
-		connect(this, &TriggerEditor::save_changes, [=]() {
-			files.at(item).get().custom_text = edit->text().replace("\r", "").toStdString();
+	QSplitter* spiltter = new QSplitter(Qt::Orientation::Vertical);
+
+	//comment editing and viewing, probably shouldn't be JassEditor
+	JassEditor* cedit = new JassEditor;
+	spiltter->addWidget(cedit);
+	layout->addWidget(spiltter);
+	cedit->setText(QString::fromStdString(trigger.description));
+	connect(this, &TriggerEditor::save_changes, [=]() {
+		files.at(item).get().description = cedit->text().toStdString();
+	});
+
+	if (!trigger.is_comment) {
+		if (trigger.is_script) {
+			JassEditor* edit = new JassEditor;
+			spiltter->addWidget(edit);
+			edit->setText(QString::fromStdString(trigger.custom_text));
+			connect(this, &TriggerEditor::save_changes, [=]() {
+				files.at(item).get().custom_text = edit->text().toStdString();
 			});
-	} else {
-		QTreeWidget* edit = new QTreeWidget;
-		edit->setHeaderHidden(true);
-		edit->setUniformRowHeights(true);
-		layout->addWidget(edit);
-		show_gui_trigger(edit, trigger);
-		edit->expandAll();
+		}
+		else {
+			QTreeWidget* edit = new QTreeWidget;
+			edit->setHeaderHidden(true);
+			edit->setUniformRowHeights(true);
+			spiltter->addWidget(edit);
+			show_gui_trigger(edit, trigger);
+			edit->expandAll();
+		}
 	}
 
 	ui.editor->addTab(tab, QString::fromStdString(trigger.name));

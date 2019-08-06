@@ -9,6 +9,7 @@ struct TriggerCategory {
 	int id;
 	std::string name;
 	bool is_comment;
+	int parent_id;
 };
 
 struct TriggerVariable {
@@ -18,6 +19,8 @@ struct TriggerVariable {
 	int array_size = 0;
 	bool is_initialized;
 	std::string initial_value;
+	int id;
+	int parent_id;
 };
 
 struct TriggerParameter;
@@ -67,21 +70,23 @@ struct ECA {
 };
 
 struct Trigger {
-	int id;
+	int classifier;
 	std::string name;
 	std::string description;
 	bool is_comment;
+	int id;
 	bool is_enabled;
+	bool is_script;
 	std::string custom_text;
 	bool initally_off;
 	bool run_on_initialization;
-	int category_id;
+	int parent_id;
 	std::vector<ECA> lines;
 };
 
 class Triggers {
 	std::unordered_map<std::string, int> argument_counts;
-	const std::string seperator = "//===========================================================================\n";
+	const std::string separator = "//===========================================================================\n";
 
 	static constexpr int write_version = 8;
 	static constexpr int write_string_version = 1;
@@ -101,7 +106,6 @@ public:
 	std::string global_jass;
 
 	std::vector<TriggerCategory> categories;
-	//std::vector<TriggerVariable> variables;
 	std::unordered_map<std::string, TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
@@ -111,6 +115,4 @@ public:
 	void save_jass() const;
 
 	void generate_map_script();
-
-	int next_id = 0;
 };

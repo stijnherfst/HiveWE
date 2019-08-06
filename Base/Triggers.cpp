@@ -12,9 +12,6 @@
 #include "Hierarchy.h"
 #include <fstream>
 
-// Initial version of map script generation
-// Not very readable
-
 using namespace std::literals::string_literals;
 
 #include "BinaryWriter.h"
@@ -45,54 +42,9 @@ void Triggers::load(BinaryReader& reader) {
 			argument_counts[key] = arguments;
 		}
 	}
-
-	std::string magic_number = reader.read_string(4);
-	if (magic_number != "WTG!") {
-		std::cout << "Unknown magic number for war3map.wtg " << magic_number << "\n";
-		return;
-	}
-
-	int version = reader.read<uint32_t>();
-
-	categories.resize(reader.read<uint32_t>());
-	for (auto&& i : categories) {
-		i.id = reader.read<uint32_t>();
-		i.name = reader.read_c_string();
-		if (version == 7) {
-			i.is_comment = reader.read<uint32_t>();
-		}
-	}
-
-	reader.advance(4); // Unknown always 0
-
-	int variable_count = reader.read<uint32_t>();
-	for (int i = 0; i < variable_count; i++) {
-		std::string name = reader.read_c_string();
-		TriggerVariable variable;
-		variable.type = reader.read_c_string();
-		reader.advance(4); // Unknown always 1
-		variable.is_array = reader.read<uint32_t>();
-		if (version == 7) {
-			variable.array_size = reader.read<uint32_t>();
-		}
-		variable.is_initialized = reader.read<uint32_t>();
-		variable.initial_value = reader.read_c_string();
-		variables[name] = variable;
-	}
-
-	//variables.resize(reader.read<uint32_t>());
-	//for (auto&& i : variables) {
-	//	i.name = reader.read_c_string();
-	//	i.type = reader.read_c_string();
-	//	reader.advance(4); // Unknown always 1
-	//	i.is_array = reader.read<uint32_t>();
-	//	if (version == 7) {
-	//		i.array_size = reader.read<uint32_t>();
-	//	}
-	//	i.is_initialized = reader.read<uint32_t>();
-	//	i.initial_value = reader.read_c_string();
-	//}
-
+	
+	int version = 0;
+	
 	std::function<void(TriggerParameter&)> parse_parameter_structure = [&](TriggerParameter& parameter) {
 		parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
 		parameter.value = reader.read_c_string();
@@ -146,39 +98,204 @@ void Triggers::load(BinaryReader& reader) {
 		}
 	};
 
-	triggers.resize(reader.read<uint32_t>());
-	for (auto&& i : triggers) {
-		i.id = next_id++;
-		i.name = reader.read_c_string();
-		i.description = reader.read_c_string();
+	std::string magic_number = reader.read_string(4);
+	if (magic_number != "WTG!") {
+		std::cout << "Unknown magic number for war3map.wtg " << magic_number << "\n";
+		return;
+	}
+
+	version = reader.read<uint32_t>();
+	if (version != 0x80000004)
 		if (version == 7) {
-			i.is_comment = reader.read<uint32_t>();
+			std::cout << "Experimental importing of pre 1.31 trigger format!\n";
+			categories.resize(reader.read<uint32_t>());
+			for (auto&& i : categories) {
+				i.id = reader.read<uint32_t>();
+				i.name = reader.read_c_string();
+				i.parent_id = 0;
+				i.is_comment = reader.read<uint32_t>();
+			}
+
+			reader.advance(4);
+
+			int variable_count = reader.read<uint32_t>();
+			for (int i = 0; i < variable_count; i++) {
+				std::string name = reader.read_c_string();
+				TriggerVariable variable;
+				variable.type = reader.read_c_string();
+				reader.advance(4); // Unknown always 1
+				variable.parent_id = 0;
+				variable.id = i + 0x00000006;
+				variable.is_array = reader.read<uint32_t>();
+				variable.array_size = reader.read<uint32_t>();
+				variable.is_initialized = reader.read<uint32_t>();
+				variable.initial_value = reader.read_c_string();
+				variables[name] = variable;
+			}
+
+			triggers.resize(reader.read<uint32_t>());
+			int trig_id = 0;
+			for (auto&& i : triggers) {
+				i.id = (trig_id++) + 0x00000003;
+				i.name = reader.read_c_string();
+				i.description = reader.read_c_string();
+				i.is_comment = reader.read<uint32_t>();
+				i.is_enabled = reader.read<uint32_t>();
+				i.is_script = reader.read<uint32_t>();
+				i.initally_off = reader.read<uint32_t>();
+				i.run_on_initialization = reader.read<uint32_t>();
+				if (i.run_on_initialization && i.is_script)
+					i.classifier = 0x08;
+				else if (i.is_script)
+					i.classifier = 0x20;
+				else if (i.is_comment)
+					i.classifier = 0x10;
+				else i.classifier = 0x08;
+				i.parent_id = reader.read<uint32_t>();
+				i.lines.resize(reader.read<uint32_t>());
+				for (auto&& j : i.lines) {
+					parse_eca_structure(j, false);
+				}
+			}
+			return;
 		}
-		i.is_enabled = reader.read<uint32_t>();
-		reader.advance(4); // is_custom
-		i.initally_off = reader.read<uint32_t>();
-		i.run_on_initialization = reader.read<uint32_t>();
-		i.category_id = reader.read<uint32_t>();
-		i.lines.resize(reader.read<uint32_t>());
-		for (auto&& j : i.lines) {
-			parse_eca_structure(j, false);
+		else
+			std::cout << "Probably not a supported WTG format. Trying anyway.\n";
+	version = reader.read<uint32_t>();
+	std::cout << "Experimental loading of 1.31 trigger format!\n";
+
+	if (version != 7) std::cout << "For 1.31+, only TFT is currently supported! Trying anyway.\n";
+	reader.advance(16);
+	int cat_count = reader.read<uint32_t>();
+	int del_cat_count = reader.read<uint32_t>();
+	for (int i = 0; i < del_cat_count; i++) {
+		reader.advance(4); //category ids of deleted categories with the last byte as 00 instead of 02
+	}
+	categories.resize(cat_count - del_cat_count);
+	
+	int trig_count = reader.read<uint32_t>();
+	int del_trig_count = reader.read<uint32_t>();
+	for (int i = 0; i < del_trig_count; i++) {
+		reader.advance(4); //trigger ids of deleted triggers with the last byte as 00 instead of 03
+	}
+	int trig_comment_count = reader.read<uint32_t>();
+	reader.advance(4);
+	int script_count = reader.read<uint32_t>();
+	reader.advance(4);
+	triggers.resize(trig_count + trig_comment_count + script_count - del_trig_count);
+	int var_count = reader.read<uint32_t>();
+	int del_var_count = reader.read<uint32_t>();
+	for (int i = 0; i < del_var_count; i++) {
+		reader.advance(4); //variable ids of deleted variables with the last byte as 00 instead of 06
+	}
+	reader.advance(12);
+	int exist_var_count = reader.read<uint32_t>();
+	if (var_count != (del_var_count + exist_var_count)) std::cout << "Variable data non-matching!\n";
+	for (int i = 0; i < exist_var_count; i++) {
+		std::string name = reader.read_c_string();
+		TriggerVariable variable;
+		variable.type = reader.read_c_string();
+		reader.advance(4);
+		variable.is_array = reader.read<uint32_t>();
+		variable.array_size = reader.read<uint32_t>();
+		variable.is_initialized = reader.read<uint32_t>();
+		variable.initial_value = reader.read_c_string();
+		variable.id = reader.read<uint32_t>();
+		variable.parent_id = reader.read<uint32_t>();
+		variables[name] = variable;
+	}
+	
+	int elem_count = reader.read<uint32_t>();
+	reader.advance(8);
+	reader.read_c_string(); //last name the map was saved under
+	reader.advance(12);
+	if (reader.remaining() == 0) {
+		return;
+	}
+
+	uint32_t cat_pos = 0, trig_pos = 0, classifier = 0;
+	for (int i = 0; i < (elem_count - 1); i++) {
+		classifier = reader.read<uint32_t>();
+		switch (classifier) {
+			case 0x04: { //category
+				TriggerCategory cat;
+				cat.id = reader.read<uint32_t>();
+				cat.name = reader.read_c_string();
+				cat.is_comment = reader.read<uint32_t>();
+				reader.advance(4);
+				cat.parent_id = reader.read<uint32_t>();
+				categories[cat_pos] = cat;
+				cat_pos++;
+				break;
+			}
+			case 0x08: //trigger
+			case 0x10: //trigger comment
+			case 0x20: //custom script
+			{
+				Trigger trig;
+				trig.classifier = classifier;
+				trig.name = reader.read_c_string();
+				trig.description = reader.read_c_string();
+				trig.is_comment = reader.read<uint32_t>();
+				trig.id = reader.read<uint32_t>();
+				trig.is_enabled = reader.read<uint32_t>();
+				trig.is_script = reader.read<uint32_t>();
+				trig.initally_off = reader.read<uint32_t>();
+				trig.run_on_initialization = reader.read<uint32_t>();
+				trig.parent_id = reader.read<uint32_t>();
+				trig.lines.resize(reader.read<uint32_t>());
+				for (auto&& j : trig.lines) {
+					parse_eca_structure(j, false);
+				}
+				triggers[trig_pos] = trig;
+				trig_pos++;
+				break;
+			}
+			case 0x40: { //global variable data, again(why?)
+				reader.advance(4); //id
+				reader.read_c_string(); //name
+				reader.advance(4); //parentid
+				break;
+			}
 		}
 	}
 }
 
 void Triggers::load_jass(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
+	int version = reader.read<uint32_t>();
+	if (version != 0x80000004)
+		if (version == 1 || version == 0) {
+			if (version == 1) {
+				global_jass_comment = reader.read_c_string();
+				global_jass = reader.read_string(reader.read<uint32_t>());
+			}
+			reader.advance(4);
+			for (auto&& i : triggers) {
+				const int size = reader.read<uint32_t>();
+				if (size > 0) {
+					i.custom_text = reader.read_string(size);
+				}
+			}
+			return;
+		}
+		else
+			std::cout << "Probably invalid WCT format";
 
-	if (version == 1) {
-		global_jass_comment = reader.read_c_string();
-		global_jass = reader.read_string(reader.read<uint32_t>());
+	version = reader.read<uint32_t>();
+	if (version != 1) std::cout << "Unknown WCT 1.31 subformat";
+
+	global_jass_comment = reader.read_c_string();
+	int size = reader.read<uint32_t>();
+	if (size > 0) {
+		global_jass = reader.read_string(size);
 	}
 
-	reader.advance(4);
 	for (auto&& i : triggers) {
-		const int size = reader.read<uint32_t>();
-		if (size > 0) {
-			i.custom_text = reader.read_string(size);
+		if (!i.is_comment) {
+			size = reader.read<uint32_t>();
+			if (size > 0) {
+				i.custom_text = reader.read_string(size);
+			}
 		}
 	}
 }
@@ -192,23 +309,27 @@ void Triggers::save() const {
 void Triggers::save_jass() const {
 	BinaryWriter writer;
 
-	writer.write<uint32_t>(write_string_version);
+	writer.write<uint32_t>(0x80000004);
+	writer.write<uint32_t>(1);
 
 	writer.write_c_string(global_jass_comment);
 	writer.write<uint32_t>(global_jass.size());
 	writer.write_string(global_jass);
 
-	writer.write<uint32_t>(triggers.size());
 
 	for (auto&& i : triggers) {
-		writer.write<uint32_t>(i.custom_text.size());
-		if (!i.custom_text.empty()) {
-			writer.write_string(i.custom_text);
+		if (!i.is_comment) {
+			writer.write<uint32_t>(i.custom_text.size());
+			if (!i.custom_text.empty()) {
+				writer.write_string(i.custom_text);
+			}
 		}
 	}
 
 	hierarchy.map_file_write("war3map.wct", writer.buffer);
 }
+
+
 
 void Triggers::generate_map_script() {
 	std::map<std::string, std::string> unit_variables; // creation_number, unit_id
@@ -249,11 +370,11 @@ void Triggers::generate_map_script() {
 	// Write the results to a buffer
 	BinaryWriter writer;
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Global variables\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("globals\n");
 
@@ -357,11 +478,11 @@ void Triggers::generate_map_script() {
 	}
 	writer.write_string("endfunction\n\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Map Item Tables\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	for (const auto& i : map->info.random_item_tables) {
 
@@ -418,11 +539,11 @@ endfunction
 		writer.write_string("\n");
 	}
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Unit Item Tables\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	for (const auto& i : map->units.units) {
 		if (i.item_sets.size()) {
@@ -540,11 +661,11 @@ endfunction
 		}
 	}
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Sounds\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function InitSounds takes nothing returns nothing\n");
 
@@ -573,11 +694,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Destructable Objects\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function CreateDestructables takes nothing returns nothing\n");
 	writer.write_string("\tlocal destructable d\n");
@@ -624,11 +745,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Items\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function CreateItems takes nothing returns nothing\n");
 
@@ -639,11 +760,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Unit Creation\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function CreateUnits takes nothing returns nothing\n");
 
@@ -738,11 +859,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Regions\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function CreateRegions takes nothing returns nothing\n");
 	writer.write_string("\tlocal weathereffect we\n\n");
@@ -767,11 +888,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Cameras\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function CreateCameras takes nothing returns nothing\n");
 
@@ -793,23 +914,23 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Custom Script Code\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string(global_jass);
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Triggers\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string(trigger_script);
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function InitCustomTriggers takes nothing returns nothing\n");
 	for (const auto& i : triggers) {
@@ -824,18 +945,18 @@ endfunction
 	}
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("function RunInitializationTriggers takes nothing returns nothing\n");
 	for (const auto& i : initialization_triggers) {
 		writer.write_string("\tcall ConditionalTriggerExecute(" + i + ")\n");
 	}
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Players\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function InitCustomPlayerSlots takes nothing returns nothing\n");
 
@@ -945,11 +1066,11 @@ endfunction
 	}
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Main Initialization\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function main takes nothing returns nothing\n");
 
@@ -996,11 +1117,11 @@ endfunction
 
 	writer.write_string("endfunction\n");
 
-	writer.write_string(seperator);
+	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Map Configuration\n");
 	writer.write_string("//*\n");
-	writer.write_string(seperator);
+	writer.write_string(separator);
 
 	writer.write_string("function config takes nothing returns nothing\n");
 
@@ -1472,5 +1593,5 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 
-	return seperator + "// Trigger: " + trigger_name + "\n" + seperator + pre_actions + conditions + actions + seperator + events;
+	return separator + "// Trigger: " + trigger_name + "\n" + separator + pre_actions + conditions + actions + separator + events;
 }
