@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <iostream>
+#include <map>
 
 #include <QProcess>
 #include <QMessageBox>
@@ -18,7 +19,7 @@ using namespace std::literals::string_literals;
 
 int version = 0;
 
-std::function<void(TriggerParameter&)> parse_parameter_structure = [&](TriggerParameter& parameter) {
+void Triggers::parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter) {
 	parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
 	parameter.value = reader.read_c_string();
 	parameter.has_sub_parameter = reader.read<uint32_t>();
@@ -29,7 +30,7 @@ std::function<void(TriggerParameter&)> parse_parameter_structure = [&](TriggerPa
 		if (parameter.sub_parameter.begin_parameters) {
 			parameter.sub_parameter.parameters.resize(argument_counts[parameter.sub_parameter.name]);
 			for (auto&& i : parameter.sub_parameter.parameters) {
-				parse_parameter_structure(i);
+				parse_parameter_structure(reader, i);
 			}
 		}
 	}
@@ -47,12 +48,11 @@ std::function<void(TriggerParameter&)> parse_parameter_structure = [&](TriggerPa
 	}
 	if (parameter.is_array) {
 		parameter.parameters.resize(1);
-		parse_parameter_structure(parameter.parameters.front());
+		parse_parameter_structure(reader, parameter.parameters.front());
 	}
 };
 
-
-std::function<void(ECA&, bool)> parse_eca_structure = [&](ECA& eca, bool is_child) {
+void Triggers::parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child) {
 	eca.type = static_cast<ECA::Type>(reader.read<uint32_t>());
 	if (is_child) {
 		eca.group = reader.read<uint32_t>();
@@ -61,12 +61,12 @@ std::function<void(ECA&, bool)> parse_eca_structure = [&](ECA& eca, bool is_chil
 	eca.enabled = reader.read<uint32_t>();
 	eca.parameters.resize(argument_counts[eca.name]);
 	for (auto&& i : eca.parameters) {
-		parse_parameter_structure(i);
+		parse_parameter_structure(reader, i);
 	}
 	if (version == 7) {
 		eca.ecas.resize(reader.read<uint32_t>());
 		for (auto&& i : eca.ecas) {
-			parse_eca_structure(i, true);
+			parse_eca_structure(reader, i, true);
 		}
 	}
 };
@@ -80,13 +80,13 @@ void Triggers::load(BinaryReader& reader) {
 	trigger_data.set_whole_data("TriggerTypeDefaults", "string", "\"\"");
 
 	for (auto&& section : { "TriggerActions"s, "TriggerEvents"s, "TriggerConditions"s, "TriggerCalls"s }) {
-		for (auto&& [key, value] : trigger_data.section(section)) {
+		for (const auto& [key, value] : trigger_data.section(section)) {
 			if (key.front() == '_') {
 				continue;
 			}
 
 			int arguments = 0;
-			for (auto&& j : value) {
+			for (const auto& j : value) {
 				arguments += !j.empty() && !is_number(j) && j != "nothing";
 			}
 
@@ -106,18 +106,19 @@ void Triggers::load(BinaryReader& reader) {
 
 	version = reader.read<uint32_t>();
 	if (version == 0x80000004)
-		load_31();
+		load_version_31(reader);
 	else if (version == 4 || version == 7)
-		load_pre31(reader);
+		load_version_pre31(reader);
 	else {
 		std::cout << "Unknown WTG format! Trying 1.31 loader\n";
-		load_31(reader);
+		load_version_31(reader);
 	}
 }
-void Triggers::load_pre31(BinaryReader& reader) {
+
+void Triggers::load_version_pre31(BinaryReader& reader) {
 	std::cout << "Experimental importing of pre 1.31 trigger format!\n";
 	categories.resize(reader.read<uint32_t>());
-	for (auto&& i : categories) {
+	for (auto& i : categories) {
 		i.id = reader.read<uint32_t>();
 		i.name = reader.read_c_string();
 		i.parent_id = 0;
@@ -147,7 +148,7 @@ void Triggers::load_pre31(BinaryReader& reader) {
 
 	triggers.resize(reader.read<uint32_t>());
 	int trig_id = 0;
-	for (auto&& i : triggers) {
+	for (auto& i : triggers) {
 		i.id = (trig_id++) + 0x00000003;
 		i.name = reader.read_c_string();
 		i.description = reader.read_c_string();
@@ -158,52 +159,58 @@ void Triggers::load_pre31(BinaryReader& reader) {
 		i.is_script = reader.read<uint32_t>();
 		i.initally_off = reader.read<uint32_t>();
 		i.run_on_initialization = reader.read<uint32_t>();
-		if (i.run_on_initialization && i.is_script)
-			i.classifier = 0x08;
-		else if (i.is_script)
-			i.classifier = 0x20;
-		else if (i.is_comment)
-			i.classifier = 0x10;
-		else i.classifier = 0x08;
+
+		if (i.run_on_initialization && i.is_script) {
+			i.classifier = Classifier::trigger;
+		} else if (i.is_script) {
+			i.classifier = Classifier::script;
+		} else if (i.is_comment) {
+			i.classifier = Classifier::comment;
+		} else {
+			i.classifier = Classifier::trigger;
+		}
+
 		i.parent_id = reader.read<uint32_t>();
 		i.lines.resize(reader.read<uint32_t>());
-		for (auto&& j : i.lines) {
-			parse_eca_structure(j, false);
+		for (auto& j : i.lines) {
+			parse_eca_structure(reader, j, false);
 		}
 	}
 }
-void Triggers::load_31(BinaryReader& reader) {
-	version = reader.read<uint32_t>();
-	std::cout << "Experimental loading of 1.31 trigger format!\n";
 
-	if (version != 7) std::cout << "For 1.31+, only TFT is currently supported! Trying anyway.\n";
+void Triggers::load_version_31(BinaryReader& reader) {
+	version = reader.read<uint32_t>();
+	if (version != 7) {
+		std::cout << "For 1.31+, only TFT is currently supported! Trying anyway.\n";
+	}
+
 	reader.advance(16);
-	int cat_count = reader.read<uint32_t>();
-	int del_cat_count = reader.read<uint32_t>();
-	for (int i = 0; i < del_cat_count; i++) {
-		reader.advance(4); //category ids of deleted categories with the last byte as 00 instead of 02
-	}
-	categories.resize(cat_count - del_cat_count);
+	int category_count = reader.read<uint32_t>();
+	int deleted_category_count = reader.read<uint32_t>();
+	reader.advance(4 * deleted_category_count); //category ids of deleted categories with the last byte as 00 instead of 02
+	categories.resize(category_count - deleted_category_count);
 	
-	int trig_count = reader.read<uint32_t>();
-	int del_trig_count = reader.read<uint32_t>();
-	for (int i = 0; i < del_trig_count; i++) {
-		reader.advance(4); //trigger ids of deleted triggers with the last byte as 00 instead of 03
-	}
-	int trig_comment_count = reader.read<uint32_t>();
+	int trigger_count = reader.read<uint32_t>();
+	int deleted_trigger_count = reader.read<uint32_t>();
+	reader.advance(4 * deleted_trigger_count); //trigger ids of deleted triggers with the last byte as 00 instead of 03
+
+	int trigger_comment_count = reader.read<uint32_t>();
 	reader.advance(4);
 	int script_count = reader.read<uint32_t>();
 	reader.advance(4);
-	triggers.resize(trig_count + trig_comment_count + script_count - del_trig_count);
-	int var_count = reader.read<uint32_t>();
-	int del_var_count = reader.read<uint32_t>();
-	for (int i = 0; i < del_var_count; i++) {
-		reader.advance(4); //variable ids of deleted variables with the last byte as 00 instead of 06
-	}
+	triggers.resize(trigger_count + trigger_comment_count + script_count - deleted_trigger_count);
+
+	int variable_count = reader.read<uint32_t>();
+	int deleted_variable_count = reader.read<uint32_t>();
+	reader.advance(4 * deleted_variable_count); //variable ids of deleted variables with the last byte as 00 instead of 06
+
 	reader.advance(12);
-	int exist_var_count = reader.read<uint32_t>();
-	if (var_count != (del_var_count + exist_var_count)) std::cout << "Variable data non-matching!\n";
-	for (int i = 0; i < exist_var_count; i++) {
+	int existing_variable_count = reader.read<uint32_t>();
+	if (variable_count != (deleted_variable_count + existing_variable_count)) {
+		std::cout << "Variable data non-matching!\n";
+	}
+
+	for (int i = 0; i < existing_variable_count; i++) {
 		std::string name = reader.read_c_string();
 		TriggerVariable variable;
 		variable.type = reader.read_c_string();
@@ -217,7 +224,7 @@ void Triggers::load_31(BinaryReader& reader) {
 		variables[name] = variable;
 	}
 	
-	int elem_count = reader.read<uint32_t>();
+	int element_count = reader.read<uint32_t>();
 	reader.advance(8);
 	reader.read_c_string(); //last name the map was saved under
 	reader.advance(12);
@@ -225,11 +232,12 @@ void Triggers::load_31(BinaryReader& reader) {
 		return;
 	}
 
-	uint32_t cat_pos = 0, trig_pos = 0, classifier = 0;
-	for (int i = 0; i < (elem_count - 1); i++) {
-		classifier = reader.read<uint32_t>();
+	uint32_t cat_pos = 0;
+	uint32_t trig_pos = 0;
+	for (int i = 0; i < (element_count - 1); i++) {
+		Classifier classifier = static_cast<Classifier>(reader.read<uint32_t>());
 		switch (classifier) {
-			case 0x04: { //category
+			case Classifier::category: {
 				TriggerCategory cat;
 				cat.id = reader.read<uint32_t>();
 				cat.name = reader.read_c_string();
@@ -240,30 +248,29 @@ void Triggers::load_31(BinaryReader& reader) {
 				cat_pos++;
 				break;
 			}
-			case 0x08: //trigger
-			case 0x10: //trigger comment
-			case 0x20: //custom script
-			{
-				Trigger trig;
-				trig.classifier = classifier;
-				trig.name = reader.read_c_string();
-				trig.description = reader.read_c_string();
-				trig.is_comment = reader.read<uint32_t>();
-				trig.id = reader.read<uint32_t>();
-				trig.is_enabled = reader.read<uint32_t>();
-				trig.is_script = reader.read<uint32_t>();
-				trig.initally_off = reader.read<uint32_t>();
-				trig.run_on_initialization = reader.read<uint32_t>();
-				trig.parent_id = reader.read<uint32_t>();
-				trig.lines.resize(reader.read<uint32_t>());
-				for (auto&& j : trig.lines) {
-					parse_eca_structure(j, false);
+			case Classifier::trigger:
+			case Classifier::comment:
+			case Classifier::script: {
+				Trigger trigger;
+				trigger.classifier = classifier;
+				trigger.name = reader.read_c_string();
+				trigger.description = reader.read_c_string();
+				trigger.is_comment = reader.read<uint32_t>();
+				trigger.id = reader.read<uint32_t>();
+				trigger.is_enabled = reader.read<uint32_t>();
+				trigger.is_script = reader.read<uint32_t>();
+				trigger.initally_off = reader.read<uint32_t>();
+				trigger.run_on_initialization = reader.read<uint32_t>();
+				trigger.parent_id = reader.read<uint32_t>();
+				trigger.lines.resize(reader.read<uint32_t>());
+				for (auto& j : trigger.lines) {
+					parse_eca_structure(reader, j, false);
 				}
-				triggers[trig_pos] = trig;
+				triggers[trig_pos] = trigger;
 				trig_pos++;
 				break;
 			}
-			case 0x40: { //global variable data, again(why?)
+			case Classifier::variable: {
 				reader.advance(4); //id
 				reader.read_c_string(); //name
 				reader.advance(4); //parentid
@@ -274,8 +281,8 @@ void Triggers::load_31(BinaryReader& reader) {
 }
 
 void Triggers::load_jass(BinaryReader& reader) {
-	int version = reader.read<uint32_t>();
-	if (version != 0x80000004)
+	const int version = reader.read<uint32_t>();
+	if (version != 0x80000004) {
 		if (version == 1 || version == 0) {
 			if (version == 1) {
 				global_jass_comment = reader.read_c_string();
@@ -290,11 +297,14 @@ void Triggers::load_jass(BinaryReader& reader) {
 			}
 			return;
 		}
-		else
-			std::cout << "Probably invalid WCT format";
+	} else {
+		std::cout << "Probably invalid WCT format";
+	}
 
-	version = reader.read<uint32_t>();
-	if (version != 1) std::cout << "Unknown WCT 1.31 subformat";
+	const int sub_version = reader.read<uint32_t>();
+	if (sub_version != 1) {
+		std::cout << "Unknown WCT 1.31 subformat";
+	}
 
 	global_jass_comment = reader.read_c_string();
 	int size = reader.read<uint32_t>();
@@ -316,8 +326,6 @@ void Triggers::save() const {
 
 }
 
-
-
 void Triggers::save_jass() const {
 	BinaryWriter writer;
 
@@ -328,8 +336,7 @@ void Triggers::save_jass() const {
 	writer.write<uint32_t>(global_jass.size());
 	writer.write_string(global_jass);
 
-
-	for (auto&& i : triggers) {
+	for (const auto& i : triggers) {
 		if (!i.is_comment) {
 			writer.write<uint32_t>(i.custom_text.size());
 			if (!i.custom_text.empty()) {
@@ -340,8 +347,6 @@ void Triggers::save_jass() const {
 
 	hierarchy.map_file_write("war3map.wct", writer.buffer);
 }
-
-
 
 void Triggers::generate_map_script() {
 	std::map<std::string, std::string> unit_variables; // creation_number, unit_id

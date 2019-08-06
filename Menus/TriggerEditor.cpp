@@ -1,5 +1,6 @@
 #include "TriggerEditor.h"
 
+#include <QPlainTextEdit>
 #include <QFileIconProvider>
 #include "Utilities.h"
 #include "HiveWE.h"
@@ -41,7 +42,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		if (i.is_comment) {
 			item->setIcon(0, trigger_comment_icon);
-		} else if (i.classifier == 0x20) {
+		} else if (i.classifier == Classifier::script) {
 			item->setIcon(0, file_icon); //maybe give scripts a different icon
 		}
 		else {
@@ -76,20 +77,25 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 		QWidget* tab = new QWidget;
 		tab->setProperty("TriggerID", 0);
+		QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
+		QPlainTextEdit* comments_editor = new QPlainTextEdit;
+		JassEditor* jass_editor = new JassEditor;
+
 		QVBoxLayout* layout = new QVBoxLayout(tab);
-		QSplitter* spiltter = new QSplitter(Qt::Orientation::Vertical);
-		JassEditor* edit = new JassEditor;
-		JassEditor* edit2 = new JassEditor;
-		spiltter->addWidget(edit);
-		spiltter->addWidget(edit2);
-		layout->addWidget(spiltter);
-		edit->setText(QString::fromStdString(map->triggers.global_jass_comment));
-		edit2->setText(QString::fromStdString(map->triggers.global_jass));
+		splitter->addWidget(comments_editor);
+		splitter->addWidget(jass_editor);
+		splitter->setStretchFactor(0, 1);
+		splitter->setStretchFactor(1, 4);
+		layout->addWidget(splitter);
+
+		comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
+		jass_editor->setText(QString::fromStdString(map->triggers.global_jass));
+
 		connect(this, &TriggerEditor::save_changes, [=]() {
-			map->triggers.global_jass_comment = edit->text().toStdString();
+			map->triggers.global_jass_comment = comments_editor->toPlainText().toStdString();
 		});
 		connect(this, &TriggerEditor::save_changes, [=]() {
-			map->triggers.global_jass = edit2->text().toStdString();
+			map->triggers.global_jass = jass_editor->text().toStdString();
 		});
 
 		ui.editor->addTab(tab, QString::fromStdString("Map Header"));
