@@ -68,6 +68,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 
 void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	if (item == folders[0]) {
+		// If a tab for this is already open we focus to it
 		for (int i = 0; i < ui.editor->count(); i++) {
 			if (ui.editor->widget(i)->property("TriggerID").toInt() == 0) {
 				ui.editor->setCurrentIndex(i);
@@ -77,15 +78,19 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 		QWidget* tab = new QWidget;
 		tab->setProperty("TriggerID", 0);
+
 		QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
 		QPlainTextEdit* comments_editor = new QPlainTextEdit;
+		comments_editor->setPlaceholderText("Optional comments here");
+
 		JassEditor* jass_editor = new JassEditor;
 
 		QVBoxLayout* layout = new QVBoxLayout(tab);
 		splitter->addWidget(comments_editor);
 		splitter->addWidget(jass_editor);
 		splitter->setStretchFactor(0, 1);
-		splitter->setStretchFactor(1, 4);
+		splitter->setStretchFactor(1, 7);
+		layout->setMargin(0);
 		layout->addWidget(splitter);
 
 		comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
@@ -103,12 +108,28 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		return;
 	}
 	
-	//add variable editor?
-
-	if (files.find(item) == files.end()) {
+	if (!files.contains(item)) {
 		return;
 	}
 	Trigger& trigger = files.at(item).get();
+
+	//switch (trigger.classifier) {
+	//	case Classifier::trigger:
+
+	//		break;		
+	//	case Classifier::script:
+
+	//		break;		
+	//	case Classifier::variable:
+
+	//		break;
+	//	case Classifier::comment:
+
+	//		break;		
+	//	case Classifier::category:
+
+	//		break;		
+	//}
 
 	// Check if trigger is already open and if so focus it
 	for (int i = 0; i < ui.editor->count(); i++) {
@@ -120,38 +141,40 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 	QWidget* tab = new QWidget;
 	tab->setProperty("TriggerID", trigger.id);
+	QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
+	QPlainTextEdit* comments_editor = new QPlainTextEdit;
+	comments_editor->setPlaceholderText("Optional comments here");
 
 	QVBoxLayout* layout = new QVBoxLayout(tab);
+	splitter->addWidget(comments_editor);
 
-	QSplitter* spiltter = new QSplitter(Qt::Orientation::Vertical);
+	layout->addWidget(splitter);
+	layout->setMargin(0);
 
-	//comment editing and viewing, probably shouldn't be JassEditor
-	JassEditor* cedit = new JassEditor;
-	spiltter->addWidget(cedit);
-	layout->addWidget(spiltter);
-	cedit->setText(QString::fromStdString(trigger.description));
 	connect(this, &TriggerEditor::save_changes, [=]() {
-		files.at(item).get().description = cedit->text().toStdString();
+		files.at(item).get().description = comments_editor->toPlainText().toStdString();
 	});
 
 	if (!trigger.is_comment) {
 		if (trigger.is_script) {
 			JassEditor* edit = new JassEditor;
-			spiltter->addWidget(edit);
+			splitter->addWidget(edit);
 			edit->setText(QString::fromStdString(trigger.custom_text));
 			connect(this, &TriggerEditor::save_changes, [=]() {
 				files.at(item).get().custom_text = edit->text().toStdString();
 			});
-		}
-		else {
+		} else {
 			QTreeWidget* edit = new QTreeWidget;
 			edit->setHeaderHidden(true);
 			edit->setUniformRowHeights(true);
-			spiltter->addWidget(edit);
+			splitter->addWidget(edit);
 			show_gui_trigger(edit, trigger);
 			edit->expandAll();
 		}
 	}
+
+	splitter->setStretchFactor(0, 1);
+	splitter->setStretchFactor(1, 7);
 
 	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
 	ui.editor->setCurrentWidget(tab);

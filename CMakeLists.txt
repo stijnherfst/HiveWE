@@ -126,7 +126,7 @@ target_link_libraries(HiveWE
 )
 
 if(WIN32)
-    target_compile_definitions(HiveWE PRIVATE UNICODE _UNICODE)
+    target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
 endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)

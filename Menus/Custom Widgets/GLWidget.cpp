@@ -110,7 +110,7 @@ void GLWidget::update_scene() {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	if (map) {
+	if (map && map->loaded) {
 		camera->update(delta);
 
 		map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);

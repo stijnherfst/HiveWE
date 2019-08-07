@@ -52,8 +52,8 @@ void FPSCamera::update(const double delta) {
 }
 
 void FPSCamera::mouse_move_event(QMouseEvent* event) {
-	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
-	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
+	const double diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
+	const double diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
 
 	horizontal_angle += diffx * 0.012;
 	vertical_angle += -diffy * 0.012;

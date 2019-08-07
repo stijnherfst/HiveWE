@@ -185,20 +185,22 @@ void Triggers::load_version_31(BinaryReader& reader) {
 	}
 
 	reader.advance(16);
+
 	int category_count = reader.read<uint32_t>();
 	int deleted_category_count = reader.read<uint32_t>();
 	reader.advance(4 * deleted_category_count); //category ids of deleted categories with the last byte as 00 instead of 02
-	categories.resize(category_count - deleted_category_count);
 	
 	int trigger_count = reader.read<uint32_t>();
 	int deleted_trigger_count = reader.read<uint32_t>();
 	reader.advance(4 * deleted_trigger_count); //trigger ids of deleted triggers with the last byte as 00 instead of 03
 
 	int trigger_comment_count = reader.read<uint32_t>();
-	reader.advance(4);
+	int deleted_comment_count = reader.read<uint32_t>();
+	reader.advance(4 * deleted_comment_count); //comment ids of deleted comments with the last byte as 00 instead of 04
+
 	int script_count = reader.read<uint32_t>();
-	reader.advance(4);
-	triggers.resize(trigger_count + trigger_comment_count + script_count - deleted_trigger_count);
+	int deleted_script_count = reader.read<uint32_t>();
+	reader.advance(4 * deleted_script_count); //script ids of deleted scripts with the last byte as 00 instead of 05
 
 	int variable_count = reader.read<uint32_t>();
 	int deleted_variable_count = reader.read<uint32_t>();
@@ -210,6 +212,8 @@ void Triggers::load_version_31(BinaryReader& reader) {
 		std::cout << "Variable data non-matching!\n";
 	}
 
+	categories.resize(category_count - deleted_category_count);
+	triggers.resize(trigger_count + trigger_comment_count + script_count - deleted_trigger_count - deleted_comment_count - deleted_script_count);
 	for (int i = 0; i < existing_variable_count; i++) {
 		std::string name = reader.read_c_string();
 		TriggerVariable variable;
@@ -281,7 +285,7 @@ void Triggers::load_version_31(BinaryReader& reader) {
 }
 
 void Triggers::load_jass(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
+	const uint32_t version = reader.read<uint32_t>();
 	if (version != 0x80000004) {
 		if (version == 1 || version == 0) {
 			if (version == 1) {

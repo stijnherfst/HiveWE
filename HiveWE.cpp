@@ -13,6 +13,8 @@
 
 #include <SOIL2/SOIL2.h>
 
+#define UNICODE
+#define _UNICODE
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 
@@ -242,13 +244,14 @@ void HiveWE::load_mpq() {
 
 	settings.setValue("openDirectory", file_name);
 
-	fs::path mpq = file_name.toStdString();
+	fs::path mpq = file_name.toStdWString();
 
 	// Try opening the archive
 	HANDLE handle;
 	bool success = SFileOpenArchive(mpq.c_str(), 0, 0, &handle);
 	if (!success) {
 		QMessageBox::critical(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
+		std::cout << GetLastError() << "\n";
 		return;
 	}
 
