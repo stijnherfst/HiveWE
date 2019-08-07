@@ -322,12 +322,5 @@ ASALocalRun/
 # MSBuild Binary and Structured Log
 *.binlog
 
-/HiveWE/Data/Temporary
-
-![Dd]ependencies/
-!HiveWE/[Dd]ependencies/*
-!HiveWE/[Dd]ependencies/**/*
-!HiveWE/[Dd]ependencies/**/**/*
-HiveWE/Linux/
-HiveWE/Data/Tools/common.j
-HiveWE/Data/Tools/blizzard.j
+Data/Tools/common.j
+Data/Tools/blizzard.j
