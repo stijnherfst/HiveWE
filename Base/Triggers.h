@@ -99,8 +99,8 @@ class Triggers {
 	static constexpr int write_version = 8;
 	static constexpr int write_string_version = 1;
 
-	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter);
-	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child);
+	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
+	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);
 
 	std::string convert_eca_to_jass(const ECA& lines, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
 	std::string testt(const std::string& trigger_name, const std::string& parent_name, const std::vector<TriggerParameter>& parameters, std::string& pre_actions, bool add_call) const;
@@ -121,8 +121,8 @@ public:
 	std::vector<Trigger> triggers;
 
 	void load(BinaryReader& reader);
-	void load_version_31(BinaryReader& reader);
-	void load_version_pre31(BinaryReader& reader);
+	void load_version_31(BinaryReader& reader, uint32_t version);
+	void load_version_pre31(BinaryReader& reader, uint32_t version);
 	void load_jass(BinaryReader& reader);
 	void save() const;
 	void save_jass() const;
