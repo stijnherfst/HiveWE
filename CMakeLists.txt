@@ -28,6 +28,7 @@ add_executable(HiveWE
 	HiveWE.cpp
 	HiveWE.qrc
 	HiveWE.rc
+	HiveWE.ui
 	InputHandler.cpp
 	JassTokenizer.cpp
 	main.cpp
