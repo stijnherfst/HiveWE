@@ -300,14 +300,14 @@ void Triggers::load_jass(BinaryReader& reader) {
 				}
 			}
 			return;
+		} else {
+			std::cout << "Probably invalid WCT format\n";
 		}
-	} else {
-		std::cout << "Probably invalid WCT format";
-	}
+	} 
 
 	const int sub_version = reader.read<uint32_t>();
 	if (sub_version != 1) {
-		std::cout << "Unknown WCT 1.31 subformat";
+		std::cout << "Unknown WCT 1.31 subformat\n";
 	}
 
 	global_jass_comment = reader.read_c_string();
