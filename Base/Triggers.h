@@ -8,7 +8,7 @@
 struct TriggerCategory {
 	int id;
 	std::string name;
-	bool is_comment;
+	bool is_comment = false;
 	int parent_id;
 };
 
@@ -81,7 +81,7 @@ struct Trigger {
 	Classifier classifier;
 	std::string name;
 	std::string description;
-	bool is_comment;
+	bool is_comment = false;
 	int id;
 	bool is_enabled;
 	bool is_script;
