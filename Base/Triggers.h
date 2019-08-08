@@ -4,6 +4,7 @@
 
 #include "INI.h"
 #include "BinaryReader.h"
+#include "BinaryWriter.h"
 
 struct TriggerCategory {
 	int id;
@@ -109,6 +110,23 @@ class Triggers {
 	std::string get_type(const std::string& function_name, int parameter) const;
 	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
+
+	void generate_global_variables(BinaryWriter& writer);
+	void generate_init_global_variables(BinaryWriter& writer);
+	void generate_units(BinaryWriter& writer);
+	void generate_items(BinaryWriter& writer);
+	void generate_doodads(BinaryWriter& writer);
+	void generate_regions(BinaryWriter& writer);
+	void generate_cameras(BinaryWriter& writer);
+	void generate_sounds(BinaryWriter& writer);
+	void generate_item_tables(BinaryWriter& writer);
+	void generate_unit_item_tables(BinaryWriter& writer);
+	void generate_trigger_initialization(BinaryWriter& writer, std::vector<std::string> initialization_triggers);
+	void generate_players(BinaryWriter& writer);
+	void generate_custom_teams(BinaryWriter& writer);
+	void generate_ally_priorities(BinaryWriter& writer);
+	void generate_main(BinaryWriter& writer);
+	void generate_map_configuration(BinaryWriter& writer);
 public:
 	ini::INI trigger_strings;
 	ini::INI trigger_data;

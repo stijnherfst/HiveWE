@@ -119,7 +119,7 @@ target_link_libraries(HiveWE
 	Qt5::Widgets
 	glm
 	soil2
-	stormlib
+	stormlib::stormlib
 	casclib
 	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/debug/lib/turbojpegd.lib"
 	"C:/vcpkg/packages/qscintilla_x64-windows/debug/lib/qscintilla2.lib"

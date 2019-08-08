@@ -16,7 +16,10 @@ struct GameCamera {
 	float roll;
 	float fov;
 	float far_z;
-	float near_z; // ?
+	float near_z;
+	float local_roll;
+	float local_pitch;
+	float local_yaw;
 	std::string name;
 };
 

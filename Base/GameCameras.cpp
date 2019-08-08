@@ -1,7 +1,7 @@
 #include "GameCameras.h"
 
 #include <iostream>
-
+#include "HiveWE.h"
 void GameCameras::load(BinaryReader& reader) {
 	int version = reader.read<uint32_t>();
 	if (version != 0) {
@@ -20,6 +20,12 @@ void GameCameras::load(BinaryReader& reader) {
 		i.fov = reader.read<float>();
 		i.far_z = reader.read<float>();
 		i.near_z = reader.read<float>();
+
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 131) {
+			i.local_pitch = reader.read<float>();
+			i.local_yaw = reader.read<float>();
+			i.local_roll = reader.read<float>();
+		}
 		i.name = reader.read_c_string();
 	}
 }
