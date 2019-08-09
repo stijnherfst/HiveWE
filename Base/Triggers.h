@@ -99,6 +99,7 @@ class Triggers {
 
 	static constexpr int write_version = 8;
 	static constexpr int write_string_version = 1;
+	int max_category_id = 0;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
 	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);
@@ -111,11 +112,11 @@ class Triggers {
 	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
 
-	void generate_global_variables(BinaryWriter& writer);
+	void generate_global_variables(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables, std::map<std::string, std::string>& destructable_variables);
 	void generate_init_global_variables(BinaryWriter& writer);
-	void generate_units(BinaryWriter& writer);
+	void generate_units(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables);
 	void generate_items(BinaryWriter& writer);
-	void generate_doodads(BinaryWriter& writer);
+	void generate_destructables(BinaryWriter& writer, std::map<std::string, std::string>& destructable_variables);
 	void generate_regions(BinaryWriter& writer);
 	void generate_cameras(BinaryWriter& writer);
 	void generate_sounds(BinaryWriter& writer);

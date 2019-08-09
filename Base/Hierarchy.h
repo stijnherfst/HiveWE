@@ -25,6 +25,7 @@ public:
 
 	BinaryReader map_file_read(const fs::path& path) const;
 	/// Will create the file if it does not exist or overwrite existing
+	void map_file_add(const fs::path& source, const fs::path& destination) const;
 	void map_file_write(const fs::path& path, const std::vector<uint8_t>& data) const;
 	void map_file_remove(const fs::path& path) const;
 	bool map_file_exists(const fs::path& path) const;

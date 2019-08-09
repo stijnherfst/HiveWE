@@ -117,18 +117,6 @@ void Map::load(const fs::path& path) {
 		return;
 	}
 
-	//// Imported Files
-	//if (hierarchy.map_file_exists("war3map.imp")) {
-	//	BinaryReader war3map_imp = hierarchy.map_file_read("war3map.imp");
-	//	imports.load(war3map_imp);
-	//}
-	//if (hierarchy.map_file_exists("war3map.dir")) {
-	//	BinaryReader war3map_dir = hierarchy.map_file_read("war3map.dir");
-	//	imports.load_dir_file(war3map_dir);
-	//}
-
-	//imports.populate_uncategorized();
-
 	// Doodads
 	BinaryReader war3map_doo = hierarchy.map_file_read("war3map.doo");
 	success = doodads.load(war3map_doo, terrain);
@@ -174,16 +162,19 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
+	// Regions
 	if (hierarchy.map_file_exists("war3map.w3r")) {
 		BinaryReader war3map_w3r = hierarchy.map_file_read("war3map.w3r");
 		regions.load(war3map_w3r);
 	}
 
+	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
 		BinaryReader war3map_w3c = hierarchy.map_file_read("war3map.w3c");
 		cameras.load(war3map_w3c);
 	}
 
+	// Sounds
 	if (hierarchy.map_file_exists("war3map.w3s")) {
 		BinaryReader war3map_w3s = hierarchy.map_file_read("war3map.w3s");
 		sounds.load(war3map_w3s);

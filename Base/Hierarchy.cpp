@@ -71,6 +71,11 @@ BinaryReader Hierarchy::map_file_read(const fs::path& path) const {
 	return BinaryReader(buffer);
 }
 
+/// source somewhere on disk, destination relative to the map
+void Hierarchy::map_file_add(const fs::path& source, const fs::path& destination) const {
+	fs::copy_file(source, map_directory / destination, fs::copy_options::overwrite_existing);
+}
+
 void Hierarchy::map_file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
 	std::ofstream outfile(map_directory / path, std::ios::binary);
 

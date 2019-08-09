@@ -3,6 +3,9 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <algorithm> 
+#include <cctype>
+#include <locale>
 
 #include <QSettings>
 #include <QPainter>
@@ -69,6 +72,28 @@ std::vector<std::string_view> split_new(const std::string& string, const char de
 	}
 
 	return elems;
+}
+
+
+
+// trim from start (in place)
+void ltrim(std::string& s) {
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+		return !std::isspace(ch);
+		}));
+}
+
+// trim from end (in place)
+void rtrim(std::string& s) {
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+		return !std::isspace(ch);
+		}).base(), s.end());
+}
+
+// trim from both ends (in place)
+void trim(std::string& s) {
+	ltrim(s);
+	rtrim(s);
 }
 
 bool is_number(const std::string& s) {
