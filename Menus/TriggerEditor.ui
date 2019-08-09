@@ -13,59 +13,7 @@
   <property name="windowTitle">
    <string>Trigger Editor</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QSplitter" name="splitter">
-      <property name="frameShadow">
-       <enum>QFrame::Plain</enum>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="opaqueResize">
-       <bool>true</bool>
-      </property>
-      <property name="childrenCollapsible">
-       <bool>false</bool>
-      </property>
-      <widget class="QTreeWidget" name="explorer">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="uniformRowHeights">
-        <bool>true</bool>
-       </property>
-       <property name="headerHidden">
-        <bool>true</bool>
-       </property>
-       <attribute name="headerVisible">
-        <bool>false</bool>
-       </attribute>
-       <column>
-        <property name="text">
-         <string>New Column</string>
-        </property>
-       </column>
-      </widget>
-      <widget class="QTabWidget" name="editor">
-       <property name="currentIndex">
-        <number>-1</number>
-       </property>
-       <property name="tabsClosable">
-        <bool>true</bool>
-       </property>
-       <property name="movable">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </widget>
-    </item>
-   </layout>
-  </widget>
+  <widget class="QWidget" name="centralwidget"/>
   <widget class="QToolBar" name="toolBar">
    <property name="windowTitle">
     <string>toolBar</string>

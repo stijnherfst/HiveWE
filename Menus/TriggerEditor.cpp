@@ -2,6 +2,8 @@
 
 #include <QPlainTextEdit>
 #include <QFileIconProvider>
+#include <QSplitter>
+
 #include "Utilities.h"
 #include "HiveWE.h"
 #include "Triggers.h"
@@ -11,7 +13,18 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	ui.splitter->setSizes({ 1, 3 });
+	explorer->setUniformRowHeights(true);
+	explorer->setHeaderHidden(true);
+
+	setCentralWidget(dock_manager);
+
+	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
+	explorer_widget->setWidget(explorer);
+	dock_manager->addDockWidget(ads::LeftDockWidgetArea, explorer_widget);
+
+	dock_manager->setStyleSheet("");
+
+	//ui.splitter->setSizes({ 1, 3 });
 	show();
 
 	QFileIconProvider icons;
@@ -24,7 +37,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
 	action_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Action"));
 
-	QTreeWidgetItem* root = new QTreeWidgetItem(ui.explorer);
+	QTreeWidgetItem* root = new QTreeWidgetItem(explorer);
 	root->setData(0, Qt::EditRole, QString::fromStdString("Map Header"));
 	root->setIcon(0, folder_icon); //maybe use a special icon
 	root->setExpanded(true);
@@ -58,10 +71,10 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		item->setIcon(0, file_icon);
 	}
 	
-	connect(ui.explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
-	connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { 
-			delete ui.editor->widget(index); 
-		});
+	connect(explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
+	//connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { 
+		//	delete editor->widget(index); 
+	//	});
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
 		std::cout << "Checking stuff\n";
 			save_changes();
@@ -74,39 +87,39 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		item->setExpanded(true);
 
 		// If a tab for this is already open we focus to it
-		for (int i = 0; i < ui.editor->count(); i++) {
-			if (ui.editor->widget(i)->property("TriggerID").toInt() == 0) {
-				ui.editor->setCurrentIndex(i);
+		//for (int i = 0; i < ui.editor->count(); i++) {
+		//	if (ui.editor->widget(i)->property("TriggerID").toInt() == 0) {
+		//		ui.editor->setCurrentIndex(i);
 
-				return;
-			}
-		}
+		//		return;
+		//	}
+		//}
 
-		QWidget* tab = new QWidget;
-		tab->setProperty("TriggerID", 0);
-
-		QPlainTextEdit* comments_editor = new QPlainTextEdit;
-		comments_editor->setObjectName("comments");
-		comments_editor->setPlaceholderText("Optional comments here");
+		//QPlainTextEdit* comments_editor = new QPlainTextEdit;
+		//comments_editor->setObjectName("comments");
+		//comments_editor->setPlaceholderText("Optional comments here");
 
 		JassEditor* jass_editor = new JassEditor;
 		jass_editor->setObjectName("jass_editor");
-
-		QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
-		splitter->addWidget(comments_editor);
-		splitter->addWidget(jass_editor);
-		splitter->setStretchFactor(0, 1);
-		splitter->setStretchFactor(1, 7);
-
-		QVBoxLayout* layout = new QVBoxLayout(tab);
-		layout->setMargin(0);
-		layout->addWidget(splitter);
-
-		comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
 		jass_editor->setText(QString::fromStdString(map->triggers.global_jass));
 
-		ui.editor->addTab(tab, "Map Header");
-		ui.editor->setCurrentWidget(tab);
+		ads::CDockWidget* dock_tab = new ads::CDockWidget("Map Header");
+		dock_tab->setWidget(jass_editor);
+		dock_manager->addDockWidgetTab(ads::RightDockWidgetArea, dock_tab);
+		//QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
+		//splitter->addWidget(comments_editor);
+		//splitter->addWidget(jass_editor);
+		//splitter->setStretchFactor(0, 1);
+		//splitter->setStretchFactor(1, 7);
+
+		//QVBoxLayout* layout = new QVBoxLayout;
+		//layout->setMargin(0);
+		//layout->addWidget(splitter);
+
+		//comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
+
+		//dock_tab->setLayout(layout);
+
 		return;
 	}
 	
@@ -134,48 +147,49 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	//}
 
 	// Check if trigger is already open and if so focus it
-	for (int i = 0; i < ui.editor->count(); i++) {
-		if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
-			ui.editor->setCurrentIndex(i);
-			return;
-		}
-	}
+	//for (int i = 0; i < ui.editor->count(); i++) {
+	//	if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
+	//		ui.editor->setCurrentIndex(i);
+	//		return;
+	//	}
+	//}
 
-	QWidget* tab = new QWidget;
-	tab->setProperty("TriggerID", trigger.id);
+	//QPlainTextEdit* comments_editor = new QPlainTextEdit;
+	//comments_editor->setObjectName("comments");
+	//comments_editor->setPlaceholderText("Optional comments here");
 
-	QPlainTextEdit* comments_editor = new QPlainTextEdit;
-	comments_editor->setObjectName("comments");
-	comments_editor->setPlaceholderText("Optional comments here");
+	//QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
+	//splitter->addWidget(comments_editor);
 
-	QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
-	splitter->addWidget(comments_editor);
+	//QVBoxLayout* layout = new QVBoxLayout;
+	//layout->addWidget(splitter);
+	//layout->setMargin(0);
 
-	QVBoxLayout* layout = new QVBoxLayout(tab);
-	layout->addWidget(splitter);
-	layout->setMargin(0);
+	ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(trigger.name));
 
 	if (!trigger.is_comment) {
 		if (trigger.is_script) {
 			JassEditor* edit = new JassEditor;
 			edit->setObjectName("jass_editor");
-			splitter->addWidget(edit);
+			//splitter->addWidget(edit);
 			edit->setText(QString::fromStdString(trigger.custom_text));
+			dock_tab->setWidget(edit);
+
 		} else {
 			QTreeWidget* edit = new QTreeWidget;
 			edit->setHeaderHidden(true);
 			edit->setUniformRowHeights(true);
-			splitter->addWidget(edit);
+			//splitter->addWidget(edit);
+			dock_tab->setWidget(edit);
 			show_gui_trigger(edit, trigger);
 			edit->expandAll();
 		}
 	}
 
-	splitter->setStretchFactor(0, 1);
-	splitter->setStretchFactor(1, 7);
+	dock_manager->addDockWidgetTab(ads::RightDockWidgetArea, dock_tab);
 
-	ui.editor->addTab(tab, QString::fromStdString(trigger.name));
-	ui.editor->setCurrentWidget(tab);
+	//splitter->setStretchFactor(0, 1);
+	//splitter->setStretchFactor(1, 7);
 }
 
 void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) {
@@ -355,7 +369,8 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 }
 
 void TriggerEditor::save_changes() {
-	for (int i = 0; i < ui.editor->count(); i++) {
+	//dock_manager->widge
+	/*for (int i = 0; i < ui.editor->count(); i++) {
 		QWidget* tab = ui.editor->widget(i);
 		int trigger_id = tab->property("TriggerID").toInt();
 		
@@ -374,5 +389,5 @@ void TriggerEditor::save_changes() {
 				}
 			}
 		}
-	}
+	}*/
 }

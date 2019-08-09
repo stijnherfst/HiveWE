@@ -2,10 +2,14 @@
 
 #include "ui_TriggerEditor.h"
 
+#include <QTreeWidget>
+
 #include <vector>
 #include <string>
 #include <unordered_map>
 #include "Triggers.h"
+
+#include "DockManager.h"
 
 class TriggerEditor : public QMainWindow {
 	Q_OBJECT
@@ -16,6 +20,10 @@ public:
 	void save_changes();
 private:
 	Ui::TriggerEditor ui;
+
+	ads::CDockManager* dock_manager = new ads::CDockManager();
+
+	QTreeWidget* explorer = new QTreeWidget;
 
 	QIcon folder_icon;
 	QIcon file_icon;

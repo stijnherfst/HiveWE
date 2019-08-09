@@ -141,3 +141,46 @@ QRibbonButton::checked {
 	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
 }
+
+
+
+ads--CDockAreaWidget #tabsMenuButton::menu-indicator {
+    image: none;
+}
+
+ads--CDockWidgetTab {
+    background: palette(window);
+    border-color: palette(dark);
+    border-style: solid;
+    border-width: 0 1px 0 0;
+    padding: 0 5 0 5px;
+}
+
+ads--CDockWidgetTab[activeTab="true"] {
+	background: rgb(42, 42, 42);
+}
+
+
+QScrollArea#dockWidgetScrollArea
+{
+    padding: 0px;
+    border: none;
+}
+
+#tabCloseButton {
+	margin-top: 2px;
+	background: none;
+	border: none;
+	padding: 0px -2px;
+}
+
+#tabCloseButton:hover
+{
+	border: 1px solid rgba(0, 0, 0, 32);
+	background: rgba(64, 64, 64, 255);
+}
+
+#tabCloseButton:pressed
+{
+	background: rgba(128, 128, 128, 255);
+}

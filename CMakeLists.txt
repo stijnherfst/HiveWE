@@ -19,7 +19,7 @@ find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
-
+find_package(qt-advanced-docking-system CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -124,6 +124,7 @@ target_link_libraries(HiveWE
 	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/debug/lib/turbojpegd.lib"
 	"C:/vcpkg/packages/qscintilla_x64-windows/debug/lib/qscintilla2.lib"
 	${JPEG_LIBRARIES}
+	qt-advanced-docking-system::qtadvanceddocking
 )
 
 if(WIN32)
