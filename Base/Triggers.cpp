@@ -149,7 +149,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 	}
 
 	triggers.resize(reader.read<uint32_t>());
-	int trig_id = 0, comment_id = 0, script_id = 0;
+	uint32_t trig_id = 0, comment_id = 0, script_id = 0;
 	for (auto& i : triggers) {
 		i.name = reader.read_c_string();
 		i.description = reader.read_c_string();
@@ -185,8 +185,8 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 
 void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	uint32_t sub_version = reader.read<uint32_t>();
-	if (sub_version != 7) {
-		std::cout << "For 1.31+, only TFT is currently supported! Trying anyway.\n";
+	if (sub_version != 7 && sub_version != 4) {
+		std::cout << "Unknown 1.31 WTG subformat! Trying anyway.\n";
 	}
 
 	reader.advance(16);
@@ -225,7 +225,9 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 		variable.type = reader.read_c_string();
 		reader.advance(4);
 		variable.is_array = reader.read<uint32_t>();
-		variable.array_size = reader.read<uint32_t>();
+		if (sub_version == 7) {
+			variable.array_size = reader.read<uint32_t>();
+		}
 		variable.is_initialized = reader.read<uint32_t>();
 		variable.initial_value = reader.read_c_string();
 		variable.id = reader.read<uint32_t>();
@@ -236,8 +238,10 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	uint32_t element_count = reader.read<uint32_t>();
 	reader.advance(8);
 	reader.read_c_string(); //last name the map was saved under
-	reader.advance(12);
+	reader.advance(sub_version == 7 ? 12 : 8);
 	if (reader.remaining() == 0) {
+		if (element_count != 1)
+			std::cout << "Possibly corrupt WTG!";
 		return;
 	}
 
@@ -250,7 +254,9 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				TriggerCategory cat;
 				cat.id = reader.read<uint32_t>();
 				cat.name = reader.read_c_string();
-				cat.is_comment = reader.read<uint32_t>();
+				if (sub_version == 7) {
+					cat.is_comment = reader.read<uint32_t>();
+				}
 				reader.advance(4);
 				cat.parent_id = reader.read<uint32_t>();
 				categories[cat_pos] = cat;
@@ -264,7 +270,9 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				trigger.classifier = classifier;
 				trigger.name = reader.read_c_string();
 				trigger.description = reader.read_c_string();
-				trigger.is_comment = reader.read<uint32_t>();
+				if (sub_version == 7) {
+					trigger.is_comment = reader.read<uint32_t>();
+				}
 				trigger.id = reader.read<uint32_t>();
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
