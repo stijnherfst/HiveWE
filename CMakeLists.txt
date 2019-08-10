@@ -45,7 +45,6 @@ add_executable(HiveWE
 	Base/Map.cpp
 	Base/MapInfo.cpp
 	Base/PathingMap.cpp
-	Base/QRibbon.cpp
 	Base/Regions.cpp
 	Base/ResourceManager.cpp
 	Base/ShadowMap.cpp
@@ -106,6 +105,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/ColorButton.cpp"
 	"Menus/Custom Widgets/GLWidget.cpp"
 	"Menus/Custom Widgets/JassEditor.cpp"
+	"Menus/Custom Widgets/QRibbon.cpp"
 	"Menus/Custom Widgets/MainRibbon.cpp"
 )
 
