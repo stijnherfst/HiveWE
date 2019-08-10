@@ -6,9 +6,6 @@
 
 QRibbonButton::QRibbonButton(QWidget* parent) : QToolButton(parent) {
 	setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-
-	setIconSize({ 32, 32 });
-	setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
 }
 
 QRibbonButton::~QRibbonButton() {
@@ -107,11 +104,9 @@ QRibbonTab::QRibbonTab(QWidget* parent) : QWidget(parent) {
 }
 
 void QRibbonTab::disableShortcuts() {
-	
 }
 
 void QRibbonTab::enableShortcuts() {
-
 }
 
 void QRibbonTab::paintEvent(QPaintEvent* event) {
@@ -130,8 +125,6 @@ void QRibbonTab::addSection(QLayout* layout) {
 void QRibbonTab::addSection(QRibbonSection* section) {
 	QFrame* line = new QFrame();
 	line->setObjectName("seperator");
-	line->setFrameShape(QFrame::VLine);
-	line->setFrameShadow(QFrame::Sunken);
 
 	int count = sections->count();
 	sections->insertWidget(count - 1, section);
@@ -146,8 +139,6 @@ QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
 
 	QFrame* line = new QFrame();
 	line->setObjectName("verticalSeperator");
-	line->setFrameShape(QFrame::VLine);
-	line->setFrameShadow(QFrame::Plain);
 
 	base->addLayout(actions);
 	base->addWidget(line);
@@ -194,7 +185,6 @@ QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
 QRibbonFileButton::QRibbonFileButton(QWidget* parent) : QToolButton(parent) {
 	setText("File");
 	setMenu(menu);
-	setPopupMode(QToolButton::InstantPopup);
 }
 
 QRibbon::QRibbon(QWidget *parent) : QTabWidget(parent) {
@@ -204,14 +194,11 @@ QRibbon::QRibbon(QWidget *parent) : QTabWidget(parent) {
 void QRibbon::addMenuItem(QAbstractButton* widget) {
 	file->menu->actions->addWidget(widget);
 	connect(widget, &QAbstractButton::clicked, [&]() { file->menu->close(); });
-
 }
 
 void QRibbon::addMenuSeperator() {
 	QFrame* line = new QFrame();
 	line->setObjectName("horizontalSeperator");
-	line->setFrameShape(QFrame::HLine);
-	line->setFrameShadow(QFrame::Plain);
 	file->menu->actions->addWidget(line);
 }
 

@@ -50,6 +50,7 @@ QRibbon QTabBar::tab::selected {
 	color: white;
 	padding-left: 14px;
 	padding-right: 13px;
+	qproperty-popupMode: InstantPopup;
 }
 
 QRibbonFileButton::hover {
@@ -91,6 +92,7 @@ QRibbonMenu QFrame#verticalSeperator {
 	background-color: gray;
 	border-left: 1px solid rgb(220, 221, 222);
 	border-right: 1px solid rgb(254, 254, 255);
+	qproperty-frameShape: VLine;
 }
 
 QRibbonMenu QFrame#horizontalSeperator {
@@ -98,6 +100,7 @@ QRibbonMenu QFrame#horizontalSeperator {
 	background-color: rgb(220, 221, 222);
 	max-height: 1px;
 	margin-left: 44px;
+	qproperty-frameShape: HLine;
 }
 
 /******************************************************/
@@ -110,6 +113,7 @@ QRibbonTab QFrame#seperator {
 	border: none;
 	max-width: 1px;
 	background-color: rgb(226, 227, 228);
+	qproperty-frameShape: VLine;
 }
 
 /******************************************************/
@@ -125,6 +129,8 @@ QRibbonButton {
 	border: 1px solid transparent;
 	padding-left: 3px;
 	padding-right: 2px;
+	qproperty-iconSize: 30px 30px;
+	qproperty-toolButtonStyle: ToolButtonTextUnderIcon;
 }
 
 QRibbonButton::hover {
@@ -158,6 +164,12 @@ ads--CDockWidgetTab {
 
 ads--CDockWidgetTab[activeTab="true"] {
 	background: rgb(42, 42, 42);
+}
+
+QScrollArea#dockWidgetScrollArea
+{
+    padding: 0px;
+    border: none;
 }
 
 
