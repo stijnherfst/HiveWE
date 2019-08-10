@@ -15,6 +15,7 @@
 #include "Triggers.h"
 #include "JassEditor.h"
 #include "SearchWindow.h"
+#include "VariableEditor.h"
 
 TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
@@ -95,10 +96,12 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		files.emplace(item, i);
 	}
 
-	for (const auto& i : map->triggers.variables) {
-		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.second.parent_id]);
-		item->setData(0, Qt::EditRole, QString::fromStdString(i.first));
+	for (auto& i : map->triggers.variables) {
+		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.parent_id]);
+		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
 		item->setIcon(0, variable_icon);
+
+		vars.emplace(item, i);
 	}
 	
 	connect(explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
@@ -184,8 +187,45 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 		return;
 	}
-	
+
 	if (!files.contains(item)) {
+		if (vars.contains(item)) {
+			TriggerVariable& variable = vars.at(item).get();
+			if (auto found = dock_manager->findDockWidget(QString::number(variable.id)); found) {
+				found->dockAreaWidget()->setCurrentDockWidget(found);
+				return;
+			}
+			ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(variable.name));
+			dock_tab->setObjectName(QString::number(variable.id));
+			VariableEditor* edit = new VariableEditor(variable);
+			edit->setObjectName("var_editor");
+			dock_tab->setWidget(edit);
+
+			connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+				TriggerVariable& variable = vars.at(item).get();
+
+				auto editor = dock_tab->findChild<VariableEditor*>("var_editor");
+				if (editor) {
+					variable.name = editor->ui.name->text().toStdString();
+					variable.type = editor->ui.type->text().toStdString();
+					variable.is_array = editor->ui.array->isChecked();
+					variable.array_size = editor->ui.array_size->value();
+					variable.initial_value = editor->ui.value->text().toStdString();
+				}
+
+				if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+					dock_area = nullptr;
+				}
+				dock_manager->removeDockWidget(dock_tab);
+			});
+
+			if (dock_area == nullptr) {
+				dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
+			}
+			else {
+				dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
+			}
+		}
 		return;
 	}
 	Trigger& trigger = files.at(item).get();

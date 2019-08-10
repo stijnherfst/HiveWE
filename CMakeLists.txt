@@ -89,6 +89,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/QRibbon.cpp"
 	"Menus/Custom Widgets/MainRibbon.cpp"
 	"Menus/Custom Widgets/SearchWindow.cpp"
+	"Menus/Custom Widgets/VariableEditor.cpp"
 )
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})

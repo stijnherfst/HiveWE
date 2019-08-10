@@ -117,7 +117,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 	std::cout << "Importing pre-1.31 trigger format\n";
 	categories.resize(reader.read<uint32_t>());
 	for (auto& i : categories) {
-		i.id = reader.read<uint32_t>();
+		i.id = reader.read<uint32_t>() + 0x02000000;
 		i.name = reader.read_c_string();
 		i.parent_id = 0;
 		if (version == 7) {
@@ -131,25 +131,23 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 
 	int variable_category = ++max_category_id;
 	categories.insert(categories.begin(), { variable_category, "Variables", false,  0 });
-	uint32_t variable_count = reader.read<uint32_t>();
-	for (uint32_t i = 0; i < variable_count; i++) {
-		std::string name = reader.read_c_string();
-		TriggerVariable variable;
-		variable.type = reader.read_c_string();
+	uint32_t trig_id = 0, comment_id = 0, script_id = 0, var_id = 0;
+	variables.resize(reader.read<uint32_t>());
+	for (auto& i : variables) {
+		i.name = reader.read_c_string();
+		i.type = reader.read_c_string();
 		reader.advance(4); // Unknown always 1
-		variable.id = i + 0x00000006;
-		variable.is_array = reader.read<uint32_t>();
+		i.id = (var_id++) + 0x06000000;
+		i.is_array = reader.read<uint32_t>();
 		if (version == 7) {
-			variable.array_size = reader.read<uint32_t>();
+			i.array_size = reader.read<uint32_t>();
 		}
-		variable.is_initialized = reader.read<uint32_t>();
-		variable.initial_value = reader.read_c_string();
-		variable.parent_id = variable_category;
-		variables[name] = variable;
+		i.is_initialized = reader.read<uint32_t>();
+		i.initial_value = reader.read_c_string();
+		i.parent_id = variable_category;
 	}
 
 	triggers.resize(reader.read<uint32_t>());
-	uint32_t trig_id = 0, comment_id = 0, script_id = 0;
 	for (auto& i : triggers) {
 		i.name = reader.read_c_string();
 		i.description = reader.read_c_string();
@@ -175,7 +173,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 			i.id = (trig_id++) + 0x03000000;
 		}
 
-		i.parent_id = reader.read<uint32_t>();
+		i.parent_id = reader.read<uint32_t>() + 0x02000000;
 		i.lines.resize(reader.read<uint32_t>());
 		for (auto& j : i.lines) {
 			parse_eca_structure(reader, j, false, version);
@@ -227,7 +225,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 		variable.initial_value = reader.read_c_string();
 		variable.id = reader.read<uint32_t>();
 		variable.parent_id = reader.read<uint32_t>();
-		variables[name] = variable;
+		variables.push_back(variable);
 	}
 	
 	uint32_t element_count = reader.read<uint32_t>();
@@ -390,8 +388,8 @@ void Triggers::save() const {
 	writer.write<uint32_t>(unknown7);
 	writer.write<uint32_t>(variables.size());
 
-	for (const auto& [name, i] : variables) {
-		writer.write_c_string(name);
+	for (const auto& i : variables) {
+		writer.write_c_string(i.name);
 		writer.write_c_string(i.type);
 		writer.write<uint32_t>(i.unknown);
 		writer.write<uint32_t>(i.is_array);
@@ -443,10 +441,10 @@ void Triggers::generate_global_variables(BinaryWriter& writer, std::map<std::str
 
 	writer.write_string("globals\n");
 
-	for (const auto& [name, variable] : variables) {
+	for (const auto& variable : variables) {
 		std::string base_type = get_base_type(variable.type);
 		if (variable.is_array) {
-			writer.write_string("\t" + base_type + " array udg_" + name + "\n");
+			writer.write_string("\t" + base_type + " array udg_" + variable.name + "\n");
 		} else {
 			std::string default_value = trigger_data.data("TriggerTypeDefaults", base_type);
 
@@ -454,7 +452,7 @@ void Triggers::generate_global_variables(BinaryWriter& writer, std::map<std::str
 				default_value = "null";
 			}
 
-			writer.write_string("\t" + base_type + " udg_" + name + " = " + default_value + "\n");
+			writer.write_string("\t" + base_type + " udg_" + variable.name + " = " + default_value + "\n");
 		}
 	}
 
@@ -506,7 +504,7 @@ void Triggers::generate_init_global_variables(BinaryWriter& writer) {
 	// init globals
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
-	for (const auto& [name, variable] : variables) {
+	for (const auto& variable : variables) {
 		const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
 		const std::string type = base_type.empty() ? variable.type : base_type;
 		std::string default_value = trigger_data.data("TriggerTypeDefaults", type);
@@ -521,15 +519,15 @@ void Triggers::generate_init_global_variables(BinaryWriter& writer) {
 
 			if (variable.is_initialized) {
 				if (type == "string" && variable.initial_value.empty()) {
-					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+					writer.write_string("\t\tset udg_" + variable.name + "[i] = \"\"\n");
 				} else {
-					writer.write_string("\t\tset udg_" + name + "[i] = " + variable.initial_value + "\n");
+					writer.write_string("\t\tset udg_" + variable.name + "[i] = " + variable.initial_value + "\n");
 				}
 			} else {
 				if (type == "string") {
-					writer.write_string("\t\tset udg_" + name + "[i] = \"\"\n");
+					writer.write_string("\t\tset udg_" + variable.name + "[i] = \"\"\n");
 				} else {
-					writer.write_string("\t\tset udg_" + name + "[i] = " + default_value + "\n");
+					writer.write_string("\t\tset udg_" + variable.name + "[i] = " + default_value + "\n");
 				}
 			}
 			writer.write_string("\t\tset i = i + 1\n");
@@ -542,14 +540,14 @@ void Triggers::generate_init_global_variables(BinaryWriter& writer) {
 		}
 
 		if (type == "string") {
-			writer.write_string("\tset udg_" + name + " = \"" + variable.initial_value + "\"\n");
+			writer.write_string("\tset udg_" + variable.name + " = \"" + variable.initial_value + "\"\n");
 		} else {
 			std::string converted_value = trigger_data.data("TriggerParams", variable.initial_value, 2);
 
 			if (converted_value.empty()) {
-				writer.write_string("\tset udg_" + name + " = " + variable.initial_value + "\n");
+				writer.write_string("\tset udg_" + variable.name + " = " + variable.initial_value + "\n");
 			} else {
-				writer.write_string("\tset udg_" + name + " = " + converted_value + "\n");
+				writer.write_string("\tset udg_" + variable.name + " = " + converted_value + "\n");
 			}
 		}
 	}
@@ -1504,7 +1502,12 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 	std::string script_name = trigger_data.data("TriggerActions", "_" + parent_name + "_ScriptName");
  
 	if (parent_name == "SetVariable") {
-		const auto& type = variables.at(parameters[0].value).type;
+		//const auto& type = variables.at(parameters[0].value).type;
+		const std::string &type = (*find_if(variables.begin(), variables.end(),
+			[parameters](const TriggerVariable& var) {
+				return var.name == parameters[0].value;
+			}
+		)).type;
 		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, type);
 

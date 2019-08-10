@@ -43,12 +43,12 @@ private:
 
 	std::unordered_map<int, QTreeWidgetItem*> folders;
 	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
+	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<TriggerVariable>> vars;
 
 	void focus_search_window();
 
 	void item_clicked(QTreeWidgetItem* item);
 	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);
-
 
 	std::string get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const;
 };
