@@ -19,9 +19,9 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	setCentralWidget(dock_manager);
 
 	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
+	explorer_widget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	explorer_widget->setWidget(explorer);
 	dock_manager->addDockWidget(ads::LeftDockWidgetArea, explorer_widget);
-
 	dock_manager->setStyleSheet("");
 
 	//ui.splitter->setSizes({ 1, 3 });
@@ -86,26 +86,27 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	if (item == folders[0]) {
 		item->setExpanded(true);
 
-		// If a tab for this is already open we focus to it
-		//for (int i = 0; i < ui.editor->count(); i++) {
-		//	if (ui.editor->widget(i)->property("TriggerID").toInt() == 0) {
-		//		ui.editor->setCurrentIndex(i);
-
-		//		return;
-		//	}
-		//}
-
 		//QPlainTextEdit* comments_editor = new QPlainTextEdit;
 		//comments_editor->setObjectName("comments");
 		//comments_editor->setPlaceholderText("Optional comments here");
+
+		if (auto found = dock_manager->findDockWidget("0"); found) {
+			found->dockAreaWidget()->setCurrentDockWidget(found);
+			return;
+		}
 
 		JassEditor* jass_editor = new JassEditor;
 		jass_editor->setObjectName("jass_editor");
 		jass_editor->setText(QString::fromStdString(map->triggers.global_jass));
 
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("Map Header");
+		dock_tab->setObjectName("0");
 		dock_tab->setWidget(jass_editor);
-		dock_manager->addDockWidgetTab(ads::RightDockWidgetArea, dock_tab);
+
+		dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
+		
+		connect(dock_tab, &ads::CDockWidget::closed, [=]() { dock_manager->removeDockWidget(dock_tab); });
+
 		//QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
 		//splitter->addWidget(comments_editor);
 		//splitter->addWidget(jass_editor);
@@ -147,12 +148,10 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	//}
 
 	// Check if trigger is already open and if so focus it
-	//for (int i = 0; i < ui.editor->count(); i++) {
-	//	if (ui.editor->widget(i)->property("TriggerID").toInt() == trigger.id) {
-	//		ui.editor->setCurrentIndex(i);
-	//		return;
-	//	}
-	//}
+	if (auto found = dock_manager->findDockWidget(QString::number(trigger.id)); found) {
+		found->dockAreaWidget()->setCurrentDockWidget(found);
+		return;
+	}
 
 	//QPlainTextEdit* comments_editor = new QPlainTextEdit;
 	//comments_editor->setObjectName("comments");
@@ -166,6 +165,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	//layout->setMargin(0);
 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(trigger.name));
+	dock_tab->setObjectName(QString::number(trigger.id));
 
 	if (!trigger.is_comment) {
 		if (trigger.is_script) {
@@ -186,7 +186,9 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		}
 	}
 
-	dock_manager->addDockWidgetTab(ads::RightDockWidgetArea, dock_tab);
+	dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
+
+	connect(dock_tab, &ads::CDockWidget::closed, [=]() { dock_manager->removeDockWidget(dock_tab); });
 
 	//splitter->setStretchFactor(0, 1);
 	//splitter->setStretchFactor(1, 7);

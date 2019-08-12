@@ -10,6 +10,7 @@
 #include "Triggers.h"
 
 #include "DockManager.h"
+#include "DockAreaWidget.h"
 
 class TriggerEditor : public QMainWindow {
 	Q_OBJECT
@@ -22,6 +23,7 @@ private:
 	Ui::TriggerEditor ui;
 
 	ads::CDockManager* dock_manager = new ads::CDockManager();
+	ads::CDockAreaWidget* dock_area = nullptr;
 
 	QTreeWidget* explorer = new QTreeWidget;
 
