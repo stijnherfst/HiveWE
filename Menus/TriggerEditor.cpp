@@ -72,14 +72,11 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	}
 	
 	connect(explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
-	//connect(ui.editor, &QTabWidget::tabCloseRequested, [&](int index) { 
-		//	delete editor->widget(index); 
-	//	});
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
 		std::cout << "Checking stuff\n";
-			save_changes();
-			map->triggers.generate_map_script();
-		});
+		save_changes();
+		map->triggers.generate_map_script();
+	});
 }
 
 void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
@@ -188,7 +185,9 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 	dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
 
-	connect(dock_tab, &ads::CDockWidget::closed, [=]() { dock_manager->removeDockWidget(dock_tab); });
+	connect(dock_tab, &ads::CDockWidget::closed, [=]() { 
+		dock_manager->removeDockWidget(dock_tab); 
+	});
 
 	//splitter->setStretchFactor(0, 1);
 	//splitter->setStretchFactor(1, 7);

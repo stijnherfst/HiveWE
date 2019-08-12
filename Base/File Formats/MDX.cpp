@@ -289,5 +289,17 @@ namespace mdx {
 					reader.advance(reader.read<uint32_t>());
 			}
 		}
+
+		// Check the loaded data here for errors?
+		if (has_chunk<GEOA>()) {
+			// Remove geoset animations that reference non existing geosets
+			auto geosets_count = chunk<GEOS>()->geosets.size();
+			auto& animations = chunk<GEOA>()->animations;
+			for (int i = animations.size(); i-- > 0;) {
+				if (animations[i].geoset_id >= geosets_count) {
+					animations.erase(animations.begin() + i);
+				}
+			}
+		}
 	}
 }
