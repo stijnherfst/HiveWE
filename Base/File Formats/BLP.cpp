@@ -34,8 +34,8 @@ namespace blp {
 				if (mipmap_sizes[i] == 0) {
 					break;
 				}
-				int mipmap_width = std::max(1.0, width / std::pow(2, i));
-				int mipmap_height = std::max(1.0, height / std::pow(2, i));
+				int mipmap_width = static_cast<int>(std::max(1.0, width / std::pow(2, i)));
+				int mipmap_height = static_cast<int>(std::max(1.0, height / std::pow(2, i)));
 				mipmaps.emplace_back(mipmap_width, mipmap_height, std::vector<uint8_t>(mipmap_width * mipmap_height * 4));
 
 				// Move header in front of content
@@ -57,8 +57,8 @@ namespace blp {
 					break;
 				}
 
-				int mipmap_width = std::max(1.0, width / std::pow(2, i));
-				int mipmap_height = std::max(1.0, height / std::pow(2, i));
+				int mipmap_width = static_cast<int>(std::max(1.0, width / std::pow(2, i)));
+				int mipmap_height = static_cast<int>(std::max(1.0, height / std::pow(2, i)));
 
 				// There might be fake mipmaps or the first mipmap could start within the 256 bytes of the colour header
 				// Thus we cannot rely purely on advancing the position by mipmap sizes alone

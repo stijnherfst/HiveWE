@@ -43,10 +43,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			int base_index = 0;
 			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
 				MeshEntry entry;
-				entry.vertices = i.vertices.size();
+				entry.vertices = static_cast<int>(i.vertices.size());
 				entry.base_vertex = base_vertex;
 
-				entry.indices = i.faces.size();
+				entry.indices = static_cast<int>(i.faces.size());
 				entry.base_index = base_index;
 
 				entry.material_id = i.material_id;

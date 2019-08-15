@@ -15,5 +15,6 @@ public:
 signals:
 	void ribbon_tab_requested(QRibbonTab* tab, QString name);
 
+public slots:
 	virtual void deactivate(QRibbonTab* tab) = 0;
 };

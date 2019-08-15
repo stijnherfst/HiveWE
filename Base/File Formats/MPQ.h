@@ -5,8 +5,7 @@
 #include <optional>
 #include <filesystem>
 namespace fs = std::filesystem;
-#define UNICODE
-#define _UNICODE
+
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 

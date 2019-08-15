@@ -171,7 +171,7 @@ void Terrain::create() {
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
-	blight_texture = ground_textures.size();
+	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
 	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
 
@@ -421,7 +421,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
-	blight_texture = ground_textures.size();
+	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
 	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
 

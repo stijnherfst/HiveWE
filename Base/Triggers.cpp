@@ -556,7 +556,7 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 		}
 
 		for (const auto& j : i.abilities) {
-			for (int k = 0; k < std::get<2>(j); k++) {
+			for (size_t k = 0; k < std::get<2>(j); k++) {
 				writer.write_string("\tcall SelectHeroSkill(" + unit_reference + ", \'" + std::get<0>(j) + "\')\n");
 			}
 
@@ -1178,7 +1178,6 @@ void Triggers::generate_map_script() {
 	std::map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 	std::vector<std::string> initialization_triggers;
 
-
 	std::string trigger_script;
 	for (const auto& i : triggers) {
 		if (i.is_comment || !i.is_enabled) {
@@ -1202,7 +1201,6 @@ void Triggers::generate_map_script() {
 
 	pos = trigger_script.find("gg_dest", 0);
 	while (pos != std::string::npos) {
-
 		std::string type = trigger_script.substr(pos + 8, 4);
 		std::string creation_number = trigger_script.substr(pos + 13, trigger_script.find_first_not_of("0123456789", pos + 13) - pos - 13);
 		destructable_variables[creation_number] = type;
@@ -1253,7 +1251,7 @@ void Triggers::generate_map_script() {
 	std::ofstream output(path);
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
 	output.close();
-	std::cout << path << "\n";
+
 	QProcess* proc = new QProcess();
 	proc->setWorkingDirectory("Data/Tools");
 	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
@@ -1281,6 +1279,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		output += "endloop";
 		return output;
 	}
+
 	if (eca.name == "ForLoopAMultiple" || eca.name == "ForLoopBMultiple") {
 		std::string loop_index = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
@@ -1432,25 +1431,17 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	return testt(trigger_name, eca.name, eca.parameters, pre_actions, !nested);
 }
 
-
 std::string Triggers::testt(const std::string& trigger_name, const std::string& parent_name, const std::vector<TriggerParameter>& parameters, std::string& pre_actions, bool add_call) const {
 	std::string output;
 
 	std::string script_name = trigger_data.data("TriggerActions", "_" + parent_name + "_ScriptName");
-
+ 
 	if (parent_name == "SetVariable") {
-		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
+		const auto& type = variables.at(parameters[0].value).type;
+		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, "");
+		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, type);
 
-		const auto& variable = variables.at(parameters[0].value);
-		const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
-		const std::string type = base_type.empty() ? variable.type : base_type;
-
-		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
-		if (type == "string") {
-			return "set " + first + " = \"" + second + "\"";
-		} else {
-			return "set " + first + " = " + second;
-		}
+		return "set " + first + " = " + second;
 	}
 
 	if (parent_name == "CommentString") {
@@ -1572,7 +1563,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
 		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
 		output += second_parameter.insert(second_parameter.find_first_of('(') + 1, first_parameter + ", ");
-		return output;
+		return (add_call ? "call " : "") + output;
 	}
 
 	for (int k = 0; k < parameters.size(); k++) {
@@ -1600,8 +1591,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 			pre_actions += "endfunction\n\n";
 
 			output += "function " + function_name;
-		}
-		else {
+		} else {
 			output += resolve_parameter(i, trigger_name, pre_actions, type);
 		}
 
@@ -1610,9 +1600,6 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		}
 	}
 
-	if (parent_name == "EnumDestructablesInRectAll" || script_name == "EnumDestructablesInRectAll") {
-		std::cout << "\n";
-	}
 	return (add_call ? "call " : "") + (script_name.empty() ? parent_name : script_name) + "(" + output + ")";
 }
 
@@ -1662,7 +1649,11 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 					type == "itemcode" ||
 					type == "ordercode" ||
 					type == "techcode" ||
-					type == "unitcode") {
+					type == "unitcode" ||
+					type == "heroskillcode" ||
+					type == "weathereffectcode" || 
+					type == "timedlifebuffcode" ||
+					type == "doodadcode") {
 					return "'" + parameter.value + "'";
 				} else {
 					return parameter.value;
@@ -1725,6 +1716,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		if (!i.enabled) {
 			continue;
 		}
+
 		switch (i.type) {
 			case ECA::Type::event:
 				if (i.name == "MapInitializationEvent") {
@@ -1735,7 +1727,11 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 				for (int k = 0; k < i.parameters.size(); k++) {
 					const auto& p = i.parameters[k];
 
-					events += resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k));
+					if (get_type(i.name, k) == "VarAsString_Real") {
+						events += "\"" + resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k)) + "\"";
+					} else {
+						events += resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k));
+					}
 
 					if (k < i.parameters.size() - 1) {
 						events += ", ";

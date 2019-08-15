@@ -107,7 +107,7 @@ namespace mdx {
 	}
 
 	Node::Node(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t inclusive_size = reader.read<uint32_t>();
 		name = reader.read_string(80);
 		object_id = reader.read<uint32_t>();
@@ -192,7 +192,7 @@ namespace mdx {
 		uint32_t remaining_size = reader.read<uint32_t>();
 
 		while (remaining_size > 0) {
-			const int reader_pos = reader.position;
+			const size_t reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			remaining_size -= inclusive_size;
 
@@ -240,7 +240,7 @@ namespace mdx {
 	}
 
 	BONE::BONE(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
@@ -295,7 +295,7 @@ namespace mdx {
 			// Remove geoset animations that reference non existing geosets
 			auto geosets_count = chunk<GEOS>()->geosets.size();
 			auto& animations = chunk<GEOA>()->animations;
-			for (int i = animations.size(); i-- > 0;) {
+			for (size_t i = animations.size(); i-- > 0;) {
 				if (animations[i].geoset_id >= geosets_count) {
 					animations.erase(animations.begin() + i);
 				}

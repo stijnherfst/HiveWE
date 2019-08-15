@@ -120,12 +120,12 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			break;
 		case Qt::Key_PageUp:
 			for (const auto& i : selections) {
-				i->position.z += 0.1;
+				i->position.z += 0.1f;
 			}
 			break;
 		case Qt::Key_PageDown:
 			for (const auto& i : selections) {
-				i->position.z -= 0.1;
+				i->position.z -= 0.1f;
 			}
 			break;
 		default:

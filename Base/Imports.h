@@ -9,7 +9,7 @@ struct ImportItem {
 	bool directory = false;
 	bool custom = false;
 	fs::path name;
-	int size;
+	size_t size;
 	fs::path full_path;
 
 	std::vector<ImportItem> children;

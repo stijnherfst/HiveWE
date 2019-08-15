@@ -7,13 +7,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-list(INSERT CMAKE_PREFIX_PATH 0 "C:\\Qt\\5.12.2\\msvc2017_64")
-
 find_package(Qt5 REQUIRED
 	Gui
 	Widgets
 )
-
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
@@ -26,13 +23,9 @@ add_executable(HiveWE
 
 	Camera.cpp
 	HiveWE.cpp
-	HiveWE.qrc
-	HiveWE.rc
-	HiveWE.ui
 	InputHandler.cpp
 	JassTokenizer.cpp
 	main.cpp
-	resource.h
 	TerrainUndo.cpp
 	Utilities.cpp
 	WindowHandler.h
@@ -76,30 +69,18 @@ add_executable(HiveWE
 	Base/Resources/Texture.cpp
 
 	Menus/DoodadPalette.cpp
-	Menus/DoodadPalette.ui
 	Menus/ImportManager.cpp
-	Menus/ImportManager.ui
 	Menus/ImportManagerEdit.cpp
-	Menus/ImportManagerEdit.ui
 	Menus/MapInfoEditor.cpp
-	Menus/MapInfoEditor.ui
 	Menus/Minimap.cpp
-	Menus/Minimap.ui
 	Menus/Palette.cpp
 	Menus/PathingPalette.cpp
-	Menus/PathingPalette.ui
 	Menus/SettingsEditor.cpp
-	Menus/SettingsEditor.ui
 	Menus/TerrainPalette.cpp
-	Menus/TerrainPalette.ui
 	Menus/TilePather.cpp
-	Menus/TilePather.ui
 	Menus/TilePicker.cpp
-	Menus/TilePicker.ui
 	Menus/TileSetter.cpp
-	Menus/TileSetter.ui
 	Menus/TriggerEditor.cpp
-	Menus/TriggerEditor.ui
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
