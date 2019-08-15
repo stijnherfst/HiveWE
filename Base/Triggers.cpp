@@ -352,8 +352,12 @@ void Triggers::save_jass() const {
 	writer.write<uint32_t>(1);
 
 	writer.write_c_string(global_jass_comment);
-	writer.write<uint32_t>(global_jass.size() + (global_jass.back() == '\0' ? 0 : 1));
-	writer.write_c_string(global_jass);
+	if (global_jass.size() == 0) {
+		writer.write<uint32_t>(0);
+	} else {
+		writer.write<uint32_t>(global_jass.size() + (global_jass.back() == '\0' ? 0 : 1));
+		writer.write_c_string(global_jass);
+	}
 
 	for (const auto& i : triggers) {
 		if (!i.is_comment) {
