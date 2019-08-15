@@ -28,8 +28,12 @@ private:
 	QTreeWidget* explorer = new QTreeWidget;
 
 	QIcon folder_icon;
-	QIcon file_icon;
-	QIcon trigger_comment_icon;
+	QIcon gui_icon;
+	QIcon gui_icon_disabled;
+	QIcon script_icon;
+	QIcon script_icon_disabled;
+	QIcon variable_icon;
+	QIcon comment_icon;
 
 	QIcon event_icon;
 	QIcon condition_icon;
@@ -38,12 +42,10 @@ private:
 	std::unordered_map<std::string, QIcon> trigger_icons;
 
 	std::unordered_map<int, QTreeWidgetItem*> folders;
-	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<const Trigger>> files;
+	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
 
 	void item_clicked(QTreeWidgetItem* item);
 	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);
 
 	std::string get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const;
-
-	
 };

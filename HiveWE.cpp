@@ -13,8 +13,6 @@
 
 #include <SOIL2/SOIL2.h>
 
-#define UNICODE
-#define _UNICODE
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 

@@ -3,6 +3,9 @@
 #include <QPlainTextEdit>
 #include <QFileIconProvider>
 #include <QSplitter>
+#include <QMessageBox>
+#include <QMap>
+#include <QPainter>
 
 #include "Utilities.h"
 #include "HiveWE.h"
@@ -19,6 +22,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	setCentralWidget(dock_manager);
 
 	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
+	explorer_widget->setObjectName("-1");
 	explorer_widget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	explorer_widget->setWidget(explorer);
 	dock_manager->addDockWidget(ads::LeftDockWidgetArea, explorer_widget);
@@ -29,9 +33,25 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
-	file_icon = icons.icon(QFileIconProvider::File);
+	gui_icon = icons.icon(QFileIconProvider::File);
+	gui_icon_disabled = icons.icon(QFileIconProvider::File);
 
-	trigger_comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
+	{
+		auto pix = gui_icon.pixmap({ 16, 16 });
+		QPainter painter(&pix);
+		painter.setPen(QPen(QBrush(Qt::red), 2));
+		painter.drawLine(4, 4, 12, 12);
+		painter.drawLine(12, 4, 4, 12);
+		painter.end();
+
+		gui_icon_disabled = QIcon(pix);
+	}
+
+	script_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScript") + ".blp");
+	script_icon_disabled = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScriptDisable") + ".blp");
+	variable_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerGlobalVariable") + ".blp");
+
+	comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
 
 	event_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Event"));
 	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
@@ -50,25 +70,28 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		folders[i.id] = item;
 	}
 
-	for (const auto& i : map->triggers.triggers) {
+	for (auto& i : map->triggers.triggers) {
 		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.parent_id]);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.name));
-		if (i.is_comment) {
-			item->setIcon(0, trigger_comment_icon);
-		} else if (i.classifier == Classifier::script) {
-			item->setIcon(0, file_icon); //maybe give scripts a different icon
+
+		switch (i.classifier) {
+			case Classifier::script:
+				item->setIcon(0, i.is_enabled ? script_icon : script_icon_disabled);
+				break;
+			case Classifier::comment:
+				item->setIcon(0, comment_icon);
+				break;
+			case Classifier::trigger:
+				item->setIcon(0, i.is_enabled ? gui_icon : gui_icon_disabled);
+				break;
 		}
-		else {
-			item->setIcon(0, file_icon);
-		}
-		
 		files.emplace(item, i);
 	}
 
 	for (const auto& i : map->triggers.variables) {
 		QTreeWidgetItem* item = new QTreeWidgetItem(folders[i.second.parent_id]);
 		item->setData(0, Qt::EditRole, QString::fromStdString(i.first));
-		item->setIcon(0, file_icon);
+		item->setIcon(0, variable_icon);
 	}
 	
 	connect(explorer, &QTreeWidget::itemDoubleClicked, this, &TriggerEditor::item_clicked);
@@ -99,10 +122,20 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("Map Header");
 		dock_tab->setObjectName("0");
 		dock_tab->setWidget(jass_editor);
+		dock_tab->setIcon(item->icon(0));
+		if (dock_area == nullptr) {
+			dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
+		} else {
+			dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
+		}
 
-		dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
-		
-		connect(dock_tab, &ads::CDockWidget::closed, [=]() { dock_manager->removeDockWidget(dock_tab); });
+		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+			map->triggers.global_jass = dock_tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
+			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+				dock_area = nullptr;
+			}
+			dock_manager->removeDockWidget(dock_tab);
+		});
 
 		//QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
 		//splitter->addWidget(comments_editor);
@@ -124,7 +157,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 	if (!files.contains(item)) {
 		return;
 	}
-	const Trigger& trigger = files.at(item).get();
+	Trigger& trigger = files.at(item).get();
 
 	//switch (trigger.classifier) {
 	//	case Classifier::trigger:
@@ -163,6 +196,7 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(trigger.name));
 	dock_tab->setObjectName(QString::number(trigger.id));
+	dock_tab->setIcon(item->icon(0));
 
 	if (!trigger.is_comment) {
 		if (trigger.is_script) {
@@ -171,7 +205,6 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 			//splitter->addWidget(edit);
 			edit->setText(QString::fromStdString(trigger.custom_text));
 			dock_tab->setWidget(edit);
-
 		} else {
 			QTreeWidget* edit = new QTreeWidget;
 			edit->setHeaderHidden(true);
@@ -181,13 +214,24 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 			show_gui_trigger(edit, trigger);
 			edit->expandAll();
 		}
+		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+			Trigger& trigger = files.at(item).get();
+			auto editor = dock_tab->findChild<JassEditor*>("jass_editor");
+			if (editor) {
+				trigger.custom_text = editor->text().toStdString();
+			}
+			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+				dock_area = nullptr;
+			}
+			dock_manager->removeDockWidget(dock_tab);
+		});
 	}
 
-	dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
-
-	connect(dock_tab, &ads::CDockWidget::closed, [=]() { 
-		dock_manager->removeDockWidget(dock_tab); 
-	});
+	if (dock_area == nullptr) {
+		dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
+	} else {
+		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
+	}
 
 	//splitter->setStretchFactor(0, 1);
 	//splitter->setStretchFactor(1, 7);
@@ -369,26 +413,35 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 	return result;
 }
 
+#include <map>
+
 void TriggerEditor::save_changes() {
-	//dock_manager->widge
-	/*for (int i = 0; i < ui.editor->count(); i++) {
-		QWidget* tab = ui.editor->widget(i);
-		int trigger_id = tab->property("TriggerID").toInt();
-		
+	for (const auto& tab : dock_manager->dockWidgetsMap()) {
+
+		int trigger_id = tab->objectName().toInt();
+		if (trigger_id < 0) {
+			continue;
+		}
+
 		if (trigger_id == 0) {
-			map->triggers.global_jass_comment = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
-			map->triggers.global_jass = tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
+			std::cout << "saved map header\n";
+			auto t = tab->objectName();
+			auto editor = tab->findChild<JassEditor*>("jass_editor");
+			//map->triggers.global_jass_comment = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
+			map->triggers.global_jass = editor->text().toStdString();
 		} else {
 			for (auto& trigger : map->triggers.triggers) {
 				if (trigger.id == trigger_id) {
-					trigger.description = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
+					//trigger.description = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
 					JassEditor* editor = tab->findChild<JassEditor*>("jass_editor");
 					if (editor) {
+						std::cout << "saved trigger: " << trigger_id << "\n";
+
 						trigger.custom_text = editor->text().toStdString();
 					}
 					break;
 				}
 			}
 		}
-	}*/
+	}
 }
