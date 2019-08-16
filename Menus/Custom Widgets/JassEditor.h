@@ -14,9 +14,9 @@ class Styling : public QsciLexerCustom {
 private:
 	Q_OBJECT
 
-		// TODO@Daniel:
-		// Rearrange
-		QSet<QString> keywords_;
+	// TODO@Daniel:
+	// Rearrange
+	QSet<QString> keywords_;
 	QSet<QString> natives_;
 	QSet<QString> functions_;
 	QSet<QString> constants_;
@@ -71,12 +71,14 @@ class JassEditor : public QsciScintilla {
 private:
 	Q_OBJECT
 
-		Styling lexer;
+	Styling lexer;
 	QsciAPIs api;
+
+	static constexpr int search_indicator = 8;
 
 public:
 	JassEditor(QWidget* parent = nullptr);
-
+	void highlight_text(std::string text);
 	int max_line_number_width;
 
 	void calculate_margin_width();

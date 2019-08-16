@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <QShortcut>
+
 #include "Hierarchy.h"
 
 int Styling::styleAt(int idx) const {
@@ -185,11 +187,7 @@ bool Styling::caseSensitive() const {
 	return true;
 }
 
-JassEditor::JassEditor(QWidget * parent) :
-	QsciScintilla(parent),
-	lexer(this),
-	api(&lexer) {
-
+JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), api(&lexer) {
 	setLexer(&lexer);
 	setCaretForegroundColor(QColor(255, 255, 255));
 	setMargins(1);
@@ -221,6 +219,11 @@ JassEditor::JassEditor(QWidget * parent) :
 	setCallTipsBackgroundColor(palette().color(QPalette::ColorRole::Base));
 	setCallTipsForegroundColor(palette().color(QPalette::ColorRole::Text).darker());
 	setCallTipsHighlightColor(palette().color(QPalette::ColorRole::Text));
+
+	indicatorDefine(IndicatorStyle::StraightBoxIndicator, search_indicator);
+	SendScintilla(SCI_INDICSETFORE, search_indicator, qRgb(0, 56, 119));
+	SendScintilla(SCI_INDICSETALPHA, search_indicator, 255);
+	SendScintilla(SCI_INDICSETUNDER, search_indicator, true);
 
 	QSet<QString> types;
 	QSet<QString> natives;
@@ -337,10 +340,36 @@ JassEditor::JassEditor(QWidget * parent) :
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
 
+void JassEditor::highlight_text(std::string search_text) {
+	if (search_text.empty())
+		return;
+
+	SendScintilla(SCI_SETINDICATORCURRENT, search_indicator);
+	SendScintilla(SCI_INDICATORCLEARRANGE, 0, text().length());
+
+	SendScintilla(SCI_TARGETWHOLEDOCUMENT);
+
+	int found = SendScintilla(SCI_SEARCHINTARGET, search_text.size(), search_text.data());
+	while (found != -1) {
+		int line_start = SendScintilla(SCI_LINEFROMPOSITION, found);
+		int line_end = SendScintilla(SCI_LINEFROMPOSITION, found + (int)search_text.size());
+
+		int index = SendScintilla(SCI_POSITIONFROMLINE, line_start);
+
+		fillIndicatorRange(line_start, found - index, line_end, found - index + search_text.size(), 8);
+
+		SendScintilla(SCI_SETTARGETRANGE, found + search_text.size(), text().length());
+
+		found = SendScintilla(SCI_SEARCHINTARGET, search_text.size(), search_text.data());
+	}
+}
+
 void JassEditor::calculate_margin_width() {
 	const int new_width = std::log10(lines()) + 2;
 	if (new_width != max_line_number_width) {
 		max_line_number_width = new_width;
 		setMarginWidth(0, QString('9').repeated(new_width));
 	}
+
+	//HighlightWord("unit");
 }
