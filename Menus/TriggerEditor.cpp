@@ -13,6 +13,7 @@
 #include "HiveWE.h"
 #include "Triggers.h"
 #include "JassEditor.h"
+#include "SearchWindow.h"
 
 TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
@@ -107,55 +108,11 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 }
 
 void TriggerEditor::focus_search_window() {
-	QFrame* search_window = new QFrame(this);
-	search_window->move(500, 10);
-	search_window->setMinimumSize(182, 53);
-	search_window->setAutoFillBackground(true);
-	search_window->setFrameStyle(QFrame::NoFrame);
+	SearchWindow* search = new SearchWindow(this);
+	search->move(500, 10);
 
-	// Top row
-	QLineEdit* edit = new QLineEdit;
-	edit->setPlaceholderText("Find text");
-
-	QPushButton* close_button = new QPushButton(search_window);
-	close_button->setText("X");
-	close_button->setMaximumSize(23, 23);
-
-	QHBoxLayout* top_row = new QHBoxLayout;
-	top_row->addWidget(edit);
-	top_row->addWidget(close_button);
-
-	// Bottom row
-	QPushButton* case_sensitive = new QPushButton;
-	case_sensitive->setCheckable(true);
-	case_sensitive->setMaximumSize(23, 23);
-
-	QPushButton* match_whole_word = new QPushButton;
-	match_whole_word->setCheckable(true);
-	match_whole_word->setMaximumSize(23, 23);
-
-	QPushButton* regular_expression = new QPushButton;
-	regular_expression->setCheckable(true);
-	regular_expression->setMaximumSize(23, 23);
-
-	QHBoxLayout* bottom_row = new QHBoxLayout;
-	bottom_row->addWidget(case_sensitive);
-	bottom_row->addWidget(match_whole_word);
-	bottom_row->addWidget(regular_expression);
-	bottom_row->addStretch();
-
-	QVBoxLayout* layout = new QVBoxLayout;
-	layout->addLayout(top_row);
-	layout->addLayout(bottom_row);
-	layout->setSpacing(3);
-	layout->setMargin(0);
-
-	search_window->setLayout(layout);
-	search_window->show();
-
-	connect(edit, &QLineEdit::textEdited, [&, edit]() {
+	connect(search, &SearchWindow::text_changed, [&](QString text) {
 		for (const auto& tab : dock_manager->dockWidgetsMap()) {
-
 			int trigger_id = tab->objectName().toInt();
 			if (trigger_id < 0) {
 				continue;
@@ -163,7 +120,7 @@ void TriggerEditor::focus_search_window() {
 
 			auto editor = tab->findChild<JassEditor*>("jass_editor");
 			if (editor) {
-				editor->highlight_text(edit->text().toStdString());
+				editor->highlight_text(text.toStdString());
 			}
 		}
 	});

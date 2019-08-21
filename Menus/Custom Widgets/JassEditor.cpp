@@ -341,11 +341,11 @@ JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), a
 }
 
 void JassEditor::highlight_text(std::string search_text) {
-	if (search_text.empty())
-		return;
-
 	SendScintilla(SCI_SETINDICATORCURRENT, search_indicator);
 	SendScintilla(SCI_INDICATORCLEARRANGE, 0, text().length());
+
+	if (search_text.empty())
+		return;
 
 	SendScintilla(SCI_TARGETWHOLEDOCUMENT);
 
