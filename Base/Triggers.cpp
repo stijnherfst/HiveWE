@@ -364,8 +364,11 @@ void Triggers::save_jass() const {
 
 	for (const auto& i : triggers) {
 		if (!i.is_comment) {
-			writer.write<uint32_t>(i.custom_text.size() + (i.custom_text.back() == '\0' ? 0 : 1));
-			if (!i.custom_text.empty()) {
+			if (i.custom_text.size() == 0) {
+				writer.write<uint32_t>(0);
+			}
+			else {
+				writer.write<uint32_t>(i.custom_text.size() + (i.custom_text.back() == '\0' ? 0 : 1));
 				writer.write_c_string(i.custom_text);
 			}
 		}
