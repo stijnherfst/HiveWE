@@ -156,8 +156,10 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 
 		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
 			map->triggers.global_jass = dock_tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
+
+			auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
 			if (comments) {
-				map->triggers.global_jass_comment = dock_tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
+				map->triggers.global_jass_comment = comments->toPlainText().toStdString();
 			}
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
@@ -245,12 +247,14 @@ void TriggerEditor::item_clicked(QTreeWidgetItem* item) {
 		}
 		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
 			Trigger& trigger = files.at(item).get();
-			if (comments) {
-				trigger.description = dock_tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
-			}
+
 			auto editor = dock_tab->findChild<JassEditor*>("jass_editor");
+			auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
 			if (editor) {
 				trigger.custom_text = editor->text().toStdString();
+			}
+			if (comments) {
+				trigger.description = comments->toPlainText().toStdString();
 			}
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;

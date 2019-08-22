@@ -16,6 +16,7 @@ struct TriggerCategory {
 struct TriggerVariable {
 	//	std::string name;
 	std::string type;
+	uint32_t unknown;
 	bool is_array;
 	int array_size = 0;
 	bool is_initialized;
@@ -98,8 +99,24 @@ class Triggers {
 	const std::string separator = "//===========================================================================\n";
 
 	static constexpr int write_version = 0x80000004;
+	static constexpr int write_sub_version = 7;
 	static constexpr int write_string_version = 1;
 	int max_category_id = 0;
+
+	int unknown1 = 0;
+	int unknown2 = 0;
+	int unknown3 = 0;
+	int unknown4 = 0;
+
+	int unknown5 = 0;
+	int unknown6 = 0;
+	int unknown7 = 0;
+	int unknown8 = 0;
+	int unknown9 = 0;
+
+	int unknown10 = 0;
+	int unknown11 = 0;
+	int unknown12 = 0;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
 	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);

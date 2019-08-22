@@ -189,41 +189,36 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 		std::cout << "Unknown 1.31 WTG subformat! Trying anyway.\n";
 	}
 
-	reader.advance(16);
+	unknown1 = reader.read<uint32_t>();
+	unknown2 = reader.read<uint32_t>();
+	unknown3 = reader.read<uint32_t>();
+	unknown4 = reader.read<uint32_t>();
 
-	uint32_t category_count = reader.read<uint32_t>();
-	uint32_t deleted_category_count = reader.read<uint32_t>();
-	reader.advance(4 * deleted_category_count); //category ids of deleted categories with the last byte as 00 instead of 02
+	reader.advance(4); // category_count
+	reader.advance(4 * reader.read<uint32_t>()); //category ids of deleted categories
 	
-	uint32_t trigger_count = reader.read<uint32_t>();
-	uint32_t deleted_trigger_count = reader.read<uint32_t>();
-	reader.advance(4 * deleted_trigger_count); //trigger ids of deleted triggers with the last byte as 00 instead of 03
+	reader.advance(4); // trigger_count
+	reader.advance(4 * reader.read<uint32_t>()); //trigger ids of deleted triggers
 
-	uint32_t trigger_comment_count = reader.read<uint32_t>();
-	uint32_t deleted_comment_count = reader.read<uint32_t>();
-	reader.advance(4 * deleted_comment_count); //comment ids of deleted comments with the last byte as 00 instead of 04
+	reader.advance(4); // trigger_comment_count
+	reader.advance(4 * reader.read<uint32_t>()); //comment ids of deleted comments
 
-	uint32_t script_count = reader.read<uint32_t>();
-	uint32_t deleted_script_count = reader.read<uint32_t>();
-	reader.advance(4 * deleted_script_count); //script ids of deleted scripts with the last byte as 00 instead of 05
+	reader.advance(4); // script_count
+	reader.advance(4 * reader.read<uint32_t>()); //script ids of deleted scripts
+
+	reader.advance(4); // variable_count
+	reader.advance(4 * reader.read<uint32_t>()); //variable ids of deleted variables
+
+	unknown5 = reader.read<uint32_t>();
+	unknown6 = reader.read<uint32_t>();
+	unknown7 = reader.read<uint32_t>();
 
 	uint32_t variable_count = reader.read<uint32_t>();
-	uint32_t deleted_variable_count = reader.read<uint32_t>();
-	reader.advance(4 * deleted_variable_count); //variable ids of deleted variables with the last byte as 00 instead of 06
-
-	reader.advance(12);
-	uint32_t existing_variable_count = reader.read<uint32_t>();
-	if (variable_count != (deleted_variable_count + existing_variable_count)) {
-		std::cout << "Variable data non-matching!\n";
-	}
-
-	categories.resize(category_count - deleted_category_count);
-	triggers.resize(trigger_count - deleted_trigger_count + trigger_comment_count - deleted_comment_count + script_count - deleted_script_count);
-	for (uint32_t i = 0; i < existing_variable_count; i++) {
+	for (uint32_t i = 0; i < variable_count; i++) {
 		std::string name = reader.read_c_string();
 		TriggerVariable variable;
 		variable.type = reader.read_c_string();
-		reader.advance(4);
+		variable.unknown = reader.read<uint32_t>();
 		variable.is_array = reader.read<uint32_t>();
 		if (sub_version == 7) {
 			variable.array_size = reader.read<uint32_t>();
@@ -236,17 +231,23 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	}
 	
 	uint32_t element_count = reader.read<uint32_t>();
-	reader.advance(8);
+	unknown8 = reader.read<uint32_t>();	
+	unknown9 = reader.read<uint32_t>();
+
 	reader.read_c_string(); //last name the map was saved under
-	reader.advance(sub_version == 7 ? 12 : 8);
+
+	unknown10 = reader.read<uint32_t>();
+	unknown11 = reader.read<uint32_t>();
+	if (sub_version == 7) {
+		unknown12 = reader.read<uint32_t>();
+	}
+
 	if (reader.remaining() == 0) {
 		if (element_count != 1)
 			std::cout << "Possibly corrupt WTG!";
 		return;
 	}
 
-	uint32_t cat_pos = 0;
-	uint32_t trig_pos = 0;
 	for (uint32_t i = 0; i < (element_count - 1); i++) {
 		Classifier classifier = static_cast<Classifier>(reader.read<uint32_t>());
 		switch (classifier) {
@@ -259,8 +260,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				}
 				reader.advance(4);
 				cat.parent_id = reader.read<uint32_t>();
-				categories[cat_pos] = cat;
-				cat_pos++;
+
+				categories.push_back(cat);
 				break;
 			}
 			case Classifier::trigger:
@@ -283,8 +284,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				for (auto& j : trigger.lines) {
 					parse_eca_structure(reader, j, false, sub_version);
 				}
-				triggers[trig_pos] = trigger;
-				trig_pos++;
+
+				triggers.push_back(trigger);
 				break;
 			}
 			case Classifier::variable: {
@@ -345,13 +346,69 @@ void Triggers::save() const {
 	BinaryWriter writer;
 	writer.write_string("WTG!");
 	writer.write<uint32_t>(write_version);
-	
+	writer.write<uint32_t>(write_sub_version);
+
+	writer.write<uint32_t>(unknown1);
+	writer.write<uint32_t>(unknown2);
+	writer.write<uint32_t>(unknown3);
+	writer.write<uint32_t>(unknown4);
+
+	writer.write<uint32_t>(categories.size());
+	writer.write<uint32_t>(0); // Deleted category count
+
+	int trigger_count = 0;
+	int script_count = 0;
+	int comment_count = 0;
+	for (const auto& i : triggers) {
+		switch (i.classifier) {
+			case Classifier::trigger:
+				trigger_count++;
+				break;
+			case Classifier::script:
+				script_count++;
+				break;
+			case Classifier::comment:
+				comment_count++;
+				break;
+		}
+	}
+
+	writer.write<uint32_t>(trigger_count);
+	writer.write<uint32_t>(0); // Deleted category count
+
+	writer.write<uint32_t>(comment_count);
+	writer.write<uint32_t>(0); // Deleted comment count
+
+	writer.write<uint32_t>(script_count);
+	writer.write<uint32_t>(0); // Deleted script count
+
+	writer.write<uint32_t>(variables.size());
+	writer.write<uint32_t>(0); // Deleted variable count
+
+	writer.write<uint32_t>(unknown5);
+	writer.write<uint32_t>(unknown6);
+	writer.write<uint32_t>(unknown7);
+	writer.write<uint32_t>(variables.size());
+
+	for (const auto& [name, i] : variables) {
+		writer.write_c_string(name);
+		writer.write_c_string(i.type);
+		writer.write<uint32_t>(i.unknown);
+		writer.write<uint32_t>(i.is_array);
+		writer.write<uint32_t>(i.array_size);
+		writer.write<uint32_t>(i.is_initialized);
+		writer.write_c_string(i.initial_value);
+		writer.write<uint32_t>(i.id);
+		writer.write<uint32_t>(i.parent_id);
+
+
+	}
 }
 
 void Triggers::save_jass() const {
 	BinaryWriter writer;
 
-	writer.write<uint32_t>(0x80000004);
+	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(1);
 
 	writer.write_c_string(global_jass_comment);
