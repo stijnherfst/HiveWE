@@ -97,7 +97,7 @@ class Triggers {
 	std::unordered_map<std::string, int> argument_counts;
 	const std::string separator = "//===========================================================================\n";
 
-	static constexpr int write_version = 8;
+	static constexpr int write_version = 0x80000004;
 	static constexpr int write_string_version = 1;
 	int max_category_id = 0;
 

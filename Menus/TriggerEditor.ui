@@ -31,6 +31,10 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionGenerateScript"/>
+   <addaction name="separator"/>
+   <addaction name="actionCreateGuiTrigger"/>
+   <addaction name="actionCreateJassTrigger"/>
+   <addaction name="actionCreateComment"/>
   </widget>
   <action name="actionGenerateScript">
    <property name="icon">
@@ -45,6 +49,30 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+F10</string>
+   </property>
+  </action>
+  <action name="actionCreateGuiTrigger">
+   <property name="text">
+    <string>Create Gui Trigger</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a GUI trigger</string>
+   </property>
+  </action>
+  <action name="actionCreateJassTrigger">
+   <property name="text">
+    <string>Create Jass Trigger</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a Jass Trigger</string>
+   </property>
+  </action>
+  <action name="actionCreateComment">
+   <property name="text">
+    <string>Create Comment</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a Comment</string>
    </property>
   </action>
  </widget>

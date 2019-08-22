@@ -342,7 +342,10 @@ void Triggers::load_jass(BinaryReader& reader) {
 }
 
 void Triggers::save() const {
-
+	BinaryWriter writer;
+	writer.write_string("WTG!");
+	writer.write<uint32_t>(write_version);
+	
 }
 
 void Triggers::save_jass() const {

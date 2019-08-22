@@ -37,7 +37,6 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
 	gui_icon = icons.icon(QFileIconProvider::File);
-	gui_icon_disabled = icons.icon(QFileIconProvider::File);
 
 	{
 		auto pix = gui_icon.pixmap({ 16, 16 });
@@ -65,6 +64,10 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	root->setIcon(0, folder_icon); //maybe use a special icon
 	root->setExpanded(true);
 	folders[0] = root;
+
+	ui.actionCreateGuiTrigger->setIcon(gui_icon);
+	ui.actionCreateJassTrigger->setIcon(script_icon);
+	ui.actionCreateComment->setIcon(comment_icon);
 
 	for (const auto& i : map->triggers.categories) {
 		QTreeWidgetItem* item  = new QTreeWidgetItem(folders[i.parent_id]);
