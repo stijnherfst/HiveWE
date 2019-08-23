@@ -18,15 +18,52 @@ A Warcraft III world editor. [Thread on Hive](https://www.hiveworkshop.com/threa
 - Edit global tile pathing  
 ![Edit global tile pathing](http://g2f.nl/0ihyqgo)
 
+## Download
+
+See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for binary downloads.
 
 ## Build Instructions
 
-1. Download and unzip source
-2. Get Qt opensource (Any newer version should work) MSVC 2017 64 bit binaries from https://www.qt.io/download (use the opensource installer)
-3. Also get the Qt Visual Studio Tools (go to Visual Studio, Tools -> Extensions and Updates -> Online -> Search for Qt)  
-4. Set up the Qt Visual Studio Tools from inside Visual Studio (add a version and point to the Qt binaries)  
-5. Set this version as the project its main version.
-5. Done  
+For if you want to build HiveWE yourself from source. If you run into any problems then don't be afraid to contact me.
+
+1. Download [vcpkg](https://github.com/microsoft/vcpkg). Easiest if you place it in the root of the C drive: "C:/vcpkg"
+
+2. Run bootstrap-vcpkg.bat (or bootstrap-vcpkg.sh for Linux)
+3.  
+	3.1 Add vcpkg.exe to the Windows environment variable (PATH)  
+Or  
+	3.2 Open CMD and navigate to the folder containing vcpkg.exe  
+4. Run the following commands to install dependencies 
+
+[//]: # (Hello)
+
+	vcpkg install glm:x64-windows  
+	vcpkg install soil2:x64-windows
+	vcpkg install stormlib:x64-windows
+	vcpkg install casclib:x64-windows
+	vcpkg install libjpeg-turbo:x64-windows
+	vcpkg install qt-advanced-docking-system:x64-windows
+	vcpkg install qscintilla:x64-windows  
+
+
+
+
+This might take a while depending on your computer (\~20 minutes)  
+
+Now if you placed vcpkg in the root then you are ready to compile HiveWE.  
+You can either:  
+- Generate the project files for your IDE using CMake  
+or  
+- Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
+
+[//]: # (Hello)
+
+**Done**
+
+If you didn't place vcpkg in C:/ then you will need to open CMakeLists.txt and CMakeSettings.json and change the paths containing C:/vcpkg to point to where your vcpkg is located.  
+**Done**
+
+If you run into any issues then feel free to contact me.
 
 ## Possible Contributions
 
