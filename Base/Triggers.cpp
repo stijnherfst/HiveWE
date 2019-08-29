@@ -17,6 +17,8 @@ using namespace std::literals::string_literals;
 
 #include "BinaryWriter.h"
 
+int Trigger::next_id = 0;
+
 void Triggers::parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version) {
 	parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
 	parameter.value = reader.read_c_string();
@@ -40,7 +42,7 @@ void Triggers::parse_parameter_structure(BinaryReader& reader, TriggerParameter&
 		}
 	} else {
 		if (parameter.has_sub_parameter) {
-			reader.advance(4); // Unknown always 0
+			parameter.unknown = reader.read<uint32_t>(); // Unknown always 0
 		}
 		parameter.is_array = reader.read<uint32_t>();
 	}
@@ -95,6 +97,8 @@ void Triggers::load(BinaryReader& reader) {
 			argument_counts[key] = arguments;
 		}
 	}
+
+	Trigger::next_id = 0;
 
 	std::string magic_number = reader.read_string(4);
 	if (magic_number != "WTG!") {
@@ -176,8 +180,8 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		}
 
 		i.parent_id = reader.read<uint32_t>();
-		i.lines.resize(reader.read<uint32_t>());
-		for (auto& j : i.lines) {
+		i.ecas.resize(reader.read<uint32_t>());
+		for (auto& j : i.ecas) {
 			parse_eca_structure(reader, j, false, version);
 		}
 	}
@@ -258,7 +262,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				if (sub_version == 7) {
 					cat.is_comment = reader.read<uint32_t>();
 				}
-				reader.advance(4);
+				cat.unknown = reader.read<uint32_t>();
 				cat.parent_id = reader.read<uint32_t>();
 
 				categories.push_back(cat);
@@ -280,11 +284,11 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				trigger.initally_off = reader.read<uint32_t>();
 				trigger.run_on_initialization = reader.read<uint32_t>();
 				trigger.parent_id = reader.read<uint32_t>();
-				trigger.lines.resize(reader.read<uint32_t>());
-				for (auto& j : trigger.lines) {
+				trigger.ecas.resize(reader.read<uint32_t>());
+				for (auto& j : trigger.ecas) {
 					parse_eca_structure(reader, j, false, sub_version);
 				}
-
+				Trigger::next_id = std::max(Trigger::next_id, trigger.id + 1);
 				triggers.push_back(trigger);
 				break;
 			}
@@ -339,6 +343,47 @@ void Triggers::load_jass(BinaryReader& reader) {
 				i.custom_text = reader.read_string(size);
 			}
 		}
+	}
+}
+
+void Triggers::print_parameter_structure(BinaryWriter& writer, const TriggerParameter& parameter) const {
+	writer.write<uint32_t>(static_cast<int>(parameter.type));
+	writer.write_c_string(parameter.value);
+	writer.write<uint32_t>(parameter.has_sub_parameter);
+
+	if (parameter.has_sub_parameter) {
+		writer.write<uint32_t>(static_cast<int>(parameter.sub_parameter.type));
+		writer.write_c_string(parameter.sub_parameter.name);
+		writer.write<uint32_t>(parameter.sub_parameter.begin_parameters);
+		if (parameter.sub_parameter.begin_parameters) {
+			for (const auto& i : parameter.sub_parameter.parameters) {
+				print_parameter_structure(writer, i);
+			}
+		}
+
+		writer.write<uint32_t>(parameter.unknown);
+	}
+	writer.write<uint32_t>(parameter.is_array);
+	if (parameter.is_array) {
+		print_parameter_structure(writer, parameter.parameters.front());
+	}
+}
+
+void Triggers::print_eca_structure(BinaryWriter& writer, const ECA& eca, bool is_child) const {
+	writer.write<uint32_t>(static_cast<int>(eca.type));
+	if (is_child) {
+		writer.write<uint32_t>(eca.group);
+	}
+
+	writer.write_c_string(eca.name);
+	writer.write<uint32_t>(eca.enabled);
+	for (const auto& i : eca.parameters) {
+		print_parameter_structure(writer, i);
+	}
+
+	writer.write<uint32_t>(eca.ecas.size());
+	for (const auto& i : eca.ecas) {
+		print_eca_structure(writer, i, true);
 	}
 }
 
@@ -400,8 +445,47 @@ void Triggers::save() const {
 		writer.write_c_string(i.initial_value);
 		writer.write<uint32_t>(i.id);
 		writer.write<uint32_t>(i.parent_id);
+	}
 
+	writer.write<uint32_t>(triggers.size() + variables.size());
+	writer.write<uint32_t>(unknown8);
+	writer.write<uint32_t>(unknown9);
+	writer.write_c_string("It'll quench ya");
 
+	writer.write<uint32_t>(unknown10);
+	writer.write<uint32_t>(unknown11);
+	writer.write<uint32_t>(unknown12);
+	
+	for (const auto& i : categories) {
+		writer.write<uint32_t>(i.id);
+		writer.write_c_string(i.name);
+		writer.write<uint32_t>(i.is_comment);
+		writer.write<uint32_t>(i.unknown);
+		writer.write<uint32_t>(i.parent_id);
+	}
+
+	for (const auto& i : triggers) {
+		writer.write<uint32_t>(static_cast<int>(i.classifier));
+		writer.write_c_string(i.name);
+		writer.write_c_string(i.description);
+
+		writer.write<uint32_t>(i.is_comment);
+		writer.write<uint32_t>(i.id);
+		writer.write<uint32_t>(i.is_enabled);
+		writer.write<uint32_t>(i.is_script);
+		writer.write<uint32_t>(i.initally_off);
+		writer.write<uint32_t>(i.run_on_initialization);
+		writer.write<uint32_t>(i.parent_id);
+		writer.write<uint32_t>(i.ecas.size());
+		for (const auto& i : i.ecas) {
+			print_eca_structure(writer, i, false);
+		}
+	}
+
+	for (const auto& [name, i] : variables) {
+		writer.write<uint32_t>(i.id);
+		writer.write_c_string(name);
+		writer.write<uint32_t>(i.parent_id);
 	}
 }
 
@@ -1678,8 +1762,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			case TriggerParameter::Type::invalid:
 				std::cout << "Invalid parameter type\n";
 				return "";
-			case TriggerParameter::Type::preset:
-			{
+			case TriggerParameter::Type::preset: {
 				const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
 
 				if (get_base_type(preset_type) == "string") {
@@ -1690,8 +1773,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 			}
 			case TriggerParameter::Type::function:
 				return parameter.value + "()";
-			case TriggerParameter::Type::variable:
-			{
+			case TriggerParameter::Type::variable: {
 				std::string output = parameter.value;
 				
 				if (!output.starts_with("gg_")) {
@@ -1779,7 +1861,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 
 	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
 
-	for (const auto& i : trigger.lines) {
+	for (const auto& i : trigger.ecas) {
 		if (!i.enabled) {
 			continue;
 		}

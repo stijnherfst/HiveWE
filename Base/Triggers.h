@@ -9,6 +9,7 @@
 struct TriggerCategory {
 	int id;
 	std::string name;
+	uint32_t unknown;
 	bool is_comment = false;
 	int parent_id;
 };
@@ -49,6 +50,7 @@ struct TriggerParameter {
 		string
 	};
 	Type type;
+	int unknown;
 	std::string value;
 	bool has_sub_parameter;
 	TriggerSubParameter sub_parameter;
@@ -81,17 +83,19 @@ enum class Classifier {
 
 struct Trigger {
 	Classifier classifier;
+	int id;
+	int parent_id;
 	std::string name;
 	std::string description;
-	bool is_comment = false;
-	int id;
-	bool is_enabled;
-	bool is_script;
 	std::string custom_text;
-	bool initally_off;
-	bool run_on_initialization;
-	int parent_id;
-	std::vector<ECA> lines;
+	bool is_comment = false;
+	bool is_enabled = true;
+	bool is_script = true;
+	bool initally_off = false;
+	bool run_on_initialization = false;
+	std::vector<ECA> ecas;
+
+	static int next_id;
 };
 
 class Triggers {
@@ -120,6 +124,9 @@ class Triggers {
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
 	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);
+
+	void print_parameter_structure(BinaryWriter& writer, const TriggerParameter& parameter) const;
+	void print_eca_structure(BinaryWriter& writer, const ECA& eca, bool is_child) const;
 
 	std::string convert_eca_to_jass(const ECA& lines, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
 	std::string testt(const std::string& trigger_name, const std::string& parent_name, const std::vector<TriggerParameter>& parameters, std::string& pre_actions, bool add_call) const;
