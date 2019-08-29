@@ -309,14 +309,14 @@ namespace mdx {
 		std::shared_ptr<T> chunk() {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
-			return std::dynamic_pointer_cast<T>(chunks[T::tag]);
+			return std::dynamic_pointer_cast<T>(chunks[static_cast<ChunkTag>(T::tag)]);
 		}
 
 		template<typename T>
 		bool has_chunk() {
 			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
 
-			return chunks.contains(T::tag);
+			return chunks.contains(static_cast<ChunkTag>(T::tag));
 		}
 	};
 }
