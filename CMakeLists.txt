@@ -20,7 +20,7 @@ find_package(qt-advanced-docking-system CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
-
+	HiveWE.rc
 	Camera.cpp
 	HiveWE.cpp
 	InputHandler.cpp
@@ -89,6 +89,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/QRibbon.cpp"
 	"Menus/Custom Widgets/MainRibbon.cpp"
 	"Menus/Custom Widgets/SearchWindow.cpp"
+	"Menus/Custom Widgets/TriggerExplorer.cpp"
 )
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})

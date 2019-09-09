@@ -75,7 +75,7 @@ struct ECA {
 
 enum class Classifier {
 	category = 4,
-	trigger = 8,
+	gui = 8,
 	comment = 16,
 	script = 32,
 	variable = 64
@@ -84,14 +84,14 @@ enum class Classifier {
 struct Trigger {
 	Classifier classifier;
 	int id;
-	int parent_id;
+	int parent_id = 0;
 	std::string name;
 	std::string description;
 	std::string custom_text;
 	bool is_comment = false;
 	bool is_enabled = true;
 	bool is_script = true;
-	bool initally_off = false;
+	bool initially_on = true;
 	bool run_on_initialization = false;
 	std::vector<ECA> ecas;
 

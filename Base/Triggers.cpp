@@ -162,11 +162,11 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		}
 		i.is_enabled = reader.read<uint32_t>();
 		i.is_script = reader.read<uint32_t>();
-		i.initally_off = reader.read<uint32_t>();
+		i.initially_on = reader.read<uint32_t>();
 		i.run_on_initialization = reader.read<uint32_t>();
 
 		if (i.run_on_initialization && i.is_script) {
-			i.classifier = Classifier::trigger;
+			i.classifier = Classifier::gui;
 			i.id = (trig_id++) + 0x03000000;
 		} else if (i.is_comment) {
 			i.classifier = Classifier::comment;
@@ -175,7 +175,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 			i.classifier = Classifier::script;
 			i.id = (script_id++) + 0x05000000;
 		} else {
-			i.classifier = Classifier::trigger;
+			i.classifier = Classifier::gui;
 			i.id = (trig_id++) + 0x03000000;
 		}
 
@@ -264,11 +264,11 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				}
 				cat.unknown = reader.read<uint32_t>();
 				cat.parent_id = reader.read<uint32_t>();
-
+				std::cout << "Category ID: " << cat.id << "\n";
 				categories.push_back(cat);
 				break;
 			}
-			case Classifier::trigger:
+			case Classifier::gui:
 			case Classifier::comment:
 			case Classifier::script: {
 				Trigger trigger;
@@ -281,7 +281,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				trigger.id = reader.read<uint32_t>();
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
-				trigger.initally_off = reader.read<uint32_t>();
+				trigger.initially_on = reader.read<uint32_t>();
 				trigger.run_on_initialization = reader.read<uint32_t>();
 				trigger.parent_id = reader.read<uint32_t>();
 				trigger.ecas.resize(reader.read<uint32_t>());
@@ -289,6 +289,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 					parse_eca_structure(reader, j, false, sub_version);
 				}
 				Trigger::next_id = std::max(Trigger::next_id, trigger.id + 1);
+				std::cout << "Trigger ID: " << trigger.id << "\n";
+
 				triggers.push_back(trigger);
 				break;
 			}
@@ -406,7 +408,7 @@ void Triggers::save() const {
 	int comment_count = 0;
 	for (const auto& i : triggers) {
 		switch (i.classifier) {
-			case Classifier::trigger:
+			case Classifier::gui:
 				trigger_count++;
 				break;
 			case Classifier::script:
@@ -447,7 +449,7 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.parent_id);
 	}
 
-	writer.write<uint32_t>(triggers.size() + variables.size());
+	writer.write<uint32_t>(triggers.size() + variables.size() +  1);
 	writer.write<uint32_t>(unknown8);
 	writer.write<uint32_t>(unknown9);
 	writer.write_c_string("It'll quench ya");
@@ -457,6 +459,7 @@ void Triggers::save() const {
 	writer.write<uint32_t>(unknown12);
 	
 	for (const auto& i : categories) {
+		writer.write<uint32_t>(static_cast<int>(Classifier::category));
 		writer.write<uint32_t>(i.id);
 		writer.write_c_string(i.name);
 		writer.write<uint32_t>(i.is_comment);
@@ -473,7 +476,7 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.id);
 		writer.write<uint32_t>(i.is_enabled);
 		writer.write<uint32_t>(i.is_script);
-		writer.write<uint32_t>(i.initally_off);
+		writer.write<uint32_t>(i.initially_on);
 		writer.write<uint32_t>(i.run_on_initialization);
 		writer.write<uint32_t>(i.parent_id);
 		writer.write<uint32_t>(i.ecas.size());
@@ -483,6 +486,7 @@ void Triggers::save() const {
 	}
 
 	for (const auto& [name, i] : variables) {
+		writer.write<uint32_t>(static_cast<int>(Classifier::variable));
 		writer.write<uint32_t>(i.id);
 		writer.write_c_string(name);
 		writer.write<uint32_t>(i.parent_id);
@@ -587,7 +591,6 @@ void Triggers::generate_global_variables(BinaryWriter& writer, std::map<std::str
 }
 
 void Triggers::generate_init_global_variables(BinaryWriter& writer) {
-	// init globals
 	writer.write_string("function InitGlobals takes nothing returns nothing\n");
 	writer.write_string("\tlocal integer i = 0\n");
 	for (const auto& [name, variable] : variables) {

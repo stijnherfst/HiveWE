@@ -2,6 +2,7 @@
 
 #include "ui_TriggerEditor.h"
 
+#include <QTreeView>
 #include <QTreeWidget>
 
 #include <vector>
@@ -11,6 +12,7 @@
 
 #include "DockManager.h"
 #include "DockAreaWidget.h"
+#include "TriggerExplorer.h"
 
 class TriggerEditor : public QMainWindow {
 	Q_OBJECT
@@ -25,7 +27,8 @@ private:
 	ads::CDockManager* dock_manager = new ads::CDockManager();
 	ads::CDockAreaWidget* dock_area = nullptr;
 
-	QTreeWidget* explorer = new QTreeWidget;
+	TriggerExplorer* explorer = new TriggerExplorer;
+	TreeModel* model;
 
 	QIcon folder_icon;
 	QIcon gui_icon;
@@ -41,14 +44,10 @@ private:
 
 	std::unordered_map<std::string, QIcon> trigger_icons;
 
-	std::unordered_map<int, QTreeWidgetItem*> folders;
-	std::unordered_map<QTreeWidgetItem*, std::reference_wrapper<Trigger>> files;
-
 	void focus_search_window();
 
-	void item_clicked(QTreeWidgetItem* item);
+	void item_clicked(const QModelIndex& index);
 	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);
-
 
 	std::string get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const;
 };
