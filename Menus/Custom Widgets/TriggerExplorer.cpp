@@ -141,7 +141,7 @@ void TriggerExplorer::createCategory() {
 
 	TriggerCategory category;
 	category.name = "New Category";
-	category.id = Trigger::next_id++;
+	category.id = ++Trigger::next_id;
 	category.parent_id = parent_item->id;
 	map->triggers.categories.push_back(category);
 
@@ -162,7 +162,7 @@ void TriggerExplorer::createJassTrigger() {
 	Trigger trigger;
 	trigger.classifier = Classifier::script;
 	trigger.name = "New Trigger";
-	trigger.id = Trigger::next_id++;
+	trigger.id = ++Trigger::next_id;
 	trigger.parent_id = parent_item->id;
 	map->triggers.triggers.push_back(trigger);
 	
@@ -183,7 +183,7 @@ void TriggerExplorer::createGuiTrigger() {
 	Trigger trigger;
 	trigger.classifier = Classifier::gui;
 	trigger.name = "New Trigger";
-	trigger.id = Trigger::next_id++;
+	trigger.id = ++Trigger::next_id;
 	trigger.parent_id = parent_item->id;
 	map->triggers.triggers.push_back(trigger);
 
@@ -204,7 +204,7 @@ void TriggerExplorer::createComment() {
 	Trigger trigger;
 	trigger.classifier = Classifier::comment;
 	trigger.name = "New Comment";
-	trigger.id = Trigger::next_id++;
+	trigger.id = ++Trigger::next_id;
 	trigger.parent_id = parent_item->id;
 	map->triggers.triggers.push_back(trigger);
 
@@ -290,14 +290,15 @@ TreeModel::TreeModel(QObject* parent) : QAbstractItemModel(parent) {
 		item->id = i.id;
 		item->type = i.classifier;
 		item->enabled = i.is_enabled;
-		files.emplace(i.id, item);
+		item->initially_on = i.initially_on;
+		item->run_on_initialization = i.run_on_initialization;
 	}
 
-	for (const auto& [name, variable] : map->triggers.variables) {
-		TreeItem* item = new TreeItem(folders[variable.parent_id]);
-		item->id = variable.id;
-		item->type = Classifier::variable;
-	}
+	//for (const auto& i : map->triggers.variables) {
+	//	TreeItem* item = new TreeItem(folders[i.parent_id]);
+	//	item->id = i.id;
+	//	item->type = Classifier::variable;
+	//}
 
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
@@ -479,9 +480,9 @@ QVariant TreeItem::data(int column) const {
 			return "not found";
 			break;
 		case Classifier::variable:
-			for (const auto& [name, variable] : map->triggers.variables) {
-				if (variable.id == id) {
-					return QString::fromStdString(name);
+			for (const auto& i : map->triggers.variables) {
+				if (i.id == id) {
+					return QString::fromStdString(i.name);
 				}
 			}
 		case Classifier::category:

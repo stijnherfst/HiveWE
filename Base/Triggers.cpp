@@ -121,27 +121,29 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 	std::cout << "Importing pre-1.31 trigger format\n";
 	categories.resize(reader.read<uint32_t>());
 	for (auto& i : categories) {
-		i.id = reader.read<uint32_t>() + 0x02000000;
+		i.id = reader.read<uint32_t>();
 		i.name = reader.read_c_string();
 		i.parent_id = 0;
 		if (version == 7) {
 			i.is_comment = reader.read<uint32_t>();
 		}
 
-		max_category_id = std::max(i.id, max_category_id);
+		Trigger::next_id = std::max(Trigger::next_id, i.id + 1);
 	}
 
-	reader.advance(4);
 
-	int variable_category = ++max_category_id;
+	reader.advance(4); // dunno
+
+	int variable_category = ++Trigger::next_id;
 	categories.insert(categories.begin(), { variable_category, "Variables", false,  0 });
-	uint32_t trig_id = 0, comment_id = 0, script_id = 0, var_id = 0;
+
 	variables.resize(reader.read<uint32_t>());
 	for (auto& i : variables) {
 		i.name = reader.read_c_string();
 		i.type = reader.read_c_string();
 		reader.advance(4); // Unknown always 1
-		i.id = (var_id++) + 0x06000000;
+		i.id = ++Trigger::next_id;
+
 		i.is_array = reader.read<uint32_t>();
 		if (version == 7) {
 			i.array_size = reader.read<uint32_t>();
@@ -163,18 +165,16 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		i.initially_on = reader.read<uint32_t>();
 		i.run_on_initialization = reader.read<uint32_t>();
 
+		i.id = ++Trigger::next_id;
+
 		if (i.run_on_initialization && i.is_script) {
 			i.classifier = Classifier::gui;
-			i.id = (trig_id++) + 0x03000000;
 		} else if (i.is_comment) {
 			i.classifier = Classifier::comment;
-			i.id = (comment_id++) + 0x04000000;
 		} else if (i.is_script) {
 			i.classifier = Classifier::script;
-			i.id = (script_id++) + 0x05000000;
 		} else {
 			i.classifier = Classifier::gui;
-			i.id = (trig_id++) + 0x03000000;
 		}
     
 		i.parent_id = reader.read<uint32_t>();
@@ -217,8 +217,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 
 	uint32_t variable_count = reader.read<uint32_t>();
 	for (uint32_t i = 0; i < variable_count; i++) {
-		std::string name = reader.read_c_string();
 		TriggerVariable variable;
+		variable.name = reader.read_c_string();
 		variable.type = reader.read_c_string();
 		variable.unknown = reader.read<uint32_t>();
 		variable.is_array = reader.read<uint32_t>();
@@ -230,6 +230,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 		variable.id = reader.read<uint32_t>();
 		variable.parent_id = reader.read<uint32_t>();
 		variables.push_back(variable);
+
+		Trigger::next_id = std::max(Trigger::next_id, variable.id + 1);
 	}
 	
 	uint32_t element_count = reader.read<uint32_t>();
@@ -256,14 +258,16 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 			case Classifier::category: {
 				TriggerCategory cat;
 				cat.id = reader.read<uint32_t>();
+				std::cout << "cat id " << cat.id << "\n";
 				cat.name = reader.read_c_string();
 				if (sub_version == 7) {
 					cat.is_comment = reader.read<uint32_t>();
 				}
 				cat.unknown = reader.read<uint32_t>();
 				cat.parent_id = reader.read<uint32_t>();
-				std::cout << "Category ID: " << cat.id << "\n";
 				categories.push_back(cat);
+
+				Trigger::next_id = std::max(Trigger::next_id, cat.id + 1);
 				break;
 			}
 			case Classifier::gui:
@@ -277,6 +281,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 					trigger.is_comment = reader.read<uint32_t>();
 				}
 				trigger.id = reader.read<uint32_t>();
+				std::cout << "trigger id " << trigger.id << "\n";
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
 				trigger.initially_on = reader.read<uint32_t>();
@@ -286,14 +291,16 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				for (auto& j : trigger.ecas) {
 					parse_eca_structure(reader, j, false, sub_version);
 				}
-				Trigger::next_id = std::max(Trigger::next_id, trigger.id + 1);
 				std::cout << "Trigger ID: " << trigger.id << "\n";
 
 				triggers.push_back(trigger);
+
+				Trigger::next_id = std::max(Trigger::next_id, trigger.id + 1);
 				break;
 			}
 			case Classifier::variable: {
-				reader.advance(4); //id
+				std::cout << "var id " << reader.read<uint32_t>() << "\n";
+				//reader.advance(4); //id
 				reader.read_c_string(); //name
 				reader.advance(4); //parentid
 				break;
@@ -483,12 +490,14 @@ void Triggers::save() const {
 		}
 	}
 
-	for (const auto& [name, i] : variables) {
+	for (const auto& i : variables) {
 		writer.write<uint32_t>(static_cast<int>(Classifier::variable));
 		writer.write<uint32_t>(i.id);
-		writer.write_c_string(name);
+		writer.write_c_string(i.name);
 		writer.write<uint32_t>(i.parent_id);
 	}
+
+	hierarchy.map_file_write("war3map.wtg", writer.buffer);
 }
 
 void Triggers::save_jass() const {
@@ -505,14 +514,18 @@ void Triggers::save_jass() const {
 		writer.write_c_string(global_jass);
 	}
 
-	for (const auto& i : triggers) {
-		if (!i.is_comment) {
-			if (i.custom_text.size() == 0) {
-				writer.write<uint32_t>(0);
-			}
-			else {
-				writer.write<uint32_t>(i.custom_text.size() + (i.custom_text.back() == '\0' ? 0 : 1));
-				writer.write_c_string(i.custom_text);
+	// Custom text (jass) needs to be saved in the order they appear in the hierarchy
+	for (const auto& j : categories) {
+		for (const auto& i : triggers) {
+			if (i.parent_id == j.id) {
+				if (!i.is_comment) {
+					if (i.custom_text.size() == 0) {
+						writer.write<uint32_t>(0);
+					} else {
+						writer.write<uint32_t>(i.custom_text.size() + (i.custom_text.back() == '\0' ? 0 : 1));
+						writer.write_c_string(i.custom_text);
+					}
+				}
 			}
 		}
 	}

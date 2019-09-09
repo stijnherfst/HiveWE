@@ -55,7 +55,6 @@ private:
 	TreeItem* rootItem;
 
 	std::unordered_map<int, TreeItem*> folders;
-	std::unordered_map<int, TreeItem*> files;
 
 	QIcon folder_icon;
 	QIcon gui_icon;

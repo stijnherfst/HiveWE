@@ -105,7 +105,6 @@ class Triggers {
 	static constexpr int write_version = 0x80000004;
 	static constexpr int write_sub_version = 7;
 	static constexpr int write_string_version = 1;
-	int max_category_id = 0;
 
 	int unknown1 = 0;
 	int unknown2 = 0;
