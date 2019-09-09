@@ -15,6 +15,7 @@
 #include "Triggers.h"
 #include "JassEditor.h"
 #include "SearchWindow.h"
+#include "VariableEditor.h"
 #include <QTreeWidget>
 
 TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
@@ -49,7 +50,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.actionCreateGuiTrigger->setIcon(gui_icon);
 	ui.actionCreateJassTrigger->setIcon(script_icon);
 	ui.actionCreateComment->setIcon(comment_icon);
-
+  
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
 		save_changes();
 		map->triggers.generate_map_script();
@@ -149,10 +150,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 
 		return;
 	}
-	
-	Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
-		return trigger.id == item->id;
-	});
+
 
 	// Check if trigger is already open and if so focus it
 	if (auto found = dock_manager->findDockWidget(QString::number(trigger.id)); found) {
