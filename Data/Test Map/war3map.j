@@ -59,8 +59,8 @@ boolean udg_QJC_Heatlh= false
 button udg_SecretSummoning= null
 integer udg_basicelemental= 0
 string udg_removeAbilityName= ""
-integer udg_removePlayerNumber= 0
 integer udg_ArenaTimer= 0
+integer udg_removePlayerNumber= 0
 integer udg_addi= 0
 integer udg_loadExperience= 0
 string udg_addString= ""
@@ -226,7 +226,7 @@ integer summoningAbilitiesCount= 24
 
 	
 
-	
+
 
 integer array typeToFortified
 
