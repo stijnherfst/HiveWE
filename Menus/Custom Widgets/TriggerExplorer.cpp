@@ -224,7 +224,6 @@ void recursively_delete(TreeItem* parent) {
 			for (int i = 0; i < map->triggers.triggers.size(); i++) {
 				const Trigger& trigger = map->triggers.triggers[i];
 				if (trigger.id == parent->id) {
-					std::cout << trigger.name << "\n";
 					map->triggers.triggers.erase(map->triggers.triggers.begin() + i);
 					break;
 				}
@@ -232,22 +231,21 @@ void recursively_delete(TreeItem* parent) {
 			break;
 		case Classifier::category:
 			for (int i = 0; i < map->triggers.categories.size(); i++) {
-				const TriggerCategory& trigger = map->triggers.categories[i];
-				if (trigger.id == parent->id) {
-					std::cout << trigger.name << "\n";
+				const TriggerCategory& category = map->triggers.categories[i];
+				if (category.id == parent->id) {
 					map->triggers.categories.erase(map->triggers.categories.begin() + i);
 					break;
 				}
 			}
 			break;
 		case Classifier::variable:
-			/*for (auto i = map->triggers.variables.begin(); i < map->triggers.variables.end(); i++) {
-				const TriggerVariable& trigger = map->triggers.variables[i];
-				if (trigger.id == child->id) {
-					map->triggers.variables.erase(trigger.name);
+			for (int i = 0; i < map->triggers.categories.size(); i++) {
+				const TriggerVariable& variable = map->triggers.variables[i] ;
+				if (variable.id == parent->id) {
+					map->triggers.variables.erase(map->triggers.variables.begin() + i);
 					break;
 				}
-			}*/
+			}
 			break;
 	}
 };
@@ -294,11 +292,11 @@ TreeModel::TreeModel(QObject* parent) : QAbstractItemModel(parent) {
 		item->run_on_initialization = i.run_on_initialization;
 	}
 
-	//for (const auto& i : map->triggers.variables) {
-	//	TreeItem* item = new TreeItem(folders[i.parent_id]);
-	//	item->id = i.id;
-	//	item->type = Classifier::variable;
-	//}
+	for (const auto& i : map->triggers.variables) {
+		TreeItem* item = new TreeItem(folders[i.parent_id]);
+		item->id = i.id;
+		item->type = Classifier::variable;
+	}
 
 	QFileIconProvider icons;
 	folder_icon = icons.icon(QFileIconProvider::Folder);
@@ -461,9 +459,6 @@ void TreeItem::removeChild(TreeItem* item) {
 }
 
 QVariant TreeItem::data(int column) const {
-	//if (column < 0 || column >= m_itemData.size())
-	//	return QVariant();
-
 	if (column != 0) {
 		return QVariant();
 	}
@@ -511,11 +506,12 @@ bool TreeItem::setData(const QModelIndex& index, const QVariant& value, int role
 			}
 		case Classifier::variable:
 			break;
-			//for (const auto& [name, variable] : map->triggers.variables) {
-			//	if (variable.id == id) {
-			//		return QString::fromStdString(name);
-			//	}
-			//}
+			for (auto& i : map->triggers.variables) {
+				if (i.id == id) {
+					i.name = value.toString().toStdString();
+					return true;
+				}
+			}
 		case Classifier::category:
 			for (auto& i : map->triggers.categories) {
 				if (i.id == id) {

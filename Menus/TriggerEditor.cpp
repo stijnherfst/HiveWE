@@ -97,68 +97,137 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		return;
 	}
 
-	QSettings settings;
-	bool comments_enabled = settings.value("comments").toString() != "False";
-
 	if (auto found = dock_manager->findDockWidget(QString::number(item->id)); found) {
 		found->dockAreaWidget()->setCurrentDockWidget(found);
 		return;
 	}
 
-	QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
 	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
+	
+	if (item->type == Classifier::gui || item->type == Classifier::script) {
+		QSettings settings;
+		bool comments_enabled = settings.value("comments").toString() != "False";
 
-	if (item->id == 0) { // Map header
-		JassEditor* jass_editor = new JassEditor;
-		jass_editor->setObjectName("jass_editor");
-		jass_editor->setText(QString::fromStdString(map->triggers.global_jass));
+		QSplitter* splitter = new QSplitter(Qt::Orientation::Vertical);
 
-		dock_tab->setWindowTitle("Map Header");
-		dock_tab->setObjectName("0");
-		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+		if (item->id == 0) { // Map header
+			JassEditor* jass_editor = new JassEditor;
+			jass_editor->setObjectName("jass_editor");
+			jass_editor->setText(QString::fromStdString(map->triggers.global_jass));
+
+			dock_tab->setWindowTitle("Map Header");
+			dock_tab->setObjectName("0");
+			dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
 		
-		if (comments_enabled) {
-			QPlainTextEdit* comments_editor = new QPlainTextEdit;
-			comments_editor->setObjectName("comments");
-			comments_editor->setPlaceholderText("Optional comments here");
-			splitter->addWidget(comments_editor);
-			comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
+			if (comments_enabled) {
+				QPlainTextEdit* comments_editor = new QPlainTextEdit;
+				comments_editor->setObjectName("comments");
+				comments_editor->setPlaceholderText("Optional comments here");
+				splitter->addWidget(comments_editor);
+				comments_editor->setPlainText(QString::fromStdString(map->triggers.global_jass_comment));
+			}
+		
+			splitter->addWidget(jass_editor);
+		} else {
+			Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+				return trigger.id == item->id;
+			});
+
+			if (comments_enabled) {
+				QPlainTextEdit* comments_editor = new QPlainTextEdit;
+				comments_editor->setObjectName("comments");
+				comments_editor->setPlaceholderText("Optional comments here");
+				comments_editor->setPlainText(QString::fromStdString(trigger.description));
+				splitter->addWidget(comments_editor);
+			}
+
+			dock_tab->setWindowTitle(QString::fromStdString(trigger.name));
+			dock_tab->setObjectName(QString::number(trigger.id));
+			dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+
+			if (!trigger.is_comment) {
+				if (trigger.is_script) {
+					JassEditor* edit = new JassEditor;
+					edit->setObjectName("jass_editor");
+					splitter->addWidget(edit);
+					edit->setText(QString::fromStdString(trigger.custom_text));
+				} else {
+					QTreeWidget* edit = new QTreeWidget;
+					edit->setHeaderHidden(true);
+					edit->setUniformRowHeights(true);
+					splitter->addWidget(edit);
+					show_gui_trigger(edit, trigger);
+					edit->expandAll();
+				}
+			}
+
 		}
-		
-		splitter->addWidget(jass_editor);
-	} else {
-		Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
-			return trigger.id == item->id;
+
+		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+			// Map header
+			if (item->id == 0) {
+				map->triggers.global_jass = dock_tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
+
+				auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
+				if (comments) {
+					map->triggers.global_jass_comment = comments->toPlainText().toStdString();
+				}
+			} else {
+				Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+					return trigger.id == item->id;
+				});
+
+				auto editor = dock_tab->findChild<JassEditor*>("jass_editor");
+				auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
+				if (editor) {
+					trigger.custom_text = editor->text().toStdString();
+				}
+				if (comments) {
+					trigger.description = comments->toPlainText().toStdString();
+				}
+			}
+
+			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+				dock_area = nullptr;
+			}
+
+			dock_manager->removeDockWidget(dock_tab);
 		});
 
-		if (comments_enabled) {
-			QPlainTextEdit* comments_editor = new QPlainTextEdit;
-			comments_editor->setObjectName("comments");
-			comments_editor->setPlaceholderText("Optional comments here");
-			comments_editor->setPlainText(QString::fromStdString(trigger.description));
-			splitter->addWidget(comments_editor);
-		}
+		splitter->setStretchFactor(0, 1);
+		splitter->setStretchFactor(1, 7);
+		dock_tab->setWidget(splitter);
+	} else if (item->type == Classifier::variable) {
+		TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [item](const TriggerVariable& i) {
+			return i.id == item->id;
+		});
 
-		dock_tab->setWindowTitle(QString::fromStdString(trigger.name));
-		dock_tab->setObjectName(QString::number(trigger.id));
-		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+		//ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(variable.name));
+		dock_tab->setWindowTitle(QString::fromStdString(variable.name));
+		dock_tab->setObjectName(QString::number(variable.id));
+		VariableEditor* edit = new VariableEditor(variable);
+		edit->setObjectName("var_editor");
+		dock_tab->setWidget(edit);
 
-		if (!trigger.is_comment) {
-			if (trigger.is_script) {
-				JassEditor* edit = new JassEditor;
-				edit->setObjectName("jass_editor");
-				splitter->addWidget(edit);
-				edit->setText(QString::fromStdString(trigger.custom_text));
-			} else {
-				QTreeWidget* edit = new QTreeWidget;
-				edit->setHeaderHidden(true);
-				edit->setUniformRowHeights(true);
-				splitter->addWidget(edit);
-				show_gui_trigger(edit, trigger);
-				edit->expandAll();
+		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+			TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [item](const TriggerVariable& i) {
+				return i.id == item->id;
+			});
+
+			auto editor = dock_tab->findChild<VariableEditor*>("var_editor");
+			if (editor) {
+				variable.name = editor->ui.name->text().toStdString();
+				variable.type = editor->ui.type->text().toStdString();
+				variable.is_array = editor->ui.array->isChecked();
+				variable.array_size = editor->ui.array_size->value();
+				variable.initial_value = editor->ui.value->text().toStdString();
 			}
-		}
 
+			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+				dock_area = nullptr;
+			}
+			dock_manager->removeDockWidget(dock_tab);
+		});
 	}
 
 	if (dock_area == nullptr) {
@@ -166,41 +235,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 	} else {
 		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 	}
-
-	connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
-		// Map header
-		if (item->id == 0) {
-			map->triggers.global_jass = dock_tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
-
-			auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
-			if (comments) {
-				map->triggers.global_jass_comment = comments->toPlainText().toStdString();
-			}
-		} else {
-			Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
-				return trigger.id == item->id;
-			});
-
-			auto editor = dock_tab->findChild<JassEditor*>("jass_editor");
-			auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
-			if (editor) {
-				trigger.custom_text = editor->text().toStdString();
-			}
-			if (comments) {
-				trigger.description = comments->toPlainText().toStdString();
-			}
-		}
-
-		if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
-			dock_area = nullptr;
-		}
-
-		dock_manager->removeDockWidget(dock_tab);
-	});
-
-	splitter->setStretchFactor(0, 1);
-	splitter->setStretchFactor(1, 7);
-	dock_tab->setWidget(splitter);
+	
 }
 
 void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) {

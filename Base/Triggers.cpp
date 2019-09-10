@@ -162,7 +162,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		}
 		i.is_enabled = reader.read<uint32_t>();
 		i.is_script = reader.read<uint32_t>();
-		i.initially_on = reader.read<uint32_t>();
+		i.initially_on = !reader.read<uint32_t>();
 		i.run_on_initialization = reader.read<uint32_t>();
 
 		i.id = ++Trigger::next_id;
@@ -284,7 +284,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				std::cout << "trigger id " << trigger.id << "\n";
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
-				trigger.initially_on = reader.read<uint32_t>();
+				trigger.initially_on = !reader.read<uint32_t>();
 				trigger.run_on_initialization = reader.read<uint32_t>();
 				trigger.parent_id = reader.read<uint32_t>();
 				trigger.ecas.resize(reader.read<uint32_t>());
@@ -481,7 +481,7 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.id);
 		writer.write<uint32_t>(i.is_enabled);
 		writer.write<uint32_t>(i.is_script);
-		writer.write<uint32_t>(i.initially_on);
+		writer.write<uint32_t>(!i.initially_on);
 		writer.write<uint32_t>(i.run_on_initialization);
 		writer.write<uint32_t>(i.parent_id);
 		writer.write<uint32_t>(i.ecas.size());
