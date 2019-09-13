@@ -258,7 +258,6 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 			case Classifier::category: {
 				TriggerCategory cat;
 				cat.id = reader.read<uint32_t>();
-				std::cout << "cat id " << cat.id << "\n";
 				cat.name = reader.read_c_string();
 				if (sub_version == 7) {
 					cat.is_comment = reader.read<uint32_t>();
@@ -281,7 +280,6 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 					trigger.is_comment = reader.read<uint32_t>();
 				}
 				trigger.id = reader.read<uint32_t>();
-				std::cout << "trigger id " << trigger.id << "\n";
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
 				trigger.initially_on = !reader.read<uint32_t>();
@@ -291,7 +289,6 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				for (auto& j : trigger.ecas) {
 					parse_eca_structure(reader, j, false, sub_version);
 				}
-				std::cout << "Trigger ID: " << trigger.id << "\n";
 
 				triggers.push_back(trigger);
 
@@ -299,8 +296,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				break;
 			}
 			case Classifier::variable: {
-				std::cout << "var id " << reader.read<uint32_t>() << "\n";
-				//reader.advance(4); //id
+				reader.advance(4); //id
 				reader.read_c_string(); //name
 				reader.advance(4); //parentid
 				break;

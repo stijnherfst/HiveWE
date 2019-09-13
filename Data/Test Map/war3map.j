@@ -1,81 +1,69 @@
 globals
-unit udg_BlackHole= null
-unit udg_Summon8= null
-integer udg_loadCurrent= 0
-group udg_QJCS_tempGroup= CreateGroup()
-rect udg_EchoBlast= null
-real udg_RealVar= 0
 itemtype array udg_itemclass
-string udg_removeSpellNumber= ""
-boolean array udg_QJCS_AoE
-unit udg_UnitVar= null
-integer udg_loadAgility= 0
-integer udg_removeI= 0
-boolean udg_SaveLoad_SaveToDisk= false
+real udg_RealVar= 0
 real udg_RealVar2= 0
 real udg_RealVar3= 0
-integer udg_loadLumber= 0
-boolean udg_itemLoadBool= false
-unit udg_UnitVar2= null
+unit udg_UnitVar= null
 location udg_PointVar= null
-location udg_dontcopythis= null
+unit udg_UnitVar2= null
 unit udg_SuperHexUnit= null
 unit udg_Summon1= null
 unit udg_Summon2= null
-dialog udg_SecretSam= DialogCreate()
 rect udg_SunStorm= null
-unit udg_glassrepair= null
-button udg_no= null
-quest udg_spiderquest= null
 string array udg_abilityarray
-button udg_GoldShroom= null
 unit udg_Summon3= null
-boolean udg_QJC_Gold= false
-unit udg_PressureCaster= null
-dialog udg_glassrepairdialog= DialogCreate()
 unit udg_Summon4= null
 unit udg_Summon5= null
-string udg_LoadString= ""
 unit udg_Summon6= null
-integer udg_loadGold= 0
 unit udg_Summon7= null
+unit udg_Summon8= null
 unit udg_Summon9= null
-boolean array udg_QJCS_Enemy
-button udg_MasterSecret= null
 unit udg_Summon10= null
-string udg_removeAbilitiesString= ""
-unit udg_saveHero= null
+rect udg_EchoBlast= null
 timer udg_Arena= CreateTimer()
-real udg_QJC_AoERadius= 0
-boolean udg_validLoad= false
+unit udg_glassrepair= null
+dialog udg_glassrepairdialog= DialogCreate()
 button udg_Glassswordrepair= null
-string udg_saveTemp2= ""
-integer udg_addPlayerNumber= 0
+button udg_no= null
 texttag udg_scottwings= null
-string udg_LoadStringTemp= ""
-integer udg_MerchantQuestReward= 0
-real array udg_QJCS_AoERadius
-boolean udg_QJC_Heatlh= false
+dialog udg_SecretSam= DialogCreate()
+button udg_MasterSecret= null
 button udg_SecretSummoning= null
-integer udg_basicelemental= 0
+button udg_GoldShroom= null
 string udg_removeAbilityName= ""
-integer udg_ArenaTimer= 0
+string udg_removeAbilitiesString= ""
 integer udg_removePlayerNumber= 0
+string udg_removeSpellNumber= ""
+integer udg_removeI= 0
 integer udg_addi= 0
-integer udg_loadExperience= 0
+integer udg_addPlayerNumber= 0
 string udg_addString= ""
+integer udg_basicelemental= 0
 integer udg_toxicspider= 0
 integer udg_lavarunner= 0
 string udg_saveTemp= ""
+string udg_saveTemp2= ""
+unit udg_saveHero= null
+boolean udg_itemLoadBool= false
 integer udg_rndTemp= 0
+string udg_LoadStringTemp= ""
+string udg_LoadString= ""
+integer udg_loadCurrent= 0
 integer udg_loadTemp= 0
 quest udg_basicquest= null
+quest udg_spiderquest= null
 quest udg_lavaquest= null
-boolean array udg_playerLoaded
 button udg_SecretSeals= null
+boolean array udg_playerLoaded
+boolean udg_validLoad= false
+integer udg_loadExperience= 0
 integer udg_loadStrength= 0
+integer udg_loadAgility= 0
 integer udg_loadIntelligence= 0
+integer udg_loadGold= 0
+integer udg_loadLumber= 0
 integer udg_saveTempInt= 0
+integer udg_ArenaTimer= 0
 unit udg_ArenaBrawler= null
 timer udg_Bacontimer= CreateTimer()
 timerdialog udg_bacontimerwindow= null
@@ -83,46 +71,44 @@ timer udg_Armageddon= CreateTimer()
 timerdialog udg_ArenaTimerWindow= null
 timerdialog udg_Armagedontimerwindow= null
 player udg_ChallengePlayer= null
-integer udg_SaveLoad_HeroCount= 0
 player udg_AcceptPlayer= null
 unit udg_Champion= null
 integer udg_ArenaRnd= 0
 unit udg_ArenaMonster= null
 integer udg_presurerelaese= 0
 unit udg_pressuretarget= null
+unit udg_PressureCaster= null
 location udg_BlackHolePoint= null
 unit udg_BlackHoleSuckUnits= null
-boolean array udg_QJCS_Stun
+unit udg_BlackHole= null
 integer udg_raremonsterhp= 0
 unit udg_LitFurytarget= null
 unit udg_LitFuryowner= null
 item array udg_CleanedItem
-boolean udg_QJC_Enemy= false
 boolean udg_ItemCleanupFlag= false
 timer udg_ItemCleanupTimer= CreateTimer()
-boolean array udg_QJCS_Health
 integer udg_ItemsToClean= 0
 integer udg_Loop= 0
 location udg_Point= null
+boolean udg_SaveLoad_SaveToDisk= false
 string udg_SaveLoad_Directory= ""
 string udg_SaveLoad_Alphabet= ""
 boolean udg_SaveLoad_CheckName= false
 boolean udg_SaveLoad_Security= false
 integer udg_SaveLoad_HyphenSpace= 0
-attacktype array udg_QJCS_AttackType
 string udg_SaveLoad_SeperationChar= ""
 string udg_SaveLoad_Lower= ""
 string udg_SaveLoad_Number= ""
 string udg_SaveLoad_Upper= ""
 integer udg_SaveLoad_MaxValue= 0
-string udg_SaveLoad_Error= ""
 integer array udg_SaveLoad_Hero
+integer udg_SaveLoad_HeroCount= 0
 integer array udg_SaveLoad_Abilities
 integer udg_SaveLoad_AbilityCount= 0
 integer array udg_SaveLoad_Item
 integer udg_SaveLoad_ItemCount= 0
 string udg_SaveLoad_Full= ""
-real array udg_QJCS_ChainZ
+string udg_SaveLoad_Error= ""
 integer udg_SaveLoad_Base= 0
 string array udg_SaveLoad_Char
 integer array udg_Load
@@ -131,17 +117,18 @@ integer udg_SaveCount= 0
 unit udg_Hero= null
 integer array udg_Save
 item udg_Item= null
-timerdialog udg_Volcano_Timer_Window= null
 string udg_SaveLoad_Filename= ""
 string udg_Code= ""
 boolean udg_SaveLoad_Valid= false
 integer array udg_QJCS_index
-integer udg_QJC_JumpCount= 0
 location array udg_QJCS_tempPos
 unit udg_QJC_Caster= null
+integer udg_QJC_JumpCount= 0
+group udg_QJCS_tempGroup= CreateGroup()
 real udg_QJC_JumpRadius= 0
 location udg_QJC_TargetPoint= null
 integer udg_QJCS_Locust= 0
+boolean udg_QJC_Enemy= false
 boolean udg_QJC_Ally= false
 unit udg_QJC_TargetUnit= null
 boolean udg_QJC_NoTarget= false
@@ -157,25 +144,30 @@ boolean array udg_QJCS_Damage
 boolean udg_QJC_Damage= false
 boolean array udg_QJCS_Heal
 boolean udg_QJC_Heal= false
+boolean array udg_QJCS_Health
+boolean udg_QJC_Heatlh= false
 boolean array udg_QJCS_Mana
 boolean udg_QJC_Mana= false
 boolean array udg_QJCS_Gold
+boolean udg_QJC_Gold= false
 boolean array udg_QJCS_Leech
 boolean udg_QJC_Leech= false
 boolean array udg_QJCS_Ally
-location array udg_QJCS_LightningPos
+boolean array udg_QJCS_Enemy
 real array udg_QJCS_Amount
-integer udg_QJC_SlowEffect= 0
 real udg_QJC_Amount= 0
+attacktype array udg_QJCS_AttackType
 attacktype udg_QJC_AttackType= null
-integer udg_QJC_DummyType= 0
 damagetype array udg_QJCS_DamageType
 damagetype udg_QJC_DamageType= null
 real array udg_QJCS_AmountReduce
 integer array udg_QJCS_JumpCount
 real array udg_QJCS_JumpDelayTime
 real array udg_QJCS_JumpRadius
+boolean array udg_QJCS_AoE
 boolean udg_QJC_AoE= false
+real array udg_QJCS_AoERadius
+real udg_QJC_AoERadius= 0
 string array udg_QJCS_ChainSFX
 string udg_QJC_ChainSFX= ""
 string array udg_QJCS_TargetSFX
@@ -183,6 +175,8 @@ string udg_QJC_TargetSFX= ""
 boolean array udg_QJCS_Slow
 boolean udg_QJC_Slow= false
 integer array udg_QJCS_SlowEffect
+integer udg_QJC_SlowEffect= 0
+boolean array udg_QJCS_Stun
 boolean udg_QJC_Stun= false
 integer array udg_QJCS_StunEffect
 integer udg_QJC_StunEffect= 0
@@ -201,13 +195,19 @@ real array udg_QJCS_ChainY
 group array udg_QJCS_aGroup
 group udg_QJCS_victimGroup= CreateGroup()
 unit udg_QJCS_currUnit= null
+location array udg_QJCS_LightningPos
 lightning array udg_QJCS_LightningSFX
+real array udg_QJCS_ChainZ
+integer udg_QJC_DummyType= 0
 location udg_dontcopy_tempPos= null
+location udg_dontcopythis= null
 integer udg_furbolgdigger= 0
 quest udg_furbolgquest= null
 string array udg_stringParts
 integer udg_stringPartsCount= 0
+integer udg_MerchantQuestReward= 0
 timer udg_VolcanoTimer= CreateTimer()
+timerdialog udg_Volcano_Timer_Window= null
 location udg_VolcanoPoint= null
 unit array udg_Summoned_Unit
 trigger gg_trg_Player_Leaves= null
@@ -226,7 +226,7 @@ integer summoningAbilitiesCount= 24
 
 	
 
-
+	
 
 integer array typeToFortified
 
@@ -250,12 +250,7 @@ endglobals
 
 function InitGlobals takes nothing returns nothing
  local integer i= 0
-	set i=0
-	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_AoE[i]=false
-		set i=i + 1
-	endloop
+	set udg_RealVar=5
 	set i=0
 	loop
 		exitwhen ( i > 1 )
@@ -264,33 +259,8 @@ function InitGlobals takes nothing returns nothing
 	endloop
 	set i=0
 	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_Enemy[i]=false
-		set i=i + 1
-	endloop
-	set udg_MerchantQuestReward=4
-	set i=0
-	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_AoERadius[i]=0
-		set i=i + 1
-	endloop
-	set i=0
-	loop
 		exitwhen ( i > 10 )
 		set udg_playerLoaded[i]=false
-		set i=i + 1
-	endloop
-	set i=0
-	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_Stun[i]=false
-		set i=i + 1
-	endloop
-	set i=0
-	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_Health[i]=false
 		set i=i + 1
 	endloop
 	set i=0
@@ -309,12 +279,6 @@ function InitGlobals takes nothing returns nothing
 	loop
 		exitwhen ( i > 1 )
 		set udg_SaveLoad_Item[i]=0
-		set i=i + 1
-	endloop
-	set i=0
-	loop
-		exitwhen ( i > 1 )
-		set udg_QJCS_ChainZ[i]=0
 		set i=i + 1
 	endloop
 	set i=0
@@ -368,6 +332,12 @@ function InitGlobals takes nothing returns nothing
 	set i=0
 	loop
 		exitwhen ( i > 1 )
+		set udg_QJCS_Health[i]=false
+		set i=i + 1
+	endloop
+	set i=0
+	loop
+		exitwhen ( i > 1 )
 		set udg_QJCS_Mana[i]=false
 		set i=i + 1
 	endloop
@@ -387,6 +357,12 @@ function InitGlobals takes nothing returns nothing
 	loop
 		exitwhen ( i > 1 )
 		set udg_QJCS_Ally[i]=false
+		set i=i + 1
+	endloop
+	set i=0
+	loop
+		exitwhen ( i > 1 )
+		set udg_QJCS_Enemy[i]=false
 		set i=i + 1
 	endloop
 	set i=0
@@ -422,6 +398,18 @@ function InitGlobals takes nothing returns nothing
 	set i=0
 	loop
 		exitwhen ( i > 1 )
+		set udg_QJCS_AoE[i]=false
+		set i=i + 1
+	endloop
+	set i=0
+	loop
+		exitwhen ( i > 1 )
+		set udg_QJCS_AoERadius[i]=0
+		set i=i + 1
+	endloop
+	set i=0
+	loop
+		exitwhen ( i > 1 )
 		set udg_QJCS_ChainSFX[i]=""
 		set i=i + 1
 	endloop
@@ -441,6 +429,12 @@ function InitGlobals takes nothing returns nothing
 	loop
 		exitwhen ( i > 1 )
 		set udg_QJCS_SlowEffect[i]=0
+		set i=i + 1
+	endloop
+	set i=0
+	loop
+		exitwhen ( i > 1 )
+		set udg_QJCS_Stun[i]=false
 		set i=i + 1
 	endloop
 	set i=0
@@ -499,10 +493,17 @@ function InitGlobals takes nothing returns nothing
 	endloop
 	set i=0
 	loop
+		exitwhen ( i > 1 )
+		set udg_QJCS_ChainZ[i]=0
+		set i=i + 1
+	endloop
+	set i=0
+	loop
 		exitwhen ( i > 50 )
 		set udg_stringParts[i]=""
 		set i=i + 1
 	endloop
+	set udg_MerchantQuestReward=4
 endfunction
 
 //===========================================================================

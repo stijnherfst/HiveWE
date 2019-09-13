@@ -220,6 +220,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 				variable.type = editor->ui.type->text().toStdString();
 				variable.is_array = editor->ui.array->isChecked();
 				variable.array_size = editor->ui.array_size->value();
+				variable.is_initialized = !editor->ui.value->text().isEmpty();
 				variable.initial_value = editor->ui.value->text().toStdString();
 			}
 
@@ -425,26 +426,38 @@ void TriggerEditor::save_changes() {
 		}
 
 		if (trigger_id == 0) {
-			std::cout << "saved map header\n";
-			auto t = tab->objectName();
 			auto editor = tab->findChild<JassEditor*>("jass_editor");
 			if (comments) {
 				map->triggers.global_jass_comment = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
 			}
 			map->triggers.global_jass = editor->text().toStdString();
 		} else {
-			for (auto& trigger : map->triggers.triggers) {
-				if (trigger.id == trigger_id) {
-					if (comments) {
-						trigger.description = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
-					}
-					JassEditor* editor = tab->findChild<JassEditor*>("jass_editor");
-					if (editor) {
-						std::cout << "saved trigger: " << trigger_id << "\n";
+			JassEditor* editor = tab->findChild<JassEditor*>("jass_editor");
 
-						trigger.custom_text = editor->text().toStdString();
-					}
-					break;
+			if (editor) { // jass
+				Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [trigger_id](const Trigger& trigger) {
+					return trigger.id == trigger_id;
+				});
+
+				if (comments) {
+					trigger.description = tab->findChild<QPlainTextEdit*>("comments")->toPlainText().toStdString();
+				}
+
+				trigger.custom_text = editor->text().toStdString();
+				break;
+			} else { // variable
+				TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [trigger_id](const TriggerVariable& i) {
+					return i.id == trigger_id;
+				});
+
+				auto editor = tab->findChild<VariableEditor*>("var_editor");
+				if (editor) {
+					variable.name = editor->ui.name->text().toStdString();
+					variable.type = editor->ui.type->text().toStdString();
+					variable.is_array = editor->ui.array->isChecked();
+					variable.array_size = editor->ui.array_size->value();
+					variable.is_initialized = !editor->ui.value->text().isEmpty();
+					variable.initial_value = editor->ui.value->text().toStdString();
 				}
 			}
 		}
