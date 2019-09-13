@@ -48,14 +48,14 @@ glm::vec2 Brush::get_position() const {
 void Brush::set_size(const int new_size) {
 	//const int change = new_size * size_granularity - size;
 
-	size = std::clamp(new_size * size_granularity, 1, 240);
+	size = std::clamp(new_size * size_granularity, 1, 999);
 
 	brush.clear();
 	brush.resize(size * size, { 0, 0, 0, 0 });
 
 	set_shape(shape);
 
-	set_position(glm::vec2(position) + glm::vec2(uv_offset));
+	//set_position(glm::vec2(position) + glm::vec2(uv_offset));
 }
 
 void Brush::set_shape(const Shape new_shape) {
@@ -95,10 +95,10 @@ bool Brush::contains(const int x, const int y) const {
 }
 
 void Brush::increase_size(const int new_size) {
-	set_size(size + new_size);
+	set_size(size / size_granularity + new_size);
 }
 void Brush::decrease_size(const int new_size) {
-	set_size(size - new_size);
+	set_size(size / size_granularity - new_size);
 }
 
 void Brush::switch_mode() {
@@ -114,10 +114,10 @@ void Brush::switch_mode() {
 void Brush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Equal:
-			increase_size(1);
+			increase_size(2);
 			break;
 		case Qt::Key_Minus:
-			decrease_size(1);
+			decrease_size(2);
 			break;
 		case Qt::Key_Delete:
 			delete_selection();

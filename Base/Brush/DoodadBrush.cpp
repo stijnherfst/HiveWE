@@ -112,31 +112,50 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	}
 
 
-	switch (event->key()) {
-		case Qt::Key_A:
-			if (event->modifiers() & Qt::ControlModifier) {
-				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
-			}
-			break;
-		case Qt::Key_PageUp:
-			for (const auto& i : selections) {
-				i->position.z += 0.1f;
-			}
-			break;
-		case Qt::Key_PageDown:
-			for (const auto& i : selections) {
-				i->position.z -= 0.1f;
-			}
-			break;
-		default:
-			Brush::key_press_event(event);
+	if (event->modifiers() & Qt::ControlModifier) {
+		switch (event->key()) {
+			case Qt::Key_A:
+					selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
+			
+				break;
+			case Qt::Key_PageUp:
+				for (const auto& i : selections) {
+					i->position.z += 0.1f;
+					i->update();
+				}
+				break;
+			case Qt::Key_PageDown:
+				for (const auto& i : selections) {
+					i->position.z -= 0.1f;
+					i->update();
+				}
+				break;
+			default:
+				Brush::key_press_event(event);
+		}
+	} else {
+		switch (event->key()) {
+			case Qt::Key_PageUp:
+				for (const auto& i : selections) {
+					i->scale.z += 0.1f;
+					i->update();
+				}
+				break;
+			case Qt::Key_PageDown:
+				for (const auto& i : selections) {
+					i->scale.z -= 0.1f;
+					i->update();
+				}
+				break;
+			default:
+				Brush::key_press_event(event);
+		}
 	}
 }
 
 void DoodadBrush::key_release_event(QKeyEvent* event) {
 	if (!event->isAutoRepeat()) {
 		if (doodad_state_undo) {
-			std::cout << "undo added\n";
 			for (const auto& i : selections) {
 				doodad_state_undo->new_doodads.push_back(*i);
 			}

@@ -849,6 +849,7 @@ void TerrainGenericAction::undo() {
 	}
 
 	map->terrain.update_minimap();
+	map->units.update_area(area);
 }
 
 void TerrainGenericAction::redo() {
@@ -874,4 +875,5 @@ void TerrainGenericAction::redo() {
 	}
 
 	map->terrain.update_minimap();
+	map->units.update_area(area);
 }

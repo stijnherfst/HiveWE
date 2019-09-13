@@ -172,7 +172,6 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 	}
 
 	input_handler.keys_pressed.emplace(event->key());
-	std::cout << "t\n";
 	switch (event->key()) {
 		case Qt::Key_Escape:
 			exit(0);
