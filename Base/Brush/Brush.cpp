@@ -113,6 +113,9 @@ void Brush::switch_mode() {
 
 void Brush::key_press_event(QKeyEvent* event) {
 	switch (event->key()) {
+		case Qt::Key_Escape:
+			clear_selection();
+			break;
 		case Qt::Key_Equal:
 			increase_size(2);
 			break;

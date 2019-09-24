@@ -72,7 +72,6 @@ int main(int argc, char *argv[]) {
 
 	qApp->setStyleSheet(StyleSheet);
 
-
 	HiveWE w;
 
 	return QApplication::exec();

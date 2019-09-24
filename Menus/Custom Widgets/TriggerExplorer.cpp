@@ -69,7 +69,6 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 					}
 				}
 			}
-			
 		}
  
 		contextMenu->popup(viewport()->mapToGlobal(point));
@@ -471,6 +470,9 @@ QVariant TreeItem::data(int column) const {
 				if (i.id == id) {
 					return QString::fromStdString(i.name);
 				}
+			}
+			if (id == 0) {
+				return "Map Header";
 			}
 			return "not found";
 			break;

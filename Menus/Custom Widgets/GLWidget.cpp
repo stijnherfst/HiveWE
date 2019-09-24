@@ -173,9 +173,9 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 
 	input_handler.keys_pressed.emplace(event->key());
 	switch (event->key()) {
-		case Qt::Key_Escape:
-			exit(0);
-			break;
+		//case Qt::Key_Escape:
+		//	exit(0);
+		//	break;
 		default:
 			if (map->brush) {
 				map->brush->key_press_event(event);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PathingPallete</class>
- <widget class="QWidget" name="PathingPallete">
+ <class>PathingPalette</class>
+ <widget class="QWidget" name="PathingPalette">
   <property name="windowModality">
    <enum>Qt::NonModal</enum>
   </property>
@@ -535,13 +535,13 @@
   </connection>
  </connections>
  <buttongroups>
-  <buttongroup name="brushShapeGroup"/>
-  <buttongroup name="toolTypeGroup"/>
   <buttongroup name="brushTypeGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
   <buttongroup name="brushSizeGroup"/>
+  <buttongroup name="brushShapeGroup"/>
+  <buttongroup name="toolTypeGroup"/>
  </buttongroups>
 </ui>

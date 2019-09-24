@@ -224,7 +224,7 @@ void HiveWE::load_folder() {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 		
 	map->load(directory);
-	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.6 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 /// Load MPQ will extract all files from the archive in a user specified location
@@ -321,8 +321,9 @@ void HiveWE::save_as() {
 	fs::create_directory(file_name / map->name);
 	emit saving_initiated();
 	map->save(file_name / map->name);
+	hierarchy.map_directory = file_name / map->name;
 
-	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.6 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::export_mpq() {
@@ -354,6 +355,7 @@ void HiveWE::export_mpq() {
 			SFileAddFileEx(handle, entry.path().c_str(), entry.path().lexically_relative(map->filesystem_path).string().c_str(), MPQ_FILE_COMPRESS, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
 		}
 	}
+	SFileCompactArchive(handle, nullptr, false);
 	SFileCloseArchive(handle);
 }
 

@@ -111,12 +111,10 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 		map->doodads.update_doodad_pathing(selections);
 	}
 
-
 	if (event->modifiers() & Qt::ControlModifier) {
 		switch (event->key()) {
 			case Qt::Key_A:
 					selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
-			
 				break;
 			case Qt::Key_PageUp:
 				for (const auto& i : selections) {

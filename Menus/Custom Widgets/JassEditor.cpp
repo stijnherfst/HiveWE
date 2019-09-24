@@ -201,7 +201,7 @@ JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), a
 	setAutoIndent(true);
 	setTabWidth(4);
 
-	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAPIs);
+	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAll);
 	setAutoCompletionUseSingle(QsciScintilla::AcusExplicit);
 	setAutoCompletionReplaceWord(false);
 	setAutoCompletionThreshold(1);

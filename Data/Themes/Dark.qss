@@ -167,8 +167,7 @@ ads--CDockWidgetTab[activeTab="true"] {
 }
 
 
-QScrollArea#dockWidgetScrollArea
-{
+QScrollArea#dockWidgetScrollArea {
     padding: 0px;
     border: none;
 }
@@ -180,13 +179,36 @@ QScrollArea#dockWidgetScrollArea
 	padding: 0px -2px;
 }
 
-#tabCloseButton:hover
-{
+#tabCloseButton:hover {
 	border: 1px solid rgba(0, 0, 0, 32);
 	background: rgba(64, 64, 64, 255);
 }
 
-#tabCloseButton:pressed
-{
+#tabCloseButton:pressed {
 	background: rgba(128, 128, 128, 255);
+}
+
+QPushButton {
+	border: 1px solid transparent;
+}
+
+QPushButton::hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QPushButton::pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+
+QPushButton::checked {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QDialogButtonBox QPushButton {
+	border: 1px solid rgb(100, 100, 100);
+	padding: 5;
 }
