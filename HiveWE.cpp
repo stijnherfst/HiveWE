@@ -159,7 +159,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		});
 	});
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
-		auto palette = new PathingPallete(this);
+		auto palette = new PathingPalette(this);
 		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
 		connect(this, &HiveWE::tileset_changed, [palette]() {
 			palette->close();
@@ -318,10 +318,15 @@ void HiveWE::save_as() {
 		return;
 	}
 
-	fs::create_directory(file_name / map->name);
 	emit saving_initiated();
-	map->save(file_name / map->name);
-	hierarchy.map_directory = file_name / map->name;
+	if (fs::exists(file_name) && fs::equivalent(file_name, map->filesystem_path)) {
+		map->save(map->filesystem_path);
+	} else {
+		fs::create_directories(file_name / map->name);
+
+		map->save(file_name / map->name);
+		hierarchy.map_directory = file_name / map->name;
+	}
 
 	setWindowTitle("HiveWE 0.6 - " + QString::fromStdString(map->filesystem_path.string()));
 }

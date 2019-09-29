@@ -3,7 +3,7 @@
 #include <QDialog>
 #include "HiveWE.h"
 
-PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
+PathingPalette::PathingPalette(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -42,11 +42,11 @@ PathingPallete::PathingPallete(QWidget *parent) : QDialog(parent) {
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
 }
 
-PathingPallete::~PathingPallete() {
+PathingPalette::~PathingPalette() {
 	map->brush = nullptr;
 }
 
-bool PathingPallete::event(QEvent *e) {
+bool PathingPalette::event(QEvent *e) {
 	if (e->type() == QEvent::WindowActivate) {
 		map->brush = &brush;
 	}

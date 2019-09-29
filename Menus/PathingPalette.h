@@ -5,16 +5,16 @@
 #include "ui_PathingPalette.h"
 #include "PathingBrush.h"
 
-class PathingPallete : public QDialog {
+class PathingPalette : public QDialog {
 	Q_OBJECT
 
 public:
-	explicit PathingPallete(QWidget* parent = nullptr);
-	~PathingPallete();
+	explicit PathingPalette(QWidget* parent = nullptr);
+	~PathingPalette();
 
 private:
 	bool event(QEvent *e) override;
 
-	Ui::PathingPallete ui;
+	Ui::PathingPalette ui;
 	PathingBrush brush;
 };

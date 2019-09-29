@@ -19,6 +19,7 @@ class TriggerEditor : public QMainWindow {
 
 public:
 	TriggerEditor(QWidget* parent = nullptr);
+	~TriggerEditor();
 
 	void save_changes();
 private:

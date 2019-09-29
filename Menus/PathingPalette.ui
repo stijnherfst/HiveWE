@@ -270,7 +270,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Sets the brush size to 9x9.</string>
+        <string>Sets the brush size to 7x7.</string>
        </property>
        <property name="text">
         <string>7</string>
@@ -292,7 +292,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Sets the brush size to 15x15.</string>
+        <string>Sets the brush size to 9x9.</string>
        </property>
        <property name="text">
         <string>9</string>
@@ -314,7 +314,7 @@
         </size>
        </property>
        <property name="toolTip">
-        <string>Sets the brush size to 21x21.</string>
+        <string>Sets the brush size to 11x11.</string>
        </property>
        <property name="text">
         <string>11</string>
@@ -535,13 +535,13 @@
   </connection>
  </connections>
  <buttongroups>
+  <buttongroup name="brushSizeGroup"/>
   <buttongroup name="brushTypeGroup">
    <property name="exclusive">
     <bool>false</bool>
    </property>
   </buttongroup>
-  <buttongroup name="brushSizeGroup"/>
-  <buttongroup name="brushShapeGroup"/>
   <buttongroup name="toolTypeGroup"/>
+  <buttongroup name="brushShapeGroup"/>
  </buttongroups>
 </ui>

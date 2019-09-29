@@ -116,6 +116,9 @@
      </item>
      <item>
       <widget class="QGroupBox" name="groupBox">
+       <property name="toolTip">
+        <string>How the new pathing is applied</string>
+       </property>
        <property name="title">
         <string>Operation Type</string>
        </property>
@@ -123,7 +126,7 @@
         <item>
          <widget class="QRadioButton" name="replaceType">
           <property name="toolTip">
-           <string>Replaces the existing pathing when the brush is used.</string>
+           <string>Replaces the existing pathing</string>
           </property>
           <property name="text">
            <string>Replace</string>
@@ -136,7 +139,7 @@
         <item>
          <widget class="QRadioButton" name="addType">
           <property name="toolTip">
-           <string>Adds to the existing pathing any brush types that are selected.</string>
+           <string>Adds to the existing pathing any types that are selected.</string>
           </property>
           <property name="text">
            <string>Add</string>
@@ -146,7 +149,7 @@
         <item>
          <widget class="QRadioButton" name="removeType">
           <property name="toolTip">
-           <string>Removes from the existing pathing all the brush types selected.</string>
+           <string>Removes from the existing pathing all the types selected.</string>
           </property>
           <property name="text">
            <string>Remove</string>
@@ -164,6 +167,9 @@
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
          <widget class="QCheckBox" name="applyRetroactively">
+          <property name="toolTip">
+           <string>Whether the pathing is applied to all existing tiles or only to newly placed tiles.</string>
+          </property>
           <property name="text">
            <string>Apply Retroactively</string>
           </property>

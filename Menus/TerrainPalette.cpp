@@ -137,33 +137,40 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 		brush.set_size(value);
 		ui.brushSize->setValue(value);
 	});
-
-	connect(ui.textureGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_texture = checked; });
-	connect(ui.cliffGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_cliff = checked; });
-	connect(ui.deformationGroupBox, &QGroupBox::clicked, [&](bool checked) { brush.apply_height = checked; });
+	
+	connect(ui.textureCheckbox, &QCheckBox::clicked, [&](bool checked) { brush.apply_texture = checked; });
+	connect(ui.cliffCheckbox, &QCheckBox::clicked, [&](bool checked) { brush.apply_cliff = checked; });
+	connect(ui.deformationCheckbox, &QCheckBox::clicked, [&](bool checked) { brush.apply_height = checked; });
 
 	connect(textures_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		brush.tile_id = button->property("tileID").toString().toStdString();
-		ui.textureGroupBox->setChecked(true);
+		ui.textureCheckbox->setChecked(true);
 		brush.apply_texture = true;
 	});
 
 	connect(cliff_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		brush.cliff_id = button->property("cliffID").toInt();
-		ui.cliffGroupBox->setChecked(true);
+		ui.cliffCheckbox->setChecked(true);
 		brush.apply_cliff = true;
 	});
 
 	connect(ui.cliffButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
-		ui.cliffGroupBox->setChecked(true);
-		ui.deformationGroupBox->setChecked(false);
+		ui.cliffCheckbox->setChecked(true);
+		ui.deformationCheckbox->setChecked(false);
+		brush.apply_cliff = true;
+		brush.apply_height = false;
+	});
+
+	connect(cliff_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&]() {
+		ui.cliffCheckbox->setChecked(true);
+		ui.deformationCheckbox->setChecked(false);
 		brush.apply_cliff = true;
 		brush.apply_height = false;
 	});
 
 	connect(ui.deformationButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
-		ui.deformationGroupBox->setChecked(true);
-		ui.cliffGroupBox->setChecked(false);
+		ui.deformationCheckbox->setChecked(true);
+		ui.cliffCheckbox->setChecked(false);
 		brush.apply_height = true;
 		brush.apply_cliff = false;
 	});

@@ -149,6 +149,8 @@ QRibbonButton::checked {
 }
 
 
+/******************************************************/
+/* Docking */
 
 ads--CDockAreaWidget #tabsMenuButton::menu-indicator {
     image: none;
@@ -187,6 +189,10 @@ QScrollArea#dockWidgetScrollArea {
 #tabCloseButton:pressed {
 	background: rgba(128, 128, 128, 255);
 }
+
+
+/******************************************************/
+/* General */
 
 QPushButton {
 	border: 1px solid transparent;

@@ -129,6 +129,9 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 }
 
 void TriggerExplorer::createCategory() {
+	if (selectionModel()->selectedRows().empty()) {
+		return;
+	}
 	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
@@ -149,6 +152,9 @@ void TriggerExplorer::createCategory() {
 }
 
 void TriggerExplorer::createJassTrigger() {
+	if (selectionModel()->selectedRows().empty()) {
+		return;
+	}
 	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
@@ -170,6 +176,9 @@ void TriggerExplorer::createJassTrigger() {
 }
 
 void TriggerExplorer::createGuiTrigger() {
+	if (selectionModel()->selectedRows().empty()) {
+		return;
+	}
 	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
@@ -191,8 +200,10 @@ void TriggerExplorer::createGuiTrigger() {
 }
 
 void TriggerExplorer::createComment() {
+	if (selectionModel()->selectedRows().empty()) {
+		return;
+	}
 	auto index = selectionModel()->selectedRows().front();
-
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
 	if (parent_item->type != Classifier::category) {

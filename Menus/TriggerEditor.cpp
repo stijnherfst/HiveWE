@@ -72,6 +72,10 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, this, &TriggerEditor::focus_search_window);
 }
 
+TriggerEditor::~TriggerEditor() {
+	save_changes();
+}
+
 void TriggerEditor::focus_search_window() {
 	SearchWindow* search = new SearchWindow(this);
 	search->move(500, 10);
@@ -93,7 +97,7 @@ void TriggerEditor::focus_search_window() {
 
 void TriggerEditor::item_clicked(const QModelIndex& index) {
 	TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
-	if (item->type == Classifier::category || item->type == Classifier::comment) {
+	if (item->type == Classifier::category) {
 		return;
 	}
 
@@ -160,7 +164,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 					edit->expandAll();
 				}
 			}
-
 		}
 
 		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
@@ -202,7 +205,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			return i.id == item->id;
 		});
 
-		//ads::CDockWidget* dock_tab = new ads::CDockWidget(QString::fromStdString(variable.name));
 		dock_tab->setWindowTitle(QString::fromStdString(variable.name));
 		dock_tab->setObjectName(QString::number(variable.id));
 		VariableEditor* edit = new VariableEditor(variable);
@@ -229,6 +231,37 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			}
 			dock_manager->removeDockWidget(dock_tab);
 		});
+	} else if (item->type == Classifier::comment) {
+		Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+			return trigger.id == item->id;
+		});
+
+		QPlainTextEdit* comments_editor = new QPlainTextEdit;
+		comments_editor->setObjectName("comments");
+		comments_editor->setPlaceholderText("Optional comments here");
+		comments_editor->setPlainText(QString::fromStdString(trigger.description));
+
+		dock_tab->setWindowTitle(QString::fromStdString(trigger.name));
+		dock_tab->setObjectName(QString::number(trigger.id));
+		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+		dock_tab->setWidget(comments_editor);
+
+		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+			Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+				return trigger.id == item->id;
+				});
+
+			auto comments = dock_tab->findChild<QPlainTextEdit*>("comments");
+			if (comments) {
+				trigger.description = comments->toPlainText().toStdString();
+			}
+
+			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
+				dock_area = nullptr;
+			}
+
+			dock_manager->removeDockWidget(dock_tab);
+		});
 	}
 
 	if (dock_area == nullptr) {
@@ -236,7 +269,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 	} else {
 		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 	}
-	
 }
 
 void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) {
@@ -433,6 +465,7 @@ void TriggerEditor::save_changes() {
 			map->triggers.global_jass = editor->text().toStdString();
 		} else {
 			JassEditor* editor = tab->findChild<JassEditor*>("jass_editor");
+			VariableEditor* var_editor = tab->findChild<VariableEditor*>("var_editor");
 
 			if (editor) { // jass
 				Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [trigger_id](const Trigger& trigger) {
@@ -445,19 +478,25 @@ void TriggerEditor::save_changes() {
 
 				trigger.custom_text = editor->text().toStdString();
 				break;
-			} else { // variable
+			} else if (var_editor) { // variable
 				TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [trigger_id](const TriggerVariable& i) {
 					return i.id == trigger_id;
 				});
 
-				auto editor = tab->findChild<VariableEditor*>("var_editor");
-				if (editor) {
-					variable.name = editor->ui.name->text().toStdString();
-					variable.type = editor->ui.type->text().toStdString();
-					variable.is_array = editor->ui.array->isChecked();
-					variable.array_size = editor->ui.array_size->value();
-					variable.is_initialized = !editor->ui.value->text().isEmpty();
-					variable.initial_value = editor->ui.value->text().toStdString();
+				variable.name = var_editor->ui.name->text().toStdString();
+				variable.type = var_editor->ui.type->text().toStdString();
+				variable.is_array = var_editor->ui.array->isChecked();
+				variable.array_size = var_editor->ui.array_size->value();
+				variable.is_initialized = !var_editor->ui.value->text().isEmpty();
+				variable.initial_value = var_editor->ui.value->text().toStdString();
+			} else { // comments
+				Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [trigger_id](const Trigger& trigger) {
+					return trigger.id == trigger_id;
+				});
+
+				auto comments = tab->findChild<QPlainTextEdit*>("comments");
+				if (comments) {
+					trigger.description = comments->toPlainText().toStdString();
 				}
 			}
 		}

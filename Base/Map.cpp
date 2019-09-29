@@ -196,10 +196,9 @@ bool Map::save(const fs::path& path) {
 			return false;
 		}
 
+		filesystem_path = fs::absolute(path) / "";
+		name = (*--(--filesystem_path.end())).string();
 	}
-
-	filesystem_path = fs::absolute(path) / "";
-	name = (*--(--filesystem_path.end())).string();
 
 	pathing_map.save();
 	terrain.save();
@@ -210,9 +209,6 @@ bool Map::save(const fs::path& path) {
 	triggers.save();
 	triggers.save_jass();
 	triggers.generate_map_script();
-
-	//imports.save();
-	//imports.save_dir_file();
 
 	return true;
 }

@@ -46,7 +46,7 @@ glm::vec2 Brush::get_position() const {
 }
 
 void Brush::set_size(const int new_size) {
-	//const int change = new_size * size_granularity - size;
+	glm::vec2 center = glm::vec2(position) + size / 8.f + glm::vec2(uv_offset) * 0.25f;
 
 	size = std::clamp(new_size * size_granularity, 1, 999);
 
@@ -55,7 +55,7 @@ void Brush::set_size(const int new_size) {
 
 	set_shape(shape);
 
-	//set_position(glm::vec2(position) + glm::vec2(uv_offset));
+	set_position(center);
 }
 
 void Brush::set_shape(const Shape new_shape) {
