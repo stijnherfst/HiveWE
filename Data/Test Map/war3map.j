@@ -250,7 +250,6 @@ endglobals
 
 function InitGlobals takes nothing returns nothing
  local integer i= 0
-	set udg_RealVar=5
 	set i=0
 	loop
 		exitwhen ( i > 1 )
