@@ -136,7 +136,7 @@ void TriggerExplorer::createCategory() {
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
-	if (parent_item->type != Classifier::category) {
+	if (parent_item->type != Classifier::category && parent_item->id != 0) {
 		parent_item = parent_item->parent;
 		index = index.parent();
 	}
