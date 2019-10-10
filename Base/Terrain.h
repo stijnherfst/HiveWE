@@ -15,7 +15,7 @@
 #include "CliffMesh.h"
 #include "Texture.h"
 #include "BinaryReader.h"
-
+#include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include "Shader.h"
 #include "SLK.h"
 
@@ -70,6 +70,9 @@ class Terrain : public QObject {
 	std::vector<glm::u16vec4> ground_texture_list;
 	std::vector<float> water_heights;
 	std::vector<unsigned char> water_exists_data;
+
+	
+	btHeightfieldTerrainShape* collision_shape;
 
 public:
 	char tileset;

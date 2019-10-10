@@ -52,16 +52,13 @@ void FPSCamera::update(const double delta) {
 }
 
 void FPSCamera::mouse_move_event(QMouseEvent* event) {
-	const double diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
-	const double diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
+	glm::vec2 diff = input_handler.mouse - input_handler.previous_mouse;
 
-	horizontal_angle += diffx * 0.012;
-	vertical_angle += -diffy * 0.012;
+	horizontal_angle += diff.x * 0.012;
+	vertical_angle += -diff.y * 0.012;
 	vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 
 	update(0);
-
-	input_handler.previous_mouse = event->globalPos();
 }
 
 void FPSCamera::mouse_scroll_event(QWheelEvent* event) {
@@ -107,22 +104,19 @@ void TPSCamera::update(double delta) {
 }
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {
-	const int diffx = input_handler.mouse.x() - input_handler.previous_mouse.x();
-	const int diffy = input_handler.mouse.y() - input_handler.previous_mouse.y();
+	glm::vec2 diff = input_handler.mouse - input_handler.previous_mouse;
 
 	if (rolling || (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier)) {
-		horizontal_angle += -diffx * 0.0025f;
-		vertical_angle += diffy * 0.0025f;
+		horizontal_angle += -diff.x * 0.0025f;
+		vertical_angle += diff.y * 0.0025f;
 		vertical_angle = std::max(-glm::pi<double>() / 2 + 0.001, std::min(vertical_angle, glm::pi<double>() / 2 - 0.001));
 		update(0);
 	} else if (event->buttons() == Qt::RightButton) {
-		position += X * (-diffx * 0.025f * (distance / 30.f));
-		position += forward * (-diffy * 0.025f * (distance / 30.f));
+		position += X * (-diff.x * 0.025f * (distance / 30.f));
+		position += forward * (-diff.y * 0.025f * (distance / 30.f));
 		position.z = map->terrain.interpolated_height(position.x, position.y);
 		update(0);
 	}
-
-	input_handler.previous_mouse = event->globalPos();
 }
 
 void TPSCamera::mouse_scroll_event(QWheelEvent* event) {

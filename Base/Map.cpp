@@ -8,9 +8,11 @@
 #include "Hierarchy.h"
 #include "HiveWE.h"
 #include "InputHandler.h"
-
+#include "Physics.h"
 
 void Map::load(const fs::path& path) {
+	physics.initialize();
+
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
@@ -65,7 +67,7 @@ void Map::load(const fs::path& path) {
 	// Doodads
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
-	
+
 	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -182,6 +184,7 @@ void Map::load(const fs::path& path) {
 
 	camera->reset();
 
+
 	loaded = true;
 }
 
@@ -189,7 +192,7 @@ bool Map::save(const fs::path& path) {
 	if (!fs::equivalent(path, filesystem_path)) {
 		try {
 			fs::copy(filesystem_path, fs::absolute(path), fs::copy_options::recursive);
-		} catch (fs::filesystem_error& e) {
+		} catch (fs::filesystem_error & e) {
 			QMessageBox msgbox;
 			msgbox.setText(e.what());
 			msgbox.exec();
@@ -228,12 +231,26 @@ void Map::render(int width, int height) {
 
 	// Render Terrain
 	terrain.render();
-
+	
 	// Map mouse coordinates to world coordinates
-	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y() > 0) {
-		glm::vec3 window = glm::vec3(input_handler.mouse.x(), height - input_handler.mouse.y(), 0);
-		gl->glReadPixels(input_handler.mouse.x(), height - input_handler.mouse.y(), 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
-		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
+	if (input_handler.mouse != input_handler.previous_mouse) {
+		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
+		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
+		glm::vec3 origin = camera->position - camera->direction * camera->distance;
+		glm::vec3 direction = glm::normalize(pos - cpos);
+		glm::vec3 toto = origin + direction * 200.f;
+
+		btVector3 from(origin.x, origin.y, origin.z);
+		btVector3 to(toto.x, toto.y, toto.z);
+
+		btCollisionWorld::AllHitsRayResultCallback res(from, to);
+		physics.dynamicsWorld->rayTest(from, to, res);
+		res.m_hitPointWorld.quickSort([from](btVector3& a, btVector3& b) -> bool { return a.distance(from) < b.distance(from); });
+
+		if (res.m_hitPointWorld.size()) {
+			auto& hit = res.m_hitPointWorld[0];
+			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
+		}
 	}
 
 	// Render Doodads
@@ -253,9 +270,12 @@ void Map::render(int width, int height) {
 	}
 
 	// Render all meshes
-	for (auto&& i : meshes) {
+	for (const auto& i : meshes) {
 		i->render();
 	}
+
+	physics.dynamicsWorld->debugDrawWorld();
+	physics.draw->render();
 
 	meshes.clear();
 }

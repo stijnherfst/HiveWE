@@ -1,8 +1,6 @@
-
 #include <set>
 #include <bitset>
 #include <iostream>
-
 
 #include "Terrain.h"
 #include "Hierarchy.h"
@@ -11,6 +9,9 @@
 #include "HiveWE.h"
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
+#include "Physics.h"
+
+#include "btBulletDynamicsCommon.h"
 
 using namespace std::literals::string_literals;
 
@@ -264,6 +265,16 @@ void Terrain::create() {
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
 	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
+
+	collision_shape = new btHeightfieldTerrainShape(width, height, ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	if (collision_shape == nullptr) {
+		std::cout << "error\n";
+	}
+
+	btRigidBody* body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+	body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+	physics.dynamicsWorld->addRigidBody(body);
 
 	emit minimap_changed(minimap_image());
 }
@@ -553,7 +564,7 @@ bool Terrain::is_corner_ramp_entrance(int x, int y) {
 	Corner& top_left = corners[x][y + 1];
 	Corner& top_right = corners[x + 1][y + 1];
 
-	return bottom_left.ramp && top_left.ramp&& bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height);
+	return bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height);
 }
 
 //bool Terrain::is_corner_cliff(int x, int y) {
@@ -579,7 +590,7 @@ Texture Terrain::minimap_image() {
 				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
 			}
 
-			if (corners[i][j].water &&  corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
+			if (corners[i][j].water && corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {
 				if (corners[i][j].final_water_height() - corners[i][j].final_ground_height() > 0.5f) {
 					color *= 0.5625f;
 					color += glm::vec4(0, 0, 80, 112);
@@ -756,7 +767,7 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 
 				const bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
 				const bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
-				
+
 				if (!(facing_down && j == 0) && !(!facing_down && j >= height - 2) && !(facing_left && i == 0) && !(!facing_left && i >= width - 2)) {
 					const bool br = bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff;
 					const bool bo = bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff;

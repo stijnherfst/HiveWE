@@ -12,8 +12,8 @@
 
 class InputHandler {
 public:
-	QPoint mouse;
-	QPoint previous_mouse;
+	glm::vec2 mouse;
+	glm::vec2 previous_mouse;
 
 	glm::vec3 mouse_world;
 
