@@ -9,10 +9,10 @@
 #include "HiveWE.h"
 #include "InputHandler.h"
 #include "Physics.h"
+#include "Camera.h"
+
 
 void Map::load(const fs::path& path) {
-	physics.initialize();
-
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
@@ -77,6 +77,8 @@ void Map::load(const fs::path& path) {
 
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
+
+//	physics.initialize();
 
 	// Trigger strings
 	if (hierarchy.map_file_exists("war3map.wts")) {
@@ -237,18 +239,19 @@ void Map::render(int width, int height) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
 		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 		glm::vec3 origin = camera->position - camera->direction * camera->distance;
-		glm::vec3 direction = glm::normalize(pos - cpos);
+		glm::vec3 direction = glm::normalize(pos - origin);
 		glm::vec3 toto = origin + direction * 200.f;
 
 		btVector3 from(origin.x, origin.y, origin.z);
 		btVector3 to(toto.x, toto.y, toto.z);
 
-		btCollisionWorld::AllHitsRayResultCallback res(from, to);
+		btCollisionWorld::ClosestRayResultCallback res(from, to);
+		res.m_collisionFilterGroup = 32;
+		res.m_collisionFilterMask = 32;
 		physics.dynamicsWorld->rayTest(from, to, res);
-		res.m_hitPointWorld.quickSort([from](btVector3& a, btVector3& b) -> bool { return a.distance(from) < b.distance(from); });
-
-		if (res.m_hitPointWorld.size()) {
-			auto& hit = res.m_hitPointWorld[0];
+		
+		if (res.hasHit()) {
+			auto& hit = res.m_hitPointWorld;
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
 	}

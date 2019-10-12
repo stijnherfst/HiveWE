@@ -36,17 +36,14 @@ struct Physics {
 	
 	PhysicsDebugDraw* draw;
 	
-
-	void initialize();
+	Physics();
 
 	~Physics() {
-		delete dynamicsWorld;
-		delete solver;
+		delete broadphase;
 		delete collisionConfiguration;
 		delete dispatcher;
-		delete broadphase;
+		delete solver;
+		delete dynamicsWorld;
+		delete draw;
 	}
 };
-
-extern Physics physics;
-

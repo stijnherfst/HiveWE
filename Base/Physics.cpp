@@ -52,7 +52,7 @@ void PhysicsDebugDraw::render() {
 	gl->glEnable(GL_DEPTH_TEST);
 }
 
-void Physics::initialize() {
+Physics::Physics() {
 	broadphase = new btDbvtBroadphase();
 	collisionConfiguration = new btDefaultCollisionConfiguration();
 	dispatcher = new btCollisionDispatcher(collisionConfiguration);
@@ -64,5 +64,3 @@ void Physics::initialize() {
 	draw->setDebugMode(draw->getDebugMode() | btIDebugDraw::DBG_DrawAabb);
 	dynamicsWorld->setDebugDrawer(draw);
 }
-
-Physics physics;

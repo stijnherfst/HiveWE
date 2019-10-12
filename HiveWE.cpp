@@ -224,7 +224,7 @@ void HiveWE::load_folder() {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 		
 	map->load(directory);
-	setWindowTitle("HiveWE 0.6 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 /// Load MPQ will extract all files from the archive in a user specified location

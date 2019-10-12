@@ -41,7 +41,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			// Buffer Data
 			int base_vertex = 0;
 			int base_index = 0;
-			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
+			for (const auto& i : model.chunk<mdx::GEOS>()->geosets) {
 				MeshEntry entry;
 				entry.vertices = static_cast<int>(i.vertices.size());
 				entry.base_vertex = base_vertex;

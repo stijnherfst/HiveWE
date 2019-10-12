@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 
 #include "Brush.h"
 #include "StaticMesh.h"
-
+#include "Physics.h"
 
 class Map {
 public:
@@ -39,6 +39,7 @@ public:
 	Sounds sounds;
 
 	Brush* brush = nullptr;
+	Physics physics;
 
 	bool is_protected = false;
 	bool units_loaded = false;

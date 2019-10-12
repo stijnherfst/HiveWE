@@ -11,8 +11,6 @@
 #include "BinaryWriter.h"
 #include "Physics.h"
 
-#include "btBulletDynamicsCommon.h"
-
 using namespace std::literals::string_literals;
 
 float Corner::final_ground_height() const {
@@ -32,6 +30,9 @@ Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &water_texture_array);
 	gl->glDeleteTextures(1, &water_exists);
 	gl->glDeleteTextures(1, &water_height);
+
+	delete collision_body;
+	delete collision_shape;
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -271,11 +272,11 @@ void Terrain::create() {
 		std::cout << "error\n";
 	}
 
-	btRigidBody* body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
-	body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
-	physics.dynamicsWorld->addRigidBody(body);
-
+	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
+	
 	emit minimap_changed(minimap_image());
 }
 
