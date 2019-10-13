@@ -186,6 +186,7 @@ namespace slk {
 			if (!header_to_row.contains(section_key)) {
 				continue;
 			}
+
 			for (auto&& [key, value] : section_value) {
 				if (!header_to_column.contains(key)) {
 					add_column(key);

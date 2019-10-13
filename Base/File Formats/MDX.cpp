@@ -166,31 +166,37 @@ namespace mdx {
 			reader.advance(4);
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
 			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
-			reader.advance(4);
+			reader.advance(4); // Mats
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
 			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
 
+			std::string tt;
 			if (version == 900) {
 				reader.advance(4); // ?
-				reader.advance(112); // ?
+				tt = reader.read_string(80); // ?
+
+			} 
+
+			geoset.extent = Extent(reader);
+			const uint32_t extents_count = reader.read<uint32_t>();
+			for (size_t i = 0; i < extents_count; i++) {
+				geoset.extents.emplace_back(Extent(reader));
+			}
+
+			if (version == 900 && tt.size()) {
 				reader.advance(4); // Tangents
 				uint32_t structure_count = reader.read<uint32_t>();
 				reader.advance(structure_count * 16);
 				reader.advance(4); // Skin?
 				uint32_t byte_count = reader.read<uint32_t>();
 				reader.advance(byte_count);
-			} else {
-				geoset.extent = Extent(reader);
-				const uint32_t extents_count = reader.read<uint32_t>();
-				for (size_t i = 0; i < extents_count; i++) {
-					geoset.extents.emplace_back(Extent(reader));
-				}
 			}
+
 			
-			reader.advance(4);
+			reader.advance(4); // UVAS
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
 				geoset.texture_coordinate_sets.emplace_back(TextureCoordinateSet(reader));
@@ -230,7 +236,7 @@ namespace mdx {
 		}
 	}
 
-	MTLS::MTLS(BinaryReader& reader) {
+	MTLS::MTLS(BinaryReader& reader, int version) {
 		const uint32_t size = reader.read<uint32_t>();
 		uint32_t total_size = 0;
 
@@ -240,6 +246,9 @@ namespace mdx {
 			Material material;
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
+			if (version == 900) {
+				reader.advance(80); // Some random string
+			}
 			reader.advance(4);
 			const uint32_t layers_count = reader.read<uint32_t>();
 
@@ -286,12 +295,12 @@ namespace mdx {
 				//case ChunkTag::SEQS:
 				//	chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
 				//	break;
-				//case ChunkTag::MTLS:
-				//	chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader);
-				//	break;
-				//case ChunkTag::TEXS:
-				//	chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
-				//	break;
+				case ChunkTag::MTLS:
+					chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader, version);
+					break;
+				case ChunkTag::TEXS:
+					chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
+					break;
 				case ChunkTag::GEOS:
 					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader, version);
 					return;

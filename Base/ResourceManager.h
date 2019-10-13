@@ -15,14 +15,19 @@ class ResourceManager {
 public:
 	template<typename T>
 	std::shared_ptr<T> load(const fs::path& path) {
+		static int hits = 0;
+		static int misses = 0;
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
 
 		const std::string resource = path.string() + T::name;
 
 		auto res = resources[resource].lock();
 		if (!res) {
+			//std::cout << "Cache miss " << misses++ << " " << resource << "\n";
 			resources[resource] = res = std::make_shared<T>(path);
-		}
+		}/* else {
+			std::cout << "Cache hit " << hits++ << " " << resource << "\n";
+		}*/
 
 		return std::dynamic_pointer_cast<T>(res);
 	}

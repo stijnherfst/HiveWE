@@ -81,9 +81,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 		if (model.has_chunk<mdx::GEOA>()) {
 			if (animations.contains("stand")) {
-				for (auto&& i : model.chunk<mdx::GEOA>()->animations) {
+				for (const auto& i : model.chunk<mdx::GEOA>()->animations) {
 					if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
-						for (auto&& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
+						for (const auto& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
 							if (j.frame >= animations["stand"].interval_start && j.frame <= animations["stand"].interval_end) {
 								entries[i.geoset_id].visible = j.value > 0.75;
 							}
@@ -94,18 +94,30 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		}
 
 		if (model.has_chunk<mdx::TEXS>()) {
-			for (auto&& i : model.chunk<mdx::TEXS>()->textures) {
+			auto tt = model.chunk<mdx::TEXS>()->textures;
+			bool has_diffuse = false;
+			for (const auto& i : model.chunk<mdx::TEXS>()->textures) {
 				if (i.replaceable_id != 0) {
 					if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
 						std::cout << "Unknown replacable ID found\n";
 					}
 					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+					auto f = std::find(i.file_name.begin(), i.file_name.end(), "Diffuse");
+					if (f != i.file_name.end()) {
+						has_diffuse = true;
+					}
+
+					auto t = i.file_name;
+					t.replace_extension(".dds");
+					textures.push_back(resource_manager.load<GPUTexture>(t));
 					// ToDo Same texture on different model with different flags?
 					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 				}
+			}
+			if (has_diffuse == false) {
+				std::cout << "doesn't have diffuse " << path << "\n";
 			}
 		}
 

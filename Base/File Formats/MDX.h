@@ -11,6 +11,10 @@
 
 #include "BinaryReader.h"
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace mdx {
 	extern std::map<int, std::string> replacable_id_to_texture;
 
@@ -125,11 +129,11 @@ namespace mdx {
 		AnimatedData& operator=(const AnimatedData&) = default;
 
 		template<typename T>
-		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) {
-			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks[track]);
+		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) const {
+			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks.at(track));
 		}
 
-		bool has_track(const TrackTag track) {
+		bool has_track(const TrackTag track) const {
 			return tracks.contains(track);
 		}
 
@@ -230,7 +234,7 @@ namespace mdx {
 	struct Texture {
 		explicit Texture(BinaryReader& reader);
 		uint32_t replaceable_id;
-		std::string file_name;
+		fs::path file_name;
 		uint32_t flags;
 	};
 
@@ -285,7 +289,7 @@ namespace mdx {
 	};
 
 	struct MTLS : Chunk {
-		explicit MTLS(BinaryReader& reader);
+		explicit MTLS(BinaryReader& reader, int version);
 
 		static const ChunkTag tag = ChunkTag::MTLS;
 		std::vector<Material> materials;

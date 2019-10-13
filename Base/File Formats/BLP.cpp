@@ -22,73 +22,56 @@ namespace blp {
 		// extra and has_mipmaps
 		reader.advance(8);
 
+		data.resize(width * height * 4);
+
 		auto mipmap_offsets = reader.read_vector<uint32_t>(16);
 		auto mipmap_sizes = reader.read_vector<uint32_t>(16);
 
-		if (content == jpeg) {
+		if (content == Content::jpeg) {
 			tjhandle handle = tjInitDecompress();
 			const uint32_t header_size = reader.read<uint32_t>();
 			auto header_position = reader.buffer.begin() + reader.position;
 
-			for (int i = 0; i < mipmap_sizes.size(); i++) {
-				if (mipmap_sizes[i] == 0) {
-					break;
-				}
-				int mipmap_width = static_cast<int>(std::max(1.0, width / std::pow(2, i)));
-				int mipmap_height = static_cast<int>(std::max(1.0, height / std::pow(2, i)));
-				mipmaps.emplace_back(mipmap_width, mipmap_height, std::vector<uint8_t>(mipmap_width * mipmap_height * 4));
+			// Move header in front of content
+			std::copy(header_position, header_position + header_size, reader.buffer.begin() + mipmap_offsets[0] - header_size);
+			header_position = reader.buffer.begin() + mipmap_offsets[0] - header_size;
 
-				// Move header in front of content
-				std::copy(header_position, header_position + header_size, reader.buffer.begin() + mipmap_offsets[i] - header_size);
-				header_position = reader.buffer.begin() + mipmap_offsets[i] - header_size;
+			const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[0] - header_size, header_size + mipmap_sizes[0], data.data(), width, 0, height, TJPF_CMYK, 0); // Actually BGRA
 
-				const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[i] - header_size, header_size + mipmap_sizes[i], std::get<2>(mipmaps.back()).data(), mipmap_width, 0, mipmap_height, TJPF_CMYK, 0); // Actually BGRA
-
-				if (success == -1) {
-					std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
-				}
+			if (success == -1) {
+				std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
 			}
 			tjDestroy(handle);
-		} else if (content == direct) {
+		} else if (content == Content::direct) {
 			auto header = reader.read_vector<uint32_t>(256);
 
-			for (int i = 0; i < mipmap_sizes.size(); i++) {
-				if (mipmap_sizes[i] == 0) {
-					break;
+			// There might be fake mipmaps or the first mipmap could start within the 256 bytes of the colour header
+			// Thus we cannot rely purely on advancing the position by mipmap sizes alone
+			reader.position = mipmap_offsets[0];
+			auto rgb = reader.read_vector<uint8_t>(width * height);
+
+			if (alpha_bits == 0) {
+				for (size_t j = 0; j < rgb.size(); j++) {
+					// + (255 << 24) because the header alpha value is always 0 so we add 255
+					reinterpret_cast<uint32_t*>(data.data())[j] = header[rgb[j]] + (255 << 24);
 				}
-
-				int mipmap_width = static_cast<int>(std::max(1.0, width / std::pow(2, i)));
-				int mipmap_height = static_cast<int>(std::max(1.0, height / std::pow(2, i)));
-
-				// There might be fake mipmaps or the first mipmap could start within the 256 bytes of the colour header
-				// Thus we cannot rely purely on advancing the position by mipmap sizes alone
-				reader.position = mipmap_offsets[i];
-				auto rgb = reader.read_vector<uint8_t>(mipmap_width * mipmap_height);
-
-				mipmaps.emplace_back(mipmap_width, mipmap_height, std::vector<uint8_t>(mipmap_width * mipmap_height * 4, 255));
-				if (alpha_bits == 0) {
-					for (size_t j = 0; j < rgb.size(); j++) {
-						// + (255 << 24) because the header alpha value is always 0 so we add 255
-						reinterpret_cast<uint32_t*>(std::get<2>(mipmaps[i]).data())[j] = header[rgb[j]] + (255 << 24);
-					}
-				} else {
-					auto alpha = reader.read_vector<uint8_t>((mipmap_width * mipmap_height * alpha_bits + 7) / 8);
+			} else {
+				auto alpha = reader.read_vector<uint8_t>((width * height * alpha_bits + 7) / 8);
 					
-					for (size_t j = 0; j < rgb.size(); j++) {
-						reinterpret_cast<uint32_t*>(std::get<2>(mipmaps[i]).data())[j] = header[rgb[j]];
-						switch (alpha_bits) {
-							case 8:
-								std::get<2>(mipmaps[i])[j * 4 + 3] = alpha[j];
-								break;
-							case 4: {
-								uint8_t byte = alpha[j / 2];
-								std::get<2>(mipmaps[i])[j * 4 + 3] = j % 2 ? byte >> 4 : byte & 0b00001111;
-								break;
-							}
-							case 1:
-								std::get<2>(mipmaps[i])[j * 4 + 3] = alpha[j / 8] & (1 << (j % 8));
-								break;
+				for (size_t j = 0; j < rgb.size(); j++) {
+					reinterpret_cast<uint32_t*>(data.data())[j] = header[rgb[j]];
+					switch (alpha_bits) {
+						case 8:
+							data[j * 4 + 3] = alpha[j];
+							break;
+						case 4: {
+							uint8_t byte = alpha[j / 2];
+							data[j * 4 + 3] = j % 2 ? byte >> 4 : byte & 0b00001111;
+							break;
 						}
+						case 1:
+							data[j * 4 + 3] = alpha[j / 8] & (1 << (j % 8));
+							break;
 					}
 				}
 			}

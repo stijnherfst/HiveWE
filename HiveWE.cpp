@@ -465,6 +465,7 @@ void HiveWE::import_heightmap() {
 	}
 
 	map->terrain.update_ground_heights({ 0, 0, width, height });
+	delete image_data;
 }
 
 void HiveWE::save_window_state() {

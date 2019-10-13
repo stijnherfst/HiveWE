@@ -18,23 +18,11 @@ void Map::load(const fs::path& path) {
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
 
-
-	//std::ifstream fin("C:/Users/User/Desktop/ashenrock2.mdx", std::ios_base::binary);
-	//fin.seekg(0, std::ios::end);
-	//const size_t fileSize = fin.tellg();
-	//std::vector<uint8_t> buffer(fileSize);
-
-	//fin.seekg(0, std::ios::beg);
-	//fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
-	//fin.close();
-	//auto t = BinaryReader(buffer);
-
-	//mdx::MDX model(t);
-
 	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
 	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
 
+	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
 	units_slk.merge(slk::SLK("Units/unitUI.slk"));
 	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
@@ -54,7 +42,9 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"));
 
+
 	abilities_slk = slk::SLK("Units/AbilityData.slk");
+	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"));
 	abilities_slk.merge(ini::INI("Units/HumanAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/OrcAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/UndeadAbilityFunc.txt"));
@@ -75,6 +65,7 @@ void Map::load(const fs::path& path) {
 
 	// Items
 	items_slk = slk::SLK("Units/ItemData.slk");
+	items_slk.merge(ini::INI("Units/ItemSkin.txt"));
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
 
@@ -82,6 +73,7 @@ void Map::load(const fs::path& path) {
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 
+	doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"));
 	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -89,6 +81,7 @@ void Map::load(const fs::path& path) {
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
+	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -269,6 +262,12 @@ void Map::render(int width, int height) {
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
 	}*/
+
+	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y > 0) {
+		glm::vec3 window = glm::vec3(input_handler.mouse.x, height - input_handler.mouse.y, 0);
+		gl->glReadPixels(input_handler.mouse.x, height - input_handler.mouse.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
+		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
+	}
 
 	// Render Doodads
 	if (render_doodads) {

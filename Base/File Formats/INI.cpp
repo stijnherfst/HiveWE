@@ -14,6 +14,17 @@ namespace ini {
 		std::stringstream file;
 		file.write((char*)hierarchy.open_file(path).buffer.data(), hierarchy.open_file(path).buffer.size());
 
+		// Sip byte order marking
+		char a, b, c;
+		a = file.get();
+		b = file.get();
+		c = file.get();
+		if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
+			file.seekg(0);
+		} else {
+			std::cerr << "Warning: file contains the so-called 'UTF-8 signature'\n";
+		}
+
 		std::string line;
 		std::string current_section;
 		while (std::getline(file, line)) {
