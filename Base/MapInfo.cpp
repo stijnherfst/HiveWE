@@ -10,13 +10,13 @@
 void MapInfo::load(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
-	if (version != 18 && version != 25 && version != 28) {
+	if (version != 18 && version != 25 && version != 28 && version !=31) {
 		std::cout << "Unknown war3map.w3i version\n";
 	}
 
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
-	if (version == 28) {
+	if (version == 28 || version == 31) {
 		game_version_major = reader.read<uint32_t>();
 		game_version_minor = reader.read<uint32_t>();
 		game_version_patch = reader.read<uint32_t>();
@@ -59,7 +59,7 @@ void MapInfo::load(BinaryReader& reader) {
 	// Tileset
 	reader.advance(1);
 
-	if (version == 25 || version == 28) { // TFT
+	if (version == 25 || version == 28 || version == 31) { // TFT
 		loading_screen_number = reader.read<uint32_t>();
 		loading_screen_model = reader.read_c_string();
 		loading_screen_text = reader.read_c_string();
@@ -84,8 +84,12 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
 
-		if (version == 28) {
+		if (version == 28 || version == 31) {
 			lua = reader.read<uint32_t>() == 1;
+			if (version == 31) {
+				reader.advance(8);
+			}
+
 		}
 	} else if (version == 18) { // RoC
 		loading_screen_number = reader.read<uint32_t>();
@@ -108,6 +112,9 @@ void MapInfo::load(BinaryReader& reader) {
 		i.fixed_start_position = reader.read<uint32_t>();
 		i.name = reader.read_c_string();
 		i.starting_position = reader.read<glm::vec2>();
+		if (version == 31) {
+			reader.advance(8);
+		}
 		i.ally_low_priorities_flags = reader.read<uint32_t>();
 		i.ally_high_priorities_flags = reader.read<uint32_t>();
 	}
@@ -159,7 +166,7 @@ void MapInfo::load(BinaryReader& reader) {
 		}
 	}
 
-	if (version == 25 || version == 28) {
+	if (version == 25 || version == 28 || version == 31) {
 		random_item_tables.resize(reader.read<uint32_t>());
 		for (auto&& i : random_item_tables) {
 			i.number = reader.read<uint32_t>();

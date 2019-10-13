@@ -29,7 +29,7 @@ void Doodad::update() {
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3map.w3e file: Magic number is not W3do\n";
+		std::cout << "Invalid war3map.doo file: Magic number is not W3do\n";
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
@@ -49,6 +49,9 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>();
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			reader.advance(4);
+		}
 		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 

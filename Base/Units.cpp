@@ -21,7 +21,7 @@ void Unit::update() {
 bool Units::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3mapUnits.w3e file: Magic number is not W3do\n";
+		std::cout << "Invalid war3mapUnits.doo file: Magic number is not W3do\n";
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
@@ -46,6 +46,11 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		// Scale isn't actually used
 		//i.scale = reader.read<glm::vec3>() / 128.f;
 		reader.advance(12);
+
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			reader.advance(4);
+		}
+
 		i.scale = glm::vec3(1.f);
 		
 		i.flags = reader.read<uint8_t>();
