@@ -11,11 +11,25 @@
 #include "Physics.h"
 #include "Camera.h"
 
+#include <fstream>
 
 void Map::load(const fs::path& path) {
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
+
+
+	//std::ifstream fin("C:/Users/User/Desktop/ashenrock2.mdx", std::ios_base::binary);
+	//fin.seekg(0, std::ios::end);
+	//const size_t fileSize = fin.tellg();
+	//std::vector<uint8_t> buffer(fileSize);
+
+	//fin.seekg(0, std::ios::beg);
+	//fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+	//fin.close();
+	//auto t = BinaryReader(buffer);
+
+	//mdx::MDX model(t);
 
 	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
@@ -235,7 +249,7 @@ void Map::render(int width, int height) {
 	terrain.render();
 	
 	// Map mouse coordinates to world coordinates
-	if (input_handler.mouse != input_handler.previous_mouse) {
+	/*if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
 		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 		glm::vec3 origin = camera->position - camera->direction * camera->distance;
@@ -254,7 +268,7 @@ void Map::render(int width, int height) {
 			auto& hit = res.m_hitPointWorld;
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
-	}
+	}*/
 
 	// Render Doodads
 	if (render_doodads) {
@@ -277,8 +291,8 @@ void Map::render(int width, int height) {
 		i->render();
 	}
 
-	physics.dynamicsWorld->debugDrawWorld();
-	physics.draw->render();
+	//physics.dynamicsWorld->debugDrawWorld();
+	//physics.draw->render();
 
 	meshes.clear();
 }

@@ -23,7 +23,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
-				//uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
+				uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
 			}
 			
 			// Allocate space

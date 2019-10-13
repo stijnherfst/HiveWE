@@ -264,7 +264,7 @@ namespace mdx {
 	};
 
 	struct GEOS : Chunk {
-		explicit GEOS(BinaryReader& reader);
+		explicit GEOS(BinaryReader& reader, int version);
 
 		static const ChunkTag tag = ChunkTag::GEOS;
 		std::vector<Geoset> geosets;
@@ -299,6 +299,7 @@ namespace mdx {
 	};
 
 	class MDX {
+		int version;
 		std::map<ChunkTag, std::shared_ptr<Chunk>> chunks;
 
 	public:

@@ -137,7 +137,7 @@ namespace mdx {
 		}
 	}
 
-	GEOS::GEOS(BinaryReader& reader) {
+	GEOS::GEOS(BinaryReader& reader, int version) {
 		const uint32_t size = reader.read<uint32_t>();
 		uint32_t total_size = 0;
 
@@ -173,11 +173,23 @@ namespace mdx {
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
 
-			geoset.extent = Extent(reader);
-			const uint32_t extents_count = reader.read<uint32_t>();
-			for (size_t i = 0; i < extents_count; i++) {
-				geoset.extents.emplace_back(Extent(reader));
+			if (version == 900) {
+				reader.advance(4); // ?
+				reader.advance(112); // ?
+				reader.advance(4); // Tangents
+				uint32_t structure_count = reader.read<uint32_t>();
+				reader.advance(structure_count * 16);
+				reader.advance(4); // Skin?
+				uint32_t byte_count = reader.read<uint32_t>();
+				reader.advance(byte_count);
+			} else {
+				geoset.extent = Extent(reader);
+				const uint32_t extents_count = reader.read<uint32_t>();
+				for (size_t i = 0; i < extents_count; i++) {
+					geoset.extents.emplace_back(Extent(reader));
+				}
 			}
+			
 			reader.advance(4);
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
@@ -267,24 +279,29 @@ namespace mdx {
 			uint32_t header = reader.read<uint32_t>();
 
 			switch (static_cast<ChunkTag>(header)) {
-				case ChunkTag::SEQS:
-					chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
+				case ChunkTag::VERS:
+					reader.advance(4);
+					version = reader.read<uint32_t>();
 					break;
-				case ChunkTag::MTLS:
-					chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader);
-					break;
-				case ChunkTag::TEXS:
-					chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
-					break;
+				//case ChunkTag::SEQS:
+				//	chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
+				//	break;
+				//case ChunkTag::MTLS:
+				//	chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader);
+				//	break;
+				//case ChunkTag::TEXS:
+				//	chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
+				//	break;
 				case ChunkTag::GEOS:
-					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader);
+					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader, version);
+					return;
 					break;
-				case ChunkTag::GEOA:
-					chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
-					break;
-				case ChunkTag::BONE:
-					chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
-					break;
+				//case ChunkTag::GEOA:
+				//	chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
+				//	break;
+				//case ChunkTag::BONE:
+				//	chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
+				//	break;
 				default:
 					reader.advance(reader.read<uint32_t>());
 			}

@@ -19,7 +19,16 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 
 	if (map_file_exists(path)) {
 		return map_file_read(path);
-	} else if (fs::exists(warcraft_directory / path)) { //Probably shouldn't be supported but WC3 allows it
+	} else if (fs::exists("C:/Users/User/Desktop/Warcraft/MPQContent/1.32/war3.w3mod/_hd.w3mod" / path)) {
+		std::ifstream fin("C:/Users/User/Desktop/Warcraft/MPQContent/1.32/war3.w3mod/_hd.w3mod" / path, std::ios_base::binary);
+		fin.seekg(0, std::ios::end);
+		const size_t fileSize = fin.tellg();
+		fin.seekg(0, std::ios::beg);
+		std::vector<uint8_t> buffer(fileSize);
+		fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
+		fin.close();
+		return BinaryReader(buffer);
+	} else if (fs::exists(warcraft_directory / path)) {
 		std::ifstream fin(warcraft_directory / path, std::ios_base::binary);
 		fin.seekg(0, std::ios::end);
 		const size_t fileSize = fin.tellg();

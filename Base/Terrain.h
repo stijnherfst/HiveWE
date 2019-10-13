@@ -11,8 +11,8 @@
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
-#include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
-#include "btBulletDynamicsCommon.h"
+//#include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
+//#include "btBulletDynamicsCommon.h"
 
 #include "GroundTexture.h"
 #include "CliffMesh.h"
@@ -74,8 +74,8 @@ class Terrain : public QObject {
 	std::vector<unsigned char> water_exists_data;
 
 	
-	btHeightfieldTerrainShape* collision_shape;
-	btRigidBody* collision_body;
+	//btHeightfieldTerrainShape* collision_shape;
+	//btRigidBody* collision_body;
 public:
 	char tileset;
 	std::vector<std::string> tileset_ids;

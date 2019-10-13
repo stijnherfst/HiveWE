@@ -97,7 +97,6 @@ add_executable(HiveWE
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET3_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE "C:/vcpkg/installed/x64-windows/include/bullet")
 
 target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
 
@@ -110,12 +109,6 @@ target_link_libraries(HiveWE
 	casclib
 	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
 	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/Bullet3Common.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletCollision.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletInverseDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletSoftBody.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/LinearMath.lib"
 	${JPEG_LIBRARIES}
 	qt-advanced-docking-system::qtadvanceddocking
 )

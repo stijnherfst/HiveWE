@@ -31,8 +31,8 @@ Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &water_exists);
 	gl->glDeleteTextures(1, &water_height);
 
-	delete collision_body;
-	delete collision_shape;
+//	delete collision_body;
+//	delete collision_shape;
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -169,17 +169,17 @@ void Terrain::create() {
 	}
 
 	// Ground textures
-	for (auto&& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
+	for (const auto& tile_id : tileset_ids) {
+		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + "_diffuse.dds"));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
+	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight_diffuse.dds"));
 
 	// Cliff Textures
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + "_diffuse.dds"));
 		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
@@ -228,7 +228,7 @@ void Terrain::create() {
 	gl->glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	int sub = 0;
 	for (const auto& i : cliff_textures) {
-		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data.data());
+		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, i->channels == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, i->data.data());
 		sub += 1;
 	}
 	gl->glGenerateTextureMipmap(cliff_texture_array);
@@ -267,15 +267,15 @@ void Terrain::create() {
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
 	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
 
-	collision_shape = new btHeightfieldTerrainShape(width, height, ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
-	if (collision_shape == nullptr) {
-		std::cout << "error\n";
-	}
+	//collision_shape = new btHeightfieldTerrainShape(width, height, ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	//if (collision_shape == nullptr) {
+	//	std::cout << "error\n";
+	//}
 
-	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
-	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
-	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
+	//collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+	//collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	//collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+	//map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 	
 	emit minimap_changed(minimap_image());
 }
