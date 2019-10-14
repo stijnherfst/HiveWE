@@ -81,8 +81,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 		if (model.has_chunk<mdx::GEOA>()) {
 			if (animations.contains("stand")) {
+				auto tt = model.chunk<mdx::GEOA>()->animations;
 				for (const auto& i : model.chunk<mdx::GEOA>()->animations) {
 					if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
+						auto ttt = i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks;
 						for (const auto& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
 							if (j.frame >= animations["stand"].interval_start && j.frame <= animations["stand"].interval_end) {
 								entries[i.geoset_id].visible = j.value > 0.75;
@@ -93,9 +95,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			}
 		}
 
+		mtls = model.chunk<mdx::MTLS>();
+
 		if (model.has_chunk<mdx::TEXS>()) {
 			auto tt = model.chunk<mdx::TEXS>()->textures;
-			bool has_diffuse = false;
 			for (const auto& i : model.chunk<mdx::TEXS>()->textures) {
 				if (i.replaceable_id != 0) {
 					if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
@@ -103,9 +106,28 @@ StaticMesh::StaticMesh(const fs::path& path) {
 					}
 					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
 				} else {
-					auto f = std::find(i.file_name.begin(), i.file_name.end(), "Diffuse");
-					if (f != i.file_name.end()) {
-						has_diffuse = true;
+					
+					std::string to = i.file_name.stem().string();
+
+					// Only load diffuse to keep memory usage down
+					if (to.ends_with("Normal") 
+						|| to.ends_with("ORM")
+						|| to.ends_with("EnvironmentMap")
+						|| to.ends_with("Black32")
+						|| to.ends_with("Emissive")) {
+
+						textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
+
+						for (auto& j : mtls->materials) {
+							for (int k = j.layers.size(); k-- > 0;) {
+								if (j.layers[k].texture_id == textures.size() - 1) {
+									j.layers.erase(j.layers.begin() + k);
+									break;
+								}
+							}
+						}
+
+						continue;
 					}
 
 					auto t = i.file_name;
@@ -116,12 +138,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 				}
 			}
-			if (has_diffuse == false) {
-				std::cout << "doesn't have diffuse " << path << "\n";
-			}
 		}
 
-		mtls = model.chunk<mdx::MTLS>();
+		
 	}
 }
 
@@ -156,8 +175,6 @@ void StaticMesh::render() {
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
-	// ToDo support "Doodads\\Ruins\\Water\\BubbleGeyser\\BubbleGeyser.mdx"
-
 	shader->use();
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
@@ -172,11 +189,11 @@ void StaticMesh::render() {
 
 	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
 
-	for (auto&& i : entries) {
+	for (const auto& i : entries) {
 		if (!i.visible) {
 			continue;
 		}
-		for (auto&& j : mtls->materials[i.material_id].layers) {
+		for (const auto& j : mtls->materials[i.material_id].layers) {
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
 			gl->glEnable(GL_BLEND);
@@ -207,7 +224,9 @@ void StaticMesh::render() {
 			}
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+			break; // Currently only draws the first layer
 		}
+		//break;
 	}
 	gl->glDisableVertexAttribArray(2);
 

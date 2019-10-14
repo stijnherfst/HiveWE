@@ -21,8 +21,6 @@ namespace ini {
 		c = file.get();
 		if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
 			file.seekg(0);
-		} else {
-			std::cerr << "Warning: file contains the so-called 'UTF-8 signature'\n";
 		}
 
 		std::string line;

@@ -292,9 +292,9 @@ namespace mdx {
 					reader.advance(4);
 					version = reader.read<uint32_t>();
 					break;
-				//case ChunkTag::SEQS:
-				//	chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
-				//	break;
+				case ChunkTag::SEQS:
+					chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
+					break;
 				case ChunkTag::MTLS:
 					chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader, version);
 					break;
@@ -303,11 +303,10 @@ namespace mdx {
 					break;
 				case ChunkTag::GEOS:
 					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader, version);
-					return;
 					break;
-				//case ChunkTag::GEOA:
-				//	chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
-				//	break;
+				case ChunkTag::GEOA:
+					chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
+					break;
 				//case ChunkTag::BONE:
 				//	chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
 				//	break;

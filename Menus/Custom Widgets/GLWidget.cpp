@@ -23,8 +23,6 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		return;
 	}
 
-	//if (id == 131218) return;
-
 	std::cout << "---------------" << std::endl;
 	std::cout << "Debug message (" << id << "): " << message << std::endl;
 

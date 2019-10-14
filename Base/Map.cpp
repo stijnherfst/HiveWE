@@ -14,6 +14,9 @@
 #include <fstream>
 
 void Map::load(const fs::path& path) {
+	auto begin = std::chrono::steady_clock::now();
+
+
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
@@ -85,6 +88,11 @@ void Map::load(const fs::path& path) {
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
+	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "SLK loading: " << delta << "ms\n";
+
+
 //	physics.initialize();
 
 	// Trigger strings
@@ -105,6 +113,10 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Trigger loading: " << delta << "ms\n";
+
 	// Protection check
 	is_protected = !hierarchy.map_file_exists("war3map.wtg");
 	std::cout << "Protected: " << (is_protected ? "True\n" : " Possibly False\n");
@@ -112,12 +124,20 @@ void Map::load(const fs::path& path) {
 	BinaryReader war3map_w3i = hierarchy.map_file_read("war3map.w3i");
 	info.load(war3map_w3i);
 
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Info loading: " << delta << "ms\n";
+
 	// Terrain
 	BinaryReader war3map_w3e = hierarchy.map_file_read("war3map.w3e");
 	bool success = terrain.load(war3map_w3e);
 	if (!success) {
 		return;
 	}
+
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Terrain loading: " << delta << "ms\n";
 
 	units.tree.resize(terrain.width, terrain.height);
 
@@ -127,6 +147,10 @@ void Map::load(const fs::path& path) {
 	if (!success) {
 		return;
 	}
+
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Pathing loading: " << delta << "ms\n";
 
 	// Doodads
 	BinaryReader war3map_doo = hierarchy.map_file_read("war3map.doo");
@@ -144,6 +168,10 @@ void Map::load(const fs::path& path) {
 
 	doodads.create();
 
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Doodad loading: " << delta << "ms\n";
+
 	for (const auto& i : doodads.doodads) {
 		if (!i.pathing) {
 			continue;
@@ -152,6 +180,10 @@ void Map::load(const fs::path& path) {
 		pathing_map.blit_pathing_texture(i.position, 0, i.pathing);
 	}
 	pathing_map.upload_dynamic_pathing();
+
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Doodad blitting: " << delta << "ms\n";
 
 	// Units/Items
 	if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -173,6 +205,10 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Unit loading: " << delta << "ms\n";
+
 	// Regions
 	if (hierarchy.map_file_exists("war3map.w3r")) {
 		BinaryReader war3map_w3r = hierarchy.map_file_read("war3map.w3r");
@@ -190,6 +226,10 @@ void Map::load(const fs::path& path) {
 		BinaryReader war3map_w3s = hierarchy.map_file_read("war3map.w3s");
 		sounds.load(war3map_w3s);
 	}
+
+	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	begin = std::chrono::steady_clock::now();
+	std::cout << "Regions/cameras/sounds loading: " << delta << "ms\n";
 
 	camera->reset();
 

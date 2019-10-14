@@ -54,17 +54,16 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		file = game_data.file_open("war3.w3mod:"s + path.string());
 	} else if (game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())) {
 		file = game_data.file_open("war3.w3mod:_deprecated.w3mod:"s + path.string());
+	} else if (aliases.exists(path.string())) {
+		return open_file(aliases.alias(path.string()));
+	} else if (path.extension() == ".dds") {
+		auto p = path;
+		p.replace_extension(".blp");
+		return open_file(p);
 	} else {
-		if (aliases.exists(path.string())) {
-			return open_file(aliases.alias(path.string()));
-		} else if (path.extension() == ".dds") {
-			auto p = path;
-			p.replace_extension(".blp");
-			return open_file(p);
-		} else {
-			throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
-		}
+		throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
 	}
+
 	return BinaryReader(file.read());
 }
 
@@ -75,6 +74,8 @@ bool Hierarchy::file_exists(const fs::path& path) const {
 
 	return map_file_exists(path)
 		|| fs::exists(warcraft_directory / path)
+		|| fs::exists("C:/Users/User/Desktop/Warcraft/MPQContent/1.32/war3.w3mod/_hd.w3mod" / path)
+		|| fs::exists("C:/Users/User/Desktop/Warcraft/MPQContent/1.32/war3.w3mod/" / path)
 		|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:"s + path.string())

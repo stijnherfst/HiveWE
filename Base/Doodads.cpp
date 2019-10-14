@@ -303,7 +303,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 		replaceable_id = destructibles_slk.data("texID", id);
 		texture_name = destructibles_slk.data("texFile", id);
-		texture_name.replace_extension(".blp");
+		texture_name.replace_extension("");
 	}
 
 	const std::string stem = mesh_path.stem().string();
@@ -326,9 +326,9 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	// Switch around the texture in the replaceable_id table so the mesh loader will pick the correct texture
 	std::string replaceable_texture;
-	if (is_number(replaceable_id) && texture_name != "_.blp") {
+	if (is_number(replaceable_id) && texture_name != "_") {
 		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string();
+		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + "_diffuse.dds";
 	}
 
 	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path));
