@@ -63,7 +63,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		}
 
 		if (model.has_chunk<mdx::SEQS>()) {
-			for (auto&& i : model.chunk<mdx::SEQS>()->sequences) {
+			for (const auto& i : model.chunk<mdx::SEQS>()->sequences) {
 				Animation animation;
 				animation.interval_start = i.interval_start;
 				animation.interval_end = i.interval_end;
@@ -73,27 +73,36 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				animation.sync_point = i.sync_point;
 				animation.extent = i.extent;
 
-				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
-
 				animations.emplace(i.name, animation);
 			}
 		}
 
-		if (model.has_chunk<mdx::GEOA>()) {
-			if (animations.contains("stand")) {
-				auto tt = model.chunk<mdx::GEOA>()->animations;
-				for (const auto& i : model.chunk<mdx::GEOA>()->animations) {
-					if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
-						auto ttt = i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks;
-						for (const auto& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
-							if (j.frame >= animations["stand"].interval_start && j.frame <= animations["stand"].interval_end) {
-								entries[i.geoset_id].visible = j.value > 0.75;
-							}
-						}
-					}
-				}
-			}
-		}
+		//if (model.has_chunk<mdx::GEOA>()) {
+		//	//for (const auto& i : animations) {
+		//	//	if (i.first.starts_with("stand")) {
+		//	//		std::cout << i.first << "\n";
+		//	//	}
+		//	//}
+		//	auto tt = model.chunk<mdx::GEOA>()->animations;
+		//	if (animations.contains("stand0")) {
+
+		//		auto tt = model.chunk<mdx::GEOA>()->animations;
+		//		for (const auto& i : model.chunk<mdx::GEOA>()->animations) {
+		//			if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
+		//				auto ttt = i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks;
+		//				for (const auto& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
+		//					if (j.frame <= animations["stand0"].interval_start || j.frame >= animations["stand0"].interval_end) {
+		//						entries[i.geoset_id].visible = false;//j.value > 0.75;
+		//						break;
+		//					} 
+		//					//else {
+		//					//	entries[i.geoset_id].visible = false;
+		//					//}
+		//				}
+		//			}
+		//		}
+		//	}
+		//}
 
 		mtls = model.chunk<mdx::MTLS>();
 

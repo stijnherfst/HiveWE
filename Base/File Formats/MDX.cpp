@@ -1,6 +1,7 @@
 #include "MDX.h"
 
 #include <iostream>
+#include "Utilities.h"
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -315,7 +316,8 @@ namespace mdx {
 			}
 		}
 
-		// Check the loaded data here for errors?
+		// Check and postprocess data
+
 		if (has_chunk<GEOA>()) {
 			// Remove geoset animations that reference non existing geosets
 			auto geosets_count = chunk<GEOS>()->geosets.size();
@@ -324,6 +326,20 @@ namespace mdx {
 				if (animations[i].geoset_id >= geosets_count) {
 					animations.erase(animations.begin() + i);
 				}
+			}
+		}
+
+		if (has_chunk<SEQS>()) {
+			// Standardize animation names
+			// Not sure how animation names work exactly so this is just an easy way to get a valid stand animation so we can do geoset hiding
+			auto& sequences = chunk<SEQS>()->sequences;
+			int t = 0;
+			for (auto& i : sequences) {
+				std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
+
+				auto parts = split(i.name, ' ');
+				i.name = parts.front() + std::to_string(t++);
+				std::cout << i.name << "\n";
 			}
 		}
 	}

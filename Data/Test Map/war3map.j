@@ -550,6 +550,10 @@ function CreateUnits takes nothing returns nothing
  local integer unitID
  local trigger t
  local real life
+	set u=CreateUnit(Player(0), 'nwat', - 94.287842, - 190.260742, 271.390289)
+	call SetHeroStr(u, - 858993460, true)
+	call SetHeroAgi(u, - 858993460, true)
+	call SetHeroInt(u, - 858993460, true)
 endfunction
 //===========================================================================
 //*
@@ -926,7 +930,7 @@ function config takes nothing returns nothing
 	call SetTeams(1)
 	call SetGamePlacement(MAP_PLACEMENT_TEAMS_TOGETHER)
 
-	call DefineStartLocation(0, - 192.000000, 2176.000000)
+	call DefineStartLocation(0, 2112.000000, - 384.000000)
 
 	call InitCustomPlayerSlots()
 	call SetPlayerTeam(Player(0), 0) // INLINED!!
