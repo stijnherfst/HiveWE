@@ -329,6 +329,11 @@ void Map::render(int width, int height) {
 	for (const auto& i : meshes) {
 		i->render();
 	}
+	gl->glDepthMask(false);
+	for (const auto& i : meshes) {
+		i->render_trans();
+	}
+	gl->glDepthMask(true);
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();

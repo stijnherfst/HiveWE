@@ -198,23 +198,84 @@ void StaticMesh::render() {
 
 	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
 
+	gl->glDisable(GL_BLEND);
+	
 	for (const auto& i : entries) {
 		if (!i.visible) {
 			continue;
 		}
 		for (const auto& j : mtls->materials[i.material_id].layers) {
+			//std::cout << j.blend_mode << "\n";
+
+			if (j.blend_mode == 0) {
+				gl->glUniform1f(3, -1.f);
+			} else if (j.blend_mode == 1) {
+				gl->glUniform1f(3, 0.75f);
+			} else {
+				break;
+			}
+
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
-			gl->glEnable(GL_BLEND);
-			gl->glUniform1f(3, -1.f);
+
+			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+			break; // Currently only draws the first layer
+		}
+		//break;
+	}
+	gl->glDisableVertexAttribArray(2);
+
+	for (int i = 0; i < 4; i++) {
+		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+	}
+	
+	gl->glDisableVertexAttribArray(0);
+	gl->glDisableVertexAttribArray(1);
+	gl->glEnable(GL_BLEND);
+}
+
+void StaticMesh::render_trans() {
+	if (!has_mesh) {
+		render_jobs.clear();
+		return;
+	}
+
+	gl->glEnableVertexAttribArray(0);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glEnableVertexAttribArray(1);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+
+	shader->use();
+	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+
+	// Since a mat4 is 4 vec4's
+	gl->glEnableVertexAttribArray(2);
+	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+	for (int i = 0; i < 4; i++) {
+		gl->glEnableVertexAttribArray(2 + i);
+		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(2 + i, 1);
+	}
+
+	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
+
+	gl->glEnable(GL_BLEND);
+	gl->glUniform1f(3, -1.f);
+	for (const auto& i : entries) {
+		if (!i.visible) {
+			continue;
+		}
+		for (const auto& j : mtls->materials[i.material_id].layers) {
+			if (j.blend_mode == 0 || j.blend_mode == 1) {
+				continue;
+			}
+
 			switch (j.blend_mode) {
-				case 0:
-					gl->glDisable(GL_BLEND);
-					break;
-				case 1:
-					gl->glDisable(GL_BLEND);
-					gl->glUniform1f(3, 0.75f); // Alpha test
-					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 					break;
@@ -232,6 +293,9 @@ void StaticMesh::render() {
 					break;
 			}
 
+			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+
+
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 			break; // Currently only draws the first layer
 		}
@@ -245,7 +309,6 @@ void StaticMesh::render() {
 	
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
-	gl->glEnable(GL_BLEND);
 
 	render_jobs.clear();
 }

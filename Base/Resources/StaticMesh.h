@@ -57,4 +57,5 @@ public:
 
 	void render_queue(const glm::mat4& mvp);
 	void render();
+	void render_trans();
 };

@@ -339,7 +339,6 @@ namespace mdx {
 
 				auto parts = split(i.name, ' ');
 				i.name = parts.front() + std::to_string(t++);
-				std::cout << i.name << "\n";
 			}
 		}
 	}
