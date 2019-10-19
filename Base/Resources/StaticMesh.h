@@ -56,6 +56,6 @@ public:
 	virtual ~StaticMesh();
 
 	void render_queue(const glm::mat4& mvp);
-	void render();
-	void render_trans();
+	void render_opaque();
+	void render_transparent();
 };

@@ -26,8 +26,8 @@ public:
 	};
 
 	const std::vector<glm::uvec3> quad_indices = {
-		{ 0, 3, 1 },
-		{ 1, 3, 2 }
+		{ 0, 1, 2 },
+		{ 2, 3, 0 }
 	};
 };
 

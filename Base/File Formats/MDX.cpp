@@ -5,16 +5,16 @@
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
-		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.blp" },
-		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.blp" },
-		{ 11, "ReplaceableTextures/Cliff/Cliff0.blp" },
-		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.blp" },
-		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.blp" },
-		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.blp" },
-		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.blp" },
-		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.blp" },
-		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.blp" },
-		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.blp" }
+		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.dds" },
+		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.dds" },
+		{ 11, "ReplaceableTextures/Cliff/Cliff0.dds" },
+		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.dds" },
+		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.dds" },
+		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.dds" },
+		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.dds" },
+		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.dds" },
+		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.dds" },
+		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
 	};
 
 	void AnimatedData::load_tracks(BinaryReader& reader) {

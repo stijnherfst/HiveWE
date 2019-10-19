@@ -186,7 +186,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	//map->load("C:\\Users\\User\\stack\\Projects\\MCFC\\7.3\\Backup\\MCFC 7.3.w3x");
+	//map->load("C:\\Users\\User\\Desktop\\MCFC 7.2");
 	map->load("Data/Test Map/");
 
 	//QTimer::singleShot(50, [this]() {

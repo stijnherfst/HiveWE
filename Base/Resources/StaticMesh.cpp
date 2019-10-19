@@ -139,9 +139,20 @@ StaticMesh::StaticMesh(const fs::path& path) {
 						continue;
 					}
 
-					auto t = i.file_name;
-					t.replace_extension(".dds");
-					textures.push_back(resource_manager.load<GPUTexture>(t));
+					fs::path new_path = i.file_name;
+					new_path.replace_extension(".dds");
+					if (hierarchy.file_exists(new_path)) {
+						textures.push_back(resource_manager.load<GPUTexture>(new_path));
+					} else {
+						new_path.replace_extension(".blp");
+						if (hierarchy.file_exists(new_path)) {
+							textures.push_back(resource_manager.load<GPUTexture>(new_path));
+						} else {
+							std::cout << "Error loading texture " << i.file_name << "\n";
+							textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
+						}
+					}
+
 					// ToDo Same texture on different model with different flags?
 					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
@@ -168,7 +179,7 @@ void StaticMesh::render_queue(const glm::mat4& mvp){
 	}
 }
 
-void StaticMesh::render() {
+void StaticMesh::render_opaque() {
 	if (!has_mesh) {
 		render_jobs.clear();
 		return;
@@ -205,8 +216,6 @@ void StaticMesh::render() {
 			continue;
 		}
 		for (const auto& j : mtls->materials[i.material_id].layers) {
-			//std::cout << j.blend_mode << "\n";
-
 			if (j.blend_mode == 0) {
 				gl->glUniform1f(3, -1.f);
 			} else if (j.blend_mode == 1) {
@@ -234,9 +243,8 @@ void StaticMesh::render() {
 	gl->glEnable(GL_BLEND);
 }
 
-void StaticMesh::render_trans() {
+void StaticMesh::render_transparent() {
 	if (!has_mesh) {
-		render_jobs.clear();
 		return;
 	}
 

@@ -23,11 +23,8 @@ public:
 
 		auto res = resources[resource].lock();
 		if (!res) {
-			//std::cout << "Cache miss " << misses++ << " " << resource << "\n";
 			resources[resource] = res = std::make_shared<T>(path);
-		}/* else {
-			std::cout << "Cache hit " << hits++ << " " << resource << "\n";
-		}*/
+		}
 
 		return std::dynamic_pointer_cast<T>(res);
 	}

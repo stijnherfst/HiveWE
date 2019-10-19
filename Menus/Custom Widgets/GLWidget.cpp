@@ -80,6 +80,7 @@ void GLWidget::initializeGL() {
 	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 	gl->glEnable(GL_DEPTH_TEST);
+	gl->glEnable(GL_CULL_FACE);
 	gl->glDepthFunc(GL_LEQUAL);
 	gl->glEnable(GL_BLEND);
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

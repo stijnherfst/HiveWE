@@ -327,11 +327,11 @@ void Map::render(int width, int height) {
 
 	// Render all meshes
 	for (const auto& i : meshes) {
-		i->render();
+		i->render_opaque();
 	}
 	gl->glDepthMask(false);
 	for (const auto& i : meshes) {
-		i->render_trans();
+		i->render_transparent();
 	}
 	gl->glDepthMask(true);
 

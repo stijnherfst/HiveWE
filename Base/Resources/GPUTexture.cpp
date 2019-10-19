@@ -7,16 +7,14 @@
 #include "Hierarchy.h"
 
 GPUTexture::GPUTexture(const fs::path& path) {
-	/*gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
-	gl->glTextureStorage2D(id, 1, GL_RGBA8, 1, 1);
-	return;*/
+	// This exception checking can be removed later on since only non existing replaceabletextures cause this to crash (reforged beta issue)
 	try {
 		BinaryReader reader = hierarchy.open_file(path);
 
 		if (path.extension() == ".blp" || path.extension() == ".BLP") {
 			blp::BLP blp = blp::BLP(reader);
 
-			gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
+			gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
 			gl->glTextureStorage2D(id, log2(std::max(blp.width, blp.height)) + 1, GL_RGBA8, blp.width, blp.height);
 			gl->glTextureSubImage2D(id, 0, 0, 0, blp.width, blp.height, GL_BGRA, GL_UNSIGNED_BYTE, blp.data.data());
 			gl->glGenerateTextureMipmap(id);
