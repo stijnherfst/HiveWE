@@ -40,6 +40,7 @@ add_executable(HiveWE
 	Base/PathingMap.cpp
 	Base/Regions.cpp
 	Base/ResourceManager.cpp
+	Base/RenderManager.cpp
 	Base/ShadowMap.cpp
 	Base/Sounds.cpp
 	Base/Terrain.cpp
@@ -116,6 +117,8 @@ target_link_libraries(HiveWE
 if(WIN32)
     target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
 endif()
+
+	target_link_options(HiveWE PUBLIC /PROFILE)
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 

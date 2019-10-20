@@ -6,8 +6,6 @@
 #include "HiveWE.h"
 
 StaticMesh::StaticMesh(const fs::path& path) {
-	shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
-
 	if (path.extension() == ".mdx" || path.extension() == ".MDX") {
 		BinaryReader reader = hierarchy.open_file(path);
 		this->path = path;
@@ -171,35 +169,60 @@ StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &index_buffer);
 }
 
-void StaticMesh::render_queue(const glm::mat4& mvp){
-	render_jobs.push_back(mvp);
+void StaticMesh::render_queue(const glm::mat4& model){
+	render_jobs.push_back(model);
 
+	// Register for opaque drawing
 	if (render_jobs.size() == 1) {
-		map->meshes.push_back(this);
+		map->render_manager.meshes.push_back(this);
+		mid = map->render_manager.meshes.size() - 1;
+	}
+
+	// Register for transparent drawing
+	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
+	if (!has_mesh) {
+		return;
+	}
+
+	for (const auto& i : entries) {
+		if (!i.visible) {
+			continue;
+		}
+		for (const auto& j : mtls->materials[i.material_id].layers) {
+			if (j.blend_mode == 0 || j.blend_mode == 1) {
+				continue;
+			} else {
+				RenderManager::Inst t;
+				t.mesh_id = mid;
+				t.instance_id = render_jobs.size() - 1;
+				t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(model[3]));
+				map->render_manager.transparent_instances.push_back(t);
+				return;
+			}
+
+			break; // Currently only draws the first layer
+		}
 	}
 }
 
+// Opaque rendering doesn't have to be sorted and can thus be instanced
 void StaticMesh::render_opaque() {
 	if (!has_mesh) {
 		render_jobs.clear();
 		return;
 	}
 
-	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	gl->glEnableVertexAttribArray(1);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
-	shader->use();
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
 	// Since a mat4 is 4 vec4's
-	gl->glEnableVertexAttribArray(2);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 	for (int i = 0; i < 4; i++) {
 		gl->glEnableVertexAttribArray(2 + i);
@@ -207,10 +230,6 @@ void StaticMesh::render_opaque() {
 		gl->glVertexAttribDivisor(2 + i, 1);
 	}
 
-	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
-
-	gl->glDisable(GL_BLEND);
-	
 	for (const auto& i : entries) {
 		if (!i.visible) {
 			continue;
@@ -232,48 +251,94 @@ void StaticMesh::render_opaque() {
 		}
 		//break;
 	}
-	gl->glDisableVertexAttribArray(2);
 
 	for (int i = 0; i < 4; i++) {
 		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
 	}
-	
-	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-	gl->glEnable(GL_BLEND);
 }
 
-void StaticMesh::render_transparent() {
+//void StaticMesh::render_transparent() {
+//	if (!has_mesh) {
+//		return;
+//	}
+//
+//	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+//	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+//
+//	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+//	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+//
+//	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+//
+//	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+//
+//	// Since a mat4 is 4 vec4's
+//	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+//	for (int i = 0; i < 4; i++) {
+//		gl->glEnableVertexAttribArray(2 + i);
+//		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+//		gl->glVertexAttribDivisor(2 + i, 1);
+//	}
+//
+//	for (const auto& i : entries) {
+//		if (!i.visible) {
+//			continue;
+//		}
+//		for (const auto& j : mtls->materials[i.material_id].layers) {
+//			if (j.blend_mode == 0 || j.blend_mode == 1) {
+//				continue;
+//			}
+//
+//			switch (j.blend_mode) {
+//				case 2:
+//					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//					break;
+//				case 3:
+//					gl->glBlendFunc(GL_ONE, GL_ONE);
+//					break;
+//				case 4:
+//					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+//					break;
+//				case 5:
+//					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+//					break;
+//				case 6:
+//					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+//					break;
+//			}
+//
+//			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+//
+//
+//			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+//			break; // Currently only draws the first layer
+//		}
+//		//break;
+//	}
+//
+//	for (int i = 0; i < 4; i++) {
+//		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+//	}
+//}
+
+void StaticMesh::render_transparent2(int instance_id) {
 	if (!has_mesh) {
 		return;
 	}
 
-	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	gl->glEnableVertexAttribArray(1);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
-	shader->use();
-	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+	glm::mat4 model = render_jobs[instance_id];
+	model = camera->projection_view * model;
+	
+	gl->glUniformMatrix4fv(4, 1, false, &model[0][0]);
 
-	// Since a mat4 is 4 vec4's
-	gl->glEnableVertexAttribArray(2);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(2 + i);
-		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-		gl->glVertexAttribDivisor(2 + i, 1);
-	}
-
-	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
-
-	gl->glEnable(GL_BLEND);
-	gl->glUniform1f(3, -1.f);
 	for (const auto& i : entries) {
 		if (!i.visible) {
 			continue;
@@ -304,19 +369,11 @@ void StaticMesh::render_transparent() {
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
 
-			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 			break; // Currently only draws the first layer
 		}
 		//break;
 	}
-	gl->glDisableVertexAttribArray(2);
 
-	for (int i = 0; i < 4; i++) {
-		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
-	}
 	
-	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-
-	render_jobs.clear();
 }

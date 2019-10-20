@@ -233,7 +233,6 @@ void Map::load(const fs::path& path) {
 
 	camera->reset();
 
-
 	loaded = true;
 }
 
@@ -325,18 +324,8 @@ void Map::render(int width, int height) {
 		brush->render();
 	}
 
-	// Render all meshes
-	for (const auto& i : meshes) {
-		i->render_opaque();
-	}
-	gl->glDepthMask(false);
-	for (const auto& i : meshes) {
-		i->render_transparent();
-	}
-	gl->glDepthMask(true);
+	render_manager.render();
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();
-
-	meshes.clear();
 }

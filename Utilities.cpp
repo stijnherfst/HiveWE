@@ -56,25 +56,19 @@ std::vector<std::string> split(const std::string& string, const char delimiter) 
 	return elems;
 }
 
-std::vector<std::string_view> split_new(const std::string& string, const char delimiter) {
-	std::vector<std::string_view> elems;
+std::vector<std::string_view> splitSV(std::string_view str, const char delimiter) {
+	std::vector<std::string_view> output;
+	output.reserve(str.size() / 2);
 
-	int last_position = 0;
-	for (int i = 0; i < string.length(); i++) {
-		if (string[i] == delimiter) {
-			elems.emplace_back(string.c_str() + last_position, i - last_position);
-			last_position = i;
+	for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
+		while (++second < last && *second != delimiter) {}
+		if (first != second) {
+			output.emplace_back(first, second - first);
 		}
 	}
 
-	if (elems.empty()) {
-		elems.emplace_back(string);
-	}
-
-	return elems;
+	return output;
 }
-
-
 
 // trim from start (in place)
 void ltrim(std::string& s) {
