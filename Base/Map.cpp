@@ -12,6 +12,7 @@
 #include "Camera.h"
 
 #include <fstream>
+#include <bullet/btBulletDynamicsCommon.h>
 
 void Map::load(const fs::path& path) {
 	auto begin = std::chrono::steady_clock::now();
@@ -281,7 +282,7 @@ void Map::render(int width, int height) {
 	terrain.render();
 	
 	// Map mouse coordinates to world coordinates
-	/*if (input_handler.mouse != input_handler.previous_mouse) {
+	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
 		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 		glm::vec3 origin = camera->position - camera->direction * camera->distance;
@@ -300,13 +301,13 @@ void Map::render(int width, int height) {
 			auto& hit = res.m_hitPointWorld;
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
-	}*/
-
-	if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y > 0) {
-		glm::vec3 window = glm::vec3(input_handler.mouse.x, height - input_handler.mouse.y, 0);
-		gl->glReadPixels(input_handler.mouse.x, height - input_handler.mouse.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
-		input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 	}
+
+	//if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y > 0) {
+	//	glm::vec3 window = glm::vec3(input_handler.mouse.x, height - input_handler.mouse.y, 0);
+	//	gl->glReadPixels(input_handler.mouse.x, height - input_handler.mouse.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
+	//	input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
+	//}
 
 	// Render Doodads
 	if (render_doodads) {

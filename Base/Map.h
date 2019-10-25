@@ -40,7 +40,7 @@ public:
 	Sounds sounds;
 
 	Brush* brush = nullptr;
-	//Physics physics;
+	Physics physics;
 
 	bool is_protected = false;
 	bool units_loaded = false;

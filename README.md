@@ -42,8 +42,7 @@ Or
 	vcpkg install libjpeg-turbo:x64-windows
 	vcpkg install qt-advanced-docking-system:x64-windows
 	vcpkg install qscintilla:x64-windows  
-
-
+	vcpkg install bullet3:x64-windows
 
 
 This might take a while depending on your computer (\~20 minutes)  
@@ -70,6 +69,7 @@ Want to help with the development of HiveWE? Below is a list of features that yo
 - Being able to change forces/teams
 - Changing map sizes/camera bound
 - Ramp editing with the terrain palette
+- Making HiveWE run faster
 - Or any other functionality you think would be cool
 
 If you have any questions then don't be afraid to message me here, at HiveWorkshop (eejin) or on Discord eejin#4240
