@@ -109,17 +109,9 @@ void GLWidget::update_scene() {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	if (map && map->loaded) {
-		camera->update(delta);
-
-		map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);
-		if (map->terrain.current_texture >= map->terrain.water_textures_nr) {
-			map->terrain.current_texture = 0;
-		}
-	}
-
 	update();
 	if (map) {
+		map->update(delta, width(), height());
 		QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
 	} else {
 		QTimer::singleShot(std::max(0.0, 16.0), this, &GLWidget::update_scene);
@@ -135,7 +127,7 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map->render(width(), height());
+	map->render();
 
 	gl->glBindVertexArray(0);
 

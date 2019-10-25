@@ -265,22 +265,16 @@ bool Map::save(const fs::path& path) {
 	return true;
 }
 
-void Map::render(int width, int height) {
-	// While switching maps it may happen that render is called before loading has finished.
-	if (!loaded) {
-		return;
+void Map::update(double delta, int width, int height) {
+	if (loaded) {
+		camera->update(delta);
+
+		terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
+		if (terrain.current_texture >= terrain.water_textures_nr) {
+			terrain.current_texture = 0;
+		}
 	}
 
-	total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
-	last_time = std::chrono::high_resolution_clock::now();
-
-
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
-
-	// Render Terrain
-	terrain.render();
-	
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
@@ -296,19 +290,30 @@ void Map::render(int width, int height) {
 		res.m_collisionFilterGroup = 32;
 		res.m_collisionFilterMask = 32;
 		physics.dynamicsWorld->rayTest(from, to, res);
-		
+
 		if (res.hasHit()) {
 			auto& hit = res.m_hitPointWorld;
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
 	}
+}
 
-	//if (input_handler.mouse != input_handler.previous_mouse && input_handler.mouse.y > 0) {
-	//	glm::vec3 window = glm::vec3(input_handler.mouse.x, height - input_handler.mouse.y, 0);
-	//	gl->glReadPixels(input_handler.mouse.x, height - input_handler.mouse.y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &window.z);
-	//	input_handler.mouse_world = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
-	//}
+void Map::render() {
+	// While switching maps it may happen that render is called before loading has finished.
+	if (!loaded) {
+		return;
+	}
 
+	total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
+	last_time = std::chrono::high_resolution_clock::now();
+
+
+	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
+
+	// Render Terrain
+	terrain.render();
+	
 	// Render Doodads
 	if (render_doodads) {
 		doodads.render();
@@ -325,7 +330,7 @@ void Map::render(int width, int height) {
 		brush->render();
 	}
 
-	render_manager.render();
+	render_manager.render(render_lighting);
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();

@@ -65,5 +65,7 @@ public:
 
 	void load(const fs::path& path);
 	bool save(const fs::path& path);
-	void render(int width, int height);
+
+	void update(double delta, int width, int height);
+	void render();
 };

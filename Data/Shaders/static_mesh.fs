@@ -1,7 +1,8 @@
 #version 450 core
 
 layout (binding = 0) uniform sampler2D image;
-layout (location = 3) uniform float alpha_test;
+
+layout (location = 1) uniform float alpha_test;
 
 in vec2 UV;
 

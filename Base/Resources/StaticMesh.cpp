@@ -31,6 +31,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			gl->glCreateBuffers(1, &uv_buffer);
 			gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
 
+			gl->glCreateBuffers(1, &normal_buffer);
+			gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+
 			gl->glCreateBuffers(1, &instance_buffer);
 
 			gl->glCreateBuffers(1, &index_buffer);
@@ -53,6 +56,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 				gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
 				gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
+				gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
 				gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
 				base_vertex += entry.vertices;
@@ -172,6 +176,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &vertex_buffer);
 	gl->glDeleteBuffers(1, &uv_buffer);
+	gl->glDeleteBuffers(1, &normal_buffer);
 	gl->glDeleteBuffers(1, &instance_buffer);
 	gl->glDeleteBuffers(1, &index_buffer);
 }
@@ -224,6 +229,9 @@ void StaticMesh::render_opaque() const {
 	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
+	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
@@ -231,9 +239,9 @@ void StaticMesh::render_opaque() const {
 	// Since a mat4 is 4 vec4's
 	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(2 + i);
-		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-		gl->glVertexAttribDivisor(2 + i, 1);
+		gl->glEnableVertexAttribArray(3 + i);
+		gl->glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(3 + i, 1);
 	}
 
 	for (const auto& i : entries) {
@@ -242,9 +250,9 @@ void StaticMesh::render_opaque() const {
 		}
 		for (const auto& j : mtls->materials[i.material_id].layers) {
 			if (j.blend_mode == 0) {
-				gl->glUniform1f(3, -1.f);
+				gl->glUniform1f(1, -1.f);
 			} else if (j.blend_mode == 1) {
-				gl->glUniform1f(3, 0.75f);
+				gl->glUniform1f(1, 0.75f);
 			} else {
 				break;
 			}
@@ -259,7 +267,7 @@ void StaticMesh::render_opaque() const {
 	}
 
 	for (int i = 0; i < 4; i++) {
-		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
+		gl->glVertexAttribDivisor(3 + i, 0); // ToDo use multiple vao
 	}
 }
 
@@ -279,7 +287,7 @@ void StaticMesh::render_transparent(int instance_id) const {
 	glm::mat4 model = render_jobs[instance_id];
 	model = camera->projection_view * model;
 	
-	gl->glUniformMatrix4fv(4, 1, false, &model[0][0]);
+	gl->glUniformMatrix4fv(0, 1, false, &model[0][0]);
 
 	for (const auto& i : entries) {
 		if (!i.visible) {

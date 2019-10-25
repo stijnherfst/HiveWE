@@ -17,5 +17,5 @@ public:
 	std::vector<Inst> transparent_instances;
 	RenderManager();
 
-	void render();
+	void render(bool render_lighting);
 };

@@ -8,10 +8,10 @@ RenderManager::RenderManager() {
 	static_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
 }
 
-
-void RenderManager::render() {
+void RenderManager::render(bool render_lighting) {
 	instance_static_mesh_shader->use();
-	gl->glUniformMatrix4fv(4, 1, false, &camera->projection_view[0][0]);
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniform1i(2, render_lighting);
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glEnableVertexAttribArray(1);
@@ -31,7 +31,7 @@ void RenderManager::render() {
 
 	gl->glEnable(GL_BLEND);
 	gl->glDepthMask(false);
-	gl->glUniform1f(3, -1.f);
+	gl->glUniform1f(1, -1.f);
 	for (const auto& i : transparent_instances) {
 		meshes[i.mesh_id]->render_transparent(i.instance_id);
 	}
