@@ -246,8 +246,8 @@ namespace mdx {
 
 	struct Bone {
 		Node node;
-		int geoset_id;
-		int geoset_animation_id;
+		int32_t geoset_id;
+		int32_t geoset_animation_id;
 	};
 
 	struct Chunk {

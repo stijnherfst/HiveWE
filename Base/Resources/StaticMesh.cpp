@@ -75,6 +75,15 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			}
 		}
 
+		//if (model.has_chunk<mdx::BONE>()) {
+		//	auto bones = model.chunk<mdx::BONE>()->bones;
+		//	
+		//	for (const auto& i : bones) {
+		//		std::cout << i.geoset_id << "\n";
+		//		std::cout << i.geoset_animation_id << "\n";
+		//	}
+		//}
+
 		//if (model.has_chunk<mdx::GEOA>()) {
 		//	//for (const auto& i : animations) {
 		//	//	if (i.first.starts_with("stand")) {
@@ -157,8 +166,6 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				}
 			}
 		}
-
-		
 	}
 }
 
@@ -175,7 +182,7 @@ void StaticMesh::render_queue(const glm::mat4& model){
 	// Register for opaque drawing
 	if (render_jobs.size() == 1) {
 		map->render_manager.meshes.push_back(this);
-		mid = map->render_manager.meshes.size() - 1;
+		mesh_id = map->render_manager.meshes.size() - 1;
 	}
 
 	// Register for transparent drawing
@@ -193,7 +200,7 @@ void StaticMesh::render_queue(const glm::mat4& model){
 				continue;
 			} else {
 				RenderManager::Inst t;
-				t.mesh_id = mid;
+				t.mesh_id = mesh_id;
 				t.instance_id = render_jobs.size() - 1;
 				t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(model[3]));
 				map->render_manager.transparent_instances.push_back(t);
@@ -206,9 +213,8 @@ void StaticMesh::render_queue(const glm::mat4& model){
 }
 
 // Opaque rendering doesn't have to be sorted and can thus be instanced
-void StaticMesh::render_opaque() {
+void StaticMesh::render_opaque() const {
 	if (!has_mesh) {
-		render_jobs.clear();
 		return;
 	}
 
@@ -257,71 +263,7 @@ void StaticMesh::render_opaque() {
 	}
 }
 
-//void StaticMesh::render_transparent() {
-//	if (!has_mesh) {
-//		return;
-//	}
-//
-//	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-//	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-//
-//	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-//	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-//
-//	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-//
-//	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
-//
-//	// Since a mat4 is 4 vec4's
-//	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-//	for (int i = 0; i < 4; i++) {
-//		gl->glEnableVertexAttribArray(2 + i);
-//		gl->glVertexAttribPointer(2 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-//		gl->glVertexAttribDivisor(2 + i, 1);
-//	}
-//
-//	for (const auto& i : entries) {
-//		if (!i.visible) {
-//			continue;
-//		}
-//		for (const auto& j : mtls->materials[i.material_id].layers) {
-//			if (j.blend_mode == 0 || j.blend_mode == 1) {
-//				continue;
-//			}
-//
-//			switch (j.blend_mode) {
-//				case 2:
-//					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//					break;
-//				case 3:
-//					gl->glBlendFunc(GL_ONE, GL_ONE);
-//					break;
-//				case 4:
-//					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//					break;
-//				case 5:
-//					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-//					break;
-//				case 6:
-//					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-//					break;
-//			}
-//
-//			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
-//
-//
-//			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-//			break; // Currently only draws the first layer
-//		}
-//		//break;
-//	}
-//
-//	for (int i = 0; i < 4; i++) {
-//		gl->glVertexAttribDivisor(2 + i, 0); // ToDo use multiple vao
-//	}
-//}
-
-void StaticMesh::render_transparent2(int instance_id) {
+void StaticMesh::render_transparent(int instance_id) const {
 	if (!has_mesh) {
 		return;
 	}
@@ -366,6 +308,15 @@ void StaticMesh::render_transparent2(int instance_id) {
 					break;
 			}
 
+			//bool unshaded = j.shading_flags & 0x1;
+			//bool environment_map = j.shading_flags & 0x2;
+			//bool unknown1 = j.shading_flags & 0x4;
+			//bool unknown2 = j.shading_flags & 0x8;
+			//bool two_sided = j.shading_flags & 0x10;
+			//bool unfogged = j.shading_flags & 0x20;
+			//bool no_depth_test = j.shading_flags & 0x30;
+			//bool no_depth_set = j.shading_flags & 0x40;
+
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
 
@@ -374,6 +325,4 @@ void StaticMesh::render_transparent2(int instance_id) {
 		}
 		//break;
 	}
-
-	
 }

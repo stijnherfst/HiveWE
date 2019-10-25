@@ -187,6 +187,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 	//map->load("C:\\Users\\User\\Desktop\\MCFC 7.2");
+	//map->load("C:\\Users\\User\\Desktop\\Test.w3m");
 	map->load("Data/Test Map/");
 
 	//QTimer::singleShot(50, [this]() {

@@ -278,8 +278,8 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 				trigger.description = reader.read_c_string();
 				if (sub_version == 7) {
 					trigger.is_comment = reader.read<uint32_t>();
+					trigger.id = reader.read<uint32_t>();
 				}
-				trigger.id = reader.read<uint32_t>();
 				trigger.is_enabled = reader.read<uint32_t>();
 				trigger.is_script = reader.read<uint32_t>();
 				trigger.initially_on = !reader.read<uint32_t>();

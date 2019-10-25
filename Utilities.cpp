@@ -6,7 +6,6 @@
 #include <algorithm> 
 #include <cctype>
 #include <locale>
-
 #include <QSettings>
 #include <QPainter>
 #include <QIcon>

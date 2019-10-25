@@ -268,8 +268,8 @@ namespace mdx {
 		while (reader.position < reader_pos + size) {
 			Bone bone;
 			bone.node = Node(reader);
-			bone.geoset_id = reader.read<uint32_t>();
-			bone.geoset_animation_id = reader.read<uint32_t>();
+			bone.geoset_id = reader.read<int32_t>();
+			bone.geoset_animation_id = reader.read<int32_t>();
 			bones.push_back(std::move(bone));
 		}
 	}
@@ -308,9 +308,9 @@ namespace mdx {
 				case ChunkTag::GEOA:
 					chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
 					break;
-				//case ChunkTag::BONE:
-				//	chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
-				//	break;
+				case ChunkTag::BONE:
+					chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
+					break;
 				default:
 					reader.advance(reader.read<uint32_t>());
 			}
