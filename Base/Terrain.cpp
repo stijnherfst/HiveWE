@@ -267,13 +267,13 @@ void Terrain::create() {
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
 	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
 
-	collision_shape = new btHeightfieldTerrainShape(width, height, ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {
 		std::cout << "error\n";
 	}
 
 	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
 	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
 	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 	

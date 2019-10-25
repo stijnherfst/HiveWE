@@ -330,6 +330,7 @@ void DoodadBrush::render_brush() const {
 
 	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f) * scale);
 	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
+	matrix = glm::rotate(matrix, roll, glm::vec3(1, 0, 0));
 
 	if (mesh) {
 		mesh->render_queue(matrix);
@@ -411,6 +412,11 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	min_scale = slk.data<float>("minScale", id);
 	max_scale = slk.data<float>("maxScale", id);
+
+	std::string maxRoll = doodads_slk.data("maxRoll", id);
+	if (!maxRoll.empty()) {
+		roll = -std::stof(maxRoll);
+	}
 
 	if (is_doodad) {
 		scale = slk.data<float>("defScale", id);

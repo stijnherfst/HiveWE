@@ -32,6 +32,7 @@ public:
 	float max_scale = 1.f;
 
 	float rotation = 0.f;
+	float roll = 0.f;
 
 	std::vector<Doodad*> selections;
 	glm::vec2 clipboard_mouse_position;

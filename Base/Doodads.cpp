@@ -24,6 +24,11 @@ void Doodad::update() {
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+
+	auto maxRoll = doodads_slk.data("maxRoll", id);;
+	if (!maxRoll.empty()) {
+		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
+	}
 }
 
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
@@ -179,6 +184,7 @@ void Doodads::create() {
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
+
 		i.mesh = get_mesh(i.id, i.variation);
 	}
 }
