@@ -344,7 +344,7 @@ void HiveWE::export_mpq() {
 	}
 
 	emit saving_initiated();
-	map->save(file_name.toStdString());
+	map->save(map->filesystem_path);
 
 	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
 
