@@ -41,7 +41,8 @@ Or
 	vcpkg install casclib:x64-windows
 	vcpkg install libjpeg-turbo:x64-windows
 	vcpkg install qt-advanced-docking-system:x64-windows
-	vcpkg install qscintilla:x64-windows  
+	vcpkg install qscintilla:x64-windows
+	vcpkg install bullet3:x64-windows
 
 
 
