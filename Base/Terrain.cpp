@@ -252,12 +252,12 @@ void Terrain::create() {
 
 	const std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
 	for (int i = 0; i < water_textures_nr; i++) {
-		const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp");
+		const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".dds");
 
 		if (texture->width != 128 || texture->height != 128) {
 			std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, texture->data.data());
+		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_RGB, GL_UNSIGNED_BYTE, texture->data.data());
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 

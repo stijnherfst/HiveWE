@@ -77,6 +77,27 @@ namespace slk {
 		void merge(const ini::INI& ini);
 		void substitute(const ini::INI & ini, const std::string& section);
 		void copy_row(const std::string& row_header, const std::string& new_row_header);
+
+		template<typename T>
+		void add_column(const std::string& header, T default_value) {
+			columns += 1;
+			for (auto&& i : table_data) {
+				if constexpr (std::is_same_v<T, std::string>()) {
+					i.resize(columns, default_value);
+				} else {
+					i.resize(columns, std::to_string(default_value));
+				}
+			}
+			for (auto&& i : shadow_data) {
+				if constexpr (std::is_same_v<T, std::string>()) {
+					i.resize(columns, default_value);
+				} else {
+					i.resize(columns, std::to_string(default_value));
+				}
+			}
+			header_to_column.emplace(header, columns - 1);
+		}
+
 		void add_column(const std::string& header);
 
 		void set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data);

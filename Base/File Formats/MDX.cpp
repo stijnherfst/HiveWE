@@ -175,9 +175,9 @@ namespace mdx {
 			geoset.selection_flags = reader.read<uint32_t>();
 
 			std::string tt;
-			if (version == 900) {
-				reader.advance(4); // ?
-				tt = reader.read_string(80); // ?
+			if (version > 800) {
+				reader.advance(4); // lod
+				tt = reader.read_string(80); // lod name
 
 			} 
 
@@ -187,7 +187,7 @@ namespace mdx {
 				geoset.extents.emplace_back(Extent(reader));
 			}
 
-			if (version == 900 && tt.size()) {
+			if (version > 800 && tt.size()) {
 				reader.advance(4); // Tangents
 				uint32_t structure_count = reader.read<uint32_t>();
 				reader.advance(structure_count * 16);
@@ -247,7 +247,7 @@ namespace mdx {
 			Material material;
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
-			if (version == 900) {
+			if (version > 800) {
 				reader.advance(80); // Some random string
 			}
 			reader.advance(4);

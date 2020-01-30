@@ -116,6 +116,22 @@ namespace slk {
 						}
 					}
 					break;
+				case 'F':
+					if (line[position] == 'X') {
+						column = parse_int_part() - 1;
+
+						if (line[position] == 'Y') {
+							row = parse_int_part() - 1;
+						}
+					} else {
+						row = parse_int_part() - 1;
+
+						if (line[position] == 'X') {
+							column = parse_int_part() - 1;
+						}
+					}
+					max_rows = std::max(max_rows, row);
+					break;
 				case 'E':
 					goto exitloop;
 			}

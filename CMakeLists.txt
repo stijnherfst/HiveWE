@@ -11,12 +11,14 @@ find_package(Qt5 REQUIRED
 	Gui
 	Widgets
 )
+find_package(bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qt-advanced-docking-system CONFIG REQUIRED)
+
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -97,8 +99,8 @@ add_executable(HiveWE
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE ${BULLET3_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE "C:/vcpkg/installed/x64-windows/include/bullet")
+target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
+# target_include_directories(HiveWE PRIVATE "C:/vcpkg/installed/x64-windows/include/bullet")
 
 target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
 
@@ -109,18 +111,16 @@ target_link_libraries(HiveWE
 	soil2
 	stormlib::stormlib
 	casclib
-	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2.lib"
-	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/Bullet3Common.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletCollision.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletInverseDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletSoftBody.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/LinearMath.lib"
 	${JPEG_LIBRARIES}
 	qt-advanced-docking-system::qtadvanceddocking
+	LinearMath
+	Bullet3Common
+	BulletInverseDynamics
+	BulletCollision;
+	BulletDynamics
+	BulletSoftBody
+	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
+	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 )
 
 if(WIN32)
