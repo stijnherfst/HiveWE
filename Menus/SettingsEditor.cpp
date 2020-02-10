@@ -9,6 +9,7 @@ SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 	ui.testArgs->setText(settings.value("testArgs").toString());
 	ui.theme->setCurrentIndex((settings.value("theme").toString())=="Dark");
 	ui.comments->setChecked(settings.value("comments").toString() != "False");
+	ui.hd->setChecked(settings.value("hd").toString() != "False");
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();
@@ -34,4 +35,5 @@ void SettingsEditor::save() const {
 	settings.setValue("testArgs", ui.testArgs->text());
 	settings.setValue("theme", ui.theme->currentText());
 	settings.setValue("comments", ui.comments->isChecked() ? "True" : "False");
+	settings.setValue("hd", ui.hd->isChecked() ? "True" : "False");
 }

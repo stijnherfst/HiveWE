@@ -170,16 +170,20 @@ void Terrain::create() {
 
 	// Ground textures
 	for (const auto& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + "_diffuse.dds"));
+		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight_diffuse.dds"));
+
+	std::cout << std::string(1, tileset) << "\n";
+	
+
+	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 
 	// Cliff Textures
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + "_diffuse.dds"));
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
 	}
@@ -430,12 +434,12 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	ground_texture_to_id.clear();
 
 	for (const auto& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + "_diffuse.dds"));
+		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight_diffuse.dds"));
+	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight"s + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 
 	cliff_to_ground_texture.clear();
 	for (const auto& cliff_id : cliffset_ids) {

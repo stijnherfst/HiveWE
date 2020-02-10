@@ -20,6 +20,8 @@ void Doodad::update() {
 	if (doodads_slk.row_header_exists(id)) {
 		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
 	}
+	
+	//float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
 
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
@@ -34,7 +36,7 @@ void Doodad::update() {
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3map.w3e file: Magic number is not W3do\n";
+		std::cout << "Invalid war3map.doo file: Magic number is not W3do\n";
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
@@ -54,6 +56,13 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>();
+
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			i.skin_id = reader.read_string(4);
+		} else {
+			i.skin_id = i.id;
+		}
+
 		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 
@@ -99,6 +108,8 @@ void Doodads::save() const {
 		writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map->terrain.offset, 0));
 		writer.write<float>(i.angle);
 		writer.write<glm::vec3>(i.scale);
+
+		writer.write_string(i.skin_id);
 
 		writer.write<uint8_t>(static_cast<int>(i.state));
 		writer.write<uint8_t>(i.life);
@@ -334,7 +345,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string replaceable_texture;
 	if (is_number(replaceable_id) && texture_name != "_") {
 		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + "_diffuse.dds";
+		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + (hierarchy.hd ? "_diffuse.dds" : ".dds");
 	}
 
 	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path));

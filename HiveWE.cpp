@@ -298,7 +298,7 @@ void HiveWE::load_mpq() {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	map->load(directory);
-	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::save() {
@@ -329,7 +329,7 @@ void HiveWE::save_as() {
 		hierarchy.map_directory = file_name / map->name;
 	}
 
-	setWindowTitle("HiveWE 0.6 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::export_mpq() {

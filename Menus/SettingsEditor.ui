@@ -22,7 +22,7 @@
      <item>
       <widget class="QTabWidget" name="tabs">
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <property name="usesScrollButtons">
         <bool>false</bool>
@@ -53,13 +53,20 @@
            </item>
           </widget>
          </item>
-         <item row="1" column="1">
+         <item row="2" column="1">
           <widget class="QCheckBox" name="comments">
            <property name="text">
             <string>Enable Comments</string>
            </property>
            <property name="checked">
             <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="hd">
+           <property name="text">
+            <string>Enable HD Mode</string>
            </property>
           </widget>
          </item>

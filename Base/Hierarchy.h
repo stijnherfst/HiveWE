@@ -18,6 +18,8 @@ public:
 	fs::path map_directory;
 	fs::path warcraft_directory;
 
+	bool hd;
+
 	void open_casc(fs::path directory);
 
 	BinaryReader open_file(const fs::path& path) const;

@@ -48,6 +48,12 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		reader.advance(12);
 		i.scale = glm::vec3(1.f);
 		
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			i.skin_id = reader.read_string(4);
+		} else {
+			i.skin_id = i.id;
+		}
+
 		i.flags = reader.read<uint8_t>();
 
 		i.player = reader.read<uint32_t>();
@@ -139,6 +145,8 @@ void Units::save() const {
 			writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map->terrain.offset, 0));
 			writer.write<float>(i.angle);
 			writer.write<glm::vec3>(i.scale * 128.f);
+
+			writer.write_string(i.skin_id);
 
 			writer.write<uint8_t>(i.flags);
 

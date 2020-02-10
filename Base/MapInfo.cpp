@@ -16,7 +16,7 @@ void MapInfo::load(BinaryReader& reader) {
 
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
-	if (version == 28) {
+	if (version >= 28) {
 		game_version_major = reader.read<uint32_t>();
 		game_version_minor = reader.read<uint32_t>();
 		game_version_patch = reader.read<uint32_t>();
@@ -59,7 +59,7 @@ void MapInfo::load(BinaryReader& reader) {
 	// Tileset
 	reader.advance(1);
 
-	if (version == 25 || version == 28) { // TFT
+	if (version >= 25) { // TFT
 		loading_screen_number = reader.read<uint32_t>();
 		loading_screen_model = reader.read_c_string();
 		loading_screen_text = reader.read_c_string();
@@ -84,7 +84,7 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
 
-		if (version == 28) {
+		if (version >= 28) {
 			lua = reader.read<uint32_t>() == 1;
 		}
 	} else if (version == 18) { // RoC
@@ -110,6 +110,10 @@ void MapInfo::load(BinaryReader& reader) {
 		i.starting_position = reader.read<glm::vec2>();
 		i.ally_low_priorities_flags = reader.read<uint32_t>();
 		i.ally_high_priorities_flags = reader.read<uint32_t>();
+		if (version >= 31) {
+			i.enemy_low_priorities_flags = reader.read<uint32_t>();
+			i.enemy_high_priorities_flags = reader.read<uint32_t>();
+		}
 	}
 
 	forces.resize(reader.read<uint32_t>());
@@ -181,11 +185,11 @@ void MapInfo::save() const {
 
 	writer.write(write_version);
 	writer.write(map_version);
-	writer.write(editor_version);
-	writer.write(game_version_major);
-	writer.write(game_version_minor);
-	writer.write(game_version_patch);
-	writer.write(game_version_build);
+	writer.write(write_editor_version);
+	writer.write(write_game_version_major);
+	writer.write(write_game_version_minor);
+	writer.write(write_game_version_patch);
+	writer.write(write_game_version_build);
 	writer.write_c_string(name);
 	writer.write_c_string(author);
 	writer.write_c_string(description);
@@ -248,6 +252,9 @@ void MapInfo::save() const {
 	
 	writer.write((uint32_t)lua);
 
+	writer.write((uint32_t)hd_flag);
+	writer.write((uint32_t)game_data_version);
+
 	writer.write<uint32_t>(players.size());
 	for (const auto& i : players) {
 		writer.write(i.internal_number);
@@ -258,6 +265,8 @@ void MapInfo::save() const {
 		writer.write(i.starting_position);
 		writer.write(i.ally_low_priorities_flags);
 		writer.write(i.ally_high_priorities_flags);
+		writer.write(i.enemy_low_priorities_flags);
+		writer.write(i.enemy_high_priorities_flags);
 	}
 
 	writer.write<uint32_t>(forces.size());

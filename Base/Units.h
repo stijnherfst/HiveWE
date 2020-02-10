@@ -15,6 +15,8 @@ struct Unit {
 	float angle;
 	glm::vec3 scale;
 
+	std::string skin_id;
+
 	uint8_t flags;
 	int player;
 
