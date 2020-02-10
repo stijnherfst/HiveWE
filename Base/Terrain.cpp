@@ -175,10 +175,6 @@ void Terrain::create() {
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-
-	std::cout << std::string(1, tileset) << "\n";
-	
-
 	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 
 	// Cliff Textures
@@ -439,7 +435,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight"s + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
+	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 
 	cliff_to_ground_texture.clear();
 	for (const auto& cliff_id : cliffset_ids) {
@@ -590,9 +586,11 @@ Texture Terrain::minimap_image() {
 			glm::vec4 color;
 
 			if (corners[i][j].cliff || (i > 0 && corners[i - 1][j].cliff) || (j > 0 && corners[i][j - 1].cliff) || (i > 0 && j > 0 && corners[i - 1][j - 1].cliff)) {
-				color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
+				//color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
+				color = glm::vec4(1.f);
 			} else {
-				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+				//color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+				color = glm::vec4(1.f);
 			}
 
 			if (corners[i][j].water && corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {

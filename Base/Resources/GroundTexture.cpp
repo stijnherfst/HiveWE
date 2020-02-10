@@ -12,12 +12,9 @@ GroundTexture::GroundTexture(const fs::path& path) {
 	int height;
 	int channels;
 	uint8_t* data;
+
 	if (path.extension() == ".blp" || path.extension() == ".BLP") {
-		blp::BLP blp = blp::BLP(reader);
-		
-		width = blp.width;
-		height = blp.height;
-		data = blp.data.data();
+		data = blp::load(reader, width, height, channels);
 	} else {
 		data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
 	}
@@ -44,7 +41,5 @@ GroundTexture::GroundTexture(const fs::path& path) {
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	gl->glGenerateTextureMipmap(id);
 
-	if (path.extension() != ".blp" && path.extension() != ".BLP") {
-		delete data;
-	}
+	delete data;
 }

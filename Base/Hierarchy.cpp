@@ -12,7 +12,7 @@ Hierarchy hierarchy;
 void Hierarchy::open_casc(fs::path directory) {
 	warcraft_directory = directory;
 	QSettings settings;
-	hd = settings.value("hd").toString() != "False";
+	hd = settings.value("hd", "True").toString() != "False";
 
 	std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
 	game_data.open(warcraft_directory / "Data");
@@ -70,7 +70,7 @@ bool Hierarchy::file_exists(const fs::path& path) const {
 		|| game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())
-		|| ((aliases.exists(path.string())) ? file_exists(aliases.alias(path.string())) : false );
+		|| (aliases.exists(path.string()) ? file_exists(aliases.alias(path.string())) : false );
 }
 
 BinaryReader Hierarchy::map_file_read(const fs::path& path) const {
