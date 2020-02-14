@@ -64,7 +64,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.health = reader.read<uint32_t>();
 		i.mana = reader.read<uint32_t>();
 
-		if (version >= 8) {
+		if (subversion >= 11) {
 			i.item_table_pointer = reader.read<uint32_t>();
 		}
 
@@ -82,7 +82,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 
 		i.level = reader.read<uint32_t>();
 
-		if (version >= 8) {
+		if (subversion >= 11) {
 			i.strength = reader.read<uint32_t>();
 			i.agility = reader.read<uint32_t>();
 			i.intelligence = reader.read<uint32_t>();

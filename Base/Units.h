@@ -25,16 +25,16 @@ struct Unit {
 	int health;
 	int mana;
 
-	int item_table_pointer;
+	int item_table_pointer = 0xFFFF;
 	std::vector<ItemSet> item_sets;
 
 	int gold;
 	float target_acquisition;
 
 	int level;
-	int strength;
-	int agility;
-	int intelligence;
+	int strength = 0;
+	int agility = 0;
+	int intelligence = 0;
 
 	// Slot, ID
 	std::vector<std::pair<uint32_t, std::string>> items;

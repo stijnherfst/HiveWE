@@ -122,6 +122,8 @@ public:
 	bool unknown4;
 	bool item_classification;
 	bool water_tinting;
+	bool accurate_probability_for_calculations;
+	bool custom_ability_skins;
 
 	int loading_screen_number;
 	std::string loading_screen_model;
@@ -148,9 +150,8 @@ public:
 	glm::u8vec4 water_color;
 
 	bool lua;
-
-	int hd_flag = 3;
-	int game_data_version = 2; // 1 = ROC, 2 = TFT
+	uint32_t supported_modes;
+	uint32_t game_data_version;
 
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
