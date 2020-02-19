@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include "Hierarchy.h"
 
 namespace slk {
 	class SLK {
@@ -30,6 +31,19 @@ namespace slk {
 		T data(const std::string& column_header, size_t row) const {
 			if (!header_to_column.contains(column_header)) {
 				return T();
+			}
+
+			if (hierarchy.hd && header_to_column.contains(column_header + ":hd")) {
+				std::string hd_data = data(column_header + ":hd", row);
+				if (!hd_data.empty()) {
+					if constexpr (std::is_same<T, std::string>()) {
+						return hd_data;
+					} else if constexpr (std::is_same<T, float>()) {
+						return std::stof(hd_data);
+					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+						return std::stoi(hd_data);
+					}
+				}
 			}
 
 			const size_t column = header_to_column.at(column_header);

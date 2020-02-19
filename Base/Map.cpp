@@ -178,7 +178,11 @@ void Map::load(const fs::path& path) {
 			continue;
 		}
 
-		pathing_map.blit_pathing_texture(i.position, 0, i.pathing);
+		if (doodads_slk.row_header_exists(i.id)) {
+			continue;
+		}
+
+		pathing_map.blit_pathing_texture(i.position, 0.f, i.pathing);
 	}
 	pathing_map.upload_dynamic_pathing();
 

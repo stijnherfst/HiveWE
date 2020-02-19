@@ -18,7 +18,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	// Ground Tiles
 	slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&& i : map->terrain.tileset_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i) + ".blp");
+		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i) + (hierarchy.hd ? "_diffuse.dds" : ".dds"));
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
@@ -52,7 +52,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	}
 
 	// Blight texture
-	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.blp");
+	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.dds");
 	const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 	ui.blight->setIcon(icon);

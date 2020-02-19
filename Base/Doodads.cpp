@@ -17,14 +17,40 @@ int Doodad::auto_increment;
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 
-	if (doodads_slk.row_header_exists(id)) {
-		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
-	}
+	//float rotation;
+	//if (doodads_slk.row_header_exists(id)) {
+	//	base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
+	//	if (doodads_slk.data<int>("fixedRot", id) == -1) {
+	//		rotation = angle;// glm::pi<float>() * 0.5f;
+	//	} else {
+	//		rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
+
+	//	}
+	//	std::cout << doodads_slk.data<float>("fixedRot", id) << "\n";
+
+	//} else {
+	//	if (destructibles_slk.data<int>("fixedRot", id) == -1) {
+	//		rotation = angle;// glm::pi<float>() * 0.5f;
+	//	} else {
+	//		rotation = glm::radians(destructibles_slk.data<float>("fixedRot", id));
+	//	}
+	//	std::cout << destructibles_slk.data<float>("fixedRot", id) << "\n";
+
+	//}
 	
-	//float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
+	/*float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
+	std::cout << fixed_rotation << "\n";*/
+	//if (doodads_slk.data<int>("fixedRot", id) == -1) {
+	//	rotation = angle;// glm::pi<float>() * 0.5f;
+	//} else {
+	//	rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
+	//}
+	
 
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
+	//matrix = glm::rotate(matrix, angle + glm::radians(fixed_rotation), glm::vec3(0, 0, 1));
+	//matrix = glm::rotate(matrix, glm::pi<float>() * 0.5f, glm::vec3(0, 0, 1));
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
 	auto maxRoll = doodads_slk.data("maxRoll", id);;
@@ -314,7 +340,6 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 		mesh_path = doodads_slk.data("file", id);
 		variations = doodads_slk.data("numVar", id);
 	} else {
-		// Is destructible
 		mesh_path = destructibles_slk.data("file", id);
 		variations = destructibles_slk.data("numVar", id);
 

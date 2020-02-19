@@ -38,14 +38,14 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 
 	QFileIconProvider icons;
 	gui_icon = icons.icon(QFileIconProvider::File);
-	script_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScript") + ".blp");
-	script_icon_disabled = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScriptDisable") + ".blp");
-	variable_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerGlobalVariable") + ".blp");
-	comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
+	script_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScript") + ".dds");
+	script_icon_disabled = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScriptDisable") + ".dds");
+	variable_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerGlobalVariable") + ".dds");
+	comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".dds");
 
-	event_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Event"));
-	condition_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Condition"));
-	action_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_Action"));
+	event_icon = texture_to_icon(string_replaced(world_edit_data.data("WorldEditArt", "SEIcon_Event"), "blp", "dds"));
+	condition_icon = texture_to_icon(string_replaced(world_edit_data.data("WorldEditArt", "SEIcon_Condition"), "blp", "dds"));
+	action_icon = texture_to_icon(string_replaced(world_edit_data.data("WorldEditArt", "SEIcon_Action"), "blp", "dds"));
 
 	ui.actionCreateGuiTrigger->setIcon(gui_icon);
 	ui.actionCreateJassTrigger->setIcon(script_icon);
@@ -309,7 +309,7 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 
 		if (auto found = trigger_icons.find(category); found == trigger_icons.end()) {
 			std::string icon_path = map->triggers.trigger_data.data("TriggerCategories", category, 1);
-			std::string final_path = icon_path + ".blp";
+			std::string final_path = icon_path + ".dds";
 			QIcon icon = texture_to_icon(final_path);
 			trigger_icons[category] = icon;
 			eca->setIcon(0, icon);

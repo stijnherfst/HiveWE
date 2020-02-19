@@ -403,12 +403,10 @@ void DoodadBrush::erase_variation(int variation) {
 
 void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
-	if (random_variation) {
-		set_random_variation();
-	}
+	set_random_variation();
+
 	const bool is_doodad = doodads_slk.row_header_exists(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
 
 	min_scale = slk.data<float>("minScale", id);
 	max_scale = slk.data<float>("maxScale", id);
