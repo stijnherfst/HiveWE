@@ -13,8 +13,10 @@
 #include "Hierarchy.h"
 
 void Unit::update() {
+	float model_scale = units_slk.data<float>("modelScale", id);
+
 	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::scale(matrix, glm::vec3(model_scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 }
 
@@ -42,12 +44,8 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
+		i.scale = reader.read<glm::vec3>() / 128.f;
 
-		// Scale isn't actually used
-		//i.scale = reader.read<glm::vec3>() / 128.f;
-		reader.advance(12);
-		i.scale = glm::vec3(1.f);
-		
 		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
 			i.skin_id = reader.read_string(4);
 		} else {
@@ -237,10 +235,6 @@ void Units::create() {
 		// ToDo handle starting location
 		if (i.id == "sloc") {
 			continue;
-		}
-		// ToDo handle random units
-		if (i.id != "uDNR" && i.id != "bDNR") {
-			i.scale = glm::vec3(std::stof(units_slk.data("modelScale", i.id)));
 		}
 
 		i.update();

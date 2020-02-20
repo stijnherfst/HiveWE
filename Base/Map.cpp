@@ -17,7 +17,6 @@
 void Map::load(const fs::path& path) {
 	auto begin = std::chrono::steady_clock::now();
 
-
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();

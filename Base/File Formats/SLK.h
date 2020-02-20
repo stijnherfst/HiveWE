@@ -33,19 +33,6 @@ namespace slk {
 				return T();
 			}
 
-			if (hierarchy.hd && header_to_column.contains(column_header + ":hd")) {
-				std::string hd_data = data(column_header + ":hd", row);
-				if (!hd_data.empty()) {
-					if constexpr (std::is_same<T, std::string>()) {
-						return hd_data;
-					} else if constexpr (std::is_same<T, float>()) {
-						return std::stof(hd_data);
-					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-						return std::stoi(hd_data);
-					}
-				}
-			}
-
 			const size_t column = header_to_column.at(column_header);
 
 			if (row >= rows) {
@@ -60,6 +47,19 @@ namespace slk {
 					return std::stof(shadow_data[row][column]);
 				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
 					return std::stoi(shadow_data[row][column]);
+				}
+			}
+
+			if (hierarchy.hd && header_to_column.contains(column_header + ":hd")) {
+				std::string hd_data = data(column_header + ":hd", row);
+				if (!hd_data.empty()) {
+					if constexpr (std::is_same<T, std::string>()) {
+						return hd_data;
+					} else if constexpr (std::is_same<T, float>()) {
+						return std::stof(hd_data);
+					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+						return std::stoi(hd_data);
+					}
 				}
 			}
 

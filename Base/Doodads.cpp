@@ -53,7 +53,7 @@ void Doodad::update() {
 	//matrix = glm::rotate(matrix, glm::pi<float>() * 0.5f, glm::vec3(0, 0, 1));
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	auto maxRoll = doodads_slk.data("maxRoll", id);;
+	auto maxRoll = doodads_slk.data("maxRoll", id);
 	if (!maxRoll.empty()) {
 		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
 	}
