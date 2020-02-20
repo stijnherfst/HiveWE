@@ -368,15 +368,18 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	// Switch around the texture in the replaceable_id table so the mesh loader will pick the correct texture
 	std::string replaceable_texture;
-	if (is_number(replaceable_id) && texture_name != "_") {
+
+	bool replace_texture = is_number(replaceable_id) && texture_name != "_";
+
+	if (replace_texture) {
 		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
 		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + (hierarchy.hd ? "_diffuse.dds" : ".dds");
 	}
 
-	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path));
+	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, replace_texture ? texture_name.string() : ""));
 
 	// Switch it back
-	if (is_number(replaceable_id) && texture_name != "_.blp") {
+	if (replace_texture) {
 		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = replaceable_texture;
 	}
 

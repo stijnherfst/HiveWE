@@ -83,6 +83,7 @@ void Map::load(const fs::path& path) {
 
 	// Destructibles
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));

@@ -14,12 +14,10 @@ public:
 class ResourceManager {
 public:
 	template<typename T>
-	std::shared_ptr<T> load(const fs::path& path) {
-		static int hits = 0;
-		static int misses = 0;
+	std::shared_ptr<T> load(const fs::path& path, const std::string& custom_identifier = "") {
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
 
-		const std::string resource = path.string() + T::name;
+		const std::string resource = path.string() + T::name + custom_identifier;
 
 		auto res = resources[resource].lock();
 		if (!res) {
