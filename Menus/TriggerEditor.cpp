@@ -25,6 +25,10 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	model = new TreeModel(explorer);
 	explorer->setModel(model);
 
+	compile_output->setReadOnly(true);
+	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::AllTabsHaveCloseButton);
+	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::DockAreaDynamicTabsMenuButtonVisibility);
+
 	setCentralWidget(dock_manager);
 
 	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
@@ -33,6 +37,12 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	explorer_widget->setWidget(explorer);
 	dock_manager->addDockWidget(ads::LeftDockWidgetArea, explorer_widget);
 	dock_manager->setStyleSheet("");
+
+	ads::CDockWidget* output_widget = new ads::CDockWidget("Output");
+	output_widget->setObjectName("-11");
+	output_widget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+	output_widget->setWidget(compile_output);
+	dock_manager->addDockWidget(ads::BottomDockWidgetArea, output_widget);
 
 	show();
 
@@ -53,7 +63,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
   
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
 		save_changes();
-		map->triggers.generate_map_script();
+		compile_output->setPlainText(map->triggers.generate_map_script());
 	});
 	connect(ui.actionCreateJassTrigger, &QAction::triggered, explorer, &TriggerExplorer::createJassTrigger);
 	connect(ui.actionCreateComment, &QAction::triggered, explorer, &TriggerExplorer::createComment);
@@ -65,8 +75,9 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 			if (dock_area->dockWidgets().contains(found) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
 			}
-			dock_manager->removeDockWidget(found);
-			found->deleteLater();
+			found->close();
+			//dock_manager->removeDockWidget(found);
+			//found->deleteLater();
 		}
 	});
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, this, &TriggerEditor::focus_search_window);
@@ -107,7 +118,8 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 	}
 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
-	
+	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
+
 	if (item->type == Classifier::gui || item->type == Classifier::script) {
 		QSettings settings;
 		bool comments_enabled = settings.value("comments").toString() != "False";
@@ -166,7 +178,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			}
 		}
 
-		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+		connect(dock_tab, &ads::CDockWidget::closeRequested, [&, dock_tab, item]() {
 			// Map header
 			if (item->id == 0) {
 				map->triggers.global_jass = dock_tab->findChild<JassEditor*>("jass_editor")->text().toStdString();
@@ -193,8 +205,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
 			}
-
-			dock_manager->removeDockWidget(dock_tab);
 		});
 
 		splitter->setStretchFactor(0, 1);
@@ -211,7 +221,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		edit->setObjectName("var_editor");
 		dock_tab->setWidget(edit);
 
-		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+		connect(dock_tab, &ads::CDockWidget::closeRequested, [&, dock_tab, item]() {
 			TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [item](const TriggerVariable& i) {
 				return i.id == item->id;
 			});
@@ -229,7 +239,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
 			}
-			dock_manager->removeDockWidget(dock_tab);
 		});
 	} else if (item->type == Classifier::comment) {
 		Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
@@ -246,7 +255,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
 		dock_tab->setWidget(comments_editor);
 
-		connect(dock_tab, &ads::CDockWidget::closed, [&, dock_tab, item]() {
+		connect(dock_tab, &ads::CDockWidget::closeRequested, [&, dock_tab, item]() {
 			Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
 				return trigger.id == item->id;
 				});
@@ -259,8 +268,6 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
 			}
-
-			dock_manager->removeDockWidget(dock_tab);
 		});
 	}
 
@@ -450,9 +457,11 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 void TriggerEditor::save_changes() {
 	QSettings settings;
 	bool comments = settings.value("comments").toString() != "False";
-	for (const auto& tab : dock_manager->dockWidgetsMap()) {
 
+	for (const auto& tab : dock_manager->dockWidgetsMap()) {
+		
 		int trigger_id = tab->objectName().toInt();
+
 		if (trigger_id < 0) {
 			continue;
 		}
@@ -477,7 +486,6 @@ void TriggerEditor::save_changes() {
 				}
 
 				trigger.custom_text = editor->text().toStdString();
-				break;
 			} else if (var_editor) { // variable
 				TriggerVariable& variable = *std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [trigger_id](const TriggerVariable& i) {
 					return i.id == trigger_id;

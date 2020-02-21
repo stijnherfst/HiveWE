@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QString>
+
 #include <unordered_map>
 
 #include "INI.h"
@@ -169,5 +171,6 @@ public:
 	void save() const;
 	void save_jass() const;
 
-	void generate_map_script();
+	// Returns compile output which could contain errors or general information
+	QString generate_map_script();
 };

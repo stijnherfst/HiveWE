@@ -906,7 +906,7 @@ void Triggers::generate_sounds(BinaryWriter& writer) {
 			(i.stop_out_of_range ? "true" : "false") + ", " +
 			std::to_string(i.fade_in_rate) + ", " +
 			std::to_string(i.fade_out_rate) + ", " +
-			"\"" + i.eax_effect + "\"" +
+			"\"" + string_replaced(i.eax_effect, "\\", "\\\\") + "\"" +
 			")\n");
 
 		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
@@ -1334,7 +1334,7 @@ void Triggers::generate_map_configuration(BinaryWriter& writer) {
 	writer.write_string("endfunction\n");
 }
 
-void Triggers::generate_map_script() {
+QString Triggers::generate_map_script() {
 	std::map<std::string, std::string> unit_variables; // creation_number, unit_id
 	std::map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 	std::vector<std::string> initialization_triggers;
@@ -1418,20 +1418,27 @@ void Triggers::generate_map_script() {
 	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
-	std::cout << result.toStdString() << "\n";
+	//std::cout << result.toStdString() << "\n";
 
 	if (result.contains("Compile error")) {
-		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		return result.mid(result.indexOf("Compile error"));
 	} else if (result.contains("compile errors")) {
-		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("compile errors.")), QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		return result.mid(result.indexOf("compile errors."));
 	} else {
 		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
-		std::cout << "Compilation successful\n";
+		return "Compilation successful";
+		//std::cout << "Compilation successful\n";
 	}
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {
 	std::string output;
+
+	if (!eca.enabled) {
+		return "";
+	}
 
 	if (eca.name == "WaitForCondition") {
 		output += "loop\n";

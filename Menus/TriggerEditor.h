@@ -4,6 +4,7 @@
 
 #include <QTreeView>
 #include <QTreeWidget>
+#include <QPlainTextEdit>
 
 #include <vector>
 #include <string>
@@ -30,6 +31,8 @@ private:
 
 	TriggerExplorer* explorer = new TriggerExplorer;
 	TreeModel* model;
+
+	QPlainTextEdit* compile_output = new QPlainTextEdit;
 
 	QIcon folder_icon;
 	QIcon gui_icon;

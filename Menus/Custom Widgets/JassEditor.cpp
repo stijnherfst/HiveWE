@@ -184,15 +184,16 @@ void Styling::styleText(int start, int end) {
 }
 
 bool Styling::caseSensitive() const {
-	return true;
+	return false;
 }
 
 JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), api(&lexer) {
 	setLexer(&lexer);
 	setCaretForegroundColor(QColor(255, 255, 255));
-	setMargins(1);
+	setMargins(2);
 	setMarginType(0, QsciScintilla::MarginType::NumberMargin);
-	setMarginWidth(0, 100);
+	setMarginWidth(0, "00");
+	setMarginWidth(1, "0");
 	setMarginLineNumbers(0, true);
 
 	setIndentationsUseTabs(true);
@@ -200,11 +201,15 @@ JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), a
 	setIndentationGuides(true);
 	setAutoIndent(true);
 	setTabWidth(4);
+	SendScintilla(SCI_SETEOLMODE, SC_EOL_LF);
 
 	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAll);
 	setAutoCompletionUseSingle(QsciScintilla::AcusExplicit);
 	setAutoCompletionReplaceWord(false);
 	setAutoCompletionThreshold(1);
+	setAutoCompletionCaseSensitivity(false);
+	SendScintilla(SCI_AUTOCSETCASEINSENSITIVEBEHAVIOUR, SC_CASEINSENSITIVEBEHAVIOUR_RESPECTCASE);
+	SendScintilla(SCI_AUTOCSETCANCELATSTART, false);
 
 	SendScintilla(SCI_STYLESETBACK, STYLE_BRACELIGHT, qRgb(30, 75, 125));
 	SendScintilla(SCI_STYLESETBACK, STYLE_BRACEBAD, qRgb(125, 60, 25));
@@ -368,8 +373,6 @@ void JassEditor::calculate_margin_width() {
 	const int new_width = std::log10(lines()) + 2;
 	if (new_width != max_line_number_width) {
 		max_line_number_width = new_width;
-		setMarginWidth(0, QString('9').repeated(new_width));
+		setMarginWidth(0, QString('0').repeated(new_width));
 	}
-
-	//HighlightWord("unit");
 }

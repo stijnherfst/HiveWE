@@ -19,7 +19,6 @@ find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qt-advanced-docking-system CONFIG REQUIRED)
 
-
 add_executable(HiveWE 
 	${QT_RESOURCES}
 	HiveWE.rc
@@ -100,8 +99,6 @@ add_executable(HiveWE
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
-# target_include_directories(HiveWE PRIVATE "C:/vcpkg/installed/x64-windows/include/bullet")
-
 target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
 
 target_link_libraries(HiveWE
@@ -127,8 +124,7 @@ if(WIN32)
     target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
 endif()
 
-	target_link_options(HiveWE PUBLIC /PROFILE)
-
+target_link_options(HiveWE PUBLIC /PROFILE)
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

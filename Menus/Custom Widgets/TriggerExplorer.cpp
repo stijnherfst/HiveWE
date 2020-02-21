@@ -338,10 +338,9 @@ int TreeModel::columnCount(const QModelIndex& parent) const {
 }
 
 void TreeModel::insertItem(const QModelIndex& parent, Classifier classifier, int id) {
-	beginInsertRows(parent, rowCount(), rowCount());
-	TreeItem* item = static_cast<TreeItem*>(parent.internalPointer());
-	
-	TreeItem* new_item = new TreeItem(item);
+	TreeItem* parent_item = static_cast<TreeItem*>(parent.internalPointer());
+	beginInsertRows(parent, parent_item->children.size(), parent_item->children.size());
+	TreeItem* new_item = new TreeItem(parent_item);
 	new_item->type = classifier;
 	new_item->id = id;
 	endInsertRows();
