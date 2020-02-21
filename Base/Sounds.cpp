@@ -4,7 +4,7 @@
 
 void Sounds::load(BinaryReader& reader) {
 	int version = reader.read<uint32_t>();
-	if (version != 1) {
+	if (version != 1 && version != 2) {
 		std::cout << "Unknown war3map.w3s version: " << version << " Attempting to load but may crash\n";
 	}
 
@@ -23,18 +23,27 @@ void Sounds::load(BinaryReader& reader) {
 		i.fade_out_rate = reader.read<uint32_t>();
 		i.volume = reader.read<uint32_t>();
 		i.pitch = reader.read<float>();
-		i.unknown = reader.read<float>();
-		i.unknown2 = reader.read<uint32_t>();
+		i.pitch_variance = reader.read<float>();
+		i.priority = reader.read<uint32_t>();
 		i.channel = reader.read<uint32_t>();
 		i.min_distance = reader.read<float>();
 		i.max_distance = reader.read<float>();
 		i.distance_cutoff = reader.read<float>();
-		i.unknown3 = reader.read<float>();
-		i.unknown4 = reader.read<float>();
-		i.unknown5 = reader.read<uint32_t>();
-		i.unknown6 = reader.read<float>();
-		i.unknown7 = reader.read<float>();
-		i.unknown8 = reader.read<float>();
+		i.cone_inside = reader.read<float>();
+		i.cone_outside = reader.read<float>();
+		i.cone_outside_volume = reader.read<uint32_t>();
+		i.cone_orientation_x = reader.read<float>();
+		i.cone_orientation_y = reader.read<float>();
+		i.cone_orientation_z = reader.read<float>();
+
+		if (version >= 2) {
+			// Sound asset data merged with sound data in v2?
+
+			reader.read_c_string();
+			reader.read_c_string();
+			reader.read_c_string();
+			reader.advance(18);
+		}
 	}
 }
 
