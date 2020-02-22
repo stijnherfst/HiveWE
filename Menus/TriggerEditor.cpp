@@ -59,6 +59,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 
 	ui.actionCreateGuiTrigger->setIcon(gui_icon);
 	ui.actionCreateJassTrigger->setIcon(script_icon);
+	ui.actionCreateVariable->setIcon(variable_icon);
 	ui.actionCreateComment->setIcon(comment_icon);
   
 	connect(ui.actionGenerateScript, &QAction::triggered, [&]() {
@@ -66,6 +67,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		compile_output->setPlainText(map->triggers.generate_map_script());
 	});
 	connect(ui.actionCreateJassTrigger, &QAction::triggered, explorer, &TriggerExplorer::createJassTrigger);
+	connect(ui.actionCreateVariable, &QAction::triggered, explorer, &TriggerExplorer::createVariable);
 	connect(ui.actionCreateComment, &QAction::triggered, explorer, &TriggerExplorer::createComment);
 
 	connect(explorer, &QTreeView::doubleClicked, this, &TriggerEditor::item_clicked);
@@ -76,8 +78,6 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 				dock_area = nullptr;
 			}
 			found->close();
-			//dock_manager->removeDockWidget(found);
-			//found->deleteLater();
 		}
 	});
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, this, &TriggerEditor::focus_search_window);

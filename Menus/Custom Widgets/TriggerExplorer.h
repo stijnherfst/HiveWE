@@ -85,6 +85,7 @@ public:
 	void createCategory();
 	void createJassTrigger();
 	void createGuiTrigger();
+	void createVariable();
 	void createComment();
 	void deleteSelection();
 

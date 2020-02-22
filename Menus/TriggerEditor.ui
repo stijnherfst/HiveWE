@@ -34,6 +34,7 @@
    <addaction name="separator"/>
    <addaction name="actionCreateGuiTrigger"/>
    <addaction name="actionCreateJassTrigger"/>
+   <addaction name="actionCreateVariable"/>
    <addaction name="actionCreateComment"/>
   </widget>
   <action name="actionGenerateScript">
@@ -73,6 +74,14 @@
    </property>
    <property name="toolTip">
     <string>Creates a Comment</string>
+   </property>
+  </action>
+  <action name="actionCreateVariable">
+   <property name="text">
+    <string>actionCreateVariable</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a global variable</string>
    </property>
   </action>
  </widget>

@@ -199,6 +199,28 @@ void TriggerExplorer::createGuiTrigger() {
 	expand(index);
 }
 
+void TriggerExplorer::createVariable() {
+	if (selectionModel()->selectedRows().empty()) {
+		return;
+	}
+	auto index = selectionModel()->selectedRows().front();
+
+	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
+
+	if (parent_item->type != Classifier::category) {
+		parent_item = parent_item->parent;
+		index = index.parent();
+	}
+
+	TriggerVariable variable;
+	variable.id = ++Trigger::next_id;
+	variable.name = "New Variable";
+	variable.parent_id = parent_item->id;
+	map->triggers.variables.push_back(variable);
+
+	dynamic_cast<TreeModel*>(model())->insertItem(index, Classifier::variable, variable.id);
+}
+
 void TriggerExplorer::createComment() {
 	if (selectionModel()->selectedRows().empty()) {
 		return;

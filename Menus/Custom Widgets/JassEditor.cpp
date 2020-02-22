@@ -201,8 +201,9 @@ JassEditor::JassEditor(QWidget * parent) : QsciScintilla(parent), lexer(this), a
 	setIndentationGuides(true);
 	setAutoIndent(true);
 	setTabWidth(4);
-	SendScintilla(SCI_SETEOLMODE, SC_EOL_LF);
+	setEolMode(QsciScintilla::EolUnix);
 
+	// Autocompletion
 	setAutoCompletionSource(QsciScintilla::AutoCompletionSource::AcsAll);
 	setAutoCompletionUseSingle(QsciScintilla::AcusExplicit);
 	setAutoCompletionReplaceWord(false);
