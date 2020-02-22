@@ -182,7 +182,7 @@ void Map::load(const fs::path& path) {
 			continue;
 		}
 
-		pathing_map.blit_pathing_texture(i.position, 0.f, i.pathing);
+		pathing_map.blit_pathing_texture(i.position, glm::degrees(i.angle) + 90, i.pathing);
 	}
 	pathing_map.upload_dynamic_pathing();
 

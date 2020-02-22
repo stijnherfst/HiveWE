@@ -39,12 +39,21 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 	shape = new_shape;
 
 	if (pathing_texture) {
+		const int div_w = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->height : pathing_texture->width;
+		const int div_h = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->width : pathing_texture->height;
+
+		for (int i = 0; i < size; i++) {
+			for (int j = 0; j < size; j++) {
+				brush[j * size + i] = { 0, 0, 0, 0 };
+			}
+		}
+
 		for (int i = 0; i < pathing_texture->width; i++) {
 			for (int j = 0; j < pathing_texture->height; j++) {
 				int x = i;
 				int y = j;
 
-				switch ((int)glm::degrees(rotation) + 90) {
+				switch (((int)glm::degrees(rotation) + 90) % 360) {
 					case 90:
 						x = pathing_texture->width - 1 - j - std::max(0, pathing_texture->width - pathing_texture->height);
 						y = i + std::max(0, pathing_texture->height - pathing_texture->width);
@@ -60,12 +69,9 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 				}
 
 				const int in = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
-				
-
-				const int div_w = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->height : pathing_texture->width;
-				const int div_h = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->width : pathing_texture->height;
 				const int index = (y + std::max(0, div_w - div_h) / 2) * size + x + std::max(0, div_h - div_w) / 2;
 
+				// Have to check for > 250 because sometimes the pathing textures are not properly thresholded
 				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
 					pathing_texture->data[in + 1] > 250 ? 255 : 0,
 					pathing_texture->data[in] > 250 ? 255 : 0,
@@ -73,8 +79,6 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 				if (color.r || color.g || color.b) {
 					brush[index] = color;
-				} else {
-					brush[index] = { 0, 0, 0, 0 };
 				}
 			}
 		}
@@ -178,9 +182,36 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 		if (mode == Mode::selection) {
 			if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
-					i->angle = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					bool fixed_rotation = false;
+					if (doodads_slk.row_header_exists(i->id)) {
+						fixed_rotation = doodads_slk.data<int>("fixedRot", i->id) > 0;
+					} else {
+						fixed_rotation = destructibles_slk.data<int>("fixedRot", i->id) > 0;
+					}
+
+					if (fixed_rotation) {
+						continue; 
+					}
+
+					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					if (target_rotation < 0) {
+						target_rotation = (glm::pi<float>() + target_rotation) + glm::pi<float>();
+					}
+
+					if (i->pathing->width == i->pathing->height) {
+						if (i->pathing->homogeneous) {
+							i->angle = target_rotation;
+
+						} else {
+							i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
+						}
+					} else {
+						i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+					}
 					i->update();
 				}
+
+				map->doodads.update_doodad_pathing(selections);
 			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
@@ -293,13 +324,9 @@ void DoodadBrush::apply() {
 		map->pathing_map.upload_dynamic_pathing();
 	}
 
-	// Setup for the next apply
-	std::random_device rd;
-	std::mt19937 gen(rd());
-
-	if (random_rotation && free_rotation) {
-		std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
-		rotation = dist(gen);
+	if (random_rotation) {
+		set_random_rotation();
+		set_shape(shape);
 	}
 
 	if (random_variation) {
@@ -307,6 +334,8 @@ void DoodadBrush::apply() {
 	}
 
 	if (random_scale) {
+		std::random_device rd;
+		std::mt19937 gen(rd());
 		std::uniform_real_distribution dist(min_scale, max_scale);
 		scale = dist(gen);
 	}
@@ -390,6 +419,30 @@ void DoodadBrush::set_random_variation() {
 	mesh = map->doodads.get_mesh(id, variation);
 }
 
+void DoodadBrush::set_random_rotation() {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+
+	bool fixed_rotation = false;
+	if (doodads_slk.row_header_exists(id)) {
+		fixed_rotation = doodads_slk.data<int>("fixedRot", id) > 0;
+	} else {
+		fixed_rotation = destructibles_slk.data<int>("fixedRot", id) > 0;
+	}
+
+	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
+	float target_rotation = dist(gen);
+	if (pathing_texture->width == pathing_texture->height) {
+		if (pathing_texture->homogeneous) {
+			rotation = target_rotation;
+		} else {
+			rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+		}
+	} else {
+		rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+	}
+}
+
 void DoodadBrush::add_variation(int variation) {
 	possible_variations.insert(variation);
 }
@@ -420,7 +473,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		scale = slk.data<float>("defScale", id);
 	}
 
-	if (slk.data<int>("fixedRot", id) == -1) {
+	if (slk.data<int>("fixedRot", id) < 0) {
 		rotation = glm::pi<float>() * 1.5f;
 	} else {
 		rotation = glm::radians(slk.data<float>("fixedRot", id));
@@ -430,7 +483,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	std::string pathing_texture_path = slk.data("pathTex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		free_placement = false;
-		pathing_texture = resource_manager.load<Texture>(pathing_texture_path);
+		pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
 
 		set_size(std::max(pathing_texture->width, pathing_texture->height));
 

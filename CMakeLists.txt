@@ -70,6 +70,7 @@ add_executable(HiveWE
 	Base/Resources/SkinnedMesh.cpp
 	Base/Resources/StaticMesh.cpp
 	Base/Resources/Texture.cpp
+	Base/Resources/PathingTexture.cpp
 
 	Menus/DoodadPalette.cpp
 	Menus/ImportManager.cpp

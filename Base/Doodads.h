@@ -5,7 +5,7 @@
 
 #include "StaticMesh.h"
 #include "Utilities.h"
-#include "Texture.h"
+#include "PathingTexture.h"
 
 #include "Terrain.h"
 #include "TerrainUndo.h"
@@ -35,7 +35,7 @@ struct Doodad {
 	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
-	std::shared_ptr<Texture> pathing;
+	std::shared_ptr<PathingTexture> pathing;
 
 	Doodad() {
 		creation_number = ++auto_increment;

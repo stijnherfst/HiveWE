@@ -212,7 +212,7 @@ void Doodads::create() {
 
 		std::string pathing_texture_path = slk.data("pathTex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
-			i.pathing = resource_manager.load<Texture>(pathing_texture_path);
+			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
 	}
 
@@ -248,7 +248,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 	std::string pathing_texture_path = slk.data("pathTex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
-		doodad.pathing = resource_manager.load<Texture>(pathing_texture_path);
+		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 	}
 
 	doodad.update();
@@ -319,7 +319,7 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 		if (!i->pathing) {
 			continue;
 		}
-		map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
+		map->pathing_map.blit_pathing_texture(i->position, glm::degrees(i->angle) + 90, i->pathing);
 	}
 	map->pathing_map.upload_dynamic_pathing();
 }
@@ -415,21 +415,37 @@ void DoodadDeleteAction::redo() {
 }
 
 void DoodadStateAction::undo() {
+	QRectF update_pathing_area;
 	for (auto& i : old_doodads) {
 		for (auto& j : map->doodads.doodads) {
 			if (i.creation_number == j.creation_number) {
+				if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+					update_pathing_area = { j.position.x, j.position.y, 1.f, 1.f };
+				}
+				update_pathing_area |= { j.position.x, j.position.y, 1.f, 1.f };
+				update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+
 				j = i;
 			}
 		}
 	}
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadStateAction::redo() {
+	QRectF update_pathing_area;
 	for (auto& i : new_doodads) {
 		for (auto& j : map->doodads.doodads) {
 			if (i.creation_number == j.creation_number) {
+				if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+					update_pathing_area = { j.position.x, j.position.y, 1.f, 1.f };
+				}
+				update_pathing_area |= { j.position.x, j.position.y, 1.f, 1.f };
+				update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+
 				j = i;
 			}
 		}
 	}
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }

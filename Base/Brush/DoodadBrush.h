@@ -3,10 +3,10 @@
 #include <set>
 #include <vector>
 
-
 #include "Doodads.h"
 #include "Brush.h"
 #include "StaticMesh.h"
+#include "PathingTexture.h"
 
 class DoodadBrush : public Brush {
 	std::set<int> possible_variations = { 0 };
@@ -18,7 +18,7 @@ class DoodadBrush : public Brush {
 	std::shared_ptr<StaticMesh> mesh;
 public:
 	Doodad::State state = Doodad::State::visible_solid;
-	std::shared_ptr<Texture> pathing_texture;
+	std::shared_ptr<PathingTexture> pathing_texture;
 
 	bool free_placement = false;
 	bool free_rotation = false;
@@ -64,6 +64,7 @@ public:
 	void render_selection() const override;
 	void render_clipboard() const override;
 
+	void set_random_rotation();
 	void set_random_variation();
 	void add_variation(int variation);
 	void erase_variation(int variation);
