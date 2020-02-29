@@ -2,7 +2,7 @@
 
 #include "HiveWE.h"
 
-TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
+TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -205,4 +205,10 @@ bool TerrainPalette::event(QEvent *e) {
 		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
 	return QWidget::event(e);
+}
+
+void TerrainPalette::deactivate(QRibbonTab* tab) {
+	if (tab != ribbon_tab) {
+		brush.clear_selection();
+	}
 }

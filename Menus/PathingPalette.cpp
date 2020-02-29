@@ -3,7 +3,7 @@
 #include <QDialog>
 #include "HiveWE.h"
 
-PathingPalette::PathingPalette(QWidget *parent) : QDialog(parent) {
+PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -51,4 +51,10 @@ bool PathingPalette::event(QEvent *e) {
 		map->brush = &brush;
 	}
 	return QWidget::event(e);
+}
+
+void PathingPalette::deactivate(QRibbonTab* tab) {
+	//if (tab != ribbon_tab) {
+	//	brush.clear_selection();
+	//}
 }

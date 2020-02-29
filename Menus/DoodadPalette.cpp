@@ -1,8 +1,10 @@
 #include "DoodadPalette.h"
 
 #include <QRadioButton>
+#include <QCheckBox>
 
 #include "HiveWE.h"
+#include "Selections.h"
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -30,12 +32,28 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.type->setCurrentIndex(ui.type->count() - 2);
 
 	QRibbonSection* selection_section = new QRibbonSection;
+	selection_section->setText("Selection");
 
 	selection_mode->setText("Selection\nMode");
 	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
+
+	selections_button->setText("View\nSelections");
+	selections_button->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png.png"));
+	selection_section->addWidget(selections_button);
+
+	QVBoxLayout* selection_choices_layout = new QVBoxLayout;
+	QCheckBox* select_destructibles = new QCheckBox("Destructibles");
+	select_destructibles->setChecked(true);
+	QCheckBox* select_doodads = new QCheckBox("Doodads");
+	select_doodads->setChecked(true);
 	
+	selection_choices_layout->addWidget(select_destructibles);
+	selection_choices_layout->addWidget(select_doodads);
+
+	selection_section->addLayout(selection_choices_layout);
+
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	QRibbonSection* placement_section = new QRibbonSection;
@@ -93,42 +111,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	visibility_flags_layout->setSpacing(6);
 	flags_section->addLayout(visibility_flags_layout);
 
-
 	pathing_section->setText("Pathing");
 	pathing_section->addWidget(pathing_image_label);
-
-
-	/*QVBoxLayout* lay = new QVBoxLayout;
-	QDoubleSpinBox* but = new QDoubleSpinBox;
-	QDoubleSpinBox* butt = new QDoubleSpinBox;
-
-	but-> setStyleSheet(R"(
-		QDoubleSpinBox {
-			border: 1px solid black;
-		}
-	)");
-
-	butt->setStyleSheet(R"(
-		QDoubleSpinBox {
-			border: 1px solid black;
-		}
-	)");
-
-	QHBoxLayout* tt = new QHBoxLayout;
-	tt->addWidget(new QLabel("Min"));
-	tt->addWidget(but);
-
-	QHBoxLayout* ttt = new QHBoxLayout;
-	ttt->addWidget(new QLabel("Max"));
-	ttt->addWidget(butt);
-
-	ttt->setSpacing(6);*/
-
-	//lay->addLayout(tt);
-	//lay->addLayout(ttt);
-	//lay->addWidget(buttt);
-
-	//section->addLayout(lay);
 
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(placement_section);

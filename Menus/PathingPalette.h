@@ -5,7 +5,9 @@
 #include "ui_PathingPalette.h"
 #include "PathingBrush.h"
 
-class PathingPalette : public QDialog {
+#include "Palette.h"
+
+class PathingPalette : public Palette {
 	Q_OBJECT
 
 public:
@@ -17,4 +19,7 @@ private:
 
 	Ui::PathingPalette ui;
 	PathingBrush brush;
+
+public slots:
+	void deactivate(QRibbonTab* tab) override;
 };

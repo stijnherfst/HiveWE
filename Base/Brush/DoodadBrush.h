@@ -27,6 +27,9 @@ public:
 	bool random_scale = true;
 	bool random_rotation = true;
 
+	bool select_doodads = true;
+	bool select_destructibles = true;
+
 	float scale = 1.f;
 	float min_scale = 1.f;
 	float max_scale = 1.f;

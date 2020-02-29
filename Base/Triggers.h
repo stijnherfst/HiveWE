@@ -92,7 +92,7 @@ struct Trigger {
 	std::string custom_text;
 	bool is_comment = false;
 	bool is_enabled = true;
-	bool is_script = true;
+	bool is_script = false;
 	bool initially_on = true;
 	bool run_on_initialization = false;
 	std::vector<ECA> ecas;

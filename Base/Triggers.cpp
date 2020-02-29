@@ -238,7 +238,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	unknown8 = reader.read<uint32_t>();	
 	unknown9 = reader.read<uint32_t>();
 
-	reader.read_c_string(); //last name the map was saved under
+	reader.read_c_string(); //last name the map was saved under, don't care
 
 	unknown10 = reader.read<uint32_t>();
 	unknown11 = reader.read<uint32_t>();
@@ -391,7 +391,7 @@ void Triggers::print_eca_structure(BinaryWriter& writer, const ECA& eca, bool is
 }
 
 void Triggers::save() const {
-	BinaryWriter writer;
+ 	BinaryWriter writer;
 	writer.write_string("WTG!");
 	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(write_sub_version);
@@ -450,7 +450,7 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.parent_id);
 	}
 
-	writer.write<uint32_t>(triggers.size() + variables.size() +  1);
+	writer.write<uint32_t>(categories.size() + triggers.size() + variables.size() +  1);
 	writer.write<uint32_t>(unknown8);
 	writer.write<uint32_t>(unknown9);
 	writer.write_c_string("It'll quench ya");
@@ -1409,7 +1409,7 @@ QString Triggers::generate_map_script() {
 	generate_map_configuration(writer);
 
 	fs::path path = QDir::tempPath().toStdString() + "/input.j";
-	std::ofstream output(path);
+	std::ofstream output(path, std::ios::binary);
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
 	output.close();
 
@@ -1932,6 +1932,9 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
 	}
 
+	if (!trigger.initially_on) {
+		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
+	}
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 

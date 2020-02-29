@@ -25,6 +25,7 @@ private:
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;
+	QRibbonButton* selections_button = new QRibbonButton;
 
 	QRibbonContainer* variations = new QRibbonContainer;
 

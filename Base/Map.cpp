@@ -82,10 +82,12 @@ void Map::load(const fs::path& path) {
 
 	// Destructibles
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
-	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
+
+	destructibles_slk.save("C:/Users/User/Desktop/Destructibles.slk");
+
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -285,7 +287,7 @@ void Map::update(double delta, int width, int height) {
 		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
 		glm::vec3 origin = camera->position - camera->direction * camera->distance;
 		glm::vec3 direction = glm::normalize(pos - origin);
-		glm::vec3 toto = origin + direction * 200.f;
+		glm::vec3 toto = origin + direction * 2000.f;
 
 		btVector3 from(origin.x, origin.y, origin.z);
 		btVector3 to(toto.x, toto.y, toto.z);

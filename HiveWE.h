@@ -41,6 +41,18 @@ private:
 	/// Adds the tab to the ribbon and sets the current index to this tab
 	void set_current_custom_tab(QRibbonTab* tab, QString name);
 	void remove_custom_tab();
+
+	template <typename T>
+	void open_palette() {
+		auto palette = new T(this);
+		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
+		connect(palette, &T::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
+		connect(palette, &T::finished, [&]() {
+			remove_custom_tab();
+			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
+		});
+	}
+
 signals:
 	void tileset_changed();
 	void palette_changed(QRibbonTab* tab);

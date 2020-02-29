@@ -215,6 +215,21 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+
+				// If we should remove doodads/destructibles from the selection
+				/*if (!select_doodads || !select_destructibles) {
+					for (int i = selections.size(); i-- > 0;) {
+						if (doodads_slk.row_header_exists(selections[i]->id)) {
+							if (!select_doodads) {
+
+							}
+						} else {
+							if (!select_destructibles) {
+
+							}
+						}
+					}
+				}*/
 			}
 		}
 	}
@@ -432,7 +447,7 @@ void DoodadBrush::set_random_rotation() {
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
 	float target_rotation = dist(gen);
-	if (pathing_texture->width == pathing_texture->height) {
+	if (pathing_texture && pathing_texture->width == pathing_texture->height) {
 		if (pathing_texture->homogeneous) {
 			rotation = target_rotation;
 		} else {
@@ -460,13 +475,15 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	const bool is_doodad = doodads_slk.row_header_exists(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
+	
 	min_scale = slk.data<float>("minScale", id);
 	max_scale = slk.data<float>("maxScale", id);
 
 	std::string maxRoll = doodads_slk.data("maxRoll", id);
 	if (!maxRoll.empty()) {
 		roll = -std::stof(maxRoll);
+	} else{
+		roll = 0;
 	}
 
 	if (is_doodad) {

@@ -80,8 +80,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() { map->terrain_undo.undo(); });
 	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {	map->terrain_undo.redo(); });
 
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Z), this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_Y), this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_Y, this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
@@ -92,11 +92,11 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map->render_debug = checked; });
 	connect(ui.ribbon->minimap_visible, &QPushButton::toggled, [&](bool checked) { (checked) ? minimap->show() : minimap->hide(); });
 
-	connect(new QShortcut(Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL + Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_F3, this), &QShortcut::activated, ui.ribbon->debug_visible, &QPushButton::click);
 
 	// Reload theme
@@ -142,29 +142,30 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
-	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() {
-		auto palette = new TerrainPalette(this);
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
-		connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
+	connect(new QShortcut(QKeySequence(Qt::Key_D), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
+		open_palette<DoodadPalette>();
 	});
 	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
-		auto palette = new DoodadPalette(this);
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
-		connect(palette, &Palette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-		connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-		connect(palette, &Palette::finished, [&]() {
-			remove_custom_tab();
-			disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
-		});
+		open_palette<DoodadPalette>();
 	});
+
+	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
+		open_palette<TerrainPalette>();
+	});
+
+	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() {
+		open_palette<TerrainPalette>();
+	});
+
+	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
+		open_palette<PathingPalette>();
+	});
+	
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
-		auto palette = new PathingPalette(this);
-		palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
-		connect(this, &HiveWE::tileset_changed, [palette]() {
-			palette->close();
-		});
+		open_palette<PathingPalette>();
+
 	});
+
 	setAutoFillBackground(true);
 
 	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });

@@ -85,6 +85,7 @@ add_executable(HiveWE
 	Menus/TilePicker.cpp
 	Menus/TileSetter.cpp
 	Menus/TriggerEditor.cpp
+	Menus/Selections.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"

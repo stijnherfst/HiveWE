@@ -47,6 +47,20 @@ namespace ini {
 				}
 
 				std::string key = line.substr(0, found);
+
+				// Fix some upper/lowercase issues that appeared in 1.32. Hopefully temporary 29/02/2020
+				if (key == "minscale") {
+					key = "minScale";
+				} else if (key == "maxscale") {
+					key = "maxScale";
+				} else if (key == "texid") {
+					key = "texID";
+				} else if (key == "fixedrot") {
+					key = "fixedRot";
+				} else if (key == "fixedrot") {
+					key = "fixedRot";
+				}
+
 				std::string value = line.substr(found + 1);
 
 				if (key.empty() || value.empty()) {
