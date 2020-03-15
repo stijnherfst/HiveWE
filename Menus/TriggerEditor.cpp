@@ -82,7 +82,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 			if (dock_area->dockWidgets().contains(found) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
 			}
-			found->closeDockWidget();
+			//found->closeDockWidget();
 		}
 	});
 	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, this, &TriggerEditor::focus_search_window);
@@ -399,9 +399,9 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 					std::string pre_result;
 					if (j.value.size() == 4) {
 						if (units_slk.row_header_exists(j.value)) {
-							pre_result = units_slk.data("Name", j.value);
+							pre_result = units_slk.data("name", j.value);
 						} else if (items_slk.row_header_exists(j.value)) {
-							pre_result = items_slk.data("Name", j.value);
+							pre_result = items_slk.data("name", j.value);
 						} else {
 							pre_result = j.value;
 						}
@@ -422,7 +422,7 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 					if (j.value.size() > 7 && j.value.substr(0, 7) == "gg_unit") {
 						std::string type = j.value.substr(8, 4);
 						std::string instance = j.value.substr(13);
-						result += units_slk.data("Name", type);
+						result += units_slk.data("name", type);
 						result += " " + instance;
 					} else {
 						//std::string type = map->triggers.variables[j.value].type;

@@ -7,6 +7,7 @@
 using namespace std::literals::string_literals;
 
 #include "Hierarchy.h"
+#include "Utilities.h"
 
 #undef mix
 #undef max
@@ -41,9 +42,11 @@ namespace slk {
 			position++;
 			length = line.find_first_of(';', position) - position;
 			position += length + 1;
+			// Replace by from_chars at some point
 			return std::stoi(line.substr(position - 1 - length, length));
 		};
 
+		// Replace getline by simply iterating over the raw bytes?
 		if (std::getline(file, line)) {
 			if (line.substr(0, 2) != "ID") {
 				std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
@@ -105,15 +108,18 @@ namespace slk {
 							part = "";
 						}
 
-						table_data[row][column] = part;
-
-						if (row == 0) {
-							header_to_column.emplace(part, column);
-						}
 
 						if (column == 0) {
 							header_to_row.emplace(part, row);
 						}
+
+						// If it is a column header we need to lowercas it as column headers are case insensitive
+						if (row == 0) {
+							to_lowercase(part);
+							header_to_column.emplace(part, column);
+						}
+
+						table_data[row][column] = part;
 					}
 					break;
 				case 'F':
@@ -204,10 +210,21 @@ namespace slk {
 			}
 
 			for (auto&& [key, value] : section_value) {
-				if (!header_to_column.contains(key)) {
-					add_column(key);
+				std::string key_lower = to_lowercase_copy(key);
+				if (!header_to_column.contains(key_lower)) {
+					add_column(key_lower);
 				}
-				table_data[header_to_row[section_key]][header_to_column[key]] = std::accumulate(value.begin(), value.end(), ""s);;
+
+				std::string final_value;
+				for (int i = 0; i < value.size(); i++) {
+					final_value += value[i];
+
+					if (i < value.size() - 1) {
+						final_value += ',';
+					}
+				}
+
+				table_data[header_to_row.at(section_key)][header_to_column.at(key_lower)] = final_value;
 			}
 		}
 	}
@@ -241,6 +258,7 @@ namespace slk {
 		rows++;
 	}
 
+	// header should be lowercase
 	void SLK::add_column(const std::string& header) {
 		columns += 1;
 		for(auto&& i : table_data) {
@@ -249,11 +267,14 @@ namespace slk {
 		for (auto&& i : shadow_data) {
 			i.resize(columns, shadow_table_empty_identifier);
 		}
+		table_data[0][columns - 1] = header;
 		header_to_column.emplace(header, columns - 1);
 	}
 
+
+	// column_header should be lowercase
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
-		if (!header_to_column.contains(column_header)) {
+		if (!header_to_column.contains(to_lowercase_copy(column_header))) {
 			std::cout << "Unknown column header: " << column_header << "\n";
 			return;
 		}
@@ -263,8 +284,20 @@ namespace slk {
 			return;
 		}
 
-		const size_t column = header_to_column[column_header];
-		const size_t row = header_to_row[row_header];
+		const size_t column = header_to_column.at(column_header);
+		const size_t row = header_to_row.at(row_header);
+
+		shadow_data[row][column] = data;
+	}
+
+	void SLK::set_shadow_data(const int column, const int row, const std::string& data) {
+		if (row >= rows) {
+			std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
+		}
+
+		if (column >= columns) {
+			std::cout << "Reading invalid column: " << column + 1 << "/" << rows << "\n";
+		}
 
 		shadow_data[row][column] = data;
 	}

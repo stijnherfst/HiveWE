@@ -69,6 +69,17 @@ std::vector<std::string_view> splitSV(std::string_view str, const char delimiter
 	return output;
 }
 
+std::string to_lowercase_copy(const std::string_view& string) {
+	std::string output(string);
+	std::transform(output.begin(), output.end(), output.begin(), [](unsigned char c) { return std::tolower(c); });
+	return output;
+}
+
+void to_lowercase(std::string& string) {
+	std::transform(string.begin(), string.end(), string.begin(), [](unsigned char c) { return std::tolower(c); });
+}
+
+
 // trim from start (in place)
 void ltrim(std::string& s) {
 	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
@@ -193,7 +204,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 				reader.advance(8);
 			}
 
-			const std::string column_header = meta_data.data("field", modification_id);
+			const std::string column_header = to_lowercase_copy(meta_data.data("field", modification_id));
 
 			std::string data;
 			switch (type) {

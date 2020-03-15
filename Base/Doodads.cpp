@@ -53,7 +53,7 @@ void Doodad::update() {
 	//matrix = glm::rotate(matrix, glm::pi<float>() * 0.5f, glm::vec3(0, 0, 1));
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	auto maxRoll = doodads_slk.data("maxRoll", id);
+	auto maxRoll = doodads_slk.data("maxroll", id);
 	if (!maxRoll.empty()) {
 		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
 	}
@@ -210,14 +210,14 @@ void Doodads::create() {
 		const bool is_doodad = doodads_slk.row_header_exists(i.id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-		std::string pathing_texture_path = slk.data("pathTex", i.id);
+		std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = doodads_slk.data<int>("fixedRot", i.id) / 360.f * 2.f * glm::pi<float>();
+		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
@@ -246,7 +246,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 
 	const bool is_doodad = doodads_slk.row_header_exists(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-	std::string pathing_texture_path = slk.data("pathTex", id);
+	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 	}
@@ -338,13 +338,13 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	if (doodads_slk.row_header_exists(id)) {
 		// Is doodad
 		mesh_path = doodads_slk.data("file", id);
-		variations = doodads_slk.data("numVar", id);
+		variations = doodads_slk.data("numvar", id);
 	} else {
 		mesh_path = destructibles_slk.data("file", id);
-		variations = destructibles_slk.data("numVar", id);
+		variations = destructibles_slk.data("numvar", id);
 
-		replaceable_id = destructibles_slk.data("texID", id);
-		texture_name = destructibles_slk.data("texFile", id);
+		replaceable_id = destructibles_slk.data("texid", id);
+		texture_name = destructibles_slk.data("texfile", id);
 		texture_name.replace_extension("");
 	}
 

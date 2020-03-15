@@ -1,3 +1,10 @@
+if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			CACHE STRING "")
+endif ()
+
+set (CMAKE_PREFIX_PATH "C:\\Qt\\5.14\\msvc2017_64")
+
 cmake_minimum_required(VERSION 3.13)
 project (HiveWE CXX)
 
@@ -54,6 +61,7 @@ add_executable(HiveWE
 	Base/Brush/DoodadBrush.cpp
 	Base/Brush/PathingBrush.cpp
 	Base/Brush/TerrainBrush.cpp
+	Base/Brush/UnitBrush.cpp
 
 	"Base/File Formats/BLP.cpp"
 	"Base/File Formats/CASC.cpp"
@@ -71,6 +79,7 @@ add_executable(HiveWE
 	Base/Resources/StaticMesh.cpp
 	Base/Resources/Texture.cpp
 	Base/Resources/PathingTexture.cpp
+	Base/Resources/QIconResource.cpp
 
 	Menus/DoodadPalette.cpp
 	Menus/ImportManager.cpp
@@ -81,11 +90,16 @@ add_executable(HiveWE
 	Menus/PathingPalette.cpp
 	Menus/SettingsEditor.cpp
 	Menus/TerrainPalette.cpp
+	Menus/UnitPalette.cpp
 	Menus/TilePather.cpp
 	Menus/TilePicker.cpp
 	Menus/TileSetter.cpp
 	Menus/TriggerEditor.cpp
 	Menus/Selections.cpp
+	Menus/ObjectEditor.cpp
+
+	Base/Models/UnitModel.cpp
+	Base/Models/UnitTreeModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
@@ -101,7 +115,7 @@ add_executable(HiveWE
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
-target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
+target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets" "Base/Models")
 
 target_link_libraries(HiveWE
 	Qt5::Gui
@@ -118,8 +132,8 @@ target_link_libraries(HiveWE
 	BulletCollision;
 	BulletDynamics
 	BulletSoftBody
-	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
+	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
+	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 )
 
 if(WIN32)

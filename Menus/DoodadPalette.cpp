@@ -179,7 +179,7 @@ void DoodadPalette::update_list() {
 
 
 
-		std::string text = slk.data("Name", i);
+		std::string text = slk.data("name", i);
 
 		const std::string trigstr = map->trigger_strings.string(text);
 		if (!trigstr.empty()) {
@@ -187,12 +187,12 @@ void DoodadPalette::update_list() {
 		}
 
 		if (!is_doodad) { 
-			text += " " + destructibles_slk.data("EditorSuffix", i);
+			text += " " + destructibles_slk.data("editorsuffix", i);
 		}
 
 		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
 		item->setText(QString::fromStdString(text));
-		item->setData(Qt::UserRole, QString::fromStdString(slk.data(is_doodad ? "doodID" : "DestructableID", i)));
+		item->setData(Qt::UserRole, QString::fromStdString(slk.data(is_doodad ? "doodid" : "destructableid", i)));
 	}
 }
 
@@ -207,7 +207,7 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 
 	variations->clear();
 
-	int variation_count = slk.data<int>("numVar", id);
+	int variation_count = slk.data<int>("numvar", id);
 	for (int i = 0; i < variation_count; i++) {
 		QRibbonButton* toggle = new QRibbonButton;
 		toggle->setCheckable(true);

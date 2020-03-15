@@ -243,6 +243,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	trigger_editor->setText("Trigger\nEditor");
 	editor_section->addWidget(trigger_editor);
 
+	object_editor->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
+	object_editor->setText("Object\nEditor");
+	editor_section->addWidget(object_editor);
+
 	QRibbonSection* palette_section = new QRibbonSection;
 	palette_section->setText("Palette"); 
 	

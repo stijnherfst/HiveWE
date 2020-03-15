@@ -28,6 +28,7 @@
 #include "PathingPalette.h"
 #include "Palette.h"
 #include "ImportManager.h"
+#include "ObjectEditor.h"
 #include "Camera.h"
 
 Map* map = nullptr;
@@ -174,29 +175,19 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
 
+	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
+		window_handler.create_or_raise<ObjectEditor>();
+	});
+
 	minimap->setParent(ui.widget);
 	minimap->move(10, 10);
 	minimap->show();
 
-	// Temporary Temporary
-	//QTimer::singleShot(5, [this]() {
-	//	auto editor = window_handler.create_or_raise<TriggerEditor>();
-	//	connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
-	//});
-
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	//map->load("C:\\Users\\User\\Desktop\\MCFC 7.2");
-	//map->load("C:\\Users\\User\\Desktop\\Test.w3m");
-	map->load("Data/Test Map/");
 
-	//QTimer::singleShot(50, [this]() {
-	//	auto palette = new TerrainPalette(this);
-	//	palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
-	//	connect(palette, &TerrainPalette::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
-	//	connect(palette, &DoodadPalette::finished, this, &HiveWE::remove_custom_tab);
-	//});
+	map->load("Data/Test Map/");
 }
 
 void HiveWE::load_folder() {

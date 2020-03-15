@@ -13,7 +13,7 @@
 #include "Hierarchy.h"
 
 void Unit::update() {
-	float model_scale = units_slk.data<float>("modelScale", id);
+	float model_scale = units_slk.data<float>("modelscale", id);
 
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, glm::vec3(model_scale) / 128.f);

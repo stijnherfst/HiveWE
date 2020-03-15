@@ -208,7 +208,6 @@ QPushButton::pressed {
 	background-color: rgb(100, 100, 100);
 }
 
-
 QPushButton::checked {
 	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
@@ -222,3 +221,26 @@ QDialogButtonBox QPushButton {
 JassEditor QFrame {
 	background-color: palette(window);
 }
+
+
+QTableView::indicator {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(60, 60, 60);
+}
+
+QTableView::indicator:hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QTableView::indicator:pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QTableView::indicator:checked{
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+	image: url("C:/Users/User/stack/Projects/HiveWE/HiveWE/Data/Icons/check.png");
+}
+

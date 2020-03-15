@@ -21,9 +21,14 @@ void Map::load(const fs::path& path) {
 	filesystem_path = fs::absolute(path) / "";
 	name = (*--(--filesystem_path.end())).string();
 
+	// ToDo So for the game data files we should actually load from _balance/custom_v0.w3mod/Units, _balance/custom_v1.w3mod/Units, _balance/melee_v0.w3mod/units or /Units depending on the Game Data set and Game Data Versions
+	// Maybe just ignore RoC so we only need to choose between _balance/custom_v1.w3mod/Units and /Units
+	// Maybe just force everyone to suck it up and use /Units
+
 	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
 	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
+	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
@@ -44,7 +49,6 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"));
-
 
 	abilities_slk = slk::SLK("Units/AbilityData.slk");
 	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"));

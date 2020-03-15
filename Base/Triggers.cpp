@@ -722,13 +722,13 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 			}
 
 			if (std::get<1>(j)) {
-				std::string order_on = abilities_slk.data("Orderon", std::get<0>(j));
+				std::string order_on = abilities_slk.data("orderon", std::get<0>(j));
 				if (order_on.empty()) {
-					order_on = abilities_slk.data("Order", std::get<0>(j));
+					order_on = abilities_slk.data("order", std::get<0>(j));
 				}
 				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_on + "\")\n");
 			} else {
-				std::string order_off = abilities_slk.data("Orderoff", std::get<0>(j));
+				std::string order_off = abilities_slk.data("orderoff", std::get<0>(j));
 				if (!order_off.empty()) {
 					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_off + "\")\n");
 				}

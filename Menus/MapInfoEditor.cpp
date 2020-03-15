@@ -74,7 +74,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
 	for (int i = 1; i < weather_slk.rows; i++) {
-		ui.globalWeatherCombo->addItem(QString::fromStdString(weather_slk.data("name", i)), QString::fromStdString(weather_slk.data("effectID", i)));
+		ui.globalWeatherCombo->addItem(QString::fromStdString(weather_slk.data("name", i)), QString::fromStdString(weather_slk.data("effectid", i)));
 	}
 	std::string weather_id = { reinterpret_cast<char*>(&map->info.weather_id), 4 };
 	ui.globalWeatherCombo->setCurrentText(QString::fromStdString(weather_slk.data("name", weather_id)));
@@ -85,9 +85,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
 	for (int i = 1; i < environment_sounds_slk.rows; i++) {
-		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("DisplayText", i)), QString::fromStdString(environment_sounds_slk.data("EnvironmentType", i)));
+		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("displaytext", i)), QString::fromStdString(environment_sounds_slk.data("environmenttype", i)));
 	}
-	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("DisplayText", map->info.custom_sound_environment)));
+	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("displaytext", map->info.custom_sound_environment)));
 
 	// Custom Lighting
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {

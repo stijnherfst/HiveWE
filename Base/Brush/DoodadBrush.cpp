@@ -184,9 +184,9 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 				for (auto&& i : selections) {
 					bool fixed_rotation = false;
 					if (doodads_slk.row_header_exists(i->id)) {
-						fixed_rotation = doodads_slk.data<int>("fixedRot", i->id) > 0;
+						fixed_rotation = doodads_slk.data<int>("fixedrot", i->id) > 0;
 					} else {
-						fixed_rotation = destructibles_slk.data<int>("fixedRot", i->id) > 0;
+						fixed_rotation = destructibles_slk.data<int>("fixedrot", i->id) > 0;
 					}
 
 					if (fixed_rotation) {
@@ -408,7 +408,7 @@ void DoodadBrush::render_clipboard() const {
 		glm::vec3 base_scale = glm::vec3(1.f);
 
 		if (doodads_slk.row_header_exists(i.id)) {
-			base_scale = glm::vec3(doodads_slk.data<float>("defScale", i.id));
+			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
 		}
 
 		glm::vec3 final_position;
@@ -440,9 +440,9 @@ void DoodadBrush::set_random_rotation() {
 
 	bool fixed_rotation = false;
 	if (doodads_slk.row_header_exists(id)) {
-		fixed_rotation = doodads_slk.data<int>("fixedRot", id) > 0;
+		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
 	} else {
-		fixed_rotation = destructibles_slk.data<int>("fixedRot", id) > 0;
+		fixed_rotation = destructibles_slk.data<int>("fixedrot", id) > 0;
 	}
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
@@ -476,10 +476,10 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	const bool is_doodad = doodads_slk.row_header_exists(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 	
-	min_scale = slk.data<float>("minScale", id);
-	max_scale = slk.data<float>("maxScale", id);
+	min_scale = slk.data<float>("minscale", id);
+	max_scale = slk.data<float>("maxscale", id);
 
-	std::string maxRoll = doodads_slk.data("maxRoll", id);
+	std::string maxRoll = doodads_slk.data("maxroll", id);
 	if (!maxRoll.empty()) {
 		roll = -std::stof(maxRoll);
 	} else{
@@ -487,13 +487,13 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 
 	if (is_doodad) {
-		scale = slk.data<float>("defScale", id);
+		scale = slk.data<float>("defscale", id);
 	}
 
-	if (slk.data<int>("fixedRot", id) < 0) {
+	if (slk.data<int>("fixedrot", id) < 0) {
 		rotation = glm::pi<float>() * 1.5f;
 	} else {
-		rotation = glm::radians(slk.data<float>("fixedRot", id));
+		rotation = glm::radians(slk.data<float>("fixedrot", id));
 	}
 
 	pathing_texture.reset();
@@ -505,14 +505,14 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		set_size(std::max(pathing_texture->width, pathing_texture->height));
 
 		free_rotation = pathing_texture->width == pathing_texture->height;
-		free_rotation = free_rotation && slk.data<float>("fixedRot", id) < 0.f;
+		free_rotation = free_rotation && slk.data<float>("fixedrot", id) < 0.f;
 	} else {
 		free_placement = true;
 		free_rotation = true;
 	}
 
 	possible_variations.clear();
-	int variation_count = slk.data<int>("numVar", id);
+	int variation_count = slk.data<int>("numvar", id);
 	for (int i = 0; i < variation_count; i++) {
 		possible_variations.insert(i);
 	}
