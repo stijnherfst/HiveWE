@@ -27,6 +27,11 @@ QVariant UnitModel::data(const QModelIndex& index, int role) const {
 			if (type == "bool") {
 				return QString::fromStdString(units_slk.data(index.column(), index.row())) == "1" ? "true" : "false";
 			}
+			else if (type == "int") {
+				return QString::fromStdString(units_slk.data(index.column(), index.row())).toInt();
+			} else if (type == "unreal") {
+				return QString::fromStdString(units_slk.data(index.column(), index.row())).toFloat();
+			}
 
 			return QString::fromStdString(units_slk.data(index.column(), index.row()));
 		}
@@ -148,120 +153,4 @@ UnitModel::UnitModel(QObject* parent) : QAbstractTableModel(parent) {
 	for (const auto& [key, index] : units_meta_slk.header_to_row) {
 		meta_field_to_index.emplace(to_lowercase_copy(units_meta_slk.data("field", index)), index);
 	}
-}
-
-UnitSingleModel::UnitSingleModel(QObject* parent) : QAbstractProxyModel(parent) {
-	for (const auto& [key, index] : units_meta_slk.header_to_row) {
-		if (units_slk.header_to_column.contains(to_lowercase_copy(units_meta_slk.data("field", key))) && !units_meta_slk.data("id", key).starts_with('i')) {
-			id_mapping.push_back(index);
-		}
-	}
-
-	std::sort(id_mapping.begin(), id_mapping.end(), [&](int left, int right) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", left));
-		category = string_replaced(category, "&", "");
-		std::string left_string = category + " - " + units_meta_slk.data("displayname", left);
-
-		category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", right));
-		category = string_replaced(category, "&", "");
-		std::string right_string = category + " - " + units_meta_slk.data("displayname", right);
-
-		return left_string < right_string;
-	});
-}
-
-QModelIndex UnitSingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
-	}
-	if (sourceIndex.row() != units_slk.header_to_row.at(unit_id)) {
-		return {};
-	}
-
-	//std::cout << sourceIndex.row() << "\t" << sourceIndex.column() << "\n";
-
-	int row = -1;
-	auto t = units_slk.data(sourceIndex.column(), 0);
-
-	for (const auto& [key, value] : units_meta_slk.header_to_row) {
-		if (to_lowercase_copy(units_meta_slk.data("field", value)) == t) {
-			row = value;
-			break;
-		}
-	}
-
-	for (int i = 0; i < id_mapping.size(); i++) {
-		if (id_mapping[i] == row) {
-			//std::cout << "Found " << row << " at " << i << " " << headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString() << " " << units_meta_slk.data("displayname", id_mapping[i]) << "\n";
-			return createIndex(i, 0);
-		}
-	}
-	return {};
-}
-
-QModelIndex UnitSingleModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	std::string column = to_lowercase_copy(units_meta_slk.data("field", id_mapping[proxyIndex.row()]));
-	return sourceModel()->index(units_slk.header_to_row.at(unit_id), units_slk.header_to_column.at(column));
-}
-
-QVariant UnitSingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
-	if (role != Qt::DisplayRole) {
-		return {};
-	}
-
-	if (orientation == Qt::Orientation::Vertical) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", id_mapping[section]));
-		category = string_replaced(category, "&", "");
-		return QString::fromStdString(category + " - " + units_meta_slk.data("displayname", id_mapping[section]) + " (" + units_meta_slk.data("id", id_mapping[section]) + ")");
-	} else {
-		return "UnitID";
-	}
-}
-
-int UnitSingleModel::rowCount(const QModelIndex& parent) const {
-	return id_mapping.size();
-}
-
-int UnitSingleModel::columnCount(const QModelIndex& parent) const {
-	return 1;
-}
-
-QModelIndex UnitSingleModel::index(int row, int column, const QModelIndex& parent) const {
-	return 	createIndex(row, column);
-}
-
-QModelIndex UnitSingleModel::parent(const QModelIndex& child) const {
-	return QModelIndex();
-}
-
-//Qt::ItemFlags UnitSingleModel::flags(const QModelIndex& index) const {
-//	if (!index.isValid()) {
-//		return Qt::NoItemFlags;
-//	}
-//
-//	return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
-//}
-
-void UnitSingleModel::setUnitID(const std::string_view unitID) {
-	beginResetModel();
-	unit_id = unitID;
-	endResetModel();
-}
-
-void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {
-	Qt::Alignment align = (Qt::AlignLeft | Qt::AlignVCenter);
-	
-	if (logicalIndex % 2 > 0) {
-		painter->fillRect(rect, palette().color(QPalette::AlternateBase));
-	} else {
-		painter->fillRect(rect, palette().color(QPalette::Base));
-	}
-
-	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, 0, this), 0, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
-	painter->setPen(QPen(palette().color(QPalette::Base)));
-	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
 }

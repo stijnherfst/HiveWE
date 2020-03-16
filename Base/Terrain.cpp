@@ -158,7 +158,7 @@ void Terrain::create() {
 	deep_color_max /= 255.f;
 
 	// Cliff Meshes
-	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
+	slk::SLK cliffs_slk("Data/Warcraft/Cliffs.slk", true);
 	for (size_t i = 1; i < cliffs_slk.rows; i++) {
 		for (int j = 0; j < cliffs_slk.data<int>("variations", i) + 1; j++) {
 			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffid", i) + std::to_string(j) + ".mdx";

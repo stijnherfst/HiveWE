@@ -70,6 +70,7 @@ extern slk::SLK units_slk;
 extern slk::SLK units_meta_slk;
 
 extern slk::SLK items_slk;
+extern slk::SLK items_meta_slk;
 
 extern slk::SLK abilities_slk;
 

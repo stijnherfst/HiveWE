@@ -40,6 +40,7 @@ WindowHandler window_handler;
 slk::SLK units_slk;
 slk::SLK units_meta_slk;
 slk::SLK items_slk;
+slk::SLK items_meta_slk;
 slk::SLK abilities_slk;
 slk::SLK doodads_slk;
 slk::SLK doodads_meta_slk;

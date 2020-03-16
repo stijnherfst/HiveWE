@@ -4,6 +4,7 @@
 
 
 #include "UnitTreeModel.h"
+#include "UnitSingleModel.h"
 
 void ObjectEditor::item_clicked(const QModelIndex& index) {
 	UnitTreeItem* item = static_cast<UnitTreeItem*>(index.internalPointer());
@@ -28,6 +29,8 @@ void ObjectEditor::item_clicked(const QModelIndex& index) {
 		//});
 
 		QTableView* view = new QTableView;
+		TableDelegate* delegate = new TableDelegate;
+		view->setItemDelegate(delegate);
 		view->horizontalHeader()->hide();
 		view->setAlternatingRowColors(true);
 		view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));

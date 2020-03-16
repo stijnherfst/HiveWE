@@ -27,7 +27,7 @@ void Map::load(const fs::path& path) {
 
 	// Units
 	units_slk = slk::SLK("Units/UnitData.slk");
-	units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
+	units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
@@ -76,6 +76,9 @@ void Map::load(const fs::path& path) {
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
 
+	items_meta_slk = slk::SLK("Data/Warcraft/ItemMetaData.slk", true);
+	items_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+
 	// Doodads
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
@@ -89,9 +92,6 @@ void Map::load(const fs::path& path) {
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
-
-	destructibles_slk.save("C:/Users/User/Desktop/Destructibles.slk");
-
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 

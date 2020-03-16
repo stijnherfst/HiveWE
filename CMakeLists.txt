@@ -100,6 +100,7 @@ add_executable(HiveWE
 
 	Base/Models/UnitModel.cpp
 	Base/Models/UnitTreeModel.cpp
+	Base/Models/UnitSingleModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"

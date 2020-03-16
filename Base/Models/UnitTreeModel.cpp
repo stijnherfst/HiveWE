@@ -80,8 +80,6 @@ void UnitTreeModel::_q_sourceDataChanged(const QModelIndex& topLeft, const QMode
 	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
 	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
 
-
-
 	UnitTreeItem* item = static_cast<UnitTreeItem*>(topLeft.internalPointer());
 
 	std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
@@ -170,6 +168,8 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.header_to_column.at("art")), role);
+		case Qt::ToolTipRole:
+			return QAbstractProxyModel::data(index, Qt::DisplayRole).toString() + "\n" + QString::fromStdString(units_slk.data("ubertip", item->tableRow));
 		default:
 			return {};
 	}
