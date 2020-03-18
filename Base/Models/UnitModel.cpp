@@ -27,11 +27,11 @@ QVariant UnitModel::data(const QModelIndex& index, int role) const {
 			if (type == "bool") {
 				return QString::fromStdString(units_slk.data(index.column(), index.row())) == "1" ? "true" : "false";
 			}
-			else if (type == "int") {
-				return QString::fromStdString(units_slk.data(index.column(), index.row())).toInt();
-			} else if (type == "unreal") {
-				return QString::fromStdString(units_slk.data(index.column(), index.row())).toFloat();
-			}
+			//else if (type == "int") {
+			//	return QString::fromStdString(units_slk.data(index.column(), index.row())).toInt();
+			//} else if (type == "unreal") {
+			//	return QString::fromStdString(units_slk.data(index.column(), index.row())).toFloat();
+			//}
 
 			return QString::fromStdString(units_slk.data(index.column(), index.row()));
 		}

@@ -29,6 +29,10 @@ void Map::load(const fs::path& path) {
 	units_slk = slk::SLK("Units/UnitData.slk");
 	units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	unit_editor_data = ini::INI("UI/UnitEditorData.txt");
+	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
+	// Have to substitute twice since some of the keys refer to other keys in the same file
+	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));

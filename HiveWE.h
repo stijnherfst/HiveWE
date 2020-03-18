@@ -68,6 +68,7 @@ extern WindowHandler window_handler;
 
 extern slk::SLK units_slk;
 extern slk::SLK units_meta_slk;
+extern ini::INI unit_editor_data;
 
 extern slk::SLK items_slk;
 extern slk::SLK items_meta_slk;

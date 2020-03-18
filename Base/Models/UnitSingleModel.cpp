@@ -3,6 +3,7 @@
 #include <QPen>
 #include <QPainter>
 #include <QLineEdit>
+#include <QComboBox>
 
 #include "HiveWE.h"
 
@@ -123,20 +124,48 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 	auto model = static_cast<const UnitSingleModel*>(index.model());
 	auto& mapping = model->getMapping();
 
+
 	std::string type = units_meta_slk.data("type", mapping[index.row()]);
+
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
 		std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
 		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
 		// handle empty minVal, maxVal
-		editor->setFrame(false);
 		editor->setMinimum(std::stoi(minVal));
 		editor->setMaximum(std::stoi(maxVal));
+		editor->setSingleStep(std::clamp((std::stoi(maxVal) - std::stoi(minVal)) / 10, 1, 10));
 		return editor;
-	}
+	} else if (type == "real" || type == "unreal") {
+		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
+		std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
+		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
 
-	QLineEdit* editor = new QLineEdit(parent);
-	return editor;
+		editor->setMinimum(std::stod(minVal));
+		editor->setMaximum(std::stod(maxVal));
+		editor->setSingleStep(std::clamp((std::stod(maxVal) - std::stod(minVal)) / 10.0, 0.1, 10.0));
+		return editor;
+	} else if (type == "string") {
+		QLineEdit* editor = new QLineEdit(parent);
+		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
+		editor->setMaxLength(std::stoi(maxVal));
+		return editor;
+	} else if (unit_editor_data.section_exists(type)) {
+		QComboBox* editor = new QComboBox(parent);
+		for (const auto& [key, value] : unit_editor_data.section(type)) {
+			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+				continue;
+			}
+
+			QString displayText = QString::fromStdString(value[1]);
+			displayText.replace('&', "");
+
+			editor->addItem(displayText);
+		}
+		return editor;
+	} else {
+		return new QLineEdit(parent);
+	}
 }
 
 void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {

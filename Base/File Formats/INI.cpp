@@ -14,7 +14,7 @@ namespace ini {
 		std::stringstream file;
 		file.write((char*)hierarchy.open_file(path).buffer.data(), hierarchy.open_file(path).buffer.size());
 
-		// Sip byte order marking
+		// Strip byte order marking
 		char a, b, c;
 		a = file.get();
 		b = file.get();
@@ -35,7 +35,7 @@ namespace ini {
 				std::string key = line.substr(1, line.find(']') - 1);
 
 				// If the segment already exists
-				if (ini_data.count(key)) { // ToDo C++20 contains
+				if (ini_data.contains(key)) {
 					continue;
 				}
 				ini_data[key] = std::map<std::string, std::vector<std::string>>();
@@ -104,19 +104,19 @@ namespace ini {
 	}
 
 	std::map<std::string, std::vector<std::string>> INI::section(const std::string& section) const {
-		if (ini_data.count(section)) {
+		if (ini_data.contains(section)) {
 			return ini_data.at(section);
 		} else {
 			return {};
 		}
 	}
 
-	void INI::set_whole_data(const std::string& section, const std::string& key, const std::string& value) {
+	void INI::set_whole_data(const std::string& section, const std::string& key, std::string value) {
 		ini_data[section][key] = { value };
 	}
 
 	std::vector<std::string> INI::whole_data(const std::string& section, const std::string& key) const {
-		if (ini_data.count(section) && ini_data.at(section).count(key)) { // ToDo C++20 contains
+		if (ini_data.contains(section) && ini_data.at(section).contains(key)) { // ToDo C++20 contains
 			return ini_data.at(section).at(key);
 		} else {
 			return {};
@@ -124,6 +124,10 @@ namespace ini {
 	}
 
 	bool INI::key_exists(const std::string& section, const std::string& key) const {
-		return ini_data.count(section) && ini_data.at(section).count(key);
+		return ini_data.contains(section) && ini_data.at(section).contains(key);
+	}
+
+	bool INI::section_exists(const std::string& section) const {
+		return ini_data.contains(section);
 	}
 }

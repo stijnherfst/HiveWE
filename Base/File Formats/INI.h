@@ -40,8 +40,9 @@ namespace ini {
 		std::vector<std::string> whole_data(const std::string& section, const std::string& key) const;
 
 		/// Sets the data of a whole key
-		void set_whole_data(const std::string& section, const std::string& key, const std::string& value);
+		void set_whole_data(const std::string& section, const std::string& key, std::string value);
 
 		bool key_exists(const std::string& section, const std::string& key) const;
+		bool section_exists(const std::string& section) const;
 	};
 }
