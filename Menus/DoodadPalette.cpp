@@ -6,6 +6,8 @@
 #include "HiveWE.h"
 #include "Selections.h"
 
+#include "TableModel.h"
+
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -30,6 +32,30 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	}
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
+
+
+
+	/*TableModel* model = new TableModel(&doodads_slk, &doodads_meta_slk);
+
+	UnitListModel* list_model = new UnitListModel;
+	list_model->setSourceModel(model);
+
+	UnitListFilter* filter_model = new UnitListFilter;
+	filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	filter_model->setSourceModel(list_model);
+	filter_model->sort(0, Qt::AscendingOrder);
+
+	ui.units->setModel(filter_model);*/
+
+	//for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
+	//	if (key == "Sort" || key == "NumValues") {
+	//		continue;
+	//	}
+	//	ui.race->addItem(QString::fromStdString(value[1]), QString::fromStdString(value[0]));
+	//}
+
+
+
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -156,44 +182,44 @@ bool DoodadPalette::event(QEvent *e) {
 }
 
 void DoodadPalette::update_list() {
-	ui.doodads->clear();
-	
-	char selected_tileset = ui.tileset->currentData().toString().toStdString().front();
-	std::string selected_category = ui.type->currentData().toString().toStdString();
+	//ui.doodads->clear();
+	//
+	//char selected_tileset = ui.tileset->currentData().toString().toStdString().front();
+	//std::string selected_category = ui.type->currentData().toString().toStdString();
 
-	bool is_doodad = world_edit_data.key_exists("DoodadCategories", selected_category);
-	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	//bool is_doodad = world_edit_data.key_exists("DoodadCategories", selected_category);
+	//slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-	for (int i = 1; i < slk.rows; i++) {
-		// If the doodad belongs to this tileset
-		std::string tilesets = slk.data("tilesets", i);
-		if (tilesets != "*" && tilesets.find(selected_tileset) == std::string::npos) {
-			continue;
-		}
+	//for (int i = 1; i < slk.rows; i++) {
+	//	// If the doodad belongs to this tileset
+	//	std::string tilesets = slk.data("tilesets", i);
+	//	if (tilesets != "*" && tilesets.find(selected_tileset) == std::string::npos) {
+	//		continue;
+	//	}
 
-		// If the doodad belongs to this category
-		std::string category = slk.data("category", i);
-		if (category != selected_category) {
-			continue;
-		}
+	//	// If the doodad belongs to this category
+	//	std::string category = slk.data("category", i);
+	//	if (category != selected_category) {
+	//		continue;
+	//	}
 
 
 
-		std::string text = slk.data("name", i);
+	//	std::string text = slk.data("name", i);
 
-		const std::string trigstr = map->trigger_strings.string(text);
-		if (!trigstr.empty()) {
-			text = trigstr;
-		}
+	//	const std::string trigstr = map->trigger_strings.string(text);
+	//	if (!trigstr.empty()) {
+	//		text = trigstr;
+	//	}
 
-		if (!is_doodad) { 
-			text += " " + destructibles_slk.data("editorsuffix", i);
-		}
+	//	if (!is_doodad) { 
+	//		text += " " + destructibles_slk.data("editorsuffix", i);
+	//	}
 
-		QListWidgetItem* item = new QListWidgetItem(ui.doodads);
-		item->setText(QString::fromStdString(text));
-		item->setData(Qt::UserRole, QString::fromStdString(slk.data(is_doodad ? "doodid" : "destructableid", i)));
-	}
+	//	QListWidgetItem* item = new QListWidgetItem(ui.doodads);
+	//	item->setText(QString::fromStdString(text));
+	//	item->setData(Qt::UserRole, QString::fromStdString(slk.data(is_doodad ? "doodid" : "destructableid", i)));
+	//}
 }
 
 void DoodadPalette::selection_changed(QListWidgetItem* item) {

@@ -5,7 +5,7 @@
 #include "HiveWE.h"
 #include "BaseTreeModel.h"
 
-class UnitTreeModel : public BaseTreeModel {
+class AbilityTreeModel : public BaseTreeModel {
 	struct Category {
 		std::string name;
 		BaseTreeItem* item;
@@ -14,11 +14,10 @@ class UnitTreeModel : public BaseTreeModel {
 	std::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
-	std::array<std::string, 4> subCategories = {
+	std::array<std::string, 3> subCategories = {
 		"Units",
-		"Buildings",
 		"Heroes",
-		"Special",
+		"Items"
 	};
 
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
@@ -26,5 +25,5 @@ class UnitTreeModel : public BaseTreeModel {
 
 public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-	explicit UnitTreeModel(QObject* parent = nullptr);
+	explicit AbilityTreeModel(QObject* parent = nullptr);
 };

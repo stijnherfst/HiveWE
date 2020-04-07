@@ -23,10 +23,11 @@
 #include "TerrainPalette.h"
 #include "SettingsEditor.h"
 #include "TilePather.h"
-#include "DoodadPalette.h"
-#include "TerrainPalette.h"
-#include "PathingPalette.h"
 #include "Palette.h"
+#include "TerrainPalette.h"
+#include "DoodadPalette.h"
+#include "UnitPalette.h"
+#include "PathingPalette.h"
 #include "ImportManager.h"
 #include "ObjectEditor.h"
 #include "Camera.h"
@@ -43,6 +44,7 @@ ini::INI unit_editor_data;
 slk::SLK items_slk;
 slk::SLK items_meta_slk;
 slk::SLK abilities_slk;
+slk::SLK abilities_meta_slk;
 slk::SLK doodads_slk;
 slk::SLK doodads_meta_slk;
 slk::SLK destructibles_slk;
@@ -145,14 +147,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
 	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
-	connect(new QShortcut(QKeySequence(Qt::Key_D), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
-		open_palette<DoodadPalette>();
-	});
-	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
-		open_palette<DoodadPalette>();
-	});
-
-	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
+	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
 		open_palette<TerrainPalette>();
 	});
 
@@ -160,7 +155,22 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		open_palette<TerrainPalette>();
 	});
 
-	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, [&]() {
+	connect(new QShortcut(QKeySequence(Qt::Key_D), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
+		open_palette<DoodadPalette>();
+	});
+	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
+		open_palette<DoodadPalette>();
+	});
+
+	connect(new QShortcut(QKeySequence(Qt::Key_U), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
+		open_palette<UnitPalette>();
+		});
+	connect(ui.ribbon->unit_palette, &QRibbonButton::clicked, [this]() {
+		open_palette<UnitPalette>();
+		});
+
+
+	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
 		open_palette<PathingPalette>();
 	});
 	

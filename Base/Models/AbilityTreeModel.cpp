@@ -1,6 +1,6 @@
-#include "UnitTreeModel.h"
+#include "AbilityTreeModel.h"
 
-UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
+AbilityTreeModel::AbilityTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -20,20 +20,19 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	// Start at 1 since the first row are column headers
-	for (int i = 1; i < units_slk.rows; i++) {
-
-		std::string race = units_slk.data("race", i);
-		bool isHostile = units_slk.data("hostilepal", i) == "1";
-		bool isBuilding = units_slk.data("isbldg", i) == "1";
-		bool isHero = isupper(units_slk.data("unitid", i).front());
-		bool isSpecial = units_slk.data("special", i) == "1";
+	for (int i = 1; i < abilities_slk.rows; i++) {
+		std::string race = abilities_slk.data("race", i);
+		if (race.empty()) {
+			std::cout << "Empty race for " << i << " in abilities\n";
+			continue;
+		}
+		bool isHero = abilities_slk.data("hero", i) == "1";
+		bool isItem = abilities_slk.data("item", i) == "1";
 
 		int subIndex = 0;
-		if (isSpecial) {
-			subIndex = 3;
-		} else if (isBuilding) {
+		if (isHero) {
 			subIndex = 1;
-		} else if (isHero) {
+		} else if (isItem) {
 			subIndex = 2;
 		}
 
@@ -42,23 +41,19 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 }
 
-QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
+QModelIndex AbilityTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	if (!sourceIndex.isValid()) {
 		return {};
 	}
 
-	std::string race = units_slk.data("race", sourceIndex.row());
-	bool isHostile = units_slk.data("hostilepal", sourceIndex.row()) == "1";
-	bool isBuilding = units_slk.data("isbldg", sourceIndex.row()) == "1";
-	bool isHero = isupper(units_slk.data("unitid", sourceIndex.row()).front());
-	bool isSpecial = units_slk.data("special", sourceIndex.row()) == "1";
+	std::string race = abilities_slk.data("race", sourceIndex.row());
+	bool isHero = abilities_slk.data("hero", sourceIndex.row()) == "1";
+	bool isItem = abilities_slk.data("item", sourceIndex.row()) == "1";
 
 	int subIndex = 0;
-	if (isSpecial) {
-		subIndex = 3;
-	} else if (isBuilding) {
+	if (isHero) {
 		subIndex = 1;
-	} else if (isHero) {
+	} else if (isItem) {
 		subIndex = 2;
 	}
 
@@ -73,19 +68,19 @@ QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	return {};
 }
 
-QModelIndex UnitTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
+QModelIndex AbilityTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 	if (!proxyIndex.isValid()) {
 		return {};
 	}
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, units_slk.header_to_column.at("name"), item);
+		return createIndex(item->tableRow, abilities_slk.header_to_column.at("name"), item);
 	}
 	return {};
 }
 
-QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
+QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 	if (!index.isValid()) {
 		return {};
 	}
@@ -100,21 +95,13 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()]);
 			} else {
-				if (units_slk.data("campaign", item->tableRow) == "1") {
-					const std::string properNames = units_slk.data("propernames", item->tableRow);
-
-					if (!properNames.empty()) {
-						return QString::fromStdString(properNames).split(',').first();
-					}
-				}
-
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->tableRow));
+				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->tableRow));
 			}
 		case Qt::DecorationRole:
 			if (item->tableRow < 0) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.header_to_column.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.header_to_column.at("art")), role);
 		default:
 			return {};
 	}

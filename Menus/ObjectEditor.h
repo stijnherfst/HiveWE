@@ -3,11 +3,15 @@
 #include <QMainWindow>
 
 #include "ui_ObjectEditor.h"
-#include "UnitTreeModel.h"
 
-#include "UnitModel.h"
+#include "TableModel.h"
+#include "UnitTreeModel.h"
+#include "DoodadTreeModel.h"
+#include "AbilityTreeModel.h"
+#include "ItemTreeModel.h"
 #include "DockManager.h"
 #include "DockAreaWidget.h"
+#include <QTreeView>
 
 class ObjectEditor : public QMainWindow {
 	Q_OBJECT
@@ -21,10 +25,32 @@ private:
 	ads::CDockManager* dock_manager = new ads::CDockManager();
 	ads::CDockAreaWidget* dock_area = nullptr;
 
-	QTreeView* explorer = new QTreeView;
-	UnitTreeModel* explorerModel;
+	QTreeView* unit_explorer = new QTreeView;
+	QTreeView* doodad_explorer = new QTreeView;
+	QTreeView* item_explorer = new QTreeView;
+	QTreeView* destructible_explorer = new QTreeView;
+	QTreeView* ability_explorer = new QTreeView;
+	QTreeView* upgrade_explorer = new QTreeView;
+	QTreeView* buffs_explorer = new QTreeView;
+	UnitTreeModel* unitTreeModel;
+	DoodadTreeModel* doodadTreeModel;
+	AbilityTreeModel* abilityTreeModel;
+	ItemTreeModel* itemTreeModel;
 
-	UnitModel* model;
+	TableModel* unitTableModel;
+	TableModel* doodadTableModel;
+	TableModel* abilityTableModel;
+	TableModel* itemTableModel;
 
-	void item_clicked(const QModelIndex& index);
+	enum class Category {
+		unit,
+		doodad,
+		item,
+		destructible,
+		ability,
+		upgrade,
+		buff
+	};
+
+	void item_clicked(const QModelIndex& index, Category category);
 };

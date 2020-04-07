@@ -42,6 +42,7 @@ public:
 
 	QRibbonButton* terrain_palette = new QRibbonButton;
 	QRibbonButton* doodad_palette = new QRibbonButton;
+	QRibbonButton* unit_palette = new QRibbonButton;
 	QRibbonButton* pathing_palette = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;

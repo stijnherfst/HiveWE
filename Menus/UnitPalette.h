@@ -1,6 +1,6 @@
 #pragma once
 
-//#include "ui_UnitPalette.h"
+#include "ui_UnitPalette.h"
 #include "UnitBrush.h"
 #include "Palette.h"
 #include "QRibbon.h"
@@ -16,11 +16,12 @@ public:
 private:
 	bool event(QEvent* e) override;
 
-	void update_list();
-
-	//Ui::DoodadPalette ui;
+	Ui::UnitPalette ui;
 
 	UnitBrush brush;
+
+	QRibbonTab* ribbon_tab = new QRibbonTab;
+	QRibbonButton* selection_mode = new QRibbonButton;
 
 public slots:
 	void deactivate(QRibbonTab* tab) override;

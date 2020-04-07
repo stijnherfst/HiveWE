@@ -55,6 +55,9 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"));
 
 	abilities_slk = slk::SLK("Units/AbilityData.slk");
+	abilities_meta_slk = slk::SLK("Units/AbilityMetaData.slk");
+	abilities_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+
 	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"));
 	abilities_slk.merge(ini::INI("Units/HumanAbilityFunc.txt"));
 	abilities_slk.merge(ini::INI("Units/OrcAbilityFunc.txt"));
@@ -86,6 +89,7 @@ void Map::load(const fs::path& path) {
 	// Doodads
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
+	doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"));
 	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");

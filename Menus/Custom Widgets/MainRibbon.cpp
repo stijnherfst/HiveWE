@@ -258,6 +258,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	doodad_palette->setText("Doodads");
 	palette_section->addWidget(doodad_palette);
 
+	unit_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
+	unit_palette->setText("Units");
+	palette_section->addWidget(unit_palette);
+
 	pathing_palette->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
 	pathing_palette->setText("Pathing");
 	palette_section->addWidget(pathing_palette);

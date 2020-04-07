@@ -6,7 +6,9 @@
 
 #include <vector>
 
-class UnitSingleModel : public QAbstractProxyModel {
+#include "SLK.h"
+
+class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT
 
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
@@ -21,12 +23,14 @@ class UnitSingleModel : public QAbstractProxyModel {
 	QModelIndex parent(const QModelIndex& child) const override;
 
 
-	std::string unit_id = "hpea";
+	std::string id = "hpea";
 	std::vector<int> id_mapping;
 
+	slk::SLK* meta_slk;
+	slk::SLK* slk;
 public:
-	explicit UnitSingleModel(QObject* parent = nullptr);
-	void setUnitID(const std::string_view unitID);
+	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
+	void setID(const std::string_view id);
 	const std::vector<int>& getMapping() const {
 		return id_mapping;
 	}
@@ -49,13 +53,10 @@ class TableDelegate : public QStyledItemDelegate {
 public:
 	TableDelegate(QObject* parent = nullptr);
 
-	QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option,
-		const QModelIndex& index) const override;
+	QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 	void setEditorData(QWidget* editor, const QModelIndex& index) const override;
-	void setModelData(QWidget* editor, QAbstractItemModel* model,
-		const QModelIndex& index) const override;
+	void setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const override;
 
-	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option,
-		const QModelIndex& index) const override;
+	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 };

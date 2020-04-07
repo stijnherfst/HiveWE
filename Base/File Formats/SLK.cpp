@@ -129,7 +129,7 @@ namespace slk {
 						if (line[position] == 'Y') {
 							row = parse_int_part() - 1;
 						}
-					} else {
+					} else if (line[position] == 'Y') {
 						row = parse_int_part() - 1;
 
 						if (line[position] == 'X') {

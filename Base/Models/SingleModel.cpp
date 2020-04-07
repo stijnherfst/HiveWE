@@ -1,47 +1,51 @@
-#include "UnitSingleModel.h"
+#include "SingleModel.h"
 
 #include <QPen>
 #include <QPainter>
 #include <QLineEdit>
 #include <QComboBox>
+#include <QDialog>
+#include <QPlainTextEdit>
+#include <QDialogButtonBox>
+#include <QTimer>
 
 #include "HiveWE.h"
 
-UnitSingleModel::UnitSingleModel(QObject* parent) : QAbstractProxyModel(parent) {
-	for (const auto& [key, index] : units_meta_slk.header_to_row) {
-		if (units_slk.header_to_column.contains(to_lowercase_copy(units_meta_slk.data("field", key)))) {
+SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
+	for (const auto& [key, index] : meta_slk->header_to_row) {
+		if (slk->header_to_column.contains(to_lowercase_copy(meta_slk->data("field", key)))) {
 			id_mapping.push_back(index);
 		}
 	}
 
 	std::sort(id_mapping.begin(), id_mapping.end(), [&](int left, int right) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", left));
+		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left));
 		category = string_replaced(category, "&", "");
-		std::string left_string = category + " - " + units_meta_slk.data("displayname", left);
+		std::string left_string = category + " - " + meta_slk->data("displayname", left);
 
-		category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", right));
+		category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", right));
 		category = string_replaced(category, "&", "");
-		std::string right_string = category + " - " + units_meta_slk.data("displayname", right);
+		std::string right_string = category + " - " + meta_slk->data("displayname", right);
 
 		return left_string < right_string;
 		});
 }
 
-QModelIndex UnitSingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
+QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	if (!sourceIndex.isValid()) {
 		return {};
 	}
-	if (sourceIndex.row() != units_slk.header_to_row.at(unit_id)) {
+	if (sourceIndex.row() != slk->header_to_row.at(id)) {
 		return {};
 	}
 
 	std::cout << sourceIndex.row() << "\t" << sourceIndex.column() << "\n";
 
 	int row = -1;
-	auto t = units_slk.data(sourceIndex.column(), 0);
+	auto t = slk->data(sourceIndex.column(), 0);
 
-	for (const auto& [key, value] : units_meta_slk.header_to_row) {
-		if (to_lowercase_copy(units_meta_slk.data("field", value)) == t) {
+	for (const auto& [key, value] : meta_slk->header_to_row) {
+		if (to_lowercase_copy(meta_slk->data("field", value)) == t) {
 			row = value;
 			break;
 		}
@@ -49,55 +53,55 @@ QModelIndex UnitSingleModel::mapFromSource(const QModelIndex& sourceIndex) const
 
 	for (int i = 0; i < id_mapping.size(); i++) {
 		if (id_mapping[i] == row) {
-			std::cout << "Found " << row << " at " << i << " " << headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString() << " " << units_meta_slk.data("displayname", id_mapping[i]) << "\n";
+			std::cout << "Found " << row << " at " << i << " " << headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString() << " " << meta_slk->data("displayname", id_mapping[i]) << "\n";
 			return createIndex(i, 0);
 		}
 	}
 	return {};
 }
 
-QModelIndex UnitSingleModel::mapToSource(const QModelIndex& proxyIndex) const {
+QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 	if (!proxyIndex.isValid()) {
 		return {};
 	}
 
-	std::string column = to_lowercase_copy(units_meta_slk.data("field", id_mapping[proxyIndex.row()]));
-	return sourceModel()->index(units_slk.header_to_row.at(unit_id), units_slk.header_to_column.at(column));
+	std::string column = to_lowercase_copy(meta_slk->data("field", id_mapping[proxyIndex.row()]));
+	return sourceModel()->index(slk->header_to_row.at(id), slk->header_to_column.at(column));
 }
 
-QVariant UnitSingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
+QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
 	if (role != Qt::DisplayRole) {
 		return {};
 	}
 
 	if (orientation == Qt::Orientation::Vertical) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", units_meta_slk.data("category", id_mapping[section]));
+		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", id_mapping[section]));
 		category = string_replaced(category, "&", "");
-		return QString::fromStdString(category + " - " + units_meta_slk.data("displayname", id_mapping[section]) + " (" + units_meta_slk.data("id", id_mapping[section]) + ")");
+		return QString::fromStdString(category + " - " + meta_slk->data("displayname", id_mapping[section]) + " (" + meta_slk->data("id", id_mapping[section]) + ")");
 	} else {
 		return "UnitID";
 	}
 }
 
-int UnitSingleModel::rowCount(const QModelIndex& parent) const {
+int SingleModel::rowCount(const QModelIndex& parent) const {
 	return id_mapping.size();
 }
 
-int UnitSingleModel::columnCount(const QModelIndex& parent) const {
+int SingleModel::columnCount(const QModelIndex& parent) const {
 	return 1;
 }
 
-QModelIndex UnitSingleModel::index(int row, int column, const QModelIndex& parent) const {
+QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) const {
 	return 	createIndex(row, column);
 }
 
-QModelIndex UnitSingleModel::parent(const QModelIndex& child) const {
+QModelIndex SingleModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
 
-void UnitSingleModel::setUnitID(const std::string_view unitID) {
+void SingleModel::setID(const std::string_view newID) {
 	beginResetModel();
-	unit_id = unitID;
+	id = newID;
 	endResetModel();
 }
 
@@ -121,7 +125,7 @@ TableDelegate::TableDelegate(QObject* parent) : QStyledItemDelegate(parent) {
 }
 
 QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
-	auto model = static_cast<const UnitSingleModel*>(index.model());
+	auto model = static_cast<const SingleModel*>(index.model());
 	auto& mapping = model->getMapping();
 
 
@@ -150,6 +154,28 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
 		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
+	} else if (type.ends_with("List")) {
+		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* layout = new QVBoxLayout(dialog);
+
+		QPlainTextEdit* editor = new QPlainTextEdit;
+
+		QDialogButtonBox* buttonBox = new QDialogButtonBox;
+		buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
+		layout->addWidget(editor);
+		layout->addWidget(buttonBox);
+
+		dialog->show();
+
+		QTimer::singleShot(0, [=]() {
+			dialog->move(parent->mapToGlobal({0, 0}));
+		});
+
+		return dialog;
+
 	} else if (unit_editor_data.section_exists(type)) {
 		QComboBox* editor = new QComboBox(parent);
 		for (const auto& [key, value] : unit_editor_data.section(type)) {

@@ -1,12 +1,11 @@
 #pragma once
 
 #include <QAbstractTableModel>
-#include <QPainter>
 
 #include "HiveWE.h"
 #include "QIconResource.h"
 
-class UnitModel : public QAbstractTableModel {
+class TableModel : public QAbstractTableModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
@@ -17,7 +16,11 @@ class UnitModel : public QAbstractTableModel {
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 	std::unordered_map<std::string, int> meta_field_to_index;
+	std::shared_ptr<QIconResource> invalid_icon;
+
+	slk::SLK* meta_slk;
+	slk::SLK* slk;
 
 public: 
-	explicit UnitModel(QObject* parent = nullptr);
+	explicit TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 };

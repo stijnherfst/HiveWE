@@ -98,9 +98,14 @@ add_executable(HiveWE
 	Menus/Selections.cpp
 	Menus/ObjectEditor.cpp
 
-	Base/Models/UnitModel.cpp
+	Base/Models/SingleModel.cpp
+	Base/Models/TableModel.cpp
+	Base/Models/BaseTreeModel.cpp
 	Base/Models/UnitTreeModel.cpp
-	Base/Models/UnitSingleModel.cpp
+	Base/Models/DoodadTreeModel.cpp
+	Base/Models/ItemTreeModel.cpp
+	Base/Models/AbilityTreeModel.cpp
+	Base/Models/UnitListModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
