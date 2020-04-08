@@ -47,8 +47,12 @@ slk::SLK abilities_slk;
 slk::SLK abilities_meta_slk;
 slk::SLK doodads_slk;
 slk::SLK doodads_meta_slk;
-slk::SLK destructibles_slk;
-slk::SLK destructibles_meta_slk;
+slk::SLK destructables_slk;
+slk::SLK destructables_meta_slk;
+slk::SLK upgrade_slk;
+slk::SLK upgrade_meta_slk;
+slk::SLK buff_slk;
+slk::SLK buff_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);

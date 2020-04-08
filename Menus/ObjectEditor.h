@@ -9,6 +9,8 @@
 #include "DoodadTreeModel.h"
 #include "AbilityTreeModel.h"
 #include "ItemTreeModel.h"
+#include "BuffTreeModel.h"
+#include "UpgradeTreeModel.h"
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include <QTreeView>
@@ -31,16 +33,20 @@ private:
 	QTreeView* destructible_explorer = new QTreeView;
 	QTreeView* ability_explorer = new QTreeView;
 	QTreeView* upgrade_explorer = new QTreeView;
-	QTreeView* buffs_explorer = new QTreeView;
+	QTreeView* buff_explorer = new QTreeView;
 	UnitTreeModel* unitTreeModel;
 	DoodadTreeModel* doodadTreeModel;
 	AbilityTreeModel* abilityTreeModel;
 	ItemTreeModel* itemTreeModel;
+	BuffTreeModel* buffTreeModel;
+	UpgradeTreeModel* upgradeTreeModel;
 
 	TableModel* unitTableModel;
 	TableModel* doodadTableModel;
 	TableModel* abilityTableModel;
 	TableModel* itemTableModel;
+	TableModel* buffTableModel;
+	TableModel* upgradeTableModel;
 
 	enum class Category {
 		unit,

@@ -78,5 +78,11 @@ extern slk::SLK abilities_meta_slk;
 
 extern slk::SLK doodads_slk;
 extern slk::SLK doodads_meta_slk;
-extern slk::SLK destructibles_slk;
-extern slk::SLK destructibles_meta_slk;
+extern slk::SLK destructables_slk;
+extern slk::SLK destructables_meta_slk;
+
+extern slk::SLK upgrade_slk;
+extern slk::SLK upgrade_meta_slk;
+
+extern slk::SLK buff_slk;
+extern slk::SLK buff_meta_slk;

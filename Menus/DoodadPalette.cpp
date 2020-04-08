@@ -229,7 +229,7 @@ void DoodadPalette::selection_changed(QListWidgetItem* item) {
 	selection_mode->setChecked(false);
 
 	bool is_doodad = doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
 
 	variations->clear();
 

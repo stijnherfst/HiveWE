@@ -105,6 +105,8 @@ add_executable(HiveWE
 	Base/Models/DoodadTreeModel.cpp
 	Base/Models/ItemTreeModel.cpp
 	Base/Models/AbilityTreeModel.cpp
+	Base/Models/BuffTreeModel.cpp
+	Base/Models/UpgradeTreeModel.cpp
 	Base/Models/UnitListModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"

@@ -23,7 +23,6 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	for (int i = 1; i < units_slk.rows; i++) {
 
 		std::string race = units_slk.data("race", i);
-		bool isHostile = units_slk.data("hostilepal", i) == "1";
 		bool isBuilding = units_slk.data("isbldg", i) == "1";
 		bool isHero = isupper(units_slk.data("unitid", i).front());
 		bool isSpecial = units_slk.data("special", i) == "1";
@@ -48,7 +47,6 @@ QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	}
 
 	std::string race = units_slk.data("race", sourceIndex.row());
-	bool isHostile = units_slk.data("hostilepal", sourceIndex.row()) == "1";
 	bool isBuilding = units_slk.data("isbldg", sourceIndex.row()) == "1";
 	bool isHero = isupper(units_slk.data("unitid", sourceIndex.row()).front());
 	bool isSpecial = units_slk.data("special", sourceIndex.row()) == "1";

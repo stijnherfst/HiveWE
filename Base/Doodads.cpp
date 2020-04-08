@@ -172,8 +172,8 @@ void Doodads::load_destructible_modifications(BinaryReader& reader) {
 		std::cout << "Unknown destructible modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, false);
-	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, true);
+	load_modification_table(reader, destructables_slk, destructables_meta_slk, false);
+	load_modification_table(reader, destructables_slk, destructables_meta_slk, true);
 }
 
 void Doodads::load_doodad_modifications(BinaryReader& reader) {
@@ -208,7 +208,7 @@ void Doodads::create() {
 
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_header_exists(i.id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
 
 		std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
@@ -245,7 +245,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.angle = 0;
 
 	const bool is_doodad = doodads_slk.row_header_exists(id);
-	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
 	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
@@ -340,11 +340,11 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 		mesh_path = doodads_slk.data("file", id);
 		variations = doodads_slk.data("numvar", id);
 	} else {
-		mesh_path = destructibles_slk.data("file", id);
-		variations = destructibles_slk.data("numvar", id);
+		mesh_path = destructables_slk.data("file", id);
+		variations = destructables_slk.data("numvar", id);
 
-		replaceable_id = destructibles_slk.data("texid", id);
-		texture_name = destructibles_slk.data("texfile", id);
+		replaceable_id = destructables_slk.data("texid", id);
+		texture_name = destructables_slk.data("texfile", id);
 		texture_name.replace_extension("");
 	}
 

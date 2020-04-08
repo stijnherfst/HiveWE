@@ -40,6 +40,17 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				dock_tab->setIcon(unitTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
+			case Category::item: {
+				std::string id = items_slk.data("itemid", item->tableRow);
+
+				single_model = new SingleModel(&items_slk, &items_meta_slk, this);
+				single_model->setSourceModel(itemTableModel);
+				single_model->setID(id);
+
+				dock_tab->setWindowTitle(QString::fromStdString(items_slk.data("name", item->tableRow)));
+				dock_tab->setIcon(itemTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				break;
+			}
 			case Category::doodad: {
 				std::string id = doodads_slk.data("doodid", item->tableRow);
 
@@ -60,6 +71,33 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 
 				dock_tab->setWindowTitle(QString::fromStdString(abilities_slk.data("name", item->tableRow)));
 				dock_tab->setIcon(abilityTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				break;
+			}
+			case Category::upgrade: {
+				std::string id = upgrade_slk.data("upgradeid", item->tableRow);
+
+				single_model = new SingleModel(&upgrade_slk, &upgrade_meta_slk, this);
+				single_model->setSourceModel(upgradeTableModel);
+				single_model->setID(id);
+
+				dock_tab->setWindowTitle(QString::fromStdString(upgrade_slk.data("name", item->tableRow)));
+				dock_tab->setIcon(upgradeTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				break;
+			}
+			case Category::buff: {
+				std::string id = buff_slk.data("alias", item->tableRow);
+
+				single_model = new SingleModel(&buff_slk, &buff_meta_slk, this);
+				single_model->setSourceModel(buffTableModel);
+				single_model->setID(id);
+
+				std::string name = buff_slk.data("bufftip", item->tableRow);
+				if (name.empty()) {
+					name = buff_slk.data("editorname", item->tableRow);
+				}
+
+				dock_tab->setWindowTitle(QString::fromStdString(name));
+				dock_tab->setIcon(buffTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			default:
@@ -133,19 +171,34 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ability_tab->setWidget(ability_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, ability_tab, t);
 
+	upgradeTableModel = new TableModel(&upgrade_slk, &upgrade_meta_slk, this);
+	upgradeTreeModel = new UpgradeTreeModel(this);
+	upgradeTreeModel->setSourceModel(upgradeTableModel);
+	upgrade_explorer->setModel(upgradeTreeModel);
+	upgrade_explorer->header()->hide();
+
 	ads::CDockWidget* upgrade_tab = new ads::CDockWidget("Upgrades");
 	upgrade_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	//upgrade_tab->setWidget(explorer);
+	upgrade_tab->setWidget(upgrade_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, upgrade_tab, t);
+
+	buffTableModel = new TableModel(&buff_slk, &buff_meta_slk, this);
+	buffTreeModel = new BuffTreeModel(this);
+	buffTreeModel->setSourceModel(buffTableModel);
+	buff_explorer->setModel(buffTreeModel);
+	buff_explorer->header()->hide();
 
 	ads::CDockWidget* buff_tab = new ads::CDockWidget("Buffs");
 	buff_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	//buff_tab->setWidget(explorer);
+	buff_tab->setWidget(buff_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, buff_tab, t);
 
 	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::unit); });
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::item); });
 	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::doodad); });
 	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::ability); });
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::upgrade); });
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::buff); });
 
 	show();
 }
