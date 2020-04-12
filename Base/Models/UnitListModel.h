@@ -6,6 +6,7 @@
 class UnitListModel : public QAbstractProxyModel {
 	Q_OBJECT
 
+public:
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
 
@@ -17,6 +18,8 @@ class UnitListModel : public QAbstractProxyModel {
 
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
+
+	using QAbstractProxyModel::QAbstractProxyModel;
 };
 
 class UnitListFilter : public QSortFilterProxyModel {
@@ -26,4 +29,5 @@ class UnitListFilter : public QSortFilterProxyModel {
 
 public:
 	void setFilterRace(QString race);
+	using QSortFilterProxyModel::QSortFilterProxyModel;
 };

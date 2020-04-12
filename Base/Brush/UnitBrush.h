@@ -13,6 +13,8 @@ class UnitBrush : public Brush {
 
 	std::shared_ptr<StaticMesh> mesh;
 public:
+	float rotation = 0.f;
+
 	UnitBrush();
 
 	void set_shape(const Shape new_shape) override;
@@ -36,4 +38,5 @@ public:
 	void render_clipboard() const override;
 
 	void set_random_rotation();
+	void set_unit(const std::string& id);
 };

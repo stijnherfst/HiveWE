@@ -213,24 +213,14 @@ void UnitBrush::apply_end() {
 }
 
 void UnitBrush::render_brush() const {
-	//if (pathing_texture) {
-	//	Brush::render_brush();
-	//}
+	glm::mat4 matrix(1.f);
+	matrix = glm::translate(matrix, input_handler.mouse_world);
+	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f));
+	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
-	//glm::mat4 matrix(1.f);
-	//if (free_placement) {
-	//	matrix = glm::translate(matrix, input_handler.mouse_world);
-	//} else {
-	//	matrix = glm::translate(matrix, glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z));
-	//}
-
-	//matrix = glm::scale(matrix, glm::vec3(1.f / 128.f) * scale);
-	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
-	//matrix = glm::rotate(matrix, roll, glm::vec3(1, 0, 0));
-
-	//if (mesh) {
-	//	mesh->render_queue(matrix);
-	//}
+	if (mesh) {
+		mesh->render_queue(matrix);
+	}
 }
 
 void UnitBrush::render_selection() const {
@@ -303,4 +293,9 @@ void UnitBrush::set_random_rotation() {
 	//} else {
 	//	rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
 	//}
+}
+
+void UnitBrush::set_unit(const std::string& id) {
+	this->id = id;
+	mesh = map->units.get_mesh(id);
 }

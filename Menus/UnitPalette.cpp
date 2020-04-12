@@ -6,7 +6,6 @@
 #include "HiveWE.h"
 #include "Selections.h"
 
-#include "UnitListModel.h"
 #include "TableModel.h"
 #include <QSortFilterProxyModel>
 
@@ -17,10 +16,10 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	TableModel* model = new TableModel(&units_slk, &units_meta_slk);
 
-	UnitListModel* list_model = new UnitListModel;
+	list_model = new UnitListModel(this);
 	list_model->setSourceModel(model);
 
-	UnitListFilter* filter_model = new UnitListFilter;
+	filter_model = new UnitListFilter(this);
 	filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
 	filter_model->setSourceModel(list_model);
 	filter_model->sort(0, Qt::AscendingOrder);
@@ -50,6 +49,7 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 		filter_model->setFilterRace(ui.race->currentData().toString());
 	});
 	connect(ui.search, &QLineEdit::textEdited, filter_model, &QSortFilterProxyModel::setFilterFixedString);
+	connect(ui.units, &QListView::clicked, this, &UnitPalette::selection_changed);
 }
 
 UnitPalette::~UnitPalette() {
@@ -70,6 +70,12 @@ bool UnitPalette::event(QEvent* e) {
 
 	return QWidget::event(e);
 	//return true;
+}
+
+void UnitPalette::selection_changed(const QModelIndex& item) {
+	int row = filter_model->mapToSource(item).row();
+	std::string id = units_slk.data(0, row);
+	brush.set_unit(id);
 }
 
 void UnitPalette::deactivate(QRibbonTab* tab) {
