@@ -9,7 +9,6 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	brush.create();
 	map->brush = &brush;
 
 	connect(ui.replaceType, &QPushButton::clicked, [&]() { brush.operation = PathingBrush::Operation::replace; });

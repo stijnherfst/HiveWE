@@ -15,7 +15,7 @@
 #include "Hierarchy.h"
 #include "Texture.h"
 
-DoodadBrush::DoodadBrush() {
+DoodadBrush::DoodadBrush() : Brush() {
 	uv_offset_granularity = 2;
 	brush_offset = { 0.25f , 0.25f };
 }

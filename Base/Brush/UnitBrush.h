@@ -14,6 +14,15 @@ class UnitBrush : public Brush {
 	std::shared_ptr<StaticMesh> mesh;
 public:
 	float rotation = 0.f;
+	bool random_rotation = true;
+
+	std::unique_ptr<UnitAddAction> unit_undo;
+	std::unique_ptr<UnitStateAction> unit_state_undo;
+
+	std::vector<Unit*> selections;
+	glm::vec2 clipboard_mouse_position;
+	bool clipboard_free_placement = false;
+	std::vector<Unit> clipboard;
 
 	UnitBrush();
 

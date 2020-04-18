@@ -9,7 +9,7 @@
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
-PathingBrush::PathingBrush() {
+PathingBrush::PathingBrush() : Brush() {
 	brush_offset = {0.125f, 0.125f};
 }
 

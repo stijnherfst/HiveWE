@@ -45,6 +45,8 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	ribbon_tab->addSection(selection_section);
 
+	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
+
 	connect(ui.race, QOverload<int>::of(&QComboBox::currentIndexChanged), [=]() {
 		filter_model->setFilterRace(ui.race->currentData().toString());
 	});
@@ -73,8 +75,8 @@ bool UnitPalette::event(QEvent* e) {
 }
 
 void UnitPalette::selection_changed(const QModelIndex& item) {
-	int row = filter_model->mapToSource(item).row();
-	std::string id = units_slk.data(0, row);
+	const int row = filter_model->mapToSource(item).row();
+	const std::string id = units_slk.data(0, row);
 	brush.set_unit(id);
 }
 

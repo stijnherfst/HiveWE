@@ -265,6 +265,47 @@ void Units::render() const {
 	}
 }
 
+Unit& Units::add_unit(std::string id, glm::vec3 position) {
+	Unit unit;
+	unit.id = id;
+	unit.mesh = get_mesh(id);
+	unit.position = position;
+	unit.scale = { 1, 1, 1 };
+	unit.angle = 0;
+
+	unit.update();
+
+	units.push_back(unit);
+	return units.back();
+}
+
+Unit& Units::add_unit(Unit unit) {
+	units.push_back(unit);
+	return units.back();
+}
+
+void Units::remove_unit(Unit* unit) {
+	auto iterator = units.begin() + std::distance(units.data(), unit);
+	units.erase(iterator);
+}
+
+std::vector<Unit*> Units::query_area(const QRectF& area) {
+	std::vector<Unit*> result;
+
+	for (auto& i : units) {
+		if (area.contains(i.position.x, i.position.y)) {
+			result.push_back(&i);
+		}
+	}
+	return result;
+}
+
+void Units::remove_units(const std::vector<Unit*>& list) {
+	units.erase(std::remove_if(units.begin(), units.end(), [&](Unit& unit) {
+		return std::find(list.begin(), list.end(), &unit) != list.end();
+	}), units.end());
+}
+
 std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	if (id_to_mesh.contains(id)) {
 		return id_to_mesh[id];
@@ -288,4 +329,48 @@ std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	id_to_mesh.emplace(id, resource_manager.load<StaticMesh>(mesh_path));
 
 	return id_to_mesh[id];
+}
+
+void UnitAddAction::undo() {
+	map->units.units.resize(map->units.units.size() - units.size());
+}
+
+void UnitAddAction::redo() {
+	map->units.units.insert(map->units.units.end(), units.begin(), units.end());
+}
+
+void UnitDeleteAction::undo() {
+	if (map->brush) {
+		map->brush->clear_selection();
+	}
+
+	map->units.units.insert(map->units.units.end(), units.begin(), units.end());
+}
+
+void UnitDeleteAction::redo() {
+	if (map->brush) {
+		map->brush->clear_selection();
+	}
+
+	map->units.units.resize(map->units.units.size() - units.size());
+}
+
+void UnitStateAction::undo() {
+	for (auto& i : old_units) {
+		for (auto& j : map->units.units) {
+			if (i.creation_number == j.creation_number) {
+				j = i;
+			}
+		}
+	}
+}
+
+void UnitStateAction::redo() {
+	for (auto& i : new_units) {
+		for (auto& j : map->units.units) {
+			if (i.creation_number == j.creation_number) {
+				j = i;
+			}
+		}
+	}
 }

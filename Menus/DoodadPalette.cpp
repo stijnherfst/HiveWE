@@ -13,7 +13,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	brush.create();
 	map->brush = &brush;
 
 	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
@@ -65,20 +64,20 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
-	selections_button->setText("View\nSelections");
-	selections_button->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png.png"));
-	selection_section->addWidget(selections_button);
+	//selections_button->setText("View\nSelections");
+	//selections_button->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png.png"));
+	//selection_section->addWidget(selections_button);
 
-	QVBoxLayout* selection_choices_layout = new QVBoxLayout;
-	QCheckBox* select_destructibles = new QCheckBox("Destructibles");
-	select_destructibles->setChecked(true);
-	QCheckBox* select_doodads = new QCheckBox("Doodads");
-	select_doodads->setChecked(true);
+	//QVBoxLayout* selection_choices_layout = new QVBoxLayout;
+	//QCheckBox* select_destructibles = new QCheckBox("Destructibles");
+	//select_destructibles->setChecked(true);
+	//QCheckBox* select_doodads = new QCheckBox("Doodads");
+	//select_doodads->setChecked(true);
 	
-	selection_choices_layout->addWidget(select_destructibles);
-	selection_choices_layout->addWidget(select_doodads);
+	//selection_choices_layout->addWidget(select_destructibles);
+	//selection_choices_layout->addWidget(select_doodads);
 
-	selection_section->addLayout(selection_choices_layout);
+	//selection_section->addLayout(selection_choices_layout);
 
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 

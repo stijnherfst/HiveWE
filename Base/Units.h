@@ -73,5 +73,39 @@ public:
 	void create();
 	void render() const;
 
+	Unit& add_unit(std::string id, glm::vec3 position);
+	Unit& add_unit(Unit unit);
+
+	void remove_unit(Unit* unit);
+
+	std::vector<Unit*> query_area(const QRectF& area);
+	void remove_units(const std::vector<Unit*>& list);
+
 	std::shared_ptr<StaticMesh> get_mesh(const std::string& id);
+};
+
+// Undo/redo structures
+class UnitAddAction : public TerrainUndoAction {
+public:
+	std::vector<Unit> units;
+
+	void undo() override;
+	void redo() override;
+};
+
+class UnitDeleteAction : public TerrainUndoAction {
+public:
+	std::vector<Unit> units;
+
+	void undo() override;
+	void redo() override;
+};
+
+class UnitStateAction : public TerrainUndoAction {
+public:
+	std::vector<Unit> old_units;
+	std::vector<Unit> new_units;
+
+	void undo() override;
+	void redo() override;
 };

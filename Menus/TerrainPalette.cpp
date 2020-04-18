@@ -9,7 +9,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	show();
 
 	brush.tile_id = map->terrain.tileset_ids.front();
-	brush.create();
 	map->brush = &brush;
 
 	ui.flowLayout_placeholder->addLayout(textures_layout);
