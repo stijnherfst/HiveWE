@@ -5,6 +5,8 @@
 #include "Palette.h"
 #include "QRibbon.h"
 #include "AspectRatioPixmapLabel.h"
+#include "DoodadListModel.h"
+
 
 class DoodadPalette : public Palette {
 	Q_OBJECT
@@ -16,12 +18,13 @@ public:
 private:
 	bool event(QEvent *e) override;
 
-	void update_list();
-	void selection_changed(QListWidgetItem* item);
+	//void selection_changed(QListWidgetItem* item);
 
 	Ui::DoodadPalette ui;
 
 	DoodadBrush brush;
+	DoodadListModel* list_model;
+	DoodadListFilter* filter_model;
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;

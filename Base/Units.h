@@ -9,6 +9,8 @@
 #include "Terrain.h"
 
 struct Unit {
+	static int auto_increment;
+
 	std::string id;
 	int variation;
 	glm::vec3 position;
@@ -51,6 +53,10 @@ struct Unit {
 
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
+
+	Unit() {
+		creation_number = ++auto_increment;
+	}
 
 	void update();
 };

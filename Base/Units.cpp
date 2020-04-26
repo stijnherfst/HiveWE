@@ -12,6 +12,8 @@
 #include "BinaryWriter.h"
 #include "Hierarchy.h"
 
+int Unit::auto_increment;
+
 void Unit::update() {
 	float model_scale = units_slk.data<float>("modelscale", id);
 
@@ -122,6 +124,8 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		} else {
 			items.push_back(i);
 		}
+
+		Unit::auto_increment = std::max(Unit::auto_increment, i.creation_number);
 	}
 
 	return true;

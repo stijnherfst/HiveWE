@@ -130,11 +130,12 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 
 
 	std::string type = units_meta_slk.data("type", mapping[index.row()]);
+	std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
+	std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
 
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
-		std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
-		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
+
 		// handle empty minVal, maxVal
 		editor->setMinimum(std::stoi(minVal));
 		editor->setMaximum(std::stoi(maxVal));
@@ -142,16 +143,12 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return editor;
 	} else if (type == "real" || type == "unreal") {
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
-		std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
-		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
-
 		editor->setMinimum(std::stod(minVal));
 		editor->setMaximum(std::stod(maxVal));
 		editor->setSingleStep(std::clamp((std::stod(maxVal) - std::stod(minVal)) / 10.0, 0.1, 10.0));
 		return editor;
 	} else if (type == "string") {
 		QLineEdit* editor = new QLineEdit(parent);
-		std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
 		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
 	} else if (type.ends_with("List")) {
@@ -161,6 +158,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		QVBoxLayout* layout = new QVBoxLayout(dialog);
 
 		QPlainTextEdit* editor = new QPlainTextEdit;
+		editor->setObjectName("editor");
 
 		QDialogButtonBox* buttonBox = new QDialogButtonBox;
 		buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
@@ -186,7 +184,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 			QString displayText = QString::fromStdString(value[1]);
 			displayText.replace('&', "");
 
-			editor->addItem(displayText);
+			editor->addItem(displayText, QString::fromStdString(value[0]));
 		}
 		return editor;
 	} else {
@@ -195,10 +193,29 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 }
 
 void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
-	//int value = index.model()->data(index, Qt::EditRole).toInt();
+	auto model = static_cast<const SingleModel*>(index.model());
+	auto& mapping = model->getMapping();
 
-	//QSpinBox* spinBox = static_cast<QSpinBox*>(editor);
-	//spinBox->setValue(value);
+	std::string type = units_meta_slk.data("type", mapping[index.row()]);
+
+	if (type == "int") {
+		static_cast<QSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toInt());
+	} else if (type == "real" || type == "unreal") {
+		static_cast<QDoubleSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toDouble());
+	} else if (type == "string") {
+		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
+	} else if (type.ends_with("List")) {
+		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(model->data(index, Qt::EditRole).toString());
+	} else if (unit_editor_data.section_exists(type)) {
+		auto combo = static_cast<QComboBox*>(editor);
+		// Find the item with the right userdata and set it as current index
+		for (int i = 0; i < combo->count(); i++) {
+			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+				combo->setCurrentIndex(i);
+			}
+		}
+	} else {
+	}
 }
 
 void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {

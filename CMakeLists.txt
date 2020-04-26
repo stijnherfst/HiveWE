@@ -108,6 +108,7 @@ add_executable(HiveWE
 	Base/Models/BuffTreeModel.cpp
 	Base/Models/UpgradeTreeModel.cpp
 	Base/Models/UnitListModel.cpp
+	Base/Models/DoodadListModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
