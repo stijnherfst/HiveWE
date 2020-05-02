@@ -33,7 +33,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = units_slk.data("unitid", item->tableRow);
 
 				single_model = new SingleModel(&units_slk, &units_meta_slk, this);
-				single_model->setSourceModel(unitTableModel);
+				single_model->setSourceModel(units_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(units_slk.data("name", item->tableRow)));
@@ -44,7 +44,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = items_slk.data("itemid", item->tableRow);
 
 				single_model = new SingleModel(&items_slk, &items_meta_slk, this);
-				single_model->setSourceModel(itemTableModel);
+				single_model->setSourceModel(items_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(items_slk.data("name", item->tableRow)));
@@ -55,7 +55,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = doodads_slk.data("doodid", item->tableRow);
 
 				single_model = new SingleModel(&doodads_slk, &doodads_meta_slk, this);
-				single_model->setSourceModel(doodadTableModel);
+				single_model->setSourceModel(doodads_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(doodads_slk.data("name", item->tableRow)));
@@ -66,7 +66,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = abilities_slk.data("alias", item->tableRow);
 
 				single_model = new SingleModel(&abilities_slk, &abilities_meta_slk, this);
-				single_model->setSourceModel(abilityTableModel);
+				single_model->setSourceModel(abilities_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(abilities_slk.data("name", item->tableRow)));
@@ -77,7 +77,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = upgrade_slk.data("upgradeid", item->tableRow);
 
 				single_model = new SingleModel(&upgrade_slk, &upgrade_meta_slk, this);
-				single_model->setSourceModel(upgradeTableModel);
+				single_model->setSourceModel(upgrade_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(upgrade_slk.data("name", item->tableRow)));
@@ -88,7 +88,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				std::string id = buff_slk.data("alias", item->tableRow);
 
 				single_model = new SingleModel(&buff_slk, &buff_meta_slk, this);
-				single_model->setSourceModel(buffTableModel);
+				single_model->setSourceModel(buff_table);
 				single_model->setID(id);
 
 				std::string name = buff_slk.data("bufftip", item->tableRow);
@@ -122,9 +122,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
 
-	unitTableModel = new TableModel(&units_slk, &units_meta_slk, this);
+//	unitTableModel = new TableModel(&units_slk, &units_meta_slk, this);
 	unitTreeModel = new UnitTreeModel(this);
-	unitTreeModel->setSourceModel(unitTableModel);
+	unitTreeModel->setSourceModel(units_table);
 	unit_explorer->setModel(unitTreeModel);
 	unit_explorer->header()->hide();
 	
@@ -133,9 +133,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	unit_tab->setWidget(unit_explorer);
 	auto t = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
 
-	itemTableModel = new TableModel(&items_slk, &items_meta_slk, this);
+//	itemTableModel = new TableModel(&items_slk, &items_meta_slk, this);
 	itemTreeModel = new ItemTreeModel(this);
-	itemTreeModel->setSourceModel(itemTableModel);
+	itemTreeModel->setSourceModel(items_table);
 	item_explorer->setModel(itemTreeModel);
 	item_explorer->header()->hide();
 
@@ -144,9 +144,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	item_tab->setWidget(item_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, item_tab, t);
 
-	doodadTableModel = new TableModel(&doodads_slk, &doodads_meta_slk, this);
+//	doodadTableModel = new TableModel(&doodads_slk, &doodads_meta_slk, this);
 	doodadTreeModel = new DoodadTreeModel(this);
-	doodadTreeModel->setSourceModel(doodadTableModel);
+	doodadTreeModel->setSourceModel(doodads_table);
 	doodad_explorer->setModel(doodadTreeModel);
 	doodad_explorer->header()->hide();
 
@@ -160,9 +160,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	//destructible_tab->setWidget(explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, destructible_tab, t);
 
-	abilityTableModel = new TableModel(&abilities_slk, &abilities_meta_slk, this);
+//	abilityTableModel = new TableModel(&abilities_slk, &abilities_meta_slk, this);
 	abilityTreeModel = new AbilityTreeModel(this);
-	abilityTreeModel->setSourceModel(abilityTableModel);
+	abilityTreeModel->setSourceModel(abilities_table);
 	ability_explorer->setModel(abilityTreeModel);
 	ability_explorer->header()->hide();
 
@@ -171,9 +171,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ability_tab->setWidget(ability_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, ability_tab, t);
 
-	upgradeTableModel = new TableModel(&upgrade_slk, &upgrade_meta_slk, this);
+//	upgradeTableModel = new TableModel(&upgrade_slk, &upgrade_meta_slk, this);
 	upgradeTreeModel = new UpgradeTreeModel(this);
-	upgradeTreeModel->setSourceModel(upgradeTableModel);
+	upgradeTreeModel->setSourceModel(upgrade_table);
 	upgrade_explorer->setModel(upgradeTreeModel);
 	upgrade_explorer->header()->hide();
 
@@ -182,9 +182,9 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	upgrade_tab->setWidget(upgrade_explorer);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, upgrade_tab, t);
 
-	buffTableModel = new TableModel(&buff_slk, &buff_meta_slk, this);
+//	buffTableModel = new TableModel(&buff_slk, &buff_meta_slk, this);
 	buffTreeModel = new BuffTreeModel(this);
-	buffTreeModel->setSourceModel(buffTableModel);
+	buffTreeModel->setSourceModel(buff_table);
 	buff_explorer->setModel(buffTreeModel);
 	buff_explorer->header()->hide();
 

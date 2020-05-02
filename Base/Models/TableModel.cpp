@@ -1,5 +1,6 @@
 #include "TableModel.h"
 #include "QIconResource.h"
+#include "HiveWE.h"
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
@@ -12,11 +13,11 @@ TableModel::TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAb
 }
 
 int TableModel::rowCount(const QModelIndex& parent) const {
-	return slk->rows - 1;
+	return slk->rows;
 }
 
 int TableModel::columnCount(const QModelIndex& parent) const {
-	return slk->columns - 1;
+	return slk->columns;
 }
 
 QVariant TableModel::data(const QModelIndex& index, int role) const {
@@ -35,12 +36,19 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			const std::string type = meta_slk->data("type", meta_field_to_index.at(field));
 			if (type == "bool") {
 				return QString::fromStdString(slk->data(index.column(), index.row())) == "1" ? "true" : "false";
+			} else if (unit_editor_data.section_exists(type)) {
+				for (const auto& [key, value] : unit_editor_data.section(type)) {
+					if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+						continue;
+					}
+
+					if (slk->data(index.column(), index.row()) == value[0]) {
+						QString displayText = QString::fromStdString(value[1]);
+						displayText.replace('&', "");
+						return displayText;
+					}
+				}
 			}
-			//else if (type == "int") {
-			//	return QString::fromStdString(units_slk.data(index.column(), index.row())).toInt();
-			//} else if (type == "unreal") {
-			//	return QString::fromStdString(units_slk.data(index.column(), index.row())).toFloat();
-			//}
 
 			return QString::fromStdString(slk->data(index.column(), index.row()));
 		}

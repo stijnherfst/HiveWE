@@ -45,10 +45,10 @@ void BaseTreeModel::_q_sourceDataChanged(const QModelIndex& topLeft, const QMode
 	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
 	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
 
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(topLeft.internalPointer());
+	//BaseTreeItem* item = static_cast<BaseTreeItem*>(topLeft.internalPointer());
 
-	std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
-	std::cout << "Proxy model row " << mapFromSource(topLeft).row() << " column" << mapFromSource(topLeft).column() << "\n";
+	//std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
+	//std::cout << "Proxy model row " << mapFromSource(topLeft).row() << " column" << mapFromSource(topLeft).column() << "\n";
 	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), {});
 }
 

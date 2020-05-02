@@ -16,13 +16,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	map->brush = &brush;
 
 	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
-		const std::string tileset_key = value.front();
-		ui.tileset->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
+		ui.tileset->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DoodadCategories")) {
-		const std::string tileset_key = value.front();
-		ui.type->addItem(QString::fromStdString(tileset_key), QString::fromStdString(key));
+		ui.type->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DestructibleCategories")) {
@@ -32,17 +30,23 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
 
-	TableModel* model = new TableModel(&doodads_slk, &doodads_meta_slk);
+	DoodadListModel* doodad_list_model = new DoodadListModel;
+	doodad_list_model->setSourceModel(doodads_table);
 
-	DoodadListModel* list_model = new DoodadListModel;
-	list_model->setSourceModel(model);
+	DestructableListModel* destructable_list_model = new DestructableListModel;
+	destructable_list_model->setSourceModel(destructables_table);
 
-	//DoodadListFilter* filter_model = new DoodadListFilter;
-	//filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
-	//filter_model->setSourceModel(list_model);
-	//filter_model->sort(0, Qt::AscendingOrder);
+	doodad_filter_model = new DoodadListFilter(this);
+	doodad_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	doodad_filter_model->setSourceModel(doodad_list_model);
+	doodad_filter_model->sort(0, Qt::AscendingOrder);
 
-	ui.doodads->setModel(list_model);
+	destructable_filter_model = new DestructableListFilter(this);
+	destructable_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	destructable_filter_model->setSourceModel(destructable_list_model);
+	destructable_filter_model->sort(0, Qt::AscendingOrder);
+
+	ui.doodads->setModel(doodad_filter_model);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -142,9 +146,23 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(visible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_non_solid; });
 	connect(visible_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_solid; });
 
-	/*connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	connect(ui.doodads, &QListWidget::itemClicked, this, &DoodadPalette::selection_changed);*/
+	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
+		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
+		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());
+
+		if (index >= 6) {
+			ui.doodads->setModel(destructable_filter_model);
+		} else {
+			ui.doodads->setModel(doodad_filter_model);
+		}
+
+	});
+	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
+	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
+
+	//connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
+	//connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
+	connect(ui.doodads, &QListView::clicked, this, &DoodadPalette::selection_changed);
 }
 
 DoodadPalette::~DoodadPalette() {
@@ -166,83 +184,52 @@ bool DoodadPalette::event(QEvent *e) {
 	return QWidget::event(e);
 }
 
-//void DoodadPalette::update_list() {
-	//ui.doodads->clear();
-	//
-	//char selected_tileset = ui.tileset->currentData().toString().toStdString().front();
-	//std::string selected_category = ui.type->currentData().toString().toStdString();
+void DoodadPalette::selection_changed(const QModelIndex& index) {
+	//const std::string id = item->data(Qt::UserRole).toString().toStdString();
 
-	//bool is_doodad = world_edit_data.key_exists("DoodadCategories", selected_category);
-	//slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-	//for (int i = 1; i < slk.rows; i++) {
-	//	// If the doodad belongs to this tileset
-	//	std::string tilesets = slk.data("tilesets", i);
-	//	if (tilesets != "*" && tilesets.find(selected_tileset) == std::string::npos) {
-	//		continue;
-	//	}
-
-	//	// If the doodad belongs to this category
-	//	std::string category = slk.data("category", i);
-	//	if (category != selected_category) {
-	//		continue;
-	//	}
+	std::string id;
+	if (ui.type->currentIndex() >= 6) {
+		const int row = destructable_filter_model->mapToSource(index).row();
+		id = destructables_slk.data(0, row);
+	} else {
+		const int row = doodad_filter_model->mapToSource(index).row();
+		id = doodads_slk.data(0, row);
+	}
 
 
+	brush.set_doodad(id);
+	selection_mode->setChecked(false);
 
-	//	std::string text = slk.data("name", i);
+	bool is_doodad = doodads_slk.row_header_exists(id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
 
-	//	const std::string trigstr = map->trigger_strings.string(text);
-	//	if (!trigstr.empty()) {
-	//		text = trigstr;
-	//	}
+	variations->clear();
 
-	//	if (!is_doodad) { 
-	//		text += " " + destructibles_slk.data("editorsuffix", i);
-	//	}
+	int variation_count = slk.data<int>("numvar", id);
+	for (int i = 0; i < variation_count; i++) {
+		QRibbonButton* toggle = new QRibbonButton;
+		toggle->setCheckable(true);
+		toggle->setChecked(true);
+		toggle->setText(QString::number(i));
+		variations->addWidget(toggle, i % 3, i / 3);
+		connect(toggle, &QRibbonButton::toggled, [=](bool checked) {
+			if (checked) {
+				brush.add_variation(i);
+			} else {
+				brush.erase_variation(i);
+			}
+		});
+	}
 
-	//	QListWidgetItem* item = new QListWidgetItem(ui.doodads);
-	//	item->setText(QString::fromStdString(text));
-	//	item->setData(Qt::UserRole, QString::fromStdString(slk.data(is_doodad ? "doodid" : "destructableid", i)));
-	//}
-//}
-
-//void DoodadPalette::selection_changed(QListWidgetItem* item) {
-//	const std::string id = item->data(Qt::UserRole).toString().toStdString();
-//
-//	brush.set_doodad(id);
-//	selection_mode->setChecked(false);
-//
-//	bool is_doodad = doodads_slk.row_header_exists(id);
-//	slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
-//
-//	variations->clear();
-//
-//	int variation_count = slk.data<int>("numvar", id);
-//	for (int i = 0; i < variation_count; i++) {
-//		QRibbonButton* toggle = new QRibbonButton;
-//		toggle->setCheckable(true);
-//		toggle->setChecked(true);
-//		toggle->setText(QString::number(i));
-//		variations->addWidget(toggle, i % 3, i / 3);
-//		connect(toggle, &QRibbonButton::toggled, [=](bool checked) {
-//			if (checked) {
-//				brush.add_variation(i);
-//			} else {
-//				brush.erase_variation(i);
-//			}
-//		});
-//	}
-//
-//	if (brush.pathing_texture) {
-//		pathing_section->setHidden(false);
-//		QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
-//		QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
-//		pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
-//	} else {
-//		pathing_section->setHidden(true);
-//	}
-//}
+	if (brush.pathing_texture) {
+		pathing_section->setHidden(false);
+		QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
+		QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
+		pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
+	} else {
+		pathing_section->setHidden(true);
+	}
+}
 
 void DoodadPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {

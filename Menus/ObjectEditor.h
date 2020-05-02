@@ -41,13 +41,6 @@ private:
 	BuffTreeModel* buffTreeModel;
 	UpgradeTreeModel* upgradeTreeModel;
 
-	TableModel* unitTableModel;
-	TableModel* doodadTableModel;
-	TableModel* abilityTableModel;
-	TableModel* itemTableModel;
-	TableModel* buffTableModel;
-	TableModel* upgradeTableModel;
-
 	enum class Category {
 		unit,
 		doodad,

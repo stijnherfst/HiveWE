@@ -2,11 +2,14 @@
 
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
+#include <QIconResource.h>
 
-class UnitListModel : public QAbstractProxyModel {
+class DestructableListModel : public QAbstractProxyModel {
 	Q_OBJECT
 
 public:
+	explicit DestructableListModel(QObject* parent = nullptr);
+
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
 
@@ -21,15 +24,16 @@ public:
 
 	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
-	using QAbstractProxyModel::QAbstractProxyModel;
+private:
+	std::unordered_map<char, std::shared_ptr<QIconResource>> icons;
 };
 
-class UnitListFilter : public QSortFilterProxyModel {
+class DestructableListFilter : public QSortFilterProxyModel {
 	bool filterAcceptsRow(int sourceRow,const QModelIndex& sourceParent) const override;
 	bool lessThan(const QModelIndex& left,const QModelIndex& right) const override;
-	QString filterRace = "human";
+	QString filterCategory = "";
 
 public:
-	void setFilterRace(QString race);
+	void setFilterCategory(QString category);
 	using QSortFilterProxyModel::QSortFilterProxyModel;
 };

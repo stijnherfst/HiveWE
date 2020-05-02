@@ -6,6 +6,7 @@
 #include "QRibbon.h"
 #include "AspectRatioPixmapLabel.h"
 #include "DoodadListModel.h"
+#include "DestructableListModel.h"
 
 
 class DoodadPalette : public Palette {
@@ -18,13 +19,15 @@ public:
 private:
 	bool event(QEvent *e) override;
 
-	//void selection_changed(QListWidgetItem* item);
+	void selection_changed(const QModelIndex& index);
 
 	Ui::DoodadPalette ui;
 
 	DoodadBrush brush;
-	DoodadListModel* list_model;
-	DoodadListFilter* filter_model;
+	DoodadListModel* doodad_list_model;
+	DoodadListFilter* doodad_filter_model;
+	DestructableListModel* destructable_list_model;
+	DestructableListFilter* destructable_filter_model;
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;

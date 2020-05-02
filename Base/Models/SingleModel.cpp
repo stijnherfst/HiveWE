@@ -8,6 +8,7 @@
 #include <QPlainTextEdit>
 #include <QDialogButtonBox>
 #include <QTimer>
+#include <QSpinBox>
 
 #include "HiveWE.h"
 
@@ -28,7 +29,7 @@ SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : Q
 		std::string right_string = category + " - " + meta_slk->data("displayname", right);
 
 		return left_string < right_string;
-		});
+	});
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
@@ -119,8 +120,6 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
 }
 
-#include <QSpinBox>
-
 TableDelegate::TableDelegate(QObject* parent) : QStyledItemDelegate(parent) {
 }
 
@@ -128,10 +127,9 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 	auto model = static_cast<const SingleModel*>(index.model());
 	auto& mapping = model->getMapping();
 
-
-	std::string type = units_meta_slk.data("type", mapping[index.row()]);
-	std::string minVal = units_meta_slk.data("minval", mapping[index.row()]);
-	std::string maxVal = units_meta_slk.data("maxval", mapping[index.row()]);
+	std::string type = model->meta_slk->data("type", mapping[index.row()]);
+	std::string minVal = model->meta_slk->data("minval", mapping[index.row()]);
+	std::string maxVal = model->meta_slk->data("maxval", mapping[index.row()]);
 
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
@@ -149,7 +147,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return editor;
 	} else if (type == "string") {
 		QLineEdit* editor = new QLineEdit(parent);
-		editor->setMaxLength(std::stoi(maxVal));
+//		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
 	} else if (type.ends_with("List")) {
 		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
@@ -173,7 +171,6 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		});
 
 		return dialog;
-
 	} else if (unit_editor_data.section_exists(type)) {
 		QComboBox* editor = new QComboBox(parent);
 		for (const auto& [key, value] : unit_editor_data.section(type)) {
@@ -196,7 +193,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	auto model = static_cast<const SingleModel*>(index.model());
 	auto& mapping = model->getMapping();
 
-	std::string type = units_meta_slk.data("type", mapping[index.row()]);
+	std::string type = model->meta_slk->data("type", mapping[index.row()]);
 
 	if (type == "int") {
 		static_cast<QSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toInt());
@@ -215,15 +212,30 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			}
 		}
 	} else {
+		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
 	}
 }
 
 void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {
-	//QSpinBox* spinBox = static_cast<QSpinBox*>(editor);
-	//spinBox->interpretText();
-	//int value = spinBox->value();
+	auto singlemodel = static_cast<SingleModel*>(model);
+	auto& mapping = singlemodel->getMapping();
 
-	//model->setData(index, value, Qt::EditRole);
+	std::string type = singlemodel->meta_slk->data("type", mapping[index.row()]);
+
+	if (type == "int") {
+		singlemodel->setData(index, static_cast<QSpinBox*>(editor)->value());
+	} else if (type == "real" || type == "unreal") {
+		singlemodel->setData(index, static_cast<QDoubleSpinBox*>(editor)->value());
+	} else if (type == "string") {
+		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
+	} else if (type.ends_with("List")) {
+		singlemodel->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
+	} else if (unit_editor_data.section_exists(type)) {
+		auto combo = static_cast<QComboBox*>(editor);
+		singlemodel->setData(index, combo->currentData());
+	} else {
+		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
+	}
 }
 
 void TableDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const {

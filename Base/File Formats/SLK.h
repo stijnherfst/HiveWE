@@ -30,12 +30,12 @@ namespace slk {
 		// column_header should be lowercase
 		template<typename T = std::string>
 		T data(const std::string& column_header, size_t row) const {
+
 			if (!header_to_column.contains(column_header)) {
 				return T();
 			}
 
 			const size_t column = header_to_column.at(column_header);
-
 			if (row >= rows) {
 				std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
 				return T();

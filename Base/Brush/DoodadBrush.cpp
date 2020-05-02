@@ -55,16 +55,16 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 				switch (((int)glm::degrees(rotation) + 90) % 360) {
 					case 90:
-						x = pathing_texture->width - 1 - j - std::max(0, pathing_texture->width - pathing_texture->height);
-						y = i + std::max(0, pathing_texture->height - pathing_texture->width);
+						x = pathing_texture->height - 1 - j;
+						y = i;
 						break;
 					case 180:
 						x = pathing_texture->width - 1 - i;
 						y = pathing_texture->height - 1 - j;
 						break;
 					case 270:
-						x = j + std::max(0, pathing_texture->height - pathing_texture->width);
-						y = pathing_texture->height - 1 - i + std::max(0, pathing_texture->width - pathing_texture->height);
+						x = j;
+						y = pathing_texture->width - 1 - i;
 						break;
 				}
 
@@ -497,7 +497,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 
 	pathing_texture.reset();
-	std::string pathing_texture_path = slk.data("pathTex", id);
+	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		free_placement = false;
 		pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);

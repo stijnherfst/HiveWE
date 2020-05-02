@@ -2,8 +2,8 @@
 
 #include <QAbstractTableModel>
 
-#include "HiveWE.h"
 #include "QIconResource.h"
+#include "SLK.h"
 
 class TableModel : public QAbstractTableModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;

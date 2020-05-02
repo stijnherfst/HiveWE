@@ -10,10 +10,11 @@
 
 class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT
-
+		
+public:
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
-
+	
 	QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
 
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -22,18 +23,18 @@ class SingleModel : public QAbstractProxyModel {
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-
-	std::string id = "hpea";
-	std::vector<int> id_mapping;
-
-	slk::SLK* meta_slk;
-	slk::SLK* slk;
-public:
 	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 	void setID(const std::string_view id);
 	const std::vector<int>& getMapping() const {
 		return id_mapping;
 	}
+
+	slk::SLK* meta_slk;
+	slk::SLK* slk;
+
+private:
+	std::string id = "hpea";
+	std::vector<int> id_mapping;
 };
 
 // Provides row headers that have alternate colors

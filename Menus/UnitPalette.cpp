@@ -14,10 +14,8 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	TableModel* model = new TableModel(&units_slk, &units_meta_slk);
-
 	list_model = new UnitListModel(this);
-	list_model->setSourceModel(model);
+	list_model->setSourceModel(units_table);
 
 	filter_model = new UnitListFilter(this);
 	filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -67,11 +65,10 @@ bool UnitPalette::event(QEvent* e) {
 	} else if (e->type() == QEvent::WindowActivate) {
 		selection_mode->enableShortcuts();
 		map->brush = &brush;
-		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
+		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
 	}
 
 	return QWidget::event(e);
-	//return true;
 }
 
 void UnitPalette::selection_changed(const QModelIndex& item) {

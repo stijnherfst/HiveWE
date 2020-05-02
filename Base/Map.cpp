@@ -150,6 +150,14 @@ void Map::load(const fs::path& path) {
 	buff_slk.merge(ini::INI("Units/CommonAbilityStrings.txt"));
 	buff_slk.merge(ini::INI("Units/CampaignAbilityStrings.txt"));
 
+	units_table = new TableModel(&units_slk, &units_meta_slk);
+	items_table = new TableModel(&items_slk, &items_meta_slk);
+	abilities_table = new TableModel(&abilities_slk, &abilities_meta_slk);
+	doodads_table = new TableModel(&doodads_slk, &doodads_meta_slk);
+	destructables_table = new TableModel(&destructables_slk, &destructables_meta_slk);
+	upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
+	buff_table = new TableModel(&buff_slk, &buff_meta_slk);
+
 	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
 	begin = std::chrono::steady_clock::now();
 	std::cout << "SLK loading: " << delta << "ms\n";
