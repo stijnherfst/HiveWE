@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HiveWEClass</class>
+ <widget class="QMainWindow" name="HiveWEClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>HiveWE 0.7</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <widget class="MainRibbon" name="ribbon">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>116</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="GLWidget" name="widget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <action name="actionConvert_Blockers_to_Pathmap">
+   <property name="text">
+    <string>Convert Blockers to Pathing Map</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open Map...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionConvert_Tile_Type_to_PathMap">
+   <property name="text">
+    <string>Convert Tile Type to Pathing Map</string>
+   </property>
+  </action>
+  <action name="actionPathing_Palette">
+   <property name="text">
+    <string>Pathing</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save Map</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionTest_Map">
+   <property name="text">
+    <string>Test Map</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
+   </property>
+  </action>
+  <action name="actionSave_As">
+   <property name="text">
+    <string>Save Map As...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionDoodads">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Doodads</string>
+   </property>
+   <property name="shortcut">
+    <string>D</string>
+   </property>
+  </action>
+  <action name="actionPathing">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Pathing</string>
+   </property>
+   <property name="shortcut">
+    <string>P</string>
+   </property>
+  </action>
+  <action name="actionBrush">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Brush</string>
+   </property>
+  </action>
+  <action name="actionTileSetter">
+   <property name="text">
+    <string>Modify Tileset...</string>
+   </property>
+  </action>
+  <action name="actionTileReplace">
+   <property name="text">
+    <string>Replace Tile...</string>
+   </property>
+  </action>
+  <action name="actionUnits">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Units</string>
+   </property>
+   <property name="shortcut">
+    <string>U</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionChangeTilePathing">
+   <property name="text">
+    <string>Change Tile Pathing...</string>
+   </property>
+  </action>
+  <action name="actionChangeCliffPathing">
+   <property name="text">
+    <string>Change Cliff Pathing...</string>
+   </property>
+  </action>
+  <action name="actionBirds_Eye">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Bird's-eye</string>
+   </property>
+   <property name="toolTip">
+    <string>Bird's-eye</string>
+   </property>
+  </action>
+  <action name="actionFirst_Person">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>First-person</string>
+   </property>
+  </action>
+  <action name="actionTerrain_Palette">
+   <property name="text">
+    <string>Terrain</string>
+   </property>
+  </action>
+  <action name="actionFrame_Times">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Frame Times</string>
+   </property>
+   <property name="shortcut">
+    <string>F3</string>
+   </property>
+  </action>
+  <action name="actionImport_Manager">
+   <property name="text">
+    <string>Import Manager</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Camera">
+   <property name="text">
+    <string>Switch Camera</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="actionLighting">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Lighting</string>
+   </property>
+   <property name="shortcut">
+    <string>L</string>
+   </property>
+  </action>
+  <action name="actionWireframe">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Wireframe</string>
+   </property>
+   <property name="shortcut">
+    <string>T</string>
+   </property>
+  </action>
+  <action name="actionReset_Camera">
+   <property name="text">
+    <string>Reset Camera</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+C</string>
+   </property>
+  </action>
+  <action name="actionTrigger_Editor">
+   <property name="text">
+    <string>Trigger Editor</string>
+   </property>
+  </action>
+  <action name="actionDescription">
+   <property name="text">
+    <string>Description...</string>
+   </property>
+  </action>
+  <action name="actionSize_and_Camera_Bounds">
+   <property name="text">
+    <string>Size and Camera Bounds...</string>
+   </property>
+  </action>
+  <action name="actionLoading_Screen">
+   <property name="text">
+    <string>Loading Screen...</string>
+   </property>
+  </action>
+  <action name="actionPreferences">
+   <property name="text">
+    <string>Preferences...</string>
+   </property>
+  </action>
+  <action name="actionOptions">
+   <property name="text">
+    <string>Options...</string>
+   </property>
+  </action>
+  <action name="actionDoodads_Palette">
+   <property name="text">
+    <string>Doodads</string>
+   </property>
+  </action>
+  <action name="actionEnforce_Water_Height_Limit">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Enforce Water Height Limits</string>
+   </property>
+  </action>
+  <action name="actionSwitch_Warcraft">
+   <property name="text">
+    <string>Switch Warcraft folder</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>GLWidget</class>
+   <extends>QWidget</extends>
+   <header>GLWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>MainRibbon</class>
+   <extends>QTabWidget</extends>
+   <header>MainRibbon.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="HiveWE.qrc"/>
+ </resources>
+ <connections/>
+</ui>
