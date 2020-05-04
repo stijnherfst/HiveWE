@@ -32,8 +32,10 @@ class DestructableListFilter : public QSortFilterProxyModel {
 	bool filterAcceptsRow(int sourceRow,const QModelIndex& sourceParent) const override;
 	bool lessThan(const QModelIndex& left,const QModelIndex& right) const override;
 	QString filterCategory = "";
+	char filterTileset = '*';
 
 public:
 	void setFilterCategory(QString category);
+	void setFilterTileset(char tileset);
 	using QSortFilterProxyModel::QSortFilterProxyModel;
 };

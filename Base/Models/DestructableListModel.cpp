@@ -86,17 +86,23 @@ bool DestructableListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& 
 	QModelIndex index0 = sourceModel()->index(sourceRow, 0);
 
 	if (!filterRegExp().isEmpty()) {
-		return sourceModel()->data(index0).toString().contains(filterRegExp());
+		return sourceModel()->data(index0).toString().contains(filterRegExp()) ;
 	} else {
-		return QString::fromStdString(destructables_slk.data(destructables_slk.header_to_column.at("category"), sourceRow)) == filterCategory;
+		const std::string tilesets = destructables_slk.data("tilesets", sourceRow);
+		return QString::fromStdString(destructables_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');;
 	}
 }
 
 bool DestructableListFilter::lessThan(const QModelIndex& left, const QModelIndex& right) const {
-	return doodads_slk.data("name", left.row()) < doodads_slk.data("name", right.row());
+	return destructables_slk.data("name", left.row()) < destructables_slk.data("name", right.row());
 }
 
 void DestructableListFilter::setFilterCategory(QString category) {
 	filterCategory = category;
+	invalidateFilter();
+}
+
+void DestructableListFilter::setFilterTileset(char tileset) {
+	filterTileset = tileset;
 	invalidateFilter();
 }

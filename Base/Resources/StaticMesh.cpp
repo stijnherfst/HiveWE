@@ -22,6 +22,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
 				uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
+				
 			}
 			
 			// Allocate space
@@ -51,6 +52,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 				entry.base_index = base_index;
 
 				entry.material_id = i.material_id;
+				entry.extent = i.extent;
 
 				entries.push_back(entry);
 

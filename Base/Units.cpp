@@ -223,8 +223,8 @@ void Units::load_item_modifications(BinaryReader& reader) {
 		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, items_slk, units_meta_slk, false);
-	load_modification_table(reader, items_slk, units_meta_slk, true);
+	load_modification_table(reader, items_slk, items_meta_slk, false);
+	load_modification_table(reader, items_slk, items_meta_slk, true);
 }
 
 void Units::update_area(const QRect& area) {
@@ -274,8 +274,8 @@ Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	unit.id = id;
 	unit.mesh = get_mesh(id);
 	unit.position = position;
-	unit.scale = { 1, 1, 1 };
-	unit.angle = 0;
+	unit.scale = glm::vec3(1.f);
+	unit.angle = 0.f;
 
 	unit.update();
 
@@ -297,7 +297,7 @@ std::vector<Unit*> Units::query_area(const QRectF& area) {
 	std::vector<Unit*> result;
 
 	for (auto& i : units) {
-		if (area.contains(i.position.x, i.position.y)) {
+		if (area.contains(i.position.x, i.position.y) && i.id != "sloc") {
 			result.push_back(&i);
 		}
 	}

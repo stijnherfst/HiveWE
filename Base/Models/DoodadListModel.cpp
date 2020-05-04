@@ -88,7 +88,8 @@ bool DoodadListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& source
 	if (!filterRegExp().isEmpty()) {
 		return sourceModel()->data(index0).toString().contains(filterRegExp());
 	} else {
-		return QString::fromStdString(doodads_slk.data(doodads_slk.header_to_column.at("category"), sourceRow)) == filterCategory;
+		const std::string tilesets = doodads_slk.data("tilesets", sourceRow);
+		return QString::fromStdString(doodads_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');
 	}
 }
 
@@ -98,5 +99,10 @@ bool DoodadListFilter::lessThan(const QModelIndex& left, const QModelIndex& righ
 
 void DoodadListFilter::setFilterCategory(QString category) {
 	filterCategory = category;
+	invalidateFilter();
+}
+
+void DoodadListFilter::setFilterTileset(char tileset) {
+	filterTileset = tileset;
 	invalidateFilter();
 }

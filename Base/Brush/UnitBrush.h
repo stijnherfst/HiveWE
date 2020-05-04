@@ -16,6 +16,8 @@ public:
 	float rotation = 0.f;
 	bool random_rotation = true;
 
+	int player_id = 0;
+
 	std::unique_ptr<UnitAddAction> unit_undo;
 	std::unique_ptr<UnitStateAction> unit_state_undo;
 

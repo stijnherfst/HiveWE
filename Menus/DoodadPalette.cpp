@@ -15,8 +15,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	map->brush = &brush;
 
+	ui.tileset->addItem("All Tilesets", '*');
 	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
-		ui.tileset->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
+		ui.tileset->addItem(QString::fromStdString(value.front()), key.front());
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DoodadCategories")) {
@@ -27,8 +28,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		const std::string text = value.front();
 		ui.type->addItem(QString::fromStdString(text), QString::fromStdString(key));
 	}
-	// Default to Trees/Destructibles
-	ui.type->setCurrentIndex(ui.type->count() - 2);
 
 	DoodadListModel* doodad_list_model = new DoodadListModel;
 	doodad_list_model->setSourceModel(doodads_table);
@@ -155,14 +154,20 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		} else {
 			ui.doodads->setModel(doodad_filter_model);
 		}
-
 	});
+
+	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
+		destructable_filter_model->setFilterTileset(ui.tileset->currentData().toChar().toLatin1());
+		doodad_filter_model->setFilterTileset(ui.tileset->currentData().toChar().toLatin1());
+	});
+
 	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
-
-	//connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
-	//connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &DoodadPalette::update_list);
 	connect(ui.doodads, &QListView::clicked, this, &DoodadPalette::selection_changed);
+
+	// Default to Trees/Destructibles
+	ui.type->setCurrentIndex(ui.type->count() - 2);
+	ui.tileset->setCurrentIndex(0);
 }
 
 DoodadPalette::~DoodadPalette() {
@@ -185,8 +190,6 @@ bool DoodadPalette::event(QEvent *e) {
 }
 
 void DoodadPalette::selection_changed(const QModelIndex& index) {
-	//const std::string id = item->data(Qt::UserRole).toString().toStdString();
-
 	std::string id;
 	if (ui.type->currentIndex() >= 6) {
 		const int row = destructable_filter_model->mapToSource(index).row();

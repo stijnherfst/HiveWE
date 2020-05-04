@@ -14,6 +14,7 @@ Brush::Brush() {
 	set_size(size);
 
 	selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vs", "Data/Shaders/selection.fs" });
+	selection_circle_shader = resource_manager.load<Shader>({ "Data/Shaders/selection_circle.vs", "Data/Shaders/selection_circle.fs" });
 	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 

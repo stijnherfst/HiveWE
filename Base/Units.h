@@ -12,28 +12,28 @@ struct Unit {
 	static int auto_increment;
 
 	std::string id;
-	int variation;
+	int variation = 0;
 	glm::vec3 position;
 	float angle;
 	glm::vec3 scale;
 
 	std::string skin_id;
 
-	uint8_t flags;
-	int player;
+	uint8_t flags = 2;
+	int player = 0;
 
-	uint8_t unknown1;
-	uint8_t unknown2;
-	int health;
-	int mana;
+	uint8_t unknown1 = 0;
+	uint8_t unknown2 = 0;
+	int health = -1;
+	int mana = -1;
 
 	int item_table_pointer = 0xFFFF;
 	std::vector<ItemSet> item_sets;
 
-	int gold;
-	float target_acquisition;
+	int gold = 12500;
+	float target_acquisition = -1;
 
-	int level;
+	int level = 1;
 	int strength = 0;
 	int agility = 0;
 	int intelligence = 0;
@@ -44,11 +44,11 @@ struct Unit {
 	// ID, autocast, ability level
 	std::vector<std::tuple<std::string, uint32_t, uint32_t>> abilities;
 
-	int random_type;
+	int random_type = 0;
 	std::vector<uint8_t> random;
 
-	int custom_color;
-	int waygate;
+	int custom_color = -1;
+	int waygate = -1;
 	int creation_number;
 
 	glm::mat4 matrix = glm::mat4(1.f);

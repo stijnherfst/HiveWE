@@ -24,18 +24,13 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="type">
+      <widget class="QComboBox" name="player">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <item>
-        <property name="text">
-         <string>Player 1 (Red)</string>
-        </property>
-       </item>
       </widget>
      </item>
     </layout>

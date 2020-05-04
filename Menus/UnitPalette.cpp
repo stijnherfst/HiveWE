@@ -24,6 +24,13 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	ui.units->setModel(filter_model);
 
+	for (const auto& player : map->info.players) {
+		ui.player->addItem(QString::fromStdString(map->trigger_strings.string(player.name)), player.internal_number);
+	}
+	ui.player->addItem("Neutral Hostile", 24);
+	ui.player->addItem("Neutral Passive", 25);
+
+
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -45,7 +52,10 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
 
-	connect(ui.race, QOverload<int>::of(&QComboBox::currentIndexChanged), [=]() {
+	connect(ui.player, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
+		brush.player_id = ui.player->currentData().toInt();
+	});
+	connect(ui.race, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
 		filter_model->setFilterRace(ui.race->currentData().toString());
 	});
 	connect(ui.search, &QLineEdit::textEdited, filter_model, &QSortFilterProxyModel::setFilterFixedString);
@@ -67,7 +77,6 @@ bool UnitPalette::event(QEvent* e) {
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
 	}
-
 	return QWidget::event(e);
 }
 
@@ -78,8 +87,8 @@ void UnitPalette::selection_changed(const QModelIndex& item) {
 }
 
 void UnitPalette::deactivate(QRibbonTab* tab) {
-	//if (tab != ribbon_tab) {
-	//	brush.clear_selection();
-	//	selection_mode->disableShortcuts();
-	//}
+	if (tab != ribbon_tab) {
+		brush.clear_selection();
+		selection_mode->disableShortcuts();
+	}
 }

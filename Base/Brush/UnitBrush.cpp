@@ -168,15 +168,16 @@ void UnitBrush::apply() {
 		return;
 	}
 
-	if (random_rotation) {
-		set_random_rotation();
-	}
-
 	Unit& new_unit = map->units.add_unit(id, input_handler.mouse_world);
 	new_unit.angle = rotation;
 	new_unit.update();
+	new_unit.player = player_id;
 
 	unit_undo->units.push_back(new_unit);
+
+	if (random_rotation) {
+		set_random_rotation();
+	}
 }
 
 void UnitBrush::apply_end() {
@@ -196,12 +197,19 @@ void UnitBrush::render_brush() const {
 
 void UnitBrush::render_selection() const {
 	gl->glDisable(GL_DEPTH_TEST);
-	selection_shader->use();
+	selection_circle_shader->use();
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
+		float selection_scale = 1.f;
+
+		if (i->mesh->animations.size()) {
+			selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
+		}
+
 		glm::mat4 model(1.f);
-		model = glm::translate(model, i->position - glm::vec3(0.5f, 0.5f, 0.f));
+		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
+		model = glm::scale(model, glm::vec3(selection_scale));
 
 		model = camera->projection_view * model;
 		gl->glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
@@ -209,7 +217,9 @@ void UnitBrush::render_selection() const {
 		gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
 		gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-		gl->glDrawArrays(GL_LINE_LOOP, 0, 4);
+		gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
+		gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
 	}
 
 	gl->glDisableVertexAttribArray(0);

@@ -19,6 +19,7 @@ public:
 
 		int material_id = 0;
 		bool visible = true;
+		mdx::Extent extent;
 	};
 
 	struct Animation {

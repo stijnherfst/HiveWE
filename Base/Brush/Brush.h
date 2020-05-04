@@ -86,5 +86,6 @@ protected:
 	GLuint brush_texture;
 
 	std::shared_ptr<Shader> selection_shader;
+	std::shared_ptr<Shader> selection_circle_shader;
 	std::shared_ptr<Shader> brush_shader;
 };
