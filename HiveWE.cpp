@@ -346,8 +346,8 @@ void HiveWE::save_as() {
 	} else {
 		fs::create_directories(file_name / map->name);
 
-		map->save(file_name / map->name);
 		hierarchy.map_directory = file_name / map->name;
+		map->save(file_name / map->name);
 	}
 
 	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));

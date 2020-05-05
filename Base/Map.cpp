@@ -320,7 +320,6 @@ bool Map::save(const fs::path& path) {
 			msgbox.exec();
 			return false;
 		}
-
 		filesystem_path = fs::absolute(path) / "";
 		name = (*--(--filesystem_path.end())).string();
 	}

@@ -272,10 +272,12 @@ void Units::render() const {
 Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	Unit unit;
 	unit.id = id;
+	unit.skin_id = id;
 	unit.mesh = get_mesh(id);
 	unit.position = position;
 	unit.scale = glm::vec3(1.f);
 	unit.angle = 0.f;
+	unit.random = { 1, 0, 0, 0 };
 
 	unit.update();
 
