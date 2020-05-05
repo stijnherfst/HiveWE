@@ -47,7 +47,8 @@ public:
 	fs::path path;
 	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
-	std::shared_ptr<mdx::MTLS> mtls;
+	//std::shared_ptr<mdx::MTLS> mtls;
+	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
 	
 	static constexpr const char* name = "StaticMesh";

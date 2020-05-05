@@ -15,10 +15,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		size_t uvs = 0;
 		mdx::MDX model = mdx::MDX(reader);
 
-		has_mesh = model.has_chunk<mdx::GEOS>();
+		has_mesh = model.geosets.size();
 		if (has_mesh) {
 			// Calculate required space
-			for (auto&& i : model.chunk<mdx::GEOS>()->geosets) {
+			for (auto&& i : model.geosets) {
 				vertices += i.vertices.size();
 				indices += i.faces.size();
 				uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
@@ -43,7 +43,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			// Buffer Data
 			int base_vertex = 0;
 			int base_index = 0;
-			for (const auto& i : model.chunk<mdx::GEOS>()->geosets) {
+			for (const auto& i : model.geosets) {
 				MeshEntry entry;
 				entry.vertices = static_cast<int>(i.vertices.size());
 				entry.base_vertex = base_vertex;
@@ -66,8 +66,8 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			}
 		}
 
-		if (model.has_chunk<mdx::SEQS>()) {
-			for (const auto& i : model.chunk<mdx::SEQS>()->sequences) {
+		if (model.sequences.size()) {
+			for (const auto& i : model.sequences) {
 				Animation animation;
 				animation.interval_start = i.interval_start;
 				animation.interval_end = i.interval_end;
@@ -117,59 +117,56 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		//	}
 		//}
 
-		mtls = model.chunk<mdx::MTLS>();
+		materials = model.materials;
 
-		if (model.has_chunk<mdx::TEXS>()) {
-			auto tt = model.chunk<mdx::TEXS>()->textures;
-			for (const auto& i : model.chunk<mdx::TEXS>()->textures) {
-				if (i.replaceable_id != 0) {
-					if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
-						std::cout << "Unknown replacable ID found\n";
-					}
-					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
-				} else {
+		for (const auto& i : model.textures) {
+			if (i.replaceable_id != 0) {
+				if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
+					std::cout << "Unknown replacable ID found\n";
+				}
+				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
+			} else {
 					
-					std::string to = i.file_name.stem().string();
+				std::string to = i.file_name.stem().string();
 
-					// Only load diffuse to keep memory usage down
-					if (to.ends_with("Normal") 
-						|| to.ends_with("ORM")
-						|| to.ends_with("EnvironmentMap")
-						|| to.ends_with("Black32")
-						|| to.ends_with("Emissive")) {
+				// Only load diffuse to keep memory usage down
+				if (to.ends_with("Normal") 
+					|| to.ends_with("ORM")
+					|| to.ends_with("EnvironmentMap")
+					|| to.ends_with("Black32")
+					|| to.ends_with("Emissive")) {
 
-						textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
+					textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
 
-						for (auto& j : mtls->materials) {
-							for (int k = j.layers.size(); k-- > 0;) {
-								if (j.layers[k].texture_id == textures.size() - 1) {
-									j.layers.erase(j.layers.begin() + k);
-									break;
-								}
+					for (auto& j : materials) {
+						for (int k = j.layers.size(); k-- > 0;) {
+							if (j.layers[k].texture_id == textures.size() - 1) {
+								j.layers.erase(j.layers.begin() + k);
+								break;
 							}
 						}
-
-						continue;
 					}
 
-					fs::path new_path = i.file_name;
-					new_path.replace_extension(".dds");
+					continue;
+				}
+
+				fs::path new_path = i.file_name;
+				new_path.replace_extension(".dds");
+				if (hierarchy.file_exists(new_path)) {
+					textures.push_back(resource_manager.load<GPUTexture>(new_path));
+				} else {
+					new_path.replace_extension(".blp");
 					if (hierarchy.file_exists(new_path)) {
 						textures.push_back(resource_manager.load<GPUTexture>(new_path));
 					} else {
-						new_path.replace_extension(".blp");
-						if (hierarchy.file_exists(new_path)) {
-							textures.push_back(resource_manager.load<GPUTexture>(new_path));
-						} else {
-							std::cout << "Error loading texture " << i.file_name << "\n";
-							textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-						}
+						std::cout << "Error loading texture " << i.file_name << "\n";
+						textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
 					}
-
-					// ToDo Same texture on different model with different flags?
-					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-					gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 				}
+
+				// ToDo Same texture on different model with different flags?
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			}
 		}
 	}
@@ -202,7 +199,7 @@ void StaticMesh::render_queue(const glm::mat4& model){
 		if (!i.visible) {
 			continue;
 		}
-		for (const auto& j : mtls->materials[i.material_id].layers) {
+		for (const auto& j : materials[i.material_id].layers) {
 			if (j.blend_mode == 0 || j.blend_mode == 1) {
 				continue;
 			} else {
@@ -250,7 +247,7 @@ void StaticMesh::render_opaque() const {
 		if (!i.visible) {
 			continue;
 		}
-		for (const auto& j : mtls->materials[i.material_id].layers) {
+		for (const auto& j : materials[i.material_id].layers) {
 			if (j.blend_mode == 0) {
 				gl->glUniform1f(1, -1.f);
 			} else if (j.blend_mode == 1) {
@@ -295,7 +292,7 @@ void StaticMesh::render_transparent(int instance_id) const {
 		if (!i.visible) {
 			continue;
 		}
-		for (const auto& j : mtls->materials[i.material_id].layers) {
+		for (const auto& j : materials[i.material_id].layers) {
 			if (j.blend_mode == 0 || j.blend_mode == 1) {
 				continue;
 			}

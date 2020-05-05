@@ -12,7 +12,7 @@ CliffMesh::CliffMesh(const fs::path& path) {
 		auto reader = BinaryReader(hierarchy.open_file(path));
 		mdx::MDX model = mdx::MDX(reader);
 
-		auto set = model.chunk<mdx::GEOS>()->geosets.front();
+		auto set = model.geosets.front();
 
 		gl->glCreateBuffers(1, &vertex_buffer);
 		gl->glNamedBufferData(vertex_buffer, set.vertices.size() * sizeof(glm::vec3), set.vertices.data(), GL_STATIC_DRAW);
