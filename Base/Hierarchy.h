@@ -19,6 +19,7 @@ public:
 	fs::path warcraft_directory;
 
 	bool hd;
+	bool teen;
 
 	void open_casc(fs::path directory);
 

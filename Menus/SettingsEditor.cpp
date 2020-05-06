@@ -6,10 +6,27 @@
 SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 	QSettings settings;
-	ui.testArgs->setText(settings.value("testArgs").toString());
-	ui.theme->setCurrentIndex((settings.value("theme").toString())=="Dark");
-	ui.comments->setChecked(settings.value("comments").toString() != "False");
-	ui.hd->setChecked(settings.value("hd").toString() != "False");
+	ui.theme->setCurrentText(settings.value("theme").toString());
+	ui.comments->setChecked(settings.value("comments", "True").toString() != "False");
+	ui.hd->setChecked(settings.value("hd", "True").toString() != "False");
+	ui.teen->setChecked(settings.value("teen", "False").toString() != "False");
+	ui.userArgs->setText(settings.value("userArgs", "").toString());
+	ui.diff->setCurrentText(settings.value("diff", "Normal").toString());
+	ui.windowmode->setCurrentText(settings.value("windowmode", "Default").toString());
+	ui.testhd->setCurrentText(settings.value("testhd", "Default").toString());
+	ui.testteen->setCurrentText(settings.value("testteen", "Default").toString());
+	ui.profile->setText(settings.value("profile", "HiveWE").toString());
+	ui.fixedseed->setChecked(settings.value("fixedseed", "True").toString() != "False");
+	ui.nowfpause->setChecked(settings.value("nowfpause", "True").toString() != "False");
+	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString(ui.diff->currentIndex() + '0') +
+		(ui.windowmode->currentText() != "Default" ? " -windowmode " + QString([](int x) {
+			switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; case 3: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") + 
+		(ui.testhd->currentText() != "Default" ? " -hd " + QString([](int x) {
+			switch (x) { case 1: return "1"; case 2: return "0";} }(ui.testhd->currentIndex())) : "") +
+		(ui.testteen->currentText() != "Default" ? " -teen " + QString([](int x) {
+			switch (x) { case 1: return "1"; case 2: return "0"; } }(ui.testteen->currentIndex())) : "") +
+		" -testmapprofile " + ui.profile->text() + " -fixedseed " + (ui.fixedseed->isChecked() ? "1" : "0") + (ui.nowfpause->isChecked() ? " -nowfpause" : "")
+	);
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();
@@ -32,8 +49,17 @@ SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 
 void SettingsEditor::save() const {
 	QSettings settings;
-	settings.setValue("testArgs", ui.testArgs->text());
 	settings.setValue("theme", ui.theme->currentText());
 	settings.setValue("comments", ui.comments->isChecked() ? "True" : "False");
 	settings.setValue("hd", ui.hd->isChecked() ? "True" : "False");
+	settings.setValue("teen", ui.teen->isChecked() ? "True" : "False");
+	settings.setValue("userArgs", ui.userArgs->text());
+	settings.setValue("diff", ui.diff->currentText());
+	settings.setValue("windowmode", ui.windowmode->currentText());
+	settings.setValue("testhd", ui.testhd->currentText());
+	settings.setValue("testteen", ui.testteen->currentText());
+	settings.setValue("profile", ui.profile->text());
+	settings.setValue("fixedseed", ui.fixedseed->isChecked() ? "True" : "False");
+	settings.setValue("nowfpause", ui.nowfpause->isChecked() ? "True" : "False");
+	settings.setValue("testArgs", ui.testArgs->text());
 }
