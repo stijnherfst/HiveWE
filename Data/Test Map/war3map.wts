@@ -8,3 +8,15 @@ STRING 2
 Force 1
 }
 
+STRING 3
+// Units: h000 (Peesaint), Name (Name)
+{
+Peesaint
+}
+
+STRING 4
+// Units: h001 (Poisant), Name (Name)
+{
+Poisant
+}
+

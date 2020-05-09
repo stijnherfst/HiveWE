@@ -227,6 +227,21 @@ void Units::load_item_modifications(BinaryReader& reader) {
 	load_modification_table(reader, items_slk, items_meta_slk, true);
 }
 
+void Units::save_unit_modifications() {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, units_slk, units_meta_slk, false);
+	save_modification_table(writer, units_slk, units_meta_slk, true);
+
+	hierarchy.map_file_write("war3map.w3u", writer.buffer);
+}
+
+void Units::save_item_modifications() {
+	BinaryWriter writer;
+}
+
+
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
 		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);

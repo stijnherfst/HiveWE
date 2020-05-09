@@ -9,6 +9,7 @@
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include "BinaryReader.h"
+#include "BinaryWriter.h"
 #include "SLK.h"
 
 class Shapes {
@@ -51,6 +52,7 @@ std::string read_text_file(const fs::path& path);
 fs::path find_warcraft_directory();
 
 void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, bool modification, bool optional_ints = false);
+void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK& meta_data, bool modification, bool optional_ints = false);
 
 /// Convert a Tground texture into an QIcon with two states
 QIcon ground_texture_to_icon(uint8_t* data, int width, int height);

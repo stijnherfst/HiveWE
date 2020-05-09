@@ -25,10 +25,17 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.units->setModel(filter_model);
 
 	for (const auto& player : map->info.players) {
-		ui.player->addItem(QString::fromStdString(map->trigger_strings.string(player.name)), player.internal_number);
+		std::string color_lookup = std::to_string(player.internal_number);
+		if (color_lookup.size() == 1) {
+			color_lookup = "0" + color_lookup;
+		}
+
+		std::string player_name = map->trigger_strings.string(player.name) + " (" + world_edit_strings.data("WorldEditStrings", "WESTRING_UNITCOLOR_" + color_lookup) + ")";
+
+		ui.player->addItem(QString::fromStdString(player_name), player.internal_number);
 	}
 	ui.player->addItem("Neutral Hostile", 24);
-	ui.player->addItem("Neutral Passive", 25);
+	ui.player->addItem("Neutral Passive", 27);
 
 
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {

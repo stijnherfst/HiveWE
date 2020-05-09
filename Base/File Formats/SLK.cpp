@@ -75,7 +75,7 @@ namespace slk {
 							return;
 					}
 					table_data.resize(rows, std::vector<std::string>(columns));
-					shadow_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
+					shadow_table_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
 					break;
 				case 'C':
 					if (line[position] == 'X') {
@@ -147,7 +147,7 @@ namespace slk {
 		if (rows > max_rows + 1) {
 			rows = max_rows + 1;
 			table_data.resize(rows, std::vector<std::string>(columns));
-			shadow_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
+			shadow_table_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
 
 			for (auto it = header_to_row.begin(); it != header_to_row.end();) {
 				if (it->second > max_rows) {
@@ -195,7 +195,7 @@ namespace slk {
 
 		for (size_t i = 0; i < rows; i++) {
 			table_data[i].resize(columns);
-			shadow_data[i].resize(columns, shadow_table_empty_identifier);
+			shadow_table_data[i].resize(columns, shadow_table_empty_identifier);
 		}
 	}
 
@@ -213,6 +213,17 @@ namespace slk {
 				std::string key_lower = to_lowercase_copy(key);
 				if (!header_to_column.contains(key_lower)) {
 					add_column(key_lower);
+				}
+
+				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
+				// This means we have to manually split these into the correct column
+				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed") && header_to_column.contains(key_lower + "2")) {
+					if (!header_to_column.contains(key_lower + "2")) {
+						puts("yeet");
+					}
+					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower)] = value[0];
+					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower + "2")] = value[1];
+					continue;
 				}
 
 				std::string final_value;
@@ -252,8 +263,9 @@ namespace slk {
 		const size_t row = header_to_row[row_header];
 
 		table_data.emplace_back(table_data[row]);
-		table_data[table_data.size() - 1][0] = new_row_header;
-		shadow_data.emplace_back(std::vector<std::string>(columns, shadow_table_empty_identifier));
+		table_data[table_data.size() - 1][0] = row_header;
+		shadow_table_data.emplace_back(std::vector<std::string>(columns, shadow_table_empty_identifier));
+		shadow_table_data[shadow_table_data.size() - 1][0] = new_row_header;
 		header_to_row.emplace(new_row_header, table_data.size() - 1);
 		rows++;
 	}
@@ -264,7 +276,7 @@ namespace slk {
 		for(auto&& i : table_data) {
 			i.resize(columns);
 		}
-		for (auto&& i : shadow_data) {
+		for (auto&& i : shadow_table_data) {
 			i.resize(columns, shadow_table_empty_identifier);
 		}
 		table_data[0][columns - 1] = header;
@@ -287,7 +299,7 @@ namespace slk {
 		const size_t column = header_to_column.at(column_header);
 		const size_t row = header_to_row.at(row_header);
 
-		shadow_data[row][column] = data;
+		shadow_table_data[row][column] = data;
 	}
 
 	void SLK::set_shadow_data(const int column, const int row, const std::string& data) {
@@ -299,6 +311,6 @@ namespace slk {
 			std::cout << "Reading invalid column: " << column + 1 << "/" << rows << "\n";
 		}
 
-		shadow_data[row][column] = data;
+		shadow_table_data[row][column] = data;
 	}
 }

@@ -172,6 +172,23 @@ namespace mdx {
 					reader.advance(reader.read<uint32_t>());
 			}
 		}
+
+		// Remove geoset animations that reference non existing geosets
+		for (size_t i = animations.size(); i-- > 0;) {
+			if (animations[i].geoset_id >= geosets.size()) {
+				animations.erase(animations.begin() + i);
+			}
+		}
+
+		// Standardize animation names
+		// Not sure how animation names work exactly so this is just an easy way to get a valid stand animation so we can do geoset hiding
+		//int t = 0;
+		//for (auto& i : sequences) {
+		//	std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
+
+		//	auto parts = split(i.name, ' ');
+		//	i.name = parts.front() + std::to_string(t++);
+		//}
 	}
 
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {
@@ -212,9 +229,10 @@ namespace mdx {
 
 			std::string tt;
 			if (version > 800) {
-				reader.advance(4); // lod
+				geoset.lod = reader.read<uint32_t>();
 				tt = reader.read_string(80); // lod name
-
+			} else {
+				geoset.lod = 0;
 			}
 
 			geoset.extent = Extent(reader);

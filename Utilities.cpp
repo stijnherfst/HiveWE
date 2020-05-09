@@ -1,4 +1,4 @@
-#include "Utilities.h"
+﻿#include "Utilities.h"
 
 #include <sstream>
 #include <iostream>
@@ -221,7 +221,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 				default: 
 					std::cout << "Unknown data type " << type << " while loading modification table.";
 			}
-			reader.position += 4;
+			reader.advance(4);
 			if (modification) {
 				base_data.set_shadow_data(column_header, modified_id, data);
 			} else {
@@ -229,6 +229,87 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 			}
 		}
 	}
+}
+
+void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK& meta_data, bool modification, bool optional_ints) {
+	uint32_t objects = 0;
+
+	BinaryWriter object_writer;
+	for (int i = 1; i < base_data.rows; i++) {
+		// If this is a modification table then we only want rows that arent base rows (no shadow id exists)
+		if (!modification && base_data.shadow_data_exists(0, i)) {
+			continue;
+		} else if (modification && !base_data.shadow_data_exists(0, i)) {
+			continue;
+		}
+
+		if (modification) {
+			object_writer.write_string(base_data.base_data(0, i));
+			object_writer.write_string(base_data.shadow_data(0, i));
+		}
+
+		uint32_t modifications = 0;
+		BinaryWriter mod_writer;
+		for (int j = 1; j < meta_data.rows; j++) {
+			std::string field = to_lowercase_copy(meta_data.data("field", j));
+			if (!base_data.header_to_column.contains(field)) {
+				continue;
+			}
+			int column = base_data.header_to_column.at(field);
+
+			if (!base_data.shadow_data_exists(column, i)) {
+				continue;
+			}
+
+			modifications++;
+
+			mod_writer.write_string(meta_data.data(0, j));
+
+			std::string type = meta_data.data("type", j);
+			if (type == "int" || type == "bool") {
+				mod_writer.write<uint32_t>(0);
+			} else if (type == "real") {
+				mod_writer.write<uint32_t>(1);
+			} else if (type == "unreal") {
+				mod_writer.write<uint32_t>(2);
+			} else { // string
+				mod_writer.write<uint32_t>(3);
+			}
+
+			if (optional_ints) {
+				mod_writer.write<uint32_t>(0); // 🤔
+				mod_writer.write<uint32_t>(0); // 🤔
+			}
+
+			if (type == "int" || type == "bool") {
+				mod_writer.write<int>(base_data.shadow_data<int>(column, i));
+			} else if (type == "real" || type == "unreal") {
+				mod_writer.write<float>(base_data.shadow_data<float>(column, i));
+			} else { // string
+				mod_writer.write_c_string(base_data.shadow_data(column, i));
+			}
+
+			mod_writer.write<uint32_t>(0);
+		}
+
+		if (modifications) {
+			objects++;
+
+			if (!modification) {
+				object_writer.write_string(base_data.base_data(0, i));
+				object_writer.write<uint32_t>(0);
+			}
+
+			object_writer.write<uint32_t>(modifications);
+			object_writer.write_vector(mod_writer.buffer);
+		} else {
+			if (modification) {
+				object_writer.write<uint32_t>(0);
+			}
+		}
+	}
+	writer.write<uint32_t>(objects);
+	writer.write_vector(object_writer.buffer);
 }
 
 QIcon ground_texture_to_icon(uint8_t* data, const int width, const int height) {

@@ -10,7 +10,7 @@
 namespace slk {
 	class SLK {
 		std::vector<std::vector<std::string>> table_data;
-		std::vector<std::vector<std::string>> shadow_data;
+		std::vector<std::vector<std::string>> shadow_table_data;
 
 		constexpr static char shadow_table_empty_identifier[] = "dezecelisleeg"; // not a nice way to do this
 	public:
@@ -41,13 +41,13 @@ namespace slk {
 				return T();
 			}
 
-			if (shadow_data[row][column] != shadow_table_empty_identifier) {
+			if (shadow_table_data[row][column] != shadow_table_empty_identifier) {
 				if constexpr (std::is_same<T, std::string>()) {
-					return shadow_data[row][column];
+					return shadow_table_data[row][column];
 				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_data[row][column]);
+					return std::stof(shadow_table_data[row][column]);
 				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(shadow_data[row][column]);
+					return std::stoi(shadow_table_data[row][column]);
 				}
 			}
 
@@ -87,13 +87,13 @@ namespace slk {
 				return T();
 			}
 
-			if (shadow_data[row][column] != shadow_table_empty_identifier) {
+			if (shadow_table_data[row][column] != shadow_table_empty_identifier) {
 				if constexpr (std::is_same<T, std::string>()) {
-					return shadow_data[row][column];
+					return shadow_table_data[row][column];
 				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_data[row][column]);
+					return std::stof(shadow_table_data[row][column]);
 				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(shadow_data[row][column]);
+					return std::stoi(shadow_table_data[row][column]);
 				}
 			}
 
@@ -120,6 +120,32 @@ namespace slk {
 			return data<T>(column_header, row);
 		}
 
+		template<typename T = std::string>
+		T base_data(size_t column, size_t row) const {
+			if constexpr (std::is_same<T, std::string>()) {
+				return table_data[row][column];
+			} else if constexpr (std::is_same<T, float>()) {
+				return std::stof(table_data[row][column]);
+			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+				return std::stoi(table_data[row][column]);
+			}
+		}
+
+		template<typename T = std::string>
+		T shadow_data(size_t column, size_t row) const {	
+			if constexpr (std::is_same<T, std::string>()) {
+				return shadow_table_data[row][column];
+			} else if constexpr (std::is_same<T, float>()) {
+				return std::stof(shadow_table_data[row][column]);
+			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+				return std::stoi(shadow_table_data[row][column]);
+			}
+		}
+
+		bool shadow_data_exists(int column, int row) {
+			return shadow_table_data[row][column] != shadow_table_empty_identifier;
+		}
+
 		bool row_header_exists(const std::string& row_header) const;
 
 		void merge(const SLK& slk);
@@ -138,7 +164,7 @@ namespace slk {
 					i.resize(columns, std::to_string(default_value));
 				}
 			}
-			for (auto&& i : shadow_data) {
+			for (auto&& i : shadow_table_data) {
 				if constexpr (std::is_same_v<T, std::string>()) {
 					i.resize(columns, default_value);
 				} else {

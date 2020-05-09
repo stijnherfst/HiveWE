@@ -26,7 +26,7 @@ void Map::load(const fs::path& path) {
 	// Maybe just force everyone to suck it up and use /Units
 
 	// Units
-	units_slk = slk::SLK("Units/UnitData.slk");
+	units_slk = slk::SLK("Data/Warcraft/UnitData.slk", true);
 	units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 	unit_editor_data = ini::INI("UI/UnitEditorData.txt");
@@ -327,6 +327,7 @@ bool Map::save(const fs::path& path) {
 	pathing_map.save();
 	terrain.save();
 	doodads.save();
+	units.save_unit_modifications();
 	units.save();
 	info.save();
 	trigger_strings.save();

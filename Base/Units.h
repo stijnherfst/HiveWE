@@ -66,6 +66,8 @@ class Units {
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
+
+	static constexpr int mod_table_write_version = 2;
 public:
 	std::vector<Unit> units;
 	std::vector<Unit> items;
@@ -75,6 +77,8 @@ public:
 	void save() const;
 	void load_unit_modifications(BinaryReader& reader);
 	void load_item_modifications(BinaryReader& reader);
+	void save_unit_modifications();
+	void save_item_modifications();
 	void update_area(const QRect& area);
 	void create();
 	void render() const;

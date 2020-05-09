@@ -216,7 +216,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
-	map->load("Data/Test Map/");
+	try {
+		map->load("Data/Test Map/");
+	} catch (std::out_of_range e) {
+		std::cout << e.what() << "\n";
+	} catch (std::exception e) {
+		std::cout << e.what() << "\n";
+	}
+
 }
 
 void HiveWE::load_folder() {

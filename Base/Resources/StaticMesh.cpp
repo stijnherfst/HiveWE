@@ -19,6 +19,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		if (has_mesh) {
 			// Calculate required space
 			for (auto&& i : model.geosets) {
+				if (i.lod != 0) {
+					continue;
+				}
 				vertices += i.vertices.size();
 				indices += i.faces.size();
 				uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
@@ -44,6 +47,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			int base_vertex = 0;
 			int base_index = 0;
 			for (const auto& i : model.geosets) {
+				if (i.lod != 0) {
+					continue;
+				}
 				MeshEntry entry;
 				entry.vertices = static_cast<int>(i.vertices.size());
 				entry.base_vertex = base_vertex;
@@ -138,14 +144,14 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 					textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
 
-					for (auto& j : materials) {
+					/*for (auto& j : materials) {
 						for (int k = j.layers.size(); k-- > 0;) {
 							if (j.layers[k].texture_id == textures.size() - 1) {
 								j.layers.erase(j.layers.begin() + k);
 								break;
 							}
 						}
-					}
+					}*/
 
 					continue;
 				}
@@ -255,14 +261,12 @@ void StaticMesh::render_opaque() const {
 			} else {
 				break;
 			}
-
+			
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
-
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 			break; // Currently only draws the first layer
 		}
-		//break;
 	}
 
 	for (int i = 0; i < 4; i++) {

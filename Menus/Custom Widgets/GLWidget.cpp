@@ -99,7 +99,7 @@ void GLWidget::resizeGL(const int w, const int h) {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	camera->aspect_ratio = double(w) / h;
 
-	if (!map) {
+	if (!map || !map->loaded) {
 		return;
 	}
 	camera->update(delta);

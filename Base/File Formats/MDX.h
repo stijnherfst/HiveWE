@@ -205,6 +205,7 @@ namespace mdx {
 	};
 
 	struct Geoset {
+		uint32_t lod;
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
 		std::vector<uint32_t> face_type_groups;
@@ -240,7 +241,10 @@ namespace mdx {
 
 	struct Material {
 		uint32_t priority_plane;
-		uint32_t flags;
+		uint32_t flags; // 1: ConstantColor
+						// 8: SortPrimitivesNearZ
+						// 16: SortPrimsFarZ
+						// 32: FullResolution)
 		std::vector<Layer> layers;
 	};
 

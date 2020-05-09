@@ -1,20 +1,5 @@
 ID;PWXL;N;E
 B;Y238;X23;D0 0 237 22
-F;W1 1 6
-F;W2 2 21
-F;W3 3 12
-F;W4 4 5
-F;W6 6 24
-F;W7 7 7
-F;W8 8 17
-F;W9 10 11
-F;W13 13 11
-F;W14 14 7
-F;W16 16 12
-F;W18 18 7
-F;W19 19 11
-F;W21 21 10
-F;W22 23 7
 C;Y1;X1;K"ID"
 C;X2;K"field"
 C;X3;K"slk"
@@ -185,7 +170,7 @@ C;X22;K0
 C;Y10;X1;K"ubpx"
 C;X2;K"Buttonpos"
 C;X3;K"Profile"
-C;X4;K0
+C;X4;K-1
 C;X5;K"art"
 C;X6;K"WESTRING_UEVAL_UBPX"
 C;X7;K"c2a03x"
@@ -368,7 +353,7 @@ C;X22;K1
 C;Y20;X1;K"uma1"
 C;X2;K"Missilearc"
 C;X3;K"Profile"
-C;X4;K0
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UMA1"
 C;X7;K"c6a06a"
@@ -385,9 +370,9 @@ C;X19;K1
 C;X20;K0
 C;X22;K1
 C;Y21;X1;K"uma2"
-C;X2;K"Missilearc"
+C;X2;K"Missilearc2"
 C;X3;K"Profile"
-C;X4;K1
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UMA2"
 C;X7;K"c6b06a"
@@ -406,7 +391,7 @@ C;X22;K1
 C;Y22;X1;K"ua1m"
 C;X2;K"Missileart"
 C;X3;K"Profile"
-C;X4;K0
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UA1M"
 C;X7;K"c6a05"
@@ -422,9 +407,9 @@ C;X19;K1
 C;X20;K0
 C;X22;K0
 C;Y23;X1;K"ua2m"
-C;X2;K"Missileart"
+C;X2;K"Missileart2"
 C;X3;K"Profile"
-C;X4;K1
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UA2M"
 C;X7;K"c6b05"
@@ -442,7 +427,7 @@ C;X22;K0
 C;Y24;X1;K"umh1"
 C;X2;K"MissileHoming"
 C;X3;K"Profile"
-C;X4;K0
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UMH1"
 C;X7;K"c6a06b"
@@ -457,9 +442,9 @@ C;X19;K1
 C;X20;K0
 C;X22;K1
 C;Y25;X1;K"umh2"
-C;X2;K"MissileHoming"
+C;X2;K"MissileHoming2"
 C;X3;K"Profile"
-C;X4;K1
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UMH2"
 C;X7;K"c6b06b"
@@ -476,7 +461,7 @@ C;X22;K1
 C;Y26;X1;K"ua1z"
 C;X2;K"Missilespeed"
 C;X3;K"Profile"
-C;X4;K0
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UA1Z"
 C;X7;K"c6a06"
@@ -493,9 +478,9 @@ C;X19;K1
 C;X20;K0
 C;X22;K0
 C;Y27;X1;K"ua2z"
-C;X2;K"Missilespeed"
+C;X2;K"Missilespeed2"
 C;X3;K"Profile"
-C;X4;K1
+C;X4;K-1
 C;X5;K"combat"
 C;X6;K"WESTRING_UEVAL_UA2Z"
 C;X7;K"c6b06"
