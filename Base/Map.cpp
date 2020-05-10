@@ -35,6 +35,8 @@ void Map::load(const fs::path& path) {
 	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
+	units_slk.merge(ini::INI("Units/UnitWeaponsFunc.txt"));
+	units_slk.merge(ini::INI("Units/UnitWeaponsSkin.txt"));
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
 	units_slk.merge(slk::SLK("Units/unitUI.slk"));
 	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));

@@ -41,31 +41,30 @@ endfunction
 //***************************************************************************
 
 //===========================================================================
-function CreateUnitsForPlayer0 takes nothing returns nothing
+function CreateBuildingsForPlayer0 takes nothing returns nothing
     local player p= Player(0)
     local unit u
     local integer unitID
     local trigger t
     local real life
 
-    set u=BlzCreateUnitWithSkin(p, 'h001', - 196.8, 1.9, 214.548, 'h001')
-    set u=BlzCreateUnitWithSkin(p, 'h000', 53.2, 9.5, 54.439, 'h000')
-    set u=BlzCreateUnitWithSkin(p, 'hpea', - 57.9, 8.5, 122.908, 'hpea')
+    set u=BlzCreateUnitWithSkin(p, 'hpea', 209.1, 66.5, 254.913, 'hpea')
+    call SetUnitColor(u, ConvertPlayerColor(0))
 endfunction
 
 //===========================================================================
 function CreatePlayerBuildings takes nothing returns nothing
+    call CreateBuildingsForPlayer0()
 endfunction
 
 //===========================================================================
 function CreatePlayerUnits takes nothing returns nothing
-    call CreateUnitsForPlayer0()
 endfunction
 
 //===========================================================================
 function CreateAllUnits takes nothing returns nothing
-    call CreatePlayerBuildings()
-    call CreateUnitsForPlayer0() // INLINED!!
+    call CreateBuildingsForPlayer0() // INLINED!!
+    call CreatePlayerUnits()
 endfunction
 
 //***************************************************************************
@@ -166,7 +165,7 @@ function config takes nothing returns nothing
     call SetTeams(1)
     call SetGamePlacement(MAP_PLACEMENT_USE_MAP_SETTINGS)
 
-    call DefineStartLocation(0, - 1393.4, - 2104.4)
+    call DefineStartLocation(0, - 1408.0, - 2112.0)
 
     // Player setup
     call InitCustomPlayerSlots()

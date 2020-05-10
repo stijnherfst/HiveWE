@@ -222,6 +222,11 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 					std::cout << "Unknown data type " << type << " while loading modification table.";
 			}
 			reader.advance(4);
+
+			if (!base_data.header_to_column.contains(column_header)) {
+				base_data.add_column(column_header);
+			}
+
 			if (modification) {
 				base_data.set_shadow_data(column_header, modified_id, data);
 			} else {
@@ -265,8 +270,10 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK
 
 			mod_writer.write_string(meta_data.data(0, j));
 
+			// If type is in uniteditordata.txt then int?
+
 			std::string type = meta_data.data("type", j);
-			if (type == "int" || type == "bool") {
+			if (type == "int" || type == "bool" || type == "attackBits") {
 				mod_writer.write<uint32_t>(0);
 			} else if (type == "real") {
 				mod_writer.write<uint32_t>(1);
@@ -281,7 +288,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK
 				mod_writer.write<uint32_t>(0); // 🤔
 			}
 
-			if (type == "int" || type == "bool") {
+			if (type == "int" || type == "bool" || type == "attackBits") {
 				mod_writer.write<int>(base_data.shadow_data<int>(column, i));
 			} else if (type == "real" || type == "unreal") {
 				mod_writer.write<float>(base_data.shadow_data<float>(column, i));
