@@ -29,6 +29,8 @@ int main(int argc, char *argv[]) {
 	QCoreApplication::setOrganizationName("HiveWE");
 	QCoreApplication::setApplicationName("HiveWE");
 
+	QLocale::setDefault(QLocale("en_US"));
+
 	QApplication a(argc, argv);
 
 	qApp->setStyle(QStyleFactory::create("Fusion"));

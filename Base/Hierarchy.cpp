@@ -1,5 +1,7 @@
 #include "Hierarchy.h"
 
+#include <QSettings>
+
 #include <iostream>
 #include <fstream>
 
@@ -9,6 +11,9 @@ Hierarchy hierarchy;
 
 void Hierarchy::open_casc(fs::path directory) {
 	warcraft_directory = directory;
+	QSettings settings;
+	hd = settings.value("hd", "True").toString() != "False";
+
 	std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
 	game_data.open(warcraft_directory / "Data");
 	aliases.load("filealiases.json");
@@ -17,9 +22,11 @@ void Hierarchy::open_casc(fs::path directory) {
 BinaryReader Hierarchy::open_file(const fs::path& path) const {
 	casc::File file;
 
-	if (map_file_exists(path)) {
+	if (hd && map_file_exists("_hd.w3mod:" + path.string())) {
+		return map_file_read("_hd.w3mod:" + path.string());
+	}  else if (map_file_exists(path)) {
 		return map_file_read(path);
-	} else if (fs::exists(warcraft_directory / path)) { //Probably shouldn't be supported but WC3 allows it
+	} else if (fs::exists(warcraft_directory / path)) {
 		std::ifstream fin(warcraft_directory / path, std::ios_base::binary);
 		fin.seekg(0, std::ios::end);
 		const size_t fileSize = fin.tellg();
@@ -28,6 +35,10 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		fin.read(reinterpret_cast<char*>(buffer.data()), fileSize);
 		fin.close();
 		return BinaryReader(buffer);
+	} else if (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) {
+		file = game_data.file_open("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string());
+	} else if (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string())) {
+		file = game_data.file_open("war3.w3mod:_hd.w3mod:"s + path.string());
 	} else if (game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) {
 		file = game_data.file_open("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string());
 	} else if (game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())) {
@@ -36,13 +47,12 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		file = game_data.file_open("war3.w3mod:"s + path.string());
 	} else if (game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())) {
 		file = game_data.file_open("war3.w3mod:_deprecated.w3mod:"s + path.string());
+	} else if (aliases.exists(path.string())) {
+		return open_file(aliases.alias(path.string()));
 	} else {
-		if (aliases.exists(path.string())) {
-			return open_file(aliases.alias(path.string()));
-		} else {
-			throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
-		}
+		throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
 	}
+
 	return BinaryReader(file.read());
 }
 
@@ -51,13 +61,16 @@ bool Hierarchy::file_exists(const fs::path& path) const {
 		return false;
 	}
 
-	return map_file_exists(path)
+	return (hd && map_file_exists("_hd.w3mod:" + path.string()))
+		|| map_file_exists(path)
 		|| fs::exists(warcraft_directory / path)
+		|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string()))
+		|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string()))
 		|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:"s + path.string())
 		|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())
-		|| ((aliases.exists(path.string())) ? file_exists(aliases.alias(path.string())) : false );
+		|| (aliases.exists(path.string()) ? file_exists(aliases.alias(path.string())) : false );
 }
 
 BinaryReader Hierarchy::map_file_read(const fs::path& path) const {

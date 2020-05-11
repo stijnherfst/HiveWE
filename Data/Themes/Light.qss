@@ -148,30 +148,28 @@ QRibbonButton::checked {
 	background-color: rgb(201, 224, 247);
 }
 
-/* CDockWidget */
 
-ads--CDockAreaWidget #tabsMenuButton::menu-indicator {
-    image: none;
-}
+/******************************************************/
+/* Docking */
 
 ads--CDockWidgetTab {
     background: palette(window);
-    border-color: palette(dark);
+    border-color: palette(light);
     border-style: solid;
     border-width: 0 1px 0 0;
-    padding: 0 5 0 5px;
+    padding: 0 0px;
+
 }
 
 ads--CDockWidgetTab[activeTab="true"] {
-	background: rgb(42, 42, 42);
+    background: palette(highlight);
 }
 
-QScrollArea#dockWidgetScrollArea
-{
+
+QScrollArea#dockWidgetScrollArea {
     padding: 0px;
     border: none;
 }
-
 
 #tabCloseButton {
 	margin-top: 2px;
@@ -181,35 +179,65 @@ QScrollArea#dockWidgetScrollArea
 }
 
 #tabCloseButton:hover {
-	border: 1px solid rgba(0, 0, 0, 32);
-	background: rgba(64, 64, 64, 255);
+	border: 1px solid rgb(164, 206, 249);
+	background-color: rgb(232, 239, 247);
 }
 
 #tabCloseButton:pressed {
-	background: rgba(128, 128, 128, 255);
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
 }
+
+
+/******************************************************/
+/* General */
 
 QPushButton {
 	border: 1px solid transparent;
 }
 
 QPushButton::hover {
-	border: 1px solid rgb(100, 100, 100);
-	background-color: rgb(85, 85, 85);
+	border: 1px solid rgb(164, 206, 249);
+	background-color: rgb(232, 239, 247);
 }
 
 QPushButton::pressed {
-	border: 1px solid rgb(120, 120, 120);
-	background-color: rgb(100, 100, 100);
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
 }
 
-
 QPushButton::checked {
-	border: 1px solid rgb(120, 120, 120);
-	background-color: rgb(100, 100, 100);
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
 }
 
 QDialogButtonBox QPushButton {
 	border: 1px solid rgb(100, 100, 100);
 	padding: 5;
+}
+
+JassEditor QFrame {
+	background-color: palette(window);
+}
+
+
+QTableView::indicator {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(60, 60, 60);
+}
+
+QTableView::indicator:hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QTableView::indicator:pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QTableView::indicator:checked{
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+	image: url("Data/Icons/check.png");
 }

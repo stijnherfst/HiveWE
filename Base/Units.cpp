@@ -12,9 +12,13 @@
 #include "BinaryWriter.h"
 #include "Hierarchy.h"
 
+int Unit::auto_increment;
+
 void Unit::update() {
+	float model_scale = units_slk.data<float>("modelscale", id);
+
 	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, scale / 128.f);
+	matrix = glm::scale(matrix, glm::vec3(model_scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 }
 
@@ -42,12 +46,14 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.variation = reader.read<uint32_t>();
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
+		i.scale = reader.read<glm::vec3>() / 128.f;
 
-		// Scale isn't actually used
-		//i.scale = reader.read<glm::vec3>() / 128.f;
-		reader.advance(12);
-		i.scale = glm::vec3(1.f);
-		
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			i.skin_id = reader.read_string(4);
+		} else {
+			i.skin_id = i.id;
+		}
+
 		i.flags = reader.read<uint8_t>();
 
 		i.player = reader.read<uint32_t>();
@@ -58,7 +64,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.health = reader.read<uint32_t>();
 		i.mana = reader.read<uint32_t>();
 
-		if (version >= 8) {
+		if (subversion >= 11) {
 			i.item_table_pointer = reader.read<uint32_t>();
 		}
 
@@ -76,7 +82,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 
 		i.level = reader.read<uint32_t>();
 
-		if (version >= 8) {
+		if (subversion >= 11) {
 			i.strength = reader.read<uint32_t>();
 			i.agility = reader.read<uint32_t>();
 			i.intelligence = reader.read<uint32_t>();
@@ -118,6 +124,8 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		} else {
 			items.push_back(i);
 		}
+
+		Unit::auto_increment = std::max(Unit::auto_increment, i.creation_number);
 	}
 
 	return true;
@@ -139,6 +147,8 @@ void Units::save() const {
 			writer.write<glm::vec3>(i.position * 128.f + glm::vec3(map->terrain.offset, 0));
 			writer.write<float>(i.angle);
 			writer.write<glm::vec3>(i.scale * 128.f);
+
+			writer.write_string(i.skin_id);
 
 			writer.write<uint8_t>(i.flags);
 
@@ -213,9 +223,30 @@ void Units::load_item_modifications(BinaryReader& reader) {
 		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, items_slk, units_meta_slk, false);
-	load_modification_table(reader, items_slk, units_meta_slk, true);
+	load_modification_table(reader, items_slk, items_meta_slk, false);
+	load_modification_table(reader, items_slk, items_meta_slk, true);
 }
+
+void Units::save_unit_modifications() {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, units_slk, units_meta_slk, false);
+	save_modification_table(writer, units_slk, units_meta_slk, true);
+
+	hierarchy.map_file_write("war3map.w3u", writer.buffer);
+}
+
+void Units::save_item_modifications() {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, items_slk, items_meta_slk, false);
+	save_modification_table(writer, items_slk, items_meta_slk, true);
+
+	hierarchy.map_file_write("war3map.w3t", writer.buffer);
+}
+
 
 void Units::update_area(const QRect& area) {
 	for (auto&& i : tree.query(area)) {
@@ -229,10 +260,6 @@ void Units::create() {
 		// ToDo handle starting location
 		if (i.id == "sloc") {
 			continue;
-		}
-		// ToDo handle random units
-		if (i.id != "uDNR" && i.id != "bDNR") {
-			i.scale = glm::vec3(std::stof(units_slk.data("modelScale", i.id)));
 		}
 
 		i.update();
@@ -263,6 +290,49 @@ void Units::render() const {
 	}
 }
 
+Unit& Units::add_unit(std::string id, glm::vec3 position) {
+	Unit unit;
+	unit.id = id;
+	unit.skin_id = id;
+	unit.mesh = get_mesh(id);
+	unit.position = position;
+	unit.scale = glm::vec3(1.f);
+	unit.angle = 0.f;
+	unit.random = { 1, 0, 0, 0 };
+
+	unit.update();
+
+	units.push_back(unit);
+	return units.back();
+}
+
+Unit& Units::add_unit(Unit unit) {
+	units.push_back(unit);
+	return units.back();
+}
+
+void Units::remove_unit(Unit* unit) {
+	auto iterator = units.begin() + std::distance(units.data(), unit);
+	units.erase(iterator);
+}
+
+std::vector<Unit*> Units::query_area(const QRectF& area) {
+	std::vector<Unit*> result;
+
+	for (auto& i : units) {
+		if (area.contains(i.position.x, i.position.y) && i.id != "sloc") {
+			result.push_back(&i);
+		}
+	}
+	return result;
+}
+
+void Units::remove_units(const std::vector<Unit*>& list) {
+	units.erase(std::remove_if(units.begin(), units.end(), [&](Unit& unit) {
+		return std::find(list.begin(), list.end(), &unit) != list.end();
+	}), units.end());
+}
+
 std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	if (id_to_mesh.contains(id)) {
 		return id_to_mesh[id];
@@ -286,4 +356,48 @@ std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	id_to_mesh.emplace(id, resource_manager.load<StaticMesh>(mesh_path));
 
 	return id_to_mesh[id];
+}
+
+void UnitAddAction::undo() {
+	map->units.units.resize(map->units.units.size() - units.size());
+}
+
+void UnitAddAction::redo() {
+	map->units.units.insert(map->units.units.end(), units.begin(), units.end());
+}
+
+void UnitDeleteAction::undo() {
+	if (map->brush) {
+		map->brush->clear_selection();
+	}
+
+	map->units.units.insert(map->units.units.end(), units.begin(), units.end());
+}
+
+void UnitDeleteAction::redo() {
+	if (map->brush) {
+		map->brush->clear_selection();
+	}
+
+	map->units.units.resize(map->units.units.size() - units.size());
+}
+
+void UnitStateAction::undo() {
+	for (auto& i : old_units) {
+		for (auto& j : map->units.units) {
+			if (i.creation_number == j.creation_number) {
+				j = i;
+			}
+		}
+	}
+}
+
+void UnitStateAction::redo() {
+	for (auto& i : new_units) {
+		for (auto& j : map->units.units) {
+			if (i.creation_number == j.creation_number) {
+				j = i;
+			}
+		}
+	}
 }

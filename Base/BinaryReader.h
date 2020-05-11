@@ -15,7 +15,7 @@ public:
 	explicit BinaryReader(std::vector<uint8_t> buffer) : buffer(buffer) {}
 
 	template<typename T>
-	T read() {
+	[[nodiscard]] T read() {
 		// These wouldn't make sense
 		static_assert(std::is_same<T, std::string>() == false);
 		static_assert(std::is_same<T, fs::path>() == false);
@@ -24,11 +24,12 @@ public:
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
 		T result = *reinterpret_cast<T*>(&buffer[position]);
+
 		position += sizeof(T);
 		return result;
 	}
 
-	std::string read_string(const size_t size) {
+	[[nodiscard]] std::string read_string(const size_t size) {
 		if (position + size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
@@ -42,7 +43,7 @@ public:
 		return result;
 	}
 
-	std::string read_c_string() {
+	[[nodiscard]] std::string read_c_string() {
 		std::string string(reinterpret_cast<char*>(buffer.data() + position));
 		position += string.size() + 1;
 		
@@ -54,7 +55,7 @@ public:
 	}
 
 	template<typename T>
-	std::vector<T> read_vector(const size_t size) {
+	[[nodiscard]] std::vector<T> read_vector(const size_t size) {
 		// These wouldn't make sense
 		static_assert(std::is_same<T, std::string>() == false);
 		static_assert(std::is_same<T, fs::path>() == false);
@@ -67,7 +68,7 @@ public:
 		return result;
 	}
 
-	long long remaining() const {
+	[[nodiscard]] long long remaining() const {
 		return buffer.size() - position;
 	}
 

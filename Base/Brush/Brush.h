@@ -35,6 +35,8 @@ public:
 
 	glm::vec4 brush_color = { 0, 255, 0, 128 };
 
+	Brush();
+
 	virtual void create();
 	virtual void set_position(const glm::vec2& position);
 	virtual glm::vec2 get_position() const;
@@ -84,5 +86,6 @@ protected:
 	GLuint brush_texture;
 
 	std::shared_ptr<Shader> selection_shader;
+	std::shared_ptr<Shader> selection_circle_shader;
 	std::shared_ptr<Shader> brush_shader;
 };

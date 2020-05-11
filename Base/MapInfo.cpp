@@ -10,13 +10,14 @@
 void MapInfo::load(BinaryReader& reader) {
 	const int version = reader.read<uint32_t>();
 
-	if (version != 18 && version != 25 && version != 28) {
+	if (version != 18 && version != 25 && version != 28 && version != 31) {
 		std::cout << "Unknown war3map.w3i version\n";
 	}
 
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
-	if (version == 28) {
+	std::cout << editor_version << " yeeeeeeeeeeeet\n";
+	if (version >= 28) {
 		game_version_major = reader.read<uint32_t>();
 		game_version_minor = reader.read<uint32_t>();
 		game_version_patch = reader.read<uint32_t>();
@@ -41,25 +42,27 @@ void MapInfo::load(BinaryReader& reader) {
 	hide_minimap_preview = flags & 0x0001;
 	modif_ally_priorities = flags & 0x0002;
 	melee_map = flags & 0x0004;
-	unknown = flags & 0x0008;
+	unknown = flags & 0x0008; // playable map size was large
 	masked_area_partially_visible = flags & 0x0010;
 	fixed_player_settings = flags & 0x0020;
 	custom_forces = flags & 0x0040;
 	custom_techtree = flags & 0x0080;
 	custom_abilities = flags & 0x0100;
 	custom_upgrades = flags & 0x0200;
-	unknown2 = flags & 0x0400;
+	unknown2 = flags & 0x0400; // has properties menu been opened
 	cliff_shore_waves = flags & 0x0800;
 	rolling_shore_waves = flags & 0x1000;
-	unknown3 = flags & 0x2000;
-	unknown4 = flags & 0x4000;
+	unknown3 = flags & 0x2000; // has terrain fog
+	unknown4 = flags & 0x4000; // requires expansion
 	item_classification = flags & 0x8000;
 	water_tinting = flags & 0x10000;
+	accurate_probability_for_calculations = flags & 0x20000;
+	custom_ability_skins = flags & 0x40000;
 
 	// Tileset
 	reader.advance(1);
 
-	if (version == 25 || version == 28) { // TFT
+	if (version >= 25) { // TFT
 		loading_screen_number = reader.read<uint32_t>();
 		loading_screen_model = reader.read_c_string();
 		loading_screen_text = reader.read_c_string();
@@ -84,8 +87,13 @@ void MapInfo::load(BinaryReader& reader) {
 		custom_light_tileset = reader.read<uint8_t>();
 		water_color = reader.read<glm::u8vec4>();
 
-		if (version == 28) {
+		if (version >= 28) {
 			lua = reader.read<uint32_t>() == 1;
+		}
+
+		if (version >= 31) {
+			supported_modes = reader.read<uint32_t>();
+			game_data_version = reader.read<uint32_t>();
 		}
 	} else if (version == 18) { // RoC
 		loading_screen_number = reader.read<uint32_t>();
@@ -110,6 +118,10 @@ void MapInfo::load(BinaryReader& reader) {
 		i.starting_position = reader.read<glm::vec2>();
 		i.ally_low_priorities_flags = reader.read<uint32_t>();
 		i.ally_high_priorities_flags = reader.read<uint32_t>();
+		if (version >= 31) {
+			i.enemy_low_priorities_flags = reader.read<uint32_t>();
+			i.enemy_high_priorities_flags = reader.read<uint32_t>();
+		}
 	}
 
 	forces.resize(reader.read<uint32_t>());
@@ -159,7 +171,7 @@ void MapInfo::load(BinaryReader& reader) {
 		}
 	}
 
-	if (version == 25 || version == 28) {
+	if (version >= 25) {
 		random_item_tables.resize(reader.read<uint32_t>());
 		for (auto&& i : random_item_tables) {
 			i.number = reader.read<uint32_t>();
@@ -181,11 +193,11 @@ void MapInfo::save() const {
 
 	writer.write(write_version);
 	writer.write(map_version);
-	writer.write(editor_version);
-	writer.write(game_version_major);
-	writer.write(game_version_minor);
-	writer.write(game_version_patch);
-	writer.write(game_version_build);
+	writer.write(write_editor_version);
+	writer.write(write_game_version_major);
+	writer.write(write_game_version_minor);
+	writer.write(write_game_version_patch);
+	writer.write(write_game_version_build);
 	writer.write_c_string(name);
 	writer.write_c_string(author);
 	writer.write_c_string(description);
@@ -217,7 +229,10 @@ void MapInfo::save() const {
 		| unknown3 * 0x2000
 		| unknown4 * 0x4000
 		| item_classification * 0x8000
-		| water_tinting * 0x10000;
+		| water_tinting * 0x10000
+		| accurate_probability_for_calculations * 0x20000
+		| custom_ability_skins * 0x40000;
+
 	writer.write(flags);
 
 	writer.write(map->terrain.tileset);
@@ -248,6 +263,9 @@ void MapInfo::save() const {
 	
 	writer.write((uint32_t)lua);
 
+	writer.write(supported_modes);
+	writer.write(game_data_version);
+
 	writer.write<uint32_t>(players.size());
 	for (const auto& i : players) {
 		writer.write(i.internal_number);
@@ -258,6 +276,8 @@ void MapInfo::save() const {
 		writer.write(i.starting_position);
 		writer.write(i.ally_low_priorities_flags);
 		writer.write(i.ally_high_priorities_flags);
+		writer.write(i.enemy_low_priorities_flags);
+		writer.write(i.enemy_high_priorities_flags);
 	}
 
 	writer.write<uint32_t>(forces.size());

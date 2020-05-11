@@ -39,11 +39,11 @@ struct Physics {
 	Physics();
 
 	~Physics() {
-		delete broadphase;
-		delete collisionConfiguration;
-		delete dispatcher;
-		delete solver;
 		delete dynamicsWorld;
+		delete solver;
+		delete dispatcher;
+		delete collisionConfiguration;
+		delete broadphase;
 		delete draw;
 	}
 };

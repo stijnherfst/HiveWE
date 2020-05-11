@@ -11,6 +11,10 @@
 
 #include "BinaryReader.h"
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace mdx {
 	extern std::map<int, std::string> replacable_id_to_texture;
 
@@ -125,11 +129,11 @@ namespace mdx {
 		AnimatedData& operator=(const AnimatedData&) = default;
 
 		template<typename T>
-		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) {
-			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks[track]);
+		std::shared_ptr<TrackHeader<T>> track(const TrackTag track) const {
+			return std::dynamic_pointer_cast<TrackHeader<T>>(tracks.at(track));
 		}
 
-		bool has_track(const TrackTag track) {
+		bool has_track(const TrackTag track) const {
 			return tracks.contains(track);
 		}
 
@@ -201,6 +205,7 @@ namespace mdx {
 	};
 
 	struct Geoset {
+		uint32_t lod;
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
 		std::vector<uint32_t> face_type_groups;
@@ -230,93 +235,44 @@ namespace mdx {
 	struct Texture {
 		explicit Texture(BinaryReader& reader);
 		uint32_t replaceable_id;
-		std::string file_name;
+		fs::path file_name;
 		uint32_t flags;
 	};
 
 	struct Material {
 		uint32_t priority_plane;
-		uint32_t flags;
+		uint32_t flags; // 1: ConstantColor
+						// 8: SortPrimitivesNearZ
+						// 16: SortPrimsFarZ
+						// 32: FullResolution)
 		std::vector<Layer> layers;
 	};
 
 	struct Bone {
 		Node node;
-		int geoset_id;
-		int geoset_animation_id;
-	};
-
-	struct Chunk {
-		virtual ~Chunk() = default;
-	};
-
-	class VERS : public Chunk {
-		uint32_t version;
-
-		static const ChunkTag tag = ChunkTag::VERS;
-	};
-
-	struct SEQS : Chunk {
-		explicit SEQS(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::SEQS;
-		std::vector<Sequence> sequences;
-	};
-
-	struct GEOS : Chunk {
-		explicit GEOS(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::GEOS;
-		std::vector<Geoset> geosets;
-	};
-
-	struct GEOA : Chunk {
-		explicit GEOA(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::GEOA;
-		std::vector<GeosetAnimation> animations;
-	};
-
-	struct TEXS : Chunk {
-		explicit TEXS(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::TEXS;
-		std::vector<Texture> textures;
-	};
-
-	struct MTLS : Chunk {
-		explicit MTLS(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::MTLS;
-		std::vector<Material> materials;
-	};
-
-	struct BONE : Chunk {
-		explicit BONE(BinaryReader& reader);
-
-		static const ChunkTag tag = ChunkTag::BONE;
-		std::vector<Bone> bones;
+		int32_t geoset_id;
+		int32_t geoset_animation_id;
 	};
 
 	class MDX {
-		std::map<ChunkTag, std::shared_ptr<Chunk>> chunks;
+		int version;
+
+		void read_GEOS_chunk(BinaryReader& reader);
+		void read_MTLS_chunk(BinaryReader& reader);
+		void read_SEQS_chunk(BinaryReader& reader);
+		void read_GEOA_chunk(BinaryReader& reader);
+		void read_BONE_chunk(BinaryReader& reader);
+		void read_TEXS_chunk(BinaryReader& reader);
 
 	public:
 		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
 
-		template<typename T>
-		std::shared_ptr<T> chunk() {
-			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
-
-			return std::dynamic_pointer_cast<T>(chunks[static_cast<ChunkTag>(T::tag)]);
-		}
-
-		template<typename T>
-		bool has_chunk() {
-			static_assert(std::is_base_of<Chunk, T>::value, "T must inherit from Chunk");
-
-			return chunks.contains(static_cast<ChunkTag>(T::tag));
-		}
+		std::vector<Geoset> geosets;
+		std::vector<Sequence> sequences;
+		std::vector<GeosetAnimation> animations;
+		std::vector<Bone> bones;
+		std::vector<Material> materials;
+		std::vector<Texture> textures;
 	};
 }

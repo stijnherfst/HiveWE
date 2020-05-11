@@ -26,23 +26,13 @@
    </item>
    <item>
     <widget class="QLineEdit" name="search">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
      <property name="placeholderText">
       <string>Search</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QListWidget" name="doodads">
-     <property name="uniformItemSizes">
-      <bool>true</bool>
-     </property>
-     <property name="sortingEnabled">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <widget class="QListView" name="doodads"/>
    </item>
    <item>
     <widget class="QGroupBox" name="brushGroupBox">

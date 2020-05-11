@@ -1,5 +1,7 @@
 #pragma once
 
+#include <QString>
+
 #include <unordered_map>
 
 #include "INI.h"
@@ -90,7 +92,7 @@ struct Trigger {
 	std::string custom_text;
 	bool is_comment = false;
 	bool is_enabled = true;
-	bool is_script = true;
+	bool is_script = false;
 	bool initially_on = true;
 	bool run_on_initialization = false;
 	std::vector<ECA> ecas;
@@ -169,5 +171,6 @@ public:
 	void save() const;
 	void save_jass() const;
 
-	void generate_map_script();
+	// Returns compile output which could contain errors or general information
+	QString generate_map_script();
 };

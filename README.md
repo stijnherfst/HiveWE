@@ -22,44 +22,18 @@ See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for bina
 
 ## Build Instructions
 
-For if you want to build HiveWE yourself from source. If you run into any problems then don't be afraid to contact me.
-
-1. Download [vcpkg](https://github.com/microsoft/vcpkg). Easiest if you place it in the root of the C drive: "C:/vcpkg"
-
-2. Run bootstrap-vcpkg.bat (or bootstrap-vcpkg.sh for Linux)
-3.  
-	3.1 Add vcpkg.exe to the Windows environment variable (PATH)  
-Or  
-	3.2 Open CMD and navigate to the folder containing vcpkg.exe  
-4. Run the following commands to install dependencies 
-
-[//]: # (Hello)
-
-	vcpkg install glm:x64-windows  
-	vcpkg install soil2:x64-windows
-	vcpkg install stormlib:x64-windows
-	vcpkg install casclib:x64-windows
-	vcpkg install libjpeg-turbo:x64-windows
-	vcpkg install qt-advanced-docking-system:x64-windows
-	vcpkg install qscintilla:x64-windows
-	vcpkg install bullet3:x64-windows
-
-
-
-
-This might take a while depending on your computer (\~20 minutes)  
-
-Now if you placed vcpkg in the root then you are ready to compile HiveWE.  
-You can either:  
-- Generate the project files for your IDE using CMake  
-or  
-- Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
-
-[//]: # (Hello)
-
-**Done**
-
-If you didn't place vcpkg in C:/ then you will need to open CMakeLists.txt and CMakeSettings.json and change the paths containing C:/vcpkg to point to where your vcpkg is located.  
+1. Clone [vcpkg](https://github.com/microsoft/vcpkg) somewhere central (eg. "C:/")
+`git clone https://github.com/Microsoft/vcpkg.git`
+2. Run bootstrap-vcpkg.bat
+3. Add 2 environment variables to your system:
+- `VCPKG_ROOT`: the location where vcpkg is installed (e.g. "C:\vcpkg")
+- `VCPKG_DEFAULT_TRIPLET`: depending on your operating system (Windows, Linux, MacOS): (`x64-windows`, `x64-linux`, `x64-osx`)
+4. You need to close and open the CMD window after step 3!!
+4. Add the vcpkg location to your System Path variable (eg. "C:\vcpkg")
+5. Install dependencies
+`vcpkg install qt5-base glm soil2 stormlib casclib libjpeg-turbo qscintilla bullet3 qt-advanced-docking-system`
+Estimated to take about 30 minutes
+6. Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
 **Done**
 
 If you run into any issues then feel free to contact me.
@@ -71,6 +45,8 @@ Want to help with the development of HiveWE? Below is a list of features that yo
 - Being able to change forces/teams
 - Changing map sizes/camera bound
 - Ramp editing with the terrain palette
+- Making HiveWE run faster
+- A FDF frame editor
 - Or any other functionality you think would be cool
 
 If you have any questions then don't be afraid to message me here, at HiveWorkshop (eejin) or on Discord eejin#4240

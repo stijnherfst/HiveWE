@@ -152,20 +152,17 @@ QRibbonButton::checked {
 /******************************************************/
 /* Docking */
 
-ads--CDockAreaWidget #tabsMenuButton::menu-indicator {
-    image: none;
-}
-
 ads--CDockWidgetTab {
     background: palette(window);
     border-color: palette(dark);
     border-style: solid;
     border-width: 0 1px 0 0;
-    padding: 0 5 0 5px;
+    padding: 0 0px;
+
 }
 
 ads--CDockWidgetTab[activeTab="true"] {
-	background: rgb(42, 42, 42);
+    background: palette(highlight);
 }
 
 
@@ -208,7 +205,6 @@ QPushButton::pressed {
 	background-color: rgb(100, 100, 100);
 }
 
-
 QPushButton::checked {
 	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
@@ -217,4 +213,30 @@ QPushButton::checked {
 QDialogButtonBox QPushButton {
 	border: 1px solid rgb(100, 100, 100);
 	padding: 5;
+}
+
+JassEditor QFrame {
+	background-color: palette(window);
+}
+
+
+QTableView::indicator {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(60, 60, 60);
+}
+
+QTableView::indicator:hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QTableView::indicator:pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QTableView::indicator:checked{
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+	image: url("Data/Icons/check.png");
 }

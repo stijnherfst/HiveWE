@@ -4,7 +4,7 @@
 #include "HiveWE.h"
 #include "InputHandler.h"
 
-void Brush::create() {
+Brush::Brush() {
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -14,7 +14,21 @@ void Brush::create() {
 	set_size(size);
 
 	selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vs", "Data/Shaders/selection.fs" });
+	selection_circle_shader = resource_manager.load<Shader>({ "Data/Shaders/selection_circle.vs", "Data/Shaders/selection_circle.fs" });
 	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
+}
+
+void Brush::create() {
+	//gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
+	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	//set_size(size);
+
+	//selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vs", "Data/Shaders/selection.fs" });
+	//brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 
 void Brush::set_position(const glm::vec2& new_position) {

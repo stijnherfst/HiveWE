@@ -5,10 +5,11 @@
 #include <QDialog>
 #include "FlowLayout.h"
 
+#include "Palette.h"
 #include "TerrainBrush.h"
 #include "QRibbon.h"
 
-class TerrainPalette : public QDialog {
+class TerrainPalette : public Palette {
 	Q_OBJECT
 
 public:
@@ -28,6 +29,6 @@ private:
 	TerrainBrush brush;
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 
-	signals:
-		void ribbon_tab_requested(QRibbonTab* tab, QString name);
+public slots:
+	void deactivate(QRibbonTab* tab) override;
 };

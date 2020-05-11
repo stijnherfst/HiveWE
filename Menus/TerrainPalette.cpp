@@ -2,14 +2,13 @@
 
 #include "HiveWE.h"
 
-TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
+TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
 	brush.tile_id = map->terrain.tileset_ids.front();
-	brush.create();
 	map->brush = &brush;
 
 	ui.flowLayout_placeholder->addLayout(textures_layout);
@@ -18,7 +17,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	// Ground Tiles
 	slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&& i : map->terrain.tileset_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i) + ".blp");
+		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i));
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
@@ -52,7 +51,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : QDialog(parent) {
 	}
 
 	// Blight texture
-	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.blp");
+	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.dds");
 	const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 	ui.blight->setIcon(icon);
@@ -205,4 +204,10 @@ bool TerrainPalette::event(QEvent *e) {
 		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
 	return QWidget::event(e);
+}
+
+void TerrainPalette::deactivate(QRibbonTab* tab) {
+	if (tab != ribbon_tab) {
+		brush.clear_selection();
+	}
 }

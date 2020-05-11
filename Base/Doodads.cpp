@@ -17,19 +17,52 @@ int Doodad::auto_increment;
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 
-	if (doodads_slk.row_header_exists(id)) {
-		base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
-	}
+	//float rotation;
+	//if (doodads_slk.row_header_exists(id)) {
+	//	base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
+	//	if (doodads_slk.data<int>("fixedRot", id) == -1) {
+	//		rotation = angle;// glm::pi<float>() * 0.5f;
+	//	} else {
+	//		rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
+
+	//	}
+	//	std::cout << doodads_slk.data<float>("fixedRot", id) << "\n";
+
+	//} else {
+	//	if (destructibles_slk.data<int>("fixedRot", id) == -1) {
+	//		rotation = angle;// glm::pi<float>() * 0.5f;
+	//	} else {
+	//		rotation = glm::radians(destructibles_slk.data<float>("fixedRot", id));
+	//	}
+	//	std::cout << destructibles_slk.data<float>("fixedRot", id) << "\n";
+
+	//}
+	
+	/*float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
+	std::cout << fixed_rotation << "\n";*/
+	//if (doodads_slk.data<int>("fixedRot", id) == -1) {
+	//	rotation = angle;// glm::pi<float>() * 0.5f;
+	//} else {
+	//	rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
+	//}
+	
 
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
+	//matrix = glm::rotate(matrix, angle + glm::radians(fixed_rotation), glm::vec3(0, 0, 1));
+	//matrix = glm::rotate(matrix, glm::pi<float>() * 0.5f, glm::vec3(0, 0, 1));
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+
+	auto maxRoll = doodads_slk.data("maxroll", id);
+	if (!maxRoll.empty()) {
+		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
+	}
 }
 
 bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3map.w3e file: Magic number is not W3do\n";
+		std::cout << "Invalid war3map.doo file: Magic number is not W3do\n";
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
@@ -49,6 +82,13 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>();
+
+		if (map->info.game_version_major * 100 + map->info.game_version_minor >= 132) {
+			i.skin_id = reader.read_string(4);
+		} else {
+			i.skin_id = i.id;
+		}
+
 		i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 		i.life = reader.read<uint8_t>();
 
@@ -95,6 +135,8 @@ void Doodads::save() const {
 		writer.write<float>(i.angle);
 		writer.write<glm::vec3>(i.scale);
 
+		writer.write_string(i.skin_id);
+
 		writer.write<uint8_t>(static_cast<int>(i.state));
 		writer.write<uint8_t>(i.life);
 
@@ -130,8 +172,8 @@ void Doodads::load_destructible_modifications(BinaryReader& reader) {
 		std::cout << "Unknown destructible modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, false);
-	load_modification_table(reader, destructibles_slk, destructibles_meta_slk, true);
+	load_modification_table(reader, destructables_slk, destructables_meta_slk, false);
+	load_modification_table(reader, destructables_slk, destructables_meta_slk, true);
 }
 
 void Doodads::load_doodad_modifications(BinaryReader& reader) {
@@ -166,19 +208,20 @@ void Doodads::create() {
 
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_header_exists(i.id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
 
-		std::string pathing_texture_path = slk.data("pathTex", i.id);
+		std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
-			i.pathing = resource_manager.load<Texture>(pathing_texture_path);
+			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = doodads_slk.data<int>("fixedRot", i.id) / 360.f * 2.f * glm::pi<float>();
+		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
 		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
+
 		i.mesh = get_mesh(i.id, i.variation);
 	}
 }
@@ -202,10 +245,10 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.angle = 0;
 
 	const bool is_doodad = doodads_slk.row_header_exists(id);
-	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-	std::string pathing_texture_path = slk.data("pathTex", id);
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
+	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
-		doodad.pathing = resource_manager.load<Texture>(pathing_texture_path);
+		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 	}
 
 	doodad.update();
@@ -276,7 +319,7 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 		if (!i->pathing) {
 			continue;
 		}
-		map->pathing_map.blit_pathing_texture(i->position, 0, i->pathing);
+		map->pathing_map.blit_pathing_texture(i->position, glm::degrees(i->angle) + 90, i->pathing);
 	}
 	map->pathing_map.upload_dynamic_pathing();
 }
@@ -295,15 +338,14 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	if (doodads_slk.row_header_exists(id)) {
 		// Is doodad
 		mesh_path = doodads_slk.data("file", id);
-		variations = doodads_slk.data("numVar", id);
+		variations = doodads_slk.data("numvar", id);
 	} else {
-		// Is destructible
-		mesh_path = destructibles_slk.data("file", id);
-		variations = destructibles_slk.data("numVar", id);
+		mesh_path = destructables_slk.data("file", id);
+		variations = destructables_slk.data("numvar", id);
 
-		replaceable_id = destructibles_slk.data("texID", id);
-		texture_name = destructibles_slk.data("texFile", id);
-		texture_name.replace_extension(".blp");
+		replaceable_id = destructables_slk.data("texid", id);
+		texture_name = destructables_slk.data("texfile", id);
+		texture_name.replace_extension("");
 	}
 
 	const std::string stem = mesh_path.stem().string();
@@ -326,15 +368,18 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	// Switch around the texture in the replaceable_id table so the mesh loader will pick the correct texture
 	std::string replaceable_texture;
-	if (is_number(replaceable_id) && texture_name != "_.blp") {
+
+	bool replace_texture = is_number(replaceable_id) && texture_name != "_";
+
+	if (replace_texture) {
 		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string();
+		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + (hierarchy.hd ? "_diffuse.dds" : ".dds");
 	}
 
-	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path));
+	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, replace_texture ? texture_name.string() : ""));
 
 	// Switch it back
-	if (is_number(replaceable_id) && texture_name != "_.blp") {
+	if (replace_texture) {
 		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = replaceable_texture;
 	}
 
@@ -370,21 +415,37 @@ void DoodadDeleteAction::redo() {
 }
 
 void DoodadStateAction::undo() {
+	QRectF update_pathing_area;
 	for (auto& i : old_doodads) {
 		for (auto& j : map->doodads.doodads) {
 			if (i.creation_number == j.creation_number) {
+				if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+					update_pathing_area = { j.position.x, j.position.y, 1.f, 1.f };
+				}
+				update_pathing_area |= { j.position.x, j.position.y, 1.f, 1.f };
+				update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+
 				j = i;
 			}
 		}
 	}
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }
 
 void DoodadStateAction::redo() {
+	QRectF update_pathing_area;
 	for (auto& i : new_doodads) {
 		for (auto& j : map->doodads.doodads) {
 			if (i.creation_number == j.creation_number) {
+				if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+					update_pathing_area = { j.position.x, j.position.y, 1.f, 1.f };
+				}
+				update_pathing_area |= { j.position.x, j.position.y, 1.f, 1.f };
+				update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+
 				j = i;
 			}
 		}
 	}
+	map->doodads.update_doodad_pathing(update_pathing_area);
 }

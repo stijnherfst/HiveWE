@@ -4,12 +4,15 @@
 #include <QFileIconProvider>
 #include <QPainter>
 #include <QMessageBox>
+#include <QStack>
 #include <set>
 
 #include "Utilities.h"
 #include "TriggerExplorer.h"
 #include "Triggers.h"
 #include "HiveWE.h"
+
+constexpr int map_header_id = 0;
 
 TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 	setSelectionMode(QAbstractItemView::SingleSelection);
@@ -18,6 +21,11 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 	setUniformRowHeights(true);
 	setHeaderHidden(true);
 	setEditTriggers(QAbstractItemView::EditTrigger::EditKeyPressed);
+	setDragEnabled(true);
+	setDragDropMode(QAbstractItemView::InternalMove);
+	setAcceptDrops(true);
+	setDropIndicatorShown(true);
+	setDefaultDropAction(Qt::MoveAction);
 
 	contextMenu->addAction(addCategory);
 	contextMenu->addAction(addGuiTrigger);
@@ -45,28 +53,32 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 	connect(this, &QTreeView::customContextMenuRequested, [&](const QPoint& point) {
 		int count = selectionModel()->selectedRows().count();
 
-		addCategory->setVisible(count == 1);
-		addGuiTrigger->setVisible(count == 1);
-		addJassTrigger->setVisible(count == 1);
-		addComment->setVisible(count == 1);
-		renameRow->setVisible(count == 1);
+		if (count == 0) {
+			selectionModel()->select(model()->index(0, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
+		}
 
-		if (count > 0) {
-			TreeItem* item = static_cast<TreeItem*>(selectionModel()->selectedRows().front().internalPointer());
+		TreeItem* item = static_cast<TreeItem*>(selectionModel()->selectedRows().front().internalPointer());
 
-			isEnabled->setVisible(item->type == Classifier::gui || item->type == Classifier::script);
-			isEnabled->setChecked(item->enabled);
-			initiallyOn->setVisible(item->type == Classifier::gui);
-			initiallyOn->setChecked(item->initially_on);
+		addCategory->setVisible(item->id == 0 || item->type == Classifier::category);
+		addGuiTrigger->setVisible(item->type == Classifier::category);
+		addJassTrigger->setVisible(item->type == Classifier::category);
+		addComment->setVisible(item->type == Classifier::category);
+		renameRow->setVisible(item->id != 0);
+		deleteRow->setVisible(item->id != 0);
 
-			if (item->type == Classifier::script || item->type == Classifier::gui) {
-				for (int i = 0; i < map->triggers.triggers.size(); i++) {
-					Trigger& trigger = map->triggers.triggers[i];
-					if (trigger.id == item->id) {
-						runOnInitialization->setVisible(item->type == Classifier::gui && trigger.is_script);
-						runOnInitialization->setChecked(item->run_on_initialization);
-						break;
-					}
+		isEnabled->setVisible(item->id != 0  && (item->type == Classifier::gui || item->type == Classifier::script));
+		isEnabled->setChecked(item->enabled);
+		initiallyOn->setVisible(item->type == Classifier::gui);
+		initiallyOn->setChecked(item->initially_on);
+
+		runOnInitialization->setVisible(false);
+		if (item->type == Classifier::script || item->type == Classifier::gui) {
+			for (int i = 0; i < map->triggers.triggers.size(); i++) {
+				Trigger& trigger = map->triggers.triggers[i];
+				if (trigger.id == item->id) {
+					runOnInitialization->setVisible(item->type == Classifier::gui && trigger.is_script);
+					runOnInitialization->setChecked(item->run_on_initialization);
+					break;
 				}
 			}
 		}
@@ -129,14 +141,16 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 }
 
 void TriggerExplorer::createCategory() {
+	QModelIndex index;
 	if (selectionModel()->selectedRows().empty()) {
-		return;
+		index = model()->index(0, 0);
+	} else {
+		index = selectionModel()->selectedRows().front();
 	}
-	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
-	if (parent_item->type != Classifier::category && parent_item->id != 0) {
+	if (parent_item->type != Classifier::category && parent_item->id != map_header_id) {
 		parent_item = parent_item->parent;
 		index = index.parent();
 	}
@@ -149,16 +163,26 @@ void TriggerExplorer::createCategory() {
 
 	dynamic_cast<TreeModel*>(model())->insertItem(index, Classifier::category, category.id);
 	expand(index);
+	selectionModel()->setCurrentIndex(index.child(parent_item->children.size() - 1, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
 }
 
 void TriggerExplorer::createJassTrigger() {
+	QModelIndex index;
 	if (selectionModel()->selectedRows().empty()) {
-		return;
+		index = model()->index(0, 0).child(0, 0);
+	} else {
+		index = selectionModel()->selectedRows().front();
 	}
-	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
+	// Select a category
+	if (parent_item->id == map_header_id) {
+		parent_item = parent_item->children.front();
+		index = index.child(0, 0);
+	}
+
+	// Select a category
 	if (parent_item->type != Classifier::category) {
 		parent_item = parent_item->parent;
 		index = index.parent();
@@ -168,21 +192,31 @@ void TriggerExplorer::createJassTrigger() {
 	trigger.classifier = Classifier::script;
 	trigger.name = "New Trigger";
 	trigger.id = ++Trigger::next_id;
+	trigger.is_script = true;
 	trigger.parent_id = parent_item->id;
 	map->triggers.triggers.push_back(trigger);
 	
 	dynamic_cast<TreeModel*>(model())->insertItem(index, trigger.classifier, trigger.id);
 	expand(index);
+	selectionModel()->setCurrentIndex(index.child(parent_item->children.size() - 1, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
 }
 
 void TriggerExplorer::createGuiTrigger() {
+	QModelIndex index;
 	if (selectionModel()->selectedRows().empty()) {
-		return;
+		index = model()->index(0, 0).child(0, 0);
+	} else {
+		index = selectionModel()->selectedRows().front();
 	}
-	auto index = selectionModel()->selectedRows().front();
 
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
+	if (parent_item->id == map_header_id) {
+		parent_item = parent_item->children.front();
+		index = index.child(0, 0);
+	}
+
+	// Select a category
 	if (parent_item->type != Classifier::category) {
 		parent_item = parent_item->parent;
 		index = index.parent();
@@ -197,15 +231,57 @@ void TriggerExplorer::createGuiTrigger() {
 
 	dynamic_cast<TreeModel*>(model())->insertItem(index, trigger.classifier, trigger.id);
 	expand(index);
+	selectionModel()->setCurrentIndex(index.child(parent_item->children.size() - 1, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
+}
+
+void TriggerExplorer::createVariable() {
+	QModelIndex index;
+	if (selectionModel()->selectedRows().empty()) {
+		index = model()->index(0, 0).child(0, 0);
+	} else {
+		index = selectionModel()->selectedRows().front();
+	}
+
+	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
+
+	if (parent_item->id == map_header_id) {
+		parent_item = parent_item->children.front();
+		index = index.child(0, 0);
+	}
+
+	// Select a category
+	if (parent_item->type != Classifier::category) {
+		parent_item = parent_item->parent;
+		index = index.parent();
+	}
+
+	TriggerVariable variable;
+	variable.id = ++Trigger::next_id;
+	variable.name = "NewVariable";
+	variable.parent_id = parent_item->id;
+	map->triggers.variables.push_back(variable);
+
+	dynamic_cast<TreeModel*>(model())->insertItem(index, Classifier::variable, variable.id);
+	expand(index);
+	selectionModel()->setCurrentIndex(index.child(parent_item->children.size() - 1, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
 }
 
 void TriggerExplorer::createComment() {
+	QModelIndex index;
 	if (selectionModel()->selectedRows().empty()) {
-		return;
+		index = model()->index(0, 0).child(0, 0);
+	} else {
+		index = selectionModel()->selectedRows().front();
 	}
-	auto index = selectionModel()->selectedRows().front();
+
 	TreeItem* parent_item = static_cast<TreeItem*>(index.internalPointer());
 
+	if (parent_item->id == map_header_id) {
+		parent_item = parent_item->children.front();
+		index = index.child(0, 0);
+	}
+
+	// Select a category
 	if (parent_item->type != Classifier::category) {
 		parent_item = parent_item->parent;
 		index = index.parent();
@@ -220,6 +296,7 @@ void TriggerExplorer::createComment() {
 
 	dynamic_cast<TreeModel*>(model())->insertItem(index, trigger.classifier, trigger.id);
 	expand(index);
+	selectionModel()->setCurrentIndex(index.child(parent_item->children.size() - 1, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
 }
 
 void recursively_delete(TreeItem* parent) {
@@ -323,10 +400,10 @@ TreeModel::TreeModel(QObject* parent) : QAbstractItemModel(parent) {
 		gui_icon_disabled = QIcon(pix);
 	}
 
-	script_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScript") + ".blp");
-	script_icon_disabled = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScriptDisable") + ".blp");
-	variable_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerGlobalVariable") + ".blp");
-	comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".blp");
+	script_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScript") + ".dds");
+	script_icon_disabled = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerScriptDisable") + ".dds");
+	variable_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerGlobalVariable") + ".dds");
+	comment_icon = texture_to_icon(world_edit_data.data("WorldEditArt", "SEIcon_TriggerComment") + ".dds");
 }
 
 TreeModel::~TreeModel() {
@@ -338,10 +415,9 @@ int TreeModel::columnCount(const QModelIndex& parent) const {
 }
 
 void TreeModel::insertItem(const QModelIndex& parent, Classifier classifier, int id) {
-	beginInsertRows(parent, rowCount(), rowCount());
-	TreeItem* item = static_cast<TreeItem*>(parent.internalPointer());
-	
-	TreeItem* new_item = new TreeItem(item);
+	TreeItem* parent_item = static_cast<TreeItem*>(parent.internalPointer());
+	beginInsertRows(parent, parent_item->children.size(), parent_item->children.size());
+	TreeItem* new_item = new TreeItem(parent_item);
 	new_item->type = classifier;
 	new_item->id = id;
 	endInsertRows();
@@ -352,6 +428,151 @@ void TreeModel::deleteItem(const QModelIndex& item) {
 	TreeItem* itemm = static_cast<TreeItem*>(item.internalPointer());
 	itemm->parent->removeChild(itemm);
 	endRemoveRows();
+}
+
+bool TreeModel::removeRows(int row, int count, const QModelIndex& parent) {
+
+	puts("remove\n");
+	return false;
+}
+
+//bool TreeModel::moveRows(const QModelIndex& sourceParent, int sourceRow, int count, const QModelIndex& destinationParent, int destinationChild) {
+//	//TreeItem* source_parent = static_cast<TreeItem*>(sourceParent.internalPointer());
+//	//TreeItem* destination_parent = static_cast<TreeItem*>(sourceParent.internalPointer());
+//
+//	//beginMoveRows(sourceParent, sourceRow, sourceRow + count, destinationParent, destinationChild);
+//
+//	//for (int i = sourceRow; i < sourceRow + count; i++) {
+//	//	source_parent->children[i]
+//	//}
+//
+//
+//	puts("moves\n");
+//	return false;
+//
+//	//endMoveRows();
+//}
+
+bool TreeModel::insertRows(int row, int count, const QModelIndex& parent) {
+	
+
+	puts("insert\n");
+	return false;
+}
+
+//bool TreeModel::moveRow(const QModelIndex& sourceParent, int sourceRow, const QModelIndex& destinationParent, int destinationChild) {
+//	puts("move\n");
+//	return false;
+//}
+
+QStringList TreeModel::mimeTypes() const {
+	return { "yeet" };
+}
+
+QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const {
+	QByteArray byteData;
+	QDataStream stream(&byteData, QIODevice::WriteOnly);
+
+	for (const QModelIndex& index : indexes) {
+		QModelIndex localIndex = index;
+		QStack<int> indexParentStack;
+		while (localIndex.isValid()) {
+			indexParentStack << localIndex.row();
+			localIndex = localIndex.parent();
+		}
+
+		stream << indexParentStack.size();
+		while (!indexParentStack.isEmpty()) {
+			stream << indexParentStack.pop();
+		}
+	}
+
+	QMimeData* result = new QMimeData();
+	result->setData("yeet", byteData);
+	return result;
+}
+
+bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& destinationParent) {
+	if (!destinationParent.isValid()) {
+		return false;
+	}
+
+	QModelIndexList indexes;
+	QDataStream stream(&data->data("yeet"), QIODevice::ReadOnly);
+
+	while (!stream.atEnd()) {
+		int childDepth = 0;
+		stream >> childDepth;
+
+		QModelIndex currentIndex = {};
+		for (int i = 0; i < childDepth; ++i) {
+			int row = 0;
+			stream >> row;
+			currentIndex = index(row, 0, currentIndex);
+		}
+		indexes << currentIndex;
+	}
+		
+	QModelIndex destinationParentIndex = destinationParent;
+	QModelIndex sourceParent = indexes.front().parent();
+	QModelIndex child = indexes.front();
+
+	TreeItem* sourceParentItem = static_cast<TreeItem*>(sourceParent.internalPointer());
+	TreeItem* destinationParentItem = static_cast<TreeItem*>(destinationParentIndex.internalPointer());
+	TreeItem* childItem = static_cast<TreeItem*>(child.internalPointer());
+
+	if (destinationParentItem->id == map_header_id && childItem->type != Classifier::category) {
+		return false;
+	}
+
+	if (destinationParentItem->id != map_header_id && destinationParentItem->type != Classifier::category) {
+		destinationParentItem = destinationParentItem->parent;
+		destinationParentIndex = destinationParentIndex.parent();
+	}
+
+	if (sourceParentItem == destinationParentItem) {
+		return false;
+	}
+
+	beginMoveRows(sourceParent, child.row(), child.row(), destinationParentIndex, destinationParentItem->children.size());
+	sourceParentItem->children.removeAll(childItem);
+	destinationParentItem->appendChild(childItem);
+	childItem->parent = destinationParentItem;
+
+	switch (childItem->type) {
+		case Classifier::comment:
+		case Classifier::gui:
+		case Classifier::script:
+			for (int i = 0; i < map->triggers.triggers.size(); i++) {
+				Trigger& trigger = map->triggers.triggers[i];
+				if (trigger.id == childItem->id) {
+					trigger.parent_id = destinationParentItem->id;
+					break;
+				}
+			}
+			break;
+		case Classifier::category:
+			for (int i = 0; i < map->triggers.categories.size(); i++) {
+				TriggerCategory& category = map->triggers.categories[i];
+				if (category.id == childItem->id) {
+					category.parent_id = destinationParentItem->id;
+					break;
+				}
+			}
+			break;
+		case Classifier::variable:
+			for (int i = 0; i < map->triggers.categories.size(); i++) {
+				TriggerVariable& variable = map->triggers.variables[i];
+				if (variable.id == childItem->id) {
+					variable.parent_id = destinationParentItem->id;
+					break;
+				}
+			}
+			break;
+	}
+	endMoveRows();
+
+	return true;
 }
 
 QVariant TreeModel::data(const QModelIndex& index, int role) const {
@@ -395,7 +616,13 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const {
 	if (!index.isValid())
 		return Qt::NoItemFlags;
 
-	return QAbstractItemModel::flags(index) | Qt::ItemIsEditable;
+	TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+
+	return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | ((item->id == map_header_id) ? 0 : Qt::ItemIsDragEnabled) | Qt::ItemIsDropEnabled;
+}
+
+Qt::DropActions TreeModel::supportedDropActions() const {
+	return Qt::CopyAction | Qt::MoveAction;
 }
 
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation,
@@ -517,14 +744,15 @@ bool TreeItem::setData(const QModelIndex& index, const QVariant& value, int role
 					return true;
 				}
 			}
-		case Classifier::variable:
 			break;
+		case Classifier::variable:
 			for (auto& i : map->triggers.variables) {
 				if (i.id == id) {
 					i.name = value.toString().toStdString();
 					return true;
 				}
 			}
+			break;
 		case Classifier::category:
 			for (auto& i : map->triggers.categories) {
 				if (i.id == id) {

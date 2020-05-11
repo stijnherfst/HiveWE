@@ -243,6 +243,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	trigger_editor->setText("Trigger\nEditor");
 	editor_section->addWidget(trigger_editor);
 
+	object_editor->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
+	object_editor->setText("Object\nEditor");
+	editor_section->addWidget(object_editor);
+
 	QRibbonSection* palette_section = new QRibbonSection;
 	palette_section->setText("Palette"); 
 	
@@ -253,6 +257,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	doodad_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
 	doodad_palette->setText("Doodads");
 	palette_section->addWidget(doodad_palette);
+
+	unit_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
+	unit_palette->setText("Units");
+	palette_section->addWidget(unit_palette);
 
 	pathing_palette->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
 	pathing_palette->setText("Pathing");

@@ -1,19 +1,20 @@
 #include "MDX.h"
 
 #include <iostream>
+#include "Utilities.h"
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
-		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.blp" },
-		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.blp" },
-		{ 11, "ReplaceableTextures/Cliff/Cliff0.blp" },
-		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.blp" },
-		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.blp" },
-		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.blp" },
-		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.blp" },
-		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.blp" },
-		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.blp" },
-		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.blp" }
+		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.dds" },
+		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.dds" },
+		{ 11, "ReplaceableTextures/Cliff/Cliff0.dds" },
+		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.dds" },
+		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.dds" },
+		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.dds" },
+		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.dds" },
+		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.dds" },
+		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.dds" },
+		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
 	};
 
 	void AnimatedData::load_tracks(BinaryReader& reader) {
@@ -130,14 +131,67 @@ namespace mdx {
 		extent = Extent(reader);
 	}
 
-	SEQS::SEQS(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-		for (size_t i = 0; i < size / 132; i++) {
-			sequences.emplace_back(Sequence(reader));
-		}
+	MDX::MDX(BinaryReader& reader) {
+		load(reader);
 	}
 
-	GEOS::GEOS(BinaryReader& reader) {
+	void MDX::load(BinaryReader& reader) {
+		const std::string magic_number = reader.read_string(4);
+		if (magic_number != "MDLX") {
+			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
+			return;
+		}
+
+		while (reader.remaining() > 0) {
+			uint32_t header = reader.read<uint32_t>();
+
+			switch (static_cast<ChunkTag>(header)) {
+				case ChunkTag::VERS:
+					reader.advance(4);
+					version = reader.read<uint32_t>();
+					break;
+				case ChunkTag::SEQS:
+					read_SEQS_chunk(reader);
+					break;
+				case ChunkTag::MTLS:
+					read_MTLS_chunk(reader);
+					break;
+				case ChunkTag::TEXS:
+					read_TEXS_chunk(reader);
+					break;
+				case ChunkTag::GEOS:
+					read_GEOS_chunk(reader);
+					break;
+				case ChunkTag::GEOA:
+					read_GEOA_chunk(reader);
+					break;
+				case ChunkTag::BONE:
+					read_BONE_chunk(reader);
+					break;
+				default:
+					reader.advance(reader.read<uint32_t>());
+			}
+		}
+
+		// Remove geoset animations that reference non existing geosets
+		for (size_t i = animations.size(); i-- > 0;) {
+			if (animations[i].geoset_id >= geosets.size()) {
+				animations.erase(animations.begin() + i);
+			}
+		}
+
+		// Standardize animation names
+		// Not sure how animation names work exactly so this is just an easy way to get a valid stand animation so we can do geoset hiding
+		//int t = 0;
+		//for (auto& i : sequences) {
+		//	std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
+
+		//	auto parts = split(i.name, ' ');
+		//	i.name = parts.front() + std::to_string(t++);
+		//}
+	}
+
+	void MDX::read_GEOS_chunk(BinaryReader& reader) {
 		const uint32_t size = reader.read<uint32_t>();
 		uint32_t total_size = 0;
 
@@ -166,19 +220,38 @@ namespace mdx {
 			reader.advance(4);
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
 			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
-			reader.advance(4);
+			reader.advance(4); // Mats
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
 			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
 
+			std::string tt;
+			if (version > 800) {
+				geoset.lod = reader.read<uint32_t>();
+				tt = reader.read_string(80); // lod name
+			} else {
+				geoset.lod = 0;
+			}
+
 			geoset.extent = Extent(reader);
 			const uint32_t extents_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < extents_count; i++) {
 				geoset.extents.emplace_back(Extent(reader));
 			}
-			reader.advance(4);
+
+			if (version > 800 && tt.size()) {
+				reader.advance(4); // Tangents
+				uint32_t structure_count = reader.read<uint32_t>();
+				reader.advance(structure_count * 16);
+				reader.advance(4); // Skin?
+				uint32_t byte_count = reader.read<uint32_t>();
+				reader.advance(byte_count);
+			}
+
+
+			reader.advance(4); // UVAS
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
 				geoset.texture_coordinate_sets.emplace_back(TextureCoordinateSet(reader));
@@ -188,7 +261,38 @@ namespace mdx {
 		}
 	}
 
-	GEOA::GEOA(BinaryReader& reader) {
+	void MDX::read_MTLS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		uint32_t total_size = 0;
+
+		while (total_size < size) {
+			total_size += reader.read<uint32_t>();
+		
+			Material material;
+			material.priority_plane = reader.read<uint32_t>();
+			material.flags = reader.read<uint32_t>();
+			if (version > 800) {
+				reader.advance(80); // Some random string
+			}
+			reader.advance(4);
+			const uint32_t layers_count = reader.read<uint32_t>();
+
+			for (size_t i = 0; i < layers_count; i++) {
+				material.layers.emplace_back(Layer(reader));
+			}
+
+			materials.push_back(material);
+		}
+	}
+
+	void MDX::read_SEQS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		for (size_t i = 0; i < size / 132; i++) {
+			sequences.emplace_back(Sequence(reader));
+		}
+	}
+
+	void MDX::read_GEOA_chunk(BinaryReader& reader) {
 		uint32_t remaining_size = reader.read<uint32_t>();
 
 		while (remaining_size > 0) {
@@ -210,96 +314,23 @@ namespace mdx {
 		}
 	}
 
-	TEXS::TEXS(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-
-		for (size_t i = 0; i < size / 268; i++) {
-			textures.emplace_back(Texture(reader));
-		}
-	}
-
-	MTLS::MTLS(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-		uint32_t total_size = 0;
-
-		while (total_size < size) {
-			total_size += reader.read<uint32_t>();
-			
-			Material material;
-			material.priority_plane = reader.read<uint32_t>();
-			material.flags = reader.read<uint32_t>();
-			reader.advance(4);
-			const uint32_t layers_count = reader.read<uint32_t>();
-
-			for (size_t i = 0; i < layers_count; i++) {
-				material.layers.emplace_back(Layer(reader));
-			}
-
-			materials.push_back(material);
-		}
-	}
-
-	BONE::BONE(BinaryReader& reader) {
+	void MDX::read_BONE_chunk(BinaryReader& reader) {
 		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			Bone bone;
 			bone.node = Node(reader);
-			bone.geoset_id = reader.read<uint32_t>();
-			bone.geoset_animation_id = reader.read<uint32_t>();
+			bone.geoset_id = reader.read<int32_t>();
+			bone.geoset_animation_id = reader.read<int32_t>();
 			bones.push_back(std::move(bone));
 		}
 	}
 
-	MDX::MDX(BinaryReader& reader) {
-		load(reader);
-	}
-
-	void MDX::load(BinaryReader& reader) {
-		const std::string magic_number = reader.read_string(4);
-		if (magic_number != "MDLX") {
-			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
-			return;
-		}
-
-		while (reader.remaining() > 0) {
-			uint32_t header = reader.read<uint32_t>();
-
-			switch (static_cast<ChunkTag>(header)) {
-				case ChunkTag::SEQS:
-					chunks[ChunkTag::SEQS] = std::make_shared<SEQS>(reader);
-					break;
-				case ChunkTag::MTLS:
-					chunks[ChunkTag::MTLS] = std::make_shared<MTLS>(reader);
-					break;
-				case ChunkTag::TEXS:
-					chunks[ChunkTag::TEXS] = std::make_shared<TEXS>(reader);
-					break;
-				case ChunkTag::GEOS:
-					chunks[ChunkTag::GEOS] = std::make_shared<GEOS>(reader);
-					break;
-				case ChunkTag::GEOA:
-					chunks[ChunkTag::GEOA] = std::make_shared<GEOA>(reader);
-					break;
-				case ChunkTag::BONE:
-					chunks[ChunkTag::BONE] = std::make_shared<BONE>(reader);
-					break;
-				default:
-					reader.advance(reader.read<uint32_t>());
-			}
-		}
-
-		// Check the loaded data here for errors?
-		if (has_chunk<GEOA>()) {
-			// Remove geoset animations that reference non existing geosets
-			auto geosets_count = chunk<GEOS>()->geosets.size();
-			auto& animations = chunk<GEOA>()->animations;
-			for (size_t i = animations.size(); i-- > 0;) {
-				if (animations[i].geoset_id >= geosets_count) {
-					animations.erase(animations.begin() + i);
-				}
-			}
+	void MDX::read_TEXS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		for (size_t i = 0; i < size / 268; i++) {
+			textures.emplace_back(Texture(reader));
 		}
 	}
 }

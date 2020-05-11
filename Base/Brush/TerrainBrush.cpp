@@ -5,7 +5,7 @@
 #include "HiveWE.h"
 #include "Terrain.h"
 
-TerrainBrush::TerrainBrush() {
+TerrainBrush::TerrainBrush() : Brush() {
 	size_granularity = 4;
 	uv_offset_locked = true;
 	uv_offset = { 2, 2 };

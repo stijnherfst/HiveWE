@@ -16,6 +16,7 @@ namespace fs = std::filesystem;
 #include "Regions.h"
 #include "GameCameras.h"
 #include "Sounds.h"
+#include "RenderManager.h"
 
 #include "Brush.h"
 #include "StaticMesh.h"
@@ -57,13 +58,14 @@ public:
 	fs::path filesystem_path;
 	std::string name;
 
-	// For instancing
-	std::vector<StaticMesh*> meshes;
+	RenderManager render_manager;
 
 	std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
 	double total_time;
 
 	void load(const fs::path& path);
 	bool save(const fs::path& path);
-	void render(int width, int height);
+
+	void update(double delta, int width, int height);
+	void render();
 };

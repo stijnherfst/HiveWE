@@ -23,8 +23,6 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 		return;
 	}
 
-	//if (id == 131218) return;
-
 	std::cout << "---------------" << std::endl;
 	std::cout << "Debug message (" << id << "): " << message << std::endl;
 
@@ -82,6 +80,7 @@ void GLWidget::initializeGL() {
 	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 
 	gl->glEnable(GL_DEPTH_TEST);
+	gl->glEnable(GL_CULL_FACE);
 	gl->glDepthFunc(GL_LEQUAL);
 	gl->glEnable(GL_BLEND);
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -100,7 +99,7 @@ void GLWidget::resizeGL(const int w, const int h) {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	camera->aspect_ratio = double(w) / h;
 
-	if (!map) {
+	if (!map || !map->loaded) {
 		return;
 	}
 	camera->update(delta);
@@ -110,17 +109,9 @@ void GLWidget::update_scene() {
 	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	if (map && map->loaded) {
-		camera->update(delta);
-
-		map->terrain.current_texture += std::max(0.0, map->terrain.animation_rate * delta);
-		if (map->terrain.current_texture >= map->terrain.water_textures_nr) {
-			map->terrain.current_texture = 0;
-		}
-	}
-
 	update();
 	if (map) {
+		map->update(delta, width(), height());
 		QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
 	} else {
 		QTimer::singleShot(std::max(0.0, 16.0), this, &GLWidget::update_scene);
@@ -136,7 +127,7 @@ void GLWidget::paintGL() {
 	gl->glClear(GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
-	map->render(width(), height());
+	map->render();
 
 	gl->glBindVertexArray(0);
 

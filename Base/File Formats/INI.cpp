@@ -14,6 +14,15 @@ namespace ini {
 		std::stringstream file;
 		file.write((char*)hierarchy.open_file(path).buffer.data(), hierarchy.open_file(path).buffer.size());
 
+		// Strip byte order marking
+		char a, b, c;
+		a = file.get();
+		b = file.get();
+		c = file.get();
+		if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
+			file.seekg(0);
+		}
+
 		std::string line;
 		std::string current_section;
 		while (std::getline(file, line)) {
@@ -26,7 +35,7 @@ namespace ini {
 				std::string key = line.substr(1, line.find(']') - 1);
 
 				// If the segment already exists
-				if (ini_data.count(key)) { // ToDo C++20 contains
+				if (ini_data.contains(key)) {
 					continue;
 				}
 				ini_data[key] = std::map<std::string, std::vector<std::string>>();
@@ -38,6 +47,20 @@ namespace ini {
 				}
 
 				std::string key = line.substr(0, found);
+
+				// Fix some upper/lowercase issues that appeared in 1.32. Hopefully temporary 29/02/2020
+				if (key == "minscale") {
+					key = "minScale";
+				} else if (key == "maxscale") {
+					key = "maxScale";
+				} else if (key == "texid") {
+					key = "texID";
+				} else if (key == "fixedrot") {
+					key = "fixedRot";
+				} else if (key == "fixedrot") {
+					key = "fixedRot";
+				}
+
 				std::string value = line.substr(found + 1);
 
 				if (key.empty() || value.empty()) {
@@ -81,19 +104,19 @@ namespace ini {
 	}
 
 	std::map<std::string, std::vector<std::string>> INI::section(const std::string& section) const {
-		if (ini_data.count(section)) {
+		if (ini_data.contains(section)) {
 			return ini_data.at(section);
 		} else {
 			return {};
 		}
 	}
 
-	void INI::set_whole_data(const std::string& section, const std::string& key, const std::string& value) {
+	void INI::set_whole_data(const std::string& section, const std::string& key, std::string value) {
 		ini_data[section][key] = { value };
 	}
 
 	std::vector<std::string> INI::whole_data(const std::string& section, const std::string& key) const {
-		if (ini_data.count(section) && ini_data.at(section).count(key)) { // ToDo C++20 contains
+		if (ini_data.contains(section) && ini_data.at(section).contains(key)) { // ToDo C++20 contains
 			return ini_data.at(section).at(key);
 		} else {
 			return {};
@@ -101,6 +124,10 @@ namespace ini {
 	}
 
 	bool INI::key_exists(const std::string& section, const std::string& key) const {
-		return ini_data.count(section) && ini_data.at(section).count(key);
+		return ini_data.contains(section) && ini_data.at(section).contains(key);
+	}
+
+	bool INI::section_exists(const std::string& section) const {
+		return ini_data.contains(section);
 	}
 }

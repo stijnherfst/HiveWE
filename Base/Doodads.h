@@ -5,14 +5,15 @@
 
 #include "StaticMesh.h"
 #include "Utilities.h"
-#include "Texture.h"
+#include "PathingTexture.h"
 
 #include "Terrain.h"
 #include "TerrainUndo.h"
 
 struct Doodad {
 	static int auto_increment;
-	std::string id = "";
+	std::string id;
+	std::string skin_id;
 	int variation = 0;
 	glm::vec3 position = {0, 0, 0};
 	glm::vec3 scale = {0, 0, 0};
@@ -31,10 +32,10 @@ struct Doodad {
 
 	int creation_number;
 
-	// Auxilirary data
+	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
-	std::shared_ptr<Texture> pathing;
+	std::shared_ptr<PathingTexture> pathing;
 
 	Doodad() {
 		creation_number = ++auto_increment;

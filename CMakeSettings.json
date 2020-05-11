@@ -10,7 +10,6 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "cmakeToolchain": "C:\\\\vcpkg\\\\scripts\\\\buildsystems\\\\vcpkg.cmake"
     },
     {
       "name": "x64-RelWithDebInfo",
@@ -22,7 +21,6 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "cmakeToolchain": "C:\\\\vcpkg\\\\scripts\\\\buildsystems\\\\vcpkg.cmake"
     },
     {
       "name": "x64-Release",
@@ -34,7 +32,6 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": "",
-      "cmakeToolchain": "C:\\\\vcpkg\\\\scripts\\\\buildsystems\\\\vcpkg.cmake"
     }
   ]
 }

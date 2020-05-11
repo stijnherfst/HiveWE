@@ -31,8 +31,8 @@ Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &water_exists);
 	gl->glDeleteTextures(1, &water_height);
 
-	delete collision_body;
-	delete collision_shape;
+//	delete collision_body;
+//	delete collision_shape;
 }
 
 bool Terrain::load(BinaryReader& reader) {
@@ -122,66 +122,66 @@ void Terrain::create() {
 	// Water Textures and Colours
 
 	water_offset = water_slk.data<float>("height", tileset + "Sha"s);
-	water_textures_nr = water_slk.data<int>("numTex", tileset + "Sha"s);
-	animation_rate = water_slk.data<int>("texRate", tileset + "Sha"s);
+	water_textures_nr = water_slk.data<int>("numtex", tileset + "Sha"s);
+	animation_rate = water_slk.data<int>("texrate", tileset + "Sha"s);
 
-	int red = water_slk.data<int>("Smin_R", tileset + "Sha"s);
-	int green = water_slk.data<int>("Smin_G", tileset + "Sha"s);
-	int blue = water_slk.data<int>("Smin_B", tileset + "Sha"s);
-	int alpha = water_slk.data<int>("Smin_A", tileset + "Sha"s);
+	int red = water_slk.data<int>("smin_r", tileset + "Sha"s);
+	int green = water_slk.data<int>("smin_g", tileset + "Sha"s);
+	int blue = water_slk.data<int>("smin_b", tileset + "Sha"s);
+	int alpha = water_slk.data<int>("smin_a", tileset + "Sha"s);
 
 	shallow_color_min = { red, green, blue, alpha };
 	shallow_color_min /= 255.f;
 
-	red = water_slk.data<int>("Smax_R", tileset + "Sha"s);
-	green = water_slk.data<int>("Smax_G", tileset + "Sha"s);
-	blue = water_slk.data<int>("Smax_B", tileset + "Sha"s);
-	alpha = water_slk.data<int>("Smax_A", tileset + "Sha"s);
+	red = water_slk.data<int>("smax_r", tileset + "Sha"s);
+	green = water_slk.data<int>("smax_g", tileset + "Sha"s);
+	blue = water_slk.data<int>("smax_b", tileset + "Sha"s);
+	alpha = water_slk.data<int>("smax_a", tileset + "Sha"s);
 
 	shallow_color_max = { red, green, blue, alpha };
 	shallow_color_max /= 255.f;
 
-	red = water_slk.data<int>("Dmin_R", tileset + "Sha"s);
-	green = water_slk.data<int>("Dmin_G", tileset + "Sha"s);
-	blue = water_slk.data<int>("Dmin_B", tileset + "Sha"s);
-	alpha = water_slk.data<int>("Dmin_A", tileset + "Sha"s);
+	red = water_slk.data<int>("dmin_r", tileset + "Sha"s);
+	green = water_slk.data<int>("dmin_g", tileset + "Sha"s);
+	blue = water_slk.data<int>("dmin_b", tileset + "Sha"s);
+	alpha = water_slk.data<int>("dmin_a", tileset + "Sha"s);
 
 	deep_color_min = { red, green, blue, alpha };
 	deep_color_min /= 255.f;
 
-	red = water_slk.data<int>("Dmax_R", tileset + "Sha"s);
-	green = water_slk.data<int>("Dmax_G", tileset + "Sha"s);
-	blue = water_slk.data<int>("Dmax_B", tileset + "Sha"s);
-	alpha = water_slk.data<int>("Dmax_A", tileset + "Sha"s);
+	red = water_slk.data<int>("dmax_r", tileset + "Sha"s);
+	green = water_slk.data<int>("dmax_g", tileset + "Sha"s);
+	blue = water_slk.data<int>("dmax_b", tileset + "Sha"s);
+	alpha = water_slk.data<int>("dmax_a", tileset + "Sha"s);
 
 	deep_color_max = { red, green, blue, alpha };
 	deep_color_max /= 255.f;
 
 	// Cliff Meshes
-	slk::SLK cliffs_slk("Data/Warcraft Data/Cliffs.slk", true);
+	slk::SLK cliffs_slk("Data/Warcraft/Cliffs.slk", true);
 	for (size_t i = 1; i < cliffs_slk.rows; i++) {
 		for (int j = 0; j < cliffs_slk.data<int>("variations", i) + 1; j++) {
-			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffID", i) + std::to_string(j) + ".mdx";
+			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffid", i) + std::to_string(j) + ".mdx";
 			cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-			path_to_cliff.emplace(cliffs_slk.data("cliffID", i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
+			path_to_cliff.emplace(cliffs_slk.data("cliffid", i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
 		}
-		cliff_variations.emplace(cliffs_slk.data("cliffID", i), cliffs_slk.data<int>("variations", i));
+		cliff_variations.emplace(cliffs_slk.data("cliffid", i), cliffs_slk.data<int>("variations", i));
 	}
 
 	// Ground textures
-	for (auto&& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
+	for (const auto& tile_id : tileset_ids) {
+		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id)));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
+	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1)));
 
 	// Cliff Textures
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texDir", cliff_id) + "/" + cliff_slk.data("texFile", cliff_id) + ".blp"));
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id)));
 		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
-		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
+		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
 	}
 
 	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
@@ -228,7 +228,7 @@ void Terrain::create() {
 	gl->glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	int sub = 0;
 	for (const auto& i : cliff_textures) {
-		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, i->data.data());
+		gl->glTextureSubImage3D(cliff_texture_array, 0, 0, 0, sub, i->width, i->height, 1, i->channels == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, i->data.data());
 		sub += 1;
 	}
 	gl->glGenerateTextureMipmap(cliff_texture_array);
@@ -250,14 +250,14 @@ void Terrain::create() {
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	const std::string file_name = water_slk.data("texFile", tileset + "Sha"s);
+	const std::string file_name = water_slk.data("texfile", tileset + "Sha"s);
 	for (int i = 0; i < water_textures_nr; i++) {
-		const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i) + ".blp");
+		const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i));
 
 		if (texture->width != 128 || texture->height != 128) {
 			std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
 		}
-		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_BGRA, GL_UNSIGNED_BYTE, texture->data.data());
+		gl->glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_RGB, GL_UNSIGNED_BYTE, texture->data.data());
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 
@@ -267,13 +267,13 @@ void Terrain::create() {
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
 	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
 
-	collision_shape = new btHeightfieldTerrainShape(width, height, ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {
 		std::cout << "error\n";
 	}
 
 	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 4.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
 	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
 	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 	
@@ -430,16 +430,16 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 	ground_texture_to_id.clear();
 
 	for (const auto& tile_id : tileset_ids) {
-		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + ".blp"));
+		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
-	ground_textures.push_back(resource_manager.load<GroundTexture>("TerrainArt/Blight/Ashen_Blight.blp"));
+	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("tilesets", std::string(1, tileset), 1) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 
 	cliff_to_ground_texture.clear();
 	for (const auto& cliff_id : cliffset_ids) {
-		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundTile", cliff_id)]);
+		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
 	}
 
 	update_ground_textures({ 0, 0, width, height });
@@ -586,9 +586,11 @@ Texture Terrain::minimap_image() {
 			glm::vec4 color;
 
 			if (corners[i][j].cliff || (i > 0 && corners[i - 1][j].cliff) || (j > 0 && corners[i][j - 1].cliff) || (i > 0 && j > 0 && corners[i - 1][j - 1].cliff)) {
-				color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
+				//color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
+				color = glm::vec4(1.f);
 			} else {
-				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+				//color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+				color = glm::vec4(1.f);
 			}
 
 			if (corners[i][j].water && corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {

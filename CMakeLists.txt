@@ -1,3 +1,10 @@
+if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+			CACHE STRING "")
+endif ()
+
+set (CMAKE_PREFIX_PATH "C:\\Qt\\5.14\\msvc2017_64")
+
 cmake_minimum_required(VERSION 3.13)
 project (HiveWE CXX)
 
@@ -11,6 +18,7 @@ find_package(Qt5 REQUIRED
 	Gui
 	Widgets
 )
+find_package(bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
@@ -40,6 +48,7 @@ add_executable(HiveWE
 	Base/PathingMap.cpp
 	Base/Regions.cpp
 	Base/ResourceManager.cpp
+	Base/RenderManager.cpp
 	Base/ShadowMap.cpp
 	Base/Sounds.cpp
 	Base/Terrain.cpp
@@ -52,6 +61,7 @@ add_executable(HiveWE
 	Base/Brush/DoodadBrush.cpp
 	Base/Brush/PathingBrush.cpp
 	Base/Brush/TerrainBrush.cpp
+	Base/Brush/UnitBrush.cpp
 
 	"Base/File Formats/BLP.cpp"
 	"Base/File Formats/CASC.cpp"
@@ -68,6 +78,8 @@ add_executable(HiveWE
 	Base/Resources/SkinnedMesh.cpp
 	Base/Resources/StaticMesh.cpp
 	Base/Resources/Texture.cpp
+	Base/Resources/PathingTexture.cpp
+	Base/Resources/QIconResource.cpp
 
 	Menus/DoodadPalette.cpp
 	Menus/ImportManager.cpp
@@ -78,10 +90,26 @@ add_executable(HiveWE
 	Menus/PathingPalette.cpp
 	Menus/SettingsEditor.cpp
 	Menus/TerrainPalette.cpp
+	Menus/UnitPalette.cpp
 	Menus/TilePather.cpp
 	Menus/TilePicker.cpp
 	Menus/TileSetter.cpp
 	Menus/TriggerEditor.cpp
+	Menus/Selections.cpp
+	Menus/ObjectEditor.cpp
+
+	Base/Models/SingleModel.cpp
+	Base/Models/TableModel.cpp
+	Base/Models/BaseTreeModel.cpp
+	Base/Models/UnitTreeModel.cpp
+	Base/Models/DoodadTreeModel.cpp
+	Base/Models/ItemTreeModel.cpp
+	Base/Models/AbilityTreeModel.cpp
+	Base/Models/BuffTreeModel.cpp
+	Base/Models/UpgradeTreeModel.cpp
+	Base/Models/UnitListModel.cpp
+	Base/Models/DoodadListModel.cpp
+	Base/Models/DestructableListModel.cpp
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
@@ -96,10 +124,8 @@ add_executable(HiveWE
 
 target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE ${BULLET3_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE "C:/vcpkg/installed/x64-windows/include/bullet")
-
-target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets")
+target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
+target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets" "Base/Models")
 
 target_link_libraries(HiveWE
 	Qt5::Gui
@@ -108,22 +134,23 @@ target_link_libraries(HiveWE
 	soil2
 	stormlib::stormlib
 	casclib
-	"C:/vcpkg/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	"C:/vcpkg/packages/qscintilla_x64-windows/lib/qscintilla2.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/Bullet3Common.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletCollision.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletInverseDynamics.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/BulletSoftBody.lib"
-	"C:/vcpkg/packages/bullet3_x64-windows/lib/LinearMath.lib"
 	${JPEG_LIBRARIES}
 	qt-advanced-docking-system::qtadvanceddocking
+	LinearMath
+	Bullet3Common
+	BulletInverseDynamics
+	BulletCollision;
+	BulletDynamics
+	BulletSoftBody
+	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
+	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 )
 
 if(WIN32)
     target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
 endif()
 
+target_link_options(HiveWE PUBLIC /PROFILE)
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

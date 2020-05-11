@@ -8,16 +8,6 @@
 #include "GPUTexture.h"
 #include "Shader.h"
 
-struct Animation {
-	uint32_t interval_start;
-	uint32_t interval_end;
-	float movespeed;
-	uint32_t flags; // 0: looping
-					// 1: non looping
-	float rarity;
-	uint32_t sync_point;
-	mdx::Extent extent;
-};
 
 class StaticMesh : public Resource {
 public:
@@ -29,6 +19,18 @@ public:
 
 		int material_id = 0;
 		bool visible = true;
+		mdx::Extent extent;
+	};
+
+	struct Animation {
+		uint32_t interval_start;
+		uint32_t interval_end;
+		float movespeed;
+		uint32_t flags; // 0: looping
+						// 1: non looping
+		float rarity;
+		uint32_t sync_point;
+		mdx::Extent extent;
 	};
 
 	std::vector<MeshEntry> entries;
@@ -43,10 +45,10 @@ public:
 	GLuint instance_buffer;
 
 	fs::path path;
-
+	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
-	std::shared_ptr<mdx::MTLS> mtls;
-	std::shared_ptr<Shader> shader; // ToDo only needed one for class
+	//std::shared_ptr<mdx::MTLS> mtls;
+	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
 	
 	static constexpr const char* name = "StaticMesh";
@@ -55,6 +57,7 @@ public:
 	explicit StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
-	void render_queue(const glm::mat4& mvp);
-	void render();
+	void render_queue(const glm::mat4& model);
+	void render_opaque() const;
+	void render_transparent(int instance_id) const;
 };

@@ -1,46 +1,46 @@
-﻿STRING 001
+﻿STRING 1
 {
 Player 1
 }
 
-STRING 002
+STRING 2
 {
 Force 1
 }
 
-STRING 003
+STRING 5
+// Units: hpea (Deedo), Description (Description)
 {
-gfh
+hey
 }
 
-STRING 004
+STRING 6
+// Units: hpea (Deedo), Hotkey (Hotkey)
 {
-Just another Warcraft III map
+D
 }
 
-STRING 005
+STRING 7
+// Units: hpea (Deedo), Name (Name)
 {
-Any
+Deedo
 }
 
-STRING 006
+STRING 8
+// Units: hpea (Deedo), EditorSuffix (Name - Editor Suffix)
 {
-Nondescript
+ded
 }
 
-STRING 007
+STRING 9
+// Units: hpea (Deedo), Tip (Tooltip - Basic)
 {
-Unknown
+traimnm,e
 }
 
-STRING 046
+STRING 10
+// Units: hpea (Deedo), Ubertip (Tooltip - Extended)
 {
-Inventory
-type -inventory to go to your inventory pick up an item to return to town if you get stuck somewhere you might have to use -suicide to kill yourself
-}
-
-STRING 047
-{
-Becoming a master isn't easy maximum level is 9999 though so theres always room for improvement!
+hoofpoof
 }
 

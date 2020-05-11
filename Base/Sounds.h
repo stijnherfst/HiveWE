@@ -19,18 +19,18 @@ struct Sound {
 	int fade_out_rate;
 	int volume;
 	float pitch;
-	float unknown;
-	int unknown2;
+	float pitch_variance;
+	int priority;
 	int channel;
 	float min_distance;
 	float max_distance;
 	float distance_cutoff;
-	float unknown3;
-	float unknown4;
-	int unknown5;
-	float unknown6;
-	float unknown7;
-	float unknown8;
+	float cone_inside;
+	float cone_outside;
+	int cone_outside_volume;
+	float cone_orientation_x;
+	float cone_orientation_y;
+	float cone_orientation_z;
 };
 
 class Sounds {

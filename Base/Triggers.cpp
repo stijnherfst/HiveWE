@@ -238,7 +238,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	unknown8 = reader.read<uint32_t>();	
 	unknown9 = reader.read<uint32_t>();
 
-	reader.read_c_string(); //last name the map was saved under
+	reader.read_c_string(); //last name the map was saved under, don't care
 
 	unknown10 = reader.read<uint32_t>();
 	unknown11 = reader.read<uint32_t>();
@@ -391,7 +391,7 @@ void Triggers::print_eca_structure(BinaryWriter& writer, const ECA& eca, bool is
 }
 
 void Triggers::save() const {
-	BinaryWriter writer;
+ 	BinaryWriter writer;
 	writer.write_string("WTG!");
 	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(write_sub_version);
@@ -450,7 +450,7 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.parent_id);
 	}
 
-	writer.write<uint32_t>(triggers.size() + variables.size() +  1);
+	writer.write<uint32_t>(categories.size() + triggers.size() + variables.size() +  1);
 	writer.write<uint32_t>(unknown8);
 	writer.write<uint32_t>(unknown9);
 	writer.write_c_string("It'll quench ya");
@@ -722,13 +722,13 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 			}
 
 			if (std::get<1>(j)) {
-				std::string order_on = abilities_slk.data("Orderon", std::get<0>(j));
+				std::string order_on = abilities_slk.data("orderon", std::get<0>(j));
 				if (order_on.empty()) {
-					order_on = abilities_slk.data("Order", std::get<0>(j));
+					order_on = abilities_slk.data("order", std::get<0>(j));
 				}
 				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_on + "\")\n");
 			} else {
-				std::string order_off = abilities_slk.data("Orderoff", std::get<0>(j));
+				std::string order_off = abilities_slk.data("orderoff", std::get<0>(j));
 				if (!order_off.empty()) {
 					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_off + "\")\n");
 				}
@@ -906,7 +906,7 @@ void Triggers::generate_sounds(BinaryWriter& writer) {
 			(i.stop_out_of_range ? "true" : "false") + ", " +
 			std::to_string(i.fade_in_rate) + ", " +
 			std::to_string(i.fade_out_rate) + ", " +
-			"\"" + i.eax_effect + "\"" +
+			"\"" + string_replaced(i.eax_effect, "\\", "\\\\") + "\"" +
 			")\n");
 
 		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
@@ -1334,7 +1334,7 @@ void Triggers::generate_map_configuration(BinaryWriter& writer) {
 	writer.write_string("endfunction\n");
 }
 
-void Triggers::generate_map_script() {
+QString Triggers::generate_map_script() {
 	std::map<std::string, std::string> unit_variables; // creation_number, unit_id
 	std::map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 	std::vector<std::string> initialization_triggers;
@@ -1409,7 +1409,7 @@ void Triggers::generate_map_script() {
 	generate_map_configuration(writer);
 
 	fs::path path = QDir::tempPath().toStdString() + "/input.j";
-	std::ofstream output(path);
+	std::ofstream output(path, std::ios::binary);
 	output.write((char*)writer.buffer.data(), writer.buffer.size());
 	output.close();
 
@@ -1418,20 +1418,27 @@ void Triggers::generate_map_script() {
 	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
-	std::cout << result.toStdString() << "\n";
+	//std::cout << result.toStdString() << "\n";
 
 	if (result.contains("Compile error")) {
-		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		return result.mid(result.indexOf("Compile error"));
 	} else if (result.contains("compile errors")) {
-		QMessageBox::information(nullptr, "vJass output", result.mid(result.indexOf("compile errors.")), QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		return result.mid(result.indexOf("compile errors."));
 	} else {
 		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
-		std::cout << "Compilation successful\n";
+		return "Compilation successful";
+		//std::cout << "Compilation successful\n";
 	}
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {
 	std::string output;
+
+	if (!eca.enabled) {
+		return "";
+	}
 
 	if (eca.name == "WaitForCondition") {
 		output += "loop\n";
@@ -1925,6 +1932,9 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
 	}
 
+	if (!trigger.initially_on) {
+		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
+	}
 	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
 	events += "endfunction\n\n";
 

@@ -33,6 +33,8 @@ struct PlayerData {
 	glm::vec2 starting_position;
 	uint32_t ally_low_priorities_flags;
 	uint32_t ally_high_priorities_flags;
+	uint32_t enemy_low_priorities_flags = 0;
+	uint32_t enemy_high_priorities_flags = 0;
 };
 
 struct ForceData {
@@ -120,6 +122,8 @@ public:
 	bool unknown4;
 	bool item_classification;
 	bool water_tinting;
+	bool accurate_probability_for_calculations;
+	bool custom_ability_skins;
 
 	int loading_screen_number;
 	std::string loading_screen_model;
@@ -146,6 +150,8 @@ public:
 	glm::u8vec4 water_color;
 
 	bool lua;
+	uint32_t supported_modes;
+	uint32_t game_data_version;
 
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
@@ -154,7 +160,12 @@ public:
 	std::vector<RandomUnitTable> random_unit_tables;
 	std::vector<RandomItemTable> random_item_tables;
 
-	static constexpr int write_version = 28;
+	static constexpr int write_version = 31;
+	static constexpr int write_editor_version = 6105;
+	static constexpr int write_game_version_major = 1;
+	static constexpr int write_game_version_minor = 32;
+	static constexpr int write_game_version_patch = 1;
+	static constexpr int write_game_version_build = 14604;
 
 	void load(BinaryReader& reader);
 	void save() const;

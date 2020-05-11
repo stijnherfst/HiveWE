@@ -74,7 +74,9 @@ void PathingMap::dynamic_clear_area(const QRect& area) {
 /// Expects position in whole grid tiles and draws the texture centered around this position
 /// Rotation in multiples of 90
 /// Blits the texture upside down as OpenGL uses the bottom-left as 0,0
-void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<Texture>& pathing_texture) {
+void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture) {
+	const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
+	const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 	for (int j = 0; j < pathing_texture->height; j++) {
 		for (int i = 0; i < pathing_texture->width; i++) {
 			int x = i;
@@ -82,22 +84,20 @@ void PathingMap::blit_pathing_texture(glm::vec2 position, int rotation, const st
 
 			switch (rotation) {
 				case 90:
-					x = pathing_texture->width - 1 - j - std::max(0, pathing_texture->width - pathing_texture->height);
-					y = i + std::max(0, pathing_texture->height - pathing_texture->width);
+					x = pathing_texture->height - 1 - j;
+					y = i;
 					break;
 				case 180:
 					x = pathing_texture->width - 1 - i;
 					y = pathing_texture->height - 1 - j;
 					break;
 				case 270:
-					x = j + std::max(0, pathing_texture->height - pathing_texture->width);
-					y = pathing_texture->height - 1 - i + std::max(0, pathing_texture->width - pathing_texture->height);
+					x = j;
+					y = pathing_texture->width - 1 - i;
 					break;
 			}
 
 			// Width and height for centering change if rotation is not divisible by 180
-			const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
-			const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 			const int xx = position.x * 4 + x - div_w / 2;
 			const int yy = position.y * 4 + y - div_h / 2;
 

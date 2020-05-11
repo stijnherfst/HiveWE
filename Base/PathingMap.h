@@ -8,7 +8,7 @@
 #include <QRect>
 
 #include "TerrainUndo.h"
-#include "Texture.h"
+#include "PathingTexture.h"
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -41,7 +41,7 @@ class PathingMap {
 
 	void dynamic_clear_area(const QRect& area);
 
-	void blit_pathing_texture(glm::vec2 pos, int rotation, const std::shared_ptr<Texture>& pathing_texture);
+	void blit_pathing_texture(glm::vec2 pos, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture);
 
 	void upload_static_pathing();
 	void upload_dynamic_pathing();
