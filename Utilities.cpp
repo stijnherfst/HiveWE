@@ -270,29 +270,41 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK
 
 			mod_writer.write_string(meta_data.data(0, j));
 
-			// If type is in uniteditordata.txt then int?
-
+			int write_type = -1;
 			std::string type = meta_data.data("type", j);
-			if (type == "int" || type == "bool" || type == "attackBits") {
-				mod_writer.write<uint32_t>(0);
+			if (type == "int" 
+				|| type == "bool"
+				|| type.ends_with("Flags") 
+				|| type == "attackBits" 
+				|| type == "channelType" 
+				|| type == "deathType" 
+				|| type == "defenseTypeInt" 
+				|| type == "detectionType" 
+				|| type == "spellDetail" 
+				|| type == "teamColor" 
+				|| type == "techAvail") {
+
+				write_type = 0;
 			} else if (type == "real") {
-				mod_writer.write<uint32_t>(1);
+				write_type = 1;
 			} else if (type == "unreal") {
-				mod_writer.write<uint32_t>(2);
+				write_type = 2;
 			} else { // string
-				mod_writer.write<uint32_t>(3);
+				write_type = 3;
 			}
+
+			mod_writer.write<uint32_t>(write_type);
 
 			if (optional_ints) {
 				mod_writer.write<uint32_t>(0); // 🤔
 				mod_writer.write<uint32_t>(0); // 🤔
 			}
 
-			if (type == "int" || type == "bool" || type == "attackBits") {
+			if (write_type == 0) {
 				mod_writer.write<int>(base_data.shadow_data<int>(column, i));
-			} else if (type == "real" || type == "unreal") {
+			} else if (write_type == 1 || write_type == 2) {
 				mod_writer.write<float>(base_data.shadow_data<float>(column, i));
-			} else { // string
+			} else {
 				mod_writer.write_c_string(base_data.shadow_data(column, i));
 			}
 

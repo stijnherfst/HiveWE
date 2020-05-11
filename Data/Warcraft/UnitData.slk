@@ -1,5 +1,5 @@
 ID;PWXL;N;E
-B;Y865;X35;D0 0 864 34
+B;Y865;X36;D0 0 864 35
 C;Y1;X1;K"unitID"
 C;X2;K"sort"
 C;X3;K"comment(s)"
@@ -35,6 +35,7 @@ C;X32;K"Missilearc2"
 C;X33;K"Missileart2"
 C;X34;K"MissileHoming2"
 C;X35;K"Missilespeed2"
+C;X36;K"ButtonPos2"
 C;Y2;X1;K"Hamg"
 C;X2;K"a1"
 C;X3;K"HeroArchMage"

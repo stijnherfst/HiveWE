@@ -217,7 +217,7 @@ namespace slk {
 
 				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
 				// This means we have to manually split these into the correct column
-				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed") && header_to_column.contains(key_lower + "2")) {
+				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos") && header_to_column.contains(key_lower + "2")) {
 					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower)] = value[0];
 					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower + "2")] = value[1];
 					continue;

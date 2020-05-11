@@ -239,6 +239,12 @@ void Units::save_unit_modifications() {
 
 void Units::save_item_modifications() {
 	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, items_slk, items_meta_slk, false);
+	save_modification_table(writer, items_slk, items_meta_slk, true);
+
+	hierarchy.map_file_write("war3map.w3t", writer.buffer);
 }
 
 
