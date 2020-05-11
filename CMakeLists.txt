@@ -3,8 +3,6 @@ if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 			CACHE STRING "")
 endif ()
 
-set (CMAKE_PREFIX_PATH "C:\\Qt\\5.14\\msvc2017_64")
-
 cmake_minimum_required(VERSION 3.13)
 project (HiveWE CXX)
 

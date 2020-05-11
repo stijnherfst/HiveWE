@@ -29,11 +29,11 @@ See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for bina
 - `VCPKG_ROOT`: the location where vcpkg is installed (e.g. "C:\vcpkg")
 - `VCPKG_DEFAULT_TRIPLET`: depending on your operating system (Windows, Linux, MacOS): (`x64-windows`, `x64-linux`, `x64-osx`)
 4. You need to close and open the CMD window after step 3!!
-4. Add the vcpkg location to your System Path variable (eg. "C:\vcpkg")
-5. Install dependencies
-`vcpkg install qt5-base glm soil2 stormlib casclib libjpeg-turbo qscintilla bullet3 qt-advanced-docking-system`
+5. Add the vcpkg location to your System Path variable (eg. "C:\vcpkg")
+6. Install dependencies  
+`vcpkg install qt5-base glm soil2 stormlib casclib libjpeg-turbo qscintilla bullet3 qt-advanced-docking-system`  
 Estimated to take about 30 minutes
-6. Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
+7. Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
 **Done**
 
 If you run into any issues then feel free to contact me.
