@@ -9,6 +9,8 @@
 
 #include "HiveWE.h"
 
+#include "SLK2.h"
+
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available
 extern "C" {

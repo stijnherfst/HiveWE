@@ -1,0 +1,227 @@
+#include "SLK2.h"
+
+#include <fstream>
+#include <numeric>
+#include <string_view>
+#include <charconv>
+
+using namespace std::literals::string_literals;
+
+#include "Hierarchy.h"
+#include "Utilities.h"
+#include "BinaryReader.h"
+
+#undef mix
+#undef max
+
+namespace slk {
+	SLK2::SLK2(const fs::path& path, const bool local) {
+		load(path, local);
+	}
+
+	void SLK2::load(const fs::path& path, const bool local) {
+		std::vector<uint8_t> buffer;
+		if (local) {
+			std::ifstream stream(path, std::ios::binary);
+			buffer = std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+		} else {
+			buffer = hierarchy.open_file(path).buffer;
+		}
+
+		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
+
+		if (!view.starts_with("ID")) {
+			std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
+			return;
+		}
+
+		const auto parse_integer = [&]() {
+			size_t value;
+			size_t separator = view.find(';');
+			std::from_chars(&view[1], &view[separator], value);
+			view.remove_prefix(separator + 1);
+			return value;
+		};
+
+		// Skip first ID line
+		view.remove_prefix(view.find('\n') + 1);
+
+		size_t column = 0;
+		size_t row = 0;
+
+		while (view.size()) {
+			switch (view.front()) {
+				case 'C':
+					view.remove_prefix(2);
+					
+					if (view.front() == 'X') {
+						column = parse_integer() - 1;
+
+						if (view.front() == 'Y') {
+							row = parse_integer() - 1;
+						}
+					} else {
+						row = parse_integer() - 1;
+
+						if (view.front() == 'X') {
+							column = parse_integer() - 1;
+						}
+					}
+
+					view.remove_prefix(1);
+
+					{
+						std::string data;
+						if (view.front() == '\"') {
+							data = view.substr(1, view.find('"', 1) - 1);
+						} else {
+							data = view.substr(0, view.find_first_of("\r\n"));
+						}
+
+						if (data == "-" || data == "_") {
+							data = "";
+						}
+
+
+						if (column == 0) {
+							row_headers.emplace(data, row);
+							index_to_row.emplace(row, data);
+						} else if (row == 0) {
+							// If it is a column header we need to lowercase it as column headers are case insensitive
+							to_lowercase(data);
+							column_headers.emplace(data, column);
+							index_to_column.emplace(column, data);
+						} else {
+							base_data[index_to_row[row]][index_to_column[column]] = data;
+						}
+
+						view.remove_prefix(view.find('\n') + 1);
+					}
+					break;
+				case 'F':
+					if (view.front() == 'X') {
+						column = parse_integer() - 1;
+
+						if (view.front() == 'Y') {
+							row = parse_integer() - 1;
+						}
+					} else {
+						row = parse_integer() - 1;
+
+						if (view.front() == 'X') {
+							column = parse_integer() - 1;
+						}
+					}
+					view.remove_prefix(view.find('\n') + 1);
+					break;
+				default:
+					view.remove_prefix(view.find_first_of('\n') + 1);
+			}
+		}
+	}
+
+	// Merges the base data of the files
+	// Shadow data is not merged
+	// Any unknown columns are appended
+	void SLK2::merge(const slk::SLK2& slk) {
+		for (const auto& [header, index] : slk.column_headers) {
+			if (!column_headers.contains(header)) {
+				auto inserted = column_headers.emplace(header, column_headers.size());
+				index_to_column[inserted.second] = header;
+			}
+		}
+
+		for (const auto& [id, properties] : slk.base_data) {
+			if (!base_data.contains(id)) {
+				std::cout << "id: " << id << " does not exist\n";
+			}
+			base_data[id].insert(properties.begin(), properties.end());
+		}
+	}
+
+	/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
+	/// If an unknown section key is encountered then that section is skipped
+	/// If an unknown column key is encountered then the column is added
+	void SLK2::merge(const ini::INI& ini) {
+		for (auto&& [section_key, section_value] : ini.ini_data) {
+			assert(base_data.contains(section_key));
+
+			for (auto&& [key, value] : section_value) {
+				std::string key_lower = to_lowercase_copy(key);
+				if (!column_headers.contains(key_lower)) {
+					auto inserted = column_headers.emplace(key_lower, column_headers.size());
+					index_to_column[inserted.second] = key_lower;
+				}
+
+				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
+				// This means we have to manually split these into the correct column
+				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos") && column_headers.contains(key_lower + "2")) {
+					base_data[section_key][key_lower] = value[0];
+					base_data[section_key][key_lower + "2"] = value[1];
+					continue;
+				}
+
+				std::string final_value;
+				for (int i = 0; i < value.size(); i++) {
+					final_value += value[i];
+
+					if (i < value.size() - 1) {
+						final_value += ',';
+					}
+				}
+
+				base_data[section_key][key_lower] = final_value;
+			}
+		}
+	}
+
+	/// Substitutes the data of the slk with data from the INI based on a certain section key.
+	/// The keys of the section are matched with all the cells in the table and if they match will replace the value
+	void SLK2::substitute(const ini::INI& ini, const std::string& section) {
+		for (auto& [id, properties] : base_data) {
+			for (auto& [prop_id, prop_value] : properties) {
+				std::string data = ini.data(section, prop_value);
+				if (!data.empty()) {
+					prop_value = data;
+				}
+			}
+		}
+	}
+
+	/// Copies the row with header row_header to a new line with the new header as new_row_header
+	void SLK2::copy_row(const std::string_view row_header, std::string_view new_row_header) {
+		assert(to_lowercase_copy(row_header) == row_header);
+		assert(to_lowercase_copy(new_row_header) == new_row_header);
+		assert(base_data.contains(row_header));
+		assert(!base_data.contains(new_row_header));
+
+		base_data[new_row_header] = base_data.at(row_header);
+
+		if (shadow_data.contains(row_header)) {
+			shadow_data[new_row_header] = shadow_data.at(row_header);
+		}
+
+		auto inserted = row_headers.emplace(new_row_header, row_headers.size());
+		index_to_row[inserted.second] = new_row_header;
+	}
+
+	// column_header and row_header should be lowercase
+	void SLK2::set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data) {
+		assert(to_lowercase_copy(column_header) == column_header);
+		assert(to_lowercase_copy(row_header) == row_header);
+
+		if (!column_headers.contains(column_header)) {
+			auto inserted = column_headers.emplace(column_header, column_headers.size());
+			index_to_column[inserted.second] = column_header;
+		}
+
+		shadow_data[row_header][column_header] = data;
+	}
+
+	void SLK2::set_shadow_data(const int column, const int row, std::string data) {
+		assert(row < index_to_row.size());
+		assert(column < index_to_column.size());
+
+		set_shadow_data(index_to_column[column], index_to_row[row], data);
+	}
+}

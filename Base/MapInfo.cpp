@@ -16,7 +16,6 @@ void MapInfo::load(BinaryReader& reader) {
 
 	map_version = reader.read<uint32_t>();
 	editor_version = reader.read<uint32_t>();
-	std::cout << editor_version << " yeeeeeeeeeeeet\n";
 	if (version >= 28) {
 		game_version_major = reader.read<uint32_t>();
 		game_version_minor = reader.read<uint32_t>();

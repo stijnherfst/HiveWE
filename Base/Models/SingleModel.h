@@ -24,7 +24,7 @@ public:
 	QModelIndex parent(const QModelIndex& child) const override;
 
 	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
-	void setID(const std::string_view id);
+	void setID(const std::string id);
 	const std::vector<int>& getMapping() const {
 		return id_mapping;
 	}

@@ -23,6 +23,7 @@ find_package(stormlib CONFIG REQUIRED)
 find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qt-advanced-docking-system CONFIG REQUIRED)
+find_package(absl CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -68,6 +69,7 @@ add_executable(HiveWE
 	"Base/File Formats/MDX.cpp"
 	"Base/File Formats/MPQ.cpp"
 	"Base/File Formats/SLK.cpp"
+	"Base/File Formats/SLK2.cpp"
 
 	Base/Resources/CliffMesh.cpp
 	Base/Resources/GPUTexture.cpp
@@ -120,7 +122,6 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/TriggerExplorer.cpp"
 )
 
-target_include_directories(HiveWE PRIVATE ${QSCINTILLA_INCLUDE_DIRS})
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
 target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets" "Base/Models")
@@ -137,11 +138,13 @@ target_link_libraries(HiveWE
 	LinearMath
 	Bullet3Common
 	BulletInverseDynamics
-	BulletCollision;
+	BulletCollision
 	BulletDynamics
 	BulletSoftBody
 	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
 	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
+	absl::flat_hash_map
+
 )
 
 if(WIN32)

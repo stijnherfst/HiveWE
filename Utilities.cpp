@@ -198,13 +198,14 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 		for (size_t j = 0; j < modifications; j++) {
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
+			std::string column_header = to_lowercase_copy(meta_data.data("field", modification_id));
 
 			if (optional_ints) {
-				// ToDo dont Skip optional ints
-				reader.advance(8);
+				uint32_t level_variation = reader.read<uint32_t>();
+				uint32_t data_pointer = reader.read<uint32_t>();
+				//std::to_string('A' + data_pointer) +
+				column_header += std::to_string(level_variation);
 			}
-
-			const std::string column_header = to_lowercase_copy(meta_data.data("field", modification_id));
 
 			std::string data;
 			switch (type) {

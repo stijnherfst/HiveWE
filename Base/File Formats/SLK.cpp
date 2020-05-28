@@ -285,6 +285,7 @@ namespace slk {
 	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
 		if (!header_to_column.contains(to_lowercase_copy(column_header))) {
 			std::cout << "Unknown column header: " << column_header << "\n";
+			add_column(column_header);
 			return;
 		}
 

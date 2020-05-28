@@ -13,23 +13,6 @@
 #include "HiveWE.h"
 
 SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
-	for (const auto& [key, index] : meta_slk->header_to_row) {
-		if (slk->header_to_column.contains(to_lowercase_copy(meta_slk->data("field", key)))) {
-			id_mapping.push_back(index);
-		}
-	}
-
-	std::sort(id_mapping.begin(), id_mapping.end(), [&](int left, int right) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left));
-		category = string_replaced(category, "&", "");
-		std::string left_string = category + " - " + meta_slk->data("displayname", left);
-
-		category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", right));
-		category = string_replaced(category, "&", "");
-		std::string right_string = category + " - " + meta_slk->data("displayname", right);
-
-		return left_string < right_string;
-	});
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
@@ -93,14 +76,38 @@ int SingleModel::columnCount(const QModelIndex& parent) const {
 }
 
 QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) const {
-	return 	createIndex(row, column);
+	return createIndex(row, column);
 }
 
 QModelIndex SingleModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
 
-void SingleModel::setID(const std::string_view newID) {
+void SingleModel::setID(const std::string newID) {
+	for (const auto& [key, index] : meta_slk->header_to_row) {
+		if (meta_slk->header_to_column.contains("usespecific")) {
+			if (!meta_slk->data("usespecific", key).empty() && meta_slk->data("usespecific", key).find(newID) == std::string::npos) {
+				continue;
+			}
+		}
+
+		//if (slk->header_to_column.contains(to_lowercase_copy(meta_slk->data("field", key)))) {
+		id_mapping.push_back(index);
+		//}
+	}
+
+	std::sort(id_mapping.begin(), id_mapping.end(), [&](int left, int right) {
+		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left));
+		category = string_replaced(category, "&", "");
+		std::string left_string = category + " - " + meta_slk->data("displayname", left);
+
+		category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", right));
+		category = string_replaced(category, "&", "");
+		std::string right_string = category + " - " + meta_slk->data("displayname", right);
+
+		return left_string < right_string;
+	});
+
 	beginResetModel();
 	id = newID;
 	endResetModel();

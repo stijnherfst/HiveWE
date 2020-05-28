@@ -186,6 +186,26 @@ void Doodads::load_doodad_modifications(BinaryReader& reader) {
 	load_modification_table(reader, doodads_slk, doodads_meta_slk, true, true);
 }
 
+void Doodads::save_destructible_modifications() {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, destructables_slk, destructables_meta_slk, false);
+	save_modification_table(writer, destructables_slk, destructables_meta_slk, true);
+
+	hierarchy.map_file_write("war3map.w3b", writer.buffer);
+}
+
+void Doodads::save_doodad_modifications() {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, doodads_slk, doodads_meta_slk, false, true);
+	save_modification_table(writer, doodads_slk, doodads_meta_slk, true, true);
+
+	hierarchy.map_file_write("war3map.w3d", writer.buffer);
+}
+
 //void Doodads::update_area(const QRect& area) {
 //	auto undo = std::make_unique<DoodadStateAction>();
 //

@@ -27,10 +27,11 @@ namespace slk {
 		void load(const fs::path&, bool local = false);
 		void save(const fs::path& path) const;
 
+		// Gets the data by first checking the shadow table and then checking the base table
+		// Also does :hd tag resolution
 		// column_header should be lowercase
 		template<typename T = std::string>
 		T data(const std::string& column_header, size_t row) const {
-
 			if (!header_to_column.contains(column_header)) {
 				return T();
 			}
@@ -75,6 +76,7 @@ namespace slk {
 			static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
 		}
 
+		// Gets the data by first checking the shadow table and then checking the base table
 		template<typename T = std::string>
 		T data(size_t column, size_t row) const {
 			if (row >= rows) {
@@ -120,6 +122,7 @@ namespace slk {
 			return data<T>(column_header, row);
 		}
 
+		// Gets the base data without consulting the shadow table
 		template<typename T = std::string>
 		T base_data(size_t column, size_t row) const {
 			if constexpr (std::is_same<T, std::string>()) {
@@ -131,6 +134,7 @@ namespace slk {
 			}
 		}
 
+		// gets the shadow table data directly
 		template<typename T = std::string>
 		T shadow_data(size_t column, size_t row) const {	
 			if constexpr (std::is_same<T, std::string>()) {

@@ -164,9 +164,6 @@ void Map::load(const fs::path& path) {
 	begin = std::chrono::steady_clock::now();
 	std::cout << "SLK loading: " << delta << "ms\n";
 
-
-//	physics.initialize();
-
 	// Trigger strings
 	if (hierarchy.map_file_exists("war3map.wts")) {
 		BinaryReader war3map_wts = hierarchy.map_file_read("war3map.wts");
@@ -328,9 +325,15 @@ bool Map::save(const fs::path& path) {
 
 	pathing_map.save();
 	terrain.save();
+
+	doodads.save_destructible_modifications();
+	doodads.save_doodad_modifications();
 	doodads.save();
+
 	units.save_unit_modifications();
+	units.save_item_modifications();
 	units.save();
+
 	info.save();
 	trigger_strings.save();
 	triggers.save();
