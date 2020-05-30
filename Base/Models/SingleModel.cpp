@@ -12,32 +12,32 @@
 
 #include "HiveWE.h"
 
-SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
+SingleModel::SingleModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	if (!sourceIndex.isValid()) {
 		return {};
 	}
-	if (sourceIndex.row() != slk->header_to_row.at(id)) {
+	if (sourceIndex.row() != slk->row_headers.at(id)) {
 		return {};
 	}
 
 	std::cout << sourceIndex.row() << "\t" << sourceIndex.column() << "\n";
+	//auto t = slk->data(sourceIndex.column(), 0);
 
-	int row = -1;
-	auto t = slk->data(sourceIndex.column(), 0);
-
-	for (const auto& [key, value] : meta_slk->header_to_row) {
-		if (to_lowercase_copy(meta_slk->data("field", value)) == t) {
-			row = value;
+	std::string meta_key;
+	auto t = slk->index_to_column.at(sourceIndex.column());
+	for (const auto& [key, value] : meta_slk->row_headers) {
+		if (to_lowercase_copy(meta_slk->data("field", key)) == t) {
+			meta_key = key;
 			break;
 		}
 	}
 
 	for (int i = 0; i < id_mapping.size(); i++) {
-		if (id_mapping[i] == row) {
-			std::cout << "Found " << row << " at " << i << " " << headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString() << " " << meta_slk->data("displayname", id_mapping[i]) << "\n";
+		if (id_mapping[i] == meta_key) {
+			std::cout << "Found " << meta_key << " at " << i << " " << headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString() << " " << meta_slk->data("displayname", id_mapping[i]) << "\n";
 			return createIndex(i, 0);
 		}
 	}
@@ -50,7 +50,7 @@ QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 	}
 
 	std::string column = to_lowercase_copy(meta_slk->data("field", id_mapping[proxyIndex.row()]));
-	return sourceModel()->index(slk->header_to_row.at(id), slk->header_to_column.at(column));
+	return sourceModel()->index(slk->row_headers.at(id), slk->column_headers.at(column));
 }
 
 QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
@@ -84,19 +84,22 @@ QModelIndex SingleModel::parent(const QModelIndex& child) const {
 }
 
 void SingleModel::setID(const std::string newID) {
-	for (const auto& [key, index] : meta_slk->header_to_row) {
-		if (meta_slk->header_to_column.contains("usespecific")) {
+	for (const auto& [key, index] : meta_slk->row_headers) {
+		if (meta_slk->column_headers.contains("usespecific")) {
 			if (!meta_slk->data("usespecific", key).empty() && meta_slk->data("usespecific", key).find(newID) == std::string::npos) {
 				continue;
 			}
 		}
 
-		//if (slk->header_to_column.contains(to_lowercase_copy(meta_slk->data("field", key)))) {
-		id_mapping.push_back(index);
-		//}
+		// We add a virtual column if it does not exist in the base table
+		if (!slk->column_headers.contains(to_lowercase_copy(meta_slk->data("field", key)))) {
+			slk->add_column(to_lowercase_copy(meta_slk->data("field", key)));
+		}
+
+		id_mapping.push_back(key);
 	}
 
-	std::sort(id_mapping.begin(), id_mapping.end(), [&](int left, int right) {
+	std::sort(id_mapping.begin(), id_mapping.end(), [&](const std::string& left, const std::string& right) {
 		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left));
 		category = string_replaced(category, "&", "");
 		std::string left_string = category + " - " + meta_slk->data("displayname", left);

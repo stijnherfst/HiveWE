@@ -19,8 +19,7 @@ BuffTreeModel::BuffTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
-	// Start at 1 since the first row are column headers
-	for (int i = 1; i < buff_slk.rows; i++) {
+	for (int i = 0; i < buff_slk.rows(); i++) {
 		std::string race = buff_slk.data("race", i);
 		if (race.empty()) {
 			std::cout << "Empty race for " << i << " in buffs\n";
@@ -63,7 +62,7 @@ QModelIndex BuffTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, buff_slk.header_to_column.at("bufftip"), item);
+		return createIndex(item->tableRow, buff_slk.column_headers.at("bufftip"), item);
 	}
 	return {};
 }
@@ -94,7 +93,7 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->tableRow < 0) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, buff_slk.header_to_column.at("buffart")), role);
+			return sourceModel()->data(sourceModel()->index(item->tableRow, buff_slk.column_headers.at("buffart")), role);
 		default:
 			return {};
 	}

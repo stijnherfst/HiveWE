@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "SLK.h"
+#include "SLK2.h"
 
 class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT
@@ -23,18 +23,18 @@ public:
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
+	explicit SingleModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent = nullptr);
 	void setID(const std::string id);
-	const std::vector<int>& getMapping() const {
+	const std::vector<std::string>& getMapping() const {
 		return id_mapping;
 	}
 
-	slk::SLK* meta_slk;
-	slk::SLK* slk;
+	slk::SLK2* meta_slk;
+	slk::SLK2* slk;
 
 private:
 	std::string id = "hpea";
-	std::vector<int> id_mapping;
+	std::vector<std::string> id_mapping;
 };
 
 // Provides row headers that have alternate colors

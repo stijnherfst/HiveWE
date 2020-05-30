@@ -12,15 +12,13 @@
 namespace slk {
 	class SLK2 {
 
+	public:
+		absl::flat_hash_map<size_t, std::string> index_to_row;
+		absl::flat_hash_map<size_t, std::string> index_to_column;
+		absl::flat_hash_map<std::string, size_t> row_headers;
+		absl::flat_hash_map<std::string, size_t> column_headers;
 		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> base_data;
 		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> shadow_data;
-
-		absl::flat_hash_map<size_t, std::string> index_to_column;
-		absl::flat_hash_map<size_t, std::string> index_to_row;
-		absl::flat_hash_map<std::string, size_t> column_headers;
-		absl::flat_hash_map<std::string, size_t> row_headers;
-
-	public:
 
 		SLK2() = default;
 		explicit SLK2(const fs::path & path, bool local = false);
@@ -34,7 +32,7 @@ namespace slk {
 				if constexpr (std::is_same<T, std::string>()) {
 					return shadow_data.at(row_header).at(column_header);
 				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_data.atd(row_header).at(column_header));
+					return std::stof(shadow_data.at(row_header).at(column_header));
 				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
 					return std::stoi(shadow_data.at(row_header).at(column_header));
 				}
@@ -76,7 +74,7 @@ namespace slk {
 				return T();
 			}
 
-			return data(column_header, index_to_row[row]);
+			return data(column_header, index_to_row.at(row));
 		}
 
 		// Gets the data by first checking the shadow table and then checking the base table
@@ -90,7 +88,7 @@ namespace slk {
 				return T();
 			}
 
-			return data(index_to_column[column], index_to_row[row]);
+			return data(index_to_column.at(column), index_to_row.at(row));
 		}
 
 		void merge(const SLK2& slk);
@@ -98,7 +96,18 @@ namespace slk {
 		void substitute(const ini::INI& ini, const std::string& section);
 		void copy_row(const std::string_view row_header, const std::string_view new_row_header);
 
+		void add_column(const std::string_view column_header);
+
+		/// If the column does not exist then it will be created
 		void set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data);
 		void set_shadow_data(const int column, const int row, std::string data);
+
+		size_t rows() {
+			return row_headers.size();
+		}
+
+		size_t columns() {
+			return column_headers.size();
+		}
 	};
 }

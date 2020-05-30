@@ -203,8 +203,8 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	brush.set_doodad(id);
 	selection_mode->setChecked(false);
 
-	bool is_doodad = doodads_slk.row_header_exists(id);
-	slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
+	bool is_doodad = doodads_slk.row_headers.contains(id);
+	slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
 
 	variations->clear();
 

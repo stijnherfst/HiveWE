@@ -227,8 +227,8 @@ void Doodads::create() {
 		i.mesh = get_mesh(i.id, i.variation);
 
 		// Get pathing map
-		const bool is_doodad = doodads_slk.row_header_exists(i.id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
+		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
+		const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
 
 		std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
@@ -264,8 +264,8 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
 
-	const bool is_doodad = doodads_slk.row_header_exists(id);
-	const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
+	const bool is_doodad = doodads_slk.row_headers.contains(id);
+	const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
 	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
@@ -355,7 +355,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string replaceable_id;
 	fs::path texture_name;
 
-	if (doodads_slk.row_header_exists(id)) {
+	if (doodads_slk.row_headers.contains(id)) {
 		// Is doodad
 		mesh_path = doodads_slk.data("file", id);
 		variations = doodads_slk.data("numvar", id);

@@ -183,7 +183,7 @@ fs::path find_warcraft_directory() {
 	}
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK& meta_data, const bool modification, bool optional_ints) {
+void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SLK2& meta_slk, const bool modification, bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -198,7 +198,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 		for (size_t j = 0; j < modifications; j++) {
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
-			std::string column_header = to_lowercase_copy(meta_data.data("field", modification_id));
+			std::string column_header = to_lowercase_copy(meta_slk.data("field", modification_id));
 
 			if (optional_ints) {
 				uint32_t level_variation = reader.read<uint32_t>();
@@ -224,10 +224,6 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 			}
 			reader.advance(4);
 
-			if (!base_data.header_to_column.contains(column_header)) {
-				base_data.add_column(column_header);
-			}
-
 			if (modification) {
 				base_data.set_shadow_data(column_header, modified_id, data);
 			} else {
@@ -237,44 +233,46 @@ void load_modification_table(BinaryReader& reader, slk::SLK& base_data, slk::SLK
 	}
 }
 
-void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK& meta_data, bool modification, bool optional_ints) {
-	uint32_t objects = 0;
-
-	BinaryWriter object_writer;
-	for (int i = 1; i < base_data.rows; i++) {
-		// If this is a modification table then we only want rows that arent base rows (no shadow id exists)
-		if (!modification && base_data.shadow_data_exists(0, i)) {
+void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& meta_slk, bool custom, bool optional_ints) {
+	for (const auto& [id, properties] : slk.shadow_data) {
+		// If we are writing custom objects then we only want rows with oldid set
+		if (!custom && properties.contains("oldid")) {
 			continue;
-		} else if (modification && !base_data.shadow_data_exists(0, i)) {
+		} else if (custom && !properties.contains("oldid")) {
 			continue;
 		}
 
-		if (modification) {
-			object_writer.write_string(base_data.base_data(0, i));
-			object_writer.write_string(base_data.shadow_data(0, i));
+		if (custom) {
+			writer.write_string(properties.at("oldid"));
+			writer.write_string(id);
+		} else {
+			writer.write_string(id);
+			writer.write<uint32_t>(0);
 		}
 
-		uint32_t modifications = 0;
-		BinaryWriter mod_writer;
-		for (int j = 1; j < meta_data.rows; j++) {
-			std::string field = to_lowercase_copy(meta_data.data("field", j));
-			if (!base_data.header_to_column.contains(field)) {
-				continue;
+		writer.write<uint32_t>(properties.size());
+
+		for (const auto& [property_id, value] : properties) {
+			std::string meta_data_key;
+			// Find the metadata ID for this field name since modification files are stupid
+			for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+				if (meta_slk.data("field", key) == property_id) {
+					meta_data_key = key;
+					
+					break;
+				}
 			}
-			int column = base_data.header_to_column.at(field);
 
-			if (!base_data.shadow_data_exists(column, i)) {
-				continue;
+			if (meta_data_key.empty()) {
+				puts("s\n");
 			}
 
-			modifications++;
-
-			mod_writer.write_string(meta_data.data(0, j));
-
+			writer.write_string(meta_data_key);
+			
 			int write_type = -1;
-			std::string type = meta_data.data("type", j);
+			const std::string type = meta_slk.data("type", meta_data_key);
 			if (type == "int" 
-				|| type == "bool"
+				|| type == "bool" 
 				|| type.ends_with("Flags") 
 				|| type == "attackBits" 
 				|| type == "channelType" 
@@ -294,42 +292,24 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& base_data, slk::SLK
 				write_type = 3;
 			}
 
-			mod_writer.write<uint32_t>(write_type);
+			writer.write<uint32_t>(write_type);
 
 			if (optional_ints) {
-				mod_writer.write<uint32_t>(0); // 🤔
-				mod_writer.write<uint32_t>(0); // 🤔
+				writer.write<uint32_t>(0); // 🤔
+				writer.write<uint32_t>(0); // 🤔
 			}
 
 			if (write_type == 0) {
-				mod_writer.write<int>(base_data.shadow_data<int>(column, i));
+				writer.write<int>(std::stoi(value));
 			} else if (write_type == 1 || write_type == 2) {
-				mod_writer.write<float>(base_data.shadow_data<float>(column, i));
+				writer.write<float>(std::stof(value));
 			} else {
-				mod_writer.write_c_string(base_data.shadow_data(column, i));
+				writer.write_c_string(value);
 			}
 
-			mod_writer.write<uint32_t>(0);
-		}
-
-		if (modifications) {
-			objects++;
-
-			if (!modification) {
-				object_writer.write_string(base_data.base_data(0, i));
-				object_writer.write<uint32_t>(0);
-			}
-
-			object_writer.write<uint32_t>(modifications);
-			object_writer.write_vector(mod_writer.buffer);
-		} else {
-			if (modification) {
-				object_writer.write<uint32_t>(0);
-			}
+			writer.write<uint32_t>(0);
 		}
 	}
-	writer.write<uint32_t>(objects);
-	writer.write_vector(object_writer.buffer);
 }
 
 QIcon ground_texture_to_icon(uint8_t* data, const int width, const int height) {

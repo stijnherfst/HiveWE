@@ -30,7 +30,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 		SingleModel* single_model;
 		switch (category) {
 			case Category::unit: {
-				std::string id = units_slk.data("unitid", item->tableRow);
+				std::string id = units_slk.index_to_row.at(item->tableRow);
 
 				single_model = new SingleModel(&units_slk, &units_meta_slk, this);
 				single_model->setSourceModel(units_table);
@@ -41,7 +41,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				break;
 			}
 			case Category::item: {
-				std::string id = items_slk.data("itemid", item->tableRow);
+				std::string id = items_slk.index_to_row.at(item->tableRow);
 
 				single_model = new SingleModel(&items_slk, &items_meta_slk, this);
 				single_model->setSourceModel(items_table);
@@ -52,7 +52,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				break;
 			}
 			case Category::doodad: {
-				std::string id = doodads_slk.data("doodid", item->tableRow);
+				std::string id = doodads_slk.index_to_row.at(item->tableRow);
 
 				single_model = new SingleModel(&doodads_slk, &doodads_meta_slk, this);
 				single_model->setSourceModel(doodads_table);
@@ -63,7 +63,8 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				break;
 			}
 			case Category::ability: {
-				std::string id = abilities_slk.data("alias", item->tableRow);
+				std::string id = abilities_slk.index_to_row.at(item->tableRow);
+
 
 				single_model = new SingleModel(&abilities_slk, &abilities_meta_slk, this);
 				single_model->setSourceModel(abilities_table);
@@ -74,7 +75,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				break;
 			}
 			case Category::upgrade: {
-				std::string id = upgrade_slk.data("upgradeid", item->tableRow);
+				std::string id = upgrade_slk.index_to_row.at(item->tableRow);
 
 				single_model = new SingleModel(&upgrade_slk, &upgrade_meta_slk, this);
 				single_model->setSourceModel(upgrade_table);
@@ -85,7 +86,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				break;
 			}
 			case Category::buff: {
-				std::string id = buff_slk.data("alias", item->tableRow);
+				std::string id = buff_slk.index_to_row.at(item->tableRow);
 
 				single_model = new SingleModel(&buff_slk, &buff_meta_slk, this);
 				single_model->setSourceModel(buff_table);

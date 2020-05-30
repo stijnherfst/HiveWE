@@ -12,8 +12,7 @@ ItemTreeModel::ItemTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		rowToCategory.push_back(value[0]);
 	}
 
-	// Start at 1 since the first row are column headers
-	for (int i = 1; i < items_slk.rows; i++) {
+	for (int i = 0; i < items_slk.rows(); i++) {
 		std::string itemClass = items_slk.data("class", i);
 		if (itemClass.empty()) {
 			std::cout << "Empty class for " << i << " in items\n";
@@ -50,7 +49,7 @@ QModelIndex ItemTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory) {
-		return createIndex(item->tableRow, items_slk.header_to_column.at("name"), item);
+		return createIndex(item->tableRow, items_slk.column_headers.at("name"), item);
 	}
 	return {};
 }
@@ -74,7 +73,7 @@ QVariant ItemTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->tableRow < 0) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, items_slk.header_to_column.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(item->tableRow, items_slk.column_headers.at("art")), role);
 		default:
 			return {};
 	}

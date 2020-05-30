@@ -68,6 +68,11 @@ namespace slk {
 						}
 					}
 
+					if (row == 0 && column == 0) {
+						view.remove_prefix(view.find('\n') + 1);
+						break;
+					}
+
 					view.remove_prefix(1);
 
 					{
@@ -82,17 +87,18 @@ namespace slk {
 							data = "";
 						}
 
-
 						if (column == 0) {
-							row_headers.emplace(data, row);
-							index_to_row.emplace(row, data);
+							// -1 as 0,0 is unitid/doodadid etc.
+							row_headers.emplace(data, row - 1);
+							index_to_row.emplace(row - 1, data);
 						} else if (row == 0) {
 							// If it is a column header we need to lowercase it as column headers are case insensitive
 							to_lowercase(data);
-							column_headers.emplace(data, column);
-							index_to_column.emplace(column, data);
+							// -1 as 0,0 is unitid/doodadid etc.
+							column_headers.emplace(data, column - 1);
+							index_to_column.emplace(column - 1, data);
 						} else {
-							base_data[index_to_row[row]][index_to_column[column]] = data;
+							base_data[index_to_row[row - 1]][index_to_column[column - 1]] = data;
 						}
 
 						view.remove_prefix(view.find('\n') + 1);
@@ -126,14 +132,14 @@ namespace slk {
 	void SLK2::merge(const slk::SLK2& slk) {
 		for (const auto& [header, index] : slk.column_headers) {
 			if (!column_headers.contains(header)) {
-				auto inserted = column_headers.emplace(header, column_headers.size());
-				index_to_column[inserted.second] = header;
+				add_column(header);
 			}
 		}
 
 		for (const auto& [id, properties] : slk.base_data) {
 			if (!base_data.contains(id)) {
-				std::cout << "id: " << id << " does not exist\n";
+				//std::cout << "id: " << id << " does not exist\n";
+				continue;
 			}
 			base_data[id].insert(properties.begin(), properties.end());
 		}
@@ -143,14 +149,17 @@ namespace slk {
 	/// If an unknown section key is encountered then that section is skipped
 	/// If an unknown column key is encountered then the column is added
 	void SLK2::merge(const ini::INI& ini) {
-		for (auto&& [section_key, section_value] : ini.ini_data) {
-			assert(base_data.contains(section_key));
+		for (const auto& [section_key, section_value] : ini.ini_data) {
+			if (!base_data.contains(section_key)) {
+				//std::cout << section_key << "\n";
+				continue;
+			}
 
-			for (auto&& [key, value] : section_value) {
+			for (const auto& [key, value] : section_value) {
 				std::string key_lower = to_lowercase_copy(key);
+
 				if (!column_headers.contains(key_lower)) {
-					auto inserted = column_headers.emplace(key_lower, column_headers.size());
-					index_to_column[inserted.second] = key_lower;
+					add_column(key_lower);
 				}
 
 				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
@@ -201,8 +210,17 @@ namespace slk {
 			shadow_data[new_row_header] = shadow_data.at(row_header);
 		}
 
-		auto inserted = row_headers.emplace(new_row_header, row_headers.size());
-		index_to_row[inserted.second] = new_row_header;
+		size_t index = row_headers.size();
+		column_headers.emplace(new_row_header, index);
+		index_to_column[index] = new_row_header;
+	}
+
+	/// Adds a (virtual) column
+	/// Since SLK2 is only a key/pair store it only emulates being table like and thus this call is very cheap memory/cpu wise
+	void SLK2::add_column(const std::string_view column_header) {
+		size_t index = column_headers.size();
+		column_headers.emplace(column_header, index);
+		index_to_column[index] = column_header;
 	}
 
 	// column_header and row_header should be lowercase
@@ -211,8 +229,7 @@ namespace slk {
 		assert(to_lowercase_copy(row_header) == row_header);
 
 		if (!column_headers.contains(column_header)) {
-			auto inserted = column_headers.emplace(column_header, column_headers.size());
-			index_to_column[inserted.second] = column_header;
+			add_column(column_header);
 		}
 
 		shadow_data[row_header][column_header] = data;

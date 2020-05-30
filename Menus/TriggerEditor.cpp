@@ -398,9 +398,9 @@ std::string TriggerEditor::get_parameters_names(const std::vector<std::string>& 
 				case TriggerParameter::Type::string: {
 					std::string pre_result;
 					if (j.value.size() == 4) {
-						if (units_slk.row_header_exists(j.value)) {
+						if (units_slk.row_headers.contains(j.value)) {
 							pre_result = units_slk.data("name", j.value);
-						} else if (items_slk.row_header_exists(j.value)) {
+						} else if (items_slk.row_headers.contains(j.value)) {
 							pre_result = items_slk.data("name", j.value);
 						} else {
 							pre_result = j.value;

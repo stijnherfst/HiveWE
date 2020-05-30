@@ -15,7 +15,7 @@ QModelIndex UnitListModel::mapToSource(const QModelIndex& proxyIndex) const {
 		return {};
 	}
 
-	return sourceModel()->index(proxyIndex.row(), units_slk.header_to_column.at("name"));
+	return sourceModel()->index(proxyIndex.row(), units_slk.column_headers.at("name"));
 }
 
 QVariant UnitListModel::data(const QModelIndex& index, int role) const {
@@ -27,7 +27,7 @@ QVariant UnitListModel::data(const QModelIndex& index, int role) const {
 		case Qt::DisplayRole:
 			return sourceModel()->data(mapToSource(index), role).toString() + "" + QString::fromStdString(units_slk.data("editorsuffix", index.row()));
 		case Qt::DecorationRole:
-			return sourceModel()->data(sourceModel()->index(index.row(), units_slk.header_to_column.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(index.row(), units_slk.column_headers.at("art")), role);
 		case Qt::SizeHintRole:
 			return QSize(0, 24);
 		default:
@@ -44,7 +44,7 @@ Qt::ItemFlags UnitListModel::flags(const QModelIndex& index) const {
 }
 
 int UnitListModel::rowCount(const QModelIndex& parent) const {
-	return units_slk.rows;
+	return units_slk.rows();
 }
 
 int UnitListModel::columnCount(const QModelIndex& parent) const {
@@ -75,7 +75,7 @@ bool UnitListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourcePa
 	if (!filterRegExp().isEmpty()) {
 		return sourceModel()->data(index0).toString().contains(filterRegExp());
 	} else {
-		return QString::fromStdString(units_slk.data(units_slk.header_to_column.at("race"), sourceRow)) == filterRace;
+		return QString::fromStdString(units_slk.data(units_slk.column_headers.at("race"), sourceRow)) == filterRace;
 	}
 }
 
@@ -85,8 +85,7 @@ bool UnitListFilter::lessThan(const QModelIndex& left, const QModelIndex& right)
 	{
 		bool isHostile = units_slk.data("hostilepal", left.row()) == "1";
 		bool isBuilding = units_slk.data("isbldg", left.row()) == "1";
-		QString unitID = QString::fromStdString(units_slk.data("unitid", left.row()));
-		bool isHero = unitID.front().isUpper();
+		bool isHero = isupper(units_slk.index_to_row.at(left.row()).front());
 		bool isSpecial = units_slk.data("special", left.row()) == "1";
 
 		if (isSpecial) {
@@ -103,8 +102,7 @@ bool UnitListFilter::lessThan(const QModelIndex& left, const QModelIndex& right)
 	{
 		bool isHostile = units_slk.data("hostilepal", right.row()) == "1";
 		bool isBuilding = units_slk.data("isbldg", right.row()) == "1";
-		QString unitID = QString::fromStdString(units_slk.data("unitid", right.row()));
-		bool isHero = unitID.front().isUpper();
+		bool isHero = isupper(units_slk.index_to_row.at(right.row()).front());
 		bool isSpecial = units_slk.data("special", right.row()) == "1";
 
 		if (isSpecial) {

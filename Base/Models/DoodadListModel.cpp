@@ -22,7 +22,7 @@ QModelIndex DoodadListModel::mapToSource(const QModelIndex& proxyIndex) const {
 		return {};
 	}
 
-	return sourceModel()->index(proxyIndex.row(), doodads_slk.header_to_column.at("name"));
+	return sourceModel()->index(proxyIndex.row(), doodads_slk.column_headers.at("name"));
 }
 
 QVariant DoodadListModel::data(const QModelIndex& index, int role) const {

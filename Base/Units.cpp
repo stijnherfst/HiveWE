@@ -119,7 +119,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		i.creation_number = reader.read<uint32_t>();
 
 		// Either a unit or an item
-		if (units_slk.row_header_exists(i.id) || i.id == "sloc" || i.id == "uDNR" || i.id == "bDNR") {
+		if (units_slk.row_headers.contains(i.id) || i.id == "sloc" || i.id == "uDNR" || i.id == "bDNR") {
 			units.push_back(i);
 		} else {
 			items.push_back(i);

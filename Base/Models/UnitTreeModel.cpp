@@ -19,12 +19,10 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
-	// Start at 1 since the first row are column headers
-	for (int i = 1; i < units_slk.rows; i++) {
-
+	for (int i = 0; i < units_slk.rows(); i++) {
 		std::string race = units_slk.data("race", i);
 		bool isBuilding = units_slk.data("isbldg", i) == "1";
-		bool isHero = isupper(units_slk.data("unitid", i).front());
+		bool isHero = isupper(units_slk.index_to_row.at(i).front());
 		bool isSpecial = units_slk.data("special", i) == "1";
 
 		int subIndex = 0;
@@ -48,7 +46,7 @@ QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 
 	std::string race = units_slk.data("race", sourceIndex.row());
 	bool isBuilding = units_slk.data("isbldg", sourceIndex.row()) == "1";
-	bool isHero = isupper(units_slk.data("unitid", sourceIndex.row()).front());
+	bool isHero = isupper(units_slk.index_to_row.at(sourceIndex.row()).front());
 	bool isSpecial = units_slk.data("special", sourceIndex.row()) == "1";
 
 	int subIndex = 0;
@@ -78,7 +76,7 @@ QModelIndex UnitTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, units_slk.header_to_column.at("name"), item);
+		return createIndex(item->tableRow, units_slk.column_headers.at("name"), item);
 	}
 	return {};
 }
@@ -112,7 +110,7 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->tableRow < 0) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.header_to_column.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.column_headers.at("art")), role);
 		default:
 			return {};
 	}

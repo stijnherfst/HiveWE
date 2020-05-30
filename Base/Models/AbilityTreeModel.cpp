@@ -19,8 +19,7 @@ AbilityTreeModel::AbilityTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
-	// Start at 1 since the first row are column headers
-	for (int i = 1; i < abilities_slk.rows; i++) {
+	for (int i = 0; i < abilities_slk.rows(); i++) {
 		std::string race = abilities_slk.data("race", i);
 		if (race.empty()) {
 			std::cout << "Empty race for " << i << " in abilities\n";
@@ -75,7 +74,7 @@ QModelIndex AbilityTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, abilities_slk.header_to_column.at("name"), item);
+		return createIndex(item->tableRow, abilities_slk.column_headers.at("name"), item);
 	}
 	return {};
 }
@@ -101,7 +100,7 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->tableRow < 0) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.header_to_column.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.column_headers.at("art")), role);
 		default:
 			return {};
 	}

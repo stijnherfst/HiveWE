@@ -22,7 +22,7 @@ QModelIndex DestructableListModel::mapToSource(const QModelIndex& proxyIndex) co
 		return {};
 	}
 
-	return sourceModel()->index(proxyIndex.row(), destructables_slk.header_to_column.at("name"));
+	return sourceModel()->index(proxyIndex.row(), destructables_slk.column_headers.at("name"));
 }
 
 QVariant DestructableListModel::data(const QModelIndex& index, int role) const {

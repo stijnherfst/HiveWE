@@ -183,7 +183,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 			if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
 					bool fixed_rotation = false;
-					if (doodads_slk.row_header_exists(i->id)) {
+					if (doodads_slk.row_headers.contains(i->id)) {
 						fixed_rotation = doodads_slk.data<int>("fixedrot", i->id) > 0;
 					} else {
 						fixed_rotation = destructables_slk.data<int>("fixedrot", i->id) > 0;
@@ -417,7 +417,7 @@ void DoodadBrush::render_clipboard() const {
 	for (const auto& i : clipboard) {
 		glm::vec3 base_scale = glm::vec3(1.f);
 
-		if (doodads_slk.row_header_exists(i.id)) {
+		if (doodads_slk.row_headers.contains(i.id)) {
 			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
 		}
 
@@ -449,7 +449,7 @@ void DoodadBrush::set_random_rotation() {
 	std::mt19937 gen(rd());
 
 	bool fixed_rotation = false;
-	if (doodads_slk.row_header_exists(id)) {
+	if (doodads_slk.row_headers.contains(id)) {
 		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
 	} else {
 		fixed_rotation = destructables_slk.data<int>("fixedrot", id) > 0;
@@ -483,8 +483,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
 	set_random_variation();
 
-	const bool is_doodad = doodads_slk.row_header_exists(id);
-	const slk::SLK& slk = is_doodad ? doodads_slk : destructables_slk;
+	const bool is_doodad = doodads_slk.row_headers.contains(id);
+	const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
 	
 	min_scale = slk.data<float>("minscale", id);
 	max_scale = slk.data<float>("maxscale", id);

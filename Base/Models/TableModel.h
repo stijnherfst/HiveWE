@@ -3,7 +3,7 @@
 #include <QAbstractTableModel>
 
 #include "QIconResource.h"
-#include "SLK.h"
+#include "SLK2.h"
 
 class TableModel : public QAbstractTableModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
@@ -15,12 +15,12 @@ class TableModel : public QAbstractTableModel {
 
 	Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-	std::unordered_map<std::string, int> meta_field_to_index;
+	std::unordered_map<std::string, std::string> meta_field_to_key;
 	std::shared_ptr<QIconResource> invalid_icon;
 
-	slk::SLK* meta_slk;
-	slk::SLK* slk;
+	slk::SLK2* meta_slk;
+	slk::SLK2* slk;
 
 public: 
-	explicit TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
+	explicit TableModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent = nullptr);
 };

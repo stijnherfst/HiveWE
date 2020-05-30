@@ -39,33 +39,33 @@ ini::INI world_edit_data;
 WindowHandler window_handler;
 
 TableModel* units_table;
-slk::SLK units_slk;
-slk::SLK units_meta_slk;
+slk::SLK2 units_slk;
+slk::SLK2 units_meta_slk;
 ini::INI unit_editor_data;
 
 TableModel* items_table;
-slk::SLK items_slk;
-slk::SLK items_meta_slk;
+slk::SLK2 items_slk;
+slk::SLK2 items_meta_slk;
 
 TableModel* abilities_table;
-slk::SLK abilities_slk;
-slk::SLK abilities_meta_slk;
+slk::SLK2 abilities_slk;
+slk::SLK2 abilities_meta_slk;
 
 TableModel* doodads_table;
-slk::SLK doodads_slk;
-slk::SLK doodads_meta_slk;
+slk::SLK2 doodads_slk;
+slk::SLK2 doodads_meta_slk;
 
 TableModel* destructables_table;
-slk::SLK destructables_slk;
-slk::SLK destructables_meta_slk;
+slk::SLK2 destructables_slk;
+slk::SLK2 destructables_meta_slk;
 
 TableModel* upgrade_table;
-slk::SLK upgrade_slk;
-slk::SLK upgrade_meta_slk;
+slk::SLK2 upgrade_slk;
+slk::SLK2 upgrade_meta_slk;
 
 TableModel* buff_table;
-slk::SLK buff_slk;
-slk::SLK buff_meta_slk;
+slk::SLK2 buff_slk;
+slk::SLK2 buff_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);

@@ -9,8 +9,7 @@ DoodadTreeModel::DoodadTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		rowToCategory.push_back(key.front());
 	}
 
-	// Start at 1 since the first row are column headers
-	for (int i = 1; i < doodads_slk.rows; i++) {
+	for (int i = 0; i < doodads_slk.rows(); i++) {
 		std::string category = doodads_slk.data("category", i);
 		BaseTreeItem* item = new BaseTreeItem(categories[category.front()].item);
 		item->tableRow = i;
@@ -42,7 +41,7 @@ QModelIndex DoodadTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
 	if (!item->baseCategory) {
-		return createIndex(item->tableRow, doodads_slk.header_to_column.at("name"), item);
+		return createIndex(item->tableRow, doodads_slk.column_headers.at("name"), item);
 	}
 	return {};
 }
