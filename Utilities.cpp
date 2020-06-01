@@ -190,7 +190,9 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SL
 		const std::string modified_id = reader.read_string(4);
 
 		if (modification) {
-			base_data.copy_row(original_id, modified_id);
+			base_data.copy_row(original_id, modified_id, false);
+			// Required when saving the modification table again
+			base_data.set_shadow_data("oldid", modified_id, original_id);
 		}
 
 		const uint32_t modifications = reader.read<uint32_t>();
@@ -204,7 +206,9 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SL
 				uint32_t level_variation = reader.read<uint32_t>();
 				uint32_t data_pointer = reader.read<uint32_t>();
 				//std::to_string('A' + data_pointer) +
-				column_header += std::to_string(level_variation);
+				if (level_variation != 0) {
+					column_header += std::to_string(level_variation);
+				}
 			}
 
 			std::string data;
@@ -233,41 +237,68 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SL
 	}
 }
 
+// The idea of SLKs and mod files is quite bad, but I can deal with them
+// The way they are implemented is horrible though
 void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& meta_slk, bool custom, bool optional_ints) {
+	BinaryWriter sub_writer;
+
+	size_t count = 0;
 	for (const auto& [id, properties] : slk.shadow_data) {
-		// If we are writing custom objects then we only want rows with oldid set
+		// If we are writing custom objects then we only want rows with oldid set as the others are base rows
 		if (!custom && properties.contains("oldid")) {
 			continue;
 		} else if (custom && !properties.contains("oldid")) {
 			continue;
 		}
+		count++;
 
 		if (custom) {
-			writer.write_string(properties.at("oldid"));
-			writer.write_string(id);
+			sub_writer.write_string(properties.at("oldid"));
+			sub_writer.write_string(id);
 		} else {
-			writer.write_string(id);
-			writer.write<uint32_t>(0);
+			sub_writer.write_string(id);
+			sub_writer.write<uint32_t>(0);
 		}
 
-		writer.write<uint32_t>(properties.size());
+		sub_writer.write<uint32_t>(properties.size() - (properties.contains("oldid") ? 1 : 0));
 
 		for (const auto& [property_id, value] : properties) {
+			if (property_id == "oldid") {
+				continue;
+			}
+
 			std::string meta_data_key;
 			// Find the metadata ID for this field name since modification files are stupid
 			for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-				if (meta_slk.data("field", key) == property_id) {
+				if (to_lowercase_copy(meta_slk.data("field", key)) == property_id) {
 					meta_data_key = key;
-					
 					break;
 				}
 			}
 
+			// Find the metadata id without numbers at the end as SLKs and modification files are really stupid
+			int variation = 0;
 			if (meta_data_key.empty()) {
-				puts("s\n");
+				size_t nr_position = property_id.find_first_of("0123456789");
+				std::string without_numbers = property_id.substr(0, nr_position);
+
+				if (nr_position < property_id.size()) {
+					variation = std::stoi(property_id.substr(nr_position));
+				}
+
+				for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+					if (to_lowercase_copy(meta_slk.data("field", key)) == without_numbers) {
+						meta_data_key = key;
+						break;
+					}
+				}
 			}
 
-			writer.write_string(meta_data_key);
+			if (meta_data_key.empty()) {
+				puts("s");
+			}
+
+			sub_writer.write_string(meta_data_key);
 			
 			int write_type = -1;
 			const std::string type = meta_slk.data("type", meta_data_key);
@@ -292,24 +323,27 @@ void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& me
 				write_type = 3;
 			}
 
-			writer.write<uint32_t>(write_type);
+			sub_writer.write<uint32_t>(write_type);
 
 			if (optional_ints) {
-				writer.write<uint32_t>(0); // 🤔
-				writer.write<uint32_t>(0); // 🤔
+				sub_writer.write<uint32_t>(variation); // 🤔
+				sub_writer.write<uint32_t>(0);		   // 🤔
 			}
 
 			if (write_type == 0) {
-				writer.write<int>(std::stoi(value));
+				sub_writer.write<int>(std::stoi(value));
 			} else if (write_type == 1 || write_type == 2) {
-				writer.write<float>(std::stof(value));
+				sub_writer.write<float>(std::stof(value));
 			} else {
-				writer.write_c_string(value);
+				sub_writer.write_c_string(value);
 			}
 
-			writer.write<uint32_t>(0);
+			sub_writer.write<uint32_t>(0);
 		}
 	}
+
+	writer.write<uint32_t>(count);
+	writer.write_vector(sub_writer.buffer);
 }
 
 QIcon ground_texture_to_icon(uint8_t* data, const int width, const int height) {

@@ -28,6 +28,8 @@ namespace slk {
 		// column_header should be lowercase
 		template <typename T = std::string>
 		T data(std::string_view column_header, std::string_view row_header) const {
+			assert(to_lowercase_copy(column_header) == column_header);
+
 			if (shadow_data.contains(row_header) && shadow_data.at(row_header).contains(column_header)) {
 				if constexpr (std::is_same<T, std::string>()) {
 					return shadow_data.at(row_header).at(column_header);
@@ -94,7 +96,7 @@ namespace slk {
 		void merge(const SLK2& slk);
 		void merge(const ini::INI& ini);
 		void substitute(const ini::INI& ini, const std::string& section);
-		void copy_row(const std::string_view row_header, const std::string_view new_row_header);
+		void copy_row(const std::string_view row_header, const std::string_view new_row_header, bool copy_shadow_data);
 
 		void add_column(const std::string_view column_header);
 

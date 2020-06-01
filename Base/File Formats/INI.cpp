@@ -11,67 +11,45 @@ namespace ini {
 	}
 
 	void INI::load(const fs::path& path) {
-		std::stringstream file;
-		file.write((char*)hierarchy.open_file(path).buffer.data(), hierarchy.open_file(path).buffer.size());
+		std::vector<uint8_t> buffer = hierarchy.open_file(path).buffer;
+		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
 		// Strip byte order marking
-		char a, b, c;
-		a = file.get();
-		b = file.get();
-		c = file.get();
-		if (a != (char)0xEF || b != (char)0xBB || c != (char)0xBF) {
-			file.seekg(0);
+		if (view.starts_with(std::string{ (char)0xEF, (char)0xBB, (char)0xBF })) {
+			view.remove_prefix(3);
 		}
 
-		std::string line;
-		std::string current_section;
-		while (std::getline(file, line)) {
-			// Normaly ini files use ; for comments, but Blizzard uses //
-			if (line.substr(0, 2) == "//" || line.empty() || line.front() == ';') {
+		std::string_view current_section;
+
+		while (view.size()) {
+			size_t eol = view.find('\n');
+			if (eol == std::string_view::npos) {
+				eol = view.size() - 1;
+			}
+
+			if (view.starts_with("//") || view.starts_with(';') || view.starts_with('\n') || view.starts_with('\r')) {
+				view.remove_prefix(eol + 1);
 				continue;
 			}
 
-			if (line.front() == '[') {
-				std::string key = line.substr(1, line.find(']') - 1);
-
-				// If the segment already exists
-				if (ini_data.contains(key)) {
-					continue;
-				}
-				ini_data[key] = std::map<std::string, std::vector<std::string>>();
-				current_section = key;
+			if (view.front() == '[') {
+				current_section = view.substr(1, view.find(']') - 1);
 			} else {
-				size_t found = line.find_first_of('=');
-				if (found == std::string::npos) {
+				size_t found = view.find_first_of('=');
+				if (found == std::string_view::npos) {
+					view.remove_prefix(eol + 1);
 					continue;
 				}
 
-				std::string key = line.substr(0, found);
-
-				// Fix some upper/lowercase issues that appeared in 1.32. Hopefully temporary 29/02/2020
-				if (key == "minscale") {
-					key = "minScale";
-				} else if (key == "maxscale") {
-					key = "maxScale";
-				} else if (key == "texid") {
-					key = "texID";
-				} else if (key == "fixedrot") {
-					key = "fixedRot";
-				} else if (key == "fixedrot") {
-					key = "fixedRot";
-				}
-
-				std::string value = line.substr(found + 1);
+				std::string_view key = view.substr(0, found);
+				std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
 
 				if (key.empty() || value.empty()) {
+					view.remove_prefix(eol + 1);
 					continue;
 				}
 
-				if (value.back() == '\r') {
-					value.pop_back();
-				}
-
-				auto parts = split(value, ',');
+				auto parts = split(std::string(value), ',');
 				// Strip off quotes at the front/back
 				for (auto&& i : parts) {
 					if (i.size() < 2) {
@@ -84,8 +62,10 @@ namespace ini {
 						i.pop_back();
 					}
 				}
-				ini_data[current_section][key] = parts;
+
+				ini_data[std::string(current_section)][std::string(key)] = parts;
 			}
+			view.remove_prefix(eol + 1);
 		}
 	}
 

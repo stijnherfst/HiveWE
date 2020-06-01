@@ -6,9 +6,11 @@
 namespace fs = std::filesystem;
 
 namespace ini {
+
 	class INI {
 	public:
 		/// header to items to list of values to value
+		// Use abseil absl::btree_map when they fix their C++20 branch
 		std::map<std::string, std::map<std::string, std::vector<std::string>>> ini_data;
 
 		INI() = default;

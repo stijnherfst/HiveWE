@@ -138,7 +138,6 @@ namespace slk {
 
 		for (const auto& [id, properties] : slk.base_data) {
 			if (!base_data.contains(id)) {
-				//std::cout << "id: " << id << " does not exist\n";
 				continue;
 			}
 			base_data[id].insert(properties.begin(), properties.end());
@@ -151,7 +150,6 @@ namespace slk {
 	void SLK2::merge(const ini::INI& ini) {
 		for (const auto& [section_key, section_value] : ini.ini_data) {
 			if (!base_data.contains(section_key)) {
-				//std::cout << section_key << "\n";
 				continue;
 			}
 
@@ -187,6 +185,8 @@ namespace slk {
 	/// Substitutes the data of the slk with data from the INI based on a certain section key.
 	/// The keys of the section are matched with all the cells in the table and if they match will replace the value
 	void SLK2::substitute(const ini::INI& ini, const std::string& section) {
+		assert(ini.section_exists(section));
+
 		for (auto& [id, properties] : base_data) {
 			for (auto& [prop_id, prop_value] : properties) {
 				std::string data = ini.data(section, prop_value);
@@ -198,35 +198,37 @@ namespace slk {
 	}
 
 	/// Copies the row with header row_header to a new line with the new header as new_row_header
-	void SLK2::copy_row(const std::string_view row_header, std::string_view new_row_header) {
-		assert(to_lowercase_copy(row_header) == row_header);
-		assert(to_lowercase_copy(new_row_header) == new_row_header);
+	void SLK2::copy_row(const std::string_view row_header, std::string_view new_row_header, bool copy_shadow_data) {
 		assert(base_data.contains(row_header));
 		assert(!base_data.contains(new_row_header));
 
-		base_data[new_row_header] = base_data.at(row_header);
+		// Get a weird allocation error if not done via a temporary 31/05/2020
+		auto t = base_data.at(row_header);
+		base_data[new_row_header] = t;
 
-		if (shadow_data.contains(row_header)) {
+		if (copy_shadow_data && shadow_data.contains(row_header)) {
 			shadow_data[new_row_header] = shadow_data.at(row_header);
 		}
 
 		size_t index = row_headers.size();
-		column_headers.emplace(new_row_header, index);
-		index_to_column[index] = new_row_header;
+		row_headers.emplace(new_row_header, index);
+		index_to_row[index] = new_row_header;
 	}
 
 	/// Adds a (virtual) column
-	/// Since SLK2 is only a key/pair store it only emulates being table like and thus this call is very cheap memory/cpu wise
+	/// Since SLK2 is only a key/pair store it emulates being table like and thus this call is very cheap memory/cpu wise
+	/// column_header must be lowercase
 	void SLK2::add_column(const std::string_view column_header) {
+		assert(to_lowercase_copy(column_header) == column_header);
+
 		size_t index = column_headers.size();
 		column_headers.emplace(column_header, index);
 		index_to_column[index] = column_header;
 	}
 
-	// column_header and row_header should be lowercase
+	// column_header should be lowercase
 	void SLK2::set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data) {
 		assert(to_lowercase_copy(column_header) == column_header);
-		assert(to_lowercase_copy(row_header) == row_header);
 
 		if (!column_headers.contains(column_header)) {
 			add_column(column_header);
