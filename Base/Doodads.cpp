@@ -59,7 +59,9 @@ void Doodad::update() {
 	}
 }
 
-bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
+bool Doodads::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.doo");
+
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
 		std::cout << "Invalid war3map.doo file: Magic number is not W3do\n";
@@ -79,7 +81,7 @@ bool Doodads::load(BinaryReader& reader, Terrain& terrain) {
 	for (auto&& i : doodads) {
 		i.id = reader.read_string(4);
 		i.variation = reader.read<uint32_t>();
-		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
+		i.position = (reader.read<glm::vec3>() - glm::vec3(map->terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>();
 
@@ -164,62 +166,6 @@ void Doodads::save() const {
 
 	hierarchy.map_file_write("war3map.doo", writer.buffer);
 }
-
-
-void Doodads::load_destructible_modifications(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
-		std::cout << "Unknown destructible modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-	}
-
-	load_modification_table(reader, destructables_slk, destructables_meta_slk, false);
-	load_modification_table(reader, destructables_slk, destructables_meta_slk, true);
-}
-
-void Doodads::load_doodad_modifications(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
-		std::cout << "Unknown doodad modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-	}
-
-	load_modification_table(reader, doodads_slk, doodads_meta_slk, false, true);
-	load_modification_table(reader, doodads_slk, doodads_meta_slk, true, true);
-}
-
-void Doodads::save_destructible_modifications() {
-	BinaryWriter writer;
-	writer.write<uint32_t>(mod_table_write_version);
-
-	save_modification_table(writer, destructables_slk, destructables_meta_slk, false);
-	save_modification_table(writer, destructables_slk, destructables_meta_slk, true);
-
-	hierarchy.map_file_write("war3map.w3b", writer.buffer);
-}
-
-void Doodads::save_doodad_modifications() {
-	BinaryWriter writer;
-	writer.write<uint32_t>(mod_table_write_version);
-
-	save_modification_table(writer, doodads_slk, doodads_meta_slk, false, true);
-	save_modification_table(writer, doodads_slk, doodads_meta_slk, true, true);
-
-	hierarchy.map_file_write("war3map.w3d", writer.buffer);
-}
-
-//void Doodads::update_area(const QRect& area) {
-//	auto undo = std::make_unique<DoodadStateAction>();
-//
-//	// ToDo optimize with parallel for?
-//	for (auto&& i : doodads) {
-//		if (area.contains(i.position.x, i.position.y)) {
-//			undo->old_doodads.push_back(i);
-//			i.position.z = map->terrain.corners[i.position.x][i.position.y].final_ground_height();
-//			i.update();
-//			undo->new_doodads.push_back(i);
-//		}
-//	}
-//	map->terrain_undo.add_undo_action(std::move(undo));
-//}
 
 void Doodads::create() {
 	for (auto&& i : doodads) {

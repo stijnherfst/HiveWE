@@ -7,7 +7,9 @@
 #include "HiveWE.h"
 #include "Hierarchy.h"
 
-void MapInfo::load(BinaryReader& reader) {
+void MapInfo::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
+
 	const int version = reader.read<uint32_t>();
 
 	if (version != 18 && version != 25 && version != 28 && version != 31) {
@@ -134,11 +136,6 @@ void MapInfo::load(BinaryReader& reader) {
 
 		i.player_masks = reader.read<uint32_t>();
 		i.name = reader.read_c_string();
-	}
-
-	// Oftentimes when maps are protected file is cut short here with just 1 byte left instead of at least 12
-	if (map->is_protected) {
-		return;
 	}
 
 	available_upgrades.resize(reader.read<uint32_t>());

@@ -36,7 +36,7 @@ class PathingMap {
 	// For undo/redo
 	std::vector<uint8_t> old_pathing_cells_static;
 	
-	bool load(BinaryReader& reader);
+	bool load();
 	void save() const;
 
 	void dynamic_clear_area(const QRect& area);

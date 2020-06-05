@@ -24,7 +24,6 @@ QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	}
 
 	std::cout << sourceIndex.row() << "\t" << sourceIndex.column() << "\n";
-	//auto t = slk->data(sourceIndex.column(), 0);
 
 	std::string meta_key;
 	auto t = slk->index_to_column.at(sourceIndex.column());
@@ -61,7 +60,7 @@ QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int r
 	if (orientation == Qt::Orientation::Vertical) {
 		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", id_mapping[section]));
 		category = string_replaced(category, "&", "");
-		return QString::fromStdString(category + " - " + meta_slk->data("displayname", id_mapping[section]) + " (" + meta_slk->data("id", id_mapping[section]) + ")");
+		return QString::fromStdString(category + " - " + meta_slk->data("displayname", id_mapping[section]) + " (" + id_mapping[section] + ")");
 	} else {
 		return "UnitID";
 	}

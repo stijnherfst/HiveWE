@@ -1,8 +1,11 @@
 #include "Regions.h"
+#include "Hierarchy.h"
 
 #include <iostream>
 
-bool Regions::load(BinaryReader& reader) {
+bool Regions::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.w3r");
+
 	const int version = reader.read<uint32_t>();
 	if (version != 5) {
 		std::cout << "Unknown Regions file version. Attempting to load, but may crash.";

@@ -42,7 +42,6 @@ public:
 	Brush* brush = nullptr;
 	Physics physics;
 
-	bool is_protected = false;
 	bool units_loaded = false;
 
 	bool enforce_water_height_limits = true;

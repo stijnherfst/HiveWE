@@ -118,23 +118,33 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
+	custom_unit_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUnit"));
+	custom_item_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewItem"));
+	custom_doodad_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewDood"));
+	custom_destructable_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewDest"));
+	custom_ability_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewAbil"));
+	custom_buff_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewBuff"));
+	custom_upgrade_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUpgr"));
+
 	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::AllTabsHaveCloseButton);
 	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::DockAreaDynamicTabsMenuButtonVisibility);
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
 
-//	unitTableModel = new TableModel(&units_slk, &units_meta_slk, this);
+	// Units
 	unitTreeModel = new UnitTreeModel(this);
 	unitTreeModel->setSourceModel(units_table);
 	unit_explorer->setModel(unitTreeModel);
 	unit_explorer->header()->hide();
-	
+	unit_explorer->expand(unit_explorer->currentIndex());
+
 	ads::CDockWidget* unit_tab = new ads::CDockWidget("Units");
 	unit_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	unit_tab->setWidget(unit_explorer);
+	unit_tab->setIcon(custom_unit_icon->icon);
 	auto t = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
 
-//	itemTableModel = new TableModel(&items_slk, &items_meta_slk, this);
+	// Items
 	itemTreeModel = new ItemTreeModel(this);
 	itemTreeModel->setSourceModel(items_table);
 	item_explorer->setModel(itemTreeModel);
@@ -143,9 +153,10 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ads::CDockWidget* item_tab = new ads::CDockWidget("Items");
 	item_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	item_tab->setWidget(item_explorer);
+	item_tab->setIcon(custom_item_icon->icon);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, item_tab, t);
 
-//	doodadTableModel = new TableModel(&doodads_slk, &doodads_meta_slk, this);
+	// Doodads
 	doodadTreeModel = new DoodadTreeModel(this);
 	doodadTreeModel->setSourceModel(doodads_table);
 	doodad_explorer->setModel(doodadTreeModel);
@@ -154,14 +165,17 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ads::CDockWidget* doodad_tab = new ads::CDockWidget("Doodads");
 	doodad_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	doodad_tab->setWidget(doodad_explorer);
+	doodad_tab->setIcon(custom_doodad_icon->icon);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, doodad_tab, t);
 
-	ads::CDockWidget* destructible_tab = new ads::CDockWidget("Destructibles");
-	destructible_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+	// Destructables
+	ads::CDockWidget* destructable_tab = new ads::CDockWidget("Destructables");
+	destructable_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+	destructable_tab->setIcon(custom_destructable_icon->icon);
 	//destructible_tab->setWidget(explorer);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, destructible_tab, t);
+	dock_manager->addDockWidget(ads::CenterDockWidgetArea, destructable_tab, t);
 
-//	abilityTableModel = new TableModel(&abilities_slk, &abilities_meta_slk, this);
+	// Abilities
 	abilityTreeModel = new AbilityTreeModel(this);
 	abilityTreeModel->setSourceModel(abilities_table);
 	ability_explorer->setModel(abilityTreeModel);
@@ -170,9 +184,10 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ads::CDockWidget* ability_tab = new ads::CDockWidget("Abilities");
 	ability_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	ability_tab->setWidget(ability_explorer);
+	ability_tab->setIcon(custom_ability_icon->icon);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, ability_tab, t);
 
-//	upgradeTableModel = new TableModel(&upgrade_slk, &upgrade_meta_slk, this);
+	// Upgrades
 	upgradeTreeModel = new UpgradeTreeModel(this);
 	upgradeTreeModel->setSourceModel(upgrade_table);
 	upgrade_explorer->setModel(upgradeTreeModel);
@@ -181,18 +196,22 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ads::CDockWidget* upgrade_tab = new ads::CDockWidget("Upgrades");
 	upgrade_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	upgrade_tab->setWidget(upgrade_explorer);
+	upgrade_tab->setIcon(custom_upgrade_icon->icon);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, upgrade_tab, t);
 
-//	buffTableModel = new TableModel(&buff_slk, &buff_meta_slk, this);
 	buffTreeModel = new BuffTreeModel(this);
 	buffTreeModel->setSourceModel(buff_table);
 	buff_explorer->setModel(buffTreeModel);
 	buff_explorer->header()->hide();
 
+	// Buffs
 	ads::CDockWidget* buff_tab = new ads::CDockWidget("Buffs");
 	buff_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	buff_tab->setWidget(buff_explorer);
+	buff_tab->setIcon(custom_buff_icon->icon);
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, buff_tab, t);
+
+	t->setCurrentIndex(0);
 
 	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::unit); });
 	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::item); });

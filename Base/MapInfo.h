@@ -167,6 +167,6 @@ public:
 	static constexpr int write_game_version_patch = 1;
 	static constexpr int write_game_version_build = 14604;
 
-	void load(BinaryReader& reader);
+	void load();
 	void save() const;
 };

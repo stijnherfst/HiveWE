@@ -142,7 +142,7 @@ public:
 
 	~Terrain();
 
-	bool load(BinaryReader& reader);
+	bool load();
 	void create();
 	void save() const;
 	void render() const;

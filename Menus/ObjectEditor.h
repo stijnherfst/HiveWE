@@ -30,16 +30,25 @@ private:
 	QTreeView* unit_explorer = new QTreeView;
 	QTreeView* doodad_explorer = new QTreeView;
 	QTreeView* item_explorer = new QTreeView;
-	QTreeView* destructible_explorer = new QTreeView;
+	QTreeView* destructable_explorer = new QTreeView;
 	QTreeView* ability_explorer = new QTreeView;
 	QTreeView* upgrade_explorer = new QTreeView;
 	QTreeView* buff_explorer = new QTreeView;
+	
 	UnitTreeModel* unitTreeModel;
 	DoodadTreeModel* doodadTreeModel;
 	AbilityTreeModel* abilityTreeModel;
 	ItemTreeModel* itemTreeModel;
 	BuffTreeModel* buffTreeModel;
 	UpgradeTreeModel* upgradeTreeModel;
+
+	std::shared_ptr<QIconResource> custom_unit_icon;
+	std::shared_ptr<QIconResource> custom_item_icon;
+	std::shared_ptr<QIconResource> custom_doodad_icon;
+	std::shared_ptr<QIconResource> custom_destructable_icon;
+	std::shared_ptr<QIconResource> custom_ability_icon;
+	std::shared_ptr<QIconResource> custom_buff_icon;
+	std::shared_ptr<QIconResource> custom_upgrade_icon;
 
 	enum class Category {
 		unit,

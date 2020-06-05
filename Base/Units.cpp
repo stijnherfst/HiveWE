@@ -22,7 +22,9 @@ void Unit::update() {
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 }
 
-bool Units::load(BinaryReader& reader, Terrain& terrain) {
+bool Units::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3mapUnits.doo");
+
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
 		std::cout << "Invalid war3mapUnits.w3e file: Magic number is not W3do\n";
@@ -44,7 +46,7 @@ bool Units::load(BinaryReader& reader, Terrain& terrain) {
 		Unit i;
 		i.id = reader.read_string(4);
 		i.variation = reader.read<uint32_t>();
-		i.position = (reader.read<glm::vec3>() - glm::vec3(terrain.offset, 0)) / 128.f;
+		i.position = (reader.read<glm::vec3>() - glm::vec3(map->terrain.offset, 0)) / 128.f;
 		i.angle = reader.read<float>();
 		i.scale = reader.read<glm::vec3>() / 128.f;
 
@@ -207,49 +209,49 @@ void Units::save() const {
 	hierarchy.map_file_write("war3mapUnits.doo", writer.buffer);
 }
 
-void Units::load_unit_modifications(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
-		std::cout << "Unknown unit modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-	}
+//void Units::load_unit_modifications(BinaryReader& reader) {
+//	const int version = reader.read<uint32_t>();
+//	if (version != 1 && version != 2) {
+//		std::cout << "Unknown unit modification table version of " << version << " detected. Attempting to load, but may crash.\n";
+//	}
+//
+//	load_modification_table(reader, units_slk, units_meta_slk, false);
+//	load_modification_table(reader, units_slk, units_meta_slk, true);
+//}
+//
+//void Units::load_item_modifications(BinaryReader& reader) {
+//	const int version = reader.read<uint32_t>();
+//	if (version != 1 && version != 2) {
+//		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
+//	}
+//
+//	load_modification_table(reader, items_slk, items_meta_slk, false);
+//	load_modification_table(reader, items_slk, items_meta_slk, true);
+//}
 
-	load_modification_table(reader, units_slk, units_meta_slk, false);
-	load_modification_table(reader, units_slk, units_meta_slk, true);
-}
-
-void Units::load_item_modifications(BinaryReader& reader) {
-	const int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
-		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-	}
-
-	load_modification_table(reader, items_slk, items_meta_slk, false);
-	load_modification_table(reader, items_slk, items_meta_slk, true);
-}
-
-void Units::save_unit_modifications() {
-	BinaryWriter writer;
-	writer.write<uint32_t>(mod_table_write_version);
-
-	save_modification_table(writer, units_slk, units_meta_slk, false);
-	save_modification_table(writer, units_slk, units_meta_slk, true);
-
-	hierarchy.map_file_write("war3map.w3u", writer.buffer);
-}
-
-void Units::save_item_modifications() {
-	BinaryWriter writer;
-	writer.write<uint32_t>(mod_table_write_version);
-
-	save_modification_table(writer, items_slk, items_meta_slk, false);
-	save_modification_table(writer, items_slk, items_meta_slk, true);
-
-	hierarchy.map_file_write("war3map.w3t", writer.buffer);
-}
+//void Units::save_unit_modifications() {
+//	BinaryWriter writer;
+//	writer.write<uint32_t>(mod_table_write_version);
+//
+//	save_modification_table(writer, units_slk, units_meta_slk, false);
+//	save_modification_table(writer, units_slk, units_meta_slk, true);
+//
+//	hierarchy.map_file_write("war3map.w3u", writer.buffer);
+//}
+//
+//void Units::save_item_modifications() {
+//	BinaryWriter writer;
+//	writer.write<uint32_t>(mod_table_write_version);
+//
+//	save_modification_table(writer, items_slk, items_meta_slk, false);
+//	save_modification_table(writer, items_slk, items_meta_slk, true);
+//
+//	hierarchy.map_file_write("war3map.w3t", writer.buffer);
+//}
 
 
 void Units::update_area(const QRect& area) {
-	for (auto&& i : tree.query(area)) {
+	for (auto&& i : query_area(area)) {
 		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
 		i->update();
 	}
@@ -264,7 +266,7 @@ void Units::create() {
 
 		i.update();
 
-		tree.insert(&i);
+		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
 	}	
 	for (auto&& i : items) {
@@ -272,7 +274,7 @@ void Units::create() {
 
 		i.update();
 
-		tree.insert(&i);
+		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
 	}
 }

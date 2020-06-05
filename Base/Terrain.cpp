@@ -35,7 +35,9 @@ Terrain::~Terrain() {
 //	delete collision_shape;
 }
 
-bool Terrain::load(BinaryReader& reader) {
+bool Terrain::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.w3e");
+
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3E!") {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
@@ -534,26 +536,10 @@ float Terrain::interpolated_height(float x, float y) const {
 	y = std::clamp(y, 0.f, height - 1.01f);
 
 	// Biliniear interpolation
-	corners[std::ceil(x)][y].final_ground_height();
-	corners[x][std::ceil(y)].final_ground_height();
-	corners[std::ceil(x)][std::ceil(y)].final_ground_height();
-
 	float xx = glm::mix(corners[x][y].final_ground_height(), corners[std::ceil(x)][y].final_ground_height(), x - floor(x));
 	float yy = glm::mix(corners[x][std::ceil(y)].final_ground_height(), corners[std::ceil(x)][std::ceil(y)].final_ground_height(), x - floor(x));
 	return glm::mix(xx, yy, y - floor(y));
 }
-
-
-//vec4 biLerp(vec4 a, vec4 b, vec4 c, vec4 d, float s, float t)
-//{
-//	vec4 x = mix(a, b, t);
-//	vec4 y = mix(c, d, t);
-//	return mix(x, y, s);
-//}
-
-//bool Terrain::is_corner_ramp_mesh(int x, int y) {
-//	return false;
-//}
 
 bool Terrain::is_corner_ramp_entrance(int x, int y) {
 	if (x == width || y == height) {
@@ -567,10 +553,6 @@ bool Terrain::is_corner_ramp_entrance(int x, int y) {
 
 	return bottom_left.ramp && top_left.ramp && bottom_right.ramp && top_right.ramp && !(bottom_left.layer_height == top_right.layer_height && top_left.layer_height == bottom_right.layer_height);
 }
-
-//bool Terrain::is_corner_cliff(int x, int y) {
-//	return
-//}
 
 /// Constructs a minimap image with tile, cliff, and water colors. Other objects such as doodads will not be added here
 Texture Terrain::minimap_image() {

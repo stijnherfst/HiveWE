@@ -10,7 +10,7 @@ class TriggerStrings {
 
 	size_t next_id;
 public:
-	void load(BinaryReader& reader);
+	void load();
 	void save() const;
 
 	std::string string(const std::string& key) const;

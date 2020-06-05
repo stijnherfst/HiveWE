@@ -34,9 +34,11 @@ void Map::load(const fs::path& path) {
 	// Have to substitute twice since some of the keys refer to other keys in the same file
 	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
+
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"));
 	units_slk.merge(ini::INI("Units/UnitWeaponsFunc.txt"));
 	units_slk.merge(ini::INI("Units/UnitWeaponsSkin.txt"));
+	
 	units_slk.merge(slk::SLK2("Units/UnitBalance.slk"));
 	units_slk.merge(slk::SLK2("Units/unitUI.slk"));
 	units_slk.merge(slk::SLK2("Units/UnitWeapons.slk"));
@@ -160,86 +162,56 @@ void Map::load(const fs::path& path) {
 	upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
 	buff_table = new TableModel(&buff_slk, &buff_meta_slk);
 
-	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "SLK loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "SLK loading: " << delta << "ms\n";
 
 	// Trigger strings
 	if (hierarchy.map_file_exists("war3map.wts")) {
-		BinaryReader war3map_wts = hierarchy.map_file_read("war3map.wts");
-		trigger_strings.load(war3map_wts);
+		trigger_strings.load();
 	}
 
 	// Triggers (GUI and JASS)
 	if (hierarchy.map_file_exists("war3map.wtg")) {
-		BinaryReader war3map_wtg = hierarchy.map_file_read("war3map.wtg");
-		triggers.load(war3map_wtg);
+		triggers.load();
 
 		// Custom text triggers (JASS)
 		if (hierarchy.map_file_exists("war3map.wct")) {
-			BinaryReader war3map_wct = hierarchy.map_file_read("war3map.wct");
-			triggers.load_jass(war3map_wct);
+			triggers.load_jass();
 		}
 	}
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Trigger loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Trigger loading: " << delta << "ms\n";
 
-	// Protection check
-	is_protected = !hierarchy.map_file_exists("war3map.wtg");
-	std::cout << "Protected: " << (is_protected ? "True\n" : " Possibly False\n");
-
-	BinaryReader war3map_w3i = hierarchy.map_file_read("war3map.w3i");
-	info.load(war3map_w3i);
-
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
-	begin = std::chrono::steady_clock::now();
-	std::cout << "Info loading: " << delta << "ms\n";
+	info.load();
 
 	// Terrain
-	BinaryReader war3map_w3e = hierarchy.map_file_read("war3map.w3e");
-	bool success = terrain.load(war3map_w3e);
-	if (!success) {
-		return;
-	}
+	terrain.load();
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Terrain loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Terrain loading: " << delta << "ms\n";
-
-	units.tree.resize(terrain.width, terrain.height);
 
 	// Pathing Map
-	BinaryReader war3map_wpm = hierarchy.map_file_read("war3map.wpm");
-	success = pathing_map.load(war3map_wpm);
-	if (!success) {
-		return;
-	}
+	pathing_map.load();
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Pathing loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Pathing loading: " << delta << "ms\n";
 
 	// Doodads
-	BinaryReader war3map_doo = hierarchy.map_file_read("war3map.doo");
-	success = doodads.load(war3map_doo, terrain);
+	doodads.load();
 
 	if (hierarchy.map_file_exists("war3map.w3d")) {
-		BinaryReader war3map_w3d = hierarchy.map_file_read("war3map.w3d");
-		doodads.load_doodad_modifications(war3map_w3d);
+		load_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true);
 	}
 
 	if (hierarchy.map_file_exists("war3map.w3b")) {
-		BinaryReader war3map_w3b = hierarchy.map_file_read("war3map.w3b");
-		doodads.load_destructible_modifications(war3map_w3b);
+		load_modification_file("war3map.w3b", destructables_slk, destructables_meta_slk, false);
 	}
 
 	doodads.create();
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Doodad loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Doodad loading: " << delta << "ms\n";
 
 	for (const auto& i : doodads.doodads) {
 		if (!i.pathing) {
@@ -254,55 +226,61 @@ void Map::load(const fs::path& path) {
 	}
 	pathing_map.upload_dynamic_pathing();
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Doodad blitting: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Doodad blitting: " << delta << "ms\n";
 
 	// Units/Items
 	if (hierarchy.map_file_exists("war3map.w3u")) {
-		BinaryReader war3map_w3u = hierarchy.map_file_read("war3map.w3u");
-		units.load_unit_modifications(war3map_w3u);
+		load_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
 	}
 
 	if (hierarchy.map_file_exists("war3map.w3t")) {
-		BinaryReader war3map_w3t = hierarchy.map_file_read("war3map.w3t");
-		units.load_item_modifications(war3map_w3t);
+		load_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
 	}
 
 	if (hierarchy.map_file_exists("war3mapUnits.doo")) {
-		BinaryReader war3mapUnits_doo = hierarchy.map_file_read("war3mapUnits.doo");
-		units_loaded = units.load(war3mapUnits_doo, terrain);
+		units_loaded = units.load();
 
 		if (units_loaded) {
 			units.create();
 		}
 	}
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Unit loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Unit loading: " << delta << "ms\n";
+
+	// Abilities 
+	if (hierarchy.map_file_exists("war3map.w3a")) {
+		load_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
+	}
+
+	// Buffs
+	if (hierarchy.map_file_exists("war3map.w3h")) {
+		load_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
+	}
+
+	// Upgrades
+	if (hierarchy.map_file_exists("war3map.w3q")) {
+		load_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);
+	}
 
 	// Regions
 	if (hierarchy.map_file_exists("war3map.w3r")) {
-		BinaryReader war3map_w3r = hierarchy.map_file_read("war3map.w3r");
-		regions.load(war3map_w3r);
+		regions.load();
 	}
 
 	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
-		BinaryReader war3map_w3c = hierarchy.map_file_read("war3map.w3c");
-		cameras.load(war3map_w3c);
+		cameras.load();
 	}
 
 	// Sounds
 	if (hierarchy.map_file_exists("war3map.w3s")) {
-		BinaryReader war3map_w3s = hierarchy.map_file_read("war3map.w3s");
-		sounds.load(war3map_w3s);
+		sounds.load();
 	}
 
-	delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000;
+	std::cout << "Regions/cameras/sounds loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
-	std::cout << "Regions/cameras/sounds loading: " << delta << "ms\n";
 
 	camera->reset();
 
@@ -326,13 +304,19 @@ bool Map::save(const fs::path& path) {
 	pathing_map.save();
 	terrain.save();
 
-	doodads.save_destructible_modifications();
-	doodads.save_doodad_modifications();
+	save_modification_file("warmap.w3d", doodads_slk, doodads_meta_slk, true);
+	save_modification_file("warmap.w3b", destructables_slk, destructables_meta_slk, false);
 	doodads.save();
 
-	units.save_unit_modifications();
-	units.save_item_modifications();
+	save_modification_file("warmap.w3u", units_slk, units_meta_slk, false);
+	save_modification_file("warmap.w3t", items_slk, items_meta_slk, false);
 	units.save();
+
+	// Currently mod file saving does not allow for "column offsets" used by abilities
+	//save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
+
+	save_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
+	save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);
 
 	info.save();
 	trigger_strings.save();

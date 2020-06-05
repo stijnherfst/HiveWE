@@ -164,10 +164,10 @@ public:
 	std::vector<TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
-	void load(BinaryReader& reader);
+	void load();
 	void load_version_31(BinaryReader& reader, uint32_t version);
 	void load_version_pre31(BinaryReader& reader, uint32_t version);
-	void load_jass(BinaryReader& reader);
+	void load_jass();
 	void save() const;
 	void save_jass() const;
 

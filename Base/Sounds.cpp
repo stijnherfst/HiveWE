@@ -2,7 +2,11 @@
 
 #include <iostream>
 
-void Sounds::load(BinaryReader& reader) {
+#include "Hierarchy.h"
+
+void Sounds::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.w3s");
+
 	int version = reader.read<uint32_t>();
 	if (version != 1 && version != 2) {
 		std::cout << "Unknown war3map.w3s version: " << version << " Attempting to load but may crash\n";

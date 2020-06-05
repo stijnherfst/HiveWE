@@ -19,6 +19,7 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
+
 	for (int i = 0; i < units_slk.rows(); i++) {
 		std::string race = units_slk.data("race", i);
 		bool isBuilding = units_slk.data("isbldg", i) == "1";

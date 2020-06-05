@@ -37,6 +37,6 @@ class Sounds {
 public:
 	std::vector<Sound> sounds;
 
-	void load(BinaryReader& reader);
+	void load();
 	void save() const;
 };

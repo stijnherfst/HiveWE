@@ -29,6 +29,6 @@ class Regions {
 public:
 	std::vector<Region> regions;
 
-	bool load(BinaryReader& reader);
+	bool load();
 	void save() const;
 };

@@ -27,6 +27,6 @@ class GameCameras {
 public:
 	std::vector<GameCamera> cameras;
 
-	void load(BinaryReader& reader);
+	void load();
 	void save();
 };

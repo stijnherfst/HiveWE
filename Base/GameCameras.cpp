@@ -2,7 +2,10 @@
 
 #include <iostream>
 #include "HiveWE.h"
-void GameCameras::load(BinaryReader& reader) {
+
+void GameCameras::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.w3c");
+
 	int version = reader.read<uint32_t>();
 	if (version != 0) {
 		std::cout << "Unknown war3map.w3c version: " << version << " Attempting to load but may crash\n";

@@ -2,6 +2,7 @@
 
 #include <QComboBox>
 #include <QLineEdit>
+#include <QListView>
 
 #include "HiveWE.h"
 #include "Selections.h"
@@ -53,10 +54,12 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
+	find = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	ribbon_tab->addSection(selection_section);
-
+	
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
 
 	connect(ui.player, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
@@ -66,7 +69,20 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 		filter_model->setFilterRace(ui.race->currentData().toString());
 	});
 	connect(ui.search, &QLineEdit::textEdited, filter_model, &QSortFilterProxyModel::setFilterFixedString);
+	connect(ui.search, &QLineEdit::returnPressed, [&]() {
+		ui.units->setCurrentIndex(ui.units->model()->index(0, 0));
+		selection_changed(ui.units->model()->index(0, 0));
+		ui.units->setFocus();
+	});
+
+	connect(find, &QShortcut::activated, [&]() {
+		ui.search->activateWindow();
+		ui.search->setFocus();
+		ui.search->selectAll();
+	});
+
 	connect(ui.units, &QListView::clicked, this, &UnitPalette::selection_changed);
+	connect(ui.units, &QListView::activated, this, &UnitPalette::selection_changed);
 }
 
 UnitPalette::~UnitPalette() {
@@ -75,11 +91,13 @@ UnitPalette::~UnitPalette() {
 
 bool UnitPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
+		find->setEnabled(false);
 		// Remove shortcut from parent
 		selection_mode->disconnectShortcuts();
 		ribbon_tab->setParent(nullptr);
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
+		find->setEnabled(true);
 		selection_mode->enableShortcuts();
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
@@ -88,9 +106,12 @@ bool UnitPalette::event(QEvent* e) {
 }
 
 void UnitPalette::selection_changed(const QModelIndex& item) {
+	if (!item.isValid()) {
+		return;
+	}
+
 	const int row = filter_model->mapToSource(item).row();
-	const std::string id = units_slk.data(0, row);
-	brush.set_unit(id);
+	brush.set_unit(units_slk.index_to_row.at(row));
 }
 
 void UnitPalette::deactivate(QRibbonTab* tab) {

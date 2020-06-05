@@ -71,7 +71,9 @@ void Triggers::parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child
 	}
 };
 
-void Triggers::load(BinaryReader& reader) {
+void Triggers::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.wtg");
+
 	trigger_strings.load("UI/TriggerStrings.txt");
 	trigger_data.load("UI/TriggerData.txt");
 	trigger_data.substitute(world_edit_strings, "WorldEditStrings");
@@ -305,7 +307,9 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	}
 }
 
-void Triggers::load_jass(BinaryReader& reader) {
+void Triggers::load_jass() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.wct");
+
 	const uint32_t version = reader.read<uint32_t>();
 	if (version != 0x80000004) {
 		if (version == 1 || version == 0) {

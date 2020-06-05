@@ -63,16 +63,12 @@ class Doodads {
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 
-	static constexpr int mod_table_write_version = 2;
+	//static constexpr int mod_table_write_version = 2;
 public:
 	std::vector<Doodad> doodads;
 
-	bool load(BinaryReader& reader, Terrain& terrain);
+	bool load();
 	void save() const;
-	void load_destructible_modifications(BinaryReader& reader);
-	void load_doodad_modifications(BinaryReader& reader);
-	void save_destructible_modifications();
-	void save_doodad_modifications();
 	void create();
 	void render();
 

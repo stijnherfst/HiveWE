@@ -10,7 +10,8 @@
 #include "HiveWE.h"
 
 
-bool PathingMap::load(BinaryReader& reader) {
+bool PathingMap::load() {
+	BinaryReader reader = hierarchy.map_file_read("war3map.wpm");
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "MP3W") {
 		std::cout << "Invalid war3map.wpm file: Magic number is not MP3W" << std::endl;

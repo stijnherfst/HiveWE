@@ -183,16 +183,28 @@ fs::path find_warcraft_directory() {
 	}
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SLK2& meta_slk, const bool modification, bool optional_ints) {
+void load_modification_file(const std::string file_name, slk::SLK2& base_data, slk::SLK2& meta_slk, bool optional_ints) {
+	BinaryReader reader = hierarchy.map_file_read(file_name);
+
+	const int version = reader.read<uint32_t>();
+	if (version != 1 && version != 2) {
+		std::cout << "Unknown modification table version of " << version << " detected. Attempting to load, but may crash.\n";
+	}
+
+	load_modification_table(reader, base_data, meta_slk, false, optional_ints);
+	load_modification_table(reader, base_data, meta_slk, true, optional_ints);
+}
+
+void load_modification_table(BinaryReader& reader, slk::SLK2& slk, slk::SLK2& meta_slk, const bool modification, bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
 		const std::string modified_id = reader.read_string(4);
 
 		if (modification) {
-			base_data.copy_row(original_id, modified_id, false);
+			slk.copy_row(original_id, modified_id, false);
 			// Required when saving the modification table again
-			base_data.set_shadow_data("oldid", modified_id, original_id);
+			slk.set_shadow_data("oldid", modified_id, original_id);
 		}
 
 		const uint32_t modifications = reader.read<uint32_t>();
@@ -200,13 +212,15 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SL
 		for (size_t j = 0; j < modifications; j++) {
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
-			std::string column_header = to_lowercase_copy(meta_slk.data("field", modification_id));
 
+			std::string column_header = to_lowercase_copy(meta_slk.data("field", modification_id));
 			if (optional_ints) {
 				uint32_t level_variation = reader.read<uint32_t>();
 				uint32_t data_pointer = reader.read<uint32_t>();
-				//std::to_string('A' + data_pointer) +
 				if (level_variation != 0) {
+					if (meta_slk.column_headers.contains("data") && meta_slk.data<int>("data", modification_id) > 0) {
+						column_header += char('a' + data_pointer);
+					}
 					column_header += std::to_string(level_variation);
 				}
 			}
@@ -229,17 +243,36 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& base_data, slk::SL
 			reader.advance(4);
 
 			if (modification) {
-				base_data.set_shadow_data(column_header, modified_id, data);
+				slk.set_shadow_data(column_header, modified_id, data);
 			} else {
-				base_data.set_shadow_data(column_header, original_id, data);
+				slk.set_shadow_data(column_header, original_id, data);
 			}
 		}
 	}
 }
 
+void save_modification_file(const std::string file_name, slk::SLK2& slk, slk::SLK2& meta_slk, bool optional_ints) {
+	BinaryWriter writer;
+	writer.write<uint32_t>(mod_table_write_version);
+
+	save_modification_table(writer, slk, meta_slk, false, optional_ints);
+	save_modification_table(writer, slk, meta_slk, true, optional_ints);
+
+	hierarchy.map_file_write(file_name, writer.buffer);
+}
+
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
 void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& meta_slk, bool custom, bool optional_ints) {
+	// Create an temporary index to speed up field lookups
+	absl::flat_hash_map<std::string, std::string> meta_index;
+	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+		if (meta_index.contains(to_lowercase_copy(meta_slk.data("field", key)))) {
+			puts("s");
+		}
+		meta_index[to_lowercase_copy(meta_slk.data("field", key))] = key;
+	}
+
 	BinaryWriter sub_writer;
 
 	size_t count = 0;
@@ -267,18 +300,13 @@ void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& me
 				continue;
 			}
 
+			//// Find the metadata ID for this field name since modification files are stupid
 			std::string meta_data_key;
-			// Find the metadata ID for this field name since modification files are stupid
-			for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-				if (to_lowercase_copy(meta_slk.data("field", key)) == property_id) {
-					meta_data_key = key;
-					break;
-				}
-			}
 
-			// Find the metadata id without numbers at the end as SLKs and modification files are really stupid
 			int variation = 0;
-			if (meta_data_key.empty()) {
+			if (meta_index.contains(property_id)) {
+				meta_data_key = meta_index.at(property_id);
+			} else {
 				size_t nr_position = property_id.find_first_of("0123456789");
 				std::string without_numbers = property_id.substr(0, nr_position);
 
@@ -286,11 +314,8 @@ void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& me
 					variation = std::stoi(property_id.substr(nr_position));
 				}
 
-				for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-					if (to_lowercase_copy(meta_slk.data("field", key)) == without_numbers) {
-						meta_data_key = key;
-						break;
-					}
+				if (meta_index.contains(without_numbers)) {
+					meta_data_key = meta_index.at(without_numbers);
 				}
 			}
 
@@ -326,8 +351,8 @@ void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& me
 			sub_writer.write<uint32_t>(write_type);
 
 			if (optional_ints) {
-				sub_writer.write<uint32_t>(variation); // 🤔
-				sub_writer.write<uint32_t>(0);		   // 🤔
+				sub_writer.write<uint32_t>(variation);
+				sub_writer.write<uint32_t>(0); // 🤔
 			}
 
 			if (write_type == 0) {
