@@ -70,6 +70,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	//selection_section->addLayout(selection_choices_layout);
 
+	find_this = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	find_parent = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	QRibbonSection* placement_section = new QRibbonSection;
@@ -161,9 +163,28 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		doodad_filter_model->setFilterTileset(ui.tileset->currentData().toChar().toLatin1());
 	});
 
+	connect(find_this, &QShortcut::activated, [&]() {
+		ui.search->activateWindow();
+		ui.search->setFocus();
+		ui.search->selectAll();
+	});
+
+	connect(find_parent, &QShortcut::activated, [&]() {
+		ui.search->activateWindow();
+		ui.search->setFocus();
+		ui.search->selectAll();
+	});
+
 	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
+	connect(ui.search, &QLineEdit::returnPressed, [&]() {
+		ui.doodads->setCurrentIndex(ui.doodads->model()->index(0, 0));
+		selection_changed(ui.doodads->model()->index(0, 0));
+		ui.doodads->setFocus();
+	});
+
 	connect(ui.doodads, &QListView::clicked, this, &DoodadPalette::selection_changed);
+	connect(ui.doodads, &QListView::activated, this, &DoodadPalette::selection_changed);
 
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
@@ -193,12 +214,11 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	std::string id;
 	if (ui.type->currentIndex() >= 6) {
 		const int row = destructable_filter_model->mapToSource(index).row();
-		id = destructables_slk.data(0, row);
+		id = destructables_slk.index_to_row.at(row);
 	} else {
 		const int row = doodad_filter_model->mapToSource(index).row();
-		id = doodads_slk.data(0, row);
+		id = doodads_slk.index_to_row.at(row);
 	}
-
 
 	brush.set_doodad(id);
 	selection_mode->setChecked(false);

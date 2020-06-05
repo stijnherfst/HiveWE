@@ -28,8 +28,8 @@ private:
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;
 
-	//QShortcut* find = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this);
-	QShortcut* find;
+	QShortcut* find_this;
+	QShortcut* find_parent;
 
 public slots:
 	void deactivate(QRibbonTab* tab) override;

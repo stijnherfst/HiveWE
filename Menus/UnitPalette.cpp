@@ -54,8 +54,8 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
-	find = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
-
+	find_this = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	find_parent = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	ribbon_tab->addSection(selection_section);
@@ -68,6 +68,7 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	connect(ui.race, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
 		filter_model->setFilterRace(ui.race->currentData().toString());
 	});
+
 	connect(ui.search, &QLineEdit::textEdited, filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::returnPressed, [&]() {
 		ui.units->setCurrentIndex(ui.units->model()->index(0, 0));
@@ -75,7 +76,13 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 		ui.units->setFocus();
 	});
 
-	connect(find, &QShortcut::activated, [&]() {
+	connect(find_this, &QShortcut::activated, [&]() {
+		ui.search->activateWindow();
+		ui.search->setFocus();
+		ui.search->selectAll();
+	});
+
+	connect(find_parent, &QShortcut::activated, [&]() {
 		ui.search->activateWindow();
 		ui.search->setFocus();
 		ui.search->selectAll();
@@ -91,13 +98,15 @@ UnitPalette::~UnitPalette() {
 
 bool UnitPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
-		find->setEnabled(false);
 		// Remove shortcut from parent
+		find_this->setEnabled(false);
+		find_parent->setEnabled(false);
 		selection_mode->disconnectShortcuts();
 		ribbon_tab->setParent(nullptr);
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
-		find->setEnabled(true);
+		find_this->setEnabled(true);
+		find_parent->setEnabled(true);
 		selection_mode->enableShortcuts();
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
@@ -118,5 +127,7 @@ void UnitPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {
 		brush.clear_selection();
 		selection_mode->disableShortcuts();
+		find_this->setEnabled(false);
+		find_parent->setEnabled(false);
 	}
 }

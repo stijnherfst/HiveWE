@@ -12,6 +12,10 @@ public:
 	Palette(QWidget* parent = nullptr);
 	~Palette();
 
+	std::vector<QShortcut*> shortcuts;
+
+	//void addShortcut(const QKeySequence sequence, const std::vector<QWidget*>& attach_to);
+
 signals:
 	void ribbon_tab_requested(QRibbonTab* tab, QString name);
 

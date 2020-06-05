@@ -38,6 +38,9 @@ private:
 	QRibbonSection* pathing_section = new QRibbonSection;
 	AspectRatioPixmapLabel* pathing_image_label = new AspectRatioPixmapLabel;
 
+	QShortcut* find_this;
+	QShortcut* find_parent;
+
 public slots:
 	void deactivate(QRibbonTab* tab) override;
 };
