@@ -242,6 +242,11 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& slk, slk::SLK2& me
 			}
 			reader.advance(4);
 
+			if (column_header == "") {
+				std::cout << "Unknown mod id: " << modification_id << "\n";
+				continue;
+			}
+
 			if (modification) {
 				slk.set_shadow_data(column_header, modified_id, data);
 			} else {

@@ -10,7 +10,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 	if (item->tableRow > 0) {
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
-
+		
 		connect(dock_tab, &ads::CDockWidget::closeRequested, [&, dock_tab]() {
 			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
 				dock_area = nullptr;
@@ -24,6 +24,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 		view->setAlternatingRowColors(true);
 		view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));
 		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
+		view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Fixed);
 		view->setIconSize({ 24, 24 });
 		dock_tab->setWidget(view);
 
@@ -143,7 +144,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	unit_tab->setWidget(unit_explorer);
 	unit_tab->setIcon(custom_unit_icon->icon);
 	auto t = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
-
+	
 	// Items
 	itemTreeModel = new ItemTreeModel(this);
 	itemTreeModel->setSourceModel(items_table);

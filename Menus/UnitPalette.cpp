@@ -38,7 +38,6 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.player->addItem("Neutral Hostile", 24);
 	ui.player->addItem("Neutral Passive", 27);
 
-
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;

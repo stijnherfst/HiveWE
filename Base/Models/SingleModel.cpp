@@ -9,6 +9,9 @@
 #include <QDialogButtonBox>
 #include <QTimer>
 #include <QSpinBox>
+#include <QCheckBox>
+#include "FlowLayout.h"
+#include "UnitSelector.h"
 
 #include "HiveWE.h"
 
@@ -129,7 +132,7 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
 }
 
-TableDelegate::TableDelegate(QObject* parent) : QStyledItemDelegate(parent) {
+TableDelegate::TableDelegate(QWidget* parent) : QStyledItemDelegate(parent) {
 }
 
 QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
@@ -158,6 +161,55 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		QLineEdit* editor = new QLineEdit(parent);
 //		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
+	} else if (type == "targetList") {
+		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* layout = new QVBoxLayout(dialog);
+		QGridLayout* flow = new QGridLayout;
+
+		for (const auto& [key, value] : unit_editor_data.section(type)) {
+			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+				continue;
+			}
+
+			QString displayText = QString::fromStdString(value[1]);
+			displayText.replace('&', "");
+
+			QCheckBox* flag = new QCheckBox(displayText);
+			flag->setObjectName(QString::fromStdString(value[0]));
+
+			flow->addWidget(flag);
+		}
+
+		QDialogButtonBox* buttonBox = new QDialogButtonBox;
+		buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+		layout->addLayout(flow);
+		layout->addWidget(buttonBox);
+
+		dialog->show();
+
+		return dialog;
+	} else if (type == "unitList") {
+		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		dialog->resize(244, 560);
+		dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* layout = new QVBoxLayout(dialog);
+		UnitSelector* selector = new UnitSelector(dialog);
+		layout->addWidget(selector);
+
+		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+		layout->addWidget(buttonBox);
+
+		dialog->show();
+
+		return dialog;
 	} else if (type.ends_with("List")) {
 		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		dialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -167,17 +219,14 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		QPlainTextEdit* editor = new QPlainTextEdit;
 		editor->setObjectName("editor");
 
-		QDialogButtonBox* buttonBox = new QDialogButtonBox;
-		buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
 		layout->addWidget(editor);
 		layout->addWidget(buttonBox);
 
 		dialog->show();
-
-		QTimer::singleShot(0, [=]() {
-			dialog->move(parent->mapToGlobal({0, 0}));
-		});
 
 		return dialog;
 	} else if (unit_editor_data.section_exists(type)) {
@@ -210,6 +259,17 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		static_cast<QDoubleSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toDouble());
 	} else if (type == "string") {
 		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
+	} else if (type == "targetList") {
+		auto parts = model->data(index, Qt::EditRole).toString().split(',');
+		for (const auto& i : parts) {
+			QCheckBox* box = editor->findChild<QCheckBox*>(i);
+			if (box) {
+				box->setChecked(true);
+			}
+		}
+
+	} else if (type == "unitList") {
+
 	} else if (type.ends_with("List")) {
 		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(model->data(index, Qt::EditRole).toString());
 	} else if (unit_editor_data.section_exists(type)) {
@@ -237,7 +297,26 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		singlemodel->setData(index, static_cast<QDoubleSpinBox*>(editor)->value());
 	} else if (type == "string") {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
-	} else if (type.ends_with("List")) {
+	} else if (type == "unitList") {
+	
+	} else if (type == "targetList") {
+		QString result;
+		for (const auto& [key, value] : unit_editor_data.section(type)) {
+			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+				continue;
+			}
+
+			QCheckBox* box = editor->findChild<QCheckBox*>(QString::fromStdString(value[0]));
+			if (box && box->isChecked()) {
+				if (!result.isEmpty()) {
+					result += ",";
+				}
+				result += QString::fromStdString(value[0]);
+			}
+		}
+		model->setData(index, result, Qt::EditRole);
+
+	}  else if (type.ends_with("List")) {
 		singlemodel->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
 	} else if (unit_editor_data.section_exists(type)) {
 		auto combo = static_cast<QComboBox*>(editor);
@@ -248,5 +327,9 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 }
 
 void TableDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const {
-	editor->setGeometry(option.rect);
+	if (dynamic_cast<QDialog*>(editor)) {
+		
+	} else {
+		editor->setGeometry(option.rect);
+	}
 }

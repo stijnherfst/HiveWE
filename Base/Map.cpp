@@ -26,7 +26,13 @@ void Map::load(const fs::path& path) {
 	// Maybe just force everyone to suck it up and use /Units
 
 	// Units
-	units_slk = slk::SLK2("Data/Warcraft/UnitData.slk", true);
+	units_slk = slk::SLK2("Units/UnitData.slk");
+	// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files. We have to add some columns for this though
+	units_slk.add_column("missilearc2");
+	units_slk.add_column("missileart2");
+	units_slk.add_column("missilespeed2");
+	units_slk.add_column("buttonpos2");
+
 	units_meta_slk = slk::SLK2("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 	unit_editor_data = ini::INI("UI/UnitEditorData.txt");

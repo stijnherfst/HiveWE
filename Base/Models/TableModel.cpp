@@ -112,7 +112,7 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
 			return true;
 		case Qt::CheckStateRole:
 		{
-			const std::string field = slk->data(index.column(), 0);
+			const std::string field = slk->index_to_column.at(index.column());
 			if (!meta_field_to_key.contains(field)) {
 				return {};
 			}
@@ -150,7 +150,7 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const {
 
 	int flags = QAbstractTableModel::flags(index);
 
-	const std::string field = slk->data(index.column(), 0);
+	const std::string field = slk->index_to_column.at(index.column());
 	if (meta_field_to_key.contains(field)) {
 		const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
 		if (type == "bool") {
