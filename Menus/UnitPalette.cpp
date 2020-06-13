@@ -15,16 +15,6 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	list_model = new UnitListModel(this);
-	list_model->setSourceModel(units_table);
-
-	filter_model = new UnitListFilter(this);
-	filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
-	filter_model->setSourceModel(list_model);
-	filter_model->sort(0, Qt::AscendingOrder);
-
-	ui.units->setModel(filter_model);
-
 	for (const auto& player : map->info.players) {
 		std::string color_lookup = std::to_string(player.internal_number);
 		if (color_lookup.size() == 1) {
@@ -37,13 +27,6 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	}
 	ui.player->addItem("Neutral Hostile", 24);
 	ui.player->addItem("Neutral Passive", 27);
-
-	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
-		if (key == "Sort" || key == "NumValues") {
-			continue;
-		}
-		ui.race->addItem(QString::fromStdString(value[1]), QString::fromStdString(value[0]));
-	}
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -64,31 +47,21 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	connect(ui.player, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
 		brush.player_id = ui.player->currentData().toInt();
 	});
-	connect(ui.race, QOverload<int>::of(&QComboBox::currentIndexChanged), [&]() {
-		filter_model->setFilterRace(ui.race->currentData().toString());
-	});
-
-	connect(ui.search, &QLineEdit::textEdited, filter_model, &QSortFilterProxyModel::setFilterFixedString);
-	connect(ui.search, &QLineEdit::returnPressed, [&]() {
-		ui.units->setCurrentIndex(ui.units->model()->index(0, 0));
-		selection_changed(ui.units->model()->index(0, 0));
-		ui.units->setFocus();
-	});
 
 	connect(find_this, &QShortcut::activated, [&]() {
-		ui.search->activateWindow();
-		ui.search->setFocus();
-		ui.search->selectAll();
+		activateWindow();
+		ui.selector->search->setFocus();
+		ui.selector->search->selectAll();
 	});
 
 	connect(find_parent, &QShortcut::activated, [&]() {
-		ui.search->activateWindow();
-		ui.search->setFocus();
-		ui.search->selectAll();
+		activateWindow();
+		ui.selector->search->setFocus();
+		ui.selector->search->selectAll();
 	});
 
-	connect(ui.units, &QListView::clicked, this, &UnitPalette::selection_changed);
-	connect(ui.units, &QListView::activated, this, &UnitPalette::selection_changed);
+	
+	connect(ui.selector, &UnitSelector::unitSelected, [&](const std::string& id) { brush.set_unit(id); });
 }
 
 UnitPalette::~UnitPalette() {
@@ -111,15 +84,6 @@ bool UnitPalette::event(QEvent* e) {
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
 	}
 	return QWidget::event(e);
-}
-
-void UnitPalette::selection_changed(const QModelIndex& item) {
-	if (!item.isValid()) {
-		return;
-	}
-
-	const int row = filter_model->mapToSource(item).row();
-	brush.set_unit(units_slk.index_to_row.at(row));
 }
 
 void UnitPalette::deactivate(QRibbonTab* tab) {

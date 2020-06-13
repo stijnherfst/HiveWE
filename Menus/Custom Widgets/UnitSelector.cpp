@@ -41,4 +41,21 @@ UnitSelector::UnitSelector(QWidget* parent) : QWidget(parent) {
 		units->setCurrentIndex(units->model()->index(0, 0));
 		units->setFocus();
 	});
+
+	connect(units, &QListView::activated, [&](const QModelIndex& index) {
+		const int row = filter_model->mapToSource(index).row();
+		emit unitSelected(units_slk.index_to_row.at(row));
+	});
+}
+
+void UnitSelector::forceSelection() {
+	if (units->selectionModel()->selectedRows().isEmpty()) {
+		return;
+	}
+	QModelIndex index = units->selectionModel()->selectedRows().front();
+	if (!index.isValid()) {
+		return;
+	}
+	const int row = filter_model->mapToSource(index).row();
+	emit unitSelected(units_slk.index_to_row.at(row));
 }

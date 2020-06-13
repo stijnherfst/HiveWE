@@ -1,3 +1,5 @@
+#pragma once
+
 #include "UnitListModel.h"
 
 #include <QListView>
@@ -10,11 +12,16 @@ class UnitSelector : public QWidget {
 public:
 	UnitSelector(QWidget* parent = nullptr);
 
-private:
 	UnitListModel* list_model;
 	UnitListFilter* filter_model;
 
 	QComboBox* race;
 	QLineEdit* search;
 	QListView* units;
+
+public slots:
+	void forceSelection();
+
+signals:
+	void unitSelected(std::string id);
 };

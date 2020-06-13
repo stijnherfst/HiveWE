@@ -23,8 +23,8 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 		view->horizontalHeader()->hide();
 		view->setAlternatingRowColors(true);
 		view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));
-		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 		view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Fixed);
+		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 		view->setIconSize({ 24, 24 });
 		dock_tab->setWidget(view);
 

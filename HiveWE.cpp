@@ -71,7 +71,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "x86_64")) {
+	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "Warcraft III Launcher.exe")) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
@@ -216,14 +216,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
-//	try {
-		map->load("Data/Test Map/");
-	//} catch (std::out_of_range e) {
-	//	std::cout << e.what() << "\n";
-	//} catch (std::exception e) {
-	//	std::cout << e.what() << "\n";
-	//}
-
+	map->load("Data/Test Map/");
 }
 
 void HiveWE::load_folder() {
@@ -399,7 +392,7 @@ void HiveWE::play_test() {
 		return;
 	}
 	QProcess* warcraft = new QProcess;
-	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "x86_64" / "Warcraft III.exe").string());
+	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "_retail_" / "x86_64" / "Warcraft III.exe").string());
 	QStringList arguments;
 	arguments << "-launch" << "-loadfile" << QString::fromStdString(map->filesystem_path.string());
 
@@ -436,7 +429,7 @@ void HiveWE::switch_warcraft() {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "")
 			directory = hierarchy.warcraft_directory;
-	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "x86_64"));
+	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "Warcraft III Launcher.exe"));
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 

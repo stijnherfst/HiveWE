@@ -25,6 +25,7 @@ public:
 
 	explicit SingleModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent = nullptr);
 	void setID(const std::string id);
+	std::string getID() const;
 	const std::vector<std::string>& getMapping() const {
 		return id_mapping;
 	}

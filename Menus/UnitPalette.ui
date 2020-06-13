@@ -36,32 +36,19 @@
     </layout>
    </item>
    <item>
-    <widget class="QComboBox" name="race">
-     <property name="maxVisibleItems">
-      <number>20</number>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLineEdit" name="search">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="placeholderText">
-      <string>Search</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QListView" name="units">
-     <property name="uniformItemSizes">
-      <bool>true</bool>
-     </property>
-    </widget>
+    <widget class="UnitSelector" name="selector" native="true"/>
    </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>UnitSelector</class>
+   <extends>QWidget</extends>
+   <header>UnitSelector.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
