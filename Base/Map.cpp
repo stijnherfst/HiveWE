@@ -380,7 +380,7 @@ void Map::render() {
 	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 	// Render Terrain
-	terrain.render();
+	terrain.render_ground();
 	
 	// Render Doodads
 	if (render_doodads) {
@@ -399,6 +399,8 @@ void Map::render() {
 	}
 
 	render_manager.render(render_lighting);
+
+	terrain.render_water();
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();

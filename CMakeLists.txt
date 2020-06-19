@@ -121,6 +121,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/VariableEditor.cpp"
 	"Menus/Custom Widgets/TriggerExplorer.cpp"
 	"Menus/Custom Widgets/UnitSelector.cpp"
+	"Menus/Custom Widgets/GenericSelectorList.cpp"
 )
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})

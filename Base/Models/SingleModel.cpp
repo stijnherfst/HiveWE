@@ -14,6 +14,7 @@
 #include <QPushButton>
 
 #include "UnitSelector.h"
+#include "GenericSelectorList.h"
 
 #include "HiveWE.h"
 
@@ -268,6 +269,10 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		dialog->show();
 
 		return dialog;
+
+		//GenericSelectorList* list = new GenericSelectorList(parent);
+
+
 	} else if (type.ends_with("List")) {
 		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		dialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -329,7 +334,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
-		auto parts = model->data(index, Qt::EditRole).toString().split(',');
+		auto parts = model->data(index, Qt::EditRole).toString().split(',', QString::SkipEmptyParts);
 		for (const auto& i : parts) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(QString::fromStdString(units_slk.data("name", i.toStdString())));

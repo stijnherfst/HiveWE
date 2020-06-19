@@ -145,7 +145,8 @@ public:
 	bool load();
 	void create();
 	void save() const;
-	void render() const;
+	void render_ground() const;
+	void render_water() const;
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old);
 
