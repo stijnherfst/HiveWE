@@ -46,7 +46,10 @@ void Sounds::load() {
 			reader.read_c_string();
 			reader.read_c_string();
 			reader.read_c_string();
-			reader.advance(18);
+			reader.advance(4); // int?
+			reader.read_c_string();
+			reader.advance(4); // int?
+			reader.advance(13);
 		}
 	}
 }
