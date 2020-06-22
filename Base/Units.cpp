@@ -292,6 +292,7 @@ void Units::render() const {
 	}
 }
 
+// Will assign a unique creation number
 Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	Unit unit;
 	unit.id = id;
@@ -301,13 +302,14 @@ Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	unit.scale = glm::vec3(1.f);
 	unit.angle = 0.f;
 	unit.random = { 1, 0, 0, 0 };
-
+	unit.creation_number = ++Unit::auto_increment;
 	unit.update();
 
 	units.push_back(unit);
 	return units.back();
 }
 
+// Assumes you will set a unique creation number yourself
 Unit& Units::add_unit(Unit unit) {
 	units.push_back(unit);
 	return units.back();

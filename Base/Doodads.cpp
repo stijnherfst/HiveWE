@@ -201,6 +201,7 @@ void Doodads::render() {
 	}
 }
 
+// Will assign a creation number
 Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	Doodad doodad;
 	doodad.id = id;
@@ -209,6 +210,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.position = position;
 	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
+	doodad.creation_number = ++Doodad::auto_increment;
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
@@ -223,6 +225,8 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	return doodads.back();
 }
 
+
+// You will have to manually set a creation number
 Doodad& Doodads::add_doodad(Doodad doodad) {
 	doodads.push_back(doodad);
 	return doodads.back();

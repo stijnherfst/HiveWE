@@ -68,6 +68,9 @@ public:
 	virtual void render_clipboard() const {}
 	virtual void render_brush() const;
 
+	virtual bool can_place() {
+		return true;
+	};
 	virtual void apply_begin() {};
 	virtual void apply() = 0;
 	virtual void apply_end() {};

@@ -42,6 +42,10 @@ UnitSelector::UnitSelector(QWidget* parent) : QWidget(parent) {
 		units->setFocus();
 	});
 
+	connect(units, &QListView::clicked, [&](const QModelIndex& index) {
+		const int row = filter_model->mapToSource(index).row();
+		emit unitSelected(units_slk.index_to_row.at(row));
+	});
 	connect(units, &QListView::activated, [&](const QModelIndex& index) {
 		const int row = filter_model->mapToSource(index).row();
 		emit unitSelected(units_slk.index_to_row.at(row));

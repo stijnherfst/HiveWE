@@ -61,7 +61,10 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	});
 
 	
-	connect(ui.selector, &UnitSelector::unitSelected, [&](const std::string& id) { brush.set_unit(id); });
+	connect(ui.selector, &UnitSelector::unitSelected, [&](const std::string& id) { 
+		brush.set_unit(id); 
+		selection_mode->setChecked(false);
+	});
 }
 
 UnitPalette::~UnitPalette() {

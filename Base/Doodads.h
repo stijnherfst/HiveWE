@@ -37,10 +37,6 @@ struct Doodad {
 	std::shared_ptr<StaticMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 
-	Doodad() {
-		creation_number = ++auto_increment;
-	}
-
 	void update();
 };
 

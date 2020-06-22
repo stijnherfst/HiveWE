@@ -146,7 +146,7 @@ void UnitBrush::place_clipboard() {
 	apply_begin();
 	for (const auto& i : clipboard) {
 		Unit& new_unit = map->units.add_unit(i);
-
+		new_unit.creation_number = ++Unit::auto_increment;
 		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
 		
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);

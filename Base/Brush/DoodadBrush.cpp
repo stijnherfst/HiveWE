@@ -163,7 +163,6 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 			}
 			map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
 		}
-		//doodad_state_undo
 	}
 }
 
@@ -288,7 +287,7 @@ void DoodadBrush::place_clipboard() {
 	apply_begin();
 	for (const auto& i : clipboard) {
 		Doodad& new_doodad = map->doodads.add_doodad(i);
-
+		new_doodad.creation_number = ++Doodad::auto_increment;
 		glm::vec3 final_position;
 		if (clipboard_free_placement) {
 			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);

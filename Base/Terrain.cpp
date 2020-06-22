@@ -385,35 +385,12 @@ void Terrain::render_ground() const {
 	for (const auto& i : cliff_meshes) {
 		i->render();
 	}
-
-
-	// Render water
-	/*water_shader->use();
-
-	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &camera->projection_view[0][0]);
-	gl->glUniform4fv(1, 1, &shallow_color_min[0]);
-	gl->glUniform4fv(2, 1, &shallow_color_max[0]);
-	gl->glUniform4fv(3, 1, &deep_color_min[0]);
-	gl->glUniform4fv(4, 1, &deep_color_max[0]);
-	gl->glUniform1f(5, water_offset);
-	gl->glUniform1i(6, current_texture);
-
-	gl->glBindTextureUnit(0, water_height);
-	gl->glBindTextureUnit(1, ground_corner_height);
-	gl->glBindTextureUnit(2, water_exists);
-	gl->glBindTextureUnit(3, water_texture_array);
-
-	gl->glEnableVertexAttribArray(0);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
-
-	gl->glDisableVertexAttribArray(0);*/
 }
 
 void Terrain::render_water() const {
+	gl->glEnable(GL_BLEND);
+	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	water_shader->use();
 
 	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &camera->projection_view[0][0]);
@@ -437,8 +414,6 @@ void Terrain::render_water() const {
 	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
 
 	gl->glDisableVertexAttribArray(0);
-
-	gl->glEnable(GL_BLEND);
 }
 
 void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {

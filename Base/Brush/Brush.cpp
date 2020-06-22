@@ -139,6 +139,11 @@ void Brush::key_press_event(QKeyEvent* event) {
 		case Qt::Key_Delete:
 			delete_selection();
 			break;
+		case Qt::Key_X:
+			if (event->modifiers() & Qt::ControlModifier) {
+				cut_selection();
+			}
+			break;
 		case Qt::Key_C:
 			if (event->modifiers() & Qt::ControlModifier) {
 				copy_selection();
@@ -174,12 +179,13 @@ void Brush::mouse_press_event(QMouseEvent* event) {
 			selection_started = true;
 			selection_start = input_handler.mouse_world;
 		}
-	} else if (mode == Mode::placement) {
+	} else if (mode == Mode::placement && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
+		// Check if ellegible for placement
 		if (event->button() == Qt::LeftButton) {
 			apply_begin();
 			apply();
 		}
-	} else if (mode == Mode::pasting) {
+	} else if (mode == Mode::pasting && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 		clear_selection();
 		place_clipboard();
 		mode = Mode::selection;
