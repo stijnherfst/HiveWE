@@ -18,67 +18,66 @@ namespace mdx {
 		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
 	};
 
-
 	void AnimatedData::load_tracks(BinaryReader& reader) {
 		TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 
 		switch (tag) {
-			case TrackTag::KMTF:
-			case TrackTag::KLAS:
-			case TrackTag::KLAE:
-			case TrackTag::KRTX:
-			case TrackTag::KCRL:
-				tracks.emplace(tag, TrackHeader<uint32_t>(reader));
-				break;
-			case TrackTag::KMTA:
-			case TrackTag::KGAO:
-			case TrackTag::KLAI:
-			case TrackTag::KLBI:
-			case TrackTag::KLAV:
-			case TrackTag::KATV:
-			case TrackTag::KPEE:
-			case TrackTag::KPEG:
-			case TrackTag::KPLN:
-			case TrackTag::KPLT:
-			case TrackTag::KPEL:
-			case TrackTag::KPES:
-			case TrackTag::KPEV:
-			case TrackTag::KP2S:
-			case TrackTag::KP2R:
-			case TrackTag::KP2L:
-			case TrackTag::KP2G:
-			case TrackTag::KP2E:
-			case TrackTag::KP2N:
-			case TrackTag::KP2W:
-			case TrackTag::KP2V:
-			case TrackTag::KRHA:
-			case TrackTag::KRHB:
-			case TrackTag::KRAL:
-			case TrackTag::KRVS:
-			case TrackTag::KFCA:
-			case TrackTag::KFTC:
-			case TrackTag::KMTE:
-				tracks.emplace(tag, TrackHeader<float>(reader));
-				break;
-			case TrackTag::KTAT:
-			case TrackTag::KTAS:
-			case TrackTag::KGAC:
-			case TrackTag::KLAC:
-			case TrackTag::KLBC:
-			case TrackTag::KTTR:
-			case TrackTag::KCTR:
-			case TrackTag::KRCO:
-			case TrackTag::KGTR:
-			case TrackTag::KGSC:
-			case TrackTag::KFC3:
-				tracks.emplace(tag, TrackHeader<glm::vec3>(reader));
-				break;
-			case TrackTag::KTAR:
-			case TrackTag::KGRT:
-				tracks.emplace(tag, TrackHeader<glm::quat>(reader));
-				break;
-			default:
-				std::cout << "Invalid Track Tag " << static_cast<int>(tag) << "\n";
+		case TrackTag::KMTF:
+		case TrackTag::KLAS:
+		case TrackTag::KLAE:
+		case TrackTag::KRTX:
+		case TrackTag::KCRL:
+			tracks.emplace(tag, TrackHeader<uint32_t>(reader));
+			break;
+		case TrackTag::KMTA:
+		case TrackTag::KGAO:
+		case TrackTag::KLAI:
+		case TrackTag::KLBI:
+		case TrackTag::KLAV:
+		case TrackTag::KATV:
+		case TrackTag::KPEE:
+		case TrackTag::KPEG:
+		case TrackTag::KPLN:
+		case TrackTag::KPLT:
+		case TrackTag::KPEL:
+		case TrackTag::KPES:
+		case TrackTag::KPEV:
+		case TrackTag::KP2S:
+		case TrackTag::KP2R:
+		case TrackTag::KP2L:
+		case TrackTag::KP2G:
+		case TrackTag::KP2E:
+		case TrackTag::KP2N:
+		case TrackTag::KP2W:
+		case TrackTag::KP2V:
+		case TrackTag::KRHA:
+		case TrackTag::KRHB:
+		case TrackTag::KRAL:
+		case TrackTag::KRVS:
+		case TrackTag::KFCA:
+		case TrackTag::KFTC:
+		case TrackTag::KMTE:
+			tracks.emplace(tag, TrackHeader<float>(reader));
+			break;
+		case TrackTag::KTAT:
+		case TrackTag::KTAS:
+		case TrackTag::KGAC:
+		case TrackTag::KLAC:
+		case TrackTag::KLBC:
+		case TrackTag::KTTR:
+		case TrackTag::KCTR:
+		case TrackTag::KRCO:
+		case TrackTag::KGTR:
+		case TrackTag::KGSC:
+		case TrackTag::KFC3:
+			tracks.emplace(tag, TrackHeader<glm::vec3>(reader));
+			break;
+		case TrackTag::KTAR:
+		case TrackTag::KGRT:
+			tracks.emplace(tag, TrackHeader<glm::quat>(reader));
+			break;
+		default:
+			std::cout << "Invalid Track Tag " << static_cast<int>(tag) << "\n";
 		}
 	}
 
@@ -107,30 +106,31 @@ namespace mdx {
 		}
 	}
 
-	void Node::getVisibility(float& out, SkeletalModelInstance& instance) const {
-		out = 1.0f;
+	float Node::getVisibility(SkeletalModelInstance& instance) const {
+		return 1.0f;
 	}
 
-	void Layer::getVisibility(float& out, int frame, const SkeletalModelInstance& instance) const {
+	float Layer::getVisibility(int frame, const SkeletalModelInstance& instance) const {
 		if (animated_data.has_track(TrackTag::KMTA)) {
-			animated_data.track<float>(TrackTag::KMTA).matrixEaterInterpolate(out, frame, instance, alpha);
+			return animated_data.track<float>(TrackTag::KMTA).matrixEaterInterpolate(frame, instance, alpha);
 		} else {
-			out = alpha;
+			return alpha;
 		}
 	}
 
-	void GeosetAnimation::getColor(glm::vec3& out, int frame, SkeletalModelInstance& instance) const {
+	glm::vec3 GeosetAnimation::getColor(int frame, SkeletalModelInstance& instance) const {
 		if (animated_data.has_track(TrackTag::KGAC)) {
-			animated_data.track<glm::vec3>(TrackTag::KGAC).matrixEaterInterpolate(out, frame, instance, color);
+			return animated_data.track<glm::vec3>(TrackTag::KGAC).matrixEaterInterpolate(frame, instance, color);
 		} else {
-			out = color;
+			return color;
 		}
 	}
-	void GeosetAnimation::getVisibility(float& out, int frame, SkeletalModelInstance& instance) const {
+
+	float GeosetAnimation::getVisibility(int frame, SkeletalModelInstance& instance) const {
 		if (animated_data.has_track(TrackTag::KGAO)) {
-			animated_data.track<float>(TrackTag::KGAO).matrixEaterInterpolate(out, frame, instance, alpha);
+			return animated_data.track<float>(TrackTag::KGAO).matrixEaterInterpolate(frame, instance, alpha);
 		} else {
-			out = alpha;
+			return alpha;
 		}
 	}
 
@@ -149,60 +149,60 @@ namespace mdx {
 			uint32_t header = reader.read<uint32_t>();
 
 			switch (static_cast<ChunkTag>(header)) {
-				case ChunkTag::VERS:
-					reader.advance(4);
-					version = reader.read<uint32_t>();
-					break;
-				case ChunkTag::SEQS:
-					read_SEQS_chunk(reader);
-					break;
-				case ChunkTag::GLBS:
-					read_GLBS_chunk(reader);
-					break;
-				case ChunkTag::MTLS:
-					read_MTLS_chunk(reader);
-					break;
-				case ChunkTag::TEXS:
-					read_TEXS_chunk(reader);
-					break;
-				case ChunkTag::GEOS:
-					read_GEOS_chunk(reader);
-					break;
-				case ChunkTag::GEOA:
-					read_GEOA_chunk(reader);
-					break;
-				case ChunkTag::BONE:
-					read_BONE_chunk(reader);
-					break;
-				case ChunkTag::LITE:
-					read_LITE_chunk(reader);
-					break;
-				case ChunkTag::HELP:
-					read_HELP_chunk(reader);
-					break;
-				case ChunkTag::ATCH:
-					read_ATCH_chunk(reader);
-					break;
-				case ChunkTag::PIVT:
-					read_PIVT_chunk(reader);
-					break;
-				case ChunkTag::PREM:
-					read_PREM_chunk(reader);
-					break;
-				case ChunkTag::PRE2:
-					read_PRE2_chunk(reader);
-					break;
-				case ChunkTag::RIBB:
-					read_RIBB_chunk(reader);
-					break;
-				case ChunkTag::EVTS:
-					read_EVTS_chunk(reader);
-					break;
-				case ChunkTag::CLID:
-					read_CLID_chunk(reader);
-					break;
-				default:
-					reader.advance(reader.read<uint32_t>());
+			case ChunkTag::VERS:
+				reader.advance(4);
+				version = reader.read<uint32_t>();
+				break;
+			case ChunkTag::SEQS:
+				read_SEQS_chunk(reader);
+				break;
+			case ChunkTag::GLBS:
+				read_GLBS_chunk(reader);
+				break;
+			case ChunkTag::MTLS:
+				read_MTLS_chunk(reader);
+				break;
+			case ChunkTag::TEXS:
+				read_TEXS_chunk(reader);
+				break;
+			case ChunkTag::GEOS:
+				read_GEOS_chunk(reader);
+				break;
+			case ChunkTag::GEOA:
+				read_GEOA_chunk(reader);
+				break;
+			case ChunkTag::BONE:
+				read_BONE_chunk(reader);
+				break;
+			case ChunkTag::LITE:
+				read_LITE_chunk(reader);
+				break;
+			case ChunkTag::HELP:
+				read_HELP_chunk(reader);
+				break;
+			case ChunkTag::ATCH:
+				read_ATCH_chunk(reader);
+				break;
+			case ChunkTag::PIVT:
+				read_PIVT_chunk(reader);
+				break;
+			case ChunkTag::PREM:
+				read_PREM_chunk(reader);
+				break;
+			case ChunkTag::PRE2:
+				read_PRE2_chunk(reader);
+				break;
+			case ChunkTag::RIBB:
+				read_RIBB_chunk(reader);
+				break;
+			case ChunkTag::EVTS:
+				read_EVTS_chunk(reader);
+				break;
+			case ChunkTag::CLID:
+				read_CLID_chunk(reader);
+				break;
+			default:
+				reader.advance(reader.read<uint32_t>());
 			}
 		}
 
@@ -283,7 +283,6 @@ namespace mdx {
 				reader.advance(byte_count);
 			}
 
-
 			reader.advance(4); // UVAS
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
@@ -302,7 +301,7 @@ namespace mdx {
 
 		while (total_size < size) {
 			total_size += reader.read<uint32_t>();
-		
+
 			Material material;
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
@@ -324,10 +323,10 @@ namespace mdx {
 				layer.alpha = reader.read<float>();
 
 				if (version > 800) {
-					reader.advance(4); // emissiveGain
+					reader.advance(4);	// emissiveGain
 					reader.advance(12); // fresnelColor
-					reader.advance(4); // fresnelOpacity
-					reader.advance(4); // fresnelTeamColor
+					reader.advance(4);	// fresnelOpacity
+					reader.advance(4);	// fresnelTeamColor
 				}
 
 				while (reader.position < reader_pos + size) {
@@ -662,7 +661,7 @@ namespace mdx {
 		for (auto& i : emitters1) {
 			F(i.node);
 		}
-	
+
 		for (auto& i : emitters2) {
 			F(i.node);
 		}
@@ -679,4 +678,4 @@ namespace mdx {
 			F(i.node);
 		}
 	}
-}
+} // namespace mdx

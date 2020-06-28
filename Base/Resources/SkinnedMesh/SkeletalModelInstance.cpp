@@ -89,8 +89,7 @@ void SkeletalModelInstance::updateNodes(bool forced) {
 	} else {
 		// update skeleton to position based on animation @ time
 		for (auto& node : renderNodes) {
-			float visibility;
-			node.node.getVisibility(visibility, (*this));
+			float visibility = node.node.getVisibility(*this);
 			bool objectVisible = visibility >= MAGIC_RENDER_SHOW_CONSTANT;
 			bool nodeVisible = forced || (!node.parent || node.parent->visible) && objectVisible;
 
@@ -128,17 +127,17 @@ void SkeletalModelInstance::updateNodes(bool forced) {
 						// the code I didn't deliver on it and have been forgetting for half a year since
 						// then.
 						// (The same is true for KGSC and KGRT further below but I will omit duplicate comments)
-						node.node.getValue<glm::vec3>(localLocation, mdx::TrackTag::KGTR, *this, TRANSLATION_IDENTITY);
+						localLocation = node.node.getValue<glm::vec3>(mdx::TrackTag::KGTR, *this, TRANSLATION_IDENTITY);
 					}
 
 					// Rotation
 					if (forced || true /* variants */) {
-						node.node.getValue<glm::quat>(localRotation, mdx::TrackTag::KGRT, *this, ROTATION_IDENTITY);
+						localRotation = node.node.getValue<glm::quat>(mdx::TrackTag::KGRT, *this, ROTATION_IDENTITY);
 					}
 
 					// Scale
 					if (forced || true /* variants */) {
-						node.node.getValue<glm::vec3>(localScale, mdx::TrackTag::KGSC, *this, SCALE_IDENTITY);
+						localScale = node.node.getValue<glm::vec3>(mdx::TrackTag::KGSC, *this, SCALE_IDENTITY);
 					}
 
 					node.dirty = true;

@@ -474,16 +474,8 @@ void fromRotationTranslationScaleOrigin(const glm::quat& q, const glm::vec3& v, 
 	out[3][3] = 1;
 #endif
 }
-void quatMul(const glm::quat& left, const glm::quat& right, glm::quat dest) {
-	dest.x = left.x * right.w + left.w * right.x + left.y * right.z - left.z * right.y;
-	dest.y = left.y * right.w + left.w * right.y + left.z * right.x - left.x * right.z;
-	dest.z = left.z * right.w + left.w * right.z + left.x * right.y - left.y * right.x;
-	dest.w = left.w * right.w - left.x * right.x - left.y * right.y - left.z * right.z;
-};
 
-float lerp(float a, float b, float t) {
-	return a + t * (b - a);
-}
+
 float hermite(float a, float aOutTan, float bInTan, float b, float t) {
 	float factorTimes2 = t * t;
 	float factor1 = factorTimes2 * (2 * t - 3) + 1;
@@ -507,132 +499,71 @@ template <typename T>
 inline void interpolate(T& out, const T* start, const T* outTan, const T* inTan, const T* end, float t, int interpolationType) {
 	out = *start;
 }
-template <>
-void interpolate<float>(float& out, const float* start, const float* outTan, const float* inTan, const float* end, float t, int interpolationType) {
+
+float interpolate(const float* start, const float* outTan, const float* inTan, const float* end, float t, int interpolationType) {
 	switch (interpolationType) {
-	case 0:
-		out = *start;
-		return;
-	case 1: // LINEAR
-		out = lerp(*start, *end, t);
-		return;
-	case 2: // HERMITE
-		out = hermite(*start, *outTan, *inTan, *end, t);
-		return;
-	case 3: // BEZIER
-		out = bezier(*start, *outTan, *inTan, *end, t);
-		return;
+		case 0:
+			return *start;
+		case 1: // LINEAR
+			return glm::mix(*start, *end, t);
+		case 2: // HERMITE
+			return hermite(*start, *outTan, *inTan, *end, t);
+		case 3: // BEZIER
+			return bezier(*start, *outTan, *inTan, *end, t);
 	}
-}
-template <>
-void interpolate<glm::vec3>(glm::vec3& out, const glm::vec3* start, const glm::vec3* outTan, const glm::vec3* inTan, const glm::vec3* end, float t, int interpolationType) {
-	switch (interpolationType) {
-	case 0:
-		out = *start;
-		return;
-	case 1: // LINEAR
-		out.x = lerp(start->x, end->x, t);
-		out.y = lerp(start->y, end->y, t);
-		out.z = lerp(start->z, end->z, t);
-		return;
-	case 2: // HERMITE
-		out.x = hermite(start->x, outTan->x, inTan->x, end->x, t);
-		out.y = hermite(start->y, outTan->y, inTan->y, end->y, t);
-		out.z = hermite(start->z, outTan->z, inTan->z, end->z, t);
-		return;
-	case 3: // BEZIER
-		out.x = bezier(start->x, outTan->x, inTan->x, end->x, t);
-		out.y = bezier(start->y, outTan->y, inTan->y, end->y, t);
-		out.z = bezier(start->z, outTan->z, inTan->z, end->z, t);
-		return;
-	}
-}
-template <>
-void interpolate<glm::quat>(glm::quat& out, const glm::quat* start, const glm::quat* outTan, const glm::quat* inTan, const glm::quat* end, float t, int interpolationType) {
-	switch (interpolationType) {
-	case 0:
-		out = *start;
-		return;
-	case 1: // LINEAR
-		//slerp(out, *start, *end, t);
-		out = glm::slerp(*start, *end, t);
-		return;
-	case 2: // HERMITE
-		// GLM uses both {x, y, z, w} and {w, x, y, z} convention, in different places, sometimes.
-		// Their squad is {w, x, y, z} but we are elsewhere using {x, y, z, w}, so we will
-		// continue using the copy of the Matrix Eater "ghostwolfSquad" for now.
-		//out = glm::squad(*start, *outTan, *inTan, *end, t);
-		ghostwolfSquad(out, start, outTan, inTan, end, t);
-		return;
-	case 3: // BEZIER
-		// GLM uses both {x, y, z, w} and {w, x, y, z} convention, in different places, sometimes.
-		// Their squad is {w, x, y, z} but we are elsewhere using {x, y, z, w}, so we will
-		// continue using the copy of the Matrix Eater "ghostwolfSquad" for now.
-		//out = glm::squad(*start, *outTan, *inTan, *end, t);
-		ghostwolfSquad(out, start, outTan, inTan, end, t);
-		return;
-	default:
-		break;
-	}
-}
-template <>
-void interpolate<uint32_t>(uint32_t& out, const uint32_t* start, const uint32_t* outTan, const uint32_t* inTan, const uint32_t* end, float t, int interpolationType) {
-	out = *start;
 }
 
-void slerp(glm::quat& out, const glm::quat& startingValue, const glm::quat& endingValue, float interpolationFactor) {
-	float ax = startingValue.x, ay = startingValue.y, az = startingValue.z, aw = startingValue.w;
-	float bx = endingValue.x, by = endingValue.y, bz = endingValue.z, bw = endingValue.w;
-	float omega;
-	float cosom;
-	float sinom, scale0, scale1;
-	// calc cosine
-	cosom = ax * bx + ay * by + az * bz + aw * bw;
-	// adjust signs (if necessary)
-	if (cosom < 0) {
-		cosom = -cosom;
-		bx = -bx;
-		by = -by;
-		bz = -bz;
-		bw = -bw;
+glm::vec3 interpolate(const glm::vec3* start, const glm::vec3* outTan, const glm::vec3* inTan, const glm::vec3* end, float t, int interpolationType) {
+	switch (interpolationType) {
+		glm::vec3 out;
+		case 0:
+			return *start;
+		case 1: // LINEAR
+			return glm::mix(*start, *end, t);
+		case 2: // HERMITE
+			out.x = hermite(start->x, outTan->x, inTan->x, end->x, t);
+			out.y = hermite(start->y, outTan->y, inTan->y, end->y, t);
+			out.z = hermite(start->z, outTan->z, inTan->z, end->z, t);
+			return out;
+		case 3: // BEZIER
+			out.x = bezier(start->x, outTan->x, inTan->x, end->x, t);
+			out.y = bezier(start->y, outTan->y, inTan->y, end->y, t);
+			out.z = bezier(start->z, outTan->z, inTan->z, end->z, t);
+			return out;
 	}
-	// calculate coefficients
-	if ((1.0 - cosom) > 0.000001) {
-		//standard case (slerp)
-		omega = acos(cosom);
-		sinom = sin(omega);
-		scale0 = sin((1.0 - interpolationFactor) * omega) / sinom;
-		scale1 = sin(interpolationFactor * omega) / sinom;
-	} else {
-		// "from" and "to" quaternions are very close
-		// ... so we can do a linear interpolation
-		scale0 = 1.0 - interpolationFactor;
-		scale1 = interpolationFactor;
-	}
-
-	out.x = scale0 * ax + scale1 * bx;
-	out.y = scale0 * ay + scale1 * by;
-	out.z = scale0 * az + scale1 * bz;
-	out.w = scale0 * aw + scale1 * bw;
-
-	// Super slow and generally not needed.
-	// quat.normalize(out, out);
 }
-void ghostwolfSquad(glm::quat& out, const glm::quat* a, const glm::quat* aOutTan, const glm::quat* bInTan, const glm::quat* b, float t) {
+glm::quat interpolate(const glm::quat* start, const glm::quat* outTan, const glm::quat* inTan, const glm::quat* end, float t, int interpolationType) {
+	switch (interpolationType) {
+		case 0:
+			return *start;
+		case 1: // LINEAR
+			return glm::slerp(*start, *end, t);
+		case 2: // HERMITE
+			// GLM uses both {x, y, z, w} and {w, x, y, z} convention, in different places, sometimes.
+			// Their squad is {w, x, y, z} but we are elsewhere using {x, y, z, w}, so we will
+			// continue using the copy of the Matrix Eater "ghostwolfSquad" for now.
+			//out = glm::squad(*start, *outTan, *inTan, *end, t);
+			return ghostwolfSquad(start, outTan, inTan, end, t);
+		case 3: // BEZIER
+			// GLM uses both {x, y, z, w} and {w, x, y, z} convention, in different places, sometimes.
+			// Their squad is {w, x, y, z} but we are elsewhere using {x, y, z, w}, so we will
+			// continue using the copy of the Matrix Eater "ghostwolfSquad" for now.
+			//out = glm::squad(*start, *outTan, *inTan, *end, t);
+			return ghostwolfSquad(start, outTan, inTan, end, t);
+		default:
+			break;
+	}
+}
+uint32_t interpolate(const uint32_t* start, const uint32_t* outTan, const uint32_t* inTan, const uint32_t* end, float t, int interpolationType) {
+	return *start;
+}
+
+glm::quat ghostwolfSquad(const glm::quat* a, const glm::quat* aOutTan, const glm::quat* bInTan, const glm::quat* b, float t) {
 	glm::quat temp1;
 	glm::quat temp2;
-	slerp(temp1, *a, *b, t);
-	slerp(temp2, *aOutTan, *bInTan, t);
-	slerp(out, temp1, temp2, 2 * t * (1 - t));
-}
-
-float clampValue(float a, float min, float max) {
-	if (a < min) {
-		return min;
-	} else if (a > max) {
-		return max;
-	}
-	return a;
+	temp1 = glm::slerp(*a, *b, t);
+	temp2 = glm::slerp(*aOutTan, *bInTan, t);
+	return glm::slerp(temp1, temp2, 2 * t * (1 - t));
 }
 
 glm::quat safeQuatLookAt(

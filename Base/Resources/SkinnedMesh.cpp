@@ -267,8 +267,8 @@ void SkinnedMesh::render_opaque() {
 			glm::vec3 geoset_color(1.0f);
 			float geoset_anim_visibility = 1.0f;
 			if (i.geoset_anim && skeletons[k]->sequence_index >= 0) {
-				i.geoset_anim->getColor(geoset_color, skeletons[k]->current_frame, *skeletons[k]);
-				i.geoset_anim->getVisibility(geoset_anim_visibility, skeletons[k]->current_frame, *skeletons[k]);
+				geoset_color = i.geoset_anim->getColor(skeletons[k]->current_frame, *skeletons[k]);
+				geoset_anim_visibility = i.geoset_anim->getVisibility(skeletons[k]->current_frame, *skeletons[k]);
 			}
 			i.geoset_anim_alphas.push_back(geoset_anim_visibility);
 			i.geoset_anim_colors.push_back(geoset_color);
@@ -288,7 +288,7 @@ void SkinnedMesh::render_opaque() {
 			for (int k = 0; k < render_jobs.size(); k++) {
 				float layer_visibility = 1.0f;
 				if (skeletons[k]->sequence_index >= 0) {
-					j.getVisibility(layer_visibility, skeletons[k]->current_frame, *skeletons[k]);
+					layer_visibility = j.getVisibility(skeletons[k]->current_frame, *skeletons[k]);
 				}
 				i.layer_alphas.push_back(layer_visibility * i.geoset_anim_alphas[k]);
 			}

@@ -169,7 +169,7 @@ namespace mdx {
    require modifying the model on load to inject additional keyframes
 	*/
 
-		void TrackHeader<T>::matrixEaterInterpolate(T& out, int time, const SkeletalModelInstance& instance, const T& defaultValue) const {
+		T TrackHeader<T>::matrixEaterInterpolate(int time, const SkeletalModelInstance& instance, const T& defaultValue) const {
 			int sequenceStart;
 			int sequenceEnd;
 			if (global_sequence_ID >= 0 && instance.model->global_sequences.size()) {
@@ -185,12 +185,10 @@ namespace mdx {
 				sequenceStart = sequence.interval_start;
 				sequenceEnd = sequence.interval_end;
 			} else {
-				out = defaultValue;
-				return;
+				return defaultValue;
 			}
 			if (tracks.empty()) {
-				out = defaultValue;
-				return;
+				return defaultValue;
 			}
 			int ceilIndex = -1;
 			int floorIndex = 0;
@@ -241,18 +239,15 @@ namespace mdx {
 			floorIndexTime = tracks[floorIndex].frame;
 			ceilIndexTime = tracks[ceilIndex].frame;
 			if (ceilIndexTime < sequenceStart) {
-				out = defaultValue;
-				return;
+				return defaultValue;
 			}
 			if (floorIndexTime > sequenceEnd) {
-				out = defaultValue;
-				return;
+				return defaultValue;
 			}
 			auto floorBeforeStart = floorIndexTime < sequenceStart;
 			auto ceilAfterEnd = ceilIndexTime > sequenceEnd;
 			if (floorBeforeStart && ceilAfterEnd) {
-				out = defaultValue;
-				return;
+				return defaultValue;
 			} else if (floorBeforeStart) {
 				if (tracks[floorAnimEndIndex].frame == sequenceEnd) {
 					// no "floor" frame found, but we have a ceil frame,
@@ -283,25 +278,25 @@ namespace mdx {
 				// example model is Water Elemental's birth animation, to verify behavior
 			}
 			if (floorIndex == ceilIndex) {
-				out = *floorValue;
-				return;
+				return *floorValue;
 			}
 			const T* ceilInTan = &tracks[ceilIndex].inTan;
-			float t = clampValue((time - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
-			interpolate<T>(out, floorValue, floorOutTan, ceilInTan, ceilValue, t, interpolation_type);
+			float t = std::clamp((time - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
+		
+			return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, interpolation_type);
 		}
 	};
 
 	struct AnimatedData {
 		std::unordered_map<TrackTag, std::variant<TrackHeader<float>,
-						   TrackHeader<uint32_t>,
-						   TrackHeader<glm::vec3>,
-						   TrackHeader<glm::quat>>>
+												  TrackHeader<uint32_t>,
+												  TrackHeader<glm::vec3>,
+												  TrackHeader<glm::quat>>>
 			tracks;
 
 		void load_tracks(BinaryReader& reader);
 
-		template<typename T>
+		template <typename T>
 		const TrackHeader<T>& track(const TrackTag track) const {
 			return std::get<TrackHeader<T>>(tracks.at(track));
 		}
@@ -330,7 +325,7 @@ namespace mdx {
 
 		AnimatedData animated_data;
 
-		void getVisibility(float& out, int frame, const SkeletalModelInstance& instance) const;
+		float getVisibility(int frame, const SkeletalModelInstance& instance) const;
 	};
 
 	struct Node {
@@ -343,14 +338,14 @@ namespace mdx {
 		int flags;
 		AnimatedData animated_data;
 
-		virtual void getVisibility(float& out, SkeletalModelInstance& instance) const;
+		float getVisibility(SkeletalModelInstance& instance) const;
 
 		template <typename T>
-		void getValue(T& out, mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const {
+		T getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const {
 			if (animated_data.has_track(tag)) {
-				animated_data.track<T>(tag).matrixEaterInterpolate(out, instance.current_frame, instance, defaultValue);
+				return animated_data.track<T>(tag).matrixEaterInterpolate(instance.current_frame, instance, defaultValue);
 			} else {
-				out = defaultValue;
+				return defaultValue;
 			}
 		}
 	};
@@ -395,8 +390,8 @@ namespace mdx {
 		uint32_t geoset_id;
 		AnimatedData animated_data;
 
-		void getColor(glm::vec3& out, int frame, SkeletalModelInstance& instance) const;
-		void getVisibility(float& out, int frame, SkeletalModelInstance& instance) const;
+		glm::vec3 getColor(int frame, SkeletalModelInstance& instance) const;
+		float getVisibility(int frame, SkeletalModelInstance& instance) const;
 	};
 
 	struct Texture {
@@ -637,7 +632,7 @@ namespace mdx {
 		void read_EVTS_chunk(BinaryReader& reader);
 		void read_CLID_chunk(BinaryReader& reader);
 
-	public:
+	  public:
 		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
 
@@ -660,4 +655,4 @@ namespace mdx {
 
 		void forEachNode(const std::function<void(Node&)>& lambda);
 	};
-}
+} // namespace mdx
