@@ -16,6 +16,8 @@ public:
 	TPSCamera tps_camera;
 	FPSCamera fps_camera;
 
+	double delta = 0.0;
+
 	explicit GLWidget(QWidget* parent);
 	~GLWidget() = default;
 

@@ -389,9 +389,9 @@ void DoodadBrush::render_selection() const {
 	for (const auto& i : selections) {
 		float selection_scale = 1.f;
 
-		if (i->mesh->animations.size()) {
-			selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
-		}
+//		if (i->mesh->animations.size()) {
+//			selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
+//		}
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));

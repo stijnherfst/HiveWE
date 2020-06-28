@@ -203,9 +203,9 @@ void UnitBrush::render_selection() const {
 	for (const auto& i : selections) {
 		float selection_scale = 1.f;
 
-		if (i->mesh->animations.size()) {
-			selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
-		}
+		//if (i->mesh->animations.size()) {
+		//	selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
+		//}
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -236,7 +236,7 @@ void UnitBrush::render_clipboard() const {
 		model = glm::scale(model, glm::vec3(1.f) / 128.f);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
-		i.mesh->render_queue(model);
+		//i.mesh->render_queue(model);
 	}
 }
 
@@ -251,5 +251,5 @@ void UnitBrush::set_random_rotation() {
 
 void UnitBrush::set_unit(const std::string& id) {
 	this->id = id;
-	mesh = map->units.get_mesh(id);
+	//mesh = map->units.get_mesh(id);
 }

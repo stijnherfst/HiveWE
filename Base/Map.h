@@ -42,8 +42,6 @@ public:
 	Brush* brush = nullptr;
 	Physics physics;
 
-	bool units_loaded = false;
-
 	bool enforce_water_height_limits = true;
 
 	bool render_doodads = true;
@@ -59,8 +57,8 @@ public:
 
 	RenderManager render_manager;
 
-	std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
-	double total_time;
+	//std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
+	//double total_time;
 
 	void load(const fs::path& path);
 	bool save(const fs::path& path);

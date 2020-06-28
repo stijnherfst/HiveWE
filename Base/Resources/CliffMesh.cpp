@@ -18,7 +18,7 @@ CliffMesh::CliffMesh(const fs::path& path) {
 		gl->glNamedBufferData(vertex_buffer, set.vertices.size() * sizeof(glm::vec3), set.vertices.data(), GL_STATIC_DRAW);
 
 		gl->glCreateBuffers(1, &uv_buffer);
-		gl->glNamedBufferData(uv_buffer, set.texture_coordinate_sets.front().coordinates.size() * sizeof(glm::vec2), set.texture_coordinate_sets.front().coordinates.data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(uv_buffer, set.texture_coordinate_sets.front().size() * sizeof(glm::vec2), set.texture_coordinate_sets.front().data(), GL_STATIC_DRAW);
 
 		gl->glCreateBuffers(1, &normal_buffer);
 		gl->glNamedBufferData(normal_buffer, set.normals.size() * sizeof(glm::vec3), set.normals.data(), GL_STATIC_DRAW);

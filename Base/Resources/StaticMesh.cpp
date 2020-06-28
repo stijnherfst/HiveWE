@@ -6,174 +6,107 @@
 #include "HiveWE.h"
 
 StaticMesh::StaticMesh(const fs::path& path) {
-	if (path.extension() == ".mdx" || path.extension() == ".MDX") {
-		BinaryReader reader = hierarchy.open_file(path);
-		this->path = path;
+	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
+		throw;
+	}
 
-		size_t vertices = 0;
-		size_t indices = 0;
-		size_t uvs = 0;
-		mdx::MDX model = mdx::MDX(reader);
+	BinaryReader reader = hierarchy.open_file(path);
+	this->path = path;
 
-		has_mesh = model.geosets.size();
-		if (has_mesh) {
-			// Calculate required space
-			for (auto&& i : model.geosets) {
-				if (i.lod != 0) {
-					continue;
-				}
-				vertices += i.vertices.size();
-				indices += i.faces.size();
-				uvs += i.texture_coordinate_sets.size() * i.texture_coordinate_sets.front().coordinates.size();
-				
+	size_t vertices = 0;
+	size_t indices = 0;
+	mdx::MDX model = mdx::MDX(reader);
+
+	has_mesh = model.geosets.size();
+	if (has_mesh) {
+		// Calculate required space
+		for (auto&& i : model.geosets) {
+			if (i.lod != 0) {
+				continue;
 			}
-			
-			// Allocate space
-			gl->glCreateBuffers(1, &vertex_buffer);
-			gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-
-			gl->glCreateBuffers(1, &uv_buffer);
-			gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
-
-			gl->glCreateBuffers(1, &normal_buffer);
-			gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-
-			gl->glCreateBuffers(1, &instance_buffer);
-
-			gl->glCreateBuffers(1, &index_buffer);
-			gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
-
-			// Buffer Data
-			int base_vertex = 0;
-			int base_index = 0;
-			for (const auto& i : model.geosets) {
-				if (i.lod != 0) {
-					continue;
-				}
-				MeshEntry entry;
-				entry.vertices = static_cast<int>(i.vertices.size());
-				entry.base_vertex = base_vertex;
-
-				entry.indices = static_cast<int>(i.faces.size());
-				entry.base_index = base_index;
-
-				entry.material_id = i.material_id;
-				entry.extent = i.extent;
-
-				entries.push_back(entry);
-
-				gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-				gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().coordinates.data());
-				gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
-				gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
-
-				base_vertex += entry.vertices;
-				base_index += entry.indices;
-			}
+			vertices += i.vertices.size();
+			indices += i.faces.size();
 		}
 
-		if (model.sequences.size()) {
-			for (const auto& i : model.sequences) {
-				Animation animation;
-				animation.interval_start = i.interval_start;
-				animation.interval_end = i.interval_end;
-				animation.movespeed = i.movespeed;
-				animation.flags = i.flags;
-				animation.rarity = i.rarity;
-				animation.sync_point = i.sync_point;
-				animation.extent = i.extent;
+		// Allocate space
+		gl->glCreateBuffers(1, &vertex_buffer);
+		gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
-				animations.emplace(i.name, animation);
+		gl->glCreateBuffers(1, &uv_buffer);
+		gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+
+		gl->glCreateBuffers(1, &normal_buffer);
+		gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+
+		gl->glCreateBuffers(1, &instance_buffer);
+
+		gl->glCreateBuffers(1, &index_buffer);
+		gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+
+		// Buffer Data
+		int base_vertex = 0;
+		int base_index = 0;
+		for (const auto& i : model.geosets) {
+			if (i.lod != 0) {
+				continue;
 			}
+			MeshEntry entry;
+			entry.vertices = static_cast<int>(i.vertices.size());
+			entry.base_vertex = base_vertex;
+
+			entry.indices = static_cast<int>(i.faces.size());
+			entry.base_index = base_index;
+
+			entry.material_id = i.material_id;
+			entry.extent = i.extent;
+
+			entries.push_back(entry);
+
+			gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
+			gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
+			gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
+			gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+
+			base_vertex += entry.vertices;
+			base_index += entry.indices;
 		}
+	}
 
-		//if (model.has_chunk<mdx::BONE>()) {
-		//	auto bones = model.chunk<mdx::BONE>()->bones;
-		//	
-		//	for (const auto& i : bones) {
-		//		std::cout << i.geoset_id << "\n";
-		//		std::cout << i.geoset_animation_id << "\n";
-		//	}
-		//}
+	materials = model.materials;
 
-		//if (model.has_chunk<mdx::GEOA>()) {
-		//	//for (const auto& i : animations) {
-		//	//	if (i.first.starts_with("stand")) {
-		//	//		std::cout << i.first << "\n";
-		//	//	}
-		//	//}
-		//	auto tt = model.chunk<mdx::GEOA>()->animations;
-		//	if (animations.contains("stand0")) {
+	for (const auto& i : model.textures) {
+		if (i.replaceable_id != 0) {
+			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
+				std::cout << "Unknown replacable ID found\n";
+			}
+			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
+		} else {
 
-		//		auto tt = model.chunk<mdx::GEOA>()->animations;
-		//		for (const auto& i : model.chunk<mdx::GEOA>()->animations) {
-		//			if (i.animated_data.has_track(mdx::TrackTag::KGAO)) {
-		//				auto ttt = i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks;
-		//				for (const auto& j : i.animated_data.track<float>(mdx::TrackTag::KGAO)->tracks) {
-		//					if (j.frame <= animations["stand0"].interval_start || j.frame >= animations["stand0"].interval_end) {
-		//						entries[i.geoset_id].visible = false;//j.value > 0.75;
-		//						break;
-		//					} 
-		//					//else {
-		//					//	entries[i.geoset_id].visible = false;
-		//					//}
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
+			std::string to = i.file_name.stem().string();
 
-		materials = model.materials;
+			// Only load diffuse to keep memory usage down
+			if (to.ends_with("Normal") || to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
+				textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
+				continue;
+			}
 
-		for (const auto& i : model.textures) {
-			if (i.replaceable_id != 0) {
-				if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
-					std::cout << "Unknown replacable ID found\n";
-				}
-				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
+			fs::path new_path = i.file_name;
+			new_path.replace_extension(".dds");
+			if (hierarchy.file_exists(new_path)) {
+				textures.push_back(resource_manager.load<GPUTexture>(new_path));
 			} else {
-					
-				std::string to = i.file_name.stem().string();
-
-				// Only load diffuse to keep memory usage down
-				if (to.ends_with("Normal") 
-					|| to.ends_with("ORM")
-					|| to.ends_with("EnvironmentMap")
-					|| to.ends_with("Black32")
-					|| to.ends_with("Emissive")) {
-
-					textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-
-					/*for (auto& j : materials) {
-						for (int k = j.layers.size(); k-- > 0;) {
-							if (j.layers[k].texture_id == textures.size() - 1) {
-								j.layers.erase(j.layers.begin() + k);
-								break;
-							}
-						}
-					}*/
-
-					continue;
-				}
-
-				fs::path new_path = i.file_name;
-				new_path.replace_extension(".dds");
+				new_path.replace_extension(".blp");
 				if (hierarchy.file_exists(new_path)) {
 					textures.push_back(resource_manager.load<GPUTexture>(new_path));
 				} else {
-					new_path.replace_extension(".blp");
-					if (hierarchy.file_exists(new_path)) {
-						textures.push_back(resource_manager.load<GPUTexture>(new_path));
-					} else {
-						std::cout << "Error loading texture " << i.file_name << "\n";
-						textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-					}
+					std::cout << "Error loading texture " << i.file_name << "\n";
+					textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
 				}
-
-				// ToDo Same texture on different model with different flags?
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-				gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			}
+
+			// ToDo Same texture on different model with different flags?
+			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
 	}
 }
@@ -186,7 +119,7 @@ StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &index_buffer);
 }
 
-void StaticMesh::render_queue(const glm::mat4& model){
+void StaticMesh::render_queue(const glm::mat4& model) {
 	render_jobs.push_back(model);
 
 	// Register for opaque drawing
@@ -261,7 +194,7 @@ void StaticMesh::render_opaque() const {
 			} else {
 				break;
 			}
-			
+
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
@@ -289,7 +222,7 @@ void StaticMesh::render_transparent(int instance_id) const {
 
 	glm::mat4 model = render_jobs[instance_id];
 	model = camera->projection_view * model;
-	
+
 	gl->glUniformMatrix4fv(0, 1, false, &model[0][0]);
 
 	for (const auto& i : entries) {
@@ -302,21 +235,21 @@ void StaticMesh::render_transparent(int instance_id) const {
 			}
 
 			switch (j.blend_mode) {
-				case 2:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					break;
-				case 3:
-					gl->glBlendFunc(GL_ONE, GL_ONE);
-					break;
-				case 4:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-					break;
-				case 5:
-					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-					break;
-				case 6:
-					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-					break;
+			case 2:
+				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				break;
+			case 3:
+				gl->glBlendFunc(GL_ONE, GL_ONE);
+				break;
+			case 4:
+				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				break;
+			case 5:
+				gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+				break;
+			case 6:
+				gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+				break;
 			}
 
 			//bool unshaded = j.shading_flags & 0x1;
@@ -329,7 +262,6 @@ void StaticMesh::render_transparent(int instance_id) const {
 			//bool no_depth_set = j.shading_flags & 0x40;
 
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
-
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 			break; // Currently only draws the first layer

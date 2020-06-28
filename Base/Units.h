@@ -2,11 +2,13 @@
 
 #include <vector>
 #include <unordered_map>
+#include <memory>
 
 #include "Quadtree.h"
 #include "BinaryReader.h"
-#include "StaticMesh.h"
+#include "SkinnedMesh.h"
 #include "Terrain.h"
+#include "SkeletalModelInstance.h"
 
 struct Unit {
 	static int auto_increment;
@@ -52,7 +54,8 @@ struct Unit {
 	int creation_number;
 
 	glm::mat4 matrix = glm::mat4(1.f);
-	std::shared_ptr<StaticMesh> mesh;
+	SkeletalModelInstance skeleton;
+	std::shared_ptr<SkinnedMesh> mesh;
 
 	Unit() {
 		creation_number = ++auto_increment;
@@ -62,7 +65,7 @@ struct Unit {
 };
 
 class Units {
-	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
+	std::unordered_map<std::string, std::shared_ptr<SkinnedMesh>> id_to_mesh;
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
@@ -73,15 +76,11 @@ public:
 	std::vector<Unit> items;
 	//QuadTree<Unit> tree; // ToDo remove
 
-	bool load();
+	void load();
 	void save() const;
-	//void load_unit_modifications(BinaryReader& reader);
-	//void load_item_modifications(BinaryReader& reader);
-	//void save_unit_modifications();
-	//void save_item_modifications();
 	void update_area(const QRect& area);
 	void create();
-	void render() const;
+	void render();
 
 	Unit& add_unit(std::string id, glm::vec3 position);
 	Unit& add_unit(Unit unit);
@@ -91,7 +90,7 @@ public:
 	std::vector<Unit*> query_area(const QRectF& area);
 	void remove_units(const std::vector<Unit*>& list);
 
-	std::shared_ptr<StaticMesh> get_mesh(const std::string& id);
+	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id);
 };
 
 // Undo/redo structures

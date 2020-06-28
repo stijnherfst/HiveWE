@@ -81,6 +81,9 @@ add_executable(HiveWE
 	Base/Resources/PathingTexture.cpp
 	Base/Resources/QIconResource.cpp
 
+	Base/Resources/SkinnedMesh/RenderNode.cpp
+	Base/Resources/SkinnedMesh/SkeletalModelInstance.cpp
+
 	Menus/DoodadPalette.cpp
 	Menus/ImportManager.cpp
 	Menus/ImportManagerEdit.cpp
@@ -126,7 +129,7 @@ add_executable(HiveWE
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
-target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Menus" "Menus/Custom Widgets" "Base/Models")
+target_include_directories(HiveWE PRIVATE "Base" "Base/Brush" "Base/File Formats" "Base/Resources" "Base/Resources/SkinnedMesh" "Menus" "Menus/Custom Widgets" "Base/Models")
 
 target_link_libraries(HiveWE
 	Qt5::Gui

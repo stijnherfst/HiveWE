@@ -49,6 +49,18 @@ void FPSCamera::update(const double delta) {
 	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
 	view = glm::lookAt(position, position + direction, up);
 	projection_view = projection * view;
+
+	// for billboarded animated mesh
+	glm::vec3 opDirection = -direction; // camera->position - this->position;
+
+	glm::vec3 opDirectionZ = glm::normalize(glm::vec3(opDirection.x, opDirection.y, 0));
+	float angleZ = glm::atan(opDirectionZ.y, opDirectionZ.x);
+	glm::vec3 axisZ = glm::vec3(0, 0, 1);
+
+	glm::vec3 opDirectionY = glm::normalize(opDirection);
+	glm::vec3 axisY = glm::vec3(0, -1, 0);
+
+	decomposed_rotation = glm::angleAxis(angleZ, axisZ) * glm::angleAxis(glm::asin(opDirectionY.z), axisY);
 }
 
 void FPSCamera::mouse_move_event(QMouseEvent* event) {
@@ -101,6 +113,18 @@ void TPSCamera::update(double delta) {
 	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
 	view = glm::lookAt(position - direction * distance, position, up);
 	projection_view = projection * view;
+
+	// for billboarded animated mesh
+	glm::vec3 opDirection = -direction; // camera->position - this->position;
+
+	glm::vec3 opDirectionZ = glm::normalize(glm::vec3(opDirection.x, opDirection.y, 0));
+	float angleZ = glm::atan(opDirectionZ.y, opDirectionZ.x);
+	glm::vec3 axisZ = glm::vec3(0, 0, 1);
+
+	glm::vec3 opDirectionY = glm::normalize(opDirection);
+	glm::vec3 axisY = glm::vec3(0, -1, 0);
+
+	decomposed_rotation = glm::angleAxis(angleZ, axisZ) * glm::angleAxis(glm::asin(opDirectionY.z), axisY);
 }
 
 void TPSCamera::mouse_move_event(QMouseEvent* event) {

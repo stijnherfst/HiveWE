@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "Utilities.h"
+#include "SkeletalModelInstance.h"
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -17,6 +18,7 @@ namespace mdx {
 		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
 	};
 
+
 	void AnimatedData::load_tracks(BinaryReader& reader) {
 		TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 
@@ -26,7 +28,7 @@ namespace mdx {
 			case TrackTag::KLAE:
 			case TrackTag::KRTX:
 			case TrackTag::KCRL:
-				tracks.emplace(tag, std::make_unique<TrackHeader<uint32_t>>(reader));
+				tracks.emplace(tag, TrackHeader<uint32_t>(reader));
 				break;
 			case TrackTag::KMTA:
 			case TrackTag::KGAO:
@@ -53,7 +55,10 @@ namespace mdx {
 			case TrackTag::KRHB:
 			case TrackTag::KRAL:
 			case TrackTag::KRVS:
-				tracks.emplace(tag, std::make_unique<TrackHeader<float>>(reader));
+			case TrackTag::KFCA:
+			case TrackTag::KFTC:
+			case TrackTag::KMTE:
+				tracks.emplace(tag, TrackHeader<float>(reader));
 				break;
 			case TrackTag::KTAT:
 			case TrackTag::KTAS:
@@ -65,11 +70,12 @@ namespace mdx {
 			case TrackTag::KRCO:
 			case TrackTag::KGTR:
 			case TrackTag::KGSC:
-				tracks.emplace(tag, std::make_unique<TrackHeader<glm::vec3>>(reader));
+			case TrackTag::KFC3:
+				tracks.emplace(tag, TrackHeader<glm::vec3>(reader));
 				break;
 			case TrackTag::KTAR:
 			case TrackTag::KGRT:
-				tracks.emplace(tag, std::make_unique<TrackHeader<glm::vec4>>(reader));
+				tracks.emplace(tag, TrackHeader<glm::quat>(reader));
 				break;
 			default:
 				std::cout << "Invalid Track Tag " << static_cast<int>(tag) << "\n";
@@ -82,25 +88,6 @@ namespace mdx {
 		maximum = reader.read<glm::vec3>();
 	}
 
-	TextureCoordinateSet::TextureCoordinateSet(BinaryReader& reader) {
-		reader.advance(4);
-		const uint32_t texture_coordinates_count = reader.read<uint32_t>();
-		coordinates = reader.read_vector<glm::vec2>(texture_coordinates_count);
-	}
-
-	Layer::Layer(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-		blend_mode = reader.read<uint32_t>();
-		shading_flags = reader.read<uint32_t>();
-		texture_id = reader.read<uint32_t>();
-		texture_animation_id = reader.read<uint32_t>();
-		coord_id = reader.read<uint32_t>();
-		alpha = reader.read<float>();
-
-		// Skip tags
-		reader.advance(size - 28);
-	}
-
 	Texture::Texture(BinaryReader& reader) {
 		replaceable_id = reader.read<uint32_t>();
 		file_name = reader.read_string(260);
@@ -111,7 +98,7 @@ namespace mdx {
 		const size_t reader_pos = reader.position;
 		const uint32_t inclusive_size = reader.read<uint32_t>();
 		name = reader.read_string(80);
-		object_id = reader.read<uint32_t>();
+		id = reader.read<uint32_t>();
 		parent_id = reader.read<uint32_t>();
 		flags = reader.read<uint32_t>();
 
@@ -120,15 +107,31 @@ namespace mdx {
 		}
 	}
 
-	Sequence::Sequence(BinaryReader& reader) {
-		name = reader.read_string(80);
-		interval_start = reader.read<uint32_t>();
-		interval_end = reader.read<uint32_t>();
-		movespeed = reader.read<float>();
-		flags = reader.read<uint32_t>();
-		rarity = reader.read<float>();
-		sync_point = reader.read<uint32_t>();
-		extent = Extent(reader);
+	void Node::getVisibility(float& out, SkeletalModelInstance& instance) const {
+		out = 1.0f;
+	}
+
+	void Layer::getVisibility(float& out, int frame, const SkeletalModelInstance& instance) const {
+		if (animated_data.has_track(TrackTag::KMTA)) {
+			animated_data.track<float>(TrackTag::KMTA).matrixEaterInterpolate(out, frame, instance, alpha);
+		} else {
+			out = alpha;
+		}
+	}
+
+	void GeosetAnimation::getColor(glm::vec3& out, int frame, SkeletalModelInstance& instance) const {
+		if (animated_data.has_track(TrackTag::KGAC)) {
+			animated_data.track<glm::vec3>(TrackTag::KGAC).matrixEaterInterpolate(out, frame, instance, color);
+		} else {
+			out = color;
+		}
+	}
+	void GeosetAnimation::getVisibility(float& out, int frame, SkeletalModelInstance& instance) const {
+		if (animated_data.has_track(TrackTag::KGAO)) {
+			animated_data.track<float>(TrackTag::KGAO).matrixEaterInterpolate(out, frame, instance, alpha);
+		} else {
+			out = alpha;
+		}
 	}
 
 	MDX::MDX(BinaryReader& reader) {
@@ -153,6 +156,9 @@ namespace mdx {
 				case ChunkTag::SEQS:
 					read_SEQS_chunk(reader);
 					break;
+				case ChunkTag::GLBS:
+					read_GLBS_chunk(reader);
+					break;
 				case ChunkTag::MTLS:
 					read_MTLS_chunk(reader);
 					break;
@@ -167,6 +173,33 @@ namespace mdx {
 					break;
 				case ChunkTag::BONE:
 					read_BONE_chunk(reader);
+					break;
+				case ChunkTag::LITE:
+					read_LITE_chunk(reader);
+					break;
+				case ChunkTag::HELP:
+					read_HELP_chunk(reader);
+					break;
+				case ChunkTag::ATCH:
+					read_ATCH_chunk(reader);
+					break;
+				case ChunkTag::PIVT:
+					read_PIVT_chunk(reader);
+					break;
+				case ChunkTag::PREM:
+					read_PREM_chunk(reader);
+					break;
+				case ChunkTag::PRE2:
+					read_PRE2_chunk(reader);
+					break;
+				case ChunkTag::RIBB:
+					read_RIBB_chunk(reader);
+					break;
+				case ChunkTag::EVTS:
+					read_EVTS_chunk(reader);
+					break;
+				case ChunkTag::CLID:
+					read_CLID_chunk(reader);
 					break;
 				default:
 					reader.advance(reader.read<uint32_t>());
@@ -254,10 +287,12 @@ namespace mdx {
 			reader.advance(4); // UVAS
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
-				geoset.texture_coordinate_sets.emplace_back(TextureCoordinateSet(reader));
+				reader.advance(4);
+				const uint32_t texture_coordinates_count = reader.read<uint32_t>();
+				geoset.texture_coordinate_sets.push_back(reader.read_vector<glm::vec2>(texture_coordinates_count));
 			}
 
-			geosets.push_back(geoset);
+			geosets.push_back(std::move(geoset));
 		}
 	}
 
@@ -272,23 +307,53 @@ namespace mdx {
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
 			if (version > 800) {
-				reader.advance(80); // Some random string
+				reader.advance(80); // A shader file
 			}
 			reader.advance(4);
 			const uint32_t layers_count = reader.read<uint32_t>();
 
 			for (size_t i = 0; i < layers_count; i++) {
-				material.layers.emplace_back(Layer(reader));
+				const int reader_pos = reader.position;
+				Layer layer;
+				const uint32_t size = reader.read<uint32_t>();
+				layer.blend_mode = reader.read<uint32_t>();
+				layer.shading_flags = reader.read<uint32_t>();
+				layer.texture_id = reader.read<uint32_t>();
+				layer.texture_animation_id = reader.read<uint32_t>();
+				layer.coord_id = reader.read<uint32_t>();
+				layer.alpha = reader.read<float>();
+
+				if (version > 800) {
+					reader.advance(4); // emissiveGain
+					reader.advance(12); // fresnelColor
+					reader.advance(4); // fresnelOpacity
+					reader.advance(4); // fresnelTeamColor
+				}
+
+				while (reader.position < reader_pos + size) {
+					layer.animated_data.load_tracks(reader);
+				}
+
+				material.layers.push_back(std::move(layer));
 			}
 
-			materials.push_back(material);
+			materials.push_back(std::move(material));
 		}
 	}
 
 	void MDX::read_SEQS_chunk(BinaryReader& reader) {
 		const uint32_t size = reader.read<uint32_t>();
 		for (size_t i = 0; i < size / 132; i++) {
-			sequences.emplace_back(Sequence(reader));
+			Sequence sequence;
+			sequence.name = reader.read_string(80);
+			sequence.interval_start = reader.read<uint32_t>();
+			sequence.interval_end = reader.read<uint32_t>();
+			sequence.movespeed = reader.read<float>();
+			sequence.flags = reader.read<uint32_t>();
+			sequence.rarity = reader.read<float>();
+			sequence.sync_point = reader.read<uint32_t>();
+			sequence.extent = Extent(reader);
+			sequences.push_back(std::move(sequence));
 		}
 	}
 
@@ -331,6 +396,287 @@ namespace mdx {
 		const uint32_t size = reader.read<uint32_t>();
 		for (size_t i = 0; i < size / 268; i++) {
 			textures.emplace_back(Texture(reader));
+		}
+	}
+
+	void MDX::read_GLBS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		global_sequences = reader.read_vector<uint32_t>(size / 4);
+	}
+
+	void MDX::read_LITE_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			Light light;
+			const size_t node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			light.node = Node(reader);
+			light.type = reader.read<uint32_t>();
+			light.attenuation_start = reader.read<float>();
+			light.attenuation_end = reader.read<float>();
+			light.color = reader.read<glm::vec3>();
+			light.intensity = reader.read<float>();
+			light.ambient_color = reader.read<glm::vec3>();
+			light.ambient_intensity = reader.read<float>();
+			while (reader.position < node_reader_pos + inclusive_size) {
+				light.node.animated_data.load_tracks(reader);
+			}
+			lights.push_back(std::move(light));
+		}
+	}
+
+	void MDX::read_HELP_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+		while (reader.position < reader_pos + size) {
+			help_bones.push_back(Node(reader));
+		}
+	}
+
+	void MDX::read_ATCH_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			Attachment attachment;
+			const int node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			attachment.node = Node(reader);
+			attachment.path = reader.read_string(256);
+			attachment.reserved = reader.read<uint32_t>();
+			attachment.attachment_id = reader.read<uint32_t>();
+			while (reader.position < node_reader_pos + inclusive_size) {
+				attachment.node.animated_data.load_tracks(reader);
+			}
+			attachments.push_back(std::move(attachment));
+		}
+	}
+
+	void MDX::read_PIVT_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		pivots = reader.read_vector<glm::vec3>(size / 12);
+	}
+
+	void MDX::read_PREM_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			ParticleEmitter1 emitter;
+			const int node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			emitter.node = Node(reader);
+			emitter.emission_rate = reader.read<float>();
+			emitter.gravity = reader.read<float>();
+			emitter.longitude = reader.read<float>();
+			emitter.latitude = reader.read<float>();
+			emitter.path = reader.read_string(256);
+			emitter.reserved = reader.read<uint32_t>();
+			emitter.life_span = reader.read<float>();
+			emitter.speed = reader.read<float>();
+			while (reader.position < node_reader_pos + inclusive_size) {
+				emitter.node.animated_data.load_tracks(reader);
+			}
+			emitters1.push_back(std::move(emitter));
+		}
+	}
+
+	void MDX::read_PRE2_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			ParticleEmitter2 emitter2;
+			const int node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			emitter2.node = Node(reader);
+
+			emitter2.speed = reader.read<float>();
+			emitter2.variation = reader.read<float>();
+			emitter2.latitude = reader.read<float>();
+			emitter2.gravity = reader.read<float>();
+			emitter2.life_span = reader.read<float>();
+			emitter2.emission_rate = reader.read<float>();
+			emitter2.length = reader.read<float>();
+			emitter2.width = reader.read<float>();
+			emitter2.filter_mode = reader.read<uint32_t>();
+			emitter2.rows = reader.read<uint32_t>();
+			emitter2.columns = reader.read<uint32_t>();
+			emitter2.head_or_tail = reader.read<uint32_t>();
+			emitter2.tail_length = reader.read<float>();
+			emitter2.time_middle = reader.read<float>();
+			for (int time = 0; time < 3; time++) {
+				for (int i = 0; i < 3; i++) {
+					emitter2.segment_color[time][i] = reader.read<float>();
+				}
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.segment_alphas[i] = reader.read<uint8_t>();
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.segment_scaling[i] = reader.read<float>();
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.head_intervals[i] = reader.read<float>();
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.head_decay_intervals[i] = reader.read<float>();
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.tail_intervals[i] = reader.read<float>();
+			}
+			for (int i = 0; i < 3; i++) {
+				emitter2.tail_decay_intervals[i] = reader.read<float>();
+			}
+			emitter2.texture_id = reader.read<uint32_t>();
+			emitter2.squirt = reader.read<uint32_t>();
+			emitter2.priority_plane = reader.read<uint32_t>();
+			emitter2.replaceable_id = reader.read<uint32_t>();
+
+			while (reader.position < node_reader_pos + inclusive_size) {
+				emitter2.node.animated_data.load_tracks(reader);
+			}
+			emitters2.push_back(std::move(emitter2));
+		}
+	}
+
+	void MDX::read_RIBB_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			RibbonEmitter emitter;
+			const int node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			emitter.node = Node(reader);
+			emitter.height_above = reader.read<float>();
+			emitter.height_below = reader.read<float>();
+			emitter.alpha = reader.read<float>();
+			emitter.color = reader.read<glm::vec3>();
+			emitter.life_span = reader.read<float>();
+			emitter.texture_slot = reader.read<uint32_t>();
+			emitter.emission_rate = reader.read<uint32_t>();
+			emitter.rows = reader.read<uint32_t>();
+			emitter.columns = reader.read<uint32_t>();
+			emitter.material_id = reader.read<uint32_t>();
+			emitter.gravity = reader.read<float>();
+			while (reader.position < node_reader_pos + inclusive_size) {
+				emitter.node.animated_data.load_tracks(reader);
+			}
+			ribbons.push_back(std::move(emitter));
+		}
+	}
+
+	void MDX::read_EVTS_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			EventObject evt;
+			evt.node = Node(reader);
+			reader.read<uint32_t>(); // read KEVT
+			evt.count = reader.read<uint32_t>();
+			evt.global_sequence_id = reader.read<int32_t>(); //signed
+			for (int i = 0; i < evt.count; i++) {
+				evt.times.push_back(reader.read<uint32_t>());
+			}
+			eventObjects.push_back(std::move(evt));
+		}
+	}
+
+	void MDX::read_CLID_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			CollisionShape shape;
+			shape.node = Node(reader);
+
+			uint32_t type_index = reader.read<uint32_t>();
+			switch (type_index) {
+			case 1:
+				shape.type = CollisionShapeType::Plane;
+				break;
+			case 2:
+				shape.type = CollisionShapeType::Sphere;
+				break;
+			case 3:
+				shape.type = CollisionShapeType::Cylinder;
+				break;
+			default:
+			case 0:
+				shape.type = CollisionShapeType::Box;
+				break;
+			}
+
+			for (int i = 0; i < 3; i++) {
+				if (reader.remaining() <= 0) {
+					shape.vertices[0][i] = 0;
+				} else {
+					shape.vertices[0][i] = reader.read<float>();
+				}
+			}
+
+			if (type_index != 2) {
+				for (int i = 0; i < 3; i++) {
+					if (reader.remaining() <= 0) {
+						shape.vertices[1][i] = 0;
+					} else {
+						shape.vertices[1][i] = reader.read<float>();
+					}
+				}
+			}
+
+			if (type_index == 2 || type_index == 3) {
+				if (reader.remaining() > 0) {
+					shape.radius = reader.read<float>();
+				} else {
+					shape.radius = 0;
+				}
+			}
+			collisionShapes.push_back(std::move(shape));
+		}
+	}
+
+	void MDX::forEachNode(const std::function<void(Node&)>& F) {
+		for (auto& i : bones) {
+			F(i.node);
+		}
+
+		for (auto& i : lights) {
+			F(i.node);
+		}
+
+		for (auto& i : help_bones) {
+			F(i);
+		}
+
+		for (auto& i : attachments) {
+			F(i.node);
+		}
+
+		for (auto& i : emitters1) {
+			F(i.node);
+		}
+	
+		for (auto& i : emitters2) {
+			F(i.node);
+		}
+
+		for (auto& i : ribbons) {
+			F(i.node);
+		}
+
+		for (auto& i : eventObjects) {
+			F(i.node);
+		}
+
+		for (auto& i : collisionShapes) {
+			F(i.node);
 		}
 	}
 }

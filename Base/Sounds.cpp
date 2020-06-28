@@ -49,7 +49,7 @@ void Sounds::load() {
 			reader.advance(4); // int?
 			reader.read_c_string();
 			reader.advance(4); // int?
-			reader.advance(13);
+			reader.advance(9);
 		}
 	}
 }

@@ -204,8 +204,6 @@ void Map::load(const fs::path& path) {
 	begin = std::chrono::steady_clock::now();
 
 	// Doodads
-	doodads.load();
-
 	if (hierarchy.map_file_exists("war3map.w3d")) {
 		load_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true);
 	}
@@ -214,6 +212,7 @@ void Map::load(const fs::path& path) {
 		load_modification_file("war3map.w3b", destructables_slk, destructables_meta_slk, false);
 	}
 
+	doodads.load();
 	doodads.create();
 
 	std::cout << "Doodad loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
@@ -235,7 +234,7 @@ void Map::load(const fs::path& path) {
 	std::cout << "Doodad blitting: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
 
-	// Units/Items
+
 	if (hierarchy.map_file_exists("war3map.w3u")) {
 		load_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
 	}
@@ -244,13 +243,12 @@ void Map::load(const fs::path& path) {
 		load_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
 	}
 
+	// Units/Items
 	if (hierarchy.map_file_exists("war3mapUnits.doo")) {
-		units_loaded = units.load();
-
-		if (units_loaded) {
-			units.create();
-		}
+		units.load();
+		units.create();
 	}
+
 
 	std::cout << "Unit loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
@@ -334,13 +332,14 @@ bool Map::save(const fs::path& path) {
 }
 
 void Map::update(double delta, int width, int height) {
-	if (loaded) {
-		camera->update(delta);
+	if (!loaded) {
+		return;
+	}
 
-		terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
-		if (terrain.current_texture >= terrain.water_textures_nr) {
-			terrain.current_texture = 0;
-		}
+	camera->update(delta);
+	terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
+	if (terrain.current_texture >= terrain.water_textures_nr) {
+		terrain.current_texture = 0;
 	}
 
 	// Map mouse coordinates to world coordinates
@@ -364,6 +363,16 @@ void Map::update(double delta, int width, int height) {
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
 	}
+
+	for (auto& i : units.units) {
+		if (i.id == "sloc") {
+			continue;
+		} // ToDo handle starting locations
+		i.skeleton.update(delta);
+	}
+	for (auto& i : units.items) {
+		i.skeleton.update(delta);
+	}
 }
 
 void Map::render() {
@@ -372,8 +381,8 @@ void Map::render() {
 		return;
 	}
 
-	total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
-	last_time = std::chrono::high_resolution_clock::now();
+	/*total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
+	last_time = std::chrono::high_resolution_clock::now();*/
 
 
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -388,10 +397,8 @@ void Map::render() {
 	}
 
 	// Render units
-	if (units_loaded) {
-		if (render_units) {
-			units.render();
-		}
+	if (render_units) {
+		units.render();
 	}
 
 	if (render_brush && brush) {

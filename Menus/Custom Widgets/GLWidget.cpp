@@ -106,13 +106,13 @@ void GLWidget::resizeGL(const int w, const int h) {
 }
 
 void GLWidget::update_scene() {
-	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
+	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
 	update();
 	if (map) {
 		map->update(delta, width(), height());
-		QTimer::singleShot(std::max(0.0, 16.0 - map->total_time), this, &GLWidget::update_scene);
+		QTimer::singleShot(std::max(0.0, 16.0 - delta), this, &GLWidget::update_scene);
 	} else {
 		QTimer::singleShot(std::max(0.0, 16.0), this, &GLWidget::update_scene);
 	}
@@ -135,8 +135,9 @@ void GLWidget::paintGL() {
 		QPainter p(this);
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
+		
 		// Rendering time
-		p.drawText(10, 20, QString::fromStdString("Total time: " + std::to_string(map->total_time)));
+		p.drawText(10, 20, QString::fromStdString("Total time: " + std::to_string(delta * 1000.f) + "ms"));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));

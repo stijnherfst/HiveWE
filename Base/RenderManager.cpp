@@ -6,6 +6,7 @@
 RenderManager::RenderManager() {
 	instance_static_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
 	static_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
+	instance_skinned_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced.vs", "Data/Shaders/skinned_mesh_instanced.fs" });
 }
 
 void RenderManager::render(bool render_lighting) {
@@ -25,6 +26,19 @@ void RenderManager::render(bool render_lighting) {
 		i->render_opaque();
 	}
 
+	instance_skinned_mesh_shader->use();
+
+	gl->glEnableVertexAttribArray(0);
+	gl->glEnableVertexAttribArray(1);
+	gl->glEnableVertexAttribArray(2);
+
+	//instance_skinned_mesh_shader->use();
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniform1i(2, render_lighting);
+	for (const auto& i : animated_meshes) {
+		i->render_opaque();
+	}
+
 	// Render transparent meshes
 	std::sort(transparent_instances.begin(), transparent_instances.end(), [](Inst& left, Inst& right) { return left.distance > right.distance; });
 	static_mesh_shader->use();
@@ -41,10 +55,17 @@ void RenderManager::render(bool render_lighting) {
 		i->render_jobs.clear();
 	}
 
+	for (const auto& i : animated_meshes) {
+		i->render_jobs.clear();
+		i->skeletons.clear();
+		i->instance_bone_matrices.clear();
+	}
+
 	gl->glDisableVertexAttribArray(0);
 	gl->glDisableVertexAttribArray(1);
 	gl->glDisableVertexAttribArray(2);
 
 	meshes.clear();
+	animated_meshes.clear();
 	transparent_instances.clear();
 }

@@ -20,15 +20,16 @@ void Unit::update() {
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, glm::vec3(model_scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+
+	skeleton.updateLocation(position, angle, glm::vec3(model_scale));
 }
 
-bool Units::load() {
+void Units::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3mapUnits.doo");
 
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
 		std::cout << "Invalid war3mapUnits.w3e file: Magic number is not W3do\n";
-		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
 	if (version != 7 && version != 8) {
@@ -129,8 +130,6 @@ bool Units::load() {
 
 		Unit::auto_increment = std::max(Unit::auto_increment, i.creation_number);
 	}
-
-	return true;
 }
 
 void Units::save() const {
@@ -209,47 +208,6 @@ void Units::save() const {
 	hierarchy.map_file_write("war3mapUnits.doo", writer.buffer);
 }
 
-//void Units::load_unit_modifications(BinaryReader& reader) {
-//	const int version = reader.read<uint32_t>();
-//	if (version != 1 && version != 2) {
-//		std::cout << "Unknown unit modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-//	}
-//
-//	load_modification_table(reader, units_slk, units_meta_slk, false);
-//	load_modification_table(reader, units_slk, units_meta_slk, true);
-//}
-//
-//void Units::load_item_modifications(BinaryReader& reader) {
-//	const int version = reader.read<uint32_t>();
-//	if (version != 1 && version != 2) {
-//		std::cout << "Unknown item modification table version of " << version << " detected. Attempting to load, but may crash.\n";
-//	}
-//
-//	load_modification_table(reader, items_slk, items_meta_slk, false);
-//	load_modification_table(reader, items_slk, items_meta_slk, true);
-//}
-
-//void Units::save_unit_modifications() {
-//	BinaryWriter writer;
-//	writer.write<uint32_t>(mod_table_write_version);
-//
-//	save_modification_table(writer, units_slk, units_meta_slk, false);
-//	save_modification_table(writer, units_slk, units_meta_slk, true);
-//
-//	hierarchy.map_file_write("war3map.w3u", writer.buffer);
-//}
-//
-//void Units::save_item_modifications() {
-//	BinaryWriter writer;
-//	writer.write<uint32_t>(mod_table_write_version);
-//
-//	save_modification_table(writer, items_slk, items_meta_slk, false);
-//	save_modification_table(writer, items_slk, items_meta_slk, true);
-//
-//	hierarchy.map_file_write("war3map.w3t", writer.buffer);
-//}
-
-
 void Units::update_area(const QRect& area) {
 	for (auto&& i : query_area(area)) {
 		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
@@ -258,37 +216,37 @@ void Units::update_area(const QRect& area) {
 }
 
 void Units::create() {
-	for (auto&& i : units) {
+	for (auto& i : units) {
 		// ToDo handle starting location
 		if (i.id == "sloc") {
 			continue;
 		}
 
-		i.update();
-
 		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
+		i.skeleton = SkeletalModelInstance(i.mesh->model);
+		i.update();
 	}	
-	for (auto&& i : items) {
+	for (auto& i : items) {
 		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
 
-		i.update();
-
 		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
+		i.skeleton = SkeletalModelInstance(i.mesh->model);
+		i.update();
 	}
 }
 
-void Units::render() const {
-	for (auto&& i : units) {
+void Units::render() {
+	for (auto& i : units) {
 		if (i.id == "sloc") {
 			continue;
 		} // ToDo handle starting locations
 
-		i.mesh->render_queue(i.matrix);
+		i.mesh->render_queue(i.skeleton);
 	}
-	for (auto&& i : items) {
-		i.mesh->render_queue(i.matrix);
+	for (auto& i : items) {
+		i.mesh->render_queue(i.skeleton);
 	}
 }
 
@@ -303,6 +261,7 @@ Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	unit.angle = 0.f;
 	unit.random = { 1, 0, 0, 0 };
 	unit.creation_number = ++Unit::auto_increment;
+	unit.skeleton = SkeletalModelInstance(unit.mesh->model);
 	unit.update();
 
 	units.push_back(unit);
@@ -337,8 +296,8 @@ void Units::remove_units(const std::vector<Unit*>& list) {
 	}), units.end());
 }
 
-std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
-	if (id_to_mesh.contains(id)) {
+std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {
+	if (id_to_mesh.find(id) != id_to_mesh.end()) {
 		return id_to_mesh[id];
 	}
 
@@ -353,11 +312,11 @@ std::shared_ptr<StaticMesh> Units::get_mesh(const std::string& id) {
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
-		id_to_mesh.emplace(id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
+		id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
 		return id_to_mesh[id];
 	}
 
-	id_to_mesh.emplace(id, resource_manager.load<StaticMesh>(mesh_path));
+	id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>(mesh_path));
 
 	return id_to_mesh[id];
 }

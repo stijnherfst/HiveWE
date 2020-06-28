@@ -22,21 +22,8 @@ public:
 		mdx::Extent extent;
 	};
 
-	struct Animation {
-		uint32_t interval_start;
-		uint32_t interval_end;
-		float movespeed;
-		uint32_t flags; // 0: looping
-						// 1: non looping
-		float rarity;
-		uint32_t sync_point;
-		mdx::Extent extent;
-	};
-
 	std::vector<MeshEntry> entries;
 	bool has_mesh; // ToDo remove when added support for meshless
-
-	std::map<std::string, Animation> animations;
 
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
@@ -47,7 +34,6 @@ public:
 	fs::path path;
 	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
-	//std::shared_ptr<mdx::MTLS> mtls;
 	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
 	

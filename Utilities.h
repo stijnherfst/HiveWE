@@ -78,3 +78,31 @@ namespace std {
 		}
 	};
 }
+
+extern const glm::vec3 TRANSLATION_IDENTITY;
+extern const glm::quat ROTATION_IDENTITY;
+extern const glm::vec3 SCALE_IDENTITY;
+
+template <typename T>
+void interpolate(T& out, const T* start, const T* outTan, const T* inTan, const T* end, float t, int interpolationType);
+
+/* ToDo replace these with some library calls (glm?), Ghostwolf said it was bad
+   practice for me to copy them everywhere (Retera here, also copied them in Matrix Eater)
+*/
+float lerp(float a, float b, float t);
+float hermite(float a, float aOutTan, float bInTan, float b, float t);
+float bezier(float a, float aOutTan, float bInTan, float b, float t);
+void slerp(glm::quat& out, const glm::quat& startingValue, const glm::quat& endingValue, float interpolationFactor);
+void ghostwolfSquad(glm::quat& out, const glm::quat* a, const glm::quat* aOutTan, const glm::quat* bInTan, const glm::quat* b, float interpolationFactor);
+
+float clampValue(float a, float min, float max);
+
+glm::quat safeQuatLookAt(
+	glm::vec3 const& lookFrom,
+	glm::vec3 const& lookTo,
+	glm::vec3 const& up,
+	glm::vec3 const& alternativeUp);
+
+void fromRotationTranslationScaleOrigin(const glm::quat& localRotation, const glm::vec3& computedLocation, const glm::vec3& computedScaling, glm::mat4& localMatrix, const glm::vec3& pivot);
+
+void quatMul(const glm::quat& left, const glm::quat& right, glm::quat dest);
