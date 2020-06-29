@@ -348,6 +348,32 @@ namespace mdx {
 				return defaultValue;
 			}
 		}
+
+		enum Flags {
+			dont_inherit_translation = 0x1,
+			dont_inherit_rotation = 0x2,
+			dont_inherit_scaling = 0x4,
+			billboarded = 0x8,
+			billboarded_lock_x = 0x10,
+			billboarded_lock_y = 0x20,
+			billboarded_lock_z = 0x40,
+			camera_anchored = 0x80,
+			bone = 0x100,
+			light = 0x200,
+			object = 0x400,
+			attachment = 0x800,
+			emitter = 0x1000,
+			collision_shape = 0x2000,
+			ribbon_emitter = 0x4000,
+			//if_particle_emitter : emitter_uses_mdl,
+			//if_particle_emitter_2 : unshaded = 0x8000,
+			//if_particle_emitter : emitter_uses_tga,
+			//if_particle_emitter_2 : sort_primitives_far_z = 0x10000,
+			line_emitter = 0x20000,
+			unfogged = 0x40000,
+			model_space = 0x80000,
+			xy_quad = 0x100000
+		};
 	};
 
 	struct Sequence {
@@ -370,7 +396,7 @@ namespace mdx {
 		std::vector<uint16_t> faces;
 		std::vector<uint8_t> vertex_groups;
 		std::vector<uint32_t> matrix_groups;
-		std::vector<uint32_t> matrix_indices;
+		std::vector<uint32_t> node_indices;
 
 		uint32_t material_id;
 		uint32_t selection_group;

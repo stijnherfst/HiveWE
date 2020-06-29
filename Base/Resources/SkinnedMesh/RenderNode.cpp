@@ -6,11 +6,13 @@ RenderNode::RenderNode(mdx::Node node, glm::vec3 pivot) {
 	this->node = node;
 	this->pivot = pivot;
 
-	dontInheritScaling = node.flags & 0x1;
-	billboarded = node.flags & 0x8;
-	billboardedX = node.flags & 0x10;
-	billboardedY = node.flags & 0x20;
-	billboardedZ = node.flags & 0x40;
+	dontInheritTranslation = node.flags & mdx::Node::Flags::dont_inherit_translation;
+	dontInheritRotation = node.flags & mdx::Node::Flags::dont_inherit_rotation;
+	dontInheritScaling = node.flags & mdx::Node::Flags::dont_inherit_scaling;
+	billboarded = node.flags & mdx::Node::Flags::billboarded;
+	billboardedX = node.flags & mdx::Node::Flags::billboarded_lock_x;
+	billboardedY = node.flags & mdx::Node::Flags::billboarded_lock_y;
+	billboardedZ = node.flags & mdx::Node::Flags::billboarded_lock_z;
 }
 
 //void RenderNode::setTransformation(glm::vec3 location, glm::quat rotation, glm::vec3 scale) {
@@ -38,30 +40,26 @@ void RenderNode::recalculateTransformation() {
 
 	wasDirty = dirty;
 
-	// Matrix Eater functionality begins below.
-	// Everything above was only in the JS.
-	// Apparently I completely removed and omitted all logic
-	// relating to dirty nodes, perhaps because I wanted
-	// correct behavior and did not want to implement the
-	// performance optimization that Ghostwolf and I discussed
-	// about dirty nodes. Shouldn't that mean the ME impl is buggy?
-	// Surely I didn't invent some way to omit the above?
-
-	// ToDo remove above comment for being too verbose.
-
 	if (dirty) {
 		dirty = false;
 
 		if (parent) {
-			glm::vec3 computedLocation;
+			glm::quat computedRotation;
 			glm::vec3 computedScaling;
-			computedLocation = localLocation;
+			glm::vec3 computedLocation;
+			//= localLocation;
 
-			// ToDo Ghostwolf has some commented-out code
-			// here to process "dontInheritRotation"
-			// and "dontInheritTranslation" flags.
-			// Matrix Eater completely skipped it so it's probably
-			// bugged, too??? Needs a test.
+			if (dontInheritTranslation) {
+				computedLocation = localLocation * parent->inverseWorldLocation;
+			} else {
+				computedLocation = localLocation;
+			}
+
+			if (dontInheritRotation) {
+				computedRotation = localRotation * parent->inverseWorldRotation;
+			} else {
+				computedRotation = localRotation;
+			}
 
 			if (dontInheritScaling) {
 				computedScaling = parent->inverseWorldScale * localScale;
@@ -70,10 +68,9 @@ void RenderNode::recalculateTransformation() {
 				computedScaling = localScale;
 				worldScale = parent->worldScale * localScale;
 			}
-			fromRotationTranslationScaleOrigin(localRotation, computedLocation, computedScaling, localMatrix, pivot);
+			fromRotationTranslationScaleOrigin(computedRotation, computedLocation, computedScaling, localMatrix, pivot);
 
 			worldMatrix = parent->worldMatrix * localMatrix;
-
 			worldRotation = parent->worldRotation * localRotation;
 		} else {
 			fromRotationTranslationScaleOrigin(localRotation, localLocation, localScale, localMatrix, pivot);

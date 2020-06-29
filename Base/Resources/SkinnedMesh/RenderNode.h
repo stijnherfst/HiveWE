@@ -38,7 +38,10 @@ class RenderNode {
 	glm::quat inverseWorldRotation;
 	glm::vec3 inverseWorldScale;
 	// cached flags from node, could be removed for RAM
+	bool dontInheritTranslation;
 	bool dontInheritScaling;
+	bool dontInheritRotation;
+
 	// for some reason MatrixEater didn't have
 	// dontInheritTranslation and dontInheritRotation????
 	bool billboarded;

@@ -61,15 +61,19 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 				// show size is capped at 3 because that's what I made the shader do.
 				// Not a correct behavior, just a simpler one.
 				int show_size = matrix_size > 3 ? 3 : matrix_size;
-				glm::uvec4 matrixData(show_size, 0, 0, 0);
+				glm::uvec4 indices = glm::uvec4(show_size, 0, 0, 0);
 				for (int index = 0; index < show_size; index++) {
-					matrixData[index + 1] = i.matrix_indices[geoset_matrix_offset + index] + 1;
+					indices[index + 1] = i.node_indices[geoset_matrix_offset + index] + 1;
 				}
-				group_indexing_lookups.push_back(matrixData);
+				
+				group_indexing_lookups.push_back(indices);
 				geoset_matrix_offset += matrix_size;
 			}
 		}
+
 		gl->glCreateBuffers(1, &retera_groups_buffer);
+		gl->glNamedBufferData(retera_groups_buffer, group_indexing_lookups.size() * sizeof(glm::uvec4), group_indexing_lookups.data(), GL_DYNAMIC_DRAW);
+
 		gl->glCreateTextures(GL_TEXTURE_BUFFER, 1, &retera_groups_buffer_texture);
 		gl->glCreateBuffers(1, &retera_vertex_group_buffer);
 		gl->glNamedBufferData(retera_vertex_group_buffer, vertex_groups.size() * sizeof(uint), vertex_groups.data(), GL_STATIC_DRAW);
@@ -229,14 +233,8 @@ void SkinnedMesh::render_opaque() {
 	gl->glVertexAttribIPointer(7, 1, GL_UNSIGNED_INT, 0, nullptr);
 	gl->glVertexAttribDivisor(7, 0);
 
-
-	gl->glActiveTexture(GL_TEXTURE14);
-	gl->glBindBuffer(GL_TEXTURE_BUFFER, retera_groups_buffer);
-	gl->glBufferData(GL_TEXTURE_BUFFER, group_indexing_lookups.size() * sizeof(glm::uvec4), group_indexing_lookups.data(), GL_DYNAMIC_DRAW);
-	gl->glBindBuffer(GL_TEXTURE_BUFFER, 0);
-
-	gl->glBindTexture(GL_TEXTURE_BUFFER, retera_groups_buffer_texture);
-	gl->glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32UI, retera_groups_buffer);
+	gl->glTextureBuffer(retera_groups_buffer_texture, GL_RGBA32UI, retera_groups_buffer);
+	gl->glBindTextureUnit(1, retera_groups_buffer_texture);
 
 	for (int i = 0; i < render_jobs.size(); i++) {
 		instance_bone_matrices.push_back(glm::mat4(0.0f)); // Our shader code currently wants loading "matrix 0" (per instance) to load a totally empty one
@@ -245,16 +243,10 @@ void SkinnedMesh::render_opaque() {
 		}
 	}
 
-	gl->glActiveTexture(GL_TEXTURE15);
-	gl->glBindBuffer(GL_TEXTURE_BUFFER, retera_node_buffer);
-	gl->glBufferData(GL_TEXTURE_BUFFER, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
-	gl->glBindBuffer(GL_TEXTURE_BUFFER, 0);
+	gl->glNamedBufferData(retera_node_buffer, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
+	gl->glTextureBuffer(retera_node_buffer_texture, GL_RGBA32UI, retera_node_buffer);
+	gl->glBindTextureUnit(2, retera_node_buffer_texture);
 
-	gl->glBindTexture(GL_TEXTURE_BUFFER, retera_node_buffer_texture);
-	gl->glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, retera_node_buffer);
-
-	gl->glUniform1i(8, 14);
-	gl->glUniform1i(9, 15);
 	gl->glUniform1i(10, model->bones.size() + 1);
 
 	for (auto& i : entries) {

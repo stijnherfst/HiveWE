@@ -255,7 +255,7 @@ namespace mdx {
 			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
 			reader.advance(4); // Mats
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
-			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
+			geoset.node_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
