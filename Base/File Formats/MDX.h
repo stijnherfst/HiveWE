@@ -78,8 +78,11 @@ namespace mdx {
 		VERS = 1397900630,
 		MODL = 1279545165,
 		SEQS = 1397835091,
-		MTLS = 1397511245,
+		GLBS = 1396853831,
 		TEXS = 1398293844,
+		SNDS = 1396985427,
+		MTLS = 1397511245,
+		TXAN = 1312905300,
 		GEOS = 1397704007,
 		GEOA = 1095714119,
 		BONE = 1162760002,
@@ -92,7 +95,9 @@ namespace mdx {
 		RIBB = 1111640402,
 		EVTS = 1398036037,
 		CLID = 1145654339,
-		GLBS = 1396853831
+		BPOS = 1397706818,
+		FAFX = 1480999238,
+		CORN = 1314017091
 	};
 
 	template <typename T>
@@ -388,22 +393,26 @@ namespace mdx {
 	};
 
 	struct Geoset {
-		uint32_t lod;
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
 		std::vector<uint32_t> face_type_groups;
 		std::vector<uint32_t> face_groups;
 		std::vector<uint16_t> faces;
 		std::vector<uint8_t> vertex_groups;
-		std::vector<uint32_t> matrix_groups;
-		std::vector<uint32_t> node_indices;
+		std::vector<uint32_t> bone_groups;
+		std::vector<uint32_t> bone_indices;
 
 		uint32_t material_id;
 		uint32_t selection_group;
 		uint32_t selection_flags;
+		uint32_t lod;
+		std::string lod_name;
 		Extent extent;
 
 		std::vector<Extent> extents;
+
+		std::vector<glm::vec4> tangents;
+		std::vector<uint8_t> skin;
 
 		using TextureCoordinateSet = std::vector<glm::vec2>;
 		std::vector<TextureCoordinateSet> texture_coordinate_sets;
@@ -638,6 +647,11 @@ namespace mdx {
 		float radius;		  // used for sphere/cylinder
 	};
 
+	struct CornEmitter {
+		Node node;
+		// Actually has more data, but we don't care
+	};
+
 	class MDX {
 		int version;
 
@@ -657,6 +671,7 @@ namespace mdx {
 		void read_RIBB_chunk(BinaryReader& reader);
 		void read_EVTS_chunk(BinaryReader& reader);
 		void read_CLID_chunk(BinaryReader& reader);
+		void read_CORN_chunk(BinaryReader& reader);
 
 	  public:
 		explicit MDX(BinaryReader& reader);
@@ -678,6 +693,7 @@ namespace mdx {
 		std::vector<RibbonEmitter> ribbons;
 		std::vector<EventObject> eventObjects;
 		std::vector<CollisionShape> collisionShapes;
+		std::vector<CornEmitter> corn_emitters;
 
 		void forEachNode(const std::function<void(Node&)>& lambda);
 	};

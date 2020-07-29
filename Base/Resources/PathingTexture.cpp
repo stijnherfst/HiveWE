@@ -1,6 +1,7 @@
 #include "PathingTexture.h"
 
 #include <SOIL2/SOIL2.h>
+#include <glm/glm.hpp>
 
 #include "BinaryReader.h"
 #include "Hierarchy.h"
@@ -18,6 +19,12 @@ PathingTexture::PathingTexture(const fs::path& path) {
 	data = std::vector<uint8_t>(image_data, image_data + width * height * channels);
 	delete image_data;
 
-	const uint8_t first = data[0];
-	homogeneous = std::all_of(data.begin(), data.end(), [first](const uint8_t data) { return data == first; });
+	homogeneous = true;
+	for (int i = 0; i < data.size(); i += channels) {
+		if (channels == 3) {
+			homogeneous = homogeneous && *reinterpret_cast<glm::u8vec3*>(data.data() + i) == *reinterpret_cast<glm::u8vec3*>(data.data());
+		} else if (channels == 4) {
+			homogeneous = homogeneous && *reinterpret_cast<glm::u8vec4*>(data.data() + i) == *reinterpret_cast<glm::u8vec4*>(data.data());
+		}
+	}
 }

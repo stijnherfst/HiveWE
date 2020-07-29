@@ -33,7 +33,7 @@ See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for bina
 5. You need to close and open the CMD window after step 3!!
 6. Add the vcpkg location to your System Path variable (eg. "C:\vcpkg")
 7. Install dependencies  
-`vcpkg install qt5-base glm soil2 stormlib casclib libjpeg-turbo qscintilla bullet3 qt-advanced-docking-system abseil[cxx17]`  
+`vcpkg install qt5-base glm soil2 stormlib casclib libjpeg-turbo qscintilla bullet3 qt-advanced-docking-system abseil[cxx17] fmt`  
 Estimated to take about 30 minutes
 8. Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator needed for creating a symbolic link on Windows)  
 **Done**

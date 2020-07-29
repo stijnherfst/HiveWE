@@ -47,7 +47,6 @@ void RenderNode::recalculateTransformation() {
 			glm::quat computedRotation;
 			glm::vec3 computedScaling;
 			glm::vec3 computedLocation;
-			//= localLocation;
 
 			if (dontInheritTranslation) {
 				computedLocation = localLocation * parent->inverseWorldLocation;

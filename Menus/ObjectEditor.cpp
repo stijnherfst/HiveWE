@@ -17,8 +17,6 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 			}
 		});
 
-		
-
 		QTableView* view = new QTableView;
 		TableDelegate* delegate = new TableDelegate;
 		view->setItemDelegate(delegate);

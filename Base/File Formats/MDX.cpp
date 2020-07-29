@@ -201,6 +201,9 @@ namespace mdx {
 			case ChunkTag::CLID:
 				read_CLID_chunk(reader);
 				break;
+			case ChunkTag::CORN:
+				read_CORN_chunk(reader);
+				break;
 			default:
 				reader.advance(reader.read<uint32_t>());
 			}
@@ -252,18 +255,17 @@ namespace mdx {
 			geoset.vertex_groups = reader.read_vector<uint8_t>(vertex_groups_count);
 			reader.advance(4);
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
-			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
+			geoset.bone_groups = reader.read_vector<uint32_t>(matrix_group_count);
 			reader.advance(4); // Mats
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
-			geoset.node_indices = reader.read_vector<uint32_t>(matrix_indices_count);
+			geoset.bone_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
 
-			std::string tt;
 			if (version > 800) {
 				geoset.lod = reader.read<uint32_t>();
-				tt = reader.read_string(80); // lod name
+				geoset.lod_name = reader.read_string(80); // lod name
 			} else {
 				geoset.lod = 0;
 			}
@@ -274,16 +276,20 @@ namespace mdx {
 				geoset.extents.emplace_back(Extent(reader));
 			}
 
-			if (version > 800 && tt.size()) {
-				reader.advance(4); // Tangents
+			std::string tag = reader.read_string(4);
+
+			if (tag == "TANG") {
 				uint32_t structure_count = reader.read<uint32_t>();
-				reader.advance(structure_count * 16);
-				reader.advance(4); // Skin?
-				uint32_t byte_count = reader.read<uint32_t>();
-				reader.advance(byte_count);
+				geoset.tangents = reader.read_vector<glm::vec4>(structure_count);
+				tag = reader.read_string(4); // Maybe SKIN, maybe UVAS
 			}
 
-			reader.advance(4); // UVAS
+			if (tag == "SKIN") {
+				uint32_t skin_count = reader.read<uint32_t>();
+				geoset.skin = reader.read_vector<uint8_t>(skin_count);
+				reader.advance(4); // UVAS
+			}
+
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
 				reader.advance(4);
@@ -641,6 +647,34 @@ namespace mdx {
 		}
 	}
 
+	void MDX::read_CORN_chunk(BinaryReader& reader) {
+		const int reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			CornEmitter emitter;
+			const int node_reader_pos = reader.position;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+			emitter.node = Node(reader);
+			
+			reader.advance(4);
+			reader.advance(4);
+			reader.advance(4);
+			reader.advance(16);
+			reader.advance(4);
+			reader.advance(260);
+			reader.advance(260);
+
+			reader.advance(inclusive_size - (reader.position - node_reader_pos));
+
+			//while (reader.position < node_reader_pos + inclusive_size) {
+			//	emitter.node.animated_data.load_tracks(reader);
+			//}
+			corn_emitters.push_back(std::move(emitter));
+		}
+	}
+
+
 	void MDX::forEachNode(const std::function<void(Node&)>& F) {
 		for (auto& i : bones) {
 			F(i.node);
@@ -675,6 +709,9 @@ namespace mdx {
 		}
 
 		for (auto& i : collisionShapes) {
+			F(i.node);
+		}
+		for (auto& i : corn_emitters) {
 			F(i.node);
 		}
 	}

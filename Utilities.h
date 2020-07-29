@@ -71,20 +71,9 @@ struct ItemSet {
 	std::vector<std::pair<std::string, int>> items;
 };
 
-namespace std {
-	template<> struct hash<QString> {
-		std::size_t operator()(const QString& s) const {
-			return qHash(s);
-		}
-	};
-}
-
 extern const glm::vec3 TRANSLATION_IDENTITY;
 extern const glm::quat ROTATION_IDENTITY;
 extern const glm::vec3 SCALE_IDENTITY;
-
-//template <typename T>
-//void interpolate(T& out, const T* start, const T* outTan, const T* inTan, const T* end, float t, int interpolationType);
 
 float interpolate(const float* start, const float* outTan, const float* inTan, const float* end, float t, int interpolationType);
 glm::vec3 interpolate(const glm::vec3* start, const glm::vec3* outTan, const glm::vec3* inTan, const glm::vec3* end, float t, int interpolationType);

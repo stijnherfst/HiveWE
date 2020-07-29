@@ -74,6 +74,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 	materials = model.materials;
 
+	if (model.sequences.size()) {
+		extent = model.sequences.front().extent;
+	}
+
 	for (const auto& i : model.textures) {
 		if (i.replaceable_id != 0) {
 			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {

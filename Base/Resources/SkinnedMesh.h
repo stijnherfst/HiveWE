@@ -18,7 +18,6 @@ class SkinnedMesh : public Resource {
 		int base_index = 0;
 
 		int material_id = 0;
-		bool visible = true;
 		mdx::Extent extent;
 
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
@@ -36,18 +35,13 @@ class SkinnedMesh : public Resource {
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
 	GLuint normal_buffer;
+	GLuint weight_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
-	GLuint retera_vertex_group_buffer;
 	GLuint retera_node_buffer;
-	GLuint retera_groups_buffer;
 	GLuint retera_node_buffer_texture;
-	GLuint retera_groups_buffer_texture;
 	GLuint layer_alpha;
 	GLuint geoset_color;
-
-	std::vector<uint> vertex_groups;
-	std::vector<glm::uvec4> group_indexing_lookups;
 
 	fs::path path;
 	int mesh_id;

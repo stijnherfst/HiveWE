@@ -8,8 +8,7 @@
 #include <QFile>
 
 #include "HiveWE.h"
-
-#include "SLK2.h"
+#include "test.h"
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available

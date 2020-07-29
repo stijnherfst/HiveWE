@@ -8,39 +8,3 @@ STRING 2
 Force 1
 }
 
-STRING 5
-// Units: hpea (Deedo), Description (Description)
-{
-hey
-}
-
-STRING 6
-// Units: hpea (Deedo), Hotkey (Hotkey)
-{
-D
-}
-
-STRING 7
-// Units: hpea (Deedo), Name (Name)
-{
-Deedo
-}
-
-STRING 8
-// Units: hpea (Deedo), EditorSuffix (Name - Editor Suffix)
-{
-ded
-}
-
-STRING 9
-// Units: hpea (Deedo), Tip (Tooltip - Basic)
-{
-traimnm,e
-}
-
-STRING 10
-// Units: hpea (Deedo), Ubertip (Tooltip - Extended)
-{
-hoofpoof
-}
-

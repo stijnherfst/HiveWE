@@ -1,6 +1,7 @@
 #include "Map.h"
 
 #include <iostream>
+#include <execution>
 
 #include <QMessageBox>
 #include <QOpenGLFunctions_4_5_Core>
@@ -364,12 +365,20 @@ void Map::update(double delta, int width, int height) {
 		}
 	}
 
-	for (auto& i : units.units) {
-		if (i.id == "sloc") {
-			continue;
-		} // ToDo handle starting locations
-		i.skeleton.update(delta);
-	}
+	//for (auto& i : units.units) {
+	//	if (i.id == "sloc") {
+	//		continue;
+	//	} // ToDo handle starting locations
+	//	i.skeleton.update(delta);
+	//}
+
+	//std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
+	//	if (i.id == "sloc") {
+	//		return;
+	//	} // ToDo handle starting locations
+	//	i.skeleton.update(delta);
+	//});
+
 	for (auto& i : units.items) {
 		i.skeleton.update(delta);
 	}

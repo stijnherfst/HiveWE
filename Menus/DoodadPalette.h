@@ -8,6 +8,7 @@
 #include "DoodadListModel.h"
 #include "DestructableListModel.h"
 
+#include <QConcatenateTablesProxyModel>
 
 class DoodadPalette : public Palette {
 	Q_OBJECT
@@ -28,6 +29,7 @@ private:
 	DoodadListFilter* doodad_filter_model;
 	DestructableListModel* destructable_list_model;
 	DestructableListFilter* destructable_filter_model;
+	QConcatenateTablesProxyModel* table;
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;

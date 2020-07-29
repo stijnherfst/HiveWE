@@ -24,6 +24,7 @@ find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qt-advanced-docking-system CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -125,6 +126,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/TriggerExplorer.cpp"
 	"Menus/Custom Widgets/UnitSelector.cpp"
 	"Menus/Custom Widgets/GenericSelectorList.cpp"
+	"test.cpp"
 )
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
@@ -147,8 +149,11 @@ target_link_libraries(HiveWE
 	BulletDynamics
 	BulletSoftBody
 	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
+	#"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 	absl::flat_hash_map
+	fmt::fmt
+	fmt::fmt-header-only
 
 )
 

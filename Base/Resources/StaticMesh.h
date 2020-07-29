@@ -24,6 +24,7 @@ public:
 
 	std::vector<MeshEntry> entries;
 	bool has_mesh; // ToDo remove when added support for meshless
+	mdx::Extent extent;
 
 	GLuint vertex_buffer;
 	GLuint uv_buffer;

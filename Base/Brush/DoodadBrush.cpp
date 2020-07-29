@@ -197,15 +197,17 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 						target_rotation = (glm::pi<float>() + target_rotation) + glm::pi<float>();
 					}
 
-					if (i->pathing->width == i->pathing->height) {
-						if (i->pathing->homogeneous) {
-							i->angle = target_rotation;
 
+					if (i->pathing) {
+						if (i->pathing->width == i->pathing->height && i->pathing->homogeneous) {
+							i->angle = target_rotation;
 						} else {
 							i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
 						}
 					} else {
-						i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+						i->angle = target_rotation;
+
+						//i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
 					}
 					i->update();
 				}
@@ -387,11 +389,7 @@ void DoodadBrush::render_selection() const {
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		float selection_scale = 1.f;
-
-//		if (i->mesh->animations.size()) {
-//			selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
-//		}
+		float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -480,7 +478,6 @@ void DoodadBrush::erase_variation(int variation) {
 
 void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
-	set_random_variation();
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
@@ -514,6 +511,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		set_size(std::max(pathing_texture->width, pathing_texture->height));
 
 		free_rotation = pathing_texture->width == pathing_texture->height;
+		free_rotation = free_rotation && pathing_texture->homogeneous;
 		free_rotation = free_rotation && slk.data<float>("fixedrot", id) < 0.f;
 	} else {
 		free_placement = true;
@@ -525,4 +523,5 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	for (int i = 0; i < variation_count; i++) {
 		possible_variations.insert(i);
 	}
+	set_random_variation();
 }

@@ -45,7 +45,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	destructable_filter_model->setSourceModel(destructable_list_model);
 	destructable_filter_model->sort(0, Qt::AscendingOrder);
 
-	ui.doodads->setModel(doodad_filter_model);
+	table = new QConcatenateTablesProxyModel;
+	table->addSourceModel(doodad_filter_model);
+	table->addSourceModel(destructable_filter_model);
+
+	ui.doodads->setModel(table);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -148,14 +152,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(visible_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_solid; });
 
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
-		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
+		// Possible Qt bug. Try swapping the two lines below and see if it crashes when selecting a tree and then swapping to a doodad category
 		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());
-
-		if (index >= 6) {
-			ui.doodads->setModel(destructable_filter_model);
-		} else {
-			ui.doodads->setModel(doodad_filter_model);
-		}
+		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
 	});
 
 	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), [=](int index) {
@@ -189,6 +188,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
 	ui.tileset->setCurrentIndex(0);
+
+	ui.search->setFocus();
+	ui.search->selectAll();
 }
 
 DoodadPalette::~DoodadPalette() {
@@ -212,11 +214,13 @@ bool DoodadPalette::event(QEvent *e) {
 
 void DoodadPalette::selection_changed(const QModelIndex& index) {
 	std::string id;
-	if (ui.type->currentIndex() >= 6) {
-		const int row = destructable_filter_model->mapToSource(index).row();
+
+	const auto model = table->mapToSource(index).model();
+	if (model == destructable_filter_model) {
+		const int row = destructable_filter_model->mapToSource(table->mapToSource(index)).row();
 		id = destructables_slk.index_to_row.at(row);
-	} else {
-		const int row = doodad_filter_model->mapToSource(index).row();
+	} else if (model == doodad_filter_model) {
+		const int row = doodad_filter_model->mapToSource(table->mapToSource(index)).row();
 		id = doodads_slk.index_to_row.at(row);
 	}
 
