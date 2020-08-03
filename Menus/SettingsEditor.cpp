@@ -3,13 +3,27 @@
 #include <QSettings>
 #include <QFile>
 
-SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
+
+void setTestArgs(Ui::SettingsEditor &ui) {
+	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString(ui.diff->currentIndex() + '0') +
+						(ui.windowmode->currentText() != "Default" ? " -windowmode " + QString([](int x) {
+		switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; case 3: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") +
+						(ui.testhd->currentText() != "Default" ? " -hd " + QString([](int x) {
+		switch (x) { case 1: return "1"; case 2: return "0";} }(ui.testhd->currentIndex())) : "") +
+						(ui.testteen->currentText() != "Default" ? " -teen " + QString([](int x) {
+		switch (x) { case 1: return "1"; case 2: return "0"; } }(ui.testteen->currentIndex())) : "") +
+						" -testmapprofile " + ui.profile->text() + " -fixedseed " + (ui.fixedseed->isChecked() ? "1" : "0") + (ui.nowfpause->isChecked() ? " -nowfpause" : ""));
+};
+
+SettingsEditor::SettingsEditor(QWidget* parent)
+	: QDialog(parent) {
 	ui.setupUi(this);
 	QSettings settings;
 	ui.theme->setCurrentText(settings.value("theme").toString());
 	ui.comments->setChecked(settings.value("comments", "True").toString() != "False");
 	ui.hd->setChecked(settings.value("hd", "True").toString() != "False");
 	ui.teen->setChecked(settings.value("teen", "False").toString() != "False");
+
 	ui.userArgs->setText(settings.value("userArgs", "").toString());
 	ui.diff->setCurrentText(settings.value("diff", "Normal").toString());
 	ui.windowmode->setCurrentText(settings.value("windowmode", "Default").toString());
@@ -18,15 +32,17 @@ SettingsEditor::SettingsEditor(QWidget* parent) : QDialog(parent) {
 	ui.profile->setText(settings.value("profile", "HiveWE").toString());
 	ui.fixedseed->setChecked(settings.value("fixedseed", "True").toString() != "False");
 	ui.nowfpause->setChecked(settings.value("nowfpause", "True").toString() != "False");
-	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString(ui.diff->currentIndex() + '0') +
-		(ui.windowmode->currentText() != "Default" ? " -windowmode " + QString([](int x) {
-			switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; case 3: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") + 
-		(ui.testhd->currentText() != "Default" ? " -hd " + QString([](int x) {
-			switch (x) { case 1: return "1"; case 2: return "0";} }(ui.testhd->currentIndex())) : "") +
-		(ui.testteen->currentText() != "Default" ? " -teen " + QString([](int x) {
-			switch (x) { case 1: return "1"; case 2: return "0"; } }(ui.testteen->currentIndex())) : "") +
-		" -testmapprofile " + ui.profile->text() + " -fixedseed " + (ui.fixedseed->isChecked() ? "1" : "0") + (ui.nowfpause->isChecked() ? " -nowfpause" : "")
-	);
+
+	connect(ui.userArgs, &QLineEdit::textChanged, [&]() { setTestArgs(ui); });
+	connect(ui.diff, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
+	connect(ui.windowmode, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
+	connect(ui.testhd, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
+	connect(ui.testteen, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
+	connect(ui.profile, &QLineEdit::textChanged, [&]() { setTestArgs(ui); });
+	connect(ui.fixedseed, &QCheckBox::stateChanged, [&]() { setTestArgs(ui); });
+	connect(ui.nowfpause, &QCheckBox::stateChanged, [&]() { setTestArgs(ui); });
+	emit ui.nowfpause->stateChanged(0);
+
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();

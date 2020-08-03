@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>605</width>
-    <height>527</height>
+    <width>730</width>
+    <height>530</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,7 +22,7 @@
      <item>
       <widget class="QTabWidget" name="tabs">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="usesScrollButtons">
         <bool>false</bool>
