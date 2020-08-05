@@ -408,9 +408,9 @@ void HiveWE::play_test() {
 
 	QSettings settings;
 	if (settings.value("testArgs").toString() != "")
-		arguments << settings.value("testArgs").toString();
+		arguments << settings.value("testArgs").toString().split(' ');
 
-	warcraft->start("\"" + warcraft_path + "\"", arguments);
+	warcraft->start(warcraft_path, arguments);
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
