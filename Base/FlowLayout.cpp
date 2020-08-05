@@ -34,11 +34,12 @@ void FlowLayout::move_widget(const int index, QWidget* widget) {
 }
 
 int FlowLayout::horizontal_spacing() const {
-	if (h_space >= 0) {
-		return h_space;
-	} else {
-		return smart_spacing(QStyle::PM_LayoutHorizontalSpacing);
-	}
+	return spacing();
+	//if (h_space >= 0) {
+	//	return h_space;
+	//} else {
+	//	return smart_spacing(QStyle::PM_LayoutHorizontalSpacing);
+	//}
 }
 
 int FlowLayout::vertical_spacing() const {

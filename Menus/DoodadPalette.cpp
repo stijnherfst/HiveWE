@@ -33,7 +33,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	doodad_list_model->setSourceModel(doodads_table);
 
 	DestructableListModel* destructable_list_model = new DestructableListModel;
-	destructable_list_model->setSourceModel(destructables_table);
+	destructable_list_model->setSourceModel(destructibles_table);
 
 	doodad_filter_model = new DoodadListFilter(this);
 	doodad_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
@@ -218,7 +218,7 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	const auto model = table->mapToSource(index).model();
 	if (model == destructable_filter_model) {
 		const int row = destructable_filter_model->mapToSource(table->mapToSource(index)).row();
-		id = destructables_slk.index_to_row.at(row);
+		id = destructibles_slk.index_to_row.at(row);
 	} else if (model == doodad_filter_model) {
 		const int row = doodad_filter_model->mapToSource(table->mapToSource(index)).row();
 		id = doodads_slk.index_to_row.at(row);
@@ -228,7 +228,7 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	selection_mode->setChecked(false);
 
 	bool is_doodad = doodads_slk.row_headers.contains(id);
-	slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
+	slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	variations->clear();
 

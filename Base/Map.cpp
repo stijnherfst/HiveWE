@@ -108,12 +108,12 @@ void Map::load(const fs::path& path) {
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 	// Destructables
-	destructables_slk = slk::SLK2("Units/DestructableData.slk");
-	destructables_meta_slk = slk::SLK2("Units/DestructableMetaData.slk");
+	destructibles_slk = slk::SLK2("Units/DestructableData.slk");
+	destructibles_meta_slk = slk::SLK2("Units/DestructableMetaData.slk");
 
-	destructables_slk.merge(ini::INI("Units/DestructableSkin.txt"));
-	destructables_slk.substitute(world_edit_strings, "WorldEditStrings");
-	destructables_slk.substitute(world_edit_game_strings, "WorldEditStrings");
+	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 	upgrade_slk = slk::SLK2("Units/UpgradeData.slk");
 	upgrade_meta_slk = slk::SLK2("Units/UpgradeMetaData.slk");
@@ -165,7 +165,7 @@ void Map::load(const fs::path& path) {
 	items_table = new TableModel(&items_slk, &items_meta_slk);
 	abilities_table = new TableModel(&abilities_slk, &abilities_meta_slk);
 	doodads_table = new TableModel(&doodads_slk, &doodads_meta_slk);
-	destructables_table = new TableModel(&destructables_slk, &destructables_meta_slk);
+	destructibles_table = new TableModel(&destructibles_slk, &destructibles_meta_slk);
 	upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
 	buff_table = new TableModel(&buff_slk, &buff_meta_slk);
 
@@ -210,7 +210,7 @@ void Map::load(const fs::path& path) {
 	}
 
 	if (hierarchy.map_file_exists("war3map.w3b")) {
-		load_modification_file("war3map.w3b", destructables_slk, destructables_meta_slk, false);
+		load_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false);
 	}
 
 	doodads.load();
@@ -310,7 +310,7 @@ bool Map::save(const fs::path& path) {
 	terrain.save();
 
 	save_modification_file("warmap.w3d", doodads_slk, doodads_meta_slk, true);
-	save_modification_file("warmap.w3b", destructables_slk, destructables_meta_slk, false);
+	save_modification_file("warmap.w3b", destructibles_slk, destructibles_meta_slk, false);
 	doodads.save();
 
 	save_modification_file("warmap.w3u", units_slk, units_meta_slk, false);

@@ -185,7 +185,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 					if (doodads_slk.row_headers.contains(i->id)) {
 						fixed_rotation = doodads_slk.data<int>("fixedrot", i->id) > 0;
 					} else {
-						fixed_rotation = destructables_slk.data<int>("fixedrot", i->id) > 0;
+						fixed_rotation = destructibles_slk.data<int>("fixedrot", i->id) > 0;
 					}
 
 					if (fixed_rotation) {
@@ -449,7 +449,7 @@ void DoodadBrush::set_random_rotation() {
 	if (doodads_slk.row_headers.contains(id)) {
 		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
 	} else {
-		fixed_rotation = destructables_slk.data<int>("fixedrot", id) > 0;
+		fixed_rotation = destructibles_slk.data<int>("fixedrot", id) > 0;
 	}
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
@@ -480,7 +480,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
-	const slk::SLK2& slk = is_doodad ? doodads_slk : destructables_slk;
+	const slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
 	
 	min_scale = slk.data<float>("minscale", id);
 	max_scale = slk.data<float>("maxscale", id);

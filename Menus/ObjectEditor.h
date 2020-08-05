@@ -7,6 +7,7 @@
 #include "TableModel.h"
 #include "UnitTreeModel.h"
 #include "DoodadTreeModel.h"
+#include "DestructibleTreeModel.h"
 #include "AbilityTreeModel.h"
 #include "ItemTreeModel.h"
 #include "BuffTreeModel.h"
@@ -30,22 +31,31 @@ private:
 	QTreeView* unit_explorer = new QTreeView;
 	QTreeView* doodad_explorer = new QTreeView;
 	QTreeView* item_explorer = new QTreeView;
-	QTreeView* destructable_explorer = new QTreeView;
+	QTreeView* destructible_explorer = new QTreeView;
 	QTreeView* ability_explorer = new QTreeView;
 	QTreeView* upgrade_explorer = new QTreeView;
 	QTreeView* buff_explorer = new QTreeView;
 	
 	UnitTreeModel* unitTreeModel;
 	DoodadTreeModel* doodadTreeModel;
+	DestructibleTreeModel* destructibleTreeModel;
 	AbilityTreeModel* abilityTreeModel;
 	ItemTreeModel* itemTreeModel;
 	BuffTreeModel* buffTreeModel;
 	UpgradeTreeModel* upgradeTreeModel;
 
+	QSortFilterProxyModel* unitTreeFilter;
+	QSortFilterProxyModel* doodadTreeFilter;
+	QSortFilterProxyModel* destructibleTreeFilter;
+	QSortFilterProxyModel* abilityTreeFilter;
+	QSortFilterProxyModel* itemTreeFilter;
+	QSortFilterProxyModel* buffTreeFilter;
+	QSortFilterProxyModel* upgradeTreeFilter;
+
 	std::shared_ptr<QIconResource> custom_unit_icon;
 	std::shared_ptr<QIconResource> custom_item_icon;
 	std::shared_ptr<QIconResource> custom_doodad_icon;
-	std::shared_ptr<QIconResource> custom_destructable_icon;
+	std::shared_ptr<QIconResource> custom_destructible_icon;
 	std::shared_ptr<QIconResource> custom_ability_icon;
 	std::shared_ptr<QIconResource> custom_buff_icon;
 	std::shared_ptr<QIconResource> custom_upgrade_icon;
@@ -60,5 +70,5 @@ private:
 		buff
 	};
 
-	void item_clicked(const QModelIndex& index, Category category);
+	void item_clicked(QSortFilterProxyModel* model, const QModelIndex& index, Category category);
 };

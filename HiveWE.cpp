@@ -32,6 +32,8 @@
 #include "ObjectEditor.h"
 #include "Camera.h"
 
+#include "IconView.h"
+
 Map* map = nullptr;
 ini::INI world_edit_strings;
 ini::INI world_edit_game_strings;
@@ -55,9 +57,9 @@ TableModel* doodads_table;
 slk::SLK2 doodads_slk;
 slk::SLK2 doodads_meta_slk;
 
-TableModel* destructables_table;
-slk::SLK2 destructables_slk;
-slk::SLK2 destructables_meta_slk;
+TableModel* destructibles_table;
+slk::SLK2 destructibles_slk;
+slk::SLK2 destructibles_meta_slk;
 
 TableModel* upgrade_table;
 slk::SLK2 upgrade_slk;
@@ -217,6 +219,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	map->load("Data/Test Map/");
+
+	//QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	//dialog->resize(512, 512);
+	//dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	//QVBoxLayout* layout = new QVBoxLayout(dialog);
+	//layout->addWidget(new IconView);
+	//dialog->show();
 }
 
 void HiveWE::load_folder() {

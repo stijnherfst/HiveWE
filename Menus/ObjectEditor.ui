@@ -6,25 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>1093</height>
+    <width>1338</width>
+    <height>804</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Object Editor</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QTreeView" name="treeView"/>
-    </item>
-    <item>
-     <widget class="QTableView" name="unitView"/>
-    </item>
-    <item>
-     <widget class="QTableView" name="testView"/>
-    </item>
-   </layout>
+   <layout class="QHBoxLayout" name="horizontalLayout"/>
   </widget>
  </widget>
  <resources/>

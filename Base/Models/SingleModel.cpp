@@ -15,6 +15,7 @@
 
 #include "UnitSelector.h"
 #include "GenericSelectorList.h"
+#include "IconView.h"
 
 #include "HiveWE.h"
 
@@ -305,6 +306,17 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 			editor->addItem(displayText, QString::fromStdString(value[0]));
 		}
 		return editor;
+	} else if (type == "icon") {
+		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		dialog->resize(512, 512);
+		dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* layout = new QVBoxLayout(dialog);
+		layout->addWidget(new IconView);
+		dialog->show();
+		return dialog;
+		//IconView* view = new IconView;
+		//return view;
 	} else {
 		return new QLineEdit(parent);
 	}
@@ -355,6 +367,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 				combo->setCurrentIndex(i);
 			}
 		}
+	} else if (type == "icon") {
 	} else {
 		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
 	}
@@ -406,6 +419,8 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	} else if (unit_editor_data.section_exists(type)) {
 		auto combo = static_cast<QComboBox*>(editor);
 		singlemodel->setData(index, combo->currentData());
+	} else if (type == "icon") {
+
 	} else {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
 	}

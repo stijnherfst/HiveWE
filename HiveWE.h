@@ -85,9 +85,9 @@ extern TableModel* doodads_table;
 extern slk::SLK2 doodads_slk;
 extern slk::SLK2 doodads_meta_slk;
 
-extern TableModel* destructables_table;
-extern slk::SLK2 destructables_slk;
-extern slk::SLK2 destructables_meta_slk;
+extern TableModel* destructibles_table;
+extern slk::SLK2 destructibles_slk;
+extern slk::SLK2 destructibles_meta_slk;
 
 extern TableModel* upgrade_table;
 extern slk::SLK2 upgrade_slk;

@@ -22,7 +22,7 @@ QModelIndex DestructableListModel::mapToSource(const QModelIndex& proxyIndex) co
 		return {};
 	}
 
-	return sourceModel()->index(proxyIndex.row(), destructables_slk.column_headers.at("name"));
+	return sourceModel()->index(proxyIndex.row(), destructibles_slk.column_headers.at("name"));
 }
 
 QVariant DestructableListModel::data(const QModelIndex& index, int role) const {
@@ -32,9 +32,9 @@ QVariant DestructableListModel::data(const QModelIndex& index, int role) const {
 
 	switch (role) {
 		case Qt::DisplayRole:
-			return sourceModel()->data(mapToSource(index), role).toString() + " " + QString::fromStdString(destructables_slk.data("editorsuffix", index.row()));
+			return sourceModel()->data(mapToSource(index), role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", index.row()));
 		case Qt::DecorationRole: {
-			char category = destructables_slk.data("category", index.row()).front();
+			char category = destructibles_slk.data("category", index.row()).front();
 			if (icons.contains(category)) {
 				return icons.at(category)->icon;
 			} else {
@@ -88,13 +88,13 @@ bool DestructableListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& 
 	if (!filterRegExp().isEmpty()) {
 		return sourceModel()->data(index0).toString().contains(filterRegExp()) ;
 	} else {
-		const std::string tilesets = destructables_slk.data("tilesets", sourceRow);
-		return QString::fromStdString(destructables_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');;
+		const std::string tilesets = destructibles_slk.data("tilesets", sourceRow);
+		return QString::fromStdString(destructibles_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');;
 	}
 }
 
 bool DestructableListFilter::lessThan(const QModelIndex& left, const QModelIndex& right) const {
-	return destructables_slk.data("name", left.row()) < destructables_slk.data("name", right.row());
+	return destructibles_slk.data("name", left.row()) < destructibles_slk.data("name", right.row());
 }
 
 void DestructableListFilter::setFilterCategory(QString category) {

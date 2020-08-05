@@ -239,3 +239,31 @@ QTableView::indicator:checked{
 	background-color: rgb(100, 100, 100);
 	image: url("Data/Icons/check.png");
 }
+
+/******************************************************/
+/* Object Editor */
+
+ObjectEditor QLineEdit {
+	background-color: rgb(66, 66, 66);
+}
+
+IconButton {
+	border: 1px solid transparent;
+	padding-left: 3px;
+	padding-right: 2px;
+}
+
+IconButton::hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+IconButton::pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+IconButton::checked {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}

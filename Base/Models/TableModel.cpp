@@ -27,14 +27,69 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 
 	switch (role) {
 		case Qt::DisplayRole: {
+			const std::string field_data = slk->data(index.column(), index.row());
 			const std::string field = slk->index_to_column.at(index.column());
 			if (!meta_field_to_key.contains(field)) {
-				return QString::fromStdString(slk->data(index.column(), index.row()));
+				return QString::fromStdString(field_data);
+			}
+
+			if (field_data.starts_with("TRIGSTR")) {
+				return QString::fromStdString(map->trigger_strings.string(field_data));
 			}
 
 			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
 			if (type == "bool") {
-				return QString::fromStdString(slk->data(index.column(), index.row())) == "1" ? "true" : "false";
+				return QString::fromStdString(field_data) == "1" ? "true" : "false";
+			} else if (type == "unitList") {
+				auto parts = split(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					result += units_table->data(units_table->index(units_slk.row_headers.at(parts[i]), units_slk.column_headers.at("name")), role).toString();
+					if (i < parts.size() - 1) {
+							result += ", ";
+					}
+				}
+				return result;
+			} else if (type == "abilityList" || type == "abilitySkinList") {
+				auto parts = split(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					result += abilities_table->data(abilities_table->index(abilities_slk.row_headers.at(parts[i]), abilities_slk.column_headers.at("name")), role).toString();
+					if (i < parts.size() - 1) {
+						result += ", ";
+					}
+				}
+				return result;
+			} else if (type == "upgradeList" ) {
+				auto parts = split(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					result += upgrade_table->data(upgrade_table->index(upgrade_slk.row_headers.at(parts[i]), upgrade_slk.column_headers.at("name")), role).toString();
+					if (i < parts.size() - 1) {
+						result += ", ";
+					}
+				}
+				return result;
+			} else if (type == "targetList") {
+				auto parts = split(field_data, ',');
+				std::string result;
+				for (int i = 0; i < parts.size(); i++) {
+					for (const auto& [key, value] : unit_editor_data.section(type)) {
+						if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+							continue;
+						}
+						
+						if (value[0] == parts[i]) {
+							result += value[1];
+							if (i < parts.size() - 1) {
+								result += ", ";
+							}
+						}
+					}
+				}
+				QString result_qstring = QString::fromStdString(result);
+				result_qstring.replace('&', "");
+				return result_qstring;
 			} else if (unit_editor_data.section_exists(type)) {
 				for (const auto& [key, value] : unit_editor_data.section(type)) {
 					if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
@@ -49,7 +104,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				}
 			}
 
-			return QString::fromStdString(slk->data(index.column(), index.row()));
+			return QString::fromStdString(field_data);
 		}
 		case Qt::EditRole:
 			return QString::fromStdString(slk->data(index.column(), index.row()));

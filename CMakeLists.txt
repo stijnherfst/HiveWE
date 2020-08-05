@@ -127,7 +127,7 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/UnitSelector.cpp"
 	"Menus/Custom Widgets/GenericSelectorList.cpp"
 	"test.cpp"
-)
+ "Base/Models/DestructibleTreeModel.cpp" "Base/Models/DestructibleTreeModel.h" "Menus/Custom Widgets/IconView.cpp")
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
@@ -149,7 +149,7 @@ target_link_libraries(HiveWE
 	BulletDynamics
 	BulletSoftBody
 	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	#"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
+	#"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/debug/lib/qscintilla2_qt5d.lib"
 	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
 	absl::flat_hash_map
 	fmt::fmt

@@ -4,9 +4,11 @@
 
 #include "SingleModel.h"
 #include <QTableView>
+#include <QLineEdit>
 
-void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(index.internalPointer());
+void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex& index, Category category) {
+	QModelIndex sourceIndex = model->mapToSource(index);
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
 	if (item->tableRow > 0) {
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
@@ -38,7 +40,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(units_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(unitTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(unitTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			case Category::item: {
@@ -49,7 +51,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(items_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(itemTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(itemTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			case Category::doodad: {
@@ -60,19 +62,29 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(doodads_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(doodadTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(doodadTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
+				break;
+			}
+			case Category::destructible: {
+				std::string id = destructibles_slk.index_to_row.at(item->tableRow);
+
+				single_model = new SingleModel(&destructibles_slk, &destructibles_meta_slk, this);
+				single_model->setSourceModel(destructibles_table);
+				single_model->setID(id);
+
+				dock_tab->setWindowTitle(QString::fromStdString(destructibles_slk.data("name", item->tableRow)));
+				dock_tab->setIcon(destructibleTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			case Category::ability: {
 				std::string id = abilities_slk.index_to_row.at(item->tableRow);
-
 
 				single_model = new SingleModel(&abilities_slk, &abilities_meta_slk, this);
 				single_model->setSourceModel(abilities_table);
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(abilities_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(abilityTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(abilityTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			case Category::upgrade: {
@@ -83,7 +95,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				single_model->setID(id);
 
 				dock_tab->setWindowTitle(QString::fromStdString(upgrade_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(upgradeTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(upgradeTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			case Category::buff: {
@@ -99,7 +111,7 @@ void ObjectEditor::item_clicked(const QModelIndex& index, Category category) {
 				}
 
 				dock_tab->setWindowTitle(QString::fromStdString(name));
-				dock_tab->setIcon(buffTreeModel->data(index, Qt::DecorationRole).value<QIcon>());
+				dock_tab->setIcon(buffTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
 				break;
 			}
 			default:
@@ -122,7 +134,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	custom_unit_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUnit"));
 	custom_item_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewItem"));
 	custom_doodad_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewDood"));
-	custom_destructable_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewDest"));
+	custom_destructible_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewDest"));
 	custom_ability_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewAbil"));
 	custom_buff_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewBuff"));
 	custom_upgrade_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUpgr"));
@@ -132,94 +144,57 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
 
-	// Units
 	unitTreeModel = new UnitTreeModel(this);
-	unitTreeModel->setSourceModel(units_table);
-	unit_explorer->setModel(unitTreeModel);
-	unit_explorer->header()->hide();
-	unit_explorer->expand(unit_explorer->currentIndex());
-
-	ads::CDockWidget* unit_tab = new ads::CDockWidget("Units");
-	unit_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	unit_tab->setWidget(unit_explorer);
-	unit_tab->setIcon(custom_unit_icon->icon);
-	auto t = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
-	
-	// Items
 	itemTreeModel = new ItemTreeModel(this);
-	itemTreeModel->setSourceModel(items_table);
-	item_explorer->setModel(itemTreeModel);
-	item_explorer->header()->hide();
-
-	ads::CDockWidget* item_tab = new ads::CDockWidget("Items");
-	item_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	item_tab->setWidget(item_explorer);
-	item_tab->setIcon(custom_item_icon->icon);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, item_tab, t);
-
-	// Doodads
 	doodadTreeModel = new DoodadTreeModel(this);
-	doodadTreeModel->setSourceModel(doodads_table);
-	doodad_explorer->setModel(doodadTreeModel);
-	doodad_explorer->header()->hide();
-
-	ads::CDockWidget* doodad_tab = new ads::CDockWidget("Doodads");
-	doodad_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	doodad_tab->setWidget(doodad_explorer);
-	doodad_tab->setIcon(custom_doodad_icon->icon);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, doodad_tab, t);
-
-	// Destructables
-	ads::CDockWidget* destructable_tab = new ads::CDockWidget("Destructables");
-	destructable_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	destructable_tab->setIcon(custom_destructable_icon->icon);
-	//destructible_tab->setWidget(explorer);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, destructable_tab, t);
-
-	// Abilities
+	destructibleTreeModel = new DestructibleTreeModel(this);
 	abilityTreeModel = new AbilityTreeModel(this);
-	abilityTreeModel->setSourceModel(abilities_table);
-	ability_explorer->setModel(abilityTreeModel);
-	ability_explorer->header()->hide();
-
-	ads::CDockWidget* ability_tab = new ads::CDockWidget("Abilities");
-	ability_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	ability_tab->setWidget(ability_explorer);
-	ability_tab->setIcon(custom_ability_icon->icon);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, ability_tab, t);
-
-	// Upgrades
 	upgradeTreeModel = new UpgradeTreeModel(this);
-	upgradeTreeModel->setSourceModel(upgrade_table);
-	upgrade_explorer->setModel(upgradeTreeModel);
-	upgrade_explorer->header()->hide();
-
-	ads::CDockWidget* upgrade_tab = new ads::CDockWidget("Upgrades");
-	upgrade_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	upgrade_tab->setWidget(upgrade_explorer);
-	upgrade_tab->setIcon(custom_upgrade_icon->icon);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, upgrade_tab, t);
-
 	buffTreeModel = new BuffTreeModel(this);
-	buffTreeModel->setSourceModel(buff_table);
-	buff_explorer->setModel(buffTreeModel);
-	buff_explorer->header()->hide();
+	
+	ads::CDockAreaWidget* area = nullptr;
+	auto addTypeTreeView = [&](BaseTreeModel* treeModel, QSortFilterProxyModel*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
+		treeModel->setSourceModel(table);
+		filter = new QSortFilterProxyModel;
+		filter->setSourceModel(treeModel);
+		filter->setRecursiveFilteringEnabled(true);
+		filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+		view->setModel(filter);
+		view->header()->hide();
+		view->expandAll();
 
-	// Buffs
-	ads::CDockWidget* buff_tab = new ads::CDockWidget("Buffs");
-	buff_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	buff_tab->setWidget(buff_explorer);
-	buff_tab->setIcon(custom_buff_icon->icon);
-	dock_manager->addDockWidget(ads::CenterDockWidgetArea, buff_tab, t);
+		ads::CDockWidget* unit_tab = new ads::CDockWidget(name);
+		QLineEdit* search = new QLineEdit;
+		search->setPlaceholderText("Search " + name);
+		connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+		unit_tab->layout()->addWidget(search);
+		unit_tab->layout()->addWidget(view);
+		unit_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+		unit_tab->setIcon(icon);
+		if (area == nullptr) {
+			area = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
+		} else {
+			dock_manager->addDockWidget(ads::CenterDockWidgetArea, unit_tab, area);
+		}
+	};
 
-	t->setCurrentIndex(0);
+	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units");
+	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items");
+	addTypeTreeView(doodadTreeModel, doodadTreeFilter, doodads_table, doodad_explorer, custom_doodad_icon->icon, "Doodads");
+	addTypeTreeView(destructibleTreeModel, destructibleTreeFilter, destructibles_table, destructible_explorer, custom_destructible_icon->icon, "Destructibles");
+	addTypeTreeView(abilityTreeModel, abilityTreeFilter, abilities_table, ability_explorer, custom_ability_icon->icon, "Abilities");
+	addTypeTreeView(upgradeTreeModel, upgradeTreeFilter, upgrade_table, upgrade_explorer, custom_upgrade_icon->icon, "Upgrades");
+	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs");
 
-	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::unit); });
-	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::item); });
-	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::doodad); });
-	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::ability); });
-	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::upgrade); });
-	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(index, Category::buff); });
+	area->setCurrentIndex(0);
+
+	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(unitTreeFilter, index, Category::unit); });
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(itemTreeFilter, index, Category::item); });
+	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(doodadTreeFilter, index, Category::doodad); });
+	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(destructibleTreeFilter, index, Category::destructible); });
+	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(abilityTreeFilter, index, Category::ability); });
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(upgradeTreeFilter, index, Category::upgrade); });
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(buffTreeFilter, index, Category::buff); });
 
 	show();
 }
