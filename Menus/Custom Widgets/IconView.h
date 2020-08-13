@@ -1,25 +1,28 @@
 #pragma once
 
 #include <unordered_map>
+#include <memory>
 
 #include <QDialog>
 #include <QComboBox>
 #include <QLineEdit>
-#include <QToolButton>
+#include <QListView>
+#include <QAbstractListModel>
+#include <QSortFilterProxyModel>
 
-#include <absl/container/flat_hash_map.h>
+#include "QIconResource.h"
 
-class IconButton : public QToolButton {
-	Q_OBJECT
-
-  public:
-	QSize minimumSizeHint() const override {
-		return QWidget::minimumSizeHint();
+class IconModel : public QAbstractListModel {
+	int rowCount(const QModelIndex& parent = QModelIndex()) const override {
+		return icons.size();
 	}
 
-	QSize sizeHint() const override {
-		return QWidget::sizeHint();
-	}
+public:
+	explicit IconModel(QObject* parent = nullptr);
+
+	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+
+	std::vector<std::pair<std::string, QString>> icons;
 };
 
 class IconView : public QWidget {
@@ -27,10 +30,14 @@ class IconView : public QWidget {
 
 	QComboBox* type = new QComboBox;
 	QLineEdit* search = new QLineEdit;
+	QListView* view = new QListView;
+	QLineEdit* finalPath = new QLineEdit;
 
-	//absl::flat_hash_map<std::string, std::string> icons;
-	std::unordered_map<std::string, QString> icons;
-	
+	QSortFilterProxyModel* filter = new QSortFilterProxyModel;
+	IconModel* model;
+
 public:
 	IconView(QWidget* parent = nullptr);
+
+	QString currentIconPath();
 };

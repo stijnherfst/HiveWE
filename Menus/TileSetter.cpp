@@ -89,7 +89,7 @@ void TileSetter::update_available_tiles() const {
 	std::string tileset = ui.tileset->currentData().toString().toStdString();
 
 	slk::SLK& slk = map->terrain.terrain_slk;
-	for (auto&&[key, value] : map->terrain.terrain_slk.header_to_row) {
+	for (auto&&[key, value] : map->terrain.terrain_slk.row_headers) {
 		if (key.front() != tileset.front()) {
 			continue;
 		}

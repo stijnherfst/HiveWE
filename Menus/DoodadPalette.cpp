@@ -228,7 +228,7 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	selection_mode->setChecked(false);
 
 	bool is_doodad = doodads_slk.row_headers.contains(id);
-	slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 	variations->clear();
 

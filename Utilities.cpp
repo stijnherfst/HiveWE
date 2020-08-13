@@ -191,7 +191,7 @@ fs::path find_warcraft_directory() {
 	}
 }
 
-void load_modification_file(const std::string file_name, slk::SLK2& base_data, slk::SLK2& meta_slk, bool optional_ints) {
+void load_modification_file(const std::string file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints) {
 	BinaryReader reader = hierarchy.map_file_read(file_name);
 
 	const int version = reader.read<uint32_t>();
@@ -203,7 +203,7 @@ void load_modification_file(const std::string file_name, slk::SLK2& base_data, s
 	load_modification_table(reader, base_data, meta_slk, true, optional_ints);
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK2& slk, slk::SLK2& meta_slk, const bool modification, bool optional_ints) {
+void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta_slk, const bool modification, bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -264,7 +264,7 @@ void load_modification_table(BinaryReader& reader, slk::SLK2& slk, slk::SLK2& me
 	}
 }
 
-void save_modification_file(const std::string file_name, slk::SLK2& slk, slk::SLK2& meta_slk, bool optional_ints) {
+void save_modification_file(const std::string file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints) {
 	BinaryWriter writer;
 	writer.write<uint32_t>(mod_table_write_version);
 
@@ -276,7 +276,7 @@ void save_modification_file(const std::string file_name, slk::SLK2& slk, slk::SL
 
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
-void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& meta_slk, bool custom, bool optional_ints) {
+void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints) {
 	// Create an temporary index to speed up field lookups
 	absl::flat_hash_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {

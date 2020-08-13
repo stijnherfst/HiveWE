@@ -498,7 +498,8 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
 	}
 
 	QModelIndexList indexes;
-	QDataStream stream(&data->data("yeet"), QIODevice::ReadOnly);
+	auto mimeData = data->data("yeet");
+	QDataStream stream(&mimeData, QIODevice::ReadOnly);
 
 	while (!stream.atEnd()) {
 		int childDepth = 0;
@@ -618,7 +619,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const {
 
 	TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
 
-	return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | ((item->id == map_header_id) ? 0 : Qt::ItemIsDragEnabled) | Qt::ItemIsDropEnabled;
+	return QAbstractItemModel::flags(index) | Qt::ItemIsEditable | ((item->id == map_header_id) ? Qt::ItemFlag::NoItemFlags : Qt::ItemIsDragEnabled) | Qt::ItemIsDropEnabled;
 }
 
 Qt::DropActions TreeModel::supportedDropActions() const {

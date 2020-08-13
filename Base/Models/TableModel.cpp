@@ -4,7 +4,7 @@
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
-TableModel::TableModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent) : QAbstractTableModel(parent), slk(slk), meta_slk(meta_slk) {
+TableModel::TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractTableModel(parent), slk(slk), meta_slk(meta_slk) {
 	for (const auto& [key, index] : meta_slk->row_headers) {
 		meta_field_to_key.emplace(to_lowercase_copy(meta_slk->data("field", key)), key);
 	}
@@ -203,7 +203,7 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const {
 		return Qt::NoItemFlags;
 	}
 
-	int flags = QAbstractTableModel::flags(index);
+	Qt::ItemFlags flags = QAbstractTableModel::flags(index);
 
 	const std::string field = slk->index_to_column.at(index.column());
 	if (meta_field_to_key.contains(field)) {

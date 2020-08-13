@@ -27,14 +27,14 @@ void Map::load(const fs::path& path) {
 	// Maybe just force everyone to suck it up and use /Units
 
 	// Units
-	units_slk = slk::SLK2("Units/UnitData.slk");
+	units_slk = slk::SLK("Units/UnitData.slk");
 	// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files. We have to add some columns for this though
 	units_slk.add_column("missilearc2");
 	units_slk.add_column("missileart2");
 	units_slk.add_column("missilespeed2");
 	units_slk.add_column("buttonpos2");
 
-	units_meta_slk = slk::SLK2("Data/Warcraft/UnitMetaData.slk", true);
+	units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 	unit_editor_data = ini::INI("UI/UnitEditorData.txt");
 	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
@@ -46,10 +46,10 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/UnitWeaponsFunc.txt"));
 	units_slk.merge(ini::INI("Units/UnitWeaponsSkin.txt"));
 	
-	units_slk.merge(slk::SLK2("Units/UnitBalance.slk"));
-	units_slk.merge(slk::SLK2("Units/unitUI.slk"));
-	units_slk.merge(slk::SLK2("Units/UnitWeapons.slk"));
-	units_slk.merge(slk::SLK2("Units/UnitAbilities.slk"));
+	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
+	units_slk.merge(slk::SLK("Units/unitUI.slk"));
+	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
+	units_slk.merge(slk::SLK("Units/UnitAbilities.slk"));
 
 	units_slk.merge(ini::INI("Units/HumanUnitFunc.txt"));
 	units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"));
@@ -65,8 +65,8 @@ void Map::load(const fs::path& path) {
 	units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"));
 	units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"));
 
-	abilities_slk = slk::SLK2("Units/AbilityData.slk");
-	abilities_meta_slk = slk::SLK2("Units/AbilityMetaData.slk");
+	abilities_slk = slk::SLK("Units/AbilityData.slk");
+	abilities_meta_slk = slk::SLK("Units/AbilityMetaData.slk");
 	abilities_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"));
@@ -90,17 +90,17 @@ void Map::load(const fs::path& path) {
 	abilities_slk.merge(ini::INI("Units/CampaignAbilityStrings.txt"));
 
 	// Items
-	items_slk = slk::SLK2("Units/ItemData.slk");
+	items_slk = slk::SLK("Units/ItemData.slk");
 	items_slk.merge(ini::INI("Units/ItemSkin.txt"));
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"));
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"));
 
-	items_meta_slk = slk::SLK2("Data/Warcraft/ItemMetaData.slk", true);
+	items_meta_slk = slk::SLK("Data/Warcraft/ItemMetaData.slk", true);
 	items_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	// Doodads
-	doodads_slk = slk::SLK2("Doodads/Doodads.slk");
-	doodads_meta_slk = slk::SLK2("Doodads/DoodadMetaData.slk");
+	doodads_slk = slk::SLK("Doodads/Doodads.slk");
+	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"));
@@ -108,15 +108,15 @@ void Map::load(const fs::path& path) {
 	doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 	// Destructables
-	destructibles_slk = slk::SLK2("Units/DestructableData.slk");
-	destructibles_meta_slk = slk::SLK2("Units/DestructableMetaData.slk");
+	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
-	upgrade_slk = slk::SLK2("Units/UpgradeData.slk");
-	upgrade_meta_slk = slk::SLK2("Units/UpgradeMetaData.slk");
+	upgrade_slk = slk::SLK("Units/UpgradeData.slk");
+	upgrade_meta_slk = slk::SLK("Units/UpgradeMetaData.slk");
 	upgrade_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	upgrade_slk.merge(ini::INI("Units/AbilitySkin.txt"));
@@ -137,8 +137,8 @@ void Map::load(const fs::path& path) {
 	upgrade_slk.merge(ini::INI("Units/UpgradeSkinStrings.txt"));
 	upgrade_slk.merge(ini::INI("Units/CampaignUpgradeFunc.txt"));
 
-	buff_slk = slk::SLK2("Units/AbilityBuffData.slk");
-	buff_meta_slk = slk::SLK2("Units/AbilityBuffMetaData.slk");
+	buff_slk = slk::SLK("Units/AbilityBuffData.slk");
+	buff_meta_slk = slk::SLK("Units/AbilityBuffMetaData.slk");
 	buff_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	buff_slk.merge(ini::INI("Units/AbilitySkin.txt"));
@@ -309,12 +309,12 @@ bool Map::save(const fs::path& path) {
 	pathing_map.save();
 	terrain.save();
 
-	save_modification_file("warmap.w3d", doodads_slk, doodads_meta_slk, true);
-	save_modification_file("warmap.w3b", destructibles_slk, destructibles_meta_slk, false);
+	save_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true);
+	save_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false);
 	doodads.save();
 
-	save_modification_file("warmap.w3u", units_slk, units_meta_slk, false);
-	save_modification_file("warmap.w3t", items_slk, items_meta_slk, false);
+	save_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
+	save_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
 	units.save();
 
 	// Currently mod file saving does not allow for "column offsets" used by abilities

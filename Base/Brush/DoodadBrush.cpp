@@ -480,7 +480,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	this->id = id;
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
-	const slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 	
 	min_scale = slk.data<float>("minscale", id);
 	max_scale = slk.data<float>("maxscale", id);

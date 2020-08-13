@@ -19,9 +19,10 @@
 namespace fs = std::filesystem;
 
 class SkeletalModelInstance;
-struct Sequence;
 
 namespace mdx {
+	struct Sequence;
+
 	extern std::map<int, std::string> replacable_id_to_texture;
 
 	enum class TrackTag {
@@ -270,7 +271,7 @@ namespace mdx {
 					floorInTan = floorOutTan = &defaultValue;
 					floorIndexTime = sequenceStart;
 				}
-			} else if (ceilAfterEnd || ceilIndexTime < time && tracks[floorAnimEndIndex].frame < time) {
+			} else if (ceilAfterEnd || (ceilIndexTime < time && tracks[floorAnimEndIndex].frame < time)) {
 				// if we have a floor frame but the "ceil" frame is after end of sequence,
 				// or our ceil frame is before our time, meaning that we're at the end of the
 				// entire timeline, then we need to inject a "ceil" frame at end of sequence

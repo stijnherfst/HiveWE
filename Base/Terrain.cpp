@@ -160,14 +160,14 @@ void Terrain::create() {
 	deep_color_max /= 255.f;
 
 	// Cliff Meshes
-	slk::SLK cliffs_slk("Data/Warcraft/Cliffs.slk", true);
-	for (size_t i = 1; i < cliffs_slk.rows; i++) {
-		for (int j = 0; j < cliffs_slk.data<int>("variations", i) + 1; j++) {
-			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_slk.data("cliffid", i) + std::to_string(j) + ".mdx";
+	slk::SLK cliffs_variation_slk("Data/Warcraft/Cliffs.slk", true);
+	for (size_t i = 0; i < cliffs_variation_slk.rows(); i++) {
+		for (int j = 0; j < cliffs_variation_slk.data<int>("variations", i) + 1; j++) {
+			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_variation_slk.index_to_row.at(i) + std::to_string(j) + ".mdx";
 			cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
-			path_to_cliff.emplace(cliffs_slk.data("cliffid", i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
+			path_to_cliff.emplace(cliffs_variation_slk.index_to_row.at(i) + std::to_string(j), static_cast<int>(cliff_meshes.size()) - 1);
 		}
-		cliff_variations.emplace(cliffs_slk.data("cliffid", i), cliffs_slk.data<int>("variations", i));
+		cliff_variations.emplace(cliffs_variation_slk.index_to_row.at(i), cliffs_variation_slk.data<int>("variations", i));
 	}
 
 	// Ground textures

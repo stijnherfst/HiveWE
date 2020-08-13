@@ -10,7 +10,7 @@
 #include <glm/glm.hpp>
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
-#include "SLK2.h"
+#include "SLK.h"
 
 constexpr int mod_table_write_version = 2;
 
@@ -53,10 +53,10 @@ std::string read_text_file(const fs::path& path);
 
 fs::path find_warcraft_directory();
 
-void load_modification_file(const std::string file_name, slk::SLK2& base_data, slk::SLK2& meta_slk, bool optional_ints);
-void load_modification_table(BinaryReader& reader, slk::SLK2& slk, slk::SLK2& meta_slk, bool modification, bool optional_ints);
-void save_modification_file(const std::string file_name, slk::SLK2& slk, slk::SLK2& meta_slk, bool optional_ints);
-void save_modification_table(BinaryWriter& writer, slk::SLK2& slk, slk::SLK2& meta_slk, bool custom, bool optional_ints);
+void load_modification_file(const std::string file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints);
+void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta_slk, bool modification, bool optional_ints);
+void save_modification_file(const std::string file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints);
+void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints);
 
 /// Convert a Tground texture into an QIcon with two states
 QIcon ground_texture_to_icon(uint8_t* data, int width, int height);

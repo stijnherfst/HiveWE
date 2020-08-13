@@ -41,33 +41,33 @@ ini::INI world_edit_data;
 WindowHandler window_handler;
 
 TableModel* units_table;
-slk::SLK2 units_slk;
-slk::SLK2 units_meta_slk;
+slk::SLK units_slk;
+slk::SLK units_meta_slk;
 ini::INI unit_editor_data;
 
 TableModel* items_table;
-slk::SLK2 items_slk;
-slk::SLK2 items_meta_slk;
+slk::SLK items_slk;
+slk::SLK items_meta_slk;
 
 TableModel* abilities_table;
-slk::SLK2 abilities_slk;
-slk::SLK2 abilities_meta_slk;
+slk::SLK abilities_slk;
+slk::SLK abilities_meta_slk;
 
 TableModel* doodads_table;
-slk::SLK2 doodads_slk;
-slk::SLK2 doodads_meta_slk;
+slk::SLK doodads_slk;
+slk::SLK doodads_meta_slk;
 
 TableModel* destructibles_table;
-slk::SLK2 destructibles_slk;
-slk::SLK2 destructibles_meta_slk;
+slk::SLK destructibles_slk;
+slk::SLK destructibles_meta_slk;
 
 TableModel* upgrade_table;
-slk::SLK2 upgrade_slk;
-slk::SLK2 upgrade_meta_slk;
+slk::SLK upgrade_slk;
+slk::SLK upgrade_meta_slk;
 
 TableModel* buff_table;
-slk::SLK2 buff_slk;
-slk::SLK2 buff_meta_slk;
+slk::SLK buff_slk;
+slk::SLK buff_meta_slk;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
@@ -220,13 +220,13 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	map->load("Data/Test Map/");
 
-	//QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-	//dialog->resize(512, 512);
-	//dialog->setWindowModality(Qt::WindowModality::WindowModal);
+	QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->resize(530, 512);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
-	//QVBoxLayout* layout = new QVBoxLayout(dialog);
-	//layout->addWidget(new IconView);
-	//dialog->show();
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	layout->addWidget(new IconView);
+	dialog->show();
 }
 
 void HiveWE::load_folder() {

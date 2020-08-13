@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <vector>
+#include <memory>
 
 #include "MDX.h"
 
@@ -42,7 +43,7 @@ class SkeletalModelInstance {
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model);
 
-	void updateLocation(glm::vec3& position, float angle, glm::vec3& scale);
+	void updateLocation(glm::vec3 position, float angle, const glm::vec3& scale);
 
 	void update(double delta);
 

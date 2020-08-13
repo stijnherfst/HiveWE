@@ -29,8 +29,8 @@ QVariant UnitListModel::data(const QModelIndex& index, int role) const {
 				sourceModel()->data(sourceModel()->index(index.row(), units_slk.column_headers.at("editorsuffix")), role).toString();
 		case Qt::DecorationRole:
 			return sourceModel()->data(sourceModel()->index(index.row(), units_slk.column_headers.at("art")), role);
-		case Qt::SizeHintRole:
-			return QSize(0, 24);
+		//case Qt::SizeHintRole:
+			//return QSize(0, 24);
 		default:
 			return sourceModel()->data(mapToSource(index), role);
 	}

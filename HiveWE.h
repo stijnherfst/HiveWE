@@ -9,7 +9,7 @@
 #include "Map.h"
 #include "INI.h"
 #include "TableModel.h"
-#include "SLK2.h"
+#include "SLK.h"
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT
@@ -69,31 +69,31 @@ extern ini::INI world_edit_data;
 extern WindowHandler window_handler;
 
 extern TableModel* units_table;
-extern slk::SLK2 units_slk;
-extern slk::SLK2 units_meta_slk;
+extern slk::SLK units_slk;
+extern slk::SLK units_meta_slk;
 extern ini::INI unit_editor_data;
 
 extern TableModel* items_table;
-extern slk::SLK2 items_slk;
-extern slk::SLK2 items_meta_slk;
+extern slk::SLK items_slk;
+extern slk::SLK items_meta_slk;
 
 extern TableModel* abilities_table;
-extern slk::SLK2 abilities_slk;
-extern slk::SLK2 abilities_meta_slk;
+extern slk::SLK abilities_slk;
+extern slk::SLK abilities_meta_slk;
 
 extern TableModel* doodads_table;
-extern slk::SLK2 doodads_slk;
-extern slk::SLK2 doodads_meta_slk;
+extern slk::SLK doodads_slk;
+extern slk::SLK doodads_meta_slk;
 
 extern TableModel* destructibles_table;
-extern slk::SLK2 destructibles_slk;
-extern slk::SLK2 destructibles_meta_slk;
+extern slk::SLK destructibles_slk;
+extern slk::SLK destructibles_meta_slk;
 
 extern TableModel* upgrade_table;
-extern slk::SLK2 upgrade_slk;
-extern slk::SLK2 upgrade_meta_slk;
+extern slk::SLK upgrade_slk;
+extern slk::SLK upgrade_meta_slk;
 
 extern TableModel* buff_table;
-extern slk::SLK2 buff_slk;
-extern slk::SLK2 buff_meta_slk;
+extern slk::SLK buff_slk;
+extern slk::SLK buff_meta_slk;
 

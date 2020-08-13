@@ -174,7 +174,7 @@ void Doodads::create() {
 
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
-		const slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 		std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
@@ -213,7 +213,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.creation_number = ++Doodad::auto_increment;
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
-	const slk::SLK2& slk = is_doodad ? doodads_slk : destructibles_slk;
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);

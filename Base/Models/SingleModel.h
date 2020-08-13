@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "SLK2.h"
+#include "SLK.h"
 
 class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT
@@ -23,15 +23,15 @@ public:
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	explicit SingleModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent = nullptr);
+	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 	void setID(const std::string id);
 	std::string getID() const;
 	const std::vector<std::string>& getMapping() const {
 		return id_mapping;
 	}
 
-	slk::SLK2* meta_slk;
-	slk::SLK2* slk;
+	slk::SLK* meta_slk;
+	slk::SLK* slk;
 
 private:
 	std::string id = "hpea";

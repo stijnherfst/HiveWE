@@ -38,6 +38,8 @@ add_executable(HiveWE
 	Utilities.cpp
 	WindowHandler.h
 
+	"test.cpp"
+
 	Base/Doodads.cpp
 	Base/FlowLayout.cpp
 	Base/GameCameras.cpp
@@ -70,7 +72,6 @@ add_executable(HiveWE
 	"Base/File Formats/MDX.cpp"
 	"Base/File Formats/MPQ.cpp"
 	"Base/File Formats/SLK.cpp"
-	"Base/File Formats/SLK2.cpp"
 
 	Base/Resources/CliffMesh.cpp
 	Base/Resources/GPUTexture.cpp
@@ -114,6 +115,8 @@ add_executable(HiveWE
 	Base/Models/UnitListModel.cpp
 	Base/Models/DoodadListModel.cpp
 	Base/Models/DestructableListModel.cpp
+	Base/Models/DestructibleTreeModel.cpp
+	Base/Models/DestructibleTreeModel.h
 
 	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
 	"Menus/Custom Widgets/ColorButton.cpp"
@@ -126,8 +129,8 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/TriggerExplorer.cpp"
 	"Menus/Custom Widgets/UnitSelector.cpp"
 	"Menus/Custom Widgets/GenericSelectorList.cpp"
-	"test.cpp"
- "Base/Models/DestructibleTreeModel.cpp" "Base/Models/DestructibleTreeModel.h" "Menus/Custom Widgets/IconView.cpp")
+	"Menus/Custom Widgets/IconView.cpp"
+ )
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})

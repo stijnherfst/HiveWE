@@ -19,7 +19,7 @@
 
 #include "HiveWE.h"
 
-SingleModel::SingleModel(slk::SLK2* slk, slk::SLK2* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
+SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractProxyModel(parent), slk(slk), meta_slk(meta_slk) {
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
@@ -308,15 +308,22 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return editor;
 	} else if (type == "icon") {
 		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->resize(512, 512);
+		dialog->resize(530, 512);
 		dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
+		IconView* view = new IconView;
+		view->setObjectName("iconView");
+
+		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
 		QVBoxLayout* layout = new QVBoxLayout(dialog);
-		layout->addWidget(new IconView);
+		layout->addWidget(view);
+		layout->addWidget(buttonBox);
+
 		dialog->show();
 		return dialog;
-		//IconView* view = new IconView;
-		//return view;
 	} else {
 		return new QLineEdit(parent);
 	}
@@ -342,7 +349,6 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 				box->setChecked(true);
 			}
 		}
-
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
@@ -356,7 +362,6 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
 			list->addItem(item);
 		}
-
 	} else if (type.ends_with("List")) {
 		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(model->data(index, Qt::EditRole).toString());
 	} else if (unit_editor_data.section_exists(type)) {
@@ -420,7 +425,9 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		auto combo = static_cast<QComboBox*>(editor);
 		singlemodel->setData(index, combo->currentData());
 	} else if (type == "icon") {
-
+		IconView* list = editor->findChild<IconView*>("iconView");
+		
+		singlemodel->setData(index, list->currentIconPath());
 	} else {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
 	}

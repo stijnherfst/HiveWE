@@ -46,7 +46,7 @@ void SkeletalModelInstance::setupHierarchy() {
 	});
 }
 
-void SkeletalModelInstance::updateLocation(glm::vec3& position, float angle, glm::vec3& scale) {
+void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
 	this->position = position;
 	this->facingAngle = angle;
 	glm::vec3 origin = glm::vec3(0, 0, 0);
@@ -92,7 +92,7 @@ void SkeletalModelInstance::updateNodes(bool forced) {
 		for (auto& node : renderNodes) {
 			float visibility = node.node.getVisibility(*this);
 			bool objectVisible = visibility >= MAGIC_RENDER_SHOW_CONSTANT;
-			bool nodeVisible = forced || (!node.parent || node.parent->visible) && objectVisible;
+			bool nodeVisible = forced || ((!node.parent || node.parent->visible) && objectVisible);
 
 			node.visible = nodeVisible;
 			// Every node only needs to be updated if this is a forced update, or if both

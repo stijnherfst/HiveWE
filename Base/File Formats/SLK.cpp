@@ -1,13 +1,15 @@
 #include "SLK.h"
 
-#include <sstream>
 #include <fstream>
 #include <numeric>
+#include <string_view>
+#include <charconv>
 
 using namespace std::literals::string_literals;
 
 #include "Hierarchy.h"
 #include "Utilities.h"
+#include "BinaryReader.h"
 
 #undef mix
 #undef max
@@ -18,208 +20,151 @@ namespace slk {
 	}
 
 	void SLK::load(const fs::path& path, const bool local) {
-		std::stringstream file;
+		std::vector<uint8_t> buffer;
 		if (local) {
-			std::ifstream stream(path);
-			if (stream) {
-				file << stream.rdbuf();
-			}
-			stream.close();
+			std::ifstream stream(path, std::ios::binary);
+			buffer = std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
 		} else {
-			file << hierarchy.open_file(path).buffer.data();
+			buffer = hierarchy.open_file(path).buffer;
 		}
 
-		std::string line;
+		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
-		size_t position = 0;
-		size_t length = 0;
-
-		size_t column = 0;
-		size_t row = 0;
-		size_t max_rows = 0;
-
-		const auto parse_int_part = [&]() {
-			position++;
-			length = line.find_first_of(';', position) - position;
-			position += length + 1;
-			// Replace by from_chars at some point
-			return std::stoi(line.substr(position - 1 - length, length));
-		};
-
-		// Replace getline by simply iterating over the raw bytes?
-		if (std::getline(file, line)) {
-			if (line.substr(0, 2) != "ID") {
-				std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
-				return;
-			}
-		} else {
+		if (!view.starts_with("ID")) {
+			std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
 			return;
 		}
 
-		while (std::getline(file, line)) {
-			position = 2;
+		const auto parse_integer = [&]() {
+			size_t value;
+			size_t separator = view.find(';');
+			std::from_chars(&view[1], &view[separator], value);
+			view.remove_prefix(separator + 1);
+			return value;
+		};
 
-			switch (line.front()) {
-				case 'B':
-					switch (line[position]) {
-						case 'X':
-							columns = parse_int_part();
-							rows = parse_int_part();
-							break;
-						case 'Y':
-							rows = parse_int_part();
-							columns = parse_int_part();
-							break;
-						default:
-							std::cout << "Bad B row in .slk\n";
-							return;
-					}
-					table_data.resize(rows, std::vector<std::string>(columns));
-					shadow_table_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
-					break;
+		// Skip first ID line
+		view.remove_prefix(view.find('\n') + 1);
+
+		size_t column = 0;
+		size_t row = 0;
+
+		while (view.size()) {
+			switch (view.front()) {
 				case 'C':
-					if (line[position] == 'X') {
-						column = parse_int_part() - 1;
+					view.remove_prefix(2);
+					
+					if (view.front() == 'X') {
+						column = parse_integer() - 1;
 
-						if (line[position] == 'Y') {
-							row = parse_int_part() - 1;
+						if (view.front() == 'Y') {
+							row = parse_integer() - 1;
 						}
 					} else {
-						row = parse_int_part() - 1;
+						row = parse_integer() - 1;
 
-						if (line[position] == 'X') {
-							column = parse_int_part() - 1;
+						if (view.front() == 'X') {
+							column = parse_integer() - 1;
 						}
 					}
-					max_rows = std::max(max_rows, row);
 
-					position++;
+					if (row == 0 && column == 0) {
+						view.remove_prefix(view.find('\n') + 1);
+						break;
+					}
+
+					view.remove_prefix(1);
 
 					{
-						std::string part;
-						if (line[position] == '\"') {
-							position++;
-							part = line.substr(position, line.find('"', position) - position);
+						std::string data;
+						if (view.front() == '\"') {
+							data = view.substr(1, view.find('"', 1) - 1);
 						} else {
-							part = line.substr(position, line.size() - position - (line.back() == '\r' ? 1 : 0));
+							data = view.substr(0, view.find_first_of("\r\n"));
 						}
 
-						if (part == "-" || part == "_") {
-							part = "";
+						if (data == "-" || data == "_") {
+							data = "";
 						}
-
 
 						if (column == 0) {
-							header_to_row.emplace(part, row);
+							// -1 as 0,0 is unitid/doodadid etc.
+							row_headers.emplace(data, row - 1);
+							index_to_row.emplace(row - 1, data);
+						} else if (row == 0) {
+							// If it is a column header we need to lowercase it as column headers are case insensitive
+							to_lowercase(data);
+							// -1 as 0,0 is unitid/doodadid etc.
+							column_headers.emplace(data, column - 1);
+							index_to_column.emplace(column - 1, data);
+						} else {
+							base_data[index_to_row[row - 1]][index_to_column[column - 1]] = data;
 						}
 
-						// If it is a column header we need to lowercas it as column headers are case insensitive
-						if (row == 0) {
-							to_lowercase(part);
-							header_to_column.emplace(part, column);
-						}
-
-						table_data[row][column] = part;
+						view.remove_prefix(view.find('\n') + 1);
 					}
 					break;
 				case 'F':
-					if (line[position] == 'X') {
-						column = parse_int_part() - 1;
+					if (view.front() == 'X') {
+						column = parse_integer() - 1;
 
-						if (line[position] == 'Y') {
-							row = parse_int_part() - 1;
+						if (view.front() == 'Y') {
+							row = parse_integer() - 1;
 						}
-					} else if (line[position] == 'Y') {
-						row = parse_int_part() - 1;
+					} else {
+						row = parse_integer() - 1;
 
-						if (line[position] == 'X') {
-							column = parse_int_part() - 1;
+						if (view.front() == 'X') {
+							column = parse_integer() - 1;
 						}
 					}
-					max_rows = std::max(max_rows, row);
+					view.remove_prefix(view.find('\n') + 1);
 					break;
-				case 'E':
-					goto exitloop;
-			}
-		}
-	exitloop:
-		// If there are empty rows at the end
-		if (rows > max_rows + 1) {
-			rows = max_rows + 1;
-			table_data.resize(rows, std::vector<std::string>(columns));
-			shadow_table_data.resize(rows, std::vector<std::string>(columns, shadow_table_empty_identifier));
-
-			for (auto it = header_to_row.begin(); it != header_to_row.end();) {
-				if (it->second > max_rows) {
-					it = header_to_row.erase(it);
-				} else {
-					++it;
-				}
+				default:
+					view.remove_prefix(view.find_first_of('\n') + 1);
 			}
 		}
 	}
 
-	void SLK::save(const fs::path& path) const {
-		std::ofstream output(path);
-
-		output << "ID;PWXL;N;E\n";
-		output << "B;X" << columns << ";Y" << rows << ";D0\n";
-
-		for (auto&&[key, value] : header_to_column) {
-			output << "C;X" << value + 1 << ";Y1;K\"" << key << "\"\n";
-		}
-
-		for(int i = 1; i < table_data.size(); i++) {
-			for (int j = 0; j < table_data[i].size(); j++) {
-				output << "C;X" << j + 1 << ";Y" << i + 1 << ";K\"" << table_data[i][j] << "\"\n";
-			}
-		}
-		output << "E";
-	}
-
-	bool SLK::row_header_exists(const std::string& row_header) const {
-		return header_to_row.contains(row_header);
-	}
-
-	/// Merges the data of the files. Any unknown columns are appended
+	// Merges the base data of the files
+	// Shadow data is not merged
+	// Any unknown columns are appended
 	void SLK::merge(const slk::SLK& slk) {
-		for (size_t i = 1; i < slk.columns; i++) {
-			header_to_column.emplace(slk.table_data[0][i], columns + i - 1);
-		}
-		columns = columns + slk.columns - 1;
-
-		for (auto&& i : slk.table_data) {
-			const size_t index = header_to_row[i.front()];
-			table_data[index].insert(table_data[index].end(), i.begin() + 1, i.end());
+		for (const auto& [header, index] : slk.column_headers) {
+			if (!column_headers.contains(header)) {
+				add_column(header);
+			}
 		}
 
-		for (size_t i = 0; i < rows; i++) {
-			table_data[i].resize(columns);
-			shadow_table_data[i].resize(columns, shadow_table_empty_identifier);
+		for (const auto& [id, properties] : slk.base_data) {
+			if (!base_data.contains(id)) {
+				continue;
+			}
+			base_data[id].insert(properties.begin(), properties.end());
 		}
 	}
 
 	/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
 	/// If an unknown section key is encountered then that section is skipped
 	/// If an unknown column key is encountered then the column is added
-	void SLK::merge(const ini::INI & ini) {
-		for (auto&& [section_key, section_value] : ini.ini_data) {
-			// If id does not exist
-			if (!header_to_row.contains(section_key)) {
+	void SLK::merge(const ini::INI& ini) {
+		for (const auto& [section_key, section_value] : ini.ini_data) {
+			if (!base_data.contains(section_key)) {
 				continue;
 			}
 
-			for (auto&& [key, value] : section_value) {
+			for (const auto& [key, value] : section_value) {
 				std::string key_lower = to_lowercase_copy(key);
-				if (!header_to_column.contains(key_lower)) {
+
+				if (!column_headers.contains(key_lower)) {
 					add_column(key_lower);
 				}
 
 				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
 				// This means we have to manually split these into the correct column
-				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos") && header_to_column.contains(key_lower + "2")) {
-					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower)] = value[0];
-					table_data[header_to_row.at(section_key)][header_to_column.at(key_lower + "2")] = value[1];
+				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos") && column_headers.contains(key_lower + "2")) {
+					base_data[section_key][key_lower] = value[0];
+					base_data[section_key][key_lower + "2"] = value[1];
 					continue;
 				}
 
@@ -232,83 +177,70 @@ namespace slk {
 					}
 				}
 
-				table_data[header_to_row.at(section_key)][header_to_column.at(key_lower)] = final_value;
+				base_data[section_key][key_lower] = final_value;
 			}
 		}
 	}
 
 	/// Substitutes the data of the slk with data from the INI based on a certain section key.
 	/// The keys of the section are matched with all the cells in the table and if they match will replace the value
-	void SLK::substitute(const ini::INI & ini, const std::string& section) {
-		for (auto&& i : table_data) {
-			for (auto&& j : i) {
-				std::string data = ini.data(section, j);
+	void SLK::substitute(const ini::INI& ini, const std::string& section) {
+		assert(ini.section_exists(section));
+
+		for (auto& [id, properties] : base_data) {
+			for (auto& [prop_id, prop_value] : properties) {
+				std::string data = ini.data(section, prop_value);
 				if (!data.empty()) {
-					j = data;
+					prop_value = data;
 				}
 			}
 		}
 	}
 
 	/// Copies the row with header row_header to a new line with the new header as new_row_header
-	void SLK::copy_row(const std::string& row_header, const std::string& new_row_header) {
-		if (!header_to_row.contains(row_header)) {
-			std::cout << "Unknown row header: " << row_header << "\n";
-			return;
+	void SLK::copy_row(const std::string_view row_header, std::string_view new_row_header, bool copy_shadow_data) {
+		assert(base_data.contains(row_header));
+		assert(!base_data.contains(new_row_header));
+
+		// Get a weird allocation error if not done via a temporary 31/05/2020
+		auto t = base_data.at(row_header);
+		base_data[new_row_header] = t;
+
+		if (copy_shadow_data && shadow_data.contains(row_header)) {
+			shadow_data[new_row_header] = shadow_data.at(row_header);
 		}
 
-		const size_t row = header_to_row[row_header];
-
-		table_data.emplace_back(table_data[row]);
-		table_data[table_data.size() - 1][0] = row_header;
-		shadow_table_data.emplace_back(std::vector<std::string>(columns, shadow_table_empty_identifier));
-		shadow_table_data[shadow_table_data.size() - 1][0] = new_row_header;
-		header_to_row.emplace(new_row_header, table_data.size() - 1);
-		rows++;
+		size_t index = row_headers.size();
+		row_headers.emplace(new_row_header, index);
+		index_to_row[index] = new_row_header;
 	}
 
-	// header should be lowercase
-	void SLK::add_column(const std::string& header) {
-		columns += 1;
-		for(auto&& i : table_data) {
-			i.resize(columns);
-		}
-		for (auto&& i : shadow_table_data) {
-			i.resize(columns, shadow_table_empty_identifier);
-		}
-		table_data[0][columns - 1] = header;
-		header_to_column.emplace(header, columns - 1);
-	}
+	/// Adds a (virtual) column
+	/// Since SLK2 is only a key/pair store it emulates being table like and thus this call is very cheap memory/cpu wise
+	/// column_header must be lowercase
+	void SLK::add_column(const std::string_view column_header) {
+		assert(to_lowercase_copy(column_header) == column_header);
 
+		size_t index = column_headers.size();
+		column_headers.emplace(column_header, index);
+		index_to_column[index] = column_header;
+	}
 
 	// column_header should be lowercase
-	void SLK::set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data) {
-		if (!header_to_column.contains(to_lowercase_copy(column_header))) {
-			std::cout << "Unknown column header: " << column_header << "\n";
+	void SLK::set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data) {
+		assert(to_lowercase_copy(column_header) == column_header);
+
+		if (!column_headers.contains(column_header)) {
 			add_column(column_header);
-			return;
 		}
 
-		if (!header_to_row.contains(row_header)) {
-			std::cout << "Unknown row header: " << row_header << "\n";
-			return;
-		}
-
-		const size_t column = header_to_column.at(column_header);
-		const size_t row = header_to_row.at(row_header);
-
-		shadow_table_data[row][column] = data;
+		shadow_data[row_header][column_header] = data;
 	}
 
-	void SLK::set_shadow_data(const int column, const int row, const std::string& data) {
-		if (row >= rows) {
-			std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
-		}
+	void SLK::set_shadow_data(const int column, const int row, std::string data) {
+		assert(row < index_to_row.size());
+		assert(column < index_to_column.size());
 
-		if (column >= columns) {
-			std::cout << "Reading invalid column: " << column + 1 << "/" << rows << "\n";
-		}
-
-		shadow_table_data[row][column] = data;
+		set_shadow_data(index_to_column[column], index_to_row[row], data);
 	}
 }

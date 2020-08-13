@@ -7,53 +7,41 @@
 #include <unordered_map>
 #include "Hierarchy.h"
 
+#include <absl/container/flat_hash_map.h>
+
 namespace slk {
 	class SLK {
-		std::vector<std::vector<std::string>> table_data;
-		std::vector<std::vector<std::string>> shadow_table_data;
 
-		constexpr static char shadow_table_empty_identifier[] = "dezecelisleeg"; // not a nice way to do this
 	public:
-
-		std::unordered_map<std::string, size_t> header_to_column;
-		std::unordered_map<std::string, size_t> header_to_row;
-		size_t rows = 0;
-		size_t columns = 0;
-
+		absl::flat_hash_map<size_t, std::string> index_to_row;
+		absl::flat_hash_map<size_t, std::string> index_to_column;
+		absl::flat_hash_map<std::string, size_t> row_headers;
+		absl::flat_hash_map<std::string, size_t> column_headers;
+		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> base_data;
+		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> shadow_data;
 
 		SLK() = default;
-		explicit SLK(const fs::path& path, bool local = false);
+		explicit SLK(const fs::path & path, bool local = false);
 
 		void load(const fs::path&, bool local = false);
-		void save(const fs::path& path) const;
 
-		// Gets the data by first checking the shadow table and then checking the base table
-		// Also does :hd tag resolution
 		// column_header should be lowercase
-		template<typename T = std::string>
-		T data(const std::string& column_header, size_t row) const {
-			if (!header_to_column.contains(column_header)) {
-				return T();
-			}
+		template <typename T = std::string>
+		T data(std::string_view column_header, std::string_view row_header) const {
+			assert(to_lowercase_copy(column_header) == column_header);
 
-			const size_t column = header_to_column.at(column_header);
-			if (row >= rows) {
-				std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
-				return T();
-			}
-
-			if (shadow_table_data[row][column] != shadow_table_empty_identifier) {
+			if (shadow_data.contains(row_header) && shadow_data.at(row_header).contains(column_header)) {
 				if constexpr (std::is_same<T, std::string>()) {
-					return shadow_table_data[row][column];
+					return shadow_data.at(row_header).at(column_header);
 				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_table_data[row][column]);
+					return std::stof(shadow_data.at(row_header).at(column_header));
 				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(shadow_table_data[row][column]);
+					return std::stoi(shadow_data.at(row_header).at(column_header));
 				}
 			}
 
-			if (hierarchy.hd && header_to_column.contains(column_header + ":hd")) {
-				std::string hd_data = data(column_header + ":hd", row);
+			if (hierarchy.hd && column_headers.contains(std::string(column_header) + ":hd")) {
+				std::string hd_data = data(std::string(column_header) + ":hd", row_header);
 				if (!hd_data.empty()) {
 					if constexpr (std::is_same<T, std::string>()) {
 						return hd_data;
@@ -65,122 +53,68 @@ namespace slk {
 				}
 			}
 
-			if constexpr (std::is_same<T, std::string>()) {
-				return table_data[row][column];
-			} else if constexpr (std::is_same<T, float>()) {
-				return std::stof(table_data[row][column]);
-			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-				return std::stoi(table_data[row][column]);
+			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
+				if constexpr (std::is_same<T, std::string>()) {
+					return base_data.at(row_header).at(column_header);
+				} else if constexpr (std::is_same<T, float>()) {
+					return std::stof(base_data.at(row_header).at(column_header));
+				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+					return std::stoi(base_data.at(row_header).at(column_header));
+				}
 			}
 
 			static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
+			return T();
 		}
 
 		// Gets the data by first checking the shadow table and then checking the base table
-		template<typename T = std::string>
-		T data(size_t column, size_t row) const {
-			if (row >= rows) {
-				std::cout << "Reading invalid row: " << row + 1 << "/" << rows << "\n";
-				return T();
-			}
-
-			if (column >= columns) {
-				std::cout << "Reading invalid column: " << column + 1 << "/" << columns << "\n";
-				return T();
-			}
-
-			if (shadow_table_data[row][column] != shadow_table_empty_identifier) {
-				if constexpr (std::is_same<T, std::string>()) {
-					return shadow_table_data[row][column];
-				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_table_data[row][column]);
-				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(shadow_table_data[row][column]);
-				}
-			}
-
-			if constexpr (std::is_same<T, std::string>()) {
-				return table_data[row][column];
-			} else if constexpr (std::is_same<T, float>()) {
-				return std::stof(table_data[row][column]);
-			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-				return std::stoi(table_data[row][column]);
-			}
-
-			static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
-		}
-
+		// Also does :hd tag resolution
 		// column_header should be lowercase
-		template<typename T = std::string>
-		T data(const std::string& column_header, const std::string& row_header) const {
-			if (!header_to_row.contains(row_header)) {
+		template <typename T = std::string>
+		T data(const std::string_view column_header, size_t row) const {
+			if (row >= index_to_row.size()) {
+				return T();
+			}
+			if (column_header == "id") {
+				puts("s");
+			}
+
+			auto tt = index_to_row.at(row);
+
+			return data<T>(column_header, index_to_row.at(row));
+		}
+
+		// Gets the data by first checking the shadow table and then checking the base table
+		template <typename T = std::string>
+		T data(size_t column, size_t row) const {
+			if (row >= index_to_row.size()) {
 				return T();
 			}
 
-			const size_t row = header_to_row.at(row_header);
-
-			return data<T>(column_header, row);
-		}
-
-		// Gets the base data without consulting the shadow table
-		template<typename T = std::string>
-		T base_data(size_t column, size_t row) const {
-			if constexpr (std::is_same<T, std::string>()) {
-				return table_data[row][column];
-			} else if constexpr (std::is_same<T, float>()) {
-				return std::stof(table_data[row][column]);
-			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-				return std::stoi(table_data[row][column]);
+			if (column >= index_to_column.size()) {
+				return T();
 			}
-		}
 
-		// gets the shadow table data directly
-		template<typename T = std::string>
-		T shadow_data(size_t column, size_t row) const {	
-			if constexpr (std::is_same<T, std::string>()) {
-				return shadow_table_data[row][column];
-			} else if constexpr (std::is_same<T, float>()) {
-				return std::stof(shadow_table_data[row][column]);
-			} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-				return std::stoi(shadow_table_data[row][column]);
-			}
+			return data<T>(index_to_column.at(column), index_to_row.at(row));
 		}
-
-		bool shadow_data_exists(int column, int row) {
-			return shadow_table_data[row][column] != shadow_table_empty_identifier;
-		}
-
-		bool row_header_exists(const std::string& row_header) const;
 
 		void merge(const SLK& slk);
 		void merge(const ini::INI& ini);
-		void substitute(const ini::INI & ini, const std::string& section);
-		void copy_row(const std::string& row_header, const std::string& new_row_header);
+		void substitute(const ini::INI& ini, const std::string& section);
+		void copy_row(const std::string_view row_header, const std::string_view new_row_header, bool copy_shadow_data);
 
-		// header should be lowercase
-		template<typename T>
-		void add_column(const std::string& header, T default_value) {
-			columns += 1;
-			for (auto&& i : table_data) {
-				if constexpr (std::is_same_v<T, std::string>()) {
-					i.resize(columns, default_value);
-				} else {
-					i.resize(columns, std::to_string(default_value));
-				}
-			}
-			for (auto&& i : shadow_table_data) {
-				if constexpr (std::is_same_v<T, std::string>()) {
-					i.resize(columns, default_value);
-				} else {
-					i.resize(columns, std::to_string(default_value));
-				}
-			}
-			header_to_column.emplace(header, columns - 1);
+		void add_column(const std::string_view column_header);
+
+		/// If the column does not exist then it will be created
+		void set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data);
+		void set_shadow_data(const int column, const int row, std::string data);
+
+		size_t rows() {
+			return row_headers.size();
 		}
 
-		void add_column(const std::string& header);
-
-		void set_shadow_data(const std::string& column_header, const std::string& row_header, const std::string& data);
-		void set_shadow_data(const int column, const int row, const std::string& data);
+		size_t columns() {
+			return column_headers.size();
+		}
 	};
 }
