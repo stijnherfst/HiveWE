@@ -571,10 +571,10 @@ Texture Terrain::minimap_image() {
 
 			if (corners[i][j].cliff || (i > 0 && corners[i - 1][j].cliff) || (j > 0 && corners[i][j - 1].cliff) || (i > 0 && j > 0 && corners[i - 1][j - 1].cliff)) {
 				//color = cliff_textures[std::min(1, corners[i][j].cliff_texture)]->minimap_color;
-				color = glm::vec4(1.f);
+				color = glm::vec4(128.f, 128.f, 128.f, 255.f);
 			} else {
-				//color = ground_textures[real_tile_texture(i, j)]->minimap_color;
-				color = glm::vec4(1.f);
+				color = ground_textures[real_tile_texture(i, j)]->minimap_color;
+				//color = glm::vec4(255.f);
 			}
 
 			if (corners[i][j].water && corners[i][j].final_water_height() > corners[i][j].final_ground_height()) {

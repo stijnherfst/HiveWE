@@ -34,9 +34,10 @@ GroundTexture::GroundTexture(const fs::path& path) {
 
 	tile_size = height * 0.25;
 	extended = (width == height * 2);
+	int lods = log2(tile_size) + 1;
 		
 	gl->glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &id);
-	gl->glTextureStorage3D(id, log2(tile_size) + 1, GL_RGBA8, tile_size, tile_size, extended ? 32 : 16);
+	gl->glTextureStorage3D(id, lods, GL_RGBA8, tile_size, tile_size, extended ? 32 : 16);
 	gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	gl->glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	gl->glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -53,6 +54,9 @@ GroundTexture::GroundTexture(const fs::path& path) {
 	}
 	gl->glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 	gl->glGenerateTextureMipmap(id);
+
+	gl->glGetTextureSubImage(id, lods - 1, 0, 0, 0, 1, 1, 1, GL_RGBA, GL_FLOAT, 16, &minimap_color);
+	minimap_color *= 255.f;
 
 	delete data;
 }

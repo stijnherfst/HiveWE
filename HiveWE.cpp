@@ -219,14 +219,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	map->load("Data/Test Map/");
-
-	QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-	dialog->resize(530, 512);
-	dialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-	QVBoxLayout* layout = new QVBoxLayout(dialog);
-	layout->addWidget(new IconView);
-	dialog->show();
 }
 
 void HiveWE::load_folder() {
