@@ -17,10 +17,10 @@ out vec3 Normal;
 
 mat4 fetchMatrix(int nodeIndex) {
 	return mat4(
-		texelFetch(nodeMatrices, int(instanceID * nodeCount * 4 + nodeIndex * 4)),
-		texelFetch(nodeMatrices, int(instanceID * nodeCount * 4 + nodeIndex * 4 + 1)),
-		texelFetch(nodeMatrices, int(instanceID * nodeCount * 4 + nodeIndex * 4 + 2)),
-		texelFetch(nodeMatrices, int(instanceID * nodeCount * 4 + nodeIndex * 4 + 3)));
+		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4),
+		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 1),
+		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 2),
+		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 3));
 }
 
 void main() {
@@ -39,7 +39,7 @@ void main() {
 
 	gl_Position = MVP * position;
 	UV = vUV;
-	
+
 	//vertexColor = vec4(geoset_color, layer_alpha);
 
 }

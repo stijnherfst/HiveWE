@@ -41,10 +41,10 @@ void main() {
 
 	gl_Position = VP * vInstance * position;
 	UV = vUV;
+	Normal = normalize(mat3(vInstance) * vNormal);
 	
-	//vertexColor = vec4(geoset_color, layer_alpha);
-	vertexColor = vec4(1.f);
-	// if(vertexColor.a <= 0.75) {
-	// 	gl_Position = vec4(0);
-	// }
+	vertexColor = vec4(geoset_color, layer_alpha);
+	if(vertexColor.a <= 0.75f) {
+		gl_Position = vec4(0.f);
+	}
 }

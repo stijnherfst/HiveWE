@@ -87,7 +87,9 @@ void main() {
 		vec3 light_direction = vec3(-0.3, -0.3, 0.25);
 		light_direction = normalize(light_direction);
 
-		color.rgb *= clamp(dot(normal, light_direction) + 0.45, 0, 1);
+		float contribution = (dot(normal, light_direction) + 1.f) * 0.5f;
+
+		color.rgb *= clamp(contribution + 0.35, 0, 1);
 	}
 
 	uint byte_static = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0).r;
