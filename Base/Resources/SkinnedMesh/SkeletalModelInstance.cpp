@@ -7,15 +7,15 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) {
 	this->model = model;
 
 	size_t node_count = model->bones.size() +
-	model->lights.size() +
-	model->help_bones.size() +
-	model->attachments.size() +
-	model->emitters1.size() +
-	model->emitters2.size() +
-	model->ribbons.size() +
-	model->eventObjects.size() +
-	model->collisionShapes.size() +
-	model->corn_emitters.size();
+		model->lights.size() +
+		model->help_bones.size() +
+		model->attachments.size() +
+		model->emitters1.size() +
+		model->emitters2.size() +
+		model->ribbons.size() +
+		model->eventObjects.size() +
+		model->collisionShapes.size() +
+		model->corn_emitters.size();
 	
 	// ToDo: for each camera: add camera source node to renderNodes
 	renderNodes.resize(node_count);
@@ -50,7 +50,7 @@ void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, cons
 	this->position = position;
 	this->facingAngle = angle;
 	glm::vec3 origin = glm::vec3(0, 0, 0);
-	glm::vec3 stackScale = scale / 128.f;
+	glm::vec3 stackScale = scale;
 	glm::vec3 axis = glm::vec3(0, 0, 1);
 	glm::quat rotation = glm::angleAxis(angle, axis);
 	inverseInstanceRotation.x = -rotation.x;

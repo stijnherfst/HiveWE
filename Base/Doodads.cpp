@@ -176,7 +176,7 @@ void Doodads::create() {
 		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-		std::string pathing_texture_path = slk.data("pathtex", i.id);
+		const std::string pathing_texture_path = slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
@@ -185,10 +185,14 @@ void Doodads::create() {
 	for (auto&& i : special_doodads) {
 		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);
-		i.matrix = glm::scale(i.matrix, { 1 / 128.f, 1 / 128.f, 1 / 128.f });
+		i.matrix = glm::scale(i.matrix, { 1.f / 128.f, 1.f / 128.f, 1.f / 128.f });
 		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
 
 		i.mesh = get_mesh(i.id, i.variation);
+		const std::string pathing_texture_path = doodads_slk.data("pathtex", i.id);
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+		}
 	}
 }
 

@@ -200,10 +200,14 @@ DoodadPalette::~DoodadPalette() {
 bool DoodadPalette::event(QEvent *e) {
 	if (e->type() == QEvent::Close) {
 		// Remove shortcut from parent
+		find_this->setEnabled(false);
+		find_parent->setEnabled(false);
 		selection_mode->disconnectShortcuts();
 		ribbon_tab->setParent(nullptr);
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
+		find_this->setEnabled(true);
+		find_parent->setEnabled(true);
 		selection_mode->enableShortcuts();
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
@@ -262,5 +266,7 @@ void DoodadPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {
 		brush.clear_selection();
 		selection_mode->disableShortcuts();
+		find_this->setEnabled(false);
+		find_parent->setEnabled(false);
 	}
 }

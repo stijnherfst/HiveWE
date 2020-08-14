@@ -15,13 +15,17 @@
 int Unit::auto_increment;
 
 void Unit::update() {
-	float model_scale = units_slk.data<float>("modelscale", id);
+	const float model_scale = units_slk.data<float>("modelscale", id);
+	const float move_height = units_slk.data<float>("moveheight", id);
 
+	const glm::vec3 final_position = position + glm::vec3(0.f, 0.f, move_height / 128.f);
+	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
+	
 	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, glm::vec3(model_scale) / 128.f);
+	matrix = glm::scale(matrix, final_scale);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	skeleton.updateLocation(position, angle, glm::vec3(model_scale));
+	skeleton.updateLocation(final_position, angle, final_scale);
 }
 
 void Units::load() {

@@ -84,12 +84,12 @@ void main() {
 	color = color * color.a + get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)) * (1 - color.a);
 
 	if (show_lighting) {
-		vec3 light_direction = vec3(-0.3, -0.3, 0.25);
+		vec3 light_direction = vec3(-0.3f, -0.3f, 0.25f);
 		light_direction = normalize(light_direction);
 
 		float contribution = (dot(normal, light_direction) + 1.f) * 0.5f;
 
-		color.rgb *= clamp(contribution + 0.35, 0, 1);
+		color.rgb *= clamp(contribution + 0.3f, 0.f, 1.f);
 	}
 
 	uint byte_static = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0).r;
@@ -97,8 +97,8 @@ void main() {
 	if (show_pathing_map) {
 		uint final = byte_static.r | byte_dynamic.r;
 
-		vec4 pathing_static_color = vec4((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3, 0.25);
+		vec4 pathing_static_color = vec4((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3, 0.25f);
 
-		color = length(pathing_static_color.rgb) > 0 ? color * 0.75 + pathing_static_color * 0.5 : color;
+		color = length(pathing_static_color.rgb) > 0 ? color * 0.75f + pathing_static_color * 0.5f : color;
 	}
 }

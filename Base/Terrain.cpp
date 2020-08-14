@@ -699,10 +699,26 @@ void Terrain::update_ground_textures(const QRect& area) {
 				if (is_corner_ramp_entrance(i, j)) {
 					continue;
 				}
-				ground_texture_list[j * (width - 1) + i].a |= 0b1000000000000000;
+				ground_texture_list[j * (width - 1) + i].a |= 32768u;
 			}
 		}
 	}
+
+	//for (const auto& i : map->doodads.special_doodads) {
+	//	if (!i.pathing) {
+	//		continue;
+	//	}
+
+	//	for (int k = 0; k < i.pathing->height / 4; k++) {
+	//		for (int j = 0; j < i.pathing->width / 4; j++) {
+	//			int x = i.position.x + j - i.pathing->width / 8;
+	//			x = std::clamp(x, 0, width - 1);
+	//			int y = i.position.y + k - i.pathing->height / 8;
+	//			y = std::clamp(y, 0, height - 1);
+	//			ground_texture_list[y * (width - 1) + x].a |= 32768u;
+	//		}
+	//	}
+	//}
 
 	upload_ground_texture();
 }
@@ -750,6 +766,7 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 			if (bottom_left.cliff) {
 				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
 
+				// First we check if we need a ramp. Ramp logic is mostly hacked together and not entirely correct.
 				const bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
 				const bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
 

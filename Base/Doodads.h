@@ -44,23 +44,22 @@ struct SpecialDoodad {
 	std::string id;
 	int variation;
 	glm::vec3 position;
+
+	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
+	std::shared_ptr<PathingTexture> pathing;
 };
 
 class Doodads {
-	std::vector<SpecialDoodad> special_doodads;
-	
 	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
-
-	std::shared_ptr<Shader> shader;
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 
-	//static constexpr int mod_table_write_version = 2;
 public:
+	std::vector<SpecialDoodad> special_doodads;
 	std::vector<Doodad> doodads;
 
 	bool load();

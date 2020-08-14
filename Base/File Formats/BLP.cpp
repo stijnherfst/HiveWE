@@ -13,7 +13,7 @@ namespace blp {
 			return nullptr;
 		}
 
-		int content = reader.read<uint32_t>();
+		int content_type = reader.read<uint32_t>();
 		int alpha_bits = reader.read<uint32_t>();
 
 		width = reader.read<uint32_t>();
@@ -28,7 +28,7 @@ namespace blp {
 		auto mipmap_offsets = reader.read_vector<uint32_t>(16);
 		auto mipmap_sizes = reader.read_vector<uint32_t>(16);
 
-		if (content == 0) { // jpeg
+		if (content_type == 0) { // jpeg
 			tjhandle handle = tjInitDecompress();
 			const uint32_t header_size = reader.read<uint32_t>();
 			auto header_position = reader.buffer.begin() + reader.position;
@@ -43,7 +43,7 @@ namespace blp {
 				std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
 			}
 			tjDestroy(handle);
-		} else if (content == 1) { // direct
+		} else if (content_type == 1) { // direct
 			auto header = reader.read_vector<uint32_t>(256);
 
 			// There might be fake mipmaps or the first mipmap could start within the 256 bytes of the colour header
