@@ -361,7 +361,7 @@ void DoodadBrush::apply_end() {
 	map->terrain_undo.add_undo_action(std::move(doodad_undo));
 }
 
-void DoodadBrush::render_brush() const {
+void DoodadBrush::render_brush() {
 	if (pathing_texture) {
 		Brush::render_brush();
 	}

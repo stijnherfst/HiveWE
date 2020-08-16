@@ -62,11 +62,11 @@ public:
 
 	virtual void clear_clipboard() {};
 	
-	void render() const;
+	void render();
 	virtual void render_selector() const;
 	virtual void render_selection() const {};
 	virtual void render_clipboard() const {}
-	virtual void render_brush() const;
+	virtual void render_brush();
 
 	virtual bool can_place() {
 		return true;

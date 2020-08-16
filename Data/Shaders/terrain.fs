@@ -79,9 +79,9 @@ vec4 get_fragment(uint id, vec3 uv) {
 
 void main() {
 	color = get_fragment(texture_indices.a & 31, vec3(UV, texture_indices.a >> 5));
-	color = color * color.a + get_fragment(texture_indices.b & 31, vec3(UV, texture_indices.b >> 5)) * (1 - color.a);
-	color = color * color.a + get_fragment(texture_indices.g & 31, vec3(UV, texture_indices.g >> 5)) * (1 - color.a);
-	color = color * color.a + get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)) * (1 - color.a);
+	color = mix(get_fragment(texture_indices.b & 31, vec3(UV, texture_indices.b >> 5)), color, color.a);
+	color = mix(get_fragment(texture_indices.g & 31, vec3(UV, texture_indices.g >> 5)), color, color.a);
+	color = mix(get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)), color, color.a);
 
 	if (show_lighting) {
 		vec3 light_direction = vec3(-0.3f, -0.3f, 0.25f);

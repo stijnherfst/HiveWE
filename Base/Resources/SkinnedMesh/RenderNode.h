@@ -42,22 +42,12 @@ class RenderNode {
 	bool dontInheritScaling;
 	bool dontInheritRotation;
 
-	// for some reason MatrixEater didn't have
-	// dontInheritTranslation and dontInheritRotation????
 	bool billboarded;
 	bool billboardedX;
 	bool billboardedY;
 	bool billboardedZ;
 	// state flags
 	bool visible;
-	bool dirty;
-	bool wasDirty;
 
-	//void setTransformation(glm::vec3 location, glm::quat rotation, glm::vec3 scale);
-	void resetTransformation();
 	void recalculateTransformation();
-	// void* is a thing from javascript we don't know
-	// what it is yet, still reading, just pass null
-	// until we need it
-	void update(void* scene);
 };

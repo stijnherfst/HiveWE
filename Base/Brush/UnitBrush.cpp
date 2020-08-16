@@ -184,14 +184,27 @@ void UnitBrush::apply_end() {
 	map->terrain_undo.add_undo_action(std::move(unit_undo));
 }
 
-void UnitBrush::render_brush() const {
-	glm::mat4 matrix(1.f);
-	matrix = glm::translate(matrix, input_handler.mouse_world);
-	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f));
-	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
+void UnitBrush::render_brush() {
+	const float model_scale = units_slk.data<float>("modelscale", id);
+	const float move_height = units_slk.data<float>("moveheight", id);
+
+	const glm::vec3 final_position = input_handler.mouse_world + glm::vec3(0.f, 0.f, move_height / 128.f);
+	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
+
+	//glm::mat4 matrix(1.f);
+	//matrix = glm::translate(matrix, final_position);
+	//matrix = glm::scale(matrix, final_scale);
+	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
+
+
+	//matrix = glm::translate(matrix, input_handler.mouse_world);
+	//matrix = glm::scale(matrix, glm::vec3(1.f / 128.f));
+	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
 	if (mesh) {
-		mesh->render_queue(matrix);
+		//skeleton.updateLocation();
+		skeleton.updateLocation(final_position, rotation, final_scale);
+
 	}
 }
 
@@ -251,5 +264,6 @@ void UnitBrush::set_random_rotation() {
 
 void UnitBrush::set_unit(const std::string& id) {
 	this->id = id;
-	//mesh = map->units.get_mesh(id);
+	mesh = map->units.get_mesh(id);
+	skeleton = SkeletalModelInstance(mesh->model);
 }

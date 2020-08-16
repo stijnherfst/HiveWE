@@ -382,6 +382,11 @@ namespace mdx {
 		};
 	};
 
+	enum SequenceFlags {
+		looping,
+		non_looping
+	};
+
 	struct Sequence {
 		std::string name;
 		uint32_t interval_start;

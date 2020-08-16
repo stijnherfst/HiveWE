@@ -69,7 +69,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	pathing_visible->setIcon(QIcon("Data/Icons/Ribbon/pathing32x32.png"));
 	pathing_visible->setText("Pathing");
 	pathing_visible->setCheckable(true);
-	pathing_visible->setChecked(true);
 	visible_section->addWidget(pathing_visible);
 	
 	brush_visible->setIcon(QIcon("Data/Icons/Ribbon/brush32x32.png"));

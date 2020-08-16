@@ -37,7 +37,7 @@ void SkeletalModelInstance::setupHierarchy() {
 
 		RenderNode renderNode = RenderNode(object, pivot);
 		if (object.parent_id != -1) {
-			renderNode.parent = &renderNodes[object.parent_id]; // Pointers to unordered map data are guaranteed stable
+			renderNode.parent = &renderNodes[object.parent_id];
 		} else {
 			renderNode.parent = nullptr;
 		}
@@ -61,149 +61,56 @@ void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, cons
 }
 
 void SkeletalModelInstance::update(double delta) {
-	if (model->sequences.size() && sequence_index != -1) {
-		const mdx::Sequence& sequence = model->sequences[sequence_index];
-		int relative_frame = current_frame - sequence.interval_start;
-		int animation_length = sequence.interval_end - sequence.interval_start;
-		if (sequence.flags & 0x1) {
-			relative_frame += delta * 1000.0;
-			if (relative_frame > animation_length) {
-				relative_frame = animation_length;
-			}
-		} else {
-			relative_frame = static_cast<int>(relative_frame + delta * 1000.0) % animation_length;
-		}
-		current_frame = sequence.interval_start + relative_frame;
-		updateNodes(false);
+	if (model->sequences.empty() || sequence_index == -1) {
+		return;
 	}
 
-	inverseCameraRotation = camera->decomposed_rotation;
+	const mdx::Sequence& sequence = model->sequences[sequence_index];
+	if (sequence.flags & mdx::SequenceFlags::non_looping) {
+		current_frame = std::min<int>(current_frame + delta * 1000.0, sequence.interval_end);
+	} else {
+		current_frame += delta * 1000.0;
+		if (current_frame > sequence.interval_end) {
+			current_frame = sequence.interval_start;
+		}
+	}
+	updateNodes(false);
 }
 
 void SkeletalModelInstance::updateNodes(bool forced) {
-	if (sequence_index < 0) {
-		// no animation loaded, render in base position
-		for (auto& node : renderNodes) {
-			node.resetTransformation();
-			node.worldMatrix = glm::mat4(1.0f);
-		}
-	} else {
-		// update skeleton to position based on animation @ time
-		for (auto& node : renderNodes) {
-			float visibility = node.node.getVisibility(*this);
-			bool objectVisible = visibility >= MAGIC_RENDER_SHOW_CONSTANT;
-			bool nodeVisible = forced || ((!node.parent || node.parent->visible) && objectVisible);
+	//if (sequence_index < 0) {
+	//	// no animation loaded, render in base position
+	//	for (auto& node : renderNodes) {
+	//		node.resetTransformation();
+	//		node.worldMatrix = glm::mat4(1.0f);
+	//	}
+	//} else {
 
-			node.visible = nodeVisible;
-			// Every node only needs to be updated if this is a forced update, or if both
-			// the parent node and the
-			// generic object corresponding to this node are visible.
-			// Incoming messy code for optimizations!
-			// --- All copied from Ghostwolf to Matrix Eater, then Matrix Eater to HiveWE
-			if (nodeVisible) {
-				bool wasDirty = false;
-				// TODO variants
-				glm::vec3& localLocation = node.localLocation;
-				glm::quat& localRotation = node.localRotation;
-				glm::vec3& localScale = node.localScale;
 
-				// Only update the local data if there is a need to
-				if (forced || true /* variants */) {
-					// regarding variants comment (copied from Matrix Eater), see orig ghostwolf code
-					// The idea would be not to update if the node has no animation in
-					// current sequence, as I recall.
-					wasDirty = true;
+	assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
-					// Translation
-					if (forced || true /* variants */) {
-						// ToDo: Using KGTR here is retarded, possibly. Matrix Eater used a virtual function
-						// so that Camera's Target and Camera's Source could subclass the node thing
-						// and give their own return values using their own tags to get the Translation.
-						// Ghostwolf used "getTranslation()" similarly, but the typing in the JS is
-						// hard for me to follow. I'm not actually sure how or where he's updating the
-						// camera target. My Matrix Eater version of the camera stuff might still
-						// have some bugs, too, but it needs to work for visual editing. Hjorleif
-						// asked me to make him a model with an animated camera, like Druid of the Claw
-						// Portrait model, and my tool was so unready that even after a weekend of hacking
-						// the code I didn't deliver on it and have been forgetting for half a year since
-						// then.
-						// (The same is true for KGSC and KGRT further below but I will omit duplicate comments)
-						localLocation = node.node.getValue<glm::vec3>(mdx::TrackTag::KGTR, *this, TRANSLATION_IDENTITY);
-					}
+	// update skeleton to position based on animation @ time
+	for (auto& node : renderNodes) {
+		bool objectVisible = node.node.getVisibility(*this) >= MAGIC_RENDER_SHOW_CONSTANT;
+		node.visible = forced || ((!node.parent || node.parent->visible) && objectVisible);
 
-					// Rotation
-					if (forced || true /* variants */) {
-						localRotation = node.node.getValue<glm::quat>(mdx::TrackTag::KGRT, *this, ROTATION_IDENTITY);
-					}
+		if (node.visible) {
+			node.localLocation = node.node.getValue<glm::vec3>(mdx::TrackTag::KGTR, *this, TRANSLATION_IDENTITY);
+			node.localRotation = node.node.getValue<glm::quat>(mdx::TrackTag::KGRT, *this, ROTATION_IDENTITY);
+			node.localScale = node.node.getValue<glm::vec3>(mdx::TrackTag::KGSC, *this, SCALE_IDENTITY);
 
-					// Scale
-					if (forced || true /* variants */) {
-						localScale = node.node.getValue<glm::vec3>(mdx::TrackTag::KGSC, *this, SCALE_IDENTITY);
-					}
-
-					node.dirty = true;
-				}
-
-				// Billboarding:
-				// If the instance is not attached to any scene, this is meaningless
-				// ---
-				// This is copied from Matrix Eater billboarding which has bugs.
-				// Either it wasn't copied from Ghostwolf or he changed his repo online.
-				// It is no longer present at this point in "updateNodes" in modelinstance.js
-				if (node.billboarded || node.billboardedX) {
-					wasDirty = true;
-
-					// Cancel the parent's rotation
-					if (node.parent) {
-						localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
-					} else {
-						localRotation = inverseInstanceRotation;
-					}
-
-					localRotation *= inverseCameraRotation;
-				}
-				//else if (node->billboardedY) {
-				//	wasDirty = true;
-
+			if (node.billboarded || node.billboardedX) {
 				// Cancel the parent's rotation
-				//	localRotation = ROTATION_IDENTITY;
-				// The following is simply incorrect, but is copied from
-				// the Matrix Eater, and provides a good temporary heuristic
-				// until we get the correct code.
-				//	localRotation *= inverseCameraRotationYSpin;
-				//}
-				//else if (node->billboardedZ) {
-				//wasDirty = true;
-
-				//if (parent) {
-				//	localRotation = parent->inverseWorldRotation;
-				//}
-				//else {
-				//	localRotation = ROTATION_IDENTITY;
-				//}
-
-				//localRotation *= inverseCameraRotationZSpin;
-				//}
-
-				bool wasReallyDirty = forced || wasDirty || !node.parent || node.parent->wasDirty;
-				node.wasDirty = wasReallyDirty;
-
-				// If this is a forced upate, or this node's local data was updated, or the
-				// parent node updated, do a full world update.
-
-				if (wasReallyDirty) {
-					node.recalculateTransformation();
+				if (node.parent) {
+					node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
+				} else {
+					node.localRotation = inverseInstanceRotation;
 				}
 
-				// If there is an instance object associated with this node, and the node is
-				// visible (which might not be the case for a forced update!), update the object.
-				// This includes attachments and emitters.
-
-				// let object = node.object;
-				if (objectVisible) {
-					node.update(nullptr);
-				}
+				node.localRotation *= camera->decomposed_rotation;
 			}
+
+			node.recalculateTransformation();
 		}
 	}
 }

@@ -81,7 +81,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 	for (const auto& i : model.textures) {
 		if (i.replaceable_id != 0) {
 			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
-				std::cout << "Unknown replacable ID found\n";
+				std::cout << "Unknown replaceable ID found\n";
 			}
 			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
 		} else {
@@ -198,7 +198,7 @@ void StaticMesh::render_opaque() const {
 			} else {
 				break;
 			}
-
+			
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);

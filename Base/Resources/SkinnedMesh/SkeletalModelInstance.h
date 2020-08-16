@@ -28,7 +28,7 @@ class SkeletalModelInstance {
 	std::shared_ptr<mdx::MDX> model;
 	int sequence_index; // can be -1 if not animating
 	int current_frame;
-	glm::quat inverseCameraRotation = glm::quat(0.f, 0.f, 0.f, 1.0f);
+
 	glm::quat inverseCameraRotationXSpin;
 	glm::quat inverseCameraRotationYSpin;
 	glm::quat inverseCameraRotationZSpin;

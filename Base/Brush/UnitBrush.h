@@ -5,14 +5,16 @@
 
 #include "Units.h"
 #include "Brush.h"
-#include "StaticMesh.h"
+#include "SkinnedMesh.h"
 #include "PathingTexture.h"
 
 class UnitBrush : public Brush {
 	std::string id;
 
-	std::shared_ptr<StaticMesh> mesh;
-public:
+	std::shared_ptr<SkinnedMesh> mesh;
+	SkeletalModelInstance skeleton;
+
+  public:
 	float rotation = 0.f;
 	bool random_rotation = true;
 
@@ -44,7 +46,7 @@ public:
 	void apply_begin() override;
 	void apply() override;
 	void apply_end() override;
-	void render_brush() const override;
+	void render_brush() override;
 	void render_selection() const override;
 	void render_clipboard() const override;
 

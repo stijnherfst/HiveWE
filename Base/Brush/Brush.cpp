@@ -202,7 +202,7 @@ void Brush::mouse_release_event(QMouseEvent* event) {
 	}
 }
 
-void Brush::render() const {
+void Brush::render() {
 	if (mode == Mode::selection) {
 		render_selector();
 	} 
@@ -238,7 +238,7 @@ void Brush::render_selector() const {
 	}
 }
 
-void Brush::render_brush() const {
+void Brush::render_brush() {
 	gl->glDisable(GL_DEPTH_TEST);
 
 	brush_shader->use();

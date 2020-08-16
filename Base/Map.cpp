@@ -287,7 +287,9 @@ void Map::load(const fs::path& path) {
 	std::cout << "Regions/cameras/sounds loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
 
-	camera->reset();
+	// Center camera
+	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
+	camera->position.z = terrain.interpolated_height(camera->position.x, camera->position.y);
 
 	loaded = true;
 }
@@ -372,12 +374,12 @@ void Map::update(double delta, int width, int height) {
 	//	i.skeleton.update(delta);
 	//}
 
-	//std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
-	//	if (i.id == "sloc") {
-	//		return;
-	//	} // ToDo handle starting locations
-	//	i.skeleton.update(delta);
-	//});
+	std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
+		if (i.id == "sloc") {
+			return;
+		} // ToDo handle starting locations
+		i.skeleton.update(delta);
+	});
 
 	for (auto& i : units.items) {
 		i.skeleton.update(delta);

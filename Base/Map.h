@@ -46,7 +46,7 @@ public:
 
 	bool render_doodads = true;
 	bool render_units = true;
-	bool render_pathing = true;
+	bool render_pathing = false;
 	bool render_brush = true;
 	bool render_lighting = true;
 	bool render_wireframe = false;

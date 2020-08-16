@@ -4,9 +4,6 @@
 #include "InputHandler.h"
 
 void Camera::reset() {
-	position = glm::vec3(map->terrain.width / 2, map->terrain.height / 2, 0);
-	position.z = map->terrain.interpolated_height(position.x, position.y);
-
 	distance = 20;
 	horizontal_angle = 0.0;
 	vertical_angle = -0.977;

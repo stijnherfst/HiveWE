@@ -63,7 +63,7 @@ public:
 	void apply_begin() override;
 	void apply() override;
 	void apply_end() override;
-	void render_brush() const override;
+	void render_brush() override;
 	void render_selection() const override;
 	void render_clipboard() const override;
 
