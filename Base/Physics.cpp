@@ -1,4 +1,4 @@
-#include "physics.h"
+#include "Physics.h"
 
 #include "Camera.h"
 

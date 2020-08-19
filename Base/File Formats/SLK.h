@@ -9,6 +9,7 @@
 
 #include <absl/container/flat_hash_map.h>
 
+extern std::string to_lowercase_copy(const std::string_view& string);
 namespace slk {
 	class SLK {
 
