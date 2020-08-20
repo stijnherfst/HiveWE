@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include <map>
 #include <unordered_map>
@@ -21,7 +21,25 @@ namespace fs = std::filesystem;
 class SkeletalModelInstance;
 
 namespace mdx {
-	struct Sequence;
+	struct Extent {
+		float bounds_radius;
+		glm::vec3 minimum;
+		glm::vec3 maximum;
+
+		Extent() = default;
+		explicit Extent(BinaryReader& reader);
+	};
+
+	struct Sequence {
+		std::string name;
+		uint32_t interval_start;
+		uint32_t interval_end;
+		float movespeed;
+		uint32_t flags;
+		float rarity;
+		uint32_t sync_point;
+		Extent extent;
+	};
 
 	extern std::map<int, std::string> replacable_id_to_texture;
 
@@ -134,7 +152,6 @@ namespace mdx {
 
 		// We have to pass the sequence here because
 		// the return value is dependent on start/end time
-		template <typename T>
 		int ceilIndex(int frame, mdx::Sequence& sequence) const {
 			// ToDo fix, this function does not work yet.
 			int trackSize = tracks.size();
@@ -154,7 +171,6 @@ namespace mdx {
 			return 0;
 		}
 
-		template <typename T>
 		void getValue(T& out, int frame, mdx::Sequence& sequence, const T& defaultValue) const {
 			// ToDo fix, this function does not work yet.
 			int index = ceilIndex(frame, sequence);
@@ -175,127 +191,7 @@ namespace mdx {
    require modifying the model on load to inject additional keyframes
 	*/
 
-		T TrackHeader<T>::matrixEaterInterpolate(int current_frame, const SkeletalModelInstance& instance, T defaultValue) const {
-			if (tracks.empty()) {
-				return defaultValue;
-			}
-
-			int sequenceStart;
-			int sequenceEnd;
-			if (global_sequence_ID >= 0 && instance.model->global_sequences.size()) {
-				sequenceStart = 0;
-				sequenceEnd = instance.model->global_sequences[global_sequence_ID];
-				if (sequenceEnd == 0) {
-					current_frame = 0;
-				} else {
-					current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % sequenceEnd;
-				}
-			} else if (instance.model->sequences.size() && instance.sequence_index != -1) {
-				Sequence& sequence = instance.model->sequences[instance.sequence_index];
-				sequenceStart = sequence.interval_start;
-				sequenceEnd = sequence.interval_end;
-			} else {
-				return defaultValue;
-			}
-
-			int ceilIndex = -1;
-			int floorIndex = 0;
-			// ToDo "if global seq" check is here in MXE java
-
-			int floorAnimStartIndex = 0;
-			int floorAnimEndIndex = 0;
-
-			// get floor:
-			for (int i = 0; i < tracks.size(); i++) {
-				const Track<T>& track = tracks[i];
-				if (track.frame <= sequenceStart) {
-					floorAnimStartIndex = i;
-				}
-				if (track.frame <= current_frame) {
-					floorIndex = i;
-				}
-				if (track.frame >= current_frame && ceilIndex == -1) {
-					ceilIndex = i;
-				}
-				if (track.frame <= sequenceEnd) {
-					floorAnimEndIndex = i;
-				} else {
-					// end of our sequence
-					break;
-				}
-			}
-			if (ceilIndex == -1) {
-				ceilIndex = tracks.size() - 1;
-			}
-
-			// end get floor
-			if (ceilIndex < floorIndex) {
-				ceilIndex = floorIndex;
-				// was a problem in matrix eater, different impl, not problem here?
-			}
-
-			T floorInTan;
-			T floorOutTan;
-			T floorValue;
-			T ceilValue;
-			int floorIndexTime;
-			int ceilIndexTime;
-
-			floorValue = tracks[floorIndex].value;
-			if (interpolation_type > 1) {
-				floorInTan = tracks[floorIndex].inTan;
-				floorOutTan = tracks[floorIndex].outTan;
-			}
-			ceilValue = tracks[ceilIndex].value;
-			floorIndexTime = tracks[floorIndex].frame;
-			ceilIndexTime = tracks[ceilIndex].frame;
-			if (ceilIndexTime < sequenceStart) {
-				return defaultValue;
-			}
-			if (floorIndexTime > sequenceEnd) {
-				return defaultValue;
-			}
-			bool floorBeforeStart = floorIndexTime < sequenceStart;
-			bool ceilAfterEnd = ceilIndexTime > sequenceEnd;
-			if (floorBeforeStart && ceilAfterEnd) {
-				return defaultValue;
-			} else if (floorBeforeStart) {
-				if (tracks[floorAnimEndIndex].frame == sequenceEnd) {
-					// no "floor" frame found, but we have a ceil frame,
-					// so the prev frame is a repeat of animation's end
-					// placed at the beginning
-					floorIndex = floorAnimEndIndex;
-					floorValue = tracks[floorAnimEndIndex].value;
-					floorIndexTime = sequenceStart;
-					if (interpolation_type > 1) {
-						floorInTan = tracks[floorAnimEndIndex].inTan;
-						floorOutTan = tracks[floorAnimEndIndex].outTan;
-					}
-				} else {
-					floorValue = defaultValue;
-					floorInTan = floorOutTan = defaultValue;
-					floorIndexTime = sequenceStart;
-				}
-			} else if (ceilAfterEnd || (ceilIndexTime < current_frame && tracks[floorAnimEndIndex].frame < current_frame)) {
-				// if we have a floor frame but the "ceil" frame is after end of sequence,
-				// or our ceil frame is before our time, meaning that we're at the end of the
-				// entire timeline, then we need to inject a "ceil" frame at end of sequence
-				if (tracks[floorAnimStartIndex].frame == sequenceStart) {
-					ceilValue = tracks[floorAnimStartIndex].value;
-					ceilIndex = floorAnimStartIndex;
-					ceilIndexTime = sequenceStart;
-				}
-				// for the else case here, Matrix Eater code says to leave it blank,
-				// example model is Water Elemental's birth animation, to verify behavior
-			}
-			if (floorIndex == ceilIndex) {
-				return floorValue;
-			}
-			const T ceilInTan = tracks[ceilIndex].inTan;
-			float t = std::clamp((current_frame - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
-		
-			return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, interpolation_type);
-		}
+		T matrixEaterInterpolate(int time, const SkeletalModelInstance& instance, const T& defaultValue) const;
 	};
 
 	struct AnimatedData {
@@ -315,15 +211,6 @@ namespace mdx {
 		bool has_track(const TrackTag track) const {
 			return tracks.contains(track);
 		}
-	};
-
-	struct Extent {
-		float bounds_radius;
-		glm::vec3 minimum;
-		glm::vec3 maximum;
-
-		Extent() = default;
-		explicit Extent(BinaryReader& reader);
 	};
 
 	struct Layer {
@@ -352,13 +239,7 @@ namespace mdx {
 		float getVisibility(SkeletalModelInstance& instance) const;
 
 		template <typename T>
-		T getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const {
-			if (animated_data.has_track(tag)) {
-				return animated_data.track<T>(tag).matrixEaterInterpolate(instance.current_frame, instance, defaultValue);
-			} else {
-				return defaultValue;
-			}
-		}
+		T getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const;
 
 		enum Flags {
 			dont_inherit_translation = 0x1,
@@ -390,17 +271,6 @@ namespace mdx {
 	enum SequenceFlags {
 		looping,
 		non_looping
-	};
-
-	struct Sequence {
-		std::string name;
-		uint32_t interval_start;
-		uint32_t interval_end;
-		float movespeed;
-		uint32_t flags;
-		float rarity;
-		uint32_t sync_point;
-		Extent extent;
 	};
 
 	struct Geoset {

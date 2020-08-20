@@ -3,6 +3,7 @@
 #include "ui_HiveWE.h"
 
 #include <QMainWindow>
+#include "Palette.h"
 #include "WindowHandler.h"
 #include "QRibbon.h"
 #include "Minimap.h"

@@ -134,6 +134,135 @@ namespace mdx {
 		}
 	}
 
+	template <typename T>
+	T TrackHeader<T>::matrixEaterInterpolate(int time, const SkeletalModelInstance& instance, const T& defaultValue) const {
+		int sequenceStart;
+		int sequenceEnd;
+		if (global_sequence_ID >= 0 && instance.model->global_sequences.size()) {
+			sequenceStart = 0;
+			sequenceEnd = instance.model->global_sequences[global_sequence_ID];
+			if (sequenceEnd == 0) {
+				time = 0;
+			} else {
+				time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % sequenceEnd;
+			}
+		} else if (instance.model->sequences.size() && instance.sequence_index != -1) {
+			Sequence& sequence = instance.model->sequences[instance.sequence_index];
+			sequenceStart = sequence.interval_start;
+			sequenceEnd = sequence.interval_end;
+		} else {
+			return defaultValue;
+		}
+		if (tracks.empty()) {
+			return defaultValue;
+		}
+		int ceilIndex = -1;
+		int floorIndex = 0;
+		const T* floorInTan;
+		const T* floorOutTan = 0;
+		const T* floorValue;
+		const T* ceilValue;
+		int floorIndexTime;
+		int ceilIndexTime;
+		// ToDo "if global seq" check is here in MXE java
+
+		int floorAnimStartIndex = 0;
+		int floorAnimEndIndex = 0;
+		// get floor:
+		int tracksSize = tracks.size();
+		for (int i = 0; i < tracksSize; i++) {
+			const Track<T>& track = tracks[i];
+			if (track.frame <= sequenceStart) {
+				floorAnimStartIndex = i;
+			}
+			if (track.frame <= time) {
+				floorIndex = i;
+			}
+			if (track.frame >= time && ceilIndex == -1) {
+				ceilIndex = i;
+			}
+			if (track.frame <= sequenceEnd) {
+				floorAnimEndIndex = i;
+			} else {
+				// end of our sequence
+				break;
+			}
+		}
+		if (ceilIndex == -1) {
+			ceilIndex = tracksSize - 1;
+		}
+		// end get floor
+		if (ceilIndex < floorIndex) {
+			ceilIndex = floorIndex;
+			// was a problem in matrix eater, different impl, not problem here?
+		}
+		floorValue = &tracks[floorIndex].value;
+		if (interpolation_type > 1) {
+			floorInTan = &tracks[floorIndex].inTan;
+			floorOutTan = &tracks[floorIndex].outTan;
+		}
+		ceilValue = &tracks[ceilIndex].value;
+		floorIndexTime = tracks[floorIndex].frame;
+		ceilIndexTime = tracks[ceilIndex].frame;
+		if (ceilIndexTime < sequenceStart) {
+			return defaultValue;
+		}
+		if (floorIndexTime > sequenceEnd) {
+			return defaultValue;
+		}
+		auto floorBeforeStart = floorIndexTime < sequenceStart;
+		auto ceilAfterEnd = ceilIndexTime > sequenceEnd;
+		if (floorBeforeStart && ceilAfterEnd) {
+			return defaultValue;
+		} else if (floorBeforeStart) {
+			if (tracks[floorAnimEndIndex].frame == sequenceEnd) {
+				// no "floor" frame found, but we have a ceil frame,
+				// so the prev frame is a repeat of animation's end
+				// placed at the beginning
+				floorIndex = floorAnimEndIndex;
+				floorValue = &tracks[floorAnimEndIndex].value;
+				floorIndexTime = sequenceStart;
+				if (interpolation_type > 1) {
+					floorInTan = &tracks[floorAnimEndIndex].inTan;
+					floorOutTan = &tracks[floorAnimEndIndex].outTan;
+				}
+			} else {
+				floorValue = &defaultValue;
+				floorInTan = floorOutTan = &defaultValue;
+				floorIndexTime = sequenceStart;
+			}
+		} else if (ceilAfterEnd || (ceilIndexTime < time && tracks[floorAnimEndIndex].frame < time)) {
+			// if we have a floor frame but the "ceil" frame is after end of sequence,
+			// or our ceil frame is before our time, meaning that we're at the end of the
+			// entire timeline, then we need to inject a "ceil" frame at end of sequence
+			if (tracks[floorAnimStartIndex].frame == sequenceStart) {
+				ceilValue = &tracks[floorAnimStartIndex].value;
+				ceilIndex = floorAnimStartIndex;
+				ceilIndexTime = sequenceStart;
+			}
+			// for the else case here, Matrix Eater code says to leave it blank,
+			// example model is Water Elemental's birth animation, to verify behavior
+		}
+		if (floorIndex == ceilIndex) {
+			return *floorValue;
+		}
+		const T* ceilInTan = &tracks[ceilIndex].inTan;
+		float t = std::clamp((time - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
+
+		return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, interpolation_type);
+	}
+
+	template <typename T>
+	T Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const {
+		if (animated_data.has_track(tag)) {
+			return animated_data.track<T>(tag).matrixEaterInterpolate(instance.current_frame, instance, defaultValue);
+		} else {
+			return defaultValue;
+		}
+	}
+	template glm::vec3 Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const glm::vec3& defaultValue) const;
+	template glm::quat Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const glm::quat& defaultValue) const;
+
 	MDX::MDX(BinaryReader& reader) {
 		load(reader);
 	}
