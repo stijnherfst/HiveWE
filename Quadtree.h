@@ -97,10 +97,10 @@ public:
 			return true;
 		}
 
-		return top_left.remove(point)
-			|| top_right.remove(point)
-			|| bottom_left.remove(point)
-			|| bottom_right.remove(point);
+		return top_left->remove(point)
+			|| top_right->remove(point)
+			|| bottom_left->remove(point)
+			|| bottom_right->remove(point);
 	}
 
 	std::vector<T*> query(const QRect& target_bounds) const {

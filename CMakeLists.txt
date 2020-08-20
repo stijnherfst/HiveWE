@@ -2,6 +2,10 @@ if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
 			CACHE STRING "")
 endif ()
+if (DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
+	set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}"
+			CACHE STRING "")
+endif ()
 
 cmake_minimum_required(VERSION 3.13)
 project (HiveWE CXX)
@@ -16,7 +20,7 @@ find_package(Qt5 REQUIRED
 	Gui
 	Widgets
 )
-find_package(bullet CONFIG REQUIRED)
+find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
@@ -145,26 +149,36 @@ target_link_libraries(HiveWE
 	casclib
 	${JPEG_LIBRARIES}
 	qt-advanced-docking-system::qtadvanceddocking
-	LinearMath
 	Bullet3Common
-	BulletInverseDynamics
-	BulletCollision
 	BulletDynamics
 	BulletSoftBody
-	"$ENV{VCPKG_ROOT}/packages/libjpeg-turbo_x64-windows/lib/turbojpeg.lib"
-	#"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/debug/lib/qscintilla2_qt5d.lib"
-	"$ENV{VCPKG_ROOT}/packages/qscintilla_x64-windows/lib/qscintilla2_qt5.lib"
+	BulletInverseDynamics
+	BulletCollision
+	LinearMath
 	absl::flat_hash_map
 	fmt::fmt
 	fmt::fmt-header-only
-
 )
 
-if(WIN32)
-    target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because of casclib and stormlib
+	target_link_libraries(HiveWE
+		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libqscintilla2_qt5.so"
+		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libturbojpeg.so"
+	)
 endif()
-
-target_link_options(HiveWE PUBLIC /PROFILE)
+if(WIN32)
+	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+		target_link_libraries(HiveWE
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/qscintilla2_qt5.lib")
+	else()
+		target_link_libraries(HiveWE
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
+	endif()
+	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF)
+	target_link_options(HiveWE PUBLIC /PROFILE)
+endif()
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
