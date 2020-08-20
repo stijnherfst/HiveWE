@@ -36,7 +36,7 @@ GPUTexture::GPUTexture(const fs::path& path) {
 			gl->glGenerateTextureMipmap(id);
 			delete data;
 		} else {
-			id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), reader.buffer.size(), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_MIPMAPS | SOIL_FLAG_DDS_LOAD_DIRECT);
+			id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), reader.buffer.size(), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT);
 		}
 
 		gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

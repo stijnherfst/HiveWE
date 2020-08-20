@@ -216,15 +216,14 @@ namespace mdx {
 			}
 		}
 
-		// Standardize animation names
-		// Not sure how animation names work exactly so this is just an easy way to get a valid stand animation so we can do geoset hiding
-		//int t = 0;
-		//for (auto& i : sequences) {
-		//	std::transform(i.name.begin(), i.name.end(), i.name.begin(), ::tolower);
-
-		//	auto parts = split(i.name, ' ');
-		//	i.name = parts.front() + std::to_string(t++);
-		//}
+		// Fix vertex groups that reference non existent bone groups
+		for (auto& i : geosets) {
+			for (auto& j : i.vertex_groups) {
+				if (j > i.bone_groups.size()) {
+					j = std::min<uint8_t>(j, i.bone_groups.size() - 1);
+				}
+			}
+		}
 	}
 
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {
@@ -312,7 +311,7 @@ namespace mdx {
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
 			if (version > 800) {
-				reader.advance(80); // A shader file
+				material.shader_name = reader.read_string(80);
 			}
 			reader.advance(4);
 			const uint32_t layers_count = reader.read<uint32_t>();

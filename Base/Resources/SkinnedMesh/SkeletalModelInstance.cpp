@@ -21,13 +21,18 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) {
 	renderNodes.resize(node_count);
 	setupHierarchy();
 	// ToDo: for each camera: add camera target node to renderNodes
-	sequence_index = 0;
 }
 
 void SkeletalModelInstance::setupHierarchy() {
 	// Leaking is bad, if you leak, you are serving the Demon Lord.
 
 	model->forEachNode([&](mdx::Node& object) {
+		// Seen it happen with Emmitter1, is this an error in the model?
+		// ToDo purge (when adding a validation layer or just crashing)
+		if (object.id == -1) {
+			return;
+		}
+
 		glm::vec3 pivot;
 		if (object.id < model->pivots.size()) {
 			pivot = model->pivots[object.id];
@@ -74,10 +79,10 @@ void SkeletalModelInstance::update(double delta) {
 			current_frame = sequence.interval_start;
 		}
 	}
-	updateNodes(false);
+	updateNodes();
 }
 
-void SkeletalModelInstance::updateNodes(bool forced) {
+void SkeletalModelInstance::updateNodes() {
 	//if (sequence_index < 0) {
 	//	// no animation loaded, render in base position
 	//	for (auto& node : renderNodes) {
@@ -92,7 +97,7 @@ void SkeletalModelInstance::updateNodes(bool forced) {
 	// update skeleton to position based on animation @ time
 	for (auto& node : renderNodes) {
 		bool objectVisible = node.node.getVisibility(*this) >= MAGIC_RENDER_SHOW_CONSTANT;
-		node.visible = forced || ((!node.parent || node.parent->visible) && objectVisible);
+		node.visible = (!node.parent || node.parent->visible) && objectVisible;
 
 		if (node.visible) {
 			node.localLocation = node.node.getValue<glm::vec3>(mdx::TrackTag::KGTR, *this, TRANSLATION_IDENTITY);

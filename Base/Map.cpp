@@ -169,7 +169,7 @@ void Map::load(const fs::path& path) {
 	upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
 	buff_table = new TableModel(&buff_slk, &buff_meta_slk);
 
-	std::cout << "SLK loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
+	std::cout << "\nSLK loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
 
 	// Trigger strings
@@ -367,19 +367,19 @@ void Map::update(double delta, int width, int height) {
 		}
 	}
 
-	//for (auto& i : units.units) {
-	//	if (i.id == "sloc") {
-	//		continue;
-	//	} // ToDo handle starting locations
-	//	i.skeleton.update(delta);
-	//}
-
-	std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
+	for (auto& i : units.units) {
 		if (i.id == "sloc") {
-			return;
+			continue;
 		} // ToDo handle starting locations
 		i.skeleton.update(delta);
-	});
+	}
+
+	//std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
+	//	if (i.id == "sloc") {
+	//		return;
+	//	} // ToDo handle starting locations
+	//	i.skeleton.update(delta);
+	//});
 
 	for (auto& i : units.items) {
 		i.skeleton.update(delta);

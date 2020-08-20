@@ -11,8 +11,11 @@ public:
 		float distance;
 	};
 
-	std::shared_ptr<Shader> instance_static_mesh_shader;
-	std::shared_ptr<Shader> static_mesh_shader;
+	std::shared_ptr<Shader> instance_static_mesh_shader_sd;
+	std::shared_ptr<Shader> instance_static_mesh_shader_hd;
+	std::shared_ptr<Shader> static_mesh_shader_sd;
+	std::shared_ptr<Shader> static_mesh_shader_hd;
+
 	std::shared_ptr<Shader> instance_skinned_mesh_shader;
 	std::shared_ptr<Shader> skinned_mesh_shader;
 

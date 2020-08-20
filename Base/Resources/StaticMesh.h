@@ -18,6 +18,7 @@ public:
 		int base_index = 0;
 
 		int material_id = 0;
+		bool hd = true;
 		bool visible = true;
 		mdx::Extent extent;
 	};
@@ -29,6 +30,7 @@ public:
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
 	GLuint normal_buffer;
+	GLuint tangent_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
 
@@ -45,6 +47,9 @@ public:
 	virtual ~StaticMesh();
 
 	void render_queue(const glm::mat4& model);
-	void render_opaque() const;
+
+	void render_opaque_sd() const;
+	void render_opaque_hd() const;
+
 	void render_transparent(int instance_id) const;
 };

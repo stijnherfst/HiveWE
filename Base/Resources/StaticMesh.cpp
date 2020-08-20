@@ -38,6 +38,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		gl->glCreateBuffers(1, &normal_buffer);
 		gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
+		gl->glCreateBuffers(1, &tangent_buffer);
+		gl->glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+
 		gl->glCreateBuffers(1, &instance_buffer);
 
 		gl->glCreateBuffers(1, &index_buffer);
@@ -58,6 +61,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			entry.base_index = base_index;
 
 			entry.material_id = i.material_id;
+			entry.hd = !model.materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
 			entry.extent = i.extent;
 
 			entries.push_back(entry);
@@ -65,6 +69,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
 			gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
 			gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
+			gl->glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 			gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
 			base_vertex += entry.vertices;
@@ -89,10 +94,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			std::string to = i.file_name.stem().string();
 
 			// Only load diffuse to keep memory usage down
-			if (to.ends_with("Normal") || to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
+			/*if (to.ends_with("Normal") || to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
 				textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
 				continue;
-			}
+			}*/
 
 			fs::path new_path = i.file_name;
 			new_path.replace_extension(".dds");
@@ -124,6 +129,12 @@ StaticMesh::~StaticMesh() {
 }
 
 void StaticMesh::render_queue(const glm::mat4& model) {
+	// Register for transparent drawing
+	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
+	if (!has_mesh) {
+		return;
+	}
+
 	render_jobs.push_back(model);
 
 	// Register for opaque drawing
@@ -132,11 +143,6 @@ void StaticMesh::render_queue(const glm::mat4& model) {
 		mesh_id = map->render_manager.meshes.size() - 1;
 	}
 
-	// Register for transparent drawing
-	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
-	if (!has_mesh) {
-		return;
-	}
 
 	for (const auto& i : entries) {
 		if (!i.visible) {
@@ -159,8 +165,7 @@ void StaticMesh::render_queue(const glm::mat4& model) {
 	}
 }
 
-// Opaque rendering doesn't have to be sorted and can thus be instanced
-void StaticMesh::render_opaque() const {
+void StaticMesh::render_opaque_sd() const {
 	if (!has_mesh) {
 		return;
 	}
@@ -181,29 +186,83 @@ void StaticMesh::render_opaque() const {
 	// Since a mat4 is 4 vec4's
 	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(3 + i);
-		gl->glVertexAttribPointer(3 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-		gl->glVertexAttribDivisor(3 + i, 1);
+		gl->glEnableVertexAttribArray(4 + i);
+		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(4 + i, 1);
 	}
 
 	for (const auto& i : entries) {
-		if (!i.visible) {
+		if (!i.visible || i.hd) {
 			continue;
 		}
-		for (const auto& j : materials[i.material_id].layers) {
-			if (j.blend_mode == 0) {
-				gl->glUniform1f(1, -1.f);
-			} else if (j.blend_mode == 1) {
-				gl->glUniform1f(1, 0.75f);
-			} else {
-				break;
-			}
-			
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
-			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-			break; // Currently only draws the first layer
+		auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode == 0) {
+			gl->glUniform1f(1, -1.f);
+		} else if (layers[0].blend_mode == 1) {
+			gl->glUniform1f(1, 0.75f);
+		} else {
+			break;
 		}
+
+		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
+		//gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
+		//gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+
+		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+	}
+
+	for (int i = 0; i < 4; i++) {
+		gl->glVertexAttribDivisor(3 + i, 0); // ToDo use multiple vao
+	}
+}
+
+void StaticMesh::render_opaque_hd() const {
+	if (!has_mesh) {
+		return;
+	}
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, tangent_buffer);
+	gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+
+	// Since a mat4 is 4 vec4's
+	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+	for (int i = 0; i < 4; i++) {
+		gl->glEnableVertexAttribArray(4 + i);
+		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(4 + i, 1);
+	}
+
+	for (const auto& i : entries) {
+		if (!i.visible || !i.hd) {
+			continue;
+		}
+
+		auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode == 0) {
+			gl->glUniform1f(1, -1.f);
+		} else if (layers[0].blend_mode == 1) {
+			gl->glUniform1f(1, 0.75f);
+		} else {
+			break;
+		}
+
+		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
+		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
+		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+
+		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
 
 	for (int i = 0; i < 4; i++) {

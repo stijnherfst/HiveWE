@@ -75,17 +75,17 @@ extern const glm::vec3 TRANSLATION_IDENTITY;
 extern const glm::quat ROTATION_IDENTITY;
 extern const glm::vec3 SCALE_IDENTITY;
 
-float interpolate(const float* start, const float* outTan, const float* inTan, const float* end, float t, int interpolationType);
-glm::vec3 interpolate(const glm::vec3* start, const glm::vec3* outTan, const glm::vec3* inTan, const glm::vec3* end, float t, int interpolationType);
-glm::quat interpolate(const glm::quat* start, const glm::quat* outTan, const glm::quat* inTan, const glm::quat* end, float t, int interpolationType);
-uint32_t interpolate(const uint32_t* start, const uint32_t* outTan, const uint32_t* inTan, const uint32_t* end, float t, int interpolationType);
+float interpolate(const float start, const float outTan, const float inTan, const float end, float t, int interpolationType);
+glm::vec3 interpolate(const glm::vec3 start, const glm::vec3 outTan, const glm::vec3 inTan, const glm::vec3 end, float t, int interpolationType);
+glm::quat interpolate(const glm::quat start, const glm::quat outTan, const glm::quat inTan, const glm::quat end, float t, int interpolationType);
+uint32_t interpolate(const uint32_t start, const uint32_t outTan, const uint32_t inTan, const uint32_t end, float t, int interpolationType);
 
 /* ToDo replace these with some library calls (glm?), Ghostwolf said it was bad
    practice for me to copy them everywhere (Retera here, also copied them in Matrix Eater)
 */
 float hermite(float a, float aOutTan, float bInTan, float b, float t);
 float bezier(float a, float aOutTan, float bInTan, float b, float t);
-glm::quat ghostwolfSquad(const glm::quat* a, const glm::quat* aOutTan, const glm::quat* bInTan, const glm::quat* b, float interpolationFactor);
+glm::quat ghostwolfSquad(const glm::quat a, const glm::quat aOutTan, const glm::quat bInTan, const glm::quat b, float interpolationFactor);
 
 glm::quat safeQuatLookAt(
 	glm::vec3 const& lookFrom,

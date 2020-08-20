@@ -4,35 +4,42 @@
 #include "Camera.h"
 
 RenderManager::RenderManager() {
-	instance_static_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced.vs", "Data/Shaders/static_mesh_instanced.fs" });
-	static_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
+	instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
+	instance_static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_hd.vs", "Data/Shaders/static_mesh_instanced_hd.fs" });
+	static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
+	//static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh.vs", "Data/Shaders/static_mesh.fs" });
 	instance_skinned_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced.vs", "Data/Shaders/skinned_mesh_instanced.fs" });
 	skinned_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh.vs", "Data/Shaders/skinned_mesh.fs" });
 }
 
 void RenderManager::render(bool render_lighting) {
-	instance_static_mesh_shader->use();
-	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
-	gl->glUniform1i(2, render_lighting);
-
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
-	gl->glEnableVertexAttribArray(2);
-
-	// Render opaque meshes
-	// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
-	gl->glDisable(GL_BLEND);
-
-	for (const auto& i : meshes) {
-		i->render_opaque();
-	}
-
-	instance_skinned_mesh_shader->use();
-
 	gl->glEnableVertexAttribArray(0);
 	gl->glEnableVertexAttribArray(1);
 	gl->glEnableVertexAttribArray(2);
 	gl->glEnableVertexAttribArray(3);
+
+	// Render opaque meshes
+	// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
+	instance_static_mesh_shader_sd->use();
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniform1i(2, render_lighting);
+
+	gl->glDisable(GL_BLEND);
+
+	for (const auto& i : meshes) {
+		i->render_opaque_sd();
+	}
+
+	instance_static_mesh_shader_hd->use();
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniform1i(2, render_lighting);
+
+	for (const auto& i : meshes) {
+		i->render_opaque_hd();
+	}
+
+		
+	instance_skinned_mesh_shader->use();
 
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -43,7 +50,7 @@ void RenderManager::render(bool render_lighting) {
 	// Render transparent meshes
 	std::sort(transparent_instances.begin(), transparent_instances.end(), [](Inst& left, Inst& right) { return left.distance > right.distance; });
 	std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](Inst& left, Inst& right) { return left.distance > right.distance; });
-	static_mesh_shader->use();
+	static_mesh_shader_sd->use();
 
 	gl->glEnable(GL_BLEND);
 	gl->glUniform1f(1, -1.f);
@@ -64,6 +71,12 @@ void RenderManager::render(bool render_lighting) {
 	gl->glDepthMask(true);
 	gl->glEnable(GL_DEPTH_TEST);
 
+
+	gl->glDisableVertexAttribArray(0);
+	gl->glDisableVertexAttribArray(1);
+	gl->glDisableVertexAttribArray(2);
+	gl->glDisableVertexAttribArray(3);
+
 	for (const auto& i : meshes) {
 		i->render_jobs.clear();
 	}
@@ -73,11 +86,6 @@ void RenderManager::render(bool render_lighting) {
 		i->skeletons.clear();
 		i->instance_bone_matrices.clear();
 	}
-
-	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-	gl->glDisableVertexAttribArray(2);
-	gl->glDisableVertexAttribArray(3);
 
 	meshes.clear();
 	animated_meshes.clear();

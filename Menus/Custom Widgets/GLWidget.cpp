@@ -90,6 +90,10 @@ void GLWidget::initializeGL() {
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
+
+	int extension_count;
+	gl->glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
+
 	shapes.init();
 }
 

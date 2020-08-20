@@ -6,9 +6,7 @@ public:
 
 	template<typename T>
 	void write(const T value) {
-		// These wouldn't make sense
-		static_assert(std::is_same<T, std::string>() == false);
-		static_assert(std::is_same<T, fs::path>() == false);
+		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
 
 		T temp = static_cast<T>(value);
 		buffer.resize(buffer.size() + sizeof(T));
@@ -41,6 +39,7 @@ public:
 				buffer.insert(buffer.end(), i.begin(), i.end());
 			}
 		} else {
+			static_assert(std::is_standard_layout<T>::value, "T must be of standard layout or std::string.");
 			buffer.resize(buffer.size() + vector.size() * sizeof(T));
 			std::copy(vector.begin(), vector.end(), buffer.end() - vector.size() * sizeof(T));
 		}

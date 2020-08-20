@@ -16,9 +16,7 @@ public:
 
 	template<typename T>
 	[[nodiscard]] T read() {
-		// These wouldn't make sense
-		static_assert(std::is_same<T, std::string>() == false);
-		static_assert(std::is_same<T, fs::path>() == false);
+		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
 
 		if (position + sizeof(T) > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
@@ -44,7 +42,7 @@ public:
 	}
 
 	[[nodiscard]] std::string read_c_string() {
-		std::string string(reinterpret_cast<char*>(buffer.data() + position));
+		const std::string string(reinterpret_cast<char*>(buffer.data() + position));
 		position += string.size() + 1;
 		
 		if (position > buffer.size()) {
@@ -56,9 +54,7 @@ public:
 
 	template<typename T>
 	[[nodiscard]] std::vector<T> read_vector(const size_t size) {
-		// These wouldn't make sense
-		static_assert(std::is_same<T, std::string>() == false);
-		static_assert(std::is_same<T, fs::path>() == false);
+		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
 
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
