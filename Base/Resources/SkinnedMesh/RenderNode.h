@@ -1,12 +1,5 @@
 #pragma once
 
-/**
-  * Node in skeletal hierarcy.
-  * Based on RenderNode class in MatrixEater
-  * that was based on "src/viewer/node.js" in Ghostwolf's
-  * viewer.
-  */
-
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
@@ -15,8 +8,9 @@
 #include <glm/gtc/quaternion.hpp>
 #include "MDX.h"
 
-class RenderNode {
 
+
+class RenderNode {
   public:
 	RenderNode() = default;
 	RenderNode(mdx::Node node, glm::vec3 pivot);

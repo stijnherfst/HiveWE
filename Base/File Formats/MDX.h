@@ -1,7 +1,11 @@
 ﻿#pragma once
 
+#include <functional>
+#include <filesystem>
+namespace fs = std::filesystem;
 #include <map>
 #include <unordered_map>
+#include <variant>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -12,35 +16,7 @@
 
 #include "BinaryReader.h"
 
-#include <filesystem>
-#include <variant>
-#include <functional>
-
-namespace fs = std::filesystem;
-
-class SkeletalModelInstance;
-
 namespace mdx {
-	struct Extent {
-		float bounds_radius;
-		glm::vec3 minimum;
-		glm::vec3 maximum;
-
-		Extent() = default;
-		explicit Extent(BinaryReader& reader);
-	};
-
-	struct Sequence {
-		std::string name;
-		uint32_t interval_start;
-		uint32_t interval_end;
-		float movespeed;
-		uint32_t flags;
-		float rarity;
-		uint32_t sync_point;
-		Extent extent;
-	};
-
 	extern std::map<int, std::string> replacable_id_to_texture;
 
 	enum class TrackTag {
@@ -90,7 +66,6 @@ namespace mdx {
 		KFCA = 1094927947,
 		KFTC = 1129596491,
 		KMTE = 1163152715
-
 	};
 
 	enum class ChunkTag {
@@ -127,12 +102,23 @@ namespace mdx {
 		T outTan;
 	};
 
+	// To keep track of what 
+	struct CurrentKeyFrame {
+		int start = 0;
+		int end = 0;
+		int left = 0;
+		int right = 0;
+	};
+
 	template <typename T>
 	struct TrackHeader {
 		int32_t interpolation_type;
 		int32_t global_sequence_ID;
 		std::vector<Track<T>> tracks;
 
+		CurrentKeyFrame current;
+
+		TrackHeader() = default;
 		explicit TrackHeader(BinaryReader& reader) {
 			const int tracks_count = reader.read<int32_t>();
 			interpolation_type = reader.read<int32_t>();
@@ -149,49 +135,6 @@ namespace mdx {
 				tracks.push_back(track);
 			}
 		}
-
-		// We have to pass the sequence here because
-		// the return value is dependent on start/end time
-		int ceilIndex(int frame, mdx::Sequence& sequence) const {
-			// ToDo fix, this function does not work yet.
-			int trackSize = tracks.size();
-			if (frame < sequence.interval_start) {
-				return -1;
-			} else if (frame >= sequence.interval_end) {
-				return trackSize;
-			} else {
-				for (int i = 1; i < trackSize; i++) {
-					const Track<T>& track = tracks[i];
-					if (track.frame > frame) {
-						return i;
-					}
-				}
-				return -1;
-			}
-			return 0;
-		}
-
-		void getValue(T& out, int frame, mdx::Sequence& sequence, const T& defaultValue) const {
-			// ToDo fix, this function does not work yet.
-			int index = ceilIndex(frame, sequence);
-			int length = tracks.size();
-			if (index == -1) {
-				out = tracks[0].value;
-			} else if (index == length) {
-				out = tracks[length - 1].value;
-			} else {
-				Track<T>& start = tracks[index - 1];
-				Track<T>& end = tracks[index];
-				float t = clampValue((frame - start.frame) / (end.frame - start.frame), 0, 1);
-			}
-		}
-
-		/* Matrix Eater interpolate is slower than ghostwolf interpolate,
-   because this one does more CPU operations. But it does not
-   require modifying the model on load to inject additional keyframes
-	*/
-
-		T matrixEaterInterpolate(int time, const SkeletalModelInstance& instance, const T& defaultValue) const;
 	};
 
 	struct AnimatedData {
@@ -204,7 +147,7 @@ namespace mdx {
 		void load_tracks(BinaryReader& reader);
 
 		template <typename T>
-		const TrackHeader<T>& track(const TrackTag track) const {
+		TrackHeader<T>& track(const TrackTag track) {
 			return std::get<TrackHeader<T>>(tracks.at(track));
 		}
 
@@ -222,8 +165,6 @@ namespace mdx {
 		float alpha;
 
 		AnimatedData animated_data;
-
-		float getVisibility(int frame, const SkeletalModelInstance& instance) const;
 	};
 
 	struct Node {
@@ -235,11 +176,9 @@ namespace mdx {
 		int parent_id;
 		int flags;
 		AnimatedData animated_data;
-
-		float getVisibility(SkeletalModelInstance& instance) const;
-
-		template <typename T>
-		T getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const;
+		/*TrackHeader<glm::vec3> KGTR;
+		TrackHeader<glm::quat> KGRT;
+		TrackHeader<glm::vec3> KGSC;*/
 
 		enum Flags {
 			dont_inherit_translation = 0x1,
@@ -268,9 +207,29 @@ namespace mdx {
 		};
 	};
 
-	enum SequenceFlags {
-		looping,
-		non_looping
+	struct Extent {
+		float bounds_radius;
+		glm::vec3 minimum;
+		glm::vec3 maximum;
+
+		Extent() = default;
+		explicit Extent(BinaryReader& reader);
+	};
+
+	struct Sequence {
+		std::string name;
+		uint32_t start_frame;
+		uint32_t end_frame;
+		float movespeed;
+		uint32_t flags;
+		float rarity;
+		uint32_t sync_point;
+		Extent extent;
+
+		enum Flags {
+			looping,
+			non_looping
+		};
 	};
 
 	struct Geoset {
@@ -306,12 +265,11 @@ namespace mdx {
 		uint32_t geoset_id;
 		AnimatedData animated_data;
 
-		glm::vec3 getColor(int frame, SkeletalModelInstance& instance) const;
-		float getVisibility(int frame, SkeletalModelInstance& instance) const;
+		//TrackHeader<float> KGAO;
+		//TrackHeader<glm::vec3> KGAC;
 	};
 
 	struct Texture {
-		explicit Texture(BinaryReader& reader);
 		uint32_t replaceable_id;
 		fs::path file_name;
 		uint32_t flags;
@@ -558,6 +516,11 @@ namespace mdx {
 	  public:
 		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
+
+		void validate();
+
+		template <typename T>
+		void fix(mdx::TrackHeader<T>& header);
 
 		std::vector<Geoset> geosets;
 		std::vector<Sequence> sequences;

@@ -59,6 +59,7 @@ namespace mpq {
 		bool open(const fs::path& path, unsigned long flags = 0);
 		void close();
 		bool compact();
+		bool unpack(const fs::path& path);
 
 		File file_open(const fs::path& path) const;
 		void file_write(const fs::path& path, const std::vector<uint8_t>& data) const;

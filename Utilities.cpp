@@ -554,8 +554,8 @@ glm::quat interpolate(const glm::quat start, const glm::quat outTan, const glm::
 			break;
 	}
 }
-uint32_t interpolate(const uint32_t* start, const uint32_t* outTan, const uint32_t* inTan, const uint32_t* end, float t, int interpolationType) {
-	return *start;
+uint32_t interpolate(const uint32_t start, const uint32_t outTan, const uint32_t inTan, const uint32_t end, float t, int interpolationType) {
+	return start;
 }
 
 glm::quat ghostwolfSquad(const glm::quat a, const glm::quat aOutTan, const glm::quat bInTan, const glm::quat b, float t) {

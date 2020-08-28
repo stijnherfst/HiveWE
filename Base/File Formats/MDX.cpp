@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include "Utilities.h"
-#include "SkeletalModelInstance.h"
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -87,12 +86,6 @@ namespace mdx {
 		maximum = reader.read<glm::vec3>();
 	}
 
-	Texture::Texture(BinaryReader& reader) {
-		replaceable_id = reader.read<uint32_t>();
-		file_name = reader.read_string(260);
-		flags = reader.read<uint32_t>();
-	}
-
 	Node::Node(BinaryReader& reader) {
 		const size_t reader_pos = reader.position;
 		const uint32_t inclusive_size = reader.read<uint32_t>();
@@ -102,166 +95,17 @@ namespace mdx {
 		flags = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + inclusive_size) {
+			//TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+			//if (tag == TrackTag::KGTR) {
+			//	KGTR = TrackHeader<glm::vec3>(reader);
+			//} else if (tag == TrackTag::KGRT) {
+			//	KGRT = TrackHeader<glm::quat>(reader);
+			//} else if (tag == TrackTag::KGSC) {
+			//	KGSC = TrackHeader<glm::vec3>(reader);
+			//}
 			animated_data.load_tracks(reader);
 		}
 	}
-
-	float Node::getVisibility(SkeletalModelInstance& instance) const {
-		return 1.0f;
-	}
-
-	float Layer::getVisibility(int frame, const SkeletalModelInstance& instance) const {
-		if (animated_data.has_track(TrackTag::KMTA)) {
-			return animated_data.track<float>(TrackTag::KMTA).matrixEaterInterpolate(frame, instance, alpha);
-		} else {
-			return alpha;
-		}
-	}
-
-	glm::vec3 GeosetAnimation::getColor(int frame, SkeletalModelInstance& instance) const {
-		if (animated_data.has_track(TrackTag::KGAC)) {
-			return animated_data.track<glm::vec3>(TrackTag::KGAC).matrixEaterInterpolate(frame, instance, color);
-		} else {
-			return color;
-		}
-	}
-
-	float GeosetAnimation::getVisibility(int frame, SkeletalModelInstance& instance) const {
-		if (animated_data.has_track(TrackTag::KGAO)) {
-			return animated_data.track<float>(TrackTag::KGAO).matrixEaterInterpolate(frame, instance, alpha);
-		} else {
-			return alpha;
-		}
-	}
-
-	template <typename T>
-	T TrackHeader<T>::matrixEaterInterpolate(int time, const SkeletalModelInstance& instance, const T& defaultValue) const {
-		int sequenceStart;
-		int sequenceEnd;
-		if (global_sequence_ID >= 0 && instance.model->global_sequences.size()) {
-			sequenceStart = 0;
-			sequenceEnd = instance.model->global_sequences[global_sequence_ID];
-			if (sequenceEnd == 0) {
-				time = 0;
-			} else {
-				time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % sequenceEnd;
-			}
-		} else if (instance.model->sequences.size() && instance.sequence_index != -1) {
-			Sequence& sequence = instance.model->sequences[instance.sequence_index];
-			sequenceStart = sequence.interval_start;
-			sequenceEnd = sequence.interval_end;
-		} else {
-			return defaultValue;
-		}
-		if (tracks.empty()) {
-			return defaultValue;
-		}
-		int ceilIndex = -1;
-		int floorIndex = 0;
-		const T* floorInTan;
-		const T* floorOutTan = 0;
-		const T* floorValue;
-		const T* ceilValue;
-		int floorIndexTime;
-		int ceilIndexTime;
-		// ToDo "if global seq" check is here in MXE java
-
-		int floorAnimStartIndex = 0;
-		int floorAnimEndIndex = 0;
-		// get floor:
-		int tracksSize = tracks.size();
-		for (int i = 0; i < tracksSize; i++) {
-			const Track<T>& track = tracks[i];
-			if (track.frame <= sequenceStart) {
-				floorAnimStartIndex = i;
-			}
-			if (track.frame <= time) {
-				floorIndex = i;
-			}
-			if (track.frame >= time && ceilIndex == -1) {
-				ceilIndex = i;
-			}
-			if (track.frame <= sequenceEnd) {
-				floorAnimEndIndex = i;
-			} else {
-				// end of our sequence
-				break;
-			}
-		}
-		if (ceilIndex == -1) {
-			ceilIndex = tracksSize - 1;
-		}
-		// end get floor
-		if (ceilIndex < floorIndex) {
-			ceilIndex = floorIndex;
-			// was a problem in matrix eater, different impl, not problem here?
-		}
-		floorValue = &tracks[floorIndex].value;
-		if (interpolation_type > 1) {
-			floorInTan = &tracks[floorIndex].inTan;
-			floorOutTan = &tracks[floorIndex].outTan;
-		}
-		ceilValue = &tracks[ceilIndex].value;
-		floorIndexTime = tracks[floorIndex].frame;
-		ceilIndexTime = tracks[ceilIndex].frame;
-		if (ceilIndexTime < sequenceStart) {
-			return defaultValue;
-		}
-		if (floorIndexTime > sequenceEnd) {
-			return defaultValue;
-		}
-		auto floorBeforeStart = floorIndexTime < sequenceStart;
-		auto ceilAfterEnd = ceilIndexTime > sequenceEnd;
-		if (floorBeforeStart && ceilAfterEnd) {
-			return defaultValue;
-		} else if (floorBeforeStart) {
-			if (tracks[floorAnimEndIndex].frame == sequenceEnd) {
-				// no "floor" frame found, but we have a ceil frame,
-				// so the prev frame is a repeat of animation's end
-				// placed at the beginning
-				floorIndex = floorAnimEndIndex;
-				floorValue = &tracks[floorAnimEndIndex].value;
-				floorIndexTime = sequenceStart;
-				if (interpolation_type > 1) {
-					floorInTan = &tracks[floorAnimEndIndex].inTan;
-					floorOutTan = &tracks[floorAnimEndIndex].outTan;
-				}
-			} else {
-				floorValue = &defaultValue;
-				floorInTan = floorOutTan = &defaultValue;
-				floorIndexTime = sequenceStart;
-			}
-		} else if (ceilAfterEnd || (ceilIndexTime < time && tracks[floorAnimEndIndex].frame < time)) {
-			// if we have a floor frame but the "ceil" frame is after end of sequence,
-			// or our ceil frame is before our time, meaning that we're at the end of the
-			// entire timeline, then we need to inject a "ceil" frame at end of sequence
-			if (tracks[floorAnimStartIndex].frame == sequenceStart) {
-				ceilValue = &tracks[floorAnimStartIndex].value;
-				ceilIndex = floorAnimStartIndex;
-				ceilIndexTime = sequenceStart;
-			}
-			// for the else case here, Matrix Eater code says to leave it blank,
-			// example model is Water Elemental's birth animation, to verify behavior
-		}
-		if (floorIndex == ceilIndex) {
-			return *floorValue;
-		}
-		const T* ceilInTan = &tracks[ceilIndex].inTan;
-		float t = std::clamp((time - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
-
-		return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, interpolation_type);
-	}
-
-	template <typename T>
-	T Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const T& defaultValue) const {
-		if (animated_data.has_track(tag)) {
-			return animated_data.track<T>(tag).matrixEaterInterpolate(instance.current_frame, instance, defaultValue);
-		} else {
-			return defaultValue;
-		}
-	}
-	template glm::vec3 Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const glm::vec3& defaultValue) const;
-	template glm::quat Node::getValue(mdx::TrackTag tag, SkeletalModelInstance& instance, const glm::quat& defaultValue) const;
 
 	MDX::MDX(BinaryReader& reader) {
 		load(reader);
@@ -338,6 +182,77 @@ namespace mdx {
 			}
 		}
 
+		validate();
+	}
+
+	template <typename T>
+	void MDX::fix(mdx::TrackHeader<T>& header) {
+		if (header.tracks.empty()) {
+			return;
+		}
+
+		for (const auto& sequence : sequences) {
+			int start_index = -1;
+			int end_index = -1;
+
+			for (int i = 0; i < header.tracks.size(); i++) {
+				auto& track = header.tracks[i];
+
+				if (start_index == -1 && track.frame > sequence.start_frame) {
+					start_index = i;
+				}
+
+				if (track.frame < sequence.end_frame) {
+					end_index = i;
+				}
+			}
+
+			if (start_index == -1) {
+				// Found no frame, abort
+				continue;
+			}
+
+			if (start_index == end_index) {
+				// Only one frame
+			}
+
+			if (header.tracks[start_index].frame > sequence.start_frame) {
+				// Interpolate between this frame and end frame and place at start
+				const int distance = header.tracks[start_index].frame - sequence.start_frame + sequence.end_frame - header.tracks[end_index].frame;
+				std::cout << distance << "\n";
+				float t = (sequence.end_frame - header.tracks[end_index].frame) / distance;
+				T new_value = interpolate(header.tracks[end_index].value, header.tracks[end_index].outTan, header.tracks[start_index].inTan, header.tracks[start_index].value, t, header.interpolation_type);
+				//T new_value = header.tracks[start_index].value;
+
+				header.tracks.insert(header.tracks.begin() + start_index, header.tracks[start_index]);
+				header.tracks[start_index].value = new_value;
+				header.tracks[start_index].frame = sequence.start_frame;
+				end_index++;
+
+				if (header.interpolation_type != 1) {
+					std::cout << "Not linear\n";
+				}
+
+				//std::cout << "Missing start frame\n";
+			}
+
+			if (header.tracks[end_index].frame < sequence.end_frame) {
+				// Interpolate between this frame and end frame and place at start
+				//const int distance = header.tracks[start_index].frame - sequence.start + sequence.end - header.tracks[end_index].frame;
+
+				//float t = sequence.end - header.tracks[end_index].frame / distance;
+				//interpolate(header.tracks[end_index].value, header.tracks[end_index].outTan, header.tracks[start_index].inTan, header.tracks[start_index].value, t, header.interpolation_type);
+
+				//std::cout << "Missing end frame\n";
+			}
+		}
+	};
+
+	template void MDX::fix(mdx::TrackHeader<glm::vec3>& header);
+	template void MDX::fix(mdx::TrackHeader<glm::quat>& header);
+	template void MDX::fix(mdx::TrackHeader<uint32_t>& header);
+
+	void MDX::validate() {
 		// Remove geoset animations that reference non existing geosets
 		for (size_t i = animations.size(); i-- > 0;) {
 			if (animations[i].geoset_id >= geosets.size()) {
@@ -353,6 +268,31 @@ namespace mdx {
 				}
 			}
 		}
+
+		//for (auto& i : animations) {
+		//	auto t = i.animated_data.tracks;
+		//	for (auto& j : i.animated_data.tracks) {
+		//		std::visit([&](auto&& arg) {
+		//			fix(arg);
+		//		}, j.second);
+		//	}
+		//}
+
+		//for (auto& i : materials) {
+		//	for (auto& j : i.layers) {
+		//	
+		//	}
+		//}
+
+		//forEachNode([&](Node& node) {
+		//	for (auto& j : node.animated_data.tracks) {
+		//		std::visit([&](auto&& arg) {
+		//			fix(arg);
+		//		}, j.second);
+		//	}
+		//});
+
+		// also check lights, particle emmitters and texture animations
 	}
 
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {
@@ -479,8 +419,8 @@ namespace mdx {
 		for (size_t i = 0; i < size / 132; i++) {
 			Sequence sequence;
 			sequence.name = reader.read_string(80);
-			sequence.interval_start = reader.read<uint32_t>();
-			sequence.interval_end = reader.read<uint32_t>();
+			sequence.start_frame = reader.read<uint32_t>();
+			sequence.end_frame = reader.read<uint32_t>();
 			sequence.movespeed = reader.read<float>();
 			sequence.flags = reader.read<uint32_t>();
 			sequence.rarity = reader.read<float>();
@@ -528,7 +468,11 @@ namespace mdx {
 	void MDX::read_TEXS_chunk(BinaryReader& reader) {
 		const uint32_t size = reader.read<uint32_t>();
 		for (size_t i = 0; i < size / 268; i++) {
-			textures.emplace_back(Texture(reader));
+			Texture texture;
+			texture.replaceable_id = reader.read<uint32_t>();
+			texture.file_name = reader.read_string(260);
+			texture.flags = reader.read<uint32_t>();
+			textures.push_back(std::move(texture));
 		}
 	}
 

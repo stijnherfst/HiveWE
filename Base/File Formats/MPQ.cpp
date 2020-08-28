@@ -141,4 +141,23 @@ namespace mpq {
 	bool MPQ::compact() {
 		return SFileCompactArchive(handle, nullptr, false);
 	}
+
+	bool MPQ::unpack(const fs::path& path) {
+		SFILE_FIND_DATA file_data;
+		HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
+		fs::create_directories((path / file_data.cFileName).parent_path());
+		SFileExtractFile(handle, file_data.cFileName, (path / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
+
+		while (SFileFindNextFile(find_handle, &file_data)) {
+			fs::create_directories((path / file_data.cFileName).parent_path());
+			SFileExtractFile(handle, file_data.cFileName, (path / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
+		}
+		SFileFindClose(find_handle);
+
+		// Delete unneeded files
+		fs::remove(path / "(listfile)");
+		fs::remove(path / "(attributes)");
+		fs::remove(path / "(war3map.imp)");
+		return true;
+	}
 }

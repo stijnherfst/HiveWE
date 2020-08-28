@@ -21,12 +21,11 @@
 #define MAGIC_RENDER_SHOW_CONSTANT 0.75
 
 class SkeletalModelInstance {
-  private:
-	void setupHierarchy();
-
   public:
 	std::shared_ptr<mdx::MDX> model;
+
 	int sequence_index = 0; // can be -1 if not animating
+	
 	int current_frame = 0;
 
 	glm::quat inverseCameraRotationXSpin;
@@ -40,6 +39,8 @@ class SkeletalModelInstance {
 
 	std::vector<RenderNode> renderNodes;
 
+	bool recompute_sequence = true;
+
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model);
 
@@ -48,4 +49,18 @@ class SkeletalModelInstance {
 	void update(double delta);
 
 	void updateNodes();
+
+	void set_sequence(int sequence_index);
+
+	void get_current_track_value(mdx::TrackTag, int index);
+
+	glm::vec3 get_geoset_animation_color(mdx::GeosetAnimation& animation);
+	float get_geoset_animation_visiblity(mdx::GeosetAnimation& animation);
+	float get_layer_visiblity(mdx::Layer& layer);
+
+	template <typename T>
+	T getValue(mdx::AnimatedData& animated_data, mdx::TrackTag tag, const T& defaultValue);
+
+	template <typename T>
+	T matrixEaterInterpolate(mdx::TrackHeader<T>& header, int current_frame, const T& defaultValue);
 };

@@ -16,6 +16,7 @@
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 
+#include "MPQ.h"
 #include "Hierarchy.h"
 #include "TriggerEditor.h"
 #include "TileSetter.h"
@@ -266,53 +267,39 @@ void HiveWE::load_mpq() {
 
 	settings.setValue("openDirectory", file_name);
 
-	fs::path mpq = file_name.toStdWString();
+	fs::path mpq_path = file_name.toStdWString();
 
-	// Try opening the archive
-	HANDLE handle;
-	bool success = SFileOpenArchive(mpq.c_str(), 0, 0, &handle);
-	if (!success) {
+	mpq::MPQ mpq;
+	bool opened = mpq.open(mpq_path);
+	if (!opened) {
 		QMessageBox::critical(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
 		std::cout << GetLastError() << "\n";
 		return;
 	}
 
-	// Select a location to unpack the map
 	fs::path unpack_location = QFileDialog::getExistingDirectory(this, "Choose Unpacking Location",
 		settings.value("openDirectory", QDir::current().path()).toString(),
-		QFileDialog::ShowDirsOnly
-		| QFileDialog::DontResolveSymlinks).toStdString();
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdString();
 
 	if (unpack_location.empty()) {
 		return;
 	}
 
-	fs::path directory = unpack_location / mpq.stem();
+	fs::path final_directory = unpack_location / mpq_path.stem();
 
 	try {
-		fs::create_directory(directory);
+		fs::create_directory(final_directory);
 	} catch (std::filesystem::filesystem_error& e) {
 		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(e.what()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
 		return;
 	}
-	
-	// Unpack archive
-	SFILE_FIND_DATA file_data;
-	HANDLE find_handle = SFileFindFirstFile(handle, "*", &file_data, nullptr);
-	fs::create_directories((directory / file_data.cFileName).parent_path());
-	SFileExtractFile(handle, file_data.cFileName, (directory / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
 
-	while (SFileFindNextFile(find_handle, &file_data)) {
-		fs::create_directories((directory / file_data.cFileName).parent_path());
-		SFileExtractFile(handle, file_data.cFileName, (directory / file_data.cFileName).c_str(), SFILE_OPEN_FROM_MPQ);
+	bool unpacked = mpq.unpack(final_directory);
+	if (!unpacked) {
+		QMessageBox::critical(this, "Unpacking failed", "There was an error unpacking the archive.");
+		std::cout << GetLastError() << "\n";
+		return;
 	}
-	SFileFindClose(find_handle);
-	SFileCloseArchive(handle);
-
-	// Delete unneeded files
-	fs::remove(directory / "(listfile)");
-	fs::remove(directory / "(attributes)");
-	fs::remove(directory / "(war3map.imp)");
 
 	// Load map
 	delete map;
@@ -320,7 +307,7 @@ void HiveWE::load_mpq() {
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
-	map->load(directory);
+	map->load(final_directory);
 	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
