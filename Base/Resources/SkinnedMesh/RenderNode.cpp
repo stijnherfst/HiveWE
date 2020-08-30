@@ -51,10 +51,12 @@ void RenderNode::recalculateTransformation() {
 		worldScale = localScale;
 	}
 	
-	// Inverse world rotation (ToDo use overloaded assignment operator)
-	inverseWorldRotation.x = -worldRotation.x;
-	inverseWorldRotation.y = -worldRotation.y;
-	inverseWorldRotation.z = -worldRotation.z;
+	//inverseWorldRotation.x = -worldRotation.x;
+	//inverseWorldRotation.y = -worldRotation.y;
+	//inverseWorldRotation.z = -worldRotation.z;
+	//inverseWorldRotation.w = worldRotation.w;
+
+	inverseWorldRotation = -worldRotation;
 	inverseWorldRotation.w = worldRotation.w;
 
 	inverseWorldScale = 1.f / worldScale;

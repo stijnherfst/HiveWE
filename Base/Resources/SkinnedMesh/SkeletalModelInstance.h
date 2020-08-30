@@ -37,9 +37,7 @@ class SkeletalModelInstance {
 	float facingAngle;
 	glm::quat inverseInstanceRotation;
 
-	std::vector<RenderNode> renderNodes;
-
-	bool recompute_sequence = true;
+	std::vector<RenderNode> render_nodes;
 
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model);
@@ -52,15 +50,16 @@ class SkeletalModelInstance {
 
 	void set_sequence(int sequence_index);
 
-	void get_current_track_value(mdx::TrackTag, int index);
+	template <typename T>
+	void calculate_sequence_extents(mdx::TrackHeader<T>& header);
+
+	template <typename T>
+	void advance_keyframes(mdx::TrackHeader<T>& header);
 
 	glm::vec3 get_geoset_animation_color(mdx::GeosetAnimation& animation);
 	float get_geoset_animation_visiblity(mdx::GeosetAnimation& animation);
 	float get_layer_visiblity(mdx::Layer& layer);
 
 	template <typename T>
-	T getValue(mdx::AnimatedData& animated_data, mdx::TrackTag tag, const T& defaultValue);
-
-	template <typename T>
-	T matrixEaterInterpolate(mdx::TrackHeader<T>& header, int current_frame, const T& defaultValue);
+	T interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue);
 };

@@ -8,7 +8,7 @@ void Sounds::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.w3s");
 
 	int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
+	if (version != 1 && version != 2 && version != 3) {
 		std::cout << "Unknown war3map.w3s version: " << version << " Attempting to load but may crash\n";
 	}
 
@@ -49,7 +49,15 @@ void Sounds::load() {
 			reader.advance(4); // int?
 			reader.read_c_string();
 			reader.advance(4); // int?
-			reader.advance(9);
+			if (reader.read<uint32_t>())
+				reader.read_c_string();
+			reader.read_c_string();
+			reader.read_c_string();
+			reader.read_c_string();
+			reader.read_c_string();
+			reader.read_c_string();
+			if (version >= 3)
+				reader.advance(4); // int?
 		}
 	}
 }

@@ -242,7 +242,7 @@ void SkinnedMesh::render_opaque() {
 
 	for (int i = 0; i < render_jobs.size(); i++) {
 		for (int j = 0; j < model->bones.size(); j++) {
-			instance_bone_matrices.push_back(skeletons[i]->renderNodes[j].worldMatrix);
+			instance_bone_matrices.push_back(skeletons[i]->render_nodes[j].worldMatrix);
 		}
 	}
 

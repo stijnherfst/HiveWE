@@ -34,6 +34,17 @@
       "ctestCommandArgs": "",
     },
     {
+      "name": "x64-Clang-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "clang_cl_x64_x64" ],
+    },
+    {
       "name": "x64-Clang-Release",
       "generator": "Ninja",
       "configurationType": "Release",
@@ -42,7 +53,7 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "clang_cl_x64_x64" ],
+      "inheritEnvironments": [ "clang_cl_x64_x64" ]
     }
   ]
 }

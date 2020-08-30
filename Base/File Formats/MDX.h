@@ -104,7 +104,7 @@ namespace mdx {
 
 	// To keep track of what 
 	struct CurrentKeyFrame {
-		int start = 0;
+		int start = -1;
 		int end = 0;
 		int left = 0;
 		int right = 0;
@@ -112,8 +112,8 @@ namespace mdx {
 
 	template <typename T>
 	struct TrackHeader {
-		int32_t interpolation_type;
-		int32_t global_sequence_ID;
+		int32_t interpolation_type = 0;
+		int32_t global_sequence_ID = -1;
 		std::vector<Track<T>> tracks;
 
 		CurrentKeyFrame current;
@@ -137,25 +137,6 @@ namespace mdx {
 		}
 	};
 
-	struct AnimatedData {
-		std::unordered_map<TrackTag, std::variant<TrackHeader<float>,
-												  TrackHeader<uint32_t>,
-												  TrackHeader<glm::vec3>,
-												  TrackHeader<glm::quat>>>
-			tracks;
-
-		void load_tracks(BinaryReader& reader);
-
-		template <typename T>
-		TrackHeader<T>& track(const TrackTag track) {
-			return std::get<TrackHeader<T>>(tracks.at(track));
-		}
-
-		bool has_track(const TrackTag track) const {
-			return tracks.contains(track);
-		}
-	};
-
 	struct Layer {
 		uint32_t blend_mode;
 		uint32_t shading_flags;
@@ -164,7 +145,12 @@ namespace mdx {
 		uint32_t coord_id;
 		float alpha;
 
-		AnimatedData animated_data;
+		TrackHeader<uint32_t> KMTF;
+		TrackHeader<float> KMTA;
+		TrackHeader<float> KMTE;
+		TrackHeader<glm::vec3> KFC3;
+		TrackHeader<float> KFCA;
+		TrackHeader<float> KFTC;
 	};
 
 	struct Node {
@@ -175,10 +161,10 @@ namespace mdx {
 		int id;
 		int parent_id;
 		int flags;
-		AnimatedData animated_data;
-		/*TrackHeader<glm::vec3> KGTR;
+
+		TrackHeader<glm::vec3> KGTR;
 		TrackHeader<glm::quat> KGRT;
-		TrackHeader<glm::vec3> KGSC;*/
+		TrackHeader<glm::vec3> KGSC;
 
 		enum Flags {
 			dont_inherit_translation = 0x1,
@@ -263,10 +249,9 @@ namespace mdx {
 		uint32_t flags;
 		glm::vec3 color;
 		uint32_t geoset_id;
-		AnimatedData animated_data;
 
-		//TrackHeader<float> KGAO;
-		//TrackHeader<glm::vec3> KGAC;
+		TrackHeader<float> KGAO;
+		TrackHeader<glm::vec3> KGAC;
 	};
 
 	struct Texture {
@@ -297,6 +282,14 @@ namespace mdx {
 		float intensity;
 		glm::vec3 ambient_color;
 		float ambient_intensity;
+
+		TrackHeader<uint32_t> KLAS;
+		TrackHeader<uint32_t> KLAE;
+		TrackHeader<glm::vec3> KLAC;
+		TrackHeader<float> KLAI;
+		TrackHeader<float> KLBI;
+		TrackHeader<glm::vec3> KLBC;
+		TrackHeader<float> KLAV;
 	};
 
 	struct Attachment {
@@ -304,6 +297,8 @@ namespace mdx {
 		std::string path; // Reference to Undead, NE, or Naga birth anim
 		int reserved;	  // ToDo mine meaning of reserved from Game.dll, likely strlen
 		int attachment_id;
+
+		TrackHeader<float> KATV;
 	};
 
 	// Dragon/bird death bone emitter; usually emit MDLs based
@@ -320,6 +315,14 @@ namespace mdx {
 		int reserved; // ToDo mine meaning, same as Attachment's reserved?
 		float life_span;
 		float speed;
+
+		TrackHeader<float> KPEE;
+		TrackHeader<float> KPEG;
+		TrackHeader<float> KPLN;
+		TrackHeader<float> KPLT;
+		TrackHeader<float> KPEL;
+		TrackHeader<float> KPES;
+		TrackHeader<float> KPEV;
 	};
 
 	/*
@@ -379,6 +382,15 @@ namespace mdx {
 		uint32_t squirt;
 		uint32_t priority_plane;
 		uint32_t replaceable_id; // for Wisp team color particles
+
+		TrackHeader<float> KP2S;
+		TrackHeader<float> KP2R;
+		TrackHeader<float> KP2L;
+		TrackHeader<float> KP2G;
+		TrackHeader<float> KP2E;
+		TrackHeader<float> KP2N;
+		TrackHeader<float> KP2W;
+		TrackHeader<float> KP2V;
 	};
 
 	struct RibbonEmitter {
@@ -394,6 +406,13 @@ namespace mdx {
 		uint32_t columns;
 		uint32_t material_id; // note: not a texture id, avoids need for filtermode field like PE2
 		float gravity;
+
+		TrackHeader<float> KRHA;
+		TrackHeader<float> KRHB;
+		TrackHeader<float> KRAL;
+		TrackHeader<glm::vec3> KRCO;
+		TrackHeader<uint32_t> KRTX;
+		TrackHeader<float> KRVS;
 	};
 
 	/*

@@ -1,7 +1,7 @@
 #include "MDX.h"
 
-#include <iostream>
 #include "Utilities.h"
+#include <iostream>
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -16,69 +16,6 @@ namespace mdx {
 		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.dds" },
 		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
 	};
-
-	void AnimatedData::load_tracks(BinaryReader& reader) {
-		TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
-
-		switch (tag) {
-		case TrackTag::KMTF:
-		case TrackTag::KLAS:
-		case TrackTag::KLAE:
-		case TrackTag::KRTX:
-		case TrackTag::KCRL:
-			tracks.emplace(tag, TrackHeader<uint32_t>(reader));
-			break;
-		case TrackTag::KMTA:
-		case TrackTag::KGAO:
-		case TrackTag::KLAI:
-		case TrackTag::KLBI:
-		case TrackTag::KLAV:
-		case TrackTag::KATV:
-		case TrackTag::KPEE:
-		case TrackTag::KPEG:
-		case TrackTag::KPLN:
-		case TrackTag::KPLT:
-		case TrackTag::KPEL:
-		case TrackTag::KPES:
-		case TrackTag::KPEV:
-		case TrackTag::KP2S:
-		case TrackTag::KP2R:
-		case TrackTag::KP2L:
-		case TrackTag::KP2G:
-		case TrackTag::KP2E:
-		case TrackTag::KP2N:
-		case TrackTag::KP2W:
-		case TrackTag::KP2V:
-		case TrackTag::KRHA:
-		case TrackTag::KRHB:
-		case TrackTag::KRAL:
-		case TrackTag::KRVS:
-		case TrackTag::KFCA:
-		case TrackTag::KFTC:
-		case TrackTag::KMTE:
-			tracks.emplace(tag, TrackHeader<float>(reader));
-			break;
-		case TrackTag::KTAT:
-		case TrackTag::KTAS:
-		case TrackTag::KGAC:
-		case TrackTag::KLAC:
-		case TrackTag::KLBC:
-		case TrackTag::KTTR:
-		case TrackTag::KCTR:
-		case TrackTag::KRCO:
-		case TrackTag::KGTR:
-		case TrackTag::KGSC:
-		case TrackTag::KFC3:
-			tracks.emplace(tag, TrackHeader<glm::vec3>(reader));
-			break;
-		case TrackTag::KTAR:
-		case TrackTag::KGRT:
-			tracks.emplace(tag, TrackHeader<glm::quat>(reader));
-			break;
-		default:
-			std::cout << "Invalid Track Tag " << static_cast<int>(tag) << "\n";
-		}
-	}
 
 	Extent::Extent(BinaryReader& reader) {
 		bounds_radius = reader.read<float>();
@@ -95,15 +32,16 @@ namespace mdx {
 		flags = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + inclusive_size) {
-			//TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
-			//if (tag == TrackTag::KGTR) {
-			//	KGTR = TrackHeader<glm::vec3>(reader);
-			//} else if (tag == TrackTag::KGRT) {
-			//	KGRT = TrackHeader<glm::quat>(reader);
-			//} else if (tag == TrackTag::KGSC) {
-			//	KGSC = TrackHeader<glm::vec3>(reader);
-			//}
-			animated_data.load_tracks(reader);
+			TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+			if (tag == TrackTag::KGTR) {
+				KGTR = TrackHeader<glm::vec3>(reader);
+			} else if (tag == TrackTag::KGRT) {
+				KGRT = TrackHeader<glm::quat>(reader);
+			} else if (tag == TrackTag::KGSC) {
+				KGSC = TrackHeader<glm::vec3>(reader);
+			} else {
+				std::cout << "Unknown track tag\n";
+			}
 		}
 	}
 
@@ -122,63 +60,63 @@ namespace mdx {
 			uint32_t header = reader.read<uint32_t>();
 
 			switch (static_cast<ChunkTag>(header)) {
-			case ChunkTag::VERS:
-				reader.advance(4);
-				version = reader.read<uint32_t>();
-				break;
-			case ChunkTag::SEQS:
-				read_SEQS_chunk(reader);
-				break;
-			case ChunkTag::GLBS:
-				read_GLBS_chunk(reader);
-				break;
-			case ChunkTag::MTLS:
-				read_MTLS_chunk(reader);
-				break;
-			case ChunkTag::TEXS:
-				read_TEXS_chunk(reader);
-				break;
-			case ChunkTag::GEOS:
-				read_GEOS_chunk(reader);
-				break;
-			case ChunkTag::GEOA:
-				read_GEOA_chunk(reader);
-				break;
-			case ChunkTag::BONE:
-				read_BONE_chunk(reader);
-				break;
-			case ChunkTag::LITE:
-				read_LITE_chunk(reader);
-				break;
-			case ChunkTag::HELP:
-				read_HELP_chunk(reader);
-				break;
-			case ChunkTag::ATCH:
-				read_ATCH_chunk(reader);
-				break;
-			case ChunkTag::PIVT:
-				read_PIVT_chunk(reader);
-				break;
-			case ChunkTag::PREM:
-				read_PREM_chunk(reader);
-				break;
-			case ChunkTag::PRE2:
-				read_PRE2_chunk(reader);
-				break;
-			case ChunkTag::RIBB:
-				read_RIBB_chunk(reader);
-				break;
-			case ChunkTag::EVTS:
-				read_EVTS_chunk(reader);
-				break;
-			case ChunkTag::CLID:
-				read_CLID_chunk(reader);
-				break;
-			case ChunkTag::CORN:
-				read_CORN_chunk(reader);
-				break;
-			default:
-				reader.advance(reader.read<uint32_t>());
+				case ChunkTag::VERS:
+					reader.advance(4);
+					version = reader.read<uint32_t>();
+					break;
+				case ChunkTag::SEQS:
+					read_SEQS_chunk(reader);
+					break;
+				case ChunkTag::GLBS:
+					read_GLBS_chunk(reader);
+					break;
+				case ChunkTag::MTLS:
+					read_MTLS_chunk(reader);
+					break;
+				case ChunkTag::TEXS:
+					read_TEXS_chunk(reader);
+					break;
+				case ChunkTag::GEOS:
+					read_GEOS_chunk(reader);
+					break;
+				case ChunkTag::GEOA:
+					read_GEOA_chunk(reader);
+					break;
+				case ChunkTag::BONE:
+					read_BONE_chunk(reader);
+					break;
+				case ChunkTag::LITE:
+					read_LITE_chunk(reader);
+					break;
+				case ChunkTag::HELP:
+					read_HELP_chunk(reader);
+					break;
+				case ChunkTag::ATCH:
+					read_ATCH_chunk(reader);
+					break;
+				case ChunkTag::PIVT:
+					read_PIVT_chunk(reader);
+					break;
+				case ChunkTag::PREM:
+					read_PREM_chunk(reader);
+					break;
+				case ChunkTag::PRE2:
+					read_PRE2_chunk(reader);
+					break;
+				case ChunkTag::RIBB:
+					read_RIBB_chunk(reader);
+					break;
+				case ChunkTag::EVTS:
+					read_EVTS_chunk(reader);
+					break;
+				case ChunkTag::CLID:
+					read_CLID_chunk(reader);
+					break;
+				case ChunkTag::CORN:
+					read_CORN_chunk(reader);
+					break;
+				default:
+					reader.advance(reader.read<uint32_t>());
 			}
 		}
 
@@ -280,7 +218,7 @@ namespace mdx {
 
 		//for (auto& i : materials) {
 		//	for (auto& j : i.layers) {
-		//	
+		//
 		//	}
 		//}
 
@@ -404,7 +342,22 @@ namespace mdx {
 				}
 
 				while (reader.position < reader_pos + size) {
-					layer.animated_data.load_tracks(reader);
+					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+					if (tag == TrackTag::KMTF) {
+						layer.KMTF = TrackHeader<uint32_t>(reader);
+					} else if (tag == TrackTag::KMTA) {
+						layer.KMTA = TrackHeader<float>(reader);
+					} else if (tag == TrackTag::KMTE) {
+						layer.KMTE = TrackHeader<float>(reader);
+					} else if (tag == TrackTag::KFC3) {
+						layer.KFC3 = TrackHeader<glm::vec3>(reader);
+					} else if (tag == TrackTag::KFCA) {
+						layer.KFCA = TrackHeader<float>(reader);
+					} else if (tag == TrackTag::KFTC) {
+						layer.KFTC = TrackHeader<float>(reader);
+					} else {
+						std::cout << "Unknown track tag\n";
+					}
 				}
 
 				material.layers.push_back(std::move(layer));
@@ -445,7 +398,14 @@ namespace mdx {
 			animation.geoset_id = reader.read<uint32_t>();
 
 			while (reader.position < reader_pos + inclusive_size) {
-				animation.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KGAO) {
+					animation.KGAO = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KGAC) {
+					animation.KGAC = TrackHeader<glm::vec3>(reader);
+				} else {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 
 			animations.push_back(std::move(animation));
@@ -498,7 +458,24 @@ namespace mdx {
 			light.ambient_color = reader.read<glm::vec3>();
 			light.ambient_intensity = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				light.node.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KLAS) {
+					light.KLAS = TrackHeader<uint32_t>(reader);
+				} else if (tag == TrackTag::KLAE) {
+					light.KLAE = TrackHeader<uint32_t>(reader);
+				} else if (tag == TrackTag::KLAC) {
+					light.KLAC = TrackHeader<glm::vec3>(reader);
+				} else if (tag == TrackTag::KLAI) {
+					light.KLAI = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KLBI) {
+					light.KLBI = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KLBC) {
+					light.KLBC = TrackHeader<glm::vec3>(reader);
+				} else if (tag == TrackTag::KLAV) {
+					light.KLAV = TrackHeader<float>(reader);
+				} else {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 			lights.push_back(std::move(light));
 		}
@@ -525,7 +502,11 @@ namespace mdx {
 			attachment.reserved = reader.read<uint32_t>();
 			attachment.attachment_id = reader.read<uint32_t>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				attachment.node.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				attachment.KATV = TrackHeader<float>(reader);
+				if (tag != TrackTag::KATV) {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 			attachments.push_back(std::move(attachment));
 		}
@@ -556,7 +537,24 @@ namespace mdx {
 			emitter.life_span = reader.read<float>();
 			emitter.speed = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				emitter.node.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KPEE) {
+					emitter.KPEE = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPEG) {
+					emitter.KPEG = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPLN) {
+					emitter.KPLN = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPLT) {
+					emitter.KPLT = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPEL) {
+					emitter.KPEL = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPES) {
+					emitter.KPES = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KPEV) {
+					emitter.KPEV = TrackHeader<float>(reader);
+				} else {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 			emitters1.push_back(std::move(emitter));
 		}
@@ -615,7 +613,26 @@ namespace mdx {
 			emitter2.replaceable_id = reader.read<uint32_t>();
 
 			while (reader.position < node_reader_pos + inclusive_size) {
-				emitter2.node.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KP2S) {
+					emitter2.KP2S = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2R) {
+					emitter2.KP2R = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2L) {
+					emitter2.KP2L = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2G) {
+					emitter2.KP2G = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2E) {
+					emitter2.KP2E = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2N) {
+					emitter2.KP2N = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2W) {
+					emitter2.KP2W = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KP2V) {
+					emitter2.KP2V = TrackHeader<float>(reader);
+				} else {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 			emitters2.push_back(std::move(emitter2));
 		}
@@ -642,7 +659,22 @@ namespace mdx {
 			emitter.material_id = reader.read<uint32_t>();
 			emitter.gravity = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				emitter.node.animated_data.load_tracks(reader);
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KRHA) {
+					emitter.KRHA = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KRHB) {
+					emitter.KRHB = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KRAL) {
+					emitter.KRAL = TrackHeader<float>(reader);
+				} else if (tag == TrackTag::KRCO) {
+					emitter.KRCO = TrackHeader<glm::vec3>(reader);
+				} else if (tag == TrackTag::KRTX) {
+					emitter.KRTX = TrackHeader<uint32_t>(reader);
+				} else if (tag == TrackTag::KRVS) {
+					emitter.KRVS = TrackHeader<float>(reader);
+				} else {
+					std::cout << "Unknown track tag\n";
+				}
 			}
 			ribbons.push_back(std::move(emitter));
 		}
@@ -675,19 +707,19 @@ namespace mdx {
 
 			uint32_t type_index = reader.read<uint32_t>();
 			switch (type_index) {
-			case 1:
-				shape.type = CollisionShapeType::Plane;
-				break;
-			case 2:
-				shape.type = CollisionShapeType::Sphere;
-				break;
-			case 3:
-				shape.type = CollisionShapeType::Cylinder;
-				break;
-			default:
-			case 0:
-				shape.type = CollisionShapeType::Box;
-				break;
+				case 1:
+					shape.type = CollisionShapeType::Plane;
+					break;
+				case 2:
+					shape.type = CollisionShapeType::Sphere;
+					break;
+				case 3:
+					shape.type = CollisionShapeType::Cylinder;
+					break;
+				default:
+				case 0:
+					shape.type = CollisionShapeType::Box;
+					break;
 			}
 
 			for (int i = 0; i < 3; i++) {
@@ -728,7 +760,7 @@ namespace mdx {
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			emitter.node = Node(reader);
-			
+
 			reader.advance(4);
 			reader.advance(4);
 			reader.advance(4);
@@ -745,7 +777,6 @@ namespace mdx {
 			corn_emitters.push_back(std::move(emitter));
 		}
 	}
-
 
 	void MDX::forEachNode(const std::function<void(Node&)>& F) {
 		for (auto& i : bones) {

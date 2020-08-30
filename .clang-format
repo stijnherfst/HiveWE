@@ -2,13 +2,14 @@
 BasedOnStyle: Microsoft
 AlignEscapedNewlines: Left
 BreakBeforeBraces: Attach
-ColumnLimit: 0
-Cpp11BracedListStyle: false
-IndentWidth: 4
+ColumnLimit: '0'
+Cpp11BracedListStyle: 'false'
+IndentCaseLabels: 'true'
+IndentWidth: '4'
+Language: Cpp
 NamespaceIndentation: All
 PointerAlignment: Left
-TabWidth: 4
+TabWidth: '4'
 UseTab: Always
 SortIncludes: false
-ColumnLimit: 0
 ...
