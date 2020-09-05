@@ -162,8 +162,28 @@ ads--CDockWidgetTab {
 
 ads--CDockWidgetTab[activeTab="true"] {
     background: palette(highlight);
+    border-color: palette(highlight);
 }
 
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:hover {
+	background: rgba(255, 255, 255, 48);
+}
+
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:pressed {
+	background: rgba(255, 255, 255, 92);
+}
+
+ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid transparent;
+	padding-bottom: 0px;
+}
+
+ads--CDockAreaWidget[focused="true"] ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid palette(highlight);
+	padding-bottom: 0px;
+}
 
 QScrollArea#dockWidgetScrollArea {
     padding: 0px;

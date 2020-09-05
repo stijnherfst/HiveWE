@@ -123,73 +123,6 @@ namespace mdx {
 		validate();
 	}
 
-	template <typename T>
-	void MDX::fix(mdx::TrackHeader<T>& header) {
-		if (header.tracks.empty()) {
-			return;
-		}
-
-		for (const auto& sequence : sequences) {
-			int start_index = -1;
-			int end_index = -1;
-
-			for (int i = 0; i < header.tracks.size(); i++) {
-				auto& track = header.tracks[i];
-
-				if (start_index == -1 && track.frame > sequence.start_frame) {
-					start_index = i;
-				}
-
-				if (track.frame < sequence.end_frame) {
-					end_index = i;
-				}
-			}
-
-			if (start_index == -1) {
-				// Found no frame, abort
-				continue;
-			}
-
-			if (start_index == end_index) {
-				// Only one frame
-			}
-
-			if (header.tracks[start_index].frame > sequence.start_frame) {
-				// Interpolate between this frame and end frame and place at start
-				const int distance = header.tracks[start_index].frame - sequence.start_frame + sequence.end_frame - header.tracks[end_index].frame;
-				std::cout << distance << "\n";
-				float t = (sequence.end_frame - header.tracks[end_index].frame) / distance;
-				T new_value = interpolate(header.tracks[end_index].value, header.tracks[end_index].outTan, header.tracks[start_index].inTan, header.tracks[start_index].value, t, header.interpolation_type);
-				//T new_value = header.tracks[start_index].value;
-
-				header.tracks.insert(header.tracks.begin() + start_index, header.tracks[start_index]);
-				header.tracks[start_index].value = new_value;
-				header.tracks[start_index].frame = sequence.start_frame;
-				end_index++;
-
-				if (header.interpolation_type != 1) {
-					std::cout << "Not linear\n";
-				}
-
-				//std::cout << "Missing start frame\n";
-			}
-
-			if (header.tracks[end_index].frame < sequence.end_frame) {
-				// Interpolate between this frame and end frame and place at start
-				//const int distance = header.tracks[start_index].frame - sequence.start + sequence.end - header.tracks[end_index].frame;
-
-				//float t = sequence.end - header.tracks[end_index].frame / distance;
-				//interpolate(header.tracks[end_index].value, header.tracks[end_index].outTan, header.tracks[start_index].inTan, header.tracks[start_index].value, t, header.interpolation_type);
-
-				//std::cout << "Missing end frame\n";
-			}
-		}
-	};
-
-	template void MDX::fix(mdx::TrackHeader<glm::vec3>& header);
-	template void MDX::fix(mdx::TrackHeader<glm::quat>& header);
-	template void MDX::fix(mdx::TrackHeader<uint32_t>& header);
-
 	void MDX::validate() {
 		// Remove geoset animations that reference non existing geosets
 		for (size_t i = animations.size(); i-- > 0;) {
@@ -201,36 +134,14 @@ namespace mdx {
 		// Fix vertex groups that reference non existent bone groups
 		for (auto& i : geosets) {
 			for (auto& j : i.vertex_groups) {
-				if (j > i.bone_groups.size()) {
+				if (i.bone_groups.empty()) {
+					// Do something like referencing an existing bone. I dunno
+				}
+				if (j >= i.bone_groups.size()) {
 					j = std::min<uint8_t>(j, i.bone_groups.size() - 1);
 				}
 			}
 		}
-
-		//for (auto& i : animations) {
-		//	auto t = i.animated_data.tracks;
-		//	for (auto& j : i.animated_data.tracks) {
-		//		std::visit([&](auto&& arg) {
-		//			fix(arg);
-		//		}, j.second);
-		//	}
-		//}
-
-		//for (auto& i : materials) {
-		//	for (auto& j : i.layers) {
-		//
-		//	}
-		//}
-
-		//forEachNode([&](Node& node) {
-		//	for (auto& j : node.animated_data.tracks) {
-		//		std::visit([&](auto&& arg) {
-		//			fix(arg);
-		//		}, j.second);
-		//	}
-		//});
-
-		// also check lights, particle emmitters and texture animations
 	}
 
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {

@@ -209,6 +209,7 @@ void Doodads::render() {
 Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	Doodad doodad;
 	doodad.id = id;
+	doodad.skin_id = id;
 	doodad.variation = variation;
 	doodad.mesh = get_mesh(id, variation);
 	doodad.position = position;
@@ -229,8 +230,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	return doodads.back();
 }
 
-
-// You will have to manually set a creation number
+// You will have to manually set a creation number and valid skin ID
 Doodad& Doodads::add_doodad(Doodad doodad) {
 	doodads.push_back(doodad);
 	return doodads.back();

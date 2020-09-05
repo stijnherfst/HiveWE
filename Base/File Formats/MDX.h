@@ -538,9 +538,6 @@ namespace mdx {
 
 		void validate();
 
-		template <typename T>
-		void fix(mdx::TrackHeader<T>& header);
-
 		std::vector<Geoset> geosets;
 		std::vector<Sequence> sequences;
 		std::vector<uint32_t> global_sequences;

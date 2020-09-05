@@ -77,7 +77,10 @@ void GLWidget::initializeGL() {
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	gl->glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
-	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, false);
+	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, nullptr, true);
+	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, true);
+	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, nullptr, true);
 
 	gl->glEnable(GL_DEPTH_TEST);
 	gl->glEnable(GL_CULL_FACE);

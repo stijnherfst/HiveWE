@@ -18,10 +18,10 @@ class RenderNode {
 	RenderNode* parent;
 	glm::vec3 pivot;
 	// local space
-	glm::vec3 localLocation;
-	glm::quat localRotation = glm::quat(1.f, 0.f, 0.f, 0.f);
-	glm::vec3 localScale = glm::vec3(1, 1, 1);
-	glm::mat4 localMatrix = glm::mat4(1.f);
+	glm::vec3 position;
+	glm::quat rotation = glm::quat(1.f, 0.f, 0.f, 0.f);
+	glm::vec3 scale = glm::vec3(1, 1, 1);
+
 	// world space (not including game unit X/Y, mdx-m3-viewer's name)
 	glm::vec3 worldLocation;
 	glm::quat worldRotation = glm::quat(1.f, 0.f, 0.f, 0.f);

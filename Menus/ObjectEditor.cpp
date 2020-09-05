@@ -9,15 +9,9 @@
 void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex& index, Category category) {
 	QModelIndex sourceIndex = model->mapToSource(index);
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
-	if (item->tableRow > 0) {
+	if (item->tableRow >= 0) {
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
-		
-		connect(dock_tab, &ads::CDockWidget::closeRequested, [&, dock_tab]() {
-			if (dock_area->dockWidgets().contains(dock_tab) && dock_area->dockWidgetsCount() == 1) {
-				dock_area = nullptr;
-			}
-		});
 
 		QTableView* view = new QTableView;
 		TableDelegate* delegate = new TableDelegate;
@@ -119,11 +113,7 @@ void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex&
 		}
 		view->setModel(single_model);
 
-		if (dock_area == nullptr) {
-			dock_area = dock_manager->addDockWidget(ads::RightDockWidgetArea, dock_tab, dock_area);
-		} else {
-			dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
-		}
+		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 	}
 }
 
@@ -139,10 +129,15 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	custom_buff_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewBuff"));
 	custom_upgrade_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUpgr"));
 
-	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::AllTabsHaveCloseButton);
-	dock_manager->setConfigFlag(ads::CDockManager::eConfigFlag::DockAreaDynamicTabsMenuButtonVisibility);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
+	dock_manager = new ads::CDockManager;
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
+
+	dock_area = dock_manager->setCentralWidget(new ads::CDockWidget(""));
+	dock_area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
 
 	unitTreeModel = new UnitTreeModel(this);
 	itemTreeModel = new ItemTreeModel(this);

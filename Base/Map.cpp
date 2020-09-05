@@ -109,7 +109,10 @@ void Map::load(const fs::path& path) {
 
 	// Destructables
 	destructibles_slk = slk::SLK("Units/DestructableData.slk");
+	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
+
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
+	destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"));
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");

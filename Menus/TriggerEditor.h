@@ -26,7 +26,7 @@ public:
 private:
 	Ui::TriggerEditor ui;
 
-	ads::CDockManager* dock_manager = new ads::CDockManager();
+	ads::CDockManager* dock_manager = nullptr;
 	ads::CDockAreaWidget* dock_area = nullptr;
 
 	TriggerExplorer* explorer = new TriggerExplorer;
@@ -49,6 +49,7 @@ private:
 	std::unordered_map<std::string, QIcon> trigger_icons;
 
 	void focus_search_window();
+	void save_tab(ads::CDockWidget* tab);
 
 	void item_clicked(const QModelIndex& index);
 	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);

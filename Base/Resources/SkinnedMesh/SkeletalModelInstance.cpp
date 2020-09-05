@@ -116,20 +116,21 @@ void SkeletalModelInstance::updateNodes() {
 
 	// update skeleton to position based on animation @ time
 	for (auto& node : render_nodes) {
-		node.localLocation = interpolate_keyframes(node.node.KGTR, TRANSLATION_IDENTITY);
-		node.localRotation = interpolate_keyframes(node.node.KGRT, ROTATION_IDENTITY);
-		node.localScale = interpolate_keyframes(node.node.KGSC, SCALE_IDENTITY);
+		node.position = interpolate_keyframes(node.node.KGTR, TRANSLATION_IDENTITY);
+		node.rotation = interpolate_keyframes(node.node.KGRT, ROTATION_IDENTITY);
+		node.scale = interpolate_keyframes(node.node.KGSC, SCALE_IDENTITY);
 
-		if (node.billboarded || node.billboardedX) {
-			// Cancel the parent's rotation
-			if (node.parent) {
-				node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
-			} else {
-				node.localRotation = inverseInstanceRotation;
-			}
+		//if (node.billboarded || node.billboardedX) {
+		//	// Cancel the parent's rotation
+		//	if (node.parent) {
+		//		node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
+		//	} else {
+		//		node.localRotation = inverseInstanceRotation;
+		//	}
 
-			node.localRotation *= camera->decomposed_rotation;
-		}
+		//	node.localRotation *= camera->decomposed_rotation;
+		//}
+ 
 
 		node.recalculateTransformation();
 	}
@@ -159,9 +160,16 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 	}
 
 	header.current.start = -1;
+	header.current.right = -1;
 
 	for (int i = 0; i < header.tracks.size(); i++) {
 		const mdx::Track<T>& track = header.tracks[i];
+
+
+		if (track.frame > local_sequence_end) {
+			break;
+		}
+
 		if (track.frame >= local_sequence_start && header.current.start == -1) {
 			header.current.start = i;
 		}
@@ -170,14 +178,16 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 			header.current.left = i;
 		}
 
-		if (track.frame <= local_sequence_end) {
-			header.current.end = i;
-		} else {
-			break;
+		if (track.frame >= local_current_frame && header.current.right == -1) {
+			header.current.right = i;
 		}
+
+		//if (track.frame <= local_sequence_end) {
+			header.current.end = i;
+		//}
 	}
 
-	header.current.right = std::min(header.current.left + 1, header.current.end);
+	//header.current.right = std::min(header.current.left + 1, header.current.end);
 }
 
 template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header);
@@ -221,6 +231,9 @@ void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
 		if (header.current.right > header.current.end) {
 			break;
 		}
+		if (header.tracks[header.current.right].frame == local_current_frame) {
+			header.current.left = header.current.right;
+		}
 	}
 
 	const bool past_end = header.tracks[header.current.end].frame < local_current_frame;
@@ -251,6 +264,7 @@ float SkeletalModelInstance::get_layer_visiblity(mdx::Layer& layer) {
 
 template <typename T>
 T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue) {
+#if 1
 	int local_current_frame = current_frame;
 
 	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
@@ -280,14 +294,132 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 	T floorValue = header.tracks[header.current.left].value;
 	T ceilValue = header.tracks[header.current.right].value;
 
-	// Wrong when wrapping around sequence end/start 
+	// ToDo Wrapping is wrong around sequence end/start 
 	float tt = (local_current_frame - floorTime) / static_cast<float>(ceilTime - floorTime);
-
-	//int ttt = (sequence.end_frame - floorTime + ceilTime) / current_frame - floorTime;
-
 	float t = std::clamp(tt, 0.f, 1.f);
 
 	return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, header.interpolation_type);
+#else
+	if (header.tracks.empty()) {
+		return defaultValue;
+	}
+
+	int sequenceStart;
+	int sequenceEnd;
+	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
+		sequenceStart = 0;
+		sequenceEnd = model->global_sequences[header.global_sequence_ID];
+		if (sequenceEnd == 0) {
+			current_frame = 0;
+		} else {
+			current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % sequenceEnd;
+		}
+	} else if (model->sequences.size() && sequence_index != -1) {
+		mdx::Sequence& sequence = model->sequences[sequence_index];
+		sequenceStart = sequence.start_frame;
+		sequenceEnd = sequence.end_frame;
+	} else {
+		return defaultValue;
+	}
+
+	int ceilIndex = -1;
+	int floorIndex = 0;
+	// ToDo "if global seq" check is here in MXE java
+
+	int floorAnimStartIndex = 0;
+	int floorAnimEndIndex = 0;
+
+	// get floor:
+	for (int i = 0; i < header.tracks.size(); i++) {
+		const mdx::Track<T>& track = header.tracks[i];
+		if (track.frame <= sequenceStart) {
+			floorAnimStartIndex = i;
+		}
+		if (track.frame <= current_frame) {
+			floorIndex = i;
+		}
+		if (track.frame >= current_frame && ceilIndex == -1) {
+			ceilIndex = i;
+		}
+		if (track.frame <= sequenceEnd) {
+			floorAnimEndIndex = i;
+		} else {
+			// end of our sequence
+			break;
+		}
+	}
+	if (ceilIndex == -1) {
+		ceilIndex = header.tracks.size() - 1;
+	}
+
+	// end get floor
+	if (ceilIndex < floorIndex) {
+		ceilIndex = floorIndex;
+		// was a problem in matrix eater, different impl, not problem here?
+	}
+
+	T floorInTan{};
+	T floorOutTan{};
+	T floorValue{};
+	T ceilValue{};
+	int floorIndexTime;
+	int ceilIndexTime;
+
+	floorValue = header.tracks[floorIndex].value;
+	if (header.interpolation_type > 1) {
+		floorInTan = header.tracks[floorIndex].inTan;
+		floorOutTan = header.tracks[floorIndex].outTan;
+	}
+	ceilValue = header.tracks[ceilIndex].value;
+	floorIndexTime = header.tracks[floorIndex].frame;
+	ceilIndexTime = header.tracks[ceilIndex].frame;
+	if (ceilIndexTime < sequenceStart) {
+		return defaultValue;
+	}
+	if (floorIndexTime > sequenceEnd) {
+		return defaultValue;
+	}
+
+	if (floorIndexTime < sequenceStart && ceilIndexTime > sequenceEnd) {
+		return defaultValue;
+	} else if (floorIndexTime < sequenceStart) {
+		if (header.tracks[floorAnimEndIndex].frame == sequenceEnd) {
+			// no "floor" frame found, but we have a ceil frame,
+			// so the prev frame is a repeat of animation's end
+			// placed at the beginning
+			floorIndex = floorAnimEndIndex;
+			floorValue = header.tracks[floorAnimEndIndex].value;
+			floorIndexTime = sequenceStart;
+			if (header.interpolation_type > 1) {
+				floorInTan = header.tracks[floorAnimEndIndex].inTan;
+				floorOutTan = header.tracks[floorAnimEndIndex].outTan;
+			}
+		} else {
+			floorValue = defaultValue;
+			floorInTan = floorOutTan = defaultValue;
+			floorIndexTime = sequenceStart;
+		}
+	} else if (ceilIndexTime > sequenceEnd || (ceilIndexTime < current_frame && header.tracks[floorAnimEndIndex].frame < current_frame)) {
+		// if we have a floor frame but the "ceil" frame is after end of sequence,
+		// or our ceil frame is before our time, meaning that we're at the end of the
+		// entire timeline, then we need to inject a "ceil" frame at end of sequence
+		if (header.tracks[floorAnimStartIndex].frame == sequenceStart) {
+			ceilValue = header.tracks[floorAnimStartIndex].value;
+			ceilIndex = floorAnimStartIndex;
+			ceilIndexTime = sequenceStart;
+		}
+		// for the else case here, Matrix Eater code says to leave it blank,
+		// example model is Water Elemental's birth animation, to verify behavior
+	}
+	if (floorIndex == ceilIndex) {
+		return floorValue;
+	}
+	const T ceilInTan = header.tracks[ceilIndex].inTan;
+	float t = std::clamp((current_frame - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
+
+	return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, header.interpolation_type);
+
+#endif
 }
 
 template glm::vec3 SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue);

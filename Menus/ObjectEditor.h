@@ -25,7 +25,7 @@ public:
 private:
 	Ui::ObjectEditor ui;
 
-	ads::CDockManager* dock_manager = new ads::CDockManager();
+	ads::CDockManager* dock_manager;
 	ads::CDockAreaWidget* dock_area = nullptr;
 
 	QTreeView* unit_explorer = new QTreeView;

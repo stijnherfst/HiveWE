@@ -413,6 +413,12 @@ const glm::vec3 TRANSLATION_IDENTITY(0);
 const glm::vec3 SCALE_IDENTITY(1);
 const glm::quat ROTATION_IDENTITY(1, 0, 0, 0);
 
+// Equivalent to, but much faster than
+// worldMatrix = glm::translate(glm::mat4(1.f), position);
+// worldMatrix = glm::translate(worldMatrix, pivot);
+// worldMatrix *= glm::mat4_cast(rotation);
+// worldMatrix = glm::scale(worldMatrix, scale);
+// worldMatrix = glm::translate(worldMatrix, -pivot);
 //#define TEST_MODE 1
 void fromRotationTranslationScaleOrigin(const glm::quat& q, const glm::vec3& v, const glm::vec3& s, glm::mat4& out, const glm::vec3& pivot) {
 	// ho tom bambadil

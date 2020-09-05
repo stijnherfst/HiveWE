@@ -16,50 +16,51 @@ RenderNode::RenderNode(mdx::Node node, glm::vec3 pivot) {
 }
 
 void RenderNode::recalculateTransformation() {
+	fromRotationTranslationScaleOrigin(rotation, position, scale, worldMatrix, pivot);
+
 	if (parent) {
+		worldMatrix = parent->worldMatrix * worldMatrix;
+	}
+
+	// Pretty sure that dontInheritTranslation/Rotation are really broken since they don't take the pivot into account
+	/*if (parent) {
 		glm::quat computedRotation;
 		glm::vec3 computedScaling;
 		glm::vec3 computedLocation;
 
 		if (dontInheritTranslation) {
-			computedLocation = localLocation * parent->inverseWorldLocation;
+			computedLocation = position * parent->inverseWorldLocation;
 		} else {
-			computedLocation = localLocation;
+			computedLocation = position;
 		}
 
 		if (dontInheritRotation) {
-			computedRotation = localRotation * parent->inverseWorldRotation;
+			computedRotation = rotation * parent->inverseWorldRotation;
 		} else {
-			computedRotation = localRotation;
+			computedRotation = rotation;
 		}
 
 		if (dontInheritScaling) {
-			computedScaling = parent->inverseWorldScale * localScale;
-			worldScale = localScale;
+			computedScaling = parent->inverseWorldScale * scale;
+			worldScale = scale;
 		} else {
-			computedScaling = localScale;
-			worldScale = parent->worldScale * localScale;
+			computedScaling = scale;
+			worldScale = parent->worldScale * scale;
 		}
-		fromRotationTranslationScaleOrigin(computedRotation, computedLocation, computedScaling, localMatrix, pivot);
+		fromRotationTranslationScaleOrigin(computedRotation, computedLocation, computedScaling, worldMatrix, pivot);
 		
-		worldMatrix = parent->worldMatrix * localMatrix;
-		worldRotation = parent->worldRotation * localRotation;
+		worldMatrix = parent->worldMatrix * worldMatrix;
+		worldRotation = parent->worldRotation * rotation;
 	} else {
-		fromRotationTranslationScaleOrigin(localRotation, localLocation, localScale, localMatrix, pivot);
-		worldMatrix = localMatrix;
-		worldRotation = localRotation;
-		worldScale = localScale;
+		fromRotationTranslationScaleOrigin(rotation, position, scale, worldMatrix, pivot);
+		worldRotation = rotation;
+		worldScale = scale;
 	}
 	
-	//inverseWorldRotation.x = -worldRotation.x;
-	//inverseWorldRotation.y = -worldRotation.y;
-	//inverseWorldRotation.z = -worldRotation.z;
-	//inverseWorldRotation.w = worldRotation.w;
-
 	inverseWorldRotation = -worldRotation;
 	inverseWorldRotation.w = worldRotation.w;
 
 	inverseWorldScale = 1.f / worldScale;
 	worldLocation = worldMatrix[3];
-	inverseWorldLocation = -worldLocation;
+	inverseWorldLocation = -worldLocation;*/
 }

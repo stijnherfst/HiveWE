@@ -26,7 +26,7 @@ find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(casclib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
-find_package(qt-advanced-docking-system CONFIG REQUIRED)
+find_package(qtadvanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
@@ -148,7 +148,7 @@ target_link_libraries(HiveWE
 	stormlib::stormlib
 	casclib
 	${JPEG_LIBRARIES}
-	qt-advanced-docking-system::qtadvanceddocking
+	ads::qtadvanceddocking
 	Bullet3Common
 	BulletDynamics
 	BulletSoftBody
