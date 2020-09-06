@@ -301,6 +301,18 @@ void Map::load(const fs::path& path) {
 		const std::string& field = units_slk.index_to_column.at(top_left.column());
 		units.process_field_change(id, field);
 	});
+
+	connect(doodads_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+		const std::string& id = doodads_slk.index_to_row.at(top_left.row());
+		const std::string& field = doodads_slk.index_to_column.at(top_left.column());
+		doodads.process_doodad_field_change(id, field);
+	});
+
+	connect(destructibles_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+		const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
+		const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
+		doodads.process_destructible_field_change(id, field);
+	});
 }
 
 bool Map::save(const fs::path& path) {

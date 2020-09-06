@@ -37,7 +37,7 @@ void Doodad::update() {
 	//	std::cout << destructibles_slk.data<float>("fixedRot", id) << "\n";
 
 	//}
-	
+
 	/*float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
 	std::cout << fixed_rotation << "\n";*/
 	//if (doodads_slk.data<int>("fixedRot", id) == -1) {
@@ -45,7 +45,6 @@ void Doodad::update() {
 	//} else {
 	//	rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
 	//}
-	
 
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
@@ -254,8 +253,9 @@ std::vector<Doodad*> Doodads::query_area(const QRectF& area) {
 
 void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
 	doodads.erase(std::remove_if(doodads.begin(), doodads.end(), [&](Doodad& doodad) {
-		return std::find(list.begin(), list.end(), &doodad) != list.end();
-	}), doodads.end());
+					  return std::find(list.begin(), list.end(), &doodad) != list.end();
+				  }),
+				  doodads.end());
 }
 
 void Doodads::update_doodad_pathing(const std::vector<Doodad>& target_doodads) {
@@ -296,6 +296,56 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 		map->pathing_map.blit_pathing_texture(i->position, glm::degrees(i->angle) + 90, i->pathing);
 	}
 	map->pathing_map.upload_dynamic_pathing();
+}
+
+void Doodads::process_doodad_field_change(const std::string& id, const std::string& field) {
+	if (field == "file" || field == "numvar") {
+		// id_to_mesh requires a variation too so we will just have to check a bunch of them
+		for (int i = 0; i < 20; i++) {
+			if (id_to_mesh.contains(id + std::to_string(i))) {
+				id_to_mesh.erase(id_to_mesh.find(id));
+			}
+		}
+		for (auto& i : doodads) {
+			if (i.id == id) {
+				i.mesh = get_mesh(id, i.variation);
+				i.update();
+			}
+		}
+	}
+
+	if (field == "maxroll") {
+		for (auto& i : doodads) {
+			if (i.id == id) {
+				i.update();
+			}
+		}
+	}
+}
+
+void Doodads::process_destructible_field_change(const std::string& id, const std::string& field) {
+	if (field == "file" || field == "numvar") {
+		// id_to_mesh requires a variation too so we will just have to check a bunch of them
+		for (int i = 0; i < 20; i++) {
+			if (id_to_mesh.contains(id + std::to_string(i))) {
+				id_to_mesh.erase(id_to_mesh.find(id + std::to_string(i)));
+			}
+		}
+		for (auto& i : doodads) {
+			if (i.id == id) {
+				i.mesh = get_mesh(id, i.variation);
+				i.update();
+			}
+		}
+	}
+
+	if (field == "maxroll") {
+		for (auto& i : doodads) {
+			if (i.id == id) {
+				i.update();
+			}
+		}
+	}
 }
 
 std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {

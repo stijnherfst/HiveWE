@@ -79,6 +79,9 @@ public:
 	void update_doodad_pathing(const std::vector<Doodad>& target_doodads);
 	void update_doodad_pathing(const QRectF& area);
 
+	void process_doodad_field_change(const std::string& id, const std::string& field);
+	void process_destructible_field_change(const std::string& id, const std::string& field);
+
 	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
 };
 
