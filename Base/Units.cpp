@@ -256,7 +256,9 @@ void Units::render() {
 
 // Will assign a unique creation number
 Unit& Units::add_unit(std::string id, glm::vec3 position) {
-	Unit unit;
+	// ToDo change this once SkeletalModelInstance doesn't use pointers anymore
+	units.push_back(Unit());
+	Unit& unit = units.back();
 	unit.id = id;
 	unit.skin_id = id;
 	unit.mesh = get_mesh(id);
@@ -268,7 +270,6 @@ Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	unit.skeleton = SkeletalModelInstance(unit.mesh->model);
 	unit.update();
 
-	units.push_back(unit);
 	return units.back();
 }
 
@@ -299,6 +300,27 @@ void Units::remove_units(const std::vector<Unit*>& list) {
 		return std::find(list.begin(), list.end(), &unit) != list.end();
 	}), units.end());
 }
+
+void Units::process_field_change(const std::string& id, const std::string& field) {
+	if (field == "file") {
+		if (id_to_mesh.contains(id)) {
+			id_to_mesh.erase(id_to_mesh.find(id));
+			for (auto& i : units) {
+				if (i.id == id) {
+					i.mesh = get_mesh(id);
+					i.skeleton = SkeletalModelInstance(i.mesh->model);
+					i.update();
+				}
+			}
+		}
+	}
+	if (field == "modelscale" || field == "moveheight") {
+		for (auto& i : units) {
+			i.update();
+		}
+	}
+}
+
 
 std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {
 	if (id_to_mesh.find(id) != id_to_mesh.end()) {

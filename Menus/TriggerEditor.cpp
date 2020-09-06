@@ -122,6 +122,8 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 
 	if (auto found = dock_manager->findDockWidget(QString::number(item->id)); found) {
 		found->dockAreaWidget()->setCurrentDockWidget(found);
+		found->setFocus();
+		found->raise();
 		return;
 	}
 

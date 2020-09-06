@@ -64,7 +64,9 @@ struct Unit {
 	void update();
 };
 
-class Units {
+class Units : public QObject {
+	Q_OBJECT
+
 	std::unordered_map<std::string, std::shared_ptr<SkinnedMesh>> id_to_mesh;
 
 	static constexpr int write_version = 8;
@@ -89,6 +91,8 @@ public:
 
 	std::vector<Unit*> query_area(const QRectF& area);
 	void remove_units(const std::vector<Unit*>& list);
+
+	void process_field_change(const std::string& id, const std::string& field);
 
 	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id);
 };

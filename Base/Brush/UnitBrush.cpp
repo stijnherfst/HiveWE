@@ -202,9 +202,9 @@ void UnitBrush::render_brush() {
 	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
 	if (mesh) {
-		//skeleton.updateLocation();
 		skeleton.updateLocation(final_position, rotation, final_scale);
-
+		skeleton.update(0.016f);
+		mesh->render_queue(skeleton);
 	}
 }
 
@@ -240,7 +240,7 @@ void UnitBrush::render_selection() const {
 }
 
 void UnitBrush::render_clipboard() const {
-	for (const auto& i : clipboard) {
+	for (auto& i : clipboard) {
 		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 
@@ -249,7 +249,7 @@ void UnitBrush::render_clipboard() const {
 		model = glm::scale(model, glm::vec3(1.f) / 128.f);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
-		//i.mesh->render_queue(model);
+		i.mesh->render_queue(i.skeleton);
 	}
 }
 

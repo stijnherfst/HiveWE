@@ -22,7 +22,9 @@ namespace fs = std::filesystem;
 #include "StaticMesh.h"
 #include "Physics.h"
 
-class Map {
+class Map : public QObject {
+	Q_OBJECT
+
 public:
 	bool loaded = false;
 
@@ -56,9 +58,6 @@ public:
 	std::string name;
 
 	RenderManager render_manager;
-
-	//std::chrono::high_resolution_clock::time_point last_time = std::chrono::high_resolution_clock::now();
-	//double total_time;
 
 	void load(const fs::path& path);
 	bool save(const fs::path& path);

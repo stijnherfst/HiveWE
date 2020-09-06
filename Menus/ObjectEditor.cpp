@@ -10,6 +10,14 @@ void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex&
 	QModelIndex sourceIndex = model->mapToSource(index);
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
 	if (item->tableRow >= 0) {
+		// If there is already one open for this item
+		if (auto found = dock_manager->findDockWidget(QString::number(static_cast<int>(category)) + QString::number(item->tableRow)); found) {
+			found->dockAreaWidget()->setCurrentDockWidget(found);
+			found->setFocus();
+			found->raise();
+			return;
+		}
+
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 
@@ -23,6 +31,7 @@ void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex&
 		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 		view->setIconSize({ 24, 24 });
 		dock_tab->setWidget(view);
+		dock_tab->setObjectName(QString::number(static_cast<int>(category)) + QString::number(item->tableRow));
 
 		SingleModel* single_model;
 		switch (category) {

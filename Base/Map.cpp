@@ -295,6 +295,12 @@ void Map::load(const fs::path& path) {
 	camera->position.z = terrain.interpolated_height(camera->position.x, camera->position.y);
 
 	loaded = true;
+
+	connect(units_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+		const std::string& id = units_slk.index_to_row.at(top_left.row());
+		const std::string& field = units_slk.index_to_column.at(top_left.column());
+		units.process_field_change(id, field);
+	});
 }
 
 bool Map::save(const fs::path& path) {

@@ -48,7 +48,7 @@ class SkinnedMesh : public Resource {
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
-	std::vector<SkeletalModelInstance*> skeletons;
+	std::vector<const SkeletalModelInstance*> skeletons;
 	std::vector<glm::mat4> instance_bone_matrices;
 
 	static constexpr const char* name = "SkinnedMesh";
@@ -56,7 +56,7 @@ class SkinnedMesh : public Resource {
 	explicit SkinnedMesh(const fs::path& path);
 	virtual ~SkinnedMesh();
 
-	void render_queue(SkeletalModelInstance& skeleton);
+	void render_queue(const SkeletalModelInstance& skeleton);
 	void render_opaque();
 	void render_transparent(int instance_id) const;
 };

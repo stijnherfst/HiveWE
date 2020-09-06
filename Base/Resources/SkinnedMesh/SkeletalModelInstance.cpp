@@ -141,7 +141,7 @@ void SkeletalModelInstance::set_sequence(int sequence_index) {
 }
 
 template <typename T>
-void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& header) {
+void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& header) const {
 	const mdx::Sequence& sequence = model->sequences[sequence_index];
 
 	int local_sequence_start = sequence.start_frame;
@@ -190,11 +190,11 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 	//header.current.right = std::min(header.current.left + 1, header.current.end);
 }
 
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header);
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::quat>& header);
+template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header) const;
+template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::quat>& header) const;
 
 template <typename T>
-void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
+void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) const {
 	int local_current_frame = current_frame;
 
 	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
@@ -244,26 +244,26 @@ void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
 	}
 }
 
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::vec3>& header);
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::quat>& header);
+template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::vec3>& header) const;
+template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::quat>& header) const;
 
-glm::vec3 SkeletalModelInstance::get_geoset_animation_color(mdx::GeosetAnimation& animation) {
+glm::vec3 SkeletalModelInstance::get_geoset_animation_color(mdx::GeosetAnimation& animation) const {
 	//return interpolate_keyframes(animation.KGAC, animation.color);
 	return animation.color;
 }
 
-float SkeletalModelInstance::get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) {
+float SkeletalModelInstance::get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) const {
 	//return interpolate_keyframes(animation.KGAO, animation.alpha);
 	return animation.alpha;
 }
 
-float SkeletalModelInstance::get_layer_visiblity(mdx::Layer& layer) {
+float SkeletalModelInstance::get_layer_visiblity(mdx::Layer& layer) const {
 	//return interpolate_keyframes(layer.KMTA, layer.alpha);
 	return layer.alpha;
 }
 
 template <typename T>
-T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue) {
+T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue) const {
 #if 1
 	int local_current_frame = current_frame;
 
@@ -422,5 +422,5 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 #endif
 }
 
-template glm::vec3 SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue);
-template glm::quat SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::quat>& header, const glm::quat& defaultValue);
+template glm::vec3 SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue) const;
+template glm::quat SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::quat>& header, const glm::quat& defaultValue) const;

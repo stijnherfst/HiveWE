@@ -175,7 +175,7 @@ SkinnedMesh::~SkinnedMesh() {
 	// ToDo delete extra buffers
 }
 
-void SkinnedMesh::render_queue(SkeletalModelInstance& skeleton) {
+void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton) {
 	render_jobs.push_back(skeleton.matrix);
 	//render_jobs.push_back(model);
 	skeletons.push_back(&skeleton);
