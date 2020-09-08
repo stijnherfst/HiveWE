@@ -14,8 +14,7 @@ struct Camera {
 
 	glm::vec3 position = { 0, 0, 0 };
 
-
-	float distance = 20;
+	float distance = 20.f;
 
 	glm::vec3 direction = { 0, 1, 0 };
 	glm::vec3 X = { 1, 0, 0 };
@@ -23,16 +22,18 @@ struct Camera {
 	glm::vec3 up = { 0, 0, 1 };
 	glm::vec3 forward = { 0, 1, 0 };
 
-	double fov = 70;
-	double aspect_ratio = 16.0 / 9.0;
-	double draw_distance = 2000.0;
-	double draw_distance_close = 0.05;
-	double fov_rad = (glm::pi<double>() / 180.0) * static_cast<double>(fov); // Need radians
-	double tan_height = 2.0 * glm::tan(fov_rad * 0.5);
+	float fov = 70.f;
+	float aspect_ratio = 16.f / 9.f;
+	float draw_distance = 2000.f;
+	float draw_distance_close = 0.05f;
+	float fov_rad = (glm::pi<double>() / 180.f) * static_cast<double>(fov); // Need radians
+	float tan_height = 2.f * glm::tan(fov_rad * 0.5f);
 
 	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance, draw_distance_close);
 	glm::mat4 view = glm::lookAt(position - direction * distance, position, up);
 	glm::mat4 projection_view;
+
+	glm::vec4 frustum_planes[6];
 
 	// Used for decomposing camera information to get rotation, for camera-centric Billboarded model elements
 	glm::vec3 decomposed_scale;
@@ -41,8 +42,22 @@ struct Camera {
 	glm::vec3 decomposed_skew;
 	glm::vec4 decomposed_perspective;
 
-	double horizontal_angle = 0.0;
-	double vertical_angle = -0.977;
+	float horizontal_angle = 0.f;
+	float vertical_angle = -0.977f;
+
+	enum FrustrumPlane {
+		Right,
+		Left,
+		Bottom,
+		Top,
+		Front,
+		Back
+	};
+
+	void extract_frustrum_planes(const glm::mat4& proj, const glm::mat4& view);
+	void normalize_frustrum_plane(glm::vec4& plane);
+	bool inside_frustrum(const glm::vec3& point) const;
+	bool inside_frustrum(const glm::vec3& min, const glm::vec3& max) const;
 
 	virtual void update(double delta) = 0;
 
@@ -57,12 +72,11 @@ struct FPSCamera : Camera {
 	void update(double delta) override;
 	void mouse_move_event(QMouseEvent* event) override;
 	void mouse_scroll_event(QWheelEvent* event) override;
-	void mouse_press_event(QMouseEvent* event) override {};
-	void mouse_release_event(QMouseEvent* event) override {};
+	void mouse_press_event(QMouseEvent* event) override{};
+	void mouse_release_event(QMouseEvent* event) override{};
 };
 
 struct TPSCamera : Camera {
-
 
 	bool rolling = false;
 
