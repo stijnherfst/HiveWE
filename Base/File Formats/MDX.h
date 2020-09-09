@@ -102,13 +102,13 @@ namespace mdx {
 		T outTan;
 	};
 
-	// To keep track of what 
-	struct CurrentKeyFrame {
-		int start = -1;
-		int end = 0;
-		int left = 0;
-		int right = 0;
-	};
+	//// To keep track of what 
+	//struct CurrentKeyFrame {
+	//	int start = -1;
+	//	int end = 0;
+	//	int left = 0;
+	//	int right = 0;
+	//};
 
 	template <typename T>
 	struct TrackHeader {
@@ -116,13 +116,15 @@ namespace mdx {
 		int32_t global_sequence_ID = -1;
 		std::vector<Track<T>> tracks;
 
-		CurrentKeyFrame current;
+		//CurrentKeyFrame current;
+		int id = -1;
 
 		TrackHeader() = default;
-		explicit TrackHeader(BinaryReader& reader) {
+		explicit TrackHeader(BinaryReader& reader, int track_id) {
 			const int tracks_count = reader.read<int32_t>();
 			interpolation_type = reader.read<int32_t>();
 			global_sequence_ID = reader.read<int32_t>();
+			id = track_id;
 
 			for (int i = 0; i < tracks_count; i++) {
 				Track<T> track;
@@ -155,7 +157,7 @@ namespace mdx {
 
 	struct Node {
 		Node() = default;
-		explicit Node(BinaryReader& reader);
+		explicit Node(BinaryReader& reader, int& unique_tracks);
 
 		std::string name;
 		int id;
@@ -537,6 +539,8 @@ namespace mdx {
 		void load(BinaryReader& reader);
 
 		void validate();
+
+		int unique_tracks = 0;
 
 		std::vector<Geoset> geosets;
 		std::vector<Sequence> sequences;

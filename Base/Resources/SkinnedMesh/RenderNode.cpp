@@ -2,8 +2,8 @@
 
 #include "Utilities.h"
 
-RenderNode::RenderNode(mdx::Node node, glm::vec3 pivot) {
-	this->node = node;
+RenderNode::RenderNode(mdx::Node& node, glm::vec3 pivot) {
+	this->node = &node;
 	this->pivot = pivot;
 
 	dontInheritTranslation = node.flags & mdx::Node::Flags::dont_inherit_translation;

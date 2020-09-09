@@ -13,8 +13,8 @@
 class RenderNode {
   public:
 	RenderNode() = default;
-	RenderNode(mdx::Node node, glm::vec3 pivot);
-	mdx::Node node;
+	RenderNode(mdx::Node& node, glm::vec3 pivot);
+	mdx::Node* node;
 	RenderNode* parent;
 	glm::vec3 pivot;
 	// local space

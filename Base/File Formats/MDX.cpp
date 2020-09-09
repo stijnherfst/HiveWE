@@ -23,7 +23,7 @@ namespace mdx {
 		maximum = reader.read<glm::vec3>();
 	}
 
-	Node::Node(BinaryReader& reader) {
+	Node::Node(BinaryReader& reader, int& unique_tracks) {
 		const size_t reader_pos = reader.position;
 		const uint32_t inclusive_size = reader.read<uint32_t>();
 		name = reader.read_string(80);
@@ -34,11 +34,11 @@ namespace mdx {
 		while (reader.position < reader_pos + inclusive_size) {
 			TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 			if (tag == TrackTag::KGTR) {
-				KGTR = TrackHeader<glm::vec3>(reader);
+				KGTR = TrackHeader<glm::vec3>(reader, unique_tracks++);
 			} else if (tag == TrackTag::KGRT) {
-				KGRT = TrackHeader<glm::quat>(reader);
+				KGRT = TrackHeader<glm::quat>(reader, unique_tracks++);
 			} else if (tag == TrackTag::KGSC) {
-				KGSC = TrackHeader<glm::vec3>(reader);
+				KGSC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 			} else {
 				std::cout << "Unknown track tag\n";
 			}
@@ -235,7 +235,7 @@ namespace mdx {
 			const uint32_t layers_count = reader.read<uint32_t>();
 
 			for (size_t i = 0; i < layers_count; i++) {
-				const int reader_pos = reader.position;
+				const size_t reader_pos = reader.position;
 				Layer layer;
 				const uint32_t size = reader.read<uint32_t>();
 				layer.blend_mode = reader.read<uint32_t>();
@@ -255,17 +255,17 @@ namespace mdx {
 				while (reader.position < reader_pos + size) {
 					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 					if (tag == TrackTag::KMTF) {
-						layer.KMTF = TrackHeader<uint32_t>(reader);
+						layer.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTA) {
-						layer.KMTA = TrackHeader<float>(reader);
+						layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTE) {
-						layer.KMTE = TrackHeader<float>(reader);
+						layer.KMTE = TrackHeader<float>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KFC3) {
-						layer.KFC3 = TrackHeader<glm::vec3>(reader);
+						layer.KFC3 = TrackHeader<glm::vec3>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KFCA) {
-						layer.KFCA = TrackHeader<float>(reader);
+						layer.KFCA = TrackHeader<float>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KFTC) {
-						layer.KFTC = TrackHeader<float>(reader);
+						layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 					} else {
 						std::cout << "Unknown track tag\n";
 					}
@@ -311,9 +311,9 @@ namespace mdx {
 			while (reader.position < reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KGAO) {
-					animation.KGAO = TrackHeader<float>(reader);
+					animation.KGAO = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KGAC) {
-					animation.KGAC = TrackHeader<glm::vec3>(reader);
+					animation.KGAC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else {
 					std::cout << "Unknown track tag\n";
 				}
@@ -329,7 +329,7 @@ namespace mdx {
 
 		while (reader.position < reader_pos + size) {
 			Bone bone;
-			bone.node = Node(reader);
+			bone.node = Node(reader, unique_tracks);
 			bone.geoset_id = reader.read<int32_t>();
 			bone.geoset_animation_id = reader.read<int32_t>();
 			bones.push_back(std::move(bone));
@@ -353,14 +353,14 @@ namespace mdx {
 	}
 
 	void MDX::read_LITE_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			Light light;
 			const size_t node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			light.node = Node(reader);
+			light.node = Node(reader, unique_tracks);
 			light.type = reader.read<uint32_t>();
 			light.attenuation_start = reader.read<float>();
 			light.attenuation_end = reader.read<float>();
@@ -371,19 +371,19 @@ namespace mdx {
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KLAS) {
-					light.KLAS = TrackHeader<uint32_t>(reader);
+					light.KLAS = TrackHeader<uint32_t>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLAE) {
-					light.KLAE = TrackHeader<uint32_t>(reader);
+					light.KLAE = TrackHeader<uint32_t>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLAC) {
-					light.KLAC = TrackHeader<glm::vec3>(reader);
+					light.KLAC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLAI) {
-					light.KLAI = TrackHeader<float>(reader);
+					light.KLAI = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLBI) {
-					light.KLBI = TrackHeader<float>(reader);
+					light.KLBI = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLBC) {
-					light.KLBC = TrackHeader<glm::vec3>(reader);
+					light.KLBC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KLAV) {
-					light.KLAV = TrackHeader<float>(reader);
+					light.KLAV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
 					std::cout << "Unknown track tag\n";
 				}
@@ -393,28 +393,28 @@ namespace mdx {
 	}
 
 	void MDX::read_HELP_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 		while (reader.position < reader_pos + size) {
-			help_bones.push_back(Node(reader));
+			help_bones.push_back(Node(reader, unique_tracks));
 		}
 	}
 
 	void MDX::read_ATCH_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			Attachment attachment;
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			attachment.node = Node(reader);
+			attachment.node = Node(reader, unique_tracks);
 			attachment.path = reader.read_string(256);
 			attachment.reserved = reader.read<uint32_t>();
 			attachment.attachment_id = reader.read<uint32_t>();
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
-				attachment.KATV = TrackHeader<float>(reader);
+				attachment.KATV = TrackHeader<float>(reader, unique_tracks++);
 				if (tag != TrackTag::KATV) {
 					std::cout << "Unknown track tag\n";
 				}
@@ -424,21 +424,21 @@ namespace mdx {
 	}
 
 	void MDX::read_PIVT_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		pivots = reader.read_vector<glm::vec3>(size / 12);
 	}
 
 	void MDX::read_PREM_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			ParticleEmitter1 emitter;
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			emitter.node = Node(reader);
+			emitter.node = Node(reader, unique_tracks);
 			emitter.emission_rate = reader.read<float>();
 			emitter.gravity = reader.read<float>();
 			emitter.longitude = reader.read<float>();
@@ -450,19 +450,19 @@ namespace mdx {
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KPEE) {
-					emitter.KPEE = TrackHeader<float>(reader);
+					emitter.KPEE = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPEG) {
-					emitter.KPEG = TrackHeader<float>(reader);
+					emitter.KPEG = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPLN) {
-					emitter.KPLN = TrackHeader<float>(reader);
+					emitter.KPLN = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPLT) {
-					emitter.KPLT = TrackHeader<float>(reader);
+					emitter.KPLT = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPEL) {
-					emitter.KPEL = TrackHeader<float>(reader);
+					emitter.KPEL = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPES) {
-					emitter.KPES = TrackHeader<float>(reader);
+					emitter.KPES = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KPEV) {
-					emitter.KPEV = TrackHeader<float>(reader);
+					emitter.KPEV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
 					std::cout << "Unknown track tag\n";
 				}
@@ -472,14 +472,14 @@ namespace mdx {
 	}
 
 	void MDX::read_PRE2_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			ParticleEmitter2 emitter2;
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			emitter2.node = Node(reader);
+			emitter2.node = Node(reader, unique_tracks);
 
 			emitter2.speed = reader.read<float>();
 			emitter2.variation = reader.read<float>();
@@ -526,21 +526,21 @@ namespace mdx {
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KP2S) {
-					emitter2.KP2S = TrackHeader<float>(reader);
+					emitter2.KP2S = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2R) {
-					emitter2.KP2R = TrackHeader<float>(reader);
+					emitter2.KP2R = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2L) {
-					emitter2.KP2L = TrackHeader<float>(reader);
+					emitter2.KP2L = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2G) {
-					emitter2.KP2G = TrackHeader<float>(reader);
+					emitter2.KP2G = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2E) {
-					emitter2.KP2E = TrackHeader<float>(reader);
+					emitter2.KP2E = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2N) {
-					emitter2.KP2N = TrackHeader<float>(reader);
+					emitter2.KP2N = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2W) {
-					emitter2.KP2W = TrackHeader<float>(reader);
+					emitter2.KP2W = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KP2V) {
-					emitter2.KP2V = TrackHeader<float>(reader);
+					emitter2.KP2V = TrackHeader<float>(reader, unique_tracks++);
 				} else {
 					std::cout << "Unknown track tag\n";
 				}
@@ -550,14 +550,14 @@ namespace mdx {
 	}
 
 	void MDX::read_RIBB_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			RibbonEmitter emitter;
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			emitter.node = Node(reader);
+			emitter.node = Node(reader, unique_tracks);
 			emitter.height_above = reader.read<float>();
 			emitter.height_below = reader.read<float>();
 			emitter.alpha = reader.read<float>();
@@ -572,17 +572,17 @@ namespace mdx {
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KRHA) {
-					emitter.KRHA = TrackHeader<float>(reader);
+					emitter.KRHA = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KRHB) {
-					emitter.KRHB = TrackHeader<float>(reader);
+					emitter.KRHB = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KRAL) {
-					emitter.KRAL = TrackHeader<float>(reader);
+					emitter.KRAL = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KRCO) {
-					emitter.KRCO = TrackHeader<glm::vec3>(reader);
+					emitter.KRCO = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KRTX) {
-					emitter.KRTX = TrackHeader<uint32_t>(reader);
+					emitter.KRTX = TrackHeader<uint32_t>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KRVS) {
-					emitter.KRVS = TrackHeader<float>(reader);
+					emitter.KRVS = TrackHeader<float>(reader, unique_tracks++);
 				} else {
 					std::cout << "Unknown track tag\n";
 				}
@@ -592,12 +592,12 @@ namespace mdx {
 	}
 
 	void MDX::read_EVTS_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			EventObject evt;
-			evt.node = Node(reader);
+			evt.node = Node(reader, unique_tracks);
 			reader.read<uint32_t>(); // read KEVT
 			evt.count = reader.read<uint32_t>();
 			evt.global_sequence_id = reader.read<int32_t>(); //signed
@@ -609,12 +609,12 @@ namespace mdx {
 	}
 
 	void MDX::read_CLID_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			CollisionShape shape;
-			shape.node = Node(reader);
+			shape.node = Node(reader, unique_tracks);
 
 			uint32_t type_index = reader.read<uint32_t>();
 			switch (type_index) {
@@ -663,14 +663,14 @@ namespace mdx {
 	}
 
 	void MDX::read_CORN_chunk(BinaryReader& reader) {
-		const int reader_pos = reader.position;
+		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
 
 		while (reader.position < reader_pos + size) {
 			CornEmitter emitter;
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
-			emitter.node = Node(reader);
+			emitter.node = Node(reader, unique_tracks);
 
 			reader.advance(4);
 			reader.advance(4);

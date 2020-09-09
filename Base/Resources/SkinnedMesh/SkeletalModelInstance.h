@@ -20,6 +20,14 @@
 // whatever WC3 is doing. Do more reserach if necessary?
 #define MAGIC_RENDER_SHOW_CONSTANT 0.75
 
+// To keep track of what
+struct CurrentKeyFrame {
+	int start = -1;
+	int end = 0;
+	int left = 0;
+	int right = 0;
+};
+
 class SkeletalModelInstance {
   public:
 	std::shared_ptr<mdx::MDX> model;
@@ -37,6 +45,7 @@ class SkeletalModelInstance {
 	float facingAngle;
 	glm::quat inverseInstanceRotation;
 
+	std::vector<CurrentKeyFrame> current_keyframes;
 	std::vector<RenderNode> render_nodes;
 
 	SkeletalModelInstance() = default;
@@ -51,10 +60,10 @@ class SkeletalModelInstance {
 	void set_sequence(int sequence_index);
 
 	template <typename T>
-	void calculate_sequence_extents(mdx::TrackHeader<T>& header) const;
+	void calculate_sequence_extents(mdx::TrackHeader<T>& header);
 
 	template <typename T>
-	void advance_keyframes(mdx::TrackHeader<T>& header) const;
+	void advance_keyframes(mdx::TrackHeader<T>& header);
 
 	glm::vec3 get_geoset_animation_color(mdx::GeosetAnimation& animation) const;
 	float get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) const;

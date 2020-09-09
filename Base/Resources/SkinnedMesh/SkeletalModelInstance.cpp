@@ -41,10 +41,12 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 		render_nodes[object.id] = renderNode;
 	});
 
+	current_keyframes.resize(model->unique_tracks);
+
 	for (auto& i : render_nodes) {
-		calculate_sequence_extents(i.node.KGTR);
-		calculate_sequence_extents(i.node.KGRT);
-		calculate_sequence_extents(i.node.KGSC);
+		calculate_sequence_extents(i.node->KGTR);
+		calculate_sequence_extents(i.node->KGRT);
+		calculate_sequence_extents(i.node->KGSC);
 	}
 
 	//for (auto& i : model->materials) {
@@ -91,9 +93,9 @@ void SkeletalModelInstance::update(double delta) {
 	}
 
 	for (auto& i : render_nodes) {
-		advance_keyframes(i.node.KGTR);
-		advance_keyframes(i.node.KGRT);
-		advance_keyframes(i.node.KGSC);
+		advance_keyframes(i.node->KGTR);
+		advance_keyframes(i.node->KGRT);
+		advance_keyframes(i.node->KGSC);
 	}
 
 	//for (auto& i : model->materials) {
@@ -116,9 +118,9 @@ void SkeletalModelInstance::updateNodes() {
 
 	// update skeleton to position based on animation @ time
 	for (auto& node : render_nodes) {
-		node.position = interpolate_keyframes(node.node.KGTR, TRANSLATION_IDENTITY);
-		node.rotation = interpolate_keyframes(node.node.KGRT, ROTATION_IDENTITY);
-		node.scale = interpolate_keyframes(node.node.KGSC, SCALE_IDENTITY);
+		node.position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
+		node.rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
+		node.scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
 
 		//if (node.billboarded || node.billboardedX) {
 		//	// Cancel the parent's rotation
@@ -141,7 +143,12 @@ void SkeletalModelInstance::set_sequence(int sequence_index) {
 }
 
 template <typename T>
-void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& header) const {
+void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& header) {
+	if (header.id == -1) {
+		return;
+	}
+	CurrentKeyFrame& current = current_keyframes[header.id];
+
 	const mdx::Sequence& sequence = model->sequences[sequence_index];
 
 	int local_sequence_start = sequence.start_frame;
@@ -159,8 +166,8 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 		}
 	}
 
-	header.current.start = -1;
-	header.current.right = -1;
+	current.start = -1;
+	current.right = -1;
 
 	for (int i = 0; i < header.tracks.size(); i++) {
 		const mdx::Track<T>& track = header.tracks[i];
@@ -170,31 +177,36 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 			break;
 		}
 
-		if (track.frame >= local_sequence_start && header.current.start == -1) {
-			header.current.start = i;
+		if (track.frame >= local_sequence_start && current.start == -1) {
+			current.start = i;
 		}
 
 		if (track.frame <= local_current_frame) {
-			header.current.left = i;
+			current.left = i;
 		}
 
-		if (track.frame >= local_current_frame && header.current.right == -1) {
-			header.current.right = i;
+		if (track.frame >= local_current_frame && current.right == -1) {
+			current.right = i;
 		}
 
 		//if (track.frame <= local_sequence_end) {
-			header.current.end = i;
+			current.end = i;
 		//}
 	}
 
 	//header.current.right = std::min(header.current.left + 1, header.current.end);
 }
 
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header) const;
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::quat>& header) const;
+template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header);
+template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::quat>& header);
 
 template <typename T>
-void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) const {
+void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
+	if (header.id == -1) {
+		return;
+	}
+	CurrentKeyFrame& current = current_keyframes[header.id];
+
 	int local_current_frame = current_frame;
 
 	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
@@ -207,45 +219,45 @@ void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) const
 	}
 
 	// If there are no tracks in sequence
-	if (header.current.start == -1) {
+	if (current.start == -1) {
 		return;
 	}
 
 	// If there is only 1 track
-	if (header.current.start == header.current.end) {
+	if (current.start == current.end) {
 		return;
 	}
 
 	// Detect if we looped
-	if (header.tracks[header.current.left].frame > local_current_frame) {
-		header.current.left = header.current.start;
-		header.current.right = header.current.start + 1;
+	if (header.tracks[current.left].frame > local_current_frame) {
+		current.left = current.start;
+		current.right = current.start + 1;
 	}
 
 	// Scan till we find two tracks
-	while (header.tracks[header.current.right].frame < local_current_frame) {
-		header.current.left = header.current.right;
-		header.current.right++;
+	while (header.tracks[current.right].frame < local_current_frame) {
+		current.left = current.right;
+		current.right++;
 
 		// Reached last keyframe
-		if (header.current.right > header.current.end) {
+		if (current.right > current.end) {
 			break;
 		}
-		if (header.tracks[header.current.right].frame == local_current_frame) {
-			header.current.left = header.current.right;
+		if (header.tracks[current.right].frame == local_current_frame) {
+			current.left = current.right;
 		}
 	}
 
-	const bool past_end = header.tracks[header.current.end].frame < local_current_frame;
-	const bool before_start = header.tracks[header.current.start].frame > local_current_frame;
+	const bool past_end = header.tracks[current.end].frame < local_current_frame;
+	const bool before_start = header.tracks[current.start].frame > local_current_frame;
 	if (past_end || before_start) {
-		header.current.left = header.current.end;
-		header.current.right = header.current.start;
+		current.left = current.end;
+		current.right = current.start;
 	}
 }
 
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::vec3>& header) const;
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::quat>& header) const;
+template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::vec3>& header);
+template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::quat>& header);
 
 glm::vec3 SkeletalModelInstance::get_geoset_animation_color(mdx::GeosetAnimation& animation) const {
 	//return interpolate_keyframes(animation.KGAC, animation.color);
@@ -264,6 +276,11 @@ float SkeletalModelInstance::get_layer_visiblity(mdx::Layer& layer) const {
 
 template <typename T>
 T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue) const {
+	if (header.id == -1) {
+		return defaultValue;
+	}
+	const CurrentKeyFrame& current = current_keyframes[header.id];
+
 #if 1
 	int local_current_frame = current_frame;
 
@@ -277,22 +294,22 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 	}
 
 	// If there are no tracks in sequence
-	if (header.current.start == -1) {
+	if (current.start == -1) {
 		return defaultValue;
 	}
 
 	// If there is only 1 track
-	if (header.current.start == header.current.end) {
-		return header.tracks[header.current.left].value;
+	if (current.start == current.end) {
+		return header.tracks[current.left].value;
 	}
 
-	const T ceilInTan = header.tracks[header.current.right].inTan;
-	const T floorOutTan = header.tracks[header.current.left].outTan;
+	const T ceilInTan = header.tracks[current.right].inTan;
+	const T floorOutTan = header.tracks[current.left].outTan;
 
-	int floorTime = header.tracks[header.current.left].frame;
-	int ceilTime = header.tracks[header.current.right].frame;
-	T floorValue = header.tracks[header.current.left].value;
-	T ceilValue = header.tracks[header.current.right].value;
+	int floorTime = header.tracks[current.left].frame;
+	int ceilTime = header.tracks[current.right].frame;
+	T floorValue = header.tracks[current.left].value;
+	T ceilValue = header.tracks[current.right].value;
 
 	// ToDo Wrapping is wrong around sequence end/start 
 	float tt = (local_current_frame - floorTime) / static_cast<float>(ceilTime - floorTime);

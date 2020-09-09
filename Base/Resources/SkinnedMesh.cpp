@@ -176,6 +176,13 @@ SkinnedMesh::~SkinnedMesh() {
 }
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton) {
+	if (model->sequences.size()) {
+		mdx::Extent& extent = model->sequences.front().extent;
+		if (!camera->inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			return;
+		}
+	}
+
 	render_jobs.push_back(skeleton.matrix);
 	//render_jobs.push_back(model);
 	skeletons.push_back(&skeleton);
