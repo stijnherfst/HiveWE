@@ -36,17 +36,12 @@ RenderManager::~RenderManager() {
 }
 
 void RenderManager::render(bool render_lighting) {
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
-	gl->glEnableVertexAttribArray(2);
-
 	GLint old_vao;
 	gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 	// Render opaque meshes
 	// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
 	instance_static_mesh_shader_sd->use();
-	gl->glBlendFunc(GL_ONE, GL_ZERO);
 
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -54,9 +49,7 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : meshes) {
 		i->render_opaque_sd();
 	}
-	gl->glBindVertexArray(old_vao);
 
-	gl->glEnableVertexAttribArray(3);
 	instance_static_mesh_shader_hd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -64,7 +57,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : meshes) {
 		i->render_opaque_hd();
 	}
-	gl->glBindVertexArray(old_vao);
 
 	// Skinned
 	instance_skinned_mesh_shader_sd->use();
@@ -74,7 +66,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : animated_meshes) {
 		i->render_opaque_sd();
 	}
-	gl->glBindVertexArray(old_vao);
 
 	instance_skinned_mesh_shader_hd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
@@ -83,7 +74,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : animated_meshes) {
 		i->render_opaque_hd();
 	}
-		gl->glBindVertexArray(old_vao);
 
 	//// Render transparent meshes
 	std::sort(transparent_instances.begin(), transparent_instances.end(), [](Inst& left, Inst& right) { return left.distance > right.distance; });
@@ -94,7 +84,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : transparent_instances) {
 		meshes[i.mesh_id]->render_transparent_sd(i.instance_id);
 	}
-	gl->glBindVertexArray(old_vao);
 
 	static_mesh_shader_hd->use();
 	gl->glUniform1f(2, -1.f);
@@ -103,7 +92,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : transparent_instances) {
 		meshes[i.mesh_id]->render_transparent_hd(i.instance_id);
 	}
-	gl->glBindVertexArray(old_vao);
 
 	// Skinned
 	skinned_mesh_shader_sd->use();
@@ -111,7 +99,6 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : skinned_transparent_instances) {
 		animated_meshes[i.mesh_id]->render_transparent_sd(i.instance_id);
 	}
-	gl->glBindVertexArray(old_vao);
 
 	skinned_mesh_shader_hd->use();
 	gl->glUniform1f(2, -1.f);
@@ -120,12 +107,8 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : skinned_transparent_instances) {
 		animated_meshes[i.mesh_id]->render_transparent_hd(i.instance_id);
 	}
-	gl->glBindVertexArray(old_vao);
 
-	gl->glDisableVertexAttribArray(0);
-	gl->glDisableVertexAttribArray(1);
-	gl->glDisableVertexAttribArray(2);
-	gl->glDisableVertexAttribArray(3);
+	gl->glBindVertexArray(old_vao);
 
 	for (const auto& i : meshes) {
 		i->render_jobs.clear();

@@ -27,6 +27,7 @@ public:
 	bool has_mesh; // ToDo remove when added support for meshless
 	mdx::Extent extent;
 
+	GLuint vao;
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
 	GLuint normal_buffer;

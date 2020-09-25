@@ -173,6 +173,10 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 		}
 	}
 
+	if (!has_mesh) {
+		return;
+	}
+
 	gl->glEnableVertexAttribArray(0);
 	gl->glEnableVertexAttribArray(1);
 	gl->glEnableVertexAttribArray(2);
@@ -222,9 +226,13 @@ SkinnedMesh::~SkinnedMesh() {
 	gl->glDeleteBuffers(1, &vertex_buffer);
 	gl->glDeleteBuffers(1, &uv_buffer);
 	gl->glDeleteBuffers(1, &normal_buffer);
-	gl->glDeleteBuffers(1, &instance_buffer);
+	gl->glDeleteBuffers(1, &tangent_buffer);
+	gl->glDeleteBuffers(1, &weight_buffer);
 	gl->glDeleteBuffers(1, &index_buffer);
-	// ToDo delete extra buffers
+	gl->glDeleteBuffers(1, &instance_buffer);
+	gl->glDeleteBuffers(1, &retera_node_buffer);
+	gl->glDeleteBuffers(1, &layer_alpha);
+	gl->glDeleteBuffers(1, &geoset_color);
 }
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton) {

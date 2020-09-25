@@ -17,6 +17,9 @@ StaticMesh::StaticMesh(const fs::path& path) {
 	size_t indices = 0;
 	mdx::MDX model = mdx::MDX(reader);
 
+	gl->glGenVertexArrays(1, &vao);
+	gl->glBindVertexArray(vao);
+
 	has_mesh = model.geosets.size();
 	if (has_mesh) {
 		// Calculate required space
@@ -119,14 +122,49 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
 	}
+
+	if (!has_mesh) {
+		return;
+	}
+
+	gl->glEnableVertexAttribArray(0);
+	gl->glEnableVertexAttribArray(1);
+	gl->glEnableVertexAttribArray(2);
+	gl->glEnableVertexAttribArray(3);
+	gl->glEnableVertexAttribArray(4);
+	gl->glEnableVertexAttribArray(5);
+	gl->glEnableVertexAttribArray(6);
+	gl->glEnableVertexAttribArray(7);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, tangent_buffer);
+	gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+	for (int i = 0; i < 4; i++) {
+		gl->glEnableVertexAttribArray(4 + i);
+		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexAttribDivisor(4 + i, 1);
+	}
 }
 
 StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &vertex_buffer);
 	gl->glDeleteBuffers(1, &uv_buffer);
 	gl->glDeleteBuffers(1, &normal_buffer);
-	gl->glDeleteBuffers(1, &instance_buffer);
+	gl->glDeleteBuffers(1, &tangent_buffer);
 	gl->glDeleteBuffers(1, &index_buffer);
+	gl->glDeleteBuffers(1, &instance_buffer);
 }
 
 void StaticMesh::render_queue(const glm::mat4& model) {
@@ -166,26 +204,9 @@ void StaticMesh::render_opaque_sd() const {
 		return;
 	}
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	gl->glBindVertexArray(vao);
 
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
-
-	// Since a mat4 is 4 vec4's
-	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(4 + i);
-		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-		gl->glVertexAttribDivisor(4 + i, 1);
-	}
 
 	for (const auto& i : entries) {
 		if (i.hd) {
@@ -243,10 +264,6 @@ void StaticMesh::render_opaque_sd() const {
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 		}
 	}
-
-	for (int i = 0; i < 4; i++) {
-		gl->glVertexAttribDivisor(3 + i, 0); // ToDo use multiple vao
-	}
 }
 
 void StaticMesh::render_opaque_hd() const {
@@ -254,27 +271,7 @@ void StaticMesh::render_opaque_hd() const {
 		return;
 	}
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, tangent_buffer);
-	gl->glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-
-	// Since a mat4 is 4 vec4's
-	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(4 + i);
-		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
-		gl->glVertexAttribDivisor(4 + i, 1);
-	}
+	gl->glBindVertexArray(vao);
 
 	for (const auto& i : entries) {
 		if (!i.hd) {
@@ -311,10 +308,6 @@ void StaticMesh::render_opaque_hd() const {
 
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
-
-	for (int i = 0; i < 4; i++) {
-		gl->glVertexAttribDivisor(3 + i, 0); // ToDo use multiple vao
-	}
 }
 
 //bool unshaded = j.shading_flags & 0x1;
@@ -331,16 +324,7 @@ void StaticMesh::render_transparent_sd(int instance_id) const {
 		return;
 	}
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	gl->glBindVertexArray(vao);
 
 	glm::mat4 model = render_jobs[instance_id];
 	model = camera->projection_view * model;
@@ -410,16 +394,7 @@ void StaticMesh::render_transparent_hd(int instance_id) const {
 		return;
 	}
 
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	gl->glBindVertexArray(vao);
 
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniformMatrix4fv(1, 1, false, &render_jobs[instance_id][0][0]);
