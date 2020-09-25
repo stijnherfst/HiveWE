@@ -60,10 +60,10 @@ class SkeletalModelInstance {
 	void set_sequence(int sequence_index);
 
 	template <typename T>
-	void calculate_sequence_extents(mdx::TrackHeader<T>& header);
+	void calculate_sequence_extents(const mdx::TrackHeader<T>& header);
 
 	template <typename T>
-	void advance_keyframes(mdx::TrackHeader<T>& header);
+	void advance_keyframes(const mdx::TrackHeader<T>& header);
 
 	glm::vec3 get_geoset_animation_color(mdx::GeosetAnimation& animation) const;
 	float get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) const;

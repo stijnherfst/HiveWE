@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QDir>
 
+#include "fmt/format.h"
+
 #include "HiveWE.h"
 #include "Utilities.h"
 #include "Hierarchy.h"
@@ -675,39 +677,39 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 
 		std::string unit_reference = "u";
 		if (unit_variables.contains(std::to_string(i.creation_number))) {
-			unit_reference = "gg_unit_" + i.id + "_" + std::to_string(i.creation_number);
+			unit_reference = fmt::format("gg_unit_{}_{}", i.id, i.creation_number);
 		}
 
-		writer.write_string("\tset " + unit_reference + " = CreateUnit(Player(" +
-			std::to_string(i.player) + "), " +
-			"\'" + i.id + "\', " +
-			std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " +
-			std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ", " +
-			std::to_string(glm::degrees(i.angle)) + ")\n");
+		writer.write_string(fmt::format("\tset {} = CreateUnit(Player({}), '{}', {:.4f}, {:.4f}, {:.4f})\n", 
+			unit_reference, 
+			i.player, 
+			i.id, 
+			i.position.x * 128.f + map->terrain.offset.x, 
+			i.position.y * 128.f + map->terrain.offset.y, 
+			glm::degrees(i.angle)));
 
 		if (i.health != -1) {
-			writer.write_string("\tset life = GetUnitState(" + unit_reference + ", UNIT_STATE_LIFE)\n");
-			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_LIFE, " + std::to_string(i.health / 100.f) + "* life)\n");
+			writer.write_string(fmt::format("\tset life = GetUnitState({}, UNIT_STATE_LIFE)\n", unit_reference));
+			writer.write_string(fmt::format("\tcall SetUnitState({}, UNIT_STATE_LIFE, {:.4f}* life)\n", unit_reference, i.health / 100.f));
 		}
 
 		if (i.mana != -1) {
-			writer.write_string("\tcall SetUnitState(" + unit_reference + ", UNIT_STATE_MANA, " + std::to_string(i.mana) + ")\n");
+			writer.write_string(fmt::format("\tcall SetUnitState({}, UNIT_STATE_MANA, {})\n", unit_reference, i.mana));
 		}
-
 		if (i.level != 1) {
-			writer.write_string("\tcall SetHeroLevel(" + unit_reference + ", " + std::to_string(i.level) + ", false)\n");
+			writer.write_string(fmt::format("\tcall SetHeroLevel({}, {}, false)\n", unit_reference, i.level));
 		}
 
 		if (i.strength != 0) {
-			writer.write_string("\tcall SetHeroStr(" + unit_reference + ", " + std::to_string(i.strength) + ", true)\n");
+			writer.write_string(fmt::format("\tcall SetHeroStr({}, {}, true)\n", unit_reference, i.strength));
 		}
 
 		if (i.agility != 0) {
-			writer.write_string("\tcall SetHeroAgi(" + unit_reference + ", " + std::to_string(i.agility) + ", true)\n");
+			writer.write_string(fmt::format("\tcall SetHeroAgi({}, {}, true)\n", unit_reference, i.agility));
 		}
 
 		if (i.intelligence != 0) {
-			writer.write_string("\tcall SetHeroInt(" + unit_reference + ", " + std::to_string(i.intelligence) + ", true)\n");
+			writer.write_string(fmt::format("\tcall SetHeroInt({}, {}, true)\n", unit_reference, i.intelligence));
 		}
 
 		float range;
@@ -717,12 +719,12 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 			} else {
 				range = i.target_acquisition;
 			}
-			writer.write_string("\tcall SetUnitAcquireRange(" + unit_reference + ", " + std::to_string(range) + ")\n");
+			writer.write_string(fmt::format("\tcall SetUnitAcquireRange({}, {})\n", unit_reference, range));
 		}
 
 		for (const auto& j : i.abilities) {
 			for (size_t k = 0; k < std::get<2>(j); k++) {
-				writer.write_string("\tcall SelectHeroSkill(" + unit_reference + ", \'" + std::get<0>(j) + "\')\n");
+				writer.write_string(fmt::format("\tcall SelectHeroSkill({}, '{}')\n", unit_reference, std::get<0>(j)));
 			}
 
 			if (std::get<1>(j)) {
@@ -730,18 +732,18 @@ void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::s
 				if (order_on.empty()) {
 					order_on = abilities_slk.data("order", std::get<0>(j));
 				}
-				writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_on + "\")\n");
+				writer.write_string(fmt::format("\t call IssueImmediateOrder({}, {})\n", unit_reference, order_on));
 			} else {
 				std::string order_off = abilities_slk.data("orderoff", std::get<0>(j));
 				if (!order_off.empty()) {
-					writer.write_string("\tcall IssueImmediateOrder(" + unit_reference + ", \"" + order_off + "\")\n");
+					writer.write_string(fmt::format("\tcall IssueImmediateOrder({}, '{}')\n", unit_reference, order_off));
 				}
 			}
 
 		}
 
 		for (const auto& j : i.items) {
-			writer.write_string("\tcall UnitAddItemToSlotById(" + unit_reference + ", '" + j.second + "', " + std::to_string(j.first) + ")\n");
+			writer.write_string(fmt::format("\tcall UnitAddItemToSlotById({}, '{}', {})\n", unit_reference, j.second, j.first));
 		}
 
 		if (i.item_sets.size()) {
@@ -766,7 +768,7 @@ void Triggers::generate_items(BinaryWriter& writer) {
 
 	writer.write_string("\tlocal integer itemID\n");
 	for (const auto& i : map->units.items) {
-		writer.write_string("\tcall CreateItem('" + i.id + "', " + std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " + std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ")\n");
+		writer.write_string(fmt::format("\tcall CreateItem('{}', {:.4f}, {:.4f})\n", i.id, i.position.x * 128.f + map->terrain.offset.x, i.position.y * 128.f + map->terrain.offset.y));
 	}
 
 	writer.write_string("endfunction\n");
@@ -840,14 +842,10 @@ void Triggers::generate_regions(BinaryWriter& writer) {
 		trim(region_name);
 		std::replace(region_name.begin(), region_name.end(), ' ', '_');
 
-		writer.write_string("\tset " + region_name + "= Rect(" +
-			std::to_string(std::min(i.left, i.right)) + "," +
-			std::to_string(std::min(i.bottom, i.top)) + "," +
-			std::to_string(std::max(i.left, i.right)) + "," +
-			std::to_string(std::max(i.bottom, i.top)) + ")\n");
+		writer.write_string(fmt::format("\tset {} = Rect({}, {}, {}, {})\n", region_name, std::min(i.left, i.right), std::min(i.bottom, i.top), std::max(i.left, i.right), std::max(i.bottom, i.top)));
 
 		if (!i.weather_id.empty()) {
-			writer.write_string("\tset we = AddWeatherEffect(" + region_name + ", '" + i.weather_id + "')\n");
+			writer.write_string(fmt::format("\tset we = AddWeatherEffect({}, '{}')\n", region_name, i.weather_id));
 			writer.write_string("\tcall EnableWeatherEffect(we, true)\n");
 		}
 	}
@@ -871,19 +869,19 @@ void Triggers::generate_cameras(BinaryWriter& writer) {
 		std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
 
 		writer.write_string("\tset " + camera_name + " = CreateCameraSetup()\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ZOFFSET, " + std::to_string(i.z_offset) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROTATION, " + std::to_string(i.rotation) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ANGLE_OF_ATTACK, " + std::to_string(i.angle_of_attack) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_TARGET_DISTANCE, " + std::to_string(i.distance) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_ROLL, " + std::to_string(i.roll) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FIELD_OF_VIEW, " + std::to_string(i.fov) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_FARZ, " + std::to_string(i.far_z) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_NEARZ, " + std::to_string(i.near_z) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_LOCAL_PITCH, " + std::to_string(i.local_pitch) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_LOCAL_YAW, " + std::to_string(i.local_yaw) + ", 0.0)\n");
-		writer.write_string("\tcall CameraSetupSetField(" + camera_name + ", CAMERA_FIELD_LOCAL_ROLL, " + std::to_string(i.local_roll) + ", 0.0)\n");
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_ZOFFSET, {}, 0.0)\n", camera_name, i.z_offset));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_ROTATION, {}, 0.0)\n", camera_name, i.rotation));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_ANGLE_OF_ATTACK, {}, 0.0)\n", camera_name, i.angle_of_attack));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_TARGET_DISTANCE, {}, 0.0)\n", camera_name, i.distance));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_ROLL, {}, 0.0)\n", camera_name, i.roll));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_FIELD_OF_VIEW, {}, 0.0)\n", camera_name, i.fov));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_FARZ, {}, 0.0)\n", camera_name, i.far_z));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_NEARZ, {}, 0.0)\n", camera_name, i.near_z));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_LOCAL_PITCH, {}, 0.0)\n", camera_name, i.local_pitch));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_LOCAL_YAW, {}, 0.0)\n", camera_name, i.local_yaw));
+		writer.write_string(fmt::format("\tcall CameraSetupSetField({}, CAMERA_FIELD_LOCAL_ROLL, {}, 0.0)\n", camera_name, i.local_roll));
 
-		writer.write_string("\tcall CameraSetupSetDestPosition(" + camera_name + ", " + std::to_string(i.target_x) + ", " + std::to_string(i.target_y) + ", 0.0)\n");
+		writer.write_string(fmt::format("\tcall CameraSetupSetDestPosition({}, {}, {}, 0.0)\n", camera_name, i.target_x, i.target_y));
 	}
 
 	writer.write_string("endfunction\n");
@@ -903,20 +901,30 @@ void Triggers::generate_sounds(BinaryWriter& writer) {
 		std::string sound_name = i.name;
 		trim(sound_name);
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
-		writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
-			string_replaced(i.file, "\\", "\\\\") + "\", " +
-			(i.looping ? "true" : "false") + ", " +
-			(i.is_3d ? "true" : "false") + ", " +
-			(i.stop_out_of_range ? "true" : "false") + ", " +
-			std::to_string(i.fade_in_rate) + ", " +
-			std::to_string(i.fade_out_rate) + ", " +
-			"\"" + string_replaced(i.eax_effect, "\\", "\\\\") + "\"" +
-			")\n");
+		//writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
+		//	string_replaced(i.file, "\\", "\\\\") + "\", " +
+		//	(i.looping ? "true" : "false") + ", " +
+		//	(i.is_3d ? "true" : "false") + ", " +
+		//	(i.stop_out_of_range ? "true" : "false") + ", " +
+		//	std::to_string(i.fade_in_rate) + ", " +
+		//	std::to_string(i.fade_out_rate) + ", " +
+		//	"\"" + string_replaced(i.eax_effect, "\\", "\\\\") + "\"" +
+		//	")\n");
 
-		writer.write_string("\tcall SetSoundDuration(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
-		writer.write_string("\tcall SetSoundChannel(" + sound_name + ", " + std::to_string(i.channel) + ")\n");
-		writer.write_string("\tcall SetSoundVolume(" + sound_name + ", " + std::to_string(i.volume) + ")\n");
-		writer.write_string("\tcall SetSoundPitch(" + sound_name + ", " + std::to_string(i.pitch) + ")\n");
+		writer.write_string(fmt::format("\tset {} = CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")\n", 
+			sound_name, 
+			string_replaced(i.file, "\\", "\\\\"), 
+			i.looping ? "true" : "false", 
+			i.is_3d ? "true" : "false", 
+			i.stop_out_of_range ? "true" : "false", 
+			i.fade_in_rate, 
+			i.fade_out_rate, 
+			string_replaced(i.eax_effect, "\\", "\\\\")));
+
+		writer.write_string(fmt::format("\tcall SetSoundDuration({}, {})\n", sound_name, i.fade_in_rate));
+		writer.write_string(fmt::format("\tcall SetSoundChannel({}, {})\n", sound_name, i.channel));
+		writer.write_string(fmt::format("\tcall SetSoundVolume({}, {})\n", sound_name, i.volume));
+		writer.write_string(fmt::format("\tcall SetSoundPitch({}, {})\n", sound_name, i.pitch));
 	}
 
 	//string_replaced(parameter.value, "\\", "\\\\")
@@ -1193,16 +1201,20 @@ void Triggers::generate_custom_teams(BinaryWriter& writer) {
 				for (const auto& k : map->info.players) {
 					if (i.player_masks & (1 << k.internal_number) && j.internal_number != k.internal_number) {
 						if (i.allied) {
-							post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							//post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							post_state += fmt::format("\tcall SetPlayerAllianceStateAllyBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_vision) {
-							post_state += "\tcall SetPlayerAllianceStateVisionBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							//post_state += "\tcall SetPlayerAllianceStateVisionBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							post_state += fmt::format("\tcall SetPlayerAllianceStateVisionBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_unit_control) {
-							post_state += "\tcall SetPlayerAllianceStateControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							//post_state += "\tcall SetPlayerAllianceStateControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							post_state += fmt::format("\tcall SetPlayerAllianceStateControlBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_advanced_unit_control) {
-							post_state += "\tcall SetPlayerAllianceStateFullControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							//post_state += "\tcall SetPlayerAllianceStateFullControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
+							post_state += fmt::format("\tcall SetPlayerAllianceStateFullControlBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 					}
 				}
@@ -1238,15 +1250,18 @@ void Triggers::generate_ally_priorities(BinaryWriter& writer) {
 		int current_index = 0;
 		for (const auto& j : map->info.players) {
 			if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_LOW)\n";
+				//player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_LOW)\n";
+				player_text += fmt::format("\tcall SetStartLocPrio({}, {}, {}, MAP_LOC_PRIO_LOW)\n", current_player, current_index, player_to_startloc[j.internal_number]);
 				current_index++;
 			} else if (i.ally_high_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-				player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_HIGH)\n";
+				//player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_HIGH)\n";
+				player_text += fmt::format("\tcall SetStartLocPrio({}, {}, {}, MAP_LOC_PRIO_HIGH)\n", current_player, current_index, player_to_startloc[j.internal_number]);
 				current_index++;
 			}
 		}
 
-		player_text = "\tcall SetStartLocPrioCount(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ")\n" + player_text;
+		//player_text = "\tcall SetStartLocPrioCount(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ")\n" + player_text;
+		player_text = fmt::format("\tcall SetStartLocPrioCount({}, {})\n", current_player, current_index) + player_text;
 		writer.write_string(player_text);
 		current_player++;
 	}
@@ -1325,7 +1340,8 @@ void Triggers::generate_map_configuration(BinaryWriter& writer) {
 
 	for (const auto& i : map->units.units) {
 		if (i.id == "sloc") {
-			writer.write_string("\tcall DefineStartLocation(" + std::to_string(i.player) + ", " + std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " + std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ")\n");
+			//writer.write_string("\tcall DefineStartLocation(" + std::to_string(i.player) + ", " + std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " + std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ")\n");
+			writer.write_string(fmt::format("\tcall DefineStartLocation({}, {}, {})\n", i.player, i.position.x * 128.f + map->terrain.offset.x, i.position.y * 128.f + map->terrain.offset.y));
 		}
 	}
 

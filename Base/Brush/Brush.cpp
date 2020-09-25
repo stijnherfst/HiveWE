@@ -18,19 +18,6 @@ Brush::Brush() {
 	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
 }
 
-void Brush::create() {
-	//gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	//gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	//set_size(size);
-
-	//selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vs", "Data/Shaders/selection.fs" });
-	//brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
-}
-
 void Brush::set_position(const glm::vec2& new_position) {
 	const glm::vec2 center_position = new_position - size / 2.f * 0.25f + brush_offset;
 
@@ -172,6 +159,10 @@ void Brush::mouse_move_event(QMouseEvent* event) {
 void Brush::mouse_press_event(QMouseEvent* event) {
 	if (event->button() != Qt::LeftButton) {
 		return;
+	}
+
+	if (!event->modifiers()) {
+		clear_selection();
 	}
 
 	if (mode == Mode::selection && !(event->modifiers() & Qt::ControlModifier)) {

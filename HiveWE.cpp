@@ -220,6 +220,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	map->load("Data/Test Map/");
+	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 }
 
 void HiveWE::load_folder() {
@@ -248,7 +249,9 @@ void HiveWE::load_folder() {
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 		
+	ui.widget->makeCurrent();
 	map->load(directory);
+	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
@@ -307,7 +310,9 @@ void HiveWE::load_mpq() {
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
+	ui.widget->makeCurrent();
 	map->load(final_directory);
+	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 

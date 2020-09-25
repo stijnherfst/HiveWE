@@ -399,6 +399,12 @@ void Map::update(double delta, int width, int height) {
 		if (i.id == "sloc") {
 			return;
 		} // ToDo handle starting locations
+
+		mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
+		if (!camera->inside_frustrum(i.matrix * glm::vec4(extent.minimum, 1.f), i.matrix * glm::vec4(extent.maximum, 1.f))) {
+			return;
+		}
+
 		i.skeleton.update(delta);
 	});
 
@@ -432,6 +438,22 @@ void Map::render() {
 	if (render_units) {
 		units.render();
 	}
+
+	//render_manager.colored_skinned_shader->use();
+
+	//for (int i = 0; i < map->units.units.size(); i++) {
+	//	const Unit& unit = map->units.units[i];
+	//	if (unit.id == "sloc") {
+	//		continue;
+	//	} // ToDo handle starting locations
+
+	//	mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+	//	if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
+	//		unit.mesh->render_color_coded(unit.skeleton, i);
+	//	}
+	//}
+
+
 
 	if (render_brush && brush) {
 		brush->render();

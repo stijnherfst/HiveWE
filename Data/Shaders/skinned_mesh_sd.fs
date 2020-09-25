@@ -7,7 +7,7 @@ layout (location = 2) uniform bool show_lighting;
 
 in vec2 UV;
 in vec3 Normal;
-// in vec4 vertexColor;
+in vec4 vertexColor;
 
 out vec4 outColor;
 

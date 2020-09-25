@@ -20,6 +20,7 @@ class SkinnedMesh : public Resource {
 		int material_id = 0;
 		mdx::Extent extent;
 
+		bool hd = true;
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
 		// below vectors are per-instance:
 		std::vector<float> geoset_anim_alphas;
@@ -32,9 +33,11 @@ class SkinnedMesh : public Resource {
 	std::vector<MeshEntry> entries;
 	bool has_mesh; // ToDo remove when added support for meshless
 
+	GLuint vao;
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
 	GLuint normal_buffer;
+	GLuint tangent_buffer;
 	GLuint weight_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
@@ -57,6 +60,11 @@ class SkinnedMesh : public Resource {
 	virtual ~SkinnedMesh();
 
 	void render_queue(const SkeletalModelInstance& skeleton);
-	void render_opaque();
-	void render_transparent(int instance_id) const;
+	void render_color_coded(const SkeletalModelInstance& skeleton, int id);
+
+	void render_opaque_sd();
+	void render_opaque_hd();
+
+	void render_transparent_sd(int instance_id);
+	void render_transparent_hd(int instance_id);
 };

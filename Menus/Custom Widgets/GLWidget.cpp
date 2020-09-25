@@ -1,6 +1,6 @@
 #include "GLWidget.h"
 
-#include <iostream>
+#include "fmt/format.h"
 
 #include <QTimer>
 #include <QOpenGLFunctions_4_5_Core>
@@ -110,6 +110,7 @@ void GLWidget::resizeGL(const int w, const int h) {
 		return;
 	}
 	camera->update(delta);
+	map->render_manager.resize_framebuffers(w, h);
 }
 
 void GLWidget::update_scene() {
@@ -130,8 +131,10 @@ void GLWidget::paintGL() {
 		return;
 	}
 
+	gl->glEnable(GL_DEPTH_TEST);
+	gl->glDepthMask(true);
 	gl->glClearColor(0, 0, 0, 1);
-	gl->glClear(GL_DEPTH_BUFFER_BIT);
+	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	gl->glBindVertexArray(vao);
 	map->render();
@@ -144,16 +147,16 @@ void GLWidget::paintGL() {
 		p.setFont(QFont("Arial", 10, 100, false));
 		
 		// Rendering time
-		p.drawText(10, 20, QString::fromStdString("Total time: " + std::to_string(delta * 1000.f) + "ms"));
+		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.4f}ms", delta * 1000.f)));
 
 		// General info
-		p.drawText(300, 20, QString::fromStdString("Mouse Grid Position X: " + std::to_string(input_handler.mouse_world.x) + " Y: " + std::to_string(input_handler.mouse_world.y)));
+		p.drawText(300, 20, QString::fromStdString(fmt::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));
 		if (map->brush) {
-			p.drawText(300, 35, QString::fromStdString("Brush Grid Position X: " + std::to_string(map->brush->get_position().x) + " Y: " + std::to_string(map->brush->get_position().y)));
+			p.drawText(300, 35, QString::fromStdString(fmt::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x,map->brush->get_position().y)));
 		}
 
-		p.drawText(300, 50, QString::fromStdString("Camera Horizontal Angle: " + std::to_string(camera->horizontal_angle)));
-		p.drawText(300, 64, QString::fromStdString("Camera Vertical Angle: " + std::to_string(camera->vertical_angle)));
+		p.drawText(300, 50, QString::fromStdString(fmt::format("Camera Horizontal Angle: {:.4f}", camera->horizontal_angle)));
+		p.drawText(300, 64, QString::fromStdString(fmt::format("Camera Vertical Angle: {:.4f}", camera->vertical_angle)));
 
 		p.end();
 
@@ -209,6 +212,10 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void GLWidget::mousePressEvent(QMouseEvent* event) {
+	makeCurrent();
+	gl->glBindVertexArray(vao);
+	gl->glViewport(0, 0, width(), height());
+
 	if (!map) {
 		return;
 	}
@@ -217,6 +224,8 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 	if (map->brush) {
 		map->brush->mouse_press_event(event);
 	}
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+	gl->glBindVertexArray(0);
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event) {

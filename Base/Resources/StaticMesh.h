@@ -42,7 +42,6 @@ public:
 	
 	static constexpr const char* name = "StaticMesh";
 
-
 	explicit StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
@@ -51,5 +50,6 @@ public:
 	void render_opaque_sd() const;
 	void render_opaque_hd() const;
 
-	void render_transparent(int instance_id) const;
+	void render_transparent_sd(int instance_id) const;
+	void render_transparent_hd(int instance_id) const;
 };

@@ -6,8 +6,8 @@ layout (binding = 2) uniform sampler2D orm;
 layout (binding = 3) uniform sampler2D environemt;
 layout (binding = 4) uniform sampler2D emissive;
 
-layout (location = 1) uniform float alpha_test;
-layout (location = 2) uniform bool show_lighting;
+layout (location = 2) uniform float alpha_test;
+layout (location = 3) uniform bool show_lighting;
 
 in vec2 UV;
 in vec3 TangentLightDirection;

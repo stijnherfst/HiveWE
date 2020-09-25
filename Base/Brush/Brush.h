@@ -37,7 +37,6 @@ public:
 
 	Brush();
 
-	virtual void create();
 	virtual void set_position(const glm::vec2& position);
 	virtual glm::vec2 get_position() const;
 	virtual void set_size(int size);

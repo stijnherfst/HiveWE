@@ -69,6 +69,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
 			gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
 			gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
+			// ToDo Tangents in MDX format are optional!!
 			gl->glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 			gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
@@ -143,24 +144,19 @@ void StaticMesh::render_queue(const glm::mat4& model) {
 		mesh_id = map->render_manager.meshes.size() - 1;
 	}
 
-
 	for (const auto& i : entries) {
 		if (!i.visible) {
 			continue;
 		}
-		for (const auto& j : materials[i.material_id].layers) {
-			if (j.blend_mode == 0 || j.blend_mode == 1) {
-				continue;
-			} else {
-				RenderManager::Inst t;
-				t.mesh_id = mesh_id;
-				t.instance_id = render_jobs.size() - 1;
-				t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(model[3]));
-				map->render_manager.transparent_instances.push_back(t);
-				return;
-			}
 
-			break; // Currently only draws the first layer
+		const mdx::Layer& layer = materials[i.material_id].layers.front();
+		if (layer.blend_mode != 0 && layer.blend_mode != 1) {
+			RenderManager::Inst t;
+			t.mesh_id = mesh_id;
+			t.instance_id = render_jobs.size() - 1;
+			t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(model[3]));
+			map->render_manager.transparent_instances.push_back(t);
+			return;
 		}
 	}
 }
@@ -192,24 +188,60 @@ void StaticMesh::render_opaque_sd() const {
 	}
 
 	for (const auto& i : entries) {
-		if (!i.visible || i.hd) {
+		if (i.hd) {
 			continue;
 		}
 
-		auto& layers = materials[i.material_id].layers;
-		if (layers[0].blend_mode == 0) {
-			gl->glUniform1f(1, -1.f);
-		} else if (layers[0].blend_mode == 1) {
-			gl->glUniform1f(1, 0.75f);
-		} else {
-			break;
+		const auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
+			continue;
 		}
 
-		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
-		//gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
-		//gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+		for (const auto j : layers) {
+			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
 
-		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+			switch (j.blend_mode) {
+				case 0:
+				case 1:
+					gl->glBlendFunc(GL_ONE, GL_ZERO);
+				case 2:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					break;
+				case 3:
+					gl->glBlendFunc(GL_ONE, GL_ONE);
+					break;
+				case 4:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+					break;
+				case 5:
+					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+					break;
+				case 6:
+					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+					break;
+			}
+
+			if (j.shading_flags & 0x10) {
+				gl->glDisable(GL_CULL_FACE);
+			} else {
+				gl->glEnable(GL_CULL_FACE);
+			}
+
+			if (j.shading_flags & 0x40) {
+				gl->glDisable(GL_DEPTH_TEST);
+			} else {
+				gl->glEnable(GL_DEPTH_TEST);
+			}
+
+			if (j.shading_flags & 0x80) {
+				gl->glDepthMask(false);
+			} else {
+				gl->glDepthMask(true);
+			}
+
+			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+		}
 	}
 
 	for (int i = 0; i < 4; i++) {
@@ -245,17 +277,32 @@ void StaticMesh::render_opaque_hd() const {
 	}
 
 	for (const auto& i : entries) {
-		if (!i.visible || !i.hd) {
+		if (!i.hd) {
 			continue;
 		}
 
-		auto& layers = materials[i.material_id].layers;
-		if (layers[0].blend_mode == 0) {
-			gl->glUniform1f(1, -1.f);
-		} else if (layers[0].blend_mode == 1) {
-			gl->glUniform1f(1, 0.75f);
+		const auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
+			continue;
+		}
+		gl->glUniform1f(1, layers[0].blend_mode == 1 ? 0.75f : -1.f);
+
+		if (layers[0].shading_flags & 0x10) {
+			gl->glDisable(GL_CULL_FACE);
 		} else {
-			break;
+			gl->glEnable(GL_CULL_FACE);
+		}
+
+		if (layers[0].shading_flags & 0x40) {
+			gl->glDisable(GL_DEPTH_TEST);
+		} else {
+			gl->glEnable(GL_DEPTH_TEST);
+		}
+
+		if (layers[0].shading_flags & 0x80) {
+			gl->glDepthMask(false);
+		} else {
+			gl->glDepthMask(true);
 		}
 
 		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
@@ -270,7 +317,16 @@ void StaticMesh::render_opaque_hd() const {
 	}
 }
 
-void StaticMesh::render_transparent(int instance_id) const {
+//bool unshaded = j.shading_flags & 0x1;
+//bool environment_map = j.shading_flags & 0x2;
+//bool unknown1 = j.shading_flags & 0x4;
+//bool unknown2 = j.shading_flags & 0x8;
+//bool two_sided = j.shading_flags & 0x10;
+//bool unfogged = j.shading_flags & 0x20;
+//bool no_depth_test = j.shading_flags & 0x30;
+//bool no_depth_set = j.shading_flags & 0x40;
+
+void StaticMesh::render_transparent_sd(int instance_id) const {
 	if (!has_mesh) {
 		return;
 	}
@@ -281,6 +337,9 @@ void StaticMesh::render_transparent(int instance_id) const {
 	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
 	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
+	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 
 	glm::mat4 model = render_jobs[instance_id];
@@ -289,15 +348,93 @@ void StaticMesh::render_transparent(int instance_id) const {
 	gl->glUniformMatrix4fv(0, 1, false, &model[0][0]);
 
 	for (const auto& i : entries) {
-		if (!i.visible) {
+		if (i.hd) {
 			continue;
 		}
-		for (const auto& j : materials[i.material_id].layers) {
-			if (j.blend_mode == 0 || j.blend_mode == 1) {
-				continue;
-			}
+
+		const auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
+			continue;
+		}
+		for (const auto& j : layers) {
+			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
 
 			switch (j.blend_mode) {
+				case 0: // Having blend mode None in a geoset with alpha doesn't make sense, but it can happen
+				case 1: // ToDo check if blend mode 1 bit alpha Transparent works for alpha geosets
+					gl->glBlendFunc(GL_ONE, GL_ZERO);
+				case 2:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					break;
+				case 3:
+					gl->glBlendFunc(GL_ONE, GL_ONE);
+					break;
+				case 4:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+					break;
+				case 5:
+					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+					break;
+				case 6:
+					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+					break;
+			}
+
+			if (j.shading_flags & 0x10) {
+				gl->glDisable(GL_CULL_FACE);
+			} else {
+				gl->glEnable(GL_CULL_FACE);
+			}
+
+			if (j.shading_flags & 0x40) {
+				gl->glDisable(GL_DEPTH_TEST);
+			} else {
+				gl->glEnable(GL_DEPTH_TEST);
+			}
+
+			if (j.shading_flags & 0x80) {
+				gl->glDepthMask(false);
+			} else {
+				gl->glDepthMask(true);
+			}
+
+			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+
+			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
+		}
+	}
+}
+
+void StaticMesh::render_transparent_hd(int instance_id) const {
+	if (!has_mesh) {
+		return;
+	}
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
+	gl->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+	gl->glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniformMatrix4fv(1, 1, false, &render_jobs[instance_id][0][0]);
+
+	for (const auto& i : entries) {
+		if (!i.hd) {
+			continue;
+		}
+
+		const auto& layers = materials[i.material_id].layers;
+		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
+			continue;
+		}
+
+		switch (layers[0].blend_mode) {
 			case 2:
 				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				break;
@@ -313,22 +450,30 @@ void StaticMesh::render_transparent(int instance_id) const {
 			case 6:
 				gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 				break;
-			}
-
-			//bool unshaded = j.shading_flags & 0x1;
-			//bool environment_map = j.shading_flags & 0x2;
-			//bool unknown1 = j.shading_flags & 0x4;
-			//bool unknown2 = j.shading_flags & 0x8;
-			//bool two_sided = j.shading_flags & 0x10;
-			//bool unfogged = j.shading_flags & 0x20;
-			//bool no_depth_test = j.shading_flags & 0x30;
-			//bool no_depth_set = j.shading_flags & 0x40;
-
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
-
-			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-			break; // Currently only draws the first layer
 		}
-		//break;
+
+		if (layers[0].shading_flags & 0x10) {
+			gl->glDisable(GL_CULL_FACE);
+		} else {
+			gl->glEnable(GL_CULL_FACE);
+		}
+
+		if (layers[0].shading_flags & 0x40) {
+			gl->glDisable(GL_DEPTH_TEST);
+		} else {
+			gl->glEnable(GL_DEPTH_TEST);
+		}
+
+		if (layers[0].shading_flags & 0x80) {
+			gl->glDepthMask(false);
+		} else {
+			gl->glDepthMask(true);
+		}
+
+		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
+		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
+		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+
+		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}
 }

@@ -28,6 +28,10 @@ class UnitBrush : public Brush {
 	bool clipboard_free_placement = false;
 	std::vector<Unit> clipboard;
 
+	bool dragging = false;
+	float drag_x_offset;
+	float drag_y_offset;
+
 	UnitBrush();
 
 	void set_shape(const Shape new_shape) override;
@@ -35,6 +39,7 @@ class UnitBrush : public Brush {
 	void key_press_event(QKeyEvent* event) override;
 	void key_release_event(QKeyEvent* event) override;
 	void mouse_release_event(QMouseEvent* event) override;
+	void mouse_press_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
 
 	void delete_selection() override;

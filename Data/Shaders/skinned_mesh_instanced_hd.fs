@@ -11,11 +11,12 @@ layout (location = 2) uniform bool show_lighting;
 
 in vec2 UV;
 in vec3 TangentLightDirection;
+in vec4 vertexColor;
 
 out vec4 color;
 
 void main() {
-	color = texture(diffuse, UV);
+	color = texture(diffuse, UV) * vertexColor;
 	
 	// normal is a 2 channel normal map so we have to deduce the 3rd value
 	vec2 texel = texture(normal, UV).rg;

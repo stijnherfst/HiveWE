@@ -15,12 +15,11 @@
 #include "Hierarchy.h"
 #include "Texture.h"
 
-UnitBrush::UnitBrush() : Brush() {
-
+UnitBrush::UnitBrush()
+	: Brush() {
 }
 
 void UnitBrush::set_shape(const Shape new_shape) {
-
 }
 
 void UnitBrush::key_press_event(QKeyEvent* event) {
@@ -72,12 +71,50 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 	}
 }
 
-void UnitBrush::mouse_release_event(QMouseEvent* event) {
+//void UnitBrush::mouse_release_event(QMouseEvent* event) {
+//	Brush::mouse_release_event(event);
+//	//if (event->button() == Qt::LeftButton && mode == Mode::selection) {
+//	//	selection_started = false;
+//	//} else {
+//	//}
+//}
+
+void UnitBrush::mouse_press_event(QMouseEvent* event) {
+
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
+
+	gl->glClearColor(0, 0, 0, 1);
+	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	gl->glViewport(0, 0, map->render_manager.window_width, map->render_manager.window_height);
+
 	if (event->button() == Qt::LeftButton && mode == Mode::selection) {
-		selection_started = false;
-	} else {
-		Brush::mouse_release_event(event);
+		map->render_manager.colored_skinned_shader->use();
+		for (int i = 0; i < map->units.units.size(); i++) {
+			const Unit& unit = map->units.units[i];
+			if (unit.id == "sloc") {
+				continue;
+			} // ToDo handle starting locations
+
+			mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+			if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
+				unit.mesh->render_color_coded(unit.skeleton, i + 1);
+			}
+		}
+
+		glm::u8vec4 color;
+		glReadPixels(input_handler.mouse.x, map->render_manager.window_height - input_handler.mouse.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+
+		const int index = color.r + (color.g << 8) + (color.b << 16);
+		if (index != 0) {
+			Unit& unit = map->units.units[index - 1];
+			selections = { &unit };
+			dragging = true;
+			drag_x_offset = input_handler.mouse_world.x - unit.position.x;
+			drag_y_offset = input_handler.mouse_world.y - unit.position.y;
+			return;
+		}
 	}
+	Brush::mouse_press_event(event);
 }
 
 void UnitBrush::mouse_move_event(QMouseEvent* event) {
@@ -85,7 +122,14 @@ void UnitBrush::mouse_move_event(QMouseEvent* event) {
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
-			if (event->modifiers() & Qt::ControlModifier) {
+			if (dragging) {
+				for (auto& i : selections) {
+					i->position.x = input_handler.mouse_world.x - drag_x_offset;
+					i->position.y = input_handler.mouse_world.y - drag_y_offset;
+					i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+					i->update();
+				}
+			} else if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
 					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
 					if (target_rotation < 0) {
@@ -95,7 +139,7 @@ void UnitBrush::mouse_move_event(QMouseEvent* event) {
 					i->angle = target_rotation;
 					i->update();
 				}
-			} else if (mode == Mode::selection && selection_started) {
+			} else if (selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->units.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 			}
@@ -103,9 +147,15 @@ void UnitBrush::mouse_move_event(QMouseEvent* event) {
 	}
 }
 
+void UnitBrush::mouse_release_event(QMouseEvent* event) {
+	dragging = false;
+
+	Brush::mouse_release_event(event);
+}
+
 void UnitBrush::delete_selection() {
 	if (selections.size()) {
-		
+
 		// Undo/redo
 		map->terrain_undo.new_undo_group();
 		auto action = std::make_unique<UnitDeleteAction>();
@@ -148,7 +198,7 @@ void UnitBrush::place_clipboard() {
 		Unit& new_unit = map->units.add_unit(i);
 		new_unit.creation_number = ++Unit::auto_increment;
 		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
-		
+
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 
 		new_unit.position = final_position;
@@ -196,7 +246,6 @@ void UnitBrush::render_brush() {
 	//matrix = glm::scale(matrix, final_scale);
 	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
-
 	//matrix = glm::translate(matrix, input_handler.mouse_world);
 	//matrix = glm::scale(matrix, glm::vec3(1.f / 128.f));
 	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
@@ -232,7 +281,6 @@ void UnitBrush::render_selection() const {
 
 		gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
 		gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
 	}
 
 	gl->glDisableVertexAttribArray(0);
@@ -258,8 +306,8 @@ void UnitBrush::set_random_rotation() {
 	std::mt19937 gen(rd());
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
-	rotation = dist(gen);;
-
+	rotation = dist(gen);
+	;
 }
 
 void UnitBrush::set_unit(const std::string& id) {

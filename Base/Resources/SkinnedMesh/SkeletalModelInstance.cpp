@@ -43,23 +43,23 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 
 	current_keyframes.resize(model->unique_tracks);
 
-	for (auto& i : render_nodes) {
+	for (const auto& i : render_nodes) {
 		calculate_sequence_extents(i.node->KGTR);
 		calculate_sequence_extents(i.node->KGRT);
 		calculate_sequence_extents(i.node->KGSC);
 	}
 
-	//for (auto& i : model->materials) {
-	//	for (auto& j : i.layers) {
-	//		// Add more when used
-	//		calculate_sequence_extents(j.KMTA);
-	//	}
-	//}
+	for (const auto& i : model->animations) {
+		calculate_sequence_extents(i.KGAC);
+		calculate_sequence_extents(i.KGAO);
+	}
 
-	//for (auto& i : model->animations) {
-	//	calculate_sequence_extents(i.KGAC);
-	//	calculate_sequence_extents(i.KGAO);
-	//}
+	for (const auto& i : model->materials) {
+		for (const auto& j : i.layers) {
+			calculate_sequence_extents(j.KMTA);
+			// Add more when required
+		}
+	}
 }
 
 void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
@@ -92,23 +92,23 @@ void SkeletalModelInstance::update(double delta) {
 		}
 	}
 
-	for (auto& i : render_nodes) {
+	for (const auto& i : render_nodes) {
 		advance_keyframes(i.node->KGTR);
 		advance_keyframes(i.node->KGRT);
 		advance_keyframes(i.node->KGSC);
 	}
 
-	//for (auto& i : model->materials) {
-	//	for (auto& j : i.layers) {
-	//		// Add more when used
-	//		advance_keyframes(j.KMTA);
-	//	}
-	//}
+	for (const auto& i : model->animations) {
+		advance_keyframes(i.KGAC);
+		advance_keyframes(i.KGAO);
+	}
 
-	//for (auto& i : model->animations) {
-	//	advance_keyframes(i.KGAC);
-	//	advance_keyframes(i.KGAO);
-	//}
+	for (const auto& i : model->materials) {
+		for (const auto& j : i.layers) {
+			advance_keyframes(j.KMTA);
+			// Add more when required
+		}
+	}
 
 	updateNodes();
 }
@@ -143,7 +143,7 @@ void SkeletalModelInstance::set_sequence(int sequence_index) {
 }
 
 template <typename T>
-void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& header) {
+void SkeletalModelInstance::calculate_sequence_extents(const mdx::TrackHeader<T>& header) {
 	if (header.id == -1) {
 		return;
 	}
@@ -172,7 +172,6 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 	for (int i = 0; i < header.tracks.size(); i++) {
 		const mdx::Track<T>& track = header.tracks[i];
 
-
 		if (track.frame > local_sequence_end) {
 			break;
 		}
@@ -189,19 +188,15 @@ void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<T>& head
 			current.right = i;
 		}
 
-		//if (track.frame <= local_sequence_end) {
-			current.end = i;
-		//}
+		current.end = i;
 	}
-
-	//header.current.right = std::min(header.current.left + 1, header.current.end);
 }
 
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::vec3>& header);
-template void SkeletalModelInstance::calculate_sequence_extents(mdx::TrackHeader<glm::quat>& header);
+template void SkeletalModelInstance::calculate_sequence_extents(const mdx::TrackHeader<glm::vec3>& header);
+template void SkeletalModelInstance::calculate_sequence_extents(const mdx::TrackHeader<glm::quat>& header);
 
 template <typename T>
-void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
+void SkeletalModelInstance::advance_keyframes(const mdx::TrackHeader<T>& header) {
 	if (header.id == -1) {
 		return;
 	}
@@ -256,22 +251,19 @@ void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<T>& header) {
 	}
 }
 
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::vec3>& header);
-template void SkeletalModelInstance::advance_keyframes(mdx::TrackHeader<glm::quat>& header);
+template void SkeletalModelInstance::advance_keyframes(const mdx::TrackHeader<glm::vec3>& header);
+template void SkeletalModelInstance::advance_keyframes(const mdx::TrackHeader<glm::quat>& header);
 
 glm::vec3 SkeletalModelInstance::get_geoset_animation_color(mdx::GeosetAnimation& animation) const {
-	//return interpolate_keyframes(animation.KGAC, animation.color);
-	return animation.color;
+	return interpolate_keyframes(animation.KGAC, animation.color);
 }
 
 float SkeletalModelInstance::get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) const {
-	//return interpolate_keyframes(animation.KGAO, animation.alpha);
-	return animation.alpha;
+	return interpolate_keyframes(animation.KGAO, animation.alpha);
 }
 
 float SkeletalModelInstance::get_layer_visiblity(mdx::Layer& layer) const {
-	//return interpolate_keyframes(layer.KMTA, layer.alpha);
-	return layer.alpha;
+	return interpolate_keyframes(layer.KMTA, layer.alpha);
 }
 
 template <typename T>
