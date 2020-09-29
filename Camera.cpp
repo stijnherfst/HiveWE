@@ -245,8 +245,8 @@ void TPSCamera::mouse_move_event(QMouseEvent* event) {
 	glm::vec2 diff = input_handler.mouse - input_handler.previous_mouse;
 
 	if (rolling || (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier)) {
-		horizontal_angle += -diff.x * 0.0025f;
-		vertical_angle += diff.y * 0.0025f;
+		horizontal_angle += diff.x * 0.0025f;
+		vertical_angle -= diff.y * 0.0025f;
 		vertical_angle = std::max(-glm::pi<float>() / 2.f + 0.001f, std::min(vertical_angle, glm::pi<float>() / 2.f - 0.001f));
 		update(0);
 	} else if (event->buttons() == Qt::RightButton) {
@@ -266,6 +266,7 @@ void TPSCamera::mouse_press_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = true;
+			break;
         default:
 			break;
 	}
@@ -275,6 +276,7 @@ void TPSCamera::mouse_release_event(QMouseEvent* event) {
 	switch (event->button()) {
 		case Qt::MiddleButton:
 			rolling = false;
+			break;
         default:
 			break;
 	}

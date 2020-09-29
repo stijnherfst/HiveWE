@@ -65,7 +65,7 @@ public:
 	void apply_end() override;
 	void render_brush() override;
 	void render_selection() const override;
-	void render_clipboard() const override;
+	void render_clipboard() override;
 
 	void set_random_rotation();
 	void set_random_variation();

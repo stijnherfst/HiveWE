@@ -21,64 +21,66 @@ StaticMesh::StaticMesh(const fs::path& path) {
 	gl->glBindVertexArray(vao);
 
 	has_mesh = model.geosets.size();
-	if (has_mesh) {
-		// Calculate required space
-		for (auto&& i : model.geosets) {
-			if (i.lod != 0) {
-				continue;
-			}
-			vertices += i.vertices.size();
-			indices += i.faces.size();
+	if (!has_mesh) {
+		return;
+	}
+
+	// Calculate required space
+	for (auto&& i : model.geosets) {
+		if (i.lod != 0) {
+			continue;
 		}
+		vertices += i.vertices.size();
+		indices += i.faces.size();
+	}
 
-		// Allocate space
-		gl->glCreateBuffers(1, &vertex_buffer);
-		gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	// Allocate space
+	gl->glCreateBuffers(1, &vertex_buffer);
+	gl->glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &uv_buffer);
-		gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+	gl->glCreateBuffers(1, &uv_buffer);
+	gl->glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &normal_buffer);
-		gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	gl->glCreateBuffers(1, &normal_buffer);
+	gl->glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &tangent_buffer);
-		gl->glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+	gl->glCreateBuffers(1, &tangent_buffer);
+	gl->glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 
-		gl->glCreateBuffers(1, &instance_buffer);
+	gl->glCreateBuffers(1, &instance_buffer);
 
-		gl->glCreateBuffers(1, &index_buffer);
-		gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+	gl->glCreateBuffers(1, &index_buffer);
+	gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
 
-		// Buffer Data
-		int base_vertex = 0;
-		int base_index = 0;
-		for (const auto& i : model.geosets) {
-			if (i.lod != 0) {
-				continue;
-			}
-			MeshEntry entry;
-			entry.vertices = static_cast<int>(i.vertices.size());
-			entry.base_vertex = base_vertex;
-
-			entry.indices = static_cast<int>(i.faces.size());
-			entry.base_index = base_index;
-
-			entry.material_id = i.material_id;
-			entry.hd = !model.materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
-			entry.extent = i.extent;
-
-			entries.push_back(entry);
-
-			gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-			gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
-			gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
-			// ToDo Tangents in MDX format are optional!!
-			gl->glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
-			gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
-
-			base_vertex += entry.vertices;
-			base_index += entry.indices;
+	// Buffer Data
+	int base_vertex = 0;
+	int base_index = 0;
+	for (const auto& i : model.geosets) {
+		if (i.lod != 0) {
+			continue;
 		}
+		MeshEntry entry;
+		entry.vertices = static_cast<int>(i.vertices.size());
+		entry.base_vertex = base_vertex;
+
+		entry.indices = static_cast<int>(i.faces.size());
+		entry.base_index = base_index;
+
+		entry.material_id = i.material_id;
+		entry.hd = !model.materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
+		entry.extent = i.extent;
+
+		geosets.push_back(entry);
+
+		gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
+		gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
+		gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
+		// ToDo Tangents in MDX format are optional!!
+		gl->glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+		gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+
+		base_vertex += entry.vertices;
+		base_index += entry.indices;
 	}
 
 	materials = model.materials;
@@ -98,10 +100,10 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			std::string to = i.file_name.stem().string();
 
 			// Only load diffuse to keep memory usage down
-			/*if (to.ends_with("Normal") || to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
-				textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-				continue;
-			}*/
+			//if (to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
+			//	textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
+			//	continue;
+			//}
 
 			fs::path new_path = i.file_name;
 			new_path.replace_extension(".dds");
@@ -121,10 +123,6 @@ StaticMesh::StaticMesh(const fs::path& path) {
 			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
-	}
-
-	if (!has_mesh) {
-		return;
 	}
 
 	gl->glEnableVertexAttribArray(0);
@@ -179,18 +177,13 @@ void StaticMesh::render_queue(const glm::mat4& model) {
 	// Register for opaque drawing
 	if (render_jobs.size() == 1) {
 		map->render_manager.meshes.push_back(this);
-		mesh_id = map->render_manager.meshes.size() - 1;
 	}
 
-	for (const auto& i : entries) {
-		if (!i.visible) {
-			continue;
-		}
-
+	for (const auto& i : geosets) {
 		const mdx::Layer& layer = materials[i.material_id].layers.front();
 		if (layer.blend_mode != 0 && layer.blend_mode != 1) {
-			RenderManager::Inst t;
-			t.mesh_id = mesh_id;
+			RenderManager::StaticInstance t;
+			t.mesh = this;
 			t.instance_id = render_jobs.size() - 1;
 			t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(model[3]));
 			map->render_manager.transparent_instances.push_back(t);
@@ -208,7 +201,7 @@ void StaticMesh::render_opaque_sd() const {
 
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
 
-	for (const auto& i : entries) {
+	for (const auto& i : geosets) {
 		if (i.hd) {
 			continue;
 		}
@@ -273,7 +266,7 @@ void StaticMesh::render_opaque_hd() const {
 
 	gl->glBindVertexArray(vao);
 
-	for (const auto& i : entries) {
+	for (const auto& i : geosets) {
 		if (!i.hd) {
 			continue;
 		}
@@ -331,7 +324,7 @@ void StaticMesh::render_transparent_sd(int instance_id) const {
 
 	gl->glUniformMatrix4fv(0, 1, false, &model[0][0]);
 
-	for (const auto& i : entries) {
+	for (const auto& i : geosets) {
 		if (i.hd) {
 			continue;
 		}
@@ -397,9 +390,9 @@ void StaticMesh::render_transparent_hd(int instance_id) const {
 	gl->glBindVertexArray(vao);
 
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
-	gl->glUniformMatrix4fv(1, 1, false, &render_jobs[instance_id][0][0]);
+	gl->glUniformMatrix4fv(3, 1, false, &render_jobs[instance_id][0][0]);
 
-	for (const auto& i : entries) {
+	for (const auto& i : geosets) {
 		if (!i.hd) {
 			continue;
 		}

@@ -6,7 +6,7 @@ layout (location = 2) in vec3 vNormal;
 layout (location = 3) in vec4 vTangent;
 
 layout (location = 0) uniform mat4 VP;
-layout (location = 1) uniform mat4 M;
+layout (location = 3) uniform mat4 M;
 
 out vec2 UV;
 out vec3 TangentLightDirection;

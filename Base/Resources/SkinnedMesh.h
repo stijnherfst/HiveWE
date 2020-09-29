@@ -22,15 +22,11 @@ class SkinnedMesh : public Resource {
 
 		bool hd = true;
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
-		// below vectors are per-instance:
-		std::vector<float> geoset_anim_alphas;
-		std::vector<glm::vec3> geoset_anim_colors;
-		std::vector<float> layer_alphas;
 	};
 
 	std::shared_ptr<mdx::MDX> model;
 
-	std::vector<MeshEntry> entries;
+	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
 
 	GLuint vao;
@@ -41,15 +37,18 @@ class SkinnedMesh : public Resource {
 	GLuint weight_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
-	GLuint retera_node_buffer;
-	GLuint retera_node_buffer_texture;
+	GLuint bone_matrix_buffer;
+	GLuint bone_matrix_texture;
 	GLuint layer_alpha;
 	GLuint geoset_color;
 
+	GLuint layer_colors_ssbo;
+
+	int skip_count = 0;
+
 	fs::path path;
-	int mesh_id;
+//	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
-	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
 	std::vector<const SkeletalModelInstance*> skeletons;
 	std::vector<glm::mat4> instance_bone_matrices;

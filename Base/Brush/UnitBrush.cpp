@@ -15,8 +15,7 @@
 #include "Hierarchy.h"
 #include "Texture.h"
 
-UnitBrush::UnitBrush()
-	: Brush() {
+UnitBrush::UnitBrush() : Brush() {
 }
 
 void UnitBrush::set_shape(const Shape new_shape) {
@@ -123,6 +122,14 @@ void UnitBrush::mouse_move_event(QMouseEvent* event) {
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
 			if (dragging) {
+				if (!dragged) {
+					dragged = true;
+					map->terrain_undo.new_undo_group();
+					unit_state_undo = std::make_unique<UnitStateAction>();
+					for (const auto& i : selections) {
+						unit_state_undo->old_units.push_back(*i);
+					}
+				}
 				for (auto& i : selections) {
 					i->position.x = input_handler.mouse_world.x - drag_x_offset;
 					i->position.y = input_handler.mouse_world.y - drag_y_offset;
@@ -149,6 +156,13 @@ void UnitBrush::mouse_move_event(QMouseEvent* event) {
 
 void UnitBrush::mouse_release_event(QMouseEvent* event) {
 	dragging = false;
+	if (dragged) {
+		dragged = false;
+		for (const auto& i : selections) {
+			unit_state_undo->new_units.push_back(*i);
+		}
+		map->terrain_undo.add_undo_action(std::move(unit_state_undo));
+	}
 
 	Brush::mouse_release_event(event);
 }
@@ -238,17 +252,9 @@ void UnitBrush::render_brush() {
 	const float model_scale = units_slk.data<float>("modelscale", id);
 	const float move_height = units_slk.data<float>("moveheight", id);
 
-	const glm::vec3 final_position = input_handler.mouse_world + glm::vec3(0.f, 0.f, move_height / 128.f);
+	glm::vec3 final_position = input_handler.mouse_world;
+	final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y) + move_height / 128.f;
 	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
-
-	//glm::mat4 matrix(1.f);
-	//matrix = glm::translate(matrix, final_position);
-	//matrix = glm::scale(matrix, final_scale);
-	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
-
-	//matrix = glm::translate(matrix, input_handler.mouse_world);
-	//matrix = glm::scale(matrix, glm::vec3(1.f / 128.f));
-	//matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
 
 	if (mesh) {
 		skeleton.updateLocation(final_position, rotation, final_scale);
@@ -263,11 +269,7 @@ void UnitBrush::render_selection() const {
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		float selection_scale = 1.f;
-
-		//if (i->mesh->animations.size()) {
-		//	selection_scale = i->mesh->animations.begin()->second.extent.bounds_radius / 128.f;
-		//}
+		float selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -287,16 +289,18 @@ void UnitBrush::render_selection() const {
 	gl->glEnable(GL_DEPTH_TEST);
 }
 
-void UnitBrush::render_clipboard() const {
+void UnitBrush::render_clipboard() {
 	for (auto& i : clipboard) {
+		const float model_scale = units_slk.data<float>("modelscale", i.id);
+		const float move_height = units_slk.data<float>("moveheight", i.id);
+
 		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
-		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y) + move_height / 128.f;
 
-		glm::mat4 model(1.f);
-		model = glm::translate(model, final_position);
-		model = glm::scale(model, glm::vec3(1.f) / 128.f);
-		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
+		const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
 
+		i.skeleton.updateLocation(final_position, i.angle, final_scale);
+		i.skeleton.update(0.016f);
 		i.mesh->render_queue(i.skeleton);
 	}
 }
@@ -307,10 +311,10 @@ void UnitBrush::set_random_rotation() {
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
 	rotation = dist(gen);
-	;
 }
 
 void UnitBrush::set_unit(const std::string& id) {
+	context->makeCurrent();
 	this->id = id;
 	mesh = map->units.get_mesh(id);
 	skeleton = SkeletalModelInstance(mesh->model);

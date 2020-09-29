@@ -11,6 +11,7 @@
 #include "INI.h"
 #include "TableModel.h"
 #include "SLK.h"
+#include "GLWidget.h"
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT
@@ -98,3 +99,4 @@ extern TableModel* buff_table;
 extern slk::SLK buff_slk;
 extern slk::SLK buff_meta_slk;
 
+extern GLWidget* context;

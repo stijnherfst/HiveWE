@@ -29,6 +29,7 @@ class UnitBrush : public Brush {
 	std::vector<Unit> clipboard;
 
 	bool dragging = false;
+	bool dragged = false;
 	float drag_x_offset;
 	float drag_y_offset;
 
@@ -53,7 +54,7 @@ class UnitBrush : public Brush {
 	void apply_end() override;
 	void render_brush() override;
 	void render_selection() const override;
-	void render_clipboard() const override;
+	void render_clipboard() override;
 
 	void set_random_rotation();
 	void set_unit(const std::string& id);

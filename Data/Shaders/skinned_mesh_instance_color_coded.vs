@@ -4,10 +4,10 @@ layout (location = 0) in vec3 vPosition;
 layout (location = 1) in uvec2 vSkin;
 
 layout (location = 0) uniform mat4 MVP;
-layout (location = 3) uniform int nodeCount;
+layout (location = 3) uniform int bone_count;
 layout (location = 4) uniform vec3 geoset_color;
 layout (location = 5) uniform float layer_alpha;
-layout (location = 8) uniform mat4 bones[200]; // Thats a lotta boners. max 200 because the shader compiles issues an error when going higher
+layout (location = 8) uniform mat4 bones[217]; // Thats a lotta boners. max 200 because the shader compiles issues an error when going higher
 
 void main() {
 	const mat4 b0 = bones[int(vSkin.x & 0x000000FF)];
@@ -26,7 +26,4 @@ void main() {
 	gl_Position = MVP * position;
 	
 	vec4 vertexColor = vec4(geoset_color, layer_alpha);
-	if(vertexColor.a <= 0.75f) {
-		gl_Position = vec4(0.f);
-	}
 }

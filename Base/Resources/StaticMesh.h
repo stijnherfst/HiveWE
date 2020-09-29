@@ -19,11 +19,10 @@ public:
 
 		int material_id = 0;
 		bool hd = true;
-		bool visible = true;
 		mdx::Extent extent;
 	};
 
-	std::vector<MeshEntry> entries;
+	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
 	mdx::Extent extent;
 
@@ -36,7 +35,6 @@ public:
 	GLuint instance_buffer;
 
 	fs::path path;
-	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;

@@ -64,7 +64,7 @@ public:
 	void render();
 	virtual void render_selector() const;
 	virtual void render_selection() const {};
-	virtual void render_clipboard() const {}
+	virtual void render_clipboard() {}
 	virtual void render_brush();
 
 	virtual bool can_place() {

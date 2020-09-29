@@ -102,22 +102,13 @@ namespace mdx {
 		T outTan;
 	};
 
-	//// To keep track of what 
-	//struct CurrentKeyFrame {
-	//	int start = -1;
-	//	int end = 0;
-	//	int left = 0;
-	//	int right = 0;
-	//};
-
 	template <typename T>
 	struct TrackHeader {
 		int32_t interpolation_type = 0;
 		int32_t global_sequence_ID = -1;
 		std::vector<Track<T>> tracks;
 
-		//CurrentKeyFrame current;
-		int id = -1;
+		int id = -1; // Used to track each individual track for animation purposes
 
 		TrackHeader() = default;
 		explicit TrackHeader(BinaryReader& reader, int track_id) {

@@ -147,7 +147,13 @@ void GLWidget::paintGL() {
 		p.setFont(QFont("Arial", 10, 100, false));
 		
 		// Rendering time
-		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.4f}ms", delta * 1000.f)));
+		static std::vector<double> frametimes;
+		frametimes.push_back(delta * 1000.f);
+		if (frametimes.size() > 60) {
+			frametimes.erase(frametimes.begin());
+		}
+		float average_frametime = std::accumulate(frametimes.begin(), frametimes.end(), 0.f) / frametimes.size();
+		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.4f}ms", average_frametime)));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString(fmt::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));

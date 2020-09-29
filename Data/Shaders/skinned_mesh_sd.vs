@@ -4,25 +4,29 @@ layout (location = 0) in vec3 vPosition;
 layout (location = 1) in vec2 vUV;
 layout (location = 2) in vec3 vNormal;
 layout (location = 4) in uvec2 vSkin;
-layout (location = 9) in float layer_alpha;
-layout (location = 10) in vec3 geoset_color;
 
 layout (location = 0) uniform mat4 MVP;
-layout (location = 3) uniform int nodeCount;
+layout (location = 3) uniform int bone_count;
 layout (location = 4) uniform int instanceID;
+layout (location = 5) uniform int layer_skip_count;
+layout (location = 6) uniform int layer_index;
 
-layout (binding = 2) uniform samplerBuffer nodeMatrices;
+layout(std430, binding = 0) buffer layoutName {
+    vec4 layer_colors[];
+};
+
+layout (binding = 5) uniform samplerBuffer nodeMatrices;
 
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
 
-mat4 fetchMatrix(int nodeIndex) {
+mat4 fetchMatrix(int bone_index) {
 	return mat4(
-		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4),
-		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 1),
-		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 2),
-		texelFetch(nodeMatrices, instanceID * nodeCount * 4 + nodeIndex * 4 + 3));
+		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4),
+		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 1),
+		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 2),
+		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 3));
 }
 
 void main() {
@@ -40,7 +44,8 @@ void main() {
 	position.w = 1.f;
 
 	gl_Position = MVP * position;
+	
 	UV = vUV;
-
-	vertexColor = vec4(geoset_color, layer_alpha);
+	Normal = vNormal;
+	vertexColor = layer_colors[instanceID * layer_skip_count + layer_index];
 }

@@ -10,8 +10,7 @@
 
 
 
-class RenderNode {
-  public:
+struct RenderNode {
 	RenderNode() = default;
 	RenderNode(mdx::Node& node, glm::vec3 pivot);
 	mdx::Node* node;

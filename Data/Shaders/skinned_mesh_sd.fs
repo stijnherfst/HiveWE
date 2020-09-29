@@ -9,19 +9,20 @@ in vec2 UV;
 in vec3 Normal;
 in vec4 vertexColor;
 
-out vec4 outColor;
+out vec4 color;
 
 void main() {
-	outColor = texture(image, UV);// * vertexColor;
+	color = texture(image, UV) * vertexColor;
 
-	// if (show_lighting) {
-	// 	vec3 light_direction = vec3(-0.3, -0.3, 0.25);
-	// 	light_direction = normalize(light_direction);
+	if (show_lighting) {
+		vec3 light_direction = vec3(-0.3f, -0.3f, 0.25f);
+		light_direction = normalize(light_direction);
 
-	// 	outColor.rgb *= clamp(dot(Normal, light_direction) + 0.45, 0, 1);
-	// }
+		float contribution = (dot(Normal, light_direction) + 1.f) * 0.5f;
+		color.rgb *= clamp(contribution + 0.3f, 0.f, 1.f);
+	}
 
-	if (outColor.a < alpha_test) {
+	if (color.a < alpha_test) {
 		discard;
 	}
 }

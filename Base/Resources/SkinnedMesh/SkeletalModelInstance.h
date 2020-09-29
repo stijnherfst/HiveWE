@@ -33,7 +33,6 @@ class SkeletalModelInstance {
 	std::shared_ptr<mdx::MDX> model;
 
 	int sequence_index = 0; // can be -1 if not animating
-	
 	int current_frame = 0;
 
 	glm::quat inverseCameraRotationXSpin;
@@ -41,12 +40,11 @@ class SkeletalModelInstance {
 	glm::quat inverseCameraRotationZSpin;
 
 	glm::mat4 matrix = glm::mat4(1.f);
-	glm::vec3 position;
-	float facingAngle;
 	glm::quat inverseInstanceRotation;
 
 	std::vector<CurrentKeyFrame> current_keyframes;
 	std::vector<RenderNode> render_nodes;
+	std::vector<glm::mat4> world_matrices;
 
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model);

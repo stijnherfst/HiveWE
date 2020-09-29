@@ -17,6 +17,7 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 	
 	// ToDo: for each camera: add camera source node to renderNodes
 	render_nodes.resize(node_count);
+	world_matrices.resize(node_count);
 	model->forEachNode([&](mdx::Node& object) {
 		// Seen it happen with Emmitter1, is this an error in the model?
 		// ToDo purge (when adding a validation layer or just crashing)
@@ -63,8 +64,8 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 }
 
 void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
-	this->position = position;
-	this->facingAngle = angle;
+	//this->position = position;
+	//this->facingAngle = angle;
 	glm::vec3 origin = glm::vec3(0, 0, 0);
 	glm::vec3 stackScale = scale;
 	glm::vec3 axis = glm::vec3(0, 0, 1);
@@ -118,9 +119,19 @@ void SkeletalModelInstance::updateNodes() {
 
 	// update skeleton to position based on animation @ time
 	for (auto& node : render_nodes) {
-		node.position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
-		node.rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
-		node.scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+		//node.position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
+		//node.rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
+		//node.scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+
+		glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
+		glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
+		glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+
+		fromRotationTranslationScaleOrigin(rotation, position, scale, world_matrices[node.node->id], node.pivot);
+
+		if (node.node->parent_id != -1) {
+			world_matrices[node.node->id] = world_matrices[node.node->parent_id] * world_matrices[node.node->id];
+		}
 
 		//if (node.billboarded || node.billboardedX) {
 		//	// Cancel the parent's rotation
@@ -134,7 +145,7 @@ void SkeletalModelInstance::updateNodes() {
 		//}
  
 
-		node.recalculateTransformation();
+		//node.recalculateTransformation();
 	}
 }
 

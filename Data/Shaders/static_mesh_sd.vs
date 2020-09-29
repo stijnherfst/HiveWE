@@ -7,8 +7,10 @@ layout (location = 2) in vec3 vNormal;
 layout (location = 0) uniform mat4 MVP;
 
 out vec2 UV;
+out vec3 Normal;
 
 void main() {
 	gl_Position = MVP * vec4(vPosition, 1);
 	UV = vUV;
+	Normal = vNormal;
 }

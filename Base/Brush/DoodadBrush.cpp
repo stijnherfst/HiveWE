@@ -410,7 +410,7 @@ void DoodadBrush::render_selection() const {
 	gl->glEnable(GL_DEPTH_TEST);
 }
 
-void DoodadBrush::render_clipboard() const {
+void DoodadBrush::render_clipboard() {
 	for (const auto& i : clipboard) {
 		glm::vec3 base_scale = glm::vec3(1.f);
 
@@ -438,6 +438,7 @@ void DoodadBrush::render_clipboard() const {
 
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
+	context->makeCurrent();
 	mesh = map->doodads.get_mesh(id, variation);
 }
 

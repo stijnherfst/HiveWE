@@ -70,6 +70,8 @@ TableModel* buff_table;
 slk::SLK buff_slk;
 slk::SLK buff_meta_slk;
 
+GLWidget* context;
+
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
@@ -93,6 +95,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	output2.write((char*)blizzard.buffer.data(), blizzard.buffer.size());
 
 	ui.setupUi(this);
+	context = ui.widget;
 	restore_window_state();
 
 	world_edit_strings.load("UI/WorldEditStrings.txt");
@@ -218,7 +221,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-
+	
+	ui.widget->makeCurrent();
 	map->load("Data/Test Map/");
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 }
@@ -248,7 +252,7 @@ void HiveWE::load_folder() {
 	map = new Map();
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-		
+	
 	ui.widget->makeCurrent();
 	map->load(directory);
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());

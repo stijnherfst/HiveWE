@@ -7,8 +7,14 @@
 
 class RenderManager {
 public:
-	struct Inst {
-		int mesh_id;
+	struct StaticInstance {
+		StaticMesh* mesh;
+		int instance_id;
+		float distance;
+	};
+
+	struct SkinnedInstance {
+		SkinnedMesh* mesh;
 		int instance_id;
 		float distance;
 	};
@@ -25,9 +31,9 @@ public:
 	std::shared_ptr<Shader> colored_skinned_shader;
 
 	std::vector<StaticMesh*> meshes;
-	std::vector<SkinnedMesh*> animated_meshes;
-	std::vector<Inst> transparent_instances;
-	std::vector<Inst> skinned_transparent_instances;
+	std::vector<SkinnedMesh*> skinned_meshes;
+	std::vector<StaticInstance> transparent_instances;
+	std::vector<SkinnedInstance> skinned_transparent_instances;
 
 	GLuint color_buffer;
 	GLuint depth_buffer;
