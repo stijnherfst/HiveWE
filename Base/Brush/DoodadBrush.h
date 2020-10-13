@@ -9,6 +9,8 @@
 #include "PathingTexture.h"
 
 class DoodadBrush : public Brush {
+	Q_OBJECT
+
 	std::set<int> possible_variations = { 0 };
 	int get_random_variation();
 
@@ -30,6 +32,8 @@ public:
 	bool select_doodads = true;
 	bool select_destructibles = true;
 
+	bool lock_doodad_z = false;
+
 	float scale = 1.f;
 	float min_scale = 1.f;
 	float max_scale = 1.f;
@@ -37,13 +41,27 @@ public:
 	float rotation = 0.f;
 	float roll = 0.f;
 
+	std::unique_ptr<DoodadAddAction> doodad_undo;
+	std::unique_ptr<DoodadStateAction> doodad_state_undo;
+
 	std::vector<Doodad*> selections;
 	glm::vec2 clipboard_mouse_position;
 	bool clipboard_free_placement = false;
 	std::vector<Doodad> clipboard;
 
-	std::unique_ptr<DoodadAddAction> doodad_undo;
-	std::unique_ptr<DoodadStateAction> doodad_state_undo;
+	bool dragging = false;
+	bool dragged = false;
+	float drag_x_offset;
+	float drag_y_offset;
+
+	enum class Action {
+		none,
+		drag,
+		move,
+		rotate
+	};
+
+	Action action = Action::none;
 
 	DoodadBrush();
 
@@ -51,8 +69,9 @@ public:
 
 	void key_press_event(QKeyEvent* event) override;
 	void key_release_event(QKeyEvent* event) override;
-	void mouse_release_event(QMouseEvent* event) override;
+	void mouse_press_event(QMouseEvent* event) override;
 	void mouse_move_event(QMouseEvent* event) override;
+	void mouse_release_event(QMouseEvent* event) override;
 
 	void delete_selection() override;
 	void copy_selection() override;
@@ -73,4 +92,11 @@ public:
 	void erase_variation(int variation);
 
 	void set_doodad(const std::string& id);
+
+	void start_action(Action new_action);
+	void end_action();
+
+signals:
+	void selection_changed();
+	void angle_changed();
 };

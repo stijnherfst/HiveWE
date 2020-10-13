@@ -58,6 +58,30 @@ void Doodad::update() {
 	}
 }
 
+float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
+	bool fixed_rotation = false;
+	if (doodads_slk.row_headers.contains(id)) {
+		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
+	} else {
+		fixed_rotation = destructibles_slk.data<int>("fixedrot", id) > 0;
+	}
+
+	if (fixed_rotation) {
+		return current_angle;
+	}
+
+	if (pathing) {
+		if (pathing->width == pathing->height && pathing->homogeneous) {
+			return target_angle;
+		} else {
+			return (static_cast<int>((target_angle + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
+		}
+	} else {
+		return target_angle;
+	}
+}
+
+
 bool Doodads::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.doo");
 

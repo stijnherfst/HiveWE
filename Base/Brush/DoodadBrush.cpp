@@ -90,12 +90,8 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
-		if (!event->isAutoRepeat()) {
-			map->terrain_undo.new_undo_group();
-			doodad_state_undo = std::make_unique<DoodadStateAction>();
-			for (const auto& i : selections) {
-				doodad_state_undo->old_doodads.push_back(*i);
-			}
+		if (action == Action::none) {
+			start_action(Action::move);
 		}
 
 		bool left = event->key() == Qt::Key_1 || event->key() == Qt::Key_4 || event->key() == Qt::Key_7;
@@ -118,15 +114,22 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::ControlModifier) {
 		switch (event->key()) {
 			case Qt::Key_A:
-					selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
+				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
+				emit selection_changed();
 				break;
 			case Qt::Key_PageUp:
+				if (action == Action::none) {
+					start_action(Action::move);
+				}
 				for (const auto& i : selections) {
 					i->position.z += 0.1f;
 					i->update();
 				}
 				break;
 			case Qt::Key_PageDown:
+				if (action == Action::none) {
+					start_action(Action::move);
+				}
 				for (const auto& i : selections) {
 					i->position.z -= 0.1f;
 					i->update();
@@ -138,12 +141,18 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	} else {
 		switch (event->key()) {
 			case Qt::Key_PageUp:
+				if (action == Action::none) {
+					start_action(Action::move);
+				}
 				for (const auto& i : selections) {
 					i->scale.z += 0.1f;
 					i->update();
 				}
 				break;
 			case Qt::Key_PageDown:
+				if (action == Action::none) {
+					start_action(Action::move);
+				}
 				for (const auto& i : selections) {
 					i->scale.z -= 0.1f;
 					i->update();
@@ -156,22 +165,47 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 }
 
 void DoodadBrush::key_release_event(QKeyEvent* event) {
-	if (!event->isAutoRepeat()) {
-		if (doodad_state_undo) {
-			for (const auto& i : selections) {
-				doodad_state_undo->new_doodads.push_back(*i);
-			}
-			map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
-		}
+	if (event->isAutoRepeat()) {
+		return;
+	}
+		
+	if (action == Action::move) {
+		end_action();
 	}
 }
 
-void DoodadBrush::mouse_release_event(QMouseEvent* event) {
-	if (event->button() == Qt::LeftButton && mode == Mode::selection) {
-		selection_started = false;
-	} else {
-		Brush::mouse_release_event(event);
+void DoodadBrush::mouse_press_event(QMouseEvent* event) {
+	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
+		gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
+
+		gl->glClearColor(0, 0, 0, 1);
+		gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		gl->glViewport(0, 0, map->render_manager.window_width, map->render_manager.window_height);
+
+		map->render_manager.colored_static_shader->use();
+		for (int i = 0; i < map->doodads.doodads.size(); i++) {
+			const Doodad& doodad = map->doodads.doodads[i];
+			mdx::Extent& extent = doodad.mesh->extent;
+			if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
+				doodad.mesh->render_color_coded(i + 1, doodad.matrix);
+			}
+		}
+
+		glm::u8vec4 color;
+		glReadPixels(input_handler.mouse.x, map->render_manager.window_height - input_handler.mouse.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+
+		const int index = color.r + (color.g << 8) + (color.b << 16);
+		if (index != 0) {
+			Doodad& doodad = map->doodads.doodads[index - 1];
+			selections = { &doodad };
+			emit selection_changed();
+			dragging = true;
+			drag_x_offset = input_handler.mouse_world.x - doodad.position.x;
+			drag_y_offset = input_handler.mouse_world.y - doodad.position.y;
+			return;
+		}
 	}
+	Brush::mouse_press_event(event);
 }
 
 void DoodadBrush::mouse_move_event(QMouseEvent* event) {
@@ -179,84 +213,80 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
-			if (event->modifiers() & Qt::ControlModifier) {
-				for (auto&& i : selections) {
-					bool fixed_rotation = false;
-					if (doodads_slk.row_headers.contains(i->id)) {
-						fixed_rotation = doodads_slk.data<int>("fixedrot", i->id) > 0;
-					} else {
-						fixed_rotation = destructibles_slk.data<int>("fixedrot", i->id) > 0;
-					}
-
-					if (fixed_rotation) {
-						continue; 
-					}
-
-					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
-					if (target_rotation < 0) {
-						target_rotation = (glm::pi<float>() + target_rotation) + glm::pi<float>();
-					}
-
-
-					if (i->pathing) {
-						if (i->pathing->width == i->pathing->height && i->pathing->homogeneous) {
-							i->angle = target_rotation;
-						} else {
-							i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
-						}
-					} else {
-						i->angle = target_rotation;
-
-						//i->angle = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+			if (dragging) {
+				if (action == Action::none) {
+					start_action(Action::drag);
+				}
+				for (auto& i : selections) {
+					i->position.x = input_handler.mouse_world.x - drag_x_offset;
+					i->position.y = input_handler.mouse_world.y - drag_y_offset;
+					if (!lock_doodad_z) {
+						i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
 					}
 					i->update();
 				}
+			} else if (event->modifiers() & Qt::ControlModifier) {
+				if (action == Action::none) {
+					start_action(Action::rotate);
+				}
+
+				for (auto&& i : selections) {
+					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					if (target_rotation < 0) {
+						target_rotation += 2.f * glm::pi<float>();
+					}
+
+					i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, target_rotation);
+					i->update();
+				}
+				emit angle_changed();
 
 				map->doodads.update_doodad_pathing(selections);
 			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
 				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
-
-				// If we should remove doodads/destructibles from the selection
-				/*if (!select_doodads || !select_destructibles) {
-					for (int i = selections.size(); i-- > 0;) {
-						if (doodads_slk.row_header_exists(selections[i]->id)) {
-							if (!select_doodads) {
-
-							}
-						} else {
-							if (!select_destructibles) {
-
-							}
-						}
-					}
-				}*/
+				emit selection_changed();
 			}
 		}
 	}
 }
 
-void DoodadBrush::delete_selection() {
-	if (selections.size()) {
-		QRectF update_pathing_area;
-		// Undo/redo
-		map->terrain_undo.new_undo_group();
-		auto action = std::make_unique<DoodadDeleteAction>();
-		for (const auto& i : selections) {
-			action->doodads.push_back(*i);
+void DoodadBrush::mouse_release_event(QMouseEvent* event) {
+	dragging = false;
 
-			if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-				update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
-			}
-			update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
+	if (event->button() == Qt::LeftButton) {
+		if (action == Action::drag || action == Action::rotate) {
+			end_action();
 		}
-		map->terrain_undo.add_undo_action(std::move(action));
-		map->doodads.remove_doodads(selections);
-
-		map->doodads.update_doodad_pathing(update_pathing_area);
-
-		selections.clear();
 	}
+
+	Brush::mouse_release_event(event);
+}
+
+void DoodadBrush::delete_selection() {
+	if (!selections.size()) {
+		return;
+	}
+
+	QRectF update_pathing_area;
+	// Undo/redo
+	map->terrain_undo.new_undo_group();
+	auto action = std::make_unique<DoodadDeleteAction>();
+	for (const auto& i : selections) {
+		action->doodads.push_back(*i);
+
+		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
+			update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
+		}
+		update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
+	}
+	map->terrain_undo.add_undo_action(std::move(action));
+	map->doodads.remove_doodads(selections);
+
+	map->doodads.update_doodad_pathing(update_pathing_area);
+
+	selections.clear();
+	emit selection_changed();
 }
 
 void DoodadBrush::copy_selection() {
@@ -283,6 +313,7 @@ void DoodadBrush::cut_selection() {
 
 void DoodadBrush::clear_selection() {
 	selections.clear();
+	emit selection_changed();
 }
 
 void DoodadBrush::place_clipboard() {
@@ -296,7 +327,9 @@ void DoodadBrush::place_clipboard() {
 		} else {
 			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
 		}
-		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+		if (!lock_doodad_z) {
+			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+		}
 
 		new_doodad.position = final_position;
 		new_doodad.update();
@@ -525,4 +558,21 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		possible_variations.insert(i);
 	}
 	set_random_variation();
+}
+
+void DoodadBrush::start_action(Action new_action) {
+	action = new_action;
+	map->terrain_undo.new_undo_group();
+	doodad_state_undo = std::make_unique<DoodadStateAction>();
+	for (const auto& i : selections) {
+		doodad_state_undo->old_doodads.push_back(*i);
+	}
+}
+
+void DoodadBrush::end_action() {
+	for (const auto& i : selections) {
+		doodad_state_undo->new_doodads.push_back(*i);
+	}
+	map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
+	action = Action::none;
 }

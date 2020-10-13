@@ -1,6 +1,9 @@
 #pragma once
 
 #include "ui_DoodadPalette.h"
+
+#include <QLineEdit>
+
 #include "DoodadBrush.h"
 #include "Palette.h"
 #include "QRibbon.h"
@@ -40,9 +43,24 @@ private:
 	QRibbonSection* pathing_section = new QRibbonSection;
 	AspectRatioPixmapLabel* pathing_image_label = new AspectRatioPixmapLabel;
 
+	QRibbonSection* current_selection_section = new QRibbonSection;
+	QLineEdit* x_scale = new QLineEdit;
+	QLineEdit* y_scale = new QLineEdit;
+	QLineEdit* z_scale = new QLineEdit;
+	QLineEdit* rotation = new QLineEdit;
+
+	QLineEdit* absolute_height = new QLineEdit;
+	QLineEdit* relative_height = new QLineEdit;
+
 	QShortcut* find_this;
 	QShortcut* find_parent;
 
+
 public slots:
 	void deactivate(QRibbonTab* tab) override;
+	void update_selection_info();
+	void update_scale_change(int component, const QString& text);
+	void update_scale_finish(int component);
+	void update_rotation_change(const QString& text);
+	void set_selection_rotation(float rotation);
 };

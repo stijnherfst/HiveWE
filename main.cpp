@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
 	QSettings settings;
 	if (!settings.contains("theme")) {
-		settings.setValue("theme", "Light");
+		settings.setValue("theme", "Dark");
 	}
 
 	QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");

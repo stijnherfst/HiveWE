@@ -8,6 +8,7 @@ RenderManager::RenderManager() {
 	instance_static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_hd.vs", "Data/Shaders/static_mesh_instanced_hd.fs" });
 	static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_sd.vs", "Data/Shaders/static_mesh_sd.fs" });
 	static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_hd.vs", "Data/Shaders/static_mesh_hd.fs" });
+	colored_static_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_color_coded.vs", "Data/Shaders/static_mesh_color_coded.fs" });
 	
 	instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
 	instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_hd.vs", "Data/Shaders/skinned_mesh_instanced_hd.fs" });

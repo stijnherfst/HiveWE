@@ -92,6 +92,10 @@ void QRibbonSection::addLayout(QLayout* layout) {
 	section_outer->addLayout(layout);
 }
 
+void QRibbonSection::addSpacing(int spacing) {
+	section_outer->addSpacing(spacing);
+}
+
 
 void QRibbonSection::setText(const QString& text) {
 	section_text->setText(text);
@@ -131,6 +135,14 @@ void QRibbonTab::addSection(QRibbonSection* section) {
 	sections->insertWidget(count, line);
 }
 
+void QRibbonTab::addSpacer(QSpacerItem* spacer) {
+	QFrame* line = new QFrame();
+	line->setObjectName("seperator");
+
+	int count = sections->count();
+	sections->insertSpacerItem(count - 1, spacer);
+	sections->insertWidget(count, line);
+}
 
 QRibbonMenu::QRibbonMenu(QWidget* parent) : QMenu(parent) {
 	base->setContentsMargins(1, 1, 1, 1);

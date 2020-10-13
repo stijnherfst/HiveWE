@@ -134,20 +134,57 @@ QRibbonButton {
 }
 
 QRibbonButton::hover {
-	border: 1px solid rgb(100, 100, 100);
 	background-color: rgb(85, 85, 85);
 }
 
 QRibbonButton::pressed {
-	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
 }
 
 QRibbonButton::checked {
-	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
 }
 
+QRibbonButton::checked:hover {
+	border: 1px solid rgb(120, 120, 120);
+}
+
+QRibbon QLineEdit {
+	height: 21px;
+	max-width: 50px;
+	border: 1px solid rgb(100, 100, 100);
+}
+
+QRibbon QLineEdit::hover {
+	background-color: rgb(75, 75, 75);
+}
+
+QRibbon QLineEdit::focus {
+	border: 1px solid rgb(100, 150, 255);
+}
+
+QRibbon QLineEdit::disabled {
+	background-color: rgb(67, 67, 67);
+}
+
+QRibbonButton::menu-indicator {
+    top: -3;
+}
+
+QRibbonButton QMenu {
+	border: 1px solid rgb(100, 100, 100);
+}
+
+QRibbonButton QMenu::item {
+	height: 28px;
+	padding-left: 30px;
+    padding-right: 30px;
+    margin: 1px;
+}
+
+QRibbonButton QMenu::item:selected {
+	background-color: rgb(85, 85, 85);
+}
 
 /******************************************************/
 /* Docking */
@@ -197,12 +234,12 @@ QScrollArea#dockWidgetScrollArea {
 	padding: 0px -2px;
 }
 
-#tabCloseButton:hover {
+#tabCloseButton::hover {
 	border: 1px solid rgba(0, 0, 0, 32);
 	background: rgba(64, 64, 64, 255);
 }
 
-#tabCloseButton:pressed {
+#tabCloseButton::pressed {
 	background: rgba(128, 128, 128, 255);
 }
 

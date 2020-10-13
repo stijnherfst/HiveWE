@@ -51,6 +51,7 @@ public:
 	
 	void addWidget(QWidget* widget);
 	void addLayout(QLayout* layout);
+	void addSpacing(int spacing);
 
 	void setText(const QString& text);
 };
@@ -65,6 +66,7 @@ public:
 	
 	void addSection(QLayout* layout);
 	void addSection(QRibbonSection* layout);
+	void addSpacer(QSpacerItem* spacer);
 
 	void disableShortcuts();
 	void enableShortcuts();

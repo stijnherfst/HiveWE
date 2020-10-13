@@ -1,7 +1,11 @@
-#include "DoodadPalette.h"
+﻿#include "DoodadPalette.h"
 
 #include <QRadioButton>
 #include <QCheckBox>
+#include <QFormlayout>
+#include <QDoubleValidator>
+#include <QComboBox>
+#include <QListView>
 
 #include "HiveWE.h"
 #include "Selections.h"
@@ -95,6 +99,12 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	random_scale->setChecked(true);
 	placement_section->addWidget(random_scale);
 
+	QRibbonButton* lock_height = new QRibbonButton;
+	lock_height->setText("Lock\nHeight");
+	lock_height->setIcon(QIcon("Data/Icons/Ribbon/lock.png"));
+	lock_height->setCheckable(true);
+	placement_section->addWidget(lock_height);
+
 	QRibbonSection* variation_section = new QRibbonSection;
 	variation_section->setText("Variations");
 
@@ -108,11 +118,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRibbonSection* flags_section = new QRibbonSection;
 	flags_section->setText("Flags");
-	flags_section->setStyleSheet(R"(
-		QDoubleSpinBox {
-			border: 1px solid black;
-		}
-	)");
 
 	QVBoxLayout* visibility_flags_layout = new QVBoxLayout;
 
@@ -133,19 +138,99 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	visibility_flags_layout->setSpacing(6);
 	flags_section->addLayout(visibility_flags_layout);
 
-	pathing_section->setText("Pathing");
-	pathing_section->addWidget(pathing_image_label);
+	//pathing_section->setText("Pathing");
+	//pathing_section->addWidget(pathing_image_label);
+
+	current_selection_section = new QRibbonSection;
+	current_selection_section->setText("Current Selection");
+
+	QFormLayout* scaling_layout = new QFormLayout;
+	scaling_layout->setSpacing(1);
+	scaling_layout->setHorizontalSpacing(5);
+
+	x_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
+	y_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
+	z_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
+
+	scaling_layout->addRow("x scale:", x_scale);
+	scaling_layout->addRow("y scale:", y_scale);
+	scaling_layout->addRow("z scale:", z_scale);
+
+	QVBoxLayout* rotation_layout = new QVBoxLayout;
+
+	QRibbonButton* degrees0 = new QRibbonButton;
+	QRibbonButton* degrees90 = new QRibbonButton;
+	QRibbonButton* degrees180 = new QRibbonButton;
+	QRibbonButton* degrees270 = new QRibbonButton;
+
+	degrees0->setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+	degrees90->setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+	degrees180->setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+	degrees270->setSizePolicy(QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Expanding);
+
+	degrees0->setText("0");
+	degrees90->setText("90");
+	degrees180->setText("180");
+	degrees270->setText("270");
+
+	rotation->setValidator(new QDoubleValidator(0.0, 100.0, 3));
+
+	QGridLayout* degrees_layout = new QGridLayout;
+	degrees_layout->addWidget(degrees0, 0, 0);
+	degrees_layout->addWidget(degrees90, 1, 0);
+	degrees_layout->addWidget(degrees180, 0, 1);
+	degrees_layout->addWidget(degrees270, 1, 1);
+
+	QHBoxLayout* rotation_sub = new QHBoxLayout;
+	rotation_sub->addWidget(new QLabel("Angle:"));
+	rotation_sub->addSpacing(5);
+	rotation_sub->addWidget(rotation);
+	rotation_layout->addLayout(rotation_sub);
+	rotation_layout->addLayout(degrees_layout);
+
+	//QRibbonButton* lock_z = new QRibbonButton;
+	//lock_z->setText("Lock\nZ");
+	//lock_z->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
+	//lock_z->setCheckable(true);
+	//lock_z->addAction(new QAction("Absolute"));
+
+	//QRibbonButton* average_z = new QRibbonButton;
+	QRibbonButton* average_z = new QRibbonButton;
+	average_z->setText("Group\nHeight  ");
+	average_z->setIcon(QIcon("Data/Icons/Ribbon/height.png"));
+	average_z->addAction(new QAction("Minimum"));
+	average_z->addAction(new QAction("Average"));
+	average_z->addAction(new QAction("Maximum"));
+	average_z->setPopupMode(QToolButton::ToolButtonPopupMode::InstantPopup);
+
+	QFormLayout* height_layout = new QFormLayout;
+	height_layout->setSpacing(1);
+	height_layout->setHorizontalSpacing(5);
+
+	absolute_height->setValidator(new QDoubleValidator(-100.0, 100.0, 3));
+	relative_height->setValidator(new QDoubleValidator(-100.0, 100.0, 3));
+
+	height_layout->addRow("Absolute Height:", absolute_height);
+	height_layout->addRow("Relative Height:", relative_height);
+
+	current_selection_section->addLayout(scaling_layout);
+	current_selection_section->addSpacing(5);
+	current_selection_section->addLayout(rotation_layout);
+	current_selection_section->addSpacing(5);
+	current_selection_section->addLayout(height_layout);
+	current_selection_section->addWidget(average_z);
 
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(placement_section);
 	ribbon_tab->addSection(variation_section);
 	ribbon_tab->addSection(flags_section);
-	ribbon_tab->addSection(pathing_section);
+	ribbon_tab->addSection(current_selection_section);
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
 	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) { brush.random_rotation = checked; });
 	connect(random_scale, &QRibbonButton::toggled, [&](bool checked) { brush.random_scale = checked; });
 	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) { brush.random_variation = checked; });
+	connect(lock_height, &QRibbonButton::toggled, [&](bool checked) { brush.lock_doodad_z = checked; });
 
 	connect(invisible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::invisible_non_solid; });
 	connect(visible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_non_solid; });
@@ -184,6 +269,24 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(ui.doodads, &QListView::clicked, this, &DoodadPalette::selection_changed);
 	connect(ui.doodads, &QListView::activated, this, &DoodadPalette::selection_changed);
+
+	connect(&brush, &DoodadBrush::selection_changed, this, &DoodadPalette::update_selection_info);
+	connect(&brush, &DoodadBrush::angle_changed, this, &DoodadPalette::update_selection_info);
+
+	//connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) {
+	connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(0, text); });
+	connect(y_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(1, text); });
+	connect(z_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(2, text); });
+	connect(x_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(0); });
+	connect(y_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(1); });
+	connect(z_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(2); });
+
+	connect(rotation, &QLineEdit::textEdited, this, &DoodadPalette::update_rotation_change);
+
+	connect(degrees0, &QRibbonButton::clicked, [&]() { set_selection_rotation(0.f); });
+	connect(degrees90, &QRibbonButton::clicked, [&]() { set_selection_rotation(90.f); });
+	connect(degrees180, &QRibbonButton::clicked, [&]() { set_selection_rotation(180.f); });
+	connect(degrees270, &QRibbonButton::clicked, [&]() { set_selection_rotation(270.f); });
 
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
@@ -252,14 +355,14 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 		});
 	}
 
-	if (brush.pathing_texture) {
-		pathing_section->setHidden(false);
-		QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
-		QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
-		pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
-	} else {
-		pathing_section->setHidden(true);
-	}
+	//if (brush.pathing_texture) {
+	//	pathing_section->setHidden(false);
+	//	QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
+	//	QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
+	//	pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
+	//} else {
+	//	pathing_section->setHidden(true);
+	//}
 }
 
 void DoodadPalette::deactivate(QRibbonTab* tab) {
@@ -269,4 +372,90 @@ void DoodadPalette::deactivate(QRibbonTab* tab) {
 		find_this->setEnabled(false);
 		find_parent->setEnabled(false);
 	}
+}
+
+QString toString(float num) {
+	QString str = QString::number(num, 'f', 3);
+	str.remove(QRegExp("\\.?0+$"));
+	return str;
+}
+
+void DoodadPalette::update_selection_info() {
+	if (brush.selections.empty()) {
+		if (current_selection_section->isEnabled()) {
+			current_selection_section->setEnabled(false);
+		}
+	} else {
+		if (!current_selection_section->isEnabled()) {
+			current_selection_section->setEnabled(true);
+		}
+		const Doodad& doodad = *brush.selections.front();
+
+		float first_relative_height = doodad.position.z - map->terrain.interpolated_height(doodad.position.x, doodad.position.y);
+		bool same_x = true;
+		bool same_y = true;
+		bool same_z = true;
+		bool same_angle = true;
+		bool same_absolute_height = true;
+		bool same_relative_height = true;
+		for (const auto& i : brush.selections) {
+			float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y);
+
+			same_x = i->scale.x == doodad.scale.x;
+			same_y = i->scale.y == doodad.scale.y;
+			same_z = i->scale.z == doodad.scale.z;
+			same_angle = i->angle == doodad.angle;
+			same_absolute_height = i->position.z == doodad.position.z;
+			same_relative_height = other_relative_height == first_relative_height;
+		}
+
+		x_scale->setText(same_x ? QString::number(doodad.scale.x) : "Differing");
+		y_scale->setText(same_y ? QString::number(doodad.scale.y) : "Differing");
+		z_scale->setText(same_z ? QString::number(doodad.scale.z) : "Differing");
+		rotation->setText(same_angle ? toString(glm::degrees(doodad.angle)) : "Differing");
+		absolute_height->setText(same_angle ? toString(doodad.position.z) : "Differing");
+		relative_height->setText(same_angle ? toString(first_relative_height) : "Differing");
+	}
+}
+
+void DoodadPalette::update_scale_change(int component, const QString& text) {
+	for (auto& i : brush.selections) {
+		bool is_doodad = doodads_slk.row_headers.contains(i->id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		float min_scale = slk.data<float>("minscale", i->id);
+		float max_scale = slk.data<float>("maxscale", i->id);
+
+		if (!is_doodad) {
+			i->scale = glm::vec3(std::clamp(text.toFloat(), min_scale, max_scale));
+		} else {
+			i->scale[component] = std::clamp(text.toFloat(), min_scale, max_scale);
+		}
+		i->update();
+	}
+}
+
+void DoodadPalette::update_scale_finish(int component) {
+	if (brush.selections.empty()) {
+		return;
+	}
+
+	glm::vec3 scale = brush.selections.front()->scale;
+	update_selection_info();
+}
+
+void DoodadPalette::update_rotation_change(const QString& text) {
+	for (auto& i : brush.selections) {
+		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, glm::radians(text.toFloat()));
+		i->update();
+	}
+	update_selection_info();
+}
+
+void DoodadPalette::set_selection_rotation(float rotation) {
+	for (auto& i : brush.selections) {
+		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, glm::radians(rotation));
+		i->update();
+	}
+	update_selection_info();
 }

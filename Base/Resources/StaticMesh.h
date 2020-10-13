@@ -51,4 +51,6 @@ public:
 
 	void render_transparent_sd(int instance_id) const;
 	void render_transparent_hd(int instance_id) const;
+
+	void render_color_coded(int id, const glm::mat4& matrix);
 };

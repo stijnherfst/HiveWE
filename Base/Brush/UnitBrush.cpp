@@ -86,7 +86,7 @@ void UnitBrush::mouse_press_event(QMouseEvent* event) {
 	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	gl->glViewport(0, 0, map->render_manager.window_width, map->render_manager.window_height);
 
-	if (event->button() == Qt::LeftButton && mode == Mode::selection) {
+	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
 		map->render_manager.colored_skinned_shader->use();
 		for (int i = 0; i < map->units.units.size(); i++) {
 			const Unit& unit = map->units.units[i];

@@ -12,7 +12,9 @@
 
 #include "Shader.h"
 
-class Brush {
+class Brush : public QObject {
+	Q_OBJECT
+
 public:
 	enum class Shape {
 		square,

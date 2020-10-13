@@ -38,6 +38,7 @@ struct Doodad {
 	std::shared_ptr<PathingTexture> pathing;
 
 	void update();
+	static float acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle);
 };
 
 struct SpecialDoodad {

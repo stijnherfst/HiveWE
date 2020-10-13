@@ -218,6 +218,7 @@ void StaticMesh::render_opaque_sd() const {
 				case 0:
 				case 1:
 					gl->glBlendFunc(GL_ONE, GL_ZERO);
+					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 					break;
@@ -340,6 +341,7 @@ void StaticMesh::render_transparent_sd(int instance_id) const {
 				case 0: // Having blend mode None in a geoset with alpha doesn't make sense, but it can happen
 				case 1: // ToDo check if blend mode 1 bit alpha Transparent works for alpha geosets
 					gl->glBlendFunc(GL_ONE, GL_ZERO);
+					break;
 				case 2:
 					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 					break;
@@ -441,6 +443,64 @@ void StaticMesh::render_transparent_hd(int instance_id) const {
 		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
 		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
 		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+
+		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
+	}
+}
+
+void StaticMesh::render_color_coded(int id, const glm::mat4& matrix) {
+	if (!has_mesh) {
+		return;
+	}
+
+	gl->glBindVertexArray(vao);
+
+	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
+	gl->glUniformMatrix4fv(3, 1, false, &matrix[0][0]);
+	gl->glUniform1i(7, id);
+
+	for (const auto& i : geosets) {
+		const auto& layers = materials[i.material_id].layers;
+
+		switch (layers[0].blend_mode) {
+			case 0: // Having blend mode None in a geoset with alpha doesn't make sense, but it can happen
+			case 1: // ToDo check if blend mode 1 bit alpha Transparent works for alpha geosets
+				gl->glBlendFunc(GL_ONE, GL_ZERO);
+				break;
+			case 2:
+				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				break;
+			case 3:
+				gl->glBlendFunc(GL_ONE, GL_ONE);
+				break;
+			case 4:
+				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				break;
+			case 5:
+				gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+				break;
+			case 6:
+				gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+				break;
+		}
+
+		if (layers[0].shading_flags & 0x10) {
+			gl->glDisable(GL_CULL_FACE);
+		} else {
+			gl->glEnable(GL_CULL_FACE);
+		}
+
+		if (layers[0].shading_flags & 0x40) {
+			gl->glDisable(GL_DEPTH_TEST);
+		} else {
+			gl->glEnable(GL_DEPTH_TEST);
+		}
+
+		if (layers[0].shading_flags & 0x80) {
+			gl->glDepthMask(false);
+		} else {
+			gl->glDepthMask(true);
+		}
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}

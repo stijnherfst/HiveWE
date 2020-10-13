@@ -143,35 +143,49 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	connect(textures_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		brush.tile_id = button->property("tileID").toString().toStdString();
+		ui.deformationCheckbox->setChecked(false);
+		ui.cliffCheckbox->setChecked(false);
 		ui.textureCheckbox->setChecked(true);
+		brush.apply_cliff = false;
+		brush.apply_height = false;
 		brush.apply_texture = true;
 	});
 
 	connect(cliff_group, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		brush.cliff_id = button->property("cliffID").toInt();
+		ui.deformationCheckbox->setChecked(false);
 		ui.cliffCheckbox->setChecked(true);
+		ui.textureCheckbox->setChecked(false);
 		brush.apply_cliff = true;
+		brush.apply_height = false;
+		brush.apply_texture = false;
 	});
 
 	connect(ui.cliffButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
-		ui.cliffCheckbox->setChecked(true);
 		ui.deformationCheckbox->setChecked(false);
+		ui.cliffCheckbox->setChecked(true);
+		ui.textureCheckbox->setChecked(false);
 		brush.apply_cliff = true;
 		brush.apply_height = false;
+		brush.apply_texture = false;
 	});
 
 	connect(cliff_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&]() {
-		ui.cliffCheckbox->setChecked(true);
 		ui.deformationCheckbox->setChecked(false);
+		ui.cliffCheckbox->setChecked(true);
+		ui.textureCheckbox->setChecked(false);
 		brush.apply_cliff = true;
 		brush.apply_height = false;
+		brush.apply_texture = false;
 	});
 
 	connect(ui.deformationButtonGroup, QOverload<QAbstractButton *>::of(&QButtonGroup::buttonClicked), [&]() {
 		ui.deformationCheckbox->setChecked(true);
 		ui.cliffCheckbox->setChecked(false);
-		brush.apply_height = true;
+		ui.textureCheckbox->setChecked(false);
 		brush.apply_cliff = false;
+		brush.apply_height = true;
+		brush.apply_texture = false;
 	});
 
 	connect(ui.terrainRaise, &QPushButton::clicked, [&]() { brush.deformation_type = TerrainBrush::deformation::raise; });
