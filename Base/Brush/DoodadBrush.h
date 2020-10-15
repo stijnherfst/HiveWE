@@ -58,7 +58,8 @@ public:
 		none,
 		drag,
 		move,
-		rotate
+		rotate,
+		scale
 	};
 
 	Action action = Action::none;
@@ -96,7 +97,16 @@ public:
 	void start_action(Action new_action);
 	void end_action();
 
+public slots:
+	// Angle in radians
+	void set_selection_angle(float angle);
+	void set_selection_absolute_height(float height);
+	void set_selection_relative_height(float height);
+	void set_selection_scale_component(int component, float scale);
+
 signals:
 	void selection_changed();
 	void angle_changed();
+	void scale_changed();
+	void position_changed();
 };

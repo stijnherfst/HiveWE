@@ -40,9 +40,6 @@ private:
 
 	QRibbonContainer* variations = new QRibbonContainer;
 
-	QRibbonSection* pathing_section = new QRibbonSection;
-	AspectRatioPixmapLabel* pathing_image_label = new AspectRatioPixmapLabel;
-
 	QRibbonSection* current_selection_section = new QRibbonSection;
 	QLineEdit* x_scale = new QLineEdit;
 	QLineEdit* y_scale = new QLineEdit;
@@ -51,6 +48,10 @@ private:
 
 	QLineEdit* absolute_height = new QLineEdit;
 	QLineEdit* relative_height = new QLineEdit;
+
+	QAction* group_height_minimum = new QAction("Minimum");
+	QAction* group_height_average = new QAction("Average");
+	QAction* group_height_maximum = new QAction("Maximum");
 
 	QShortcut* find_this;
 	QShortcut* find_parent;
@@ -62,5 +63,10 @@ public slots:
 	void update_scale_change(int component, const QString& text);
 	void update_scale_finish(int component);
 	void update_rotation_change(const QString& text);
+	void update_absolute_change(const QString& text);
+	void update_relative_change(const QString& text);
+	void set_group_height_minimum();
+	void set_group_height_average();
+	void set_group_height_maximum();
 	void set_selection_rotation(float rotation);
 };

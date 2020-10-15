@@ -105,8 +105,12 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 		for (const auto& i : selections) {
 			i->position.x += x_displacement;
 			i->position.y += y_displacement;
+			if (!lock_doodad_z) {
+				i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+			}
 			i->update();
 		}
+		emit position_changed();
 
 		map->doodads.update_doodad_pathing(selections);
 	}
@@ -125,6 +129,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 					i->position.z += 0.1f;
 					i->update();
 				}
+				emit position_changed();
 				break;
 			case Qt::Key_PageDown:
 				if (action == Action::none) {
@@ -134,6 +139,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 					i->position.z -= 0.1f;
 					i->update();
 				}
+				emit position_changed();
 				break;
 			default:
 				Brush::key_press_event(event);
@@ -148,6 +154,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 					i->scale.z += 0.1f;
 					i->update();
 				}
+				emit scale_changed();
 				break;
 			case Qt::Key_PageDown:
 				if (action == Action::none) {
@@ -157,6 +164,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 					i->scale.z -= 0.1f;
 					i->update();
 				}
+				emit scale_changed();
 				break;
 			default:
 				Brush::key_press_event(event);
@@ -225,6 +233,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 					}
 					i->update();
 				}
+				emit position_changed();
 			} else if (event->modifiers() & Qt::ControlModifier) {
 				if (action == Action::none) {
 					start_action(Action::rotate);
@@ -575,4 +584,50 @@ void DoodadBrush::end_action() {
 	}
 	map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
 	action = Action::none;
+}
+
+void DoodadBrush::set_selection_angle(float angle) {
+	start_action(Action::rotate);
+	for (auto& i : selections) {
+		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, angle);
+		i->update();
+	}
+	end_action();
+}
+
+void DoodadBrush::set_selection_absolute_height(float height) {
+	start_action(Action::move);
+	for (auto& i : selections) {
+		i->position.z = height;
+		i->update();
+	}
+	end_action();
+}
+
+void DoodadBrush::set_selection_relative_height(float height) {
+	start_action(Action::move);
+	for (auto& i : selections) {
+		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y) + height;
+		i->update();
+	}
+	end_action();
+}
+
+void DoodadBrush::set_selection_scale_component(int component, float scale) {
+	start_action(Action::scale);
+	for (auto& i : selections) {
+		bool is_doodad = doodads_slk.row_headers.contains(i->id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		float min_scale = slk.data<float>("minscale", i->id);
+		float max_scale = slk.data<float>("maxscale", i->id);
+
+		if (!is_doodad) {
+			i->scale = glm::vec3(std::clamp(scale, min_scale, max_scale));
+		} else {
+			i->scale[component] = std::clamp(scale, min_scale, max_scale);
+		}
+		i->update();
+	}
+	end_action();
 }

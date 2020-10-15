@@ -138,9 +138,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	visibility_flags_layout->setSpacing(6);
 	flags_section->addLayout(visibility_flags_layout);
 
-	//pathing_section->setText("Pathing");
-	//pathing_section->addWidget(pathing_image_label);
-
 	current_selection_section = new QRibbonSection;
 	current_selection_section->setText("Current Selection");
 
@@ -188,19 +185,12 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	rotation_layout->addLayout(rotation_sub);
 	rotation_layout->addLayout(degrees_layout);
 
-	//QRibbonButton* lock_z = new QRibbonButton;
-	//lock_z->setText("Lock\nZ");
-	//lock_z->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
-	//lock_z->setCheckable(true);
-	//lock_z->addAction(new QAction("Absolute"));
-
-	//QRibbonButton* average_z = new QRibbonButton;
 	QRibbonButton* average_z = new QRibbonButton;
 	average_z->setText("Group\nHeight  ");
 	average_z->setIcon(QIcon("Data/Icons/Ribbon/height.png"));
-	average_z->addAction(new QAction("Minimum"));
-	average_z->addAction(new QAction("Average"));
-	average_z->addAction(new QAction("Maximum"));
+	average_z->addAction(group_height_minimum);
+	average_z->addAction(group_height_average);
+	average_z->addAction(group_height_maximum);
 	average_z->setPopupMode(QToolButton::ToolButtonPopupMode::InstantPopup);
 
 	QFormLayout* height_layout = new QFormLayout;
@@ -272,8 +262,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(&brush, &DoodadBrush::selection_changed, this, &DoodadPalette::update_selection_info);
 	connect(&brush, &DoodadBrush::angle_changed, this, &DoodadPalette::update_selection_info);
+	connect(&brush, &DoodadBrush::scale_changed, this, &DoodadPalette::update_selection_info);
+	connect(&brush, &DoodadBrush::position_changed, this, &DoodadPalette::update_selection_info);
 
-	//connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) {
 	connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(0, text); });
 	connect(y_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(1, text); });
 	connect(z_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(2, text); });
@@ -282,11 +273,17 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(z_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(2); });
 
 	connect(rotation, &QLineEdit::textEdited, this, &DoodadPalette::update_rotation_change);
+	connect(absolute_height, &QLineEdit::textEdited, this, &DoodadPalette::update_absolute_change);
+	connect(relative_height, &QLineEdit::textEdited, this, &DoodadPalette::update_relative_change);
 
 	connect(degrees0, &QRibbonButton::clicked, [&]() { set_selection_rotation(0.f); });
 	connect(degrees90, &QRibbonButton::clicked, [&]() { set_selection_rotation(90.f); });
 	connect(degrees180, &QRibbonButton::clicked, [&]() { set_selection_rotation(180.f); });
 	connect(degrees270, &QRibbonButton::clicked, [&]() { set_selection_rotation(270.f); });
+
+	connect(group_height_minimum, &QAction::triggered, this, &DoodadPalette::set_group_height_minimum);
+	connect(group_height_average, &QAction::triggered, this, &DoodadPalette::set_group_height_average);
+	connect(group_height_maximum, &QAction::triggered, this, &DoodadPalette::set_group_height_maximum);
 
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
@@ -354,15 +351,6 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 			}
 		});
 	}
-
-	//if (brush.pathing_texture) {
-	//	pathing_section->setHidden(false);
-	//	QImage::Format format = brush.pathing_texture->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888;
-	//	QImage temp_image = QImage(brush.pathing_texture->data.data(), brush.pathing_texture->width, brush.pathing_texture->height, brush.pathing_texture->width * brush.pathing_texture->channels, format);
-	//	pathing_image_label->setPixmap(QPixmap::fromImage(temp_image));
-	//} else {
-	//	pathing_section->setHidden(true);
-	//}
 }
 
 void DoodadPalette::deactivate(QRibbonTab* tab) {
@@ -401,12 +389,12 @@ void DoodadPalette::update_selection_info() {
 		for (const auto& i : brush.selections) {
 			float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y);
 
-			same_x = i->scale.x == doodad.scale.x;
-			same_y = i->scale.y == doodad.scale.y;
-			same_z = i->scale.z == doodad.scale.z;
-			same_angle = i->angle == doodad.angle;
-			same_absolute_height = i->position.z == doodad.position.z;
-			same_relative_height = other_relative_height == first_relative_height;
+			same_x = same_x && i->scale.x == doodad.scale.x;
+			same_y = same_y && i->scale.y == doodad.scale.y;
+			same_z = same_z && i->scale.z == doodad.scale.z;
+			same_angle = same_angle && i->angle == doodad.angle;
+			same_absolute_height = same_absolute_height && i->position.z == doodad.position.z;
+			same_relative_height = same_relative_height && other_relative_height == first_relative_height;
 		}
 
 		x_scale->setText(same_x ? QString::number(doodad.scale.x) : "Differing");
@@ -419,20 +407,7 @@ void DoodadPalette::update_selection_info() {
 }
 
 void DoodadPalette::update_scale_change(int component, const QString& text) {
-	for (auto& i : brush.selections) {
-		bool is_doodad = doodads_slk.row_headers.contains(i->id);
-		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-		float min_scale = slk.data<float>("minscale", i->id);
-		float max_scale = slk.data<float>("maxscale", i->id);
-
-		if (!is_doodad) {
-			i->scale = glm::vec3(std::clamp(text.toFloat(), min_scale, max_scale));
-		} else {
-			i->scale[component] = std::clamp(text.toFloat(), min_scale, max_scale);
-		}
-		i->update();
-	}
+	brush.set_selection_scale_component(component, text.toFloat());
 }
 
 void DoodadPalette::update_scale_finish(int component) {
@@ -440,22 +415,51 @@ void DoodadPalette::update_scale_finish(int component) {
 		return;
 	}
 
-	glm::vec3 scale = brush.selections.front()->scale;
 	update_selection_info();
 }
 
 void DoodadPalette::update_rotation_change(const QString& text) {
-	for (auto& i : brush.selections) {
-		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, glm::radians(text.toFloat()));
-		i->update();
-	}
+	brush.set_selection_angle(glm::radians(text.toFloat()));
 	update_selection_info();
 }
 
-void DoodadPalette::set_selection_rotation(float rotation) {
+void DoodadPalette::update_absolute_change(const QString& text) {
+	brush.set_selection_absolute_height(text.toFloat());
+	update_selection_info();
+}
+
+void DoodadPalette::update_relative_change(const QString& text) {
+	brush.set_selection_relative_height(text.toFloat());
+	update_selection_info();
+}
+
+void DoodadPalette::set_group_height_minimum() {
+	float minimum = std::numeric_limits<float>::max();
 	for (auto& i : brush.selections) {
-		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, glm::radians(rotation));
-		i->update();
+		minimum = std::min(minimum, i->position.z);
 	}
+
+	brush.set_selection_absolute_height(minimum);
+}
+
+void DoodadPalette::set_group_height_average() {
+	float average = 0.f;
+	for (auto& i : brush.selections) {
+		average += i->position.z;
+	}
+	brush.set_selection_absolute_height(average / brush.selections.size());
+}
+
+void DoodadPalette::set_group_height_maximum() {
+	float maximum = std::numeric_limits<float>::min();
+	for (auto& i : brush.selections) {
+		maximum = std::max(maximum, i->position.z);
+	}
+
+	brush.set_selection_absolute_height(maximum);
+}
+
+void DoodadPalette::set_selection_rotation(float rotation) {
+	brush.set_selection_angle(glm::radians(rotation));
 	update_selection_info();
 }
