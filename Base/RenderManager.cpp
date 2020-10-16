@@ -114,10 +114,12 @@ void RenderManager::render(bool render_lighting) {
 
 	for (const auto& i : meshes) {
 		i->render_jobs.clear();
+		i->render_colors.clear();
 	}
 
 	for (const auto& i : skinned_meshes) {
 		i->render_jobs.clear();
+		i->render_colors.clear();
 		i->skeletons.clear();
 		i->instance_bone_matrices.clear();
 	}

@@ -204,14 +204,19 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	setAutoFillBackground(true);
 
-	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, []() { window_handler.create_or_raise<ImportManager>(); });
+	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, [this]() { 
+		bool created = false;
+		window_handler.create_or_raise<ImportManager>(this, created); 
+	});
 	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
-		auto editor = window_handler.create_or_raise<TriggerEditor>();
+		bool created = false;
+		auto editor = window_handler.create_or_raise<TriggerEditor>(this, created);
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
 
 	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
-		window_handler.create_or_raise<ObjectEditor>();
+		bool created = false;
+		window_handler.create_or_raise<ObjectEditor>(this, created);
 	});
 
 	minimap->setParent(ui.widget);

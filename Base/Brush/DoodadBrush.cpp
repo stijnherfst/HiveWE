@@ -420,7 +420,7 @@ void DoodadBrush::render_brush() {
 	matrix = glm::rotate(matrix, roll, glm::vec3(1, 0, 0));
 
 	if (mesh) {
-		mesh->render_queue(matrix);
+		mesh->render_queue(matrix, glm::vec3(1.f));
 	}
 }
 
@@ -474,7 +474,7 @@ void DoodadBrush::render_clipboard() {
 		model = glm::scale(model, (base_scale - 1.f + i.scale) / 128.f);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
-		i.mesh->render_queue(model);
+		i.mesh->render_queue(model, glm::vec3(1.f));
 	}
 }
 

@@ -33,18 +33,20 @@ public:
 	GLuint tangent_buffer;
 	GLuint index_buffer;
 	GLuint instance_buffer;
+	GLuint color_buffer;
 
 	fs::path path;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
+	std::vector<glm::vec3> render_colors;
 	
 	static constexpr const char* name = "StaticMesh";
 
 	explicit StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
-	void render_queue(const glm::mat4& model);
+	void render_queue(const glm::mat4& model, glm::vec3 color);
 
 	void render_opaque_sd() const;
 	void render_opaque_hd() const;

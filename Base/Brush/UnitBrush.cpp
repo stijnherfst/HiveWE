@@ -259,7 +259,7 @@ void UnitBrush::render_brush() {
 	if (mesh) {
 		skeleton.updateLocation(final_position, rotation, final_scale);
 		skeleton.update(0.016f);
-		mesh->render_queue(skeleton);
+		mesh->render_queue(skeleton, glm::vec3(1.f));
 	}
 }
 
@@ -301,7 +301,7 @@ void UnitBrush::render_clipboard() {
 
 		i.skeleton.updateLocation(final_position, i.angle, final_scale);
 		i.skeleton.update(0.016f);
-		i.mesh->render_queue(i.skeleton);
+		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}
 }
 

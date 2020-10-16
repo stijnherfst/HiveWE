@@ -221,10 +221,15 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		i.mesh->render_queue(i.matrix);
+		//glm::vec4 color;
+		//color.r = doodads_slk.data<float>("red", i.id) / 255.f;
+		//color.g = doodads_slk.data<float>("green", i.id) / 255.f;
+		//color.b = doodads_slk.data<float>("blue", i.id) / 255.f;
+
+		i.mesh->render_queue(i.matrix, glm::vec3(1.f));
 	}
 	for (auto&& i : special_doodads) {
-		i.mesh->render_queue(i.matrix);
+		i.mesh->render_queue(i.matrix, glm::vec3(1.f));
 	}
 }
 

@@ -247,10 +247,19 @@ void Units::render() {
 			continue;
 		} // ToDo handle starting locations
 
-		i.mesh->render_queue(i.skeleton);
+		glm::vec4 color;
+		color.r = units_slk.data<float>("red", i.id) / 255.f;
+		color.g = units_slk.data<float>("green", i.id) / 255.f;
+		color.b = units_slk.data<float>("blue", i.id) / 255.f;
+
+		i.mesh->render_queue(i.skeleton, color);
 	}
 	for (auto& i : items) {
-		i.mesh->render_queue(i.skeleton);
+		glm::vec4 color;
+		color.r = items_slk.data<float>("red", i.id) / 255.f;
+		color.g = items_slk.data<float>("green", i.id) / 255.f;
+		color.b = items_slk.data<float>("blue", i.id) / 255.f;
+		i.mesh->render_queue(i.skeleton, color);
 	}
 }
 
@@ -320,7 +329,6 @@ void Units::process_field_change(const std::string& id, const std::string& field
 		}
 	}
 }
-
 
 std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {
 	if (id_to_mesh.find(id) != id_to_mesh.end()) {

@@ -48,6 +48,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 	gl->glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 
 	gl->glCreateBuffers(1, &instance_buffer);
+	gl->glCreateBuffers(1, &color_buffer);
 
 	gl->glCreateBuffers(1, &index_buffer);
 	gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
@@ -133,6 +134,7 @@ StaticMesh::StaticMesh(const fs::path& path) {
 	gl->glEnableVertexAttribArray(5);
 	gl->glEnableVertexAttribArray(6);
 	gl->glEnableVertexAttribArray(7);
+	gl->glEnableVertexAttribArray(8);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -150,10 +152,13 @@ StaticMesh::StaticMesh(const fs::path& path) {
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(4 + i);
 		gl->glVertexAttribPointer(4 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
 		gl->glVertexAttribDivisor(4 + i, 1);
 	}
+
+	gl->glBindBuffer(GL_ARRAY_BUFFER, color_buffer);
+	gl->glVertexAttribPointer(8, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+	gl->glVertexAttribDivisor(8, 1);
 }
 
 StaticMesh::~StaticMesh() {
@@ -165,7 +170,7 @@ StaticMesh::~StaticMesh() {
 	gl->glDeleteBuffers(1, &instance_buffer);
 }
 
-void StaticMesh::render_queue(const glm::mat4& model) {
+void StaticMesh::render_queue(const glm::mat4& model, glm::vec3 color) {
 	// Register for transparent drawing
 	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
 	if (!has_mesh) {
@@ -173,6 +178,7 @@ void StaticMesh::render_queue(const glm::mat4& model) {
 	}
 
 	render_jobs.push_back(model);
+	render_colors.push_back(color);
 
 	// Register for opaque drawing
 	if (render_jobs.size() == 1) {
@@ -200,6 +206,7 @@ void StaticMesh::render_opaque_sd() const {
 	gl->glBindVertexArray(vao);
 
 	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+	gl->glNamedBufferData(color_buffer, render_colors.size() * sizeof(glm::vec3), render_colors.data(), GL_STATIC_DRAW);
 
 	for (const auto& i : geosets) {
 		if (i.hd) {

@@ -228,7 +228,7 @@ SkinnedMesh::~SkinnedMesh() {
 	gl->glDeleteBuffers(1, &geoset_color);
 }
 
-void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton) {
+void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
 	if (model->sequences.size()) {
 		mdx::Extent& extent = model->sequences.front().extent;
 		if (!camera->inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
@@ -237,6 +237,7 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton) {
 	}
 
 	render_jobs.push_back(skeleton.matrix);
+	render_colors.push_back(color);
 	skeletons.push_back(&skeleton);
 
 	// Register for opaque drawing
@@ -292,6 +293,7 @@ void SkinnedMesh::render_opaque_sd() {
 				geoset_color = skeletons[k]->get_geoset_animation_color(*i.geoset_anim);
 				geoset_anim_visibility = skeletons[k]->get_geoset_animation_visiblity(*i.geoset_anim);
 			}
+			geoset_color *= render_colors[k];
 
 			auto& layers = model->materials[i.material_id].layers;
 			for (auto& j : layers) {
