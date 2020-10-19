@@ -29,9 +29,6 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	explorer->expandToDepth(1);
 
 	compile_output->setReadOnly(true);
-	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
-	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
-	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
 	dock_manager = new ads::CDockManager;
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);

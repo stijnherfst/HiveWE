@@ -5,6 +5,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "no_init_allocator.h"
+
 using namespace std::literals::string_literals;
 
 Hierarchy hierarchy;
@@ -31,7 +33,7 @@ BinaryReader Hierarchy::open_file(const fs::path& path) const {
 		return map_file_read(path);
 	} else if (fs::exists(warcraft_directory / path)) {
 		std::ifstream stream(warcraft_directory / path, std::ios::binary);
-		return BinaryReader(std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+		return BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 	} else if (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) {
 		file = game_data.file_open("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string());
 	} else if (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string())) {
@@ -79,7 +81,7 @@ bool Hierarchy::file_exists(const fs::path& path) const {
 
 BinaryReader Hierarchy::map_file_read(const fs::path& path) const {
 	std::ifstream stream(map_directory / path, std::ios::binary);
-	return BinaryReader(std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+	return BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 }
 
 /// source somewhere on disk, destination relative to the map

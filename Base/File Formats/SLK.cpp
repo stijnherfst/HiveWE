@@ -20,10 +20,10 @@ namespace slk {
 	}
 
 	void SLK::load(const fs::path& path, const bool local) {
-		std::vector<uint8_t> buffer;
+		std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 		if (local) {
 			std::ifstream stream(path, std::ios::binary);
-			buffer = std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+			buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
 		} else {
 			buffer = hierarchy.open_file(path).buffer;
 		}

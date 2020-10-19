@@ -419,16 +419,12 @@ void Map::render() {
 		return;
 	}
 
-	/*total_time = (std::chrono::high_resolution_clock::now() - last_time).count() / 1'000'000.0;
-	last_time = std::chrono::high_resolution_clock::now();*/
-
-
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 	// Render Terrain
 	terrain.render_ground();
-	
+
 	// Render Doodads
 	if (render_doodads) {
 		doodads.render();
@@ -438,22 +434,6 @@ void Map::render() {
 	if (render_units) {
 		units.render();
 	}
-
-	//render_manager.colored_skinned_shader->use();
-
-	//for (int i = 0; i < map->units.units.size(); i++) {
-	//	const Unit& unit = map->units.units[i];
-	//	if (unit.id == "sloc") {
-	//		continue;
-	//	} // ToDo handle starting locations
-
-	//	mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
-	//	if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
-	//		unit.mesh->render_color_coded(unit.skeleton, i);
-	//	}
-	//}
-
-
 
 	if (render_brush && brush) {
 		brush->render();

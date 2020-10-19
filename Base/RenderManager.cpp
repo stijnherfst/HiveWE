@@ -42,6 +42,7 @@ void RenderManager::render(bool render_lighting) {
 
 	// Render opaque meshes
 	// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
+	
 	instance_static_mesh_shader_sd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -49,7 +50,7 @@ void RenderManager::render(bool render_lighting) {
 	for (const auto& i : meshes) {
 		i->render_opaque_sd();
 	}
-
+	
 	instance_static_mesh_shader_hd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -81,6 +82,8 @@ void RenderManager::render(bool render_lighting) {
 
 	static_mesh_shader_sd->use();
 	gl->glUniform1i(2, render_lighting);
+
+
 
 	for (const auto& i : transparent_instances) {
 		i.mesh->render_transparent_sd(i.instance_id);

@@ -4,14 +4,13 @@
 #include <unordered_map>
 #include <memory>
 
-#include "Quadtree.h"
 #include "BinaryReader.h"
 #include "SkinnedMesh.h"
 #include "Terrain.h"
 #include "SkeletalModelInstance.h"
 
 struct Unit {
-	static int auto_increment;
+	static inline int auto_increment;
 
 	std::string id;
 	int variation = 0;
@@ -56,6 +55,7 @@ struct Unit {
 	glm::mat4 matrix = glm::mat4(1.f);
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
+	glm::vec3 color;
 
 	Unit() {
 		creation_number = ++auto_increment;
@@ -76,7 +76,6 @@ class Units : public QObject {
 public:
 	std::vector<Unit> units;
 	std::vector<Unit> items;
-	//QuadTree<Unit> tree; // ToDo remove
 
 	void load();
 	void save() const;

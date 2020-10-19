@@ -138,9 +138,6 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	custom_buff_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewBuff"));
 	custom_upgrade_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUpgr"));
 
-	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
-	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
-	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
 	dock_manager = new ads::CDockManager;
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);

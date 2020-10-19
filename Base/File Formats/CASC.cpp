@@ -1,27 +1,63 @@
 #include "CASC.h"
 
-#include <iostream>
+#include "fmt/format.h"
 
 namespace casc {
 	File::~File() {
 		close();
 	}
 
-	std::vector<uint8_t> File::read() const {
+	std::vector<uint8_t, default_init_allocator<uint8_t>> File::read() const {
 		const uint32_t size = CascGetFileSize(handle, 0);
-		std::vector<uint8_t> buffer(size);
+		std::vector<uint8_t, default_init_allocator<uint8_t>> buffer(size);
 
-		#ifdef _MSC_VER
+#ifdef _MSC_VER
 		unsigned long bytes_read;
-		#else
+#else
 		unsigned bytes_read;
-		#endif
+#endif
 		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
 		if (!success) {
-			std::cout << "Failed to read file: " << GetLastError() << std::endl;
+			//fmt::print("Failed to read file: {}\n", GetLastError());
 		}
 		return buffer;
 	}
+
+//	std::vector<uint8_t, NoInitChar> File::read() const {
+//		const uint32_t size = CascGetFileSize(handle, 0);
+//		std::vector<uint8_t, NoInitChar> buffer(size);
+//
+//#ifdef _MSC_VER
+//		unsigned long bytes_read;
+//#else
+//		unsigned bytes_read;
+//#endif
+//		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
+//		if (!success) {
+//			fmt::print("Failed to read file: {}\n", GetLastError());
+//		}
+//		return buffer;
+//	}
+
+	//std::pair<std::unique_ptr<uint8_t[]>, std::size_t> File::read() const {
+	//	const uint32_t size = CascGetFileSize(handle, 0);
+	//	
+	//	std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
+	//	
+	//	#ifdef _MSC_VER
+	//	unsigned long bytes_read;
+	//	#else
+	//	unsigned bytes_read;
+	//	#endif
+	//	const bool success = CascReadFile(handle, buffer.get(), size, &bytes_read);
+	//	if (!success) {
+	//		fmt::print("Failed to read file: {}\n", GetLastError());
+	//	}
+	//	if (size != bytes_read) {
+	//		fmt::print("size != bytes_read");
+	//	}
+	//	return std::make_pair(buffer, bytes_read);
+	//}
 	
 	size_t File::size() const noexcept {
 		return CascGetFileSize(handle, 0);
@@ -43,7 +79,7 @@ namespace casc {
 	void CASC::open(const fs::path& path) {
 		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
-			std::wcout << "Error opening " << path << " with error:" << GetLastError() << std::endl;
+			//fmt::print("Error opening {} with error: {}\n", path, GetLastError());
 		}
 	}
 
@@ -51,7 +87,7 @@ namespace casc {
 		File file;
 		const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 		if (!opened) {
-			std::cout << "Error opening file " << path << " with error: " << GetLastError() << std::endl;
+			//fmt::print("Error opening {} with error: {}\n", path, GetLastError());
 		}
 		return file;
 	}

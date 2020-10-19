@@ -67,39 +67,39 @@ signals:
 	void saving_initiated();
 };
 
-extern Map* map;
-extern ini::INI world_edit_strings;
-extern ini::INI world_edit_game_strings;
-extern ini::INI world_edit_data;
-extern WindowHandler window_handler;
+inline Map* map = nullptr;
+inline ini::INI world_edit_strings;
+inline ini::INI world_edit_game_strings;
+inline ini::INI world_edit_data;
+inline WindowHandler window_handler;
 
-extern TableModel* units_table;
-extern slk::SLK units_slk;
-extern slk::SLK units_meta_slk;
-extern ini::INI unit_editor_data;
+inline TableModel* units_table;
+inline slk::SLK units_slk;
+inline slk::SLK units_meta_slk;
+inline ini::INI unit_editor_data;
 
-extern TableModel* items_table;
-extern slk::SLK items_slk;
-extern slk::SLK items_meta_slk;
+inline TableModel* items_table;
+inline slk::SLK items_slk;
+inline slk::SLK items_meta_slk;
 
-extern TableModel* abilities_table;
-extern slk::SLK abilities_slk;
-extern slk::SLK abilities_meta_slk;
+inline TableModel* abilities_table;
+inline slk::SLK abilities_slk;
+inline slk::SLK abilities_meta_slk;
 
-extern TableModel* doodads_table;
-extern slk::SLK doodads_slk;
-extern slk::SLK doodads_meta_slk;
+inline TableModel* doodads_table;
+inline slk::SLK doodads_slk;
+inline slk::SLK doodads_meta_slk;
 
-extern TableModel* destructibles_table;
-extern slk::SLK destructibles_slk;
-extern slk::SLK destructibles_meta_slk;
+inline TableModel* destructibles_table;
+inline slk::SLK destructibles_slk;
+inline slk::SLK destructibles_meta_slk;
 
-extern TableModel* upgrade_table;
-extern slk::SLK upgrade_slk;
-extern slk::SLK upgrade_meta_slk;
+inline TableModel* upgrade_table;
+inline slk::SLK upgrade_slk;
+inline slk::SLK upgrade_meta_slk;
 
-extern TableModel* buff_table;
-extern slk::SLK buff_slk;
-extern slk::SLK buff_meta_slk;
+inline TableModel* buff_table;
+inline slk::SLK buff_slk;
+inline slk::SLK buff_meta_slk;
 
-extern GLWidget* context;
+inline GLWidget* context;

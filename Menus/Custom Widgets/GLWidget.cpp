@@ -11,7 +11,6 @@
 
 #include "HiveWE.h"
 
-
 void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei, const GLchar *message, void *) {
 	// Skip buffer info messages, framebuffer info messages, texture usage state warning, redundant state change buffer
 	if (id == 131185 // ?
@@ -145,7 +144,7 @@ void GLWidget::paintGL() {
 		QPainter p(this);
 		p.setPen(QColor(Qt::GlobalColor::white));
 		p.setFont(QFont("Arial", 10, 100, false));
-		
+
 		// Rendering time
 		static std::vector<double> frametimes;
 		frametimes.push_back(delta * 1000.f);
@@ -158,7 +157,7 @@ void GLWidget::paintGL() {
 		// General info
 		p.drawText(300, 20, QString::fromStdString(fmt::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));
 		if (map->brush) {
-			p.drawText(300, 35, QString::fromStdString(fmt::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x,map->brush->get_position().y)));
+			p.drawText(300, 35, QString::fromStdString(fmt::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
 		}
 
 		p.drawText(300, 50, QString::fromStdString(fmt::format("Camera Horizontal Angle: {:.4f}", camera->horizontal_angle)));

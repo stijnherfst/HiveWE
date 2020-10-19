@@ -49,4 +49,4 @@ private:
 	std::unordered_map<std::string, std::weak_ptr<Resource>> resources;
 };
 
-extern ResourceManager resource_manager;
+inline ResourceManager resource_manager;

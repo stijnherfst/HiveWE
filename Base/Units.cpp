@@ -12,8 +12,6 @@
 #include "BinaryWriter.h"
 #include "Hierarchy.h"
 
-int Unit::auto_increment;
-
 void Unit::update() {
 	const float model_scale = units_slk.data<float>("modelscale", id);
 	const float move_height = units_slk.data<float>("moveheight", id);
@@ -26,6 +24,10 @@ void Unit::update() {
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
 	skeleton.updateLocation(final_position, angle, final_scale);
+
+	color.r = units_slk.data<float>("red", id) / 255.f;
+	color.g = units_slk.data<float>("green", id) / 255.f;
+	color.b = units_slk.data<float>("blue", id) / 255.f;
 }
 
 void Units::load() {
@@ -226,7 +228,6 @@ void Units::create() {
 			continue;
 		}
 
-		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
 		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		i.update();
@@ -234,7 +235,6 @@ void Units::create() {
 	for (auto& i : items) {
 		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
 
-		//tree.insert(&i);
 		i.mesh = get_mesh(i.id);
 		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		i.update();
@@ -247,19 +247,15 @@ void Units::render() {
 			continue;
 		} // ToDo handle starting locations
 
-		glm::vec4 color;
-		color.r = units_slk.data<float>("red", i.id) / 255.f;
-		color.g = units_slk.data<float>("green", i.id) / 255.f;
-		color.b = units_slk.data<float>("blue", i.id) / 255.f;
-
-		i.mesh->render_queue(i.skeleton, color);
+		i.mesh->render_queue(i.skeleton, i.color);
 	}
 	for (auto& i : items) {
-		glm::vec4 color;
-		color.r = items_slk.data<float>("red", i.id) / 255.f;
-		color.g = items_slk.data<float>("green", i.id) / 255.f;
-		color.b = items_slk.data<float>("blue", i.id) / 255.f;
-		i.mesh->render_queue(i.skeleton, color);
+		//glm::vec4 color;
+		//color.r = items_slk.data<float>("red", i.id) / 255.f;
+		//color.g = items_slk.data<float>("green", i.id) / 255.f;
+		//color.b = items_slk.data<float>("blue", i.id) / 255.f;
+		//i.mesh->render_queue(i.skeleton, color);
+		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}
 }
 
@@ -323,9 +319,11 @@ void Units::process_field_change(const std::string& id, const std::string& field
 			}
 		}
 	}
-	if (field == "modelscale" || field == "moveheight") {
+	if (field == "modelscale" || field == "moveheight" || field == "red" || field == "green" || field == "blue") {
 		for (auto& i : units) {
-			i.update();
+			if (i.id == id) {
+				i.update();
+			}
 		}
 	}
 }

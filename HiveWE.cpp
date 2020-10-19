@@ -35,43 +35,6 @@
 
 #include "IconView.h"
 
-Map* map = nullptr;
-ini::INI world_edit_strings;
-ini::INI world_edit_game_strings;
-ini::INI world_edit_data;
-WindowHandler window_handler;
-
-TableModel* units_table;
-slk::SLK units_slk;
-slk::SLK units_meta_slk;
-ini::INI unit_editor_data;
-
-TableModel* items_table;
-slk::SLK items_slk;
-slk::SLK items_meta_slk;
-
-TableModel* abilities_table;
-slk::SLK abilities_slk;
-slk::SLK abilities_meta_slk;
-
-TableModel* doodads_table;
-slk::SLK doodads_slk;
-slk::SLK doodads_meta_slk;
-
-TableModel* destructibles_table;
-slk::SLK destructibles_slk;
-slk::SLK destructibles_meta_slk;
-
-TableModel* upgrade_table;
-slk::SLK upgrade_slk;
-slk::SLK upgrade_meta_slk;
-
-TableModel* buff_table;
-slk::SLK buff_slk;
-slk::SLK buff_meta_slk;
-
-GLWidget* context;
-
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 

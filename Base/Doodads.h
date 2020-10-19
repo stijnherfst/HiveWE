@@ -11,7 +11,8 @@
 #include "TerrainUndo.h"
 
 struct Doodad {
-	static int auto_increment;
+	static inline int auto_increment;
+
 	std::string id;
 	std::string skin_id;
 	int variation = 0;

@@ -11,7 +11,7 @@ namespace ini {
 	}
 
 	void INI::load(const fs::path& path) {
-		std::vector<uint8_t> buffer = hierarchy.open_file(path).buffer;
+		std::vector<uint8_t, default_init_allocator<uint8_t>> buffer = hierarchy.open_file(path).buffer;
 		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
 		// Strip byte order marking

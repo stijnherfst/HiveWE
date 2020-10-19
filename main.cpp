@@ -9,6 +9,7 @@
 
 #include "HiveWE.h"
 #include "test.h"
+#include "DockManager.h"
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available
@@ -61,6 +62,11 @@ int main(int argc, char *argv[]) {
 	darkPalette.setColor(QPalette::Disabled, QPalette::Highlight, QColor(80, 80, 80));
 	darkPalette.setColor(QPalette::HighlightedText, Qt::white);
 	darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
+
+	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize);
 
 	qApp->setPalette(darkPalette);
 

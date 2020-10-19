@@ -9,5 +9,3 @@ void InputHandler::mouse_move_event(QMouseEvent* event) {
 	previous_mouse = mouse;
 	mouse = { event->pos().x(), event->pos().y() };
 }
-
-InputHandler input_handler; 

@@ -151,29 +151,8 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 			}
 			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
 		} else {
-
-			std::string to = i.file_name.stem().string();
-
-			// Only load diffuse to keep memory usage down
-			//if (to.ends_with("Normal") || to.ends_with("ORM") || to.ends_with("EnvironmentMap") || to.ends_with("Black32") || to.ends_with("Emissive")) {
-			//	textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-			//	continue;
-			//}
-
-			fs::path new_path = i.file_name;
-			new_path.replace_extension(".dds");
-			if (hierarchy.file_exists(new_path)) {
-				textures.push_back(resource_manager.load<GPUTexture>(new_path));
-			} else {
-				new_path.replace_extension(".blp");
-				if (hierarchy.file_exists(new_path)) {
-					textures.push_back(resource_manager.load<GPUTexture>(new_path));
-				} else {
-					std::cout << "Error loading texture " << i.file_name << "\n";
-					textures.push_back(resource_manager.load<GPUTexture>("Textures/btntempw.dds"));
-				}
-			}
-
+			textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+			
 			// ToDo Same texture on different model with different flags?
 			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);

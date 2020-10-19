@@ -34,7 +34,7 @@ void parse_all_mdx() {
 
 	std::for_each(std::execution::par_unseq, paths.begin(), paths.end(), [&](const fs::path& path) {
 		std::ifstream stream(path, std::ios::binary);
-		auto buffer = std::vector<uint8_t>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+		auto buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
 
 		BinaryReader reader(buffer);
 		auto mdx = mdx::MDX(reader);

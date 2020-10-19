@@ -2,11 +2,14 @@
 
 #include <filesystem>
 #include <vector>
+#include <span>
 
 namespace fs = std::filesystem;
 
 #define __CASCLIB_SELF__
 #include <CascLib.h>
+
+#include "no_init_allocator.h"
 
 // A thin wrapper around CascLib https://github.com/ladislav-zezula/CascLib
 namespace casc {
@@ -28,8 +31,10 @@ namespace casc {
 			return *this;
 		}
 
+		//std::span<uint8_t> read() const;
+		std::vector<uint8_t, default_init_allocator<uint8_t>> read() const;
+		//std::pair<std::unique_ptr<uint8_t[]>, std::size_t> read() const;
 
-		std::vector<uint8_t> read() const;
 		size_t size() const noexcept;
 		void close() const noexcept;
 	};

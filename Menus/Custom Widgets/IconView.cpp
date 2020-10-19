@@ -254,6 +254,7 @@ IconView::IconView(QWidget* parent) : QWidget(parent) {
 	connect(view->selectionModel(), &QItemSelectionModel::selectionChanged, [&]() {
 		if (!view->currentIndex().isValid()) {
 			finalPath->clear();
+			return;
 		}
 		
 		finalPath->setText(filter->data(view->currentIndex(), Qt::EditRole).toString());

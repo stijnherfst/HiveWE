@@ -26,4 +26,4 @@ public:
 	bool key_pressed(Qt::Key key) const;
 };
 
-extern InputHandler input_handler;
+inline InputHandler input_handler;

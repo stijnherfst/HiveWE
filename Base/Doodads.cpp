@@ -12,8 +12,6 @@
 #include "BinaryWriter.h"
 #include "Hierarchy.h"
 
-int Doodad::auto_increment;
-
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 

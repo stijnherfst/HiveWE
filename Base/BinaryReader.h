@@ -7,12 +7,20 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
+#include "no_init_allocator.h"
+
 class BinaryReader {
-public:
-	std::vector<uint8_t> buffer;
+  public:
+	std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(std::vector<uint8_t> buffer) : buffer(buffer) {}
+	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer)
+		: buffer(std::move(buffer)) {
+	}
+	//explicit BinaryReader(std::vector<uint8_t>&& buffer) : buffer(buffer) {}
+	//BinaryReader& operator=(BinaryReader&& other) noexcept {
+	//	buffer = other.buffer;
+	//}
 
 	template<typename T>
 	[[nodiscard]] T read() {
@@ -22,7 +30,7 @@ public:
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
 		T result = *reinterpret_cast<T*>(&buffer[position]);
-
+		
 		position += sizeof(T);
 		return result;
 	}

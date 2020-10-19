@@ -53,7 +53,7 @@ add_executable(HiveWE
 	Base/MapInfo.cpp
 	Base/PathingMap.cpp
 	Base/Regions.cpp
-	Base/ResourceManager.cpp
+	
 	Base/RenderManager.cpp
 	Base/ShadowMap.cpp
 	Base/Sounds.cpp
@@ -134,6 +134,8 @@ add_executable(HiveWE
 	"Menus/Custom Widgets/UnitSelector.cpp"
 	"Menus/Custom Widgets/GenericSelectorList.cpp"
 	"Menus/Custom Widgets/IconView.cpp"
+
+	#tracy/TracyClient.cpp
  )
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
@@ -176,6 +178,7 @@ if(WIN32)
 			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
 			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
 	endif()
+	#target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF TRACY_ENABLE)
 	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF)
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
