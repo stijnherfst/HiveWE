@@ -225,11 +225,16 @@ void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta
 			if (optional_ints) {
 				uint32_t level_variation = reader.read<uint32_t>();
 				uint32_t data_pointer = reader.read<uint32_t>();
+				if (data_pointer != 0) {
+					column_header += char('a' + data_pointer - 1);
+				}
 				if (level_variation != 0) {
-					if (meta_slk.column_headers.contains("data") && meta_slk.data<int>("data", modification_id) > 0) {
-						column_header += char('a' + data_pointer);
-					}
 					column_header += std::to_string(level_variation);
+				}
+
+				// Can remove after checking whether this holds for many maps
+				if (data_pointer != 0 && level_variation == 0) {
+					assert(!(data_pointer != 0 && level_variation == 0));
 				}
 			}
 
@@ -280,10 +285,13 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 	// Create an temporary index to speed up field lookups
 	absl::flat_hash_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-		if (meta_index.contains(to_lowercase_copy(meta_slk.data("field", key)))) {
+		std::string field = to_lowercase_copy(meta_slk.data("field", key));
+		if (meta_index.contains(field) && field != "data" && field != "unitid" && field != "cast") {
+
 			puts("s");
 		}
-		meta_index[to_lowercase_copy(meta_slk.data("field", key))] = key;
+
+		meta_index[field] = key;
 	}
 
 	BinaryWriter sub_writer;
@@ -313,13 +321,15 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				continue;
 			}
 
-			//// Find the metadata ID for this field name since modification files are stupid
+			// Find the metadata ID for this field name since modification files are stupid
 			std::string meta_data_key;
 
 			int variation = 0;
+			int data_pointer = 0;
 			if (meta_index.contains(property_id)) {
 				meta_data_key = meta_index.at(property_id);
 			} else {
+				// First strip off the variation/level
 				size_t nr_position = property_id.find_first_of("0123456789");
 				std::string without_numbers = property_id.substr(0, nr_position);
 
@@ -327,8 +337,23 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 					variation = std::stoi(property_id.substr(nr_position));
 				}
 
-				if (meta_index.contains(without_numbers)) {
-					meta_data_key = meta_index.at(without_numbers);
+				// If it is a data field then it will contain a data_pointer/column at the end
+				if (without_numbers.starts_with("data")) {
+					data_pointer = without_numbers[4] - 'a' + 1;
+				}
+
+				if (without_numbers.starts_with("data") || without_numbers == "unitid" || without_numbers == "cast") {
+					// Unfortunately mapping a data field to a key is not easy so we have to iterate over the entire meta_slk
+					for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+						if (meta_slk.data<int>("data", key) == data_pointer && meta_slk.data("usespecific", key).find(id) != std::string::npos) {
+							meta_data_key = key;
+							break;
+						}
+					}
+				} else {
+					if (meta_index.contains(without_numbers)) {
+						meta_data_key = meta_index.at(without_numbers);
+					}
 				}
 			}
 
@@ -365,7 +390,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 
 			if (optional_ints) {
 				sub_writer.write<uint32_t>(variation);
-				sub_writer.write<uint32_t>(0); // 🤔
+				sub_writer.write<uint32_t>(data_pointer);
 			}
 
 			if (write_type == 0) {

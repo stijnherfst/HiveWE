@@ -340,8 +340,7 @@ bool Map::save(const fs::path& path) {
 	save_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
 	units.save();
 
-	// Currently mod file saving does not allow for "column offsets" used by abilities
-	//save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
+	save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
 
 	save_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
 	save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);

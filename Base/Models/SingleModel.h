@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QAbstractProxyModel>
+#include <QIdentityProxyModel>
 #include <QHeaderView>
 #include <QStyledItemDelegate>
 
@@ -8,7 +9,7 @@
 
 #include "SLK.h"
 
-class SingleModel : public QAbstractProxyModel {
+class SingleModel : public QIdentityProxyModel {
 	Q_OBJECT
 		
 public:
@@ -26,16 +27,25 @@ public:
 	explicit SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 	void setID(const std::string id);
 	std::string getID() const;
-	const std::vector<std::string>& getMapping() const {
+
+	struct Mapping {
+		std::string key;
+		std::string field;
+		int level;
+	};
+
+	const std::vector<Mapping>& getMapping() const {
 		return id_mapping;
 	}
 
 	slk::SLK* meta_slk;
+private:
+	void buildMapping();
+
 	slk::SLK* slk;
 
-private:
 	std::string id = "hpea";
-	std::vector<std::string> id_mapping;
+	std::vector<Mapping> id_mapping;
 };
 
 // Provides row headers that have alternate colors

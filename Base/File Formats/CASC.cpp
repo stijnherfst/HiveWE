@@ -18,46 +18,10 @@ namespace casc {
 #endif
 		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
 		if (!success) {
-			//fmt::print("Failed to read file: {}\n", GetLastError());
+			fmt::print("Failed to read file: {}\n", GetLastError());
 		}
 		return buffer;
 	}
-
-//	std::vector<uint8_t, NoInitChar> File::read() const {
-//		const uint32_t size = CascGetFileSize(handle, 0);
-//		std::vector<uint8_t, NoInitChar> buffer(size);
-//
-//#ifdef _MSC_VER
-//		unsigned long bytes_read;
-//#else
-//		unsigned bytes_read;
-//#endif
-//		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
-//		if (!success) {
-//			fmt::print("Failed to read file: {}\n", GetLastError());
-//		}
-//		return buffer;
-//	}
-
-	//std::pair<std::unique_ptr<uint8_t[]>, std::size_t> File::read() const {
-	//	const uint32_t size = CascGetFileSize(handle, 0);
-	//	
-	//	std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
-	//	
-	//	#ifdef _MSC_VER
-	//	unsigned long bytes_read;
-	//	#else
-	//	unsigned bytes_read;
-	//	#endif
-	//	const bool success = CascReadFile(handle, buffer.get(), size, &bytes_read);
-	//	if (!success) {
-	//		fmt::print("Failed to read file: {}\n", GetLastError());
-	//	}
-	//	if (size != bytes_read) {
-	//		fmt::print("size != bytes_read");
-	//	}
-	//	return std::make_pair(buffer, bytes_read);
-	//}
 	
 	size_t File::size() const noexcept {
 		return CascGetFileSize(handle, 0);
@@ -79,7 +43,7 @@ namespace casc {
 	void CASC::open(const fs::path& path) {
 		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
-			//fmt::print("Error opening {} with error: {}\n", path, GetLastError());
+			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
 		}
 	}
 
@@ -87,7 +51,7 @@ namespace casc {
 		File file;
 		const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 		if (!opened) {
-			//fmt::print("Error opening {} with error: {}\n", path, GetLastError());
+			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
 		}
 		return file;
 	}
