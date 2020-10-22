@@ -69,6 +69,14 @@ void Map::load(const fs::path& path) {
 	abilities_meta_slk = slk::SLK("Units/AbilityMetaData.slk");
 	abilities_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
+	// Patch the SLKs
+	abilities_slk.add_column("buttonpos2");
+	abilities_slk.add_column("unbuttonpos2");
+	abilities_slk.add_column("researchbuttonpos2");
+	abilities_meta_slk.set_shadow_data("field", "abpy", "buttonpos2");
+	abilities_meta_slk.set_shadow_data("field", "auby", "unbuttonpos2");
+	abilities_meta_slk.set_shadow_data("field", "arpy", "researchbuttonpos2");
+
 	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"));
 	abilities_slk.merge(ini::INI("Units/AbilitySkinStrings.txt"));
 	abilities_slk.merge(ini::INI("Units/HumanAbilityFunc.txt"));
@@ -121,6 +129,10 @@ void Map::load(const fs::path& path) {
 	upgrade_slk = slk::SLK("Units/UpgradeData.slk");
 	upgrade_meta_slk = slk::SLK("Units/UpgradeMetaData.slk");
 	upgrade_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	
+	// Patch the SLKs
+	upgrade_slk.add_column("buttonpos2");
+	upgrade_meta_slk.set_shadow_data("field", "gbpy", "buttonpos2");
 
 	upgrade_slk.merge(ini::INI("Units/AbilitySkin.txt"));
 	upgrade_slk.merge(ini::INI("Units/UpgradeSkin.txt"));

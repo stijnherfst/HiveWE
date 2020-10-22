@@ -168,6 +168,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because
 		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libturbojpeg.so"
 	)
 endif()
+
 if(WIN32)
 	if (CMAKE_BUILD_TYPE STREQUAL "Release")
 		target_link_libraries(HiveWE
@@ -179,9 +180,10 @@ if(WIN32)
 			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
 	endif()
 	#target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF TRACY_ENABLE)
-	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF)
+	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
+
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD

@@ -286,11 +286,6 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 	absl::flat_hash_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
 		std::string field = to_lowercase_copy(meta_slk.data("field", key));
-		if (meta_index.contains(field) && field != "data" && field != "unitid" && field != "cast") {
-
-			puts("s");
-		}
-
 		meta_index[field] = key;
 	}
 
@@ -316,6 +311,12 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 
 		sub_writer.write<uint32_t>(properties.size() - (properties.contains("oldid") ? 1 : 0));
 
+		const std::string base_id = custom ? properties.at("oldid") : id;
+		std::string meta_id = custom ? properties.at("oldid") : id;
+		if (slk.column_headers.contains("code")) {
+			meta_id = slk.data("code", meta_id);
+		}
+
 		for (const auto& [property_id, value] : properties) {
 			if (property_id == "oldid") {
 				continue;
@@ -333,27 +334,51 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				size_t nr_position = property_id.find_first_of("0123456789");
 				std::string without_numbers = property_id.substr(0, nr_position);
 
-				if (nr_position < property_id.size()) {
+				if (nr_position != std::string::npos) {
 					variation = std::stoi(property_id.substr(nr_position));
 				}
 
-				// If it is a data field then it will contain a data_pointer/column at the end
-				if (without_numbers.starts_with("data")) {
-					data_pointer = without_numbers[4] - 'a' + 1;
-				}
+				if (meta_index.contains(without_numbers)) {
+					meta_data_key = meta_index.at(without_numbers);
+				} else {
+					// If it is a data field then it will contain a data_pointer/column at the end
+					if (without_numbers.starts_with("data")) {
+						data_pointer = without_numbers[4] - 'a' + 1;
+						without_numbers = "data";
+					}
 
-				if (without_numbers.starts_with("data") || without_numbers == "unitid" || without_numbers == "cast") {
-					// Unfortunately mapping a data field to a key is not easy so we have to iterate over the entire meta_slk
-					for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-						if (meta_slk.data<int>("data", key) == data_pointer && meta_slk.data("usespecific", key).find(id) != std::string::npos) {
+					if (without_numbers == "data" || without_numbers == "unitid" || without_numbers == "cast") {
+						// Unfortunately mapping a data field to a key is not easy so we have to iterate over the entire meta_slk
+						for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+							if (meta_slk.data<int>("data", key) != data_pointer) {
+								continue;
+							}
+
+							if (to_lowercase_copy(meta_slk.data("field", key)) != without_numbers) {
+								continue;
+							}
+
+							std::string use_specific = meta_slk.data("usespecific", key);
+							std::string not_specific = meta_slk.data("notspecific", key);
+
+							// If we are in the exclude list
+							if (not_specific.find(meta_id) != std::string::npos) {
+								continue;
+							}
+
+							// If the include list is not empty and we are not inside
+							if (!use_specific.empty() && use_specific.find(meta_id) == std::string::npos && use_specific.find(base_id) == std::string::npos) {
+								continue;
+							}
+
 							meta_data_key = key;
 							break;
 						}
 					}
-				} else {
-					if (meta_index.contains(without_numbers)) {
-						meta_data_key = meta_index.at(without_numbers);
-					}
+				}
+
+				if (meta_data_key.empty()) {
+					puts("s");
 				}
 			}
 
