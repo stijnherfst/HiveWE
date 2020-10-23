@@ -106,6 +106,7 @@ target_sources(HiveWE PRIVATE
 	
 	"resources/editable_mesh.cpp"
 	
+	"menus/creation_screen.cpp"
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"
 	"menus/minimap.cpp"

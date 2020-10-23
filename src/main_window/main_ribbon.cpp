@@ -116,7 +116,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	new_map->setIcon(QIcon("Data/Icons/Ribbon/new32x32.ico"));
 	new_map->setIconSize({ 32, 32 });
 	new_map->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-	new_map->setDisabled(true);
 	addMenuItem(new_map);
 
 	open_map_folder->setText("Open Map (Folder)");

@@ -5,6 +5,7 @@
 #include <print>
 namespace fs = std::filesystem;
 
+#include "creation_screen.h"
 #include "tile_setter.h"
 #include "map_info_editor.h"
 #include "terrain_palette.h"
@@ -129,7 +130,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
 
-	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
+	connect(ui.ribbon->new_map, &QPushButton::clicked, this, &HiveWE::create);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
 	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
@@ -205,6 +206,46 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	ui.widget->makeCurrent();
 	map->load("Data/Test Map/");
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
+}
+
+void HiveWE::create() {
+	QSettings settings;
+
+	QString file_name = QFileDialog::getSaveFileName(this, "Create Map",
+													 settings.value("createDirectory", QDir::current().path()).toString());
+
+	if (file_name == "") {
+		return;
+	}
+
+	QDir mapdir(file_name);
+	if (!mapdir.exists() && !mapdir.mkpath(".")) {
+		QMessageBox::information(this, "Creating map failed", "Creating the map folder failed.");
+		std::cout << "Creating map failed: " << GetLastError() << std::endl;
+		return;
+	} else if (!mapdir.isEmpty()) {
+		if (!mapdir.removeRecursively()) {
+			QMessageBox::information(this, "Creating map failed", "Emptying the map folder failed.");
+			std::cout << "Emptying map folder failed: " << GetLastError() << std::endl;
+			return;
+		} else if (!mapdir.mkpath(".")) {
+			QMessageBox::information(this, "Creating map failed", "Creating the map folder failed.");
+			std::cout << "Creating map failed: " << GetLastError() << std::endl;
+			return;
+		}
+	}
+
+	settings.setValue("createDirectory", file_name);
+
+	CreationScreen dialog(this, fs::path(file_name.toStdString()));
+	dialog.exec();
+
+	/*delete map;
+	map = new Map();
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+
+	map->load(directory);
+	setWindowTitle("HiveWE - " + QString::fromStdString(map->filesystem_path.string()));*/
 }
 
 void HiveWE::load_folder() {
