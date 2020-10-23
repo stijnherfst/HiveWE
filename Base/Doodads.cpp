@@ -54,6 +54,16 @@ void Doodad::update() {
 	if (!maxRoll.empty()) {
 		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
 	}
+
+	if (doodads_slk.row_headers.contains(id)) {
+		color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
+		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
+		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
+	} else {
+		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
+		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
+		color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
+	}
 }
 
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
@@ -219,12 +229,7 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		//glm::vec4 color;
-		//color.r = doodads_slk.data<float>("red", i.id) / 255.f;
-		//color.g = doodads_slk.data<float>("green", i.id) / 255.f;
-		//color.b = doodads_slk.data<float>("blue", i.id) / 255.f;
-
-		i.mesh->render_queue(i.matrix, glm::vec3(1.f));
+		i.mesh->render_queue(i.matrix, i.color);
 	}
 	for (auto&& i : special_doodads) {
 		i.mesh->render_queue(i.matrix, glm::vec3(1.f));

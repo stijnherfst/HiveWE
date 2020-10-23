@@ -168,6 +168,18 @@ namespace slk {
 					continue;
 				}
 
+				if (value.size() > 1 && (key_lower == "vertr" || key_lower == "vertg" || key_lower == "vertb")) {
+					for (int i = 0; i < value.size(); i++) {
+						const std::string new_key = key_lower + std::to_string(i + 1);
+						if (!column_headers.contains(new_key)) {
+							add_column(new_key);
+						}
+						base_data[section_key][new_key] = value[i];
+
+					}
+					continue;
+				}
+
 				std::string final_value;
 				for (int i = 0; i < value.size(); i++) {
 					final_value += value[i];

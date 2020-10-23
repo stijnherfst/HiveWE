@@ -37,6 +37,7 @@ struct Doodad {
 	glm::mat4 matrix = glm::mat4(1.f);
 	std::shared_ptr<StaticMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
+	glm::vec3 color;
 
 	void update();
 	static float acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle);
