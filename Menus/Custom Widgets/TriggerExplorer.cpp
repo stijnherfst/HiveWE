@@ -599,7 +599,6 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const {
 				case Classifier::comment:
 					return comment_icon;
 			}
-			break;
 		default:
 			return QVariant();
 	}	
@@ -713,7 +712,6 @@ QVariant TreeItem::data(int column) const {
 			if (id == 0) {
 				return "Map Header";
 			}
-			return "not found";
 			break;
 		case Classifier::variable:
 			for (const auto& i : map->triggers.variables) {
@@ -721,6 +719,7 @@ QVariant TreeItem::data(int column) const {
 					return QString::fromStdString(i.name);
 				}
 			}
+			break;
 		case Classifier::category:
 			for (const auto& i : map->triggers.categories) {
 				if (i.id == id) {
@@ -728,6 +727,7 @@ QVariant TreeItem::data(int column) const {
 				}
 			}
 	}
+	return "Not found";
 }
 
 bool TreeItem::setData(const QModelIndex& index, const QVariant& value, int role) {

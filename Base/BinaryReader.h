@@ -76,4 +76,12 @@ class BinaryReader {
 		}
 		position += amount;
 	}
+
+	void advance_c_string() {
+		position += std::string(reinterpret_cast<char*>(buffer.data() + position)).size() + 1;
+
+		if (position > buffer.size()) {
+			throw std::out_of_range("Trying to read out of range of buffer");
+		}
+	}
 };

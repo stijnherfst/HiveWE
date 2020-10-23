@@ -515,7 +515,7 @@ namespace mdx {
 		while (reader.position < reader_pos + size) {
 			EventObject evt;
 			evt.node = Node(reader, unique_tracks);
-			reader.read<uint32_t>(); // read KEVT
+			reader.advance(4); // read KEVT
 			uint32_t count = reader.read<uint32_t>();
 			evt.global_sequence_id = reader.read<int32_t>(); //signed
 			evt.times = reader.read_vector<uint32_t>(count);

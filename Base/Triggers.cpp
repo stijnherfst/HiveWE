@@ -237,7 +237,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	unknown8 = reader.read<uint32_t>();	
 	unknown9 = reader.read<uint32_t>();
 
-	reader.read_c_string(); //last name the map was saved under, don't care
+	reader.advance_c_string(); //last name the map was saved under, don't care
 
 	unknown10 = reader.read<uint32_t>();
 	unknown11 = reader.read<uint32_t>();
@@ -298,7 +298,7 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 			}
 			case Classifier::variable: {
 				reader.advance(4); //id
-				reader.read_c_string(); //name
+				reader.advance_c_string(); //name
 				reader.advance(4); //parentid
 				break;
 			}
