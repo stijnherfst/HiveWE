@@ -239,26 +239,15 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	}
 	
 	uint32_t element_count = reader.read<uint32_t>();
-	unknown8 = reader.read<uint32_t>();	
-	unknown9 = reader.read<uint32_t>();
-
-	reader.read_c_string(); //last name the map was saved under, don't care
-
-	unknown10 = reader.read<uint32_t>();
-	unknown11 = reader.read<uint32_t>();
-	if (sub_version == 7) {
-		unknown12 = reader.read<uint32_t>();
-	}
-
-	if (reader.remaining() == 0) {
-		if (element_count != 1)
+	for (uint32_t i = 0; i < element_count; i++) {
+		if (reader.remaining() == 0) {
 			std::cout << "Possibly corrupt WTG!";
-		return;
-	}
+			return;
+		}
 
-	for (uint32_t i = 0; i < (element_count - 1); i++) {
 		Classifier classifier = static_cast<Classifier>(reader.read<uint32_t>());
 		switch (classifier) {
+			case Classifier::root:
 			case Classifier::category: {
 				TriggerCategory cat;
 				cat.id = reader.read<uint32_t>();

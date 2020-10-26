@@ -76,6 +76,7 @@ struct ECA {
 };
 
 enum class Classifier {
+	root = 1,
 	category = 4,
 	gui = 8,
 	comment = 16,
@@ -116,12 +117,6 @@ class Triggers {
 	int unknown5 = 0;
 	int unknown6 = 0;
 	int unknown7 = 0;
-	int unknown8 = 0;
-	int unknown9 = 0;
-
-	int unknown10 = 0;
-	int unknown11 = 0;
-	int unknown12 = 0;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
 	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);
