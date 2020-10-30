@@ -1,7 +1,5 @@
 #include "INI.h"
 
-#include <sstream>
-
 #include "Hierarchy.h"
 #include "Utilities.h"
 

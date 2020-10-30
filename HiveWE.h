@@ -13,6 +13,8 @@
 #include "SLK.h"
 #include "GLWidget.h"
 
+inline WindowHandler window_handler;
+
 class HiveWE : public QMainWindow {
 	Q_OBJECT
 
@@ -71,7 +73,6 @@ inline Map* map = nullptr;
 inline ini::INI world_edit_strings;
 inline ini::INI world_edit_game_strings;
 inline ini::INI world_edit_data;
-inline WindowHandler window_handler;
 
 inline TableModel* units_table;
 inline slk::SLK units_slk;

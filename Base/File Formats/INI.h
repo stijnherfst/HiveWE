@@ -2,6 +2,7 @@
 
 #include <map>
 #include <vector>
+#include <sstream>
 #include <filesystem>
 namespace fs = std::filesystem;
 
