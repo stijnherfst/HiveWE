@@ -193,8 +193,9 @@ ads--CDockWidgetTab {
     background: palette(window);
     border-color: palette(dark);
     border-style: solid;
-    border-width: 0 1px 0 0;
+    border-width: 0 px 0 0;
     padding: 0;
+
 }
 
 ads--CDockWidgetTab[activeTab="true"] {

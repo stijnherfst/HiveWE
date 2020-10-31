@@ -15,6 +15,7 @@ namespace fs = std::filesystem;
 #include <glm/gtc/quaternion.hpp>
 
 #include "BinaryReader.h"
+#include "BinaryWriter.h"
 
 namespace mdx {
 	extern std::map<int, std::string> replacable_id_to_texture;
@@ -70,16 +71,13 @@ namespace mdx {
 
 	enum class ChunkTag {
 		VERS = 1397900630,
-		MODL = 1279545165,
+		GEOS = 1397704007,
+		MTLS = 1397511245,
 		SEQS = 1397835091,
 		GLBS = 1396853831,
-		TEXS = 1398293844,
-		SNDS = 1396985427,
-		MTLS = 1397511245,
-		TXAN = 1312905300,
-		GEOS = 1397704007,
 		GEOA = 1095714119,
 		BONE = 1162760002,
+		TEXS = 1398293844,
 		LITE = 1163151692,
 		HELP = 1347175752,
 		ATCH = 1212372033,
@@ -89,9 +87,12 @@ namespace mdx {
 		RIBB = 1111640402,
 		EVTS = 1398036037,
 		CLID = 1145654339,
+		CORN = 1314017091,
+		SNDS = 1396985427,
+		TXAN = 1312905300,
 		BPOS = 1397706818,
 		FAFX = 1480999238,
-		CORN = 1314017091
+		MODL = 1279545165
 	};
 
 	template <typename T>
@@ -112,11 +113,12 @@ namespace mdx {
 
 		TrackHeader() = default;
 		explicit TrackHeader(BinaryReader& reader, int track_id) {
-			const int tracks_count = reader.read<int32_t>();
+			const uint32_t tracks_count = reader.read<uint32_t>();
 			interpolation_type = reader.read<int32_t>();
 			global_sequence_ID = reader.read<int32_t>();
 			id = track_id;
 
+			tracks.reserve(tracks_count);
 			for (int i = 0; i < tracks_count; i++) {
 				Track<T> track;
 				track.frame = reader.read<int32_t>();
@@ -128,6 +130,25 @@ namespace mdx {
 				tracks.push_back(track);
 			}
 		}
+
+		void save(BinaryWriter& writer) const {
+			if (tracks.empty()) {
+				return;
+			}
+
+			writer.write<uint32_t>(tracks.size());
+			writer.write<uint32_t>(interpolation_type);
+			writer.write<uint32_t>(global_sequence_ID);
+
+			for (const auto& i : tracks) {
+				writer.write<uint32_t>(i.frame);
+				writer.write<T>(i.value);
+				if (interpolation_type > 1) {
+					writer.write<T>(i.inTan);
+					writer.write<T>(i.outTan);
+				}
+			}
+		}
 	};
 
 	struct Layer {
@@ -137,6 +158,11 @@ namespace mdx {
 		uint32_t texture_animation_id;
 		uint32_t coord_id;
 		float alpha;
+
+		float emissive_gain;
+		glm::vec3 fresnel_color;
+		float fresnel_opacity;
+		float fresnel_team_color;
 
 		TrackHeader<uint32_t> KMTF;
 		TrackHeader<float> KMTA;
@@ -193,6 +219,8 @@ namespace mdx {
 
 		Extent() = default;
 		explicit Extent(BinaryReader& reader);
+
+		void save(BinaryWriter& writer) const;
 	};
 
 	struct Sequence {
@@ -525,9 +553,28 @@ namespace mdx {
 		void read_CLID_chunk(BinaryReader& reader);
 		void read_CORN_chunk(BinaryReader& reader);
 
+		void write_GEOS_chunk(BinaryWriter& writer) const;
+		void write_MTLS_chunk(BinaryWriter& writer) const;
+		void write_SEQS_chunk(BinaryWriter& writer) const;
+		void write_GLBS_chunk(BinaryWriter& writer) const;
+		//void write_GEOA_chunk(BinaryWriter& writer) const;
+		//void write_BONE_chunk(BinaryWriter& writer) const;
+		//void write_TEXS_chunk(BinaryWriter& writer) const;
+		//void write_LITE_chunk(BinaryWriter& writer) const;
+		//void write_HELP_chunk(BinaryWriter& writer) const;
+		//void write_ATCH_chunk(BinaryWriter& writer) const;
+		//void write_PIVT_chunk(BinaryWriter& writer) const;
+		//void write_PREM_chunk(BinaryWriter& writer) const;
+		//void write_PRE2_chunk(BinaryWriter& writer) const;
+		//void write_RIBB_chunk(BinaryWriter& writer) const;
+		//void write_EVTS_chunk(BinaryWriter& writer) const;
+		//void write_CLID_chunk(BinaryWriter& writer) const;
+		//void write_CORN_chunk(BinaryWriter& writer) const;
+
 	  public:
 		explicit MDX(BinaryReader& reader);
 		void load(BinaryReader& reader);
+		void save(const fs::path& path);
 
 		void validate();
 

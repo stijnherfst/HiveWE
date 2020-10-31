@@ -14,55 +14,25 @@
 
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
-
-	//float rotation;
-	//if (doodads_slk.row_header_exists(id)) {
-	//	base_scale = glm::vec3(doodads_slk.data<float>("defScale", id));
-	//	if (doodads_slk.data<int>("fixedRot", id) == -1) {
-	//		rotation = angle;// glm::pi<float>() * 0.5f;
-	//	} else {
-	//		rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
-
-	//	}
-	//	std::cout << doodads_slk.data<float>("fixedRot", id) << "\n";
-
-	//} else {
-	//	if (destructibles_slk.data<int>("fixedRot", id) == -1) {
-	//		rotation = angle;// glm::pi<float>() * 0.5f;
-	//	} else {
-	//		rotation = glm::radians(destructibles_slk.data<float>("fixedRot", id));
-	//	}
-	//	std::cout << destructibles_slk.data<float>("fixedRot", id) << "\n";
-
-	//}
-
-	/*float fixed_rotation = doodads_slk.data<float>("fixedRot", id);
-	std::cout << fixed_rotation << "\n";*/
-	//if (doodads_slk.data<int>("fixedRot", id) == -1) {
-	//	rotation = angle;// glm::pi<float>() * 0.5f;
-	//} else {
-	//	rotation = glm::radians(doodads_slk.data<float>("fixedRot", id));
-	//}
-
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
-	//matrix = glm::rotate(matrix, angle + glm::radians(fixed_rotation), glm::vec3(0, 0, 1));
-	//matrix = glm::rotate(matrix, glm::pi<float>() * 0.5f, glm::vec3(0, 0, 1));
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	auto maxRoll = doodads_slk.data("maxroll", id);
-	if (!maxRoll.empty()) {
-		matrix = glm::rotate(matrix, -std::stof(maxRoll), glm::vec3(1, 0, 0));
-	}
-
+	std::string max_roll;
 	if (doodads_slk.row_headers.contains(id)) {
 		color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
 		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
+		max_roll = doodads_slk.data("maxroll", id);
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
 		color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
+		max_roll = destructibles_slk.data("maxroll", id);
+	}
+
+	if (!max_roll.empty()) {
+		matrix = glm::rotate(matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
 	}
 }
 
@@ -192,7 +162,7 @@ void Doodads::save() const {
 	for (auto&& i : special_doodads) {
 		writer.write_string(i.id);
 		writer.write<uint32_t>(i.variation);
-		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y) - 2);
+		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y));
 	}
 
 	hierarchy.map_file_write("war3map.doo", writer.buffer);
@@ -346,7 +316,7 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 		}
 	}
 
-	if (field == "maxroll") {
+	if (field == "maxroll" || field == "vertr" || field == "vertg" || field == "vertb") {
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.update();
@@ -371,7 +341,7 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 		}
 	}
 
-	if (field == "maxroll") {
+	if (field == "maxroll" || field == "colorr" || field == "colorg" || field == "colorb") {
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.update();

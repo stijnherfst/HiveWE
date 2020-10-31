@@ -35,7 +35,8 @@
 
 #include "IconView.h"
 
-HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
+HiveWE::HiveWE(QWidget* parent)
+	: QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
@@ -69,7 +70,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() { map->terrain_undo.undo(); });
-	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {	map->terrain_undo.redo(); });
+	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() { map->terrain_undo.redo(); });
 
 	connect(new QShortcut(Qt::CTRL + Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL + Qt::Key_Y, this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
@@ -150,46 +151,45 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(new QShortcut(QKeySequence(Qt::Key_U), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
 		open_palette<UnitPalette>();
-		});
+	});
+
 	connect(ui.ribbon->unit_palette, &QRibbonButton::clicked, [this]() {
 		open_palette<UnitPalette>();
-		});
-
+	});
 
 	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
 		open_palette<PathingPalette>();
 	});
-	
+
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		open_palette<PathingPalette>();
-
 	});
 
 	setAutoFillBackground(true);
 
-	connect(ui.ribbon->import_manager, &QRibbonButton::clicked, [this]() { 
-		bool created = false;
-		window_handler.create_or_raise<ImportManager>(this, created); 
-	});
+	//connect(ui.ribbon->import_manager, &QRibbonButton::clicked, [this]() {
+	//	bool created = false;
+	//	window_handler.create_or_raise<ImportManager>(this, created);
+	//});
 	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		auto editor = window_handler.create_or_raise<TriggerEditor>(this, created);
+		auto editor = window_handler.create_or_raise<TriggerEditor>(nullptr, created);
 		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
 	});
 
 	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ObjectEditor>(this, created);
+		window_handler.create_or_raise<ObjectEditor>(nullptr, created);
 	});
 
 	minimap->setParent(ui.widget);
 	minimap->move(10, 10);
 	minimap->show();
 
-	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height ,camera->position.z };  });
+	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera->position.z }; });
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	
+
 	ui.widget->makeCurrent();
 	map->load("Data/Test Map/");
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
@@ -199,9 +199,8 @@ void HiveWE::load_folder() {
 	QSettings settings;
 
 	QString folder_name = QFileDialog::getExistingDirectory(this, "Open Map Directory",
-		settings.value("openDirectory", QDir::current().path()).toString(),
-		QFileDialog::ShowDirsOnly
-		| QFileDialog::DontResolveSymlinks);
+															settings.value("openDirectory", QDir::current().path()).toString(),
+															QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
 	if (folder_name == "") {
 		return;
@@ -220,7 +219,7 @@ void HiveWE::load_folder() {
 	map = new Map();
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	
+
 	ui.widget->makeCurrent();
 	map->load(directory);
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
@@ -233,8 +232,8 @@ void HiveWE::load_mpq() {
 
 	// Choose an MPQ
 	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
-		settings.value("openDirectory", QDir::current().path()).toString(),
-		"Warcraft III Scenario (*.w3m *.w3x)");
+													 settings.value("openDirectory", QDir::current().path()).toString(),
+													 "Warcraft III Scenario (*.w3m *.w3x)");
 
 	if (file_name == "") {
 		return;
@@ -253,8 +252,9 @@ void HiveWE::load_mpq() {
 	}
 
 	fs::path unpack_location = QFileDialog::getExistingDirectory(this, "Choose Unpacking Location",
-		settings.value("openDirectory", QDir::current().path()).toString(),
-		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdString();
+																 settings.value("openDirectory", QDir::current().path()).toString(),
+																 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+								   .toStdString();
 
 	if (unpack_location.empty()) {
 		return;
@@ -298,9 +298,9 @@ void HiveWE::save_as() {
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->name);
 
 	fs::path file_name = QFileDialog::getExistingDirectory(this, "Choose Save Location",
-		settings.value("openDirectory", QDir::current().path()).toString(),
-		QFileDialog::ShowDirsOnly
-		| QFileDialog::DontResolveSymlinks).toStdString();
+														   settings.value("openDirectory", QDir::current().path()).toString(),
+														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+							 .toStdString();
 
 	if (file_name.empty()) {
 		return;
@@ -323,8 +323,8 @@ void HiveWE::export_mpq() {
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
 	QString file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ",
-		directory,
-		"Warcraft III Scenario (*.w3x)");
+													 directory,
+													 "Warcraft III Scenario (*.w3x)");
 
 	if (file_name == "") {
 		return;
@@ -337,11 +337,11 @@ void HiveWE::export_mpq() {
 
 	HANDLE handle;
 
-	#ifdef _MSC_VER
-		SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
-	#else
-		SFileCreateArchive(file_name.toStdString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
-	#endif
+#ifdef _MSC_VER
+	SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+#else
+	SFileCreateArchive(file_name.toStdString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+#endif
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {
@@ -360,7 +360,8 @@ void HiveWE::play_test() {
 	QProcess* warcraft = new QProcess;
 	const QString warcraft_path = QString::fromStdString((hierarchy.warcraft_directory / "_retail_" / "x86_64" / "Warcraft III.exe").string());
 	QStringList arguments;
-	arguments << "-launch" << "-loadfile" << QString::fromStdString(map->filesystem_path.string());
+	arguments << "-launch"
+			  << "-loadfile" << QString::fromStdString(map->filesystem_path.string());
 
 	QSettings settings;
 	if (settings.value("testArgs").toString() != "")
@@ -475,12 +476,10 @@ void HiveWE::restore_window_state() {
 		restoreState(settings.value("MainWindow/windowState").toByteArray());
 		if (settings.value("MainWindow/maximized").toBool()) {
 			showMaximized();
-		}
-		else {
+		} else {
 			showNormal();
 		}
-	}
-	else {
+	} else {
 		showMaximized();
 	}
 }

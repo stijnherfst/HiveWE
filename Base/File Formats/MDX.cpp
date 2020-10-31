@@ -2,6 +2,7 @@
 
 #include "Utilities.h"
 #include <iostream>
+#include <bit>
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -23,6 +24,13 @@ namespace mdx {
 		maximum = reader.read<glm::vec3>();
 	}
 
+	void Extent::save(BinaryWriter& writer) const {
+		writer.write<float>(bounds_radius);
+		writer.write<glm::vec3>(minimum);
+		writer.write<glm::vec3>(maximum);
+	}
+
+
 	Node::Node(BinaryReader& reader, int& unique_tracks) {
 		const size_t reader_pos = reader.position;
 		const uint32_t inclusive_size = reader.read<uint32_t>();
@@ -43,84 +51,6 @@ namespace mdx {
 				std::cout << "Unknown track tag\n";
 			}
 		}
-	}
-
-	MDX::MDX(BinaryReader& reader) {
-		load(reader);
-	}
-
-	void MDX::load(BinaryReader& reader) {
-		const std::string magic_number = reader.read_string(4);
-		if (magic_number != "MDLX") {
-			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
-			return;
-		}
-
-		while (reader.remaining() > 0) {
-			uint32_t header = reader.read<uint32_t>();
-
-			switch (static_cast<ChunkTag>(header)) {
-				case ChunkTag::VERS:
-					reader.advance(4);
-					version = reader.read<uint32_t>();
-					break;
-				case ChunkTag::SEQS:
-					read_SEQS_chunk(reader);
-					break;
-				case ChunkTag::GLBS:
-					read_GLBS_chunk(reader);
-					break;
-				case ChunkTag::MTLS:
-					read_MTLS_chunk(reader);
-					break;
-				case ChunkTag::TEXS:
-					read_TEXS_chunk(reader);
-					break;
-				case ChunkTag::GEOS:
-					read_GEOS_chunk(reader);
-					break;
-				case ChunkTag::GEOA:
-					read_GEOA_chunk(reader);
-					break;
-				case ChunkTag::BONE:
-					read_BONE_chunk(reader);
-					break;
-				case ChunkTag::LITE:
-					read_LITE_chunk(reader);
-					break;
-				case ChunkTag::HELP:
-					read_HELP_chunk(reader);
-					break;
-				case ChunkTag::ATCH:
-					read_ATCH_chunk(reader);
-					break;
-				case ChunkTag::PIVT:
-					read_PIVT_chunk(reader);
-					break;
-				case ChunkTag::PREM:
-					read_PREM_chunk(reader);
-					break;
-				case ChunkTag::PRE2:
-					read_PRE2_chunk(reader);
-					break;
-				case ChunkTag::RIBB:
-					read_RIBB_chunk(reader);
-					break;
-				case ChunkTag::EVTS:
-					read_EVTS_chunk(reader);
-					break;
-				case ChunkTag::CLID:
-					read_CLID_chunk(reader);
-					break;
-				case ChunkTag::CORN:
-					read_CORN_chunk(reader);
-					break;
-				default:
-					reader.advance(reader.read<uint32_t>());
-			}
-		}
-
-		validate();
 	}
 
 	void MDX::validate() {
@@ -246,10 +176,10 @@ namespace mdx {
 				layer.alpha = reader.read<float>();
 
 				if (version > 800) {
-					reader.advance(4);	// emissiveGain
-					reader.advance(12); // fresnelColor
-					reader.advance(4);	// fresnelOpacity
-					reader.advance(4);	// fresnelTeamColor
+					layer.emissive_gain = reader.read<float>();
+					layer.fresnel_color = reader.read<glm::vec3>();
+					layer.fresnel_opacity = reader.read<float>();
+					layer.fresnel_team_color = reader.read<float>();
 				}
 
 				while (reader.position < reader_pos + size) {
@@ -689,6 +619,154 @@ namespace mdx {
 		}
 	}
 
+	void MDX::write_GEOS_chunk(BinaryWriter& writer) const {
+		writer.write(ChunkTag::GEOS);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& geoset : geosets) {
+			const int geoset_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			writer.write_string("VRTX");
+			writer.write<uint32_t>(geoset.vertices.size());
+			writer.write_vector(geoset.vertices);
+
+			writer.write_string("NRMS");
+			writer.write<uint32_t>(geoset.normals.size());
+			writer.write_vector(geoset.normals);
+
+			writer.write_string("PTYP");
+			writer.write<uint32_t>(geoset.face_type_groups.size());
+			writer.write_vector(geoset.face_type_groups);
+
+			writer.write_string("PCNT");
+			writer.write<uint32_t>(geoset.face_groups.size());
+			writer.write_vector(geoset.face_groups);
+
+			writer.write_string("PVTX");
+			writer.write<uint32_t>(geoset.faces.size());
+			writer.write_vector(geoset.faces);
+
+			writer.write_string("GNDX");
+			writer.write<uint32_t>(geoset.vertex_groups.size());
+			writer.write_vector(geoset.vertex_groups);
+
+			writer.write_string("MTGC");
+			writer.write<uint32_t>(geoset.bone_groups.size());
+			writer.write_vector(geoset.bone_groups);
+
+			writer.write_string("MATS");
+			writer.write<uint32_t>(geoset.bone_indices.size());
+			writer.write_vector(geoset.bone_indices);
+
+			writer.write<uint32_t>(geoset.material_id);
+			writer.write<uint32_t>(geoset.selection_group);
+			writer.write<uint32_t>(geoset.selection_flags);
+			writer.write<uint32_t>(geoset.lod);
+			writer.write_c_string_padded(geoset.lod_name, 80);
+
+			geoset.extent.save(writer);
+			writer.write<uint32_t>(geoset.extents.size());
+			for (const auto& extent : geoset.extents) {
+				extent.save(writer);
+			}
+
+			writer.write_string("TANG");
+			writer.write<uint32_t>(geoset.tangents.size());
+			writer.write_vector(geoset.tangents);
+
+			writer.write_string("SKIN");
+			writer.write<uint32_t>(geoset.skin.size());
+			writer.write_vector(geoset.skin);
+
+			writer.write_string("UVAS");
+			writer.write<uint32_t>(geoset.texture_coordinate_sets.size());
+			for (const auto& set : geoset.texture_coordinate_sets) {
+				writer.write_string("UVBS");
+				writer.write<uint32_t>(set.size());
+				writer.write_vector(set);
+			}
+
+			const uint32_t temporary = writer.buffer.size() - geoset_index;
+			std::memcpy(writer.buffer.data() + geoset_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_MTLS_chunk(BinaryWriter& writer) const {
+		writer.write(ChunkTag::MTLS);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& material : materials) {
+			// Write temporary zero, remember location
+			const int material_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			writer.write<uint32_t>(material.priority_plane);
+			writer.write<uint32_t>(material.flags);
+			writer.write_c_string_padded(material.shader_name, 80);
+			writer.write_string("LAYS");
+			writer.write<uint32_t>(material.layers.size());
+
+			for (const auto& layer : material.layers) {
+				// Write temporary zero, remember location
+				const int layer_index = writer.buffer.size();
+				writer.write<uint32_t>(0);
+
+				writer.write<uint32_t>(layer.blend_mode);
+				writer.write<uint32_t>(layer.shading_flags);
+				writer.write<uint32_t>(layer.texture_id);
+				writer.write<uint32_t>(layer.texture_animation_id);
+				writer.write<uint32_t>(layer.coord_id);
+				writer.write<uint32_t>(layer.alpha);
+
+				writer.write<float>(layer.emissive_gain);
+				writer.write<glm::vec3>(layer.fresnel_color);
+				writer.write<float>(layer.fresnel_opacity);
+				writer.write<float>(layer.fresnel_team_color);
+
+				layer.KMTF.save(writer);
+				layer.KMTA.save(writer);
+				layer.KMTE.save(writer);
+				layer.KFC3.save(writer);
+				layer.KFCA.save(writer);
+				layer.KFTC.save(writer);
+				
+				const uint32_t temporary = writer.buffer.size() - layer_index;
+				std::memcpy(writer.buffer.data() + layer_index, &temporary, 4);
+			}
+			const uint32_t temporary = writer.buffer.size() - material_index;
+			std::memcpy(writer.buffer.data() + material_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_SEQS_chunk(BinaryWriter& writer) const {
+		writer.write(ChunkTag::SEQS);
+		writer.write(sequences.size() * 132);
+		for (const auto& i : sequences) {
+			writer.write_c_string_padded(i.name, 80);
+			writer.write<uint32_t>(i.start_frame);
+			writer.write<uint32_t>(i.end_frame);
+			writer.write<float>(i.movespeed);
+			writer.write<uint32_t>(i.flags);
+			writer.write<float>(i.rarity);
+			writer.write<uint32_t>(i.sync_point);
+		}
+	}
+
+	void MDX::write_GLBS_chunk(BinaryWriter& writer) const {
+		writer.write(ChunkTag::GLBS);
+		writer.write<uint32_t>(global_sequences.size() * 4);
+		writer.write_vector(global_sequences);
+	}
+
 	void MDX::forEachNode(const std::function<void(Node&)>& F) {
 		for (auto& i : bones) {
 			F(i.node);
@@ -728,5 +806,95 @@ namespace mdx {
 		for (auto& i : corn_emitters) {
 			F(i.node);
 		}
+	}
+
+	MDX::MDX(BinaryReader& reader) {
+		load(reader);
+	}
+
+	void MDX::load(BinaryReader& reader) {
+		const std::string magic_number = reader.read_string(4);
+		if (magic_number != "MDLX") {
+			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
+			return;
+		}
+
+		while (reader.remaining() > 0) {
+			uint32_t header = reader.read<uint32_t>();
+
+			switch (static_cast<ChunkTag>(header)) {
+				case ChunkTag::VERS:
+					reader.advance(4);
+					version = reader.read<uint32_t>();
+					break;
+				case ChunkTag::GEOS:
+					read_GEOS_chunk(reader);
+					break;
+				case ChunkTag::MTLS:
+					read_MTLS_chunk(reader);
+					break;
+				case ChunkTag::SEQS:
+					read_SEQS_chunk(reader);
+					break;
+				case ChunkTag::GLBS:
+					read_GLBS_chunk(reader);
+					break;
+				case ChunkTag::GEOA:
+					read_GEOA_chunk(reader);
+					break;
+				case ChunkTag::BONE:
+					read_BONE_chunk(reader);
+					break;
+				case ChunkTag::TEXS:
+					read_TEXS_chunk(reader);
+					break;
+				case ChunkTag::LITE:
+					read_LITE_chunk(reader);
+					break;
+				case ChunkTag::HELP:
+					read_HELP_chunk(reader);
+					break;
+				case ChunkTag::ATCH:
+					read_ATCH_chunk(reader);
+					break;
+				case ChunkTag::PIVT:
+					read_PIVT_chunk(reader);
+					break;
+				case ChunkTag::PREM:
+					read_PREM_chunk(reader);
+					break;
+				case ChunkTag::PRE2:
+					read_PRE2_chunk(reader);
+					break;
+				case ChunkTag::RIBB:
+					read_RIBB_chunk(reader);
+					break;
+				case ChunkTag::EVTS:
+					read_EVTS_chunk(reader);
+					break;
+				case ChunkTag::CLID:
+					read_CLID_chunk(reader);
+					break;
+				case ChunkTag::CORN:
+					read_CORN_chunk(reader);
+					break;
+				default:
+					reader.advance(reader.read<uint32_t>());
+			}
+		}
+
+		validate();
+	}
+
+	void MDX::save(const fs::path& path) {
+		BinaryWriter writer;
+
+		writer.write_string("MDLX");
+		writer.write(ChunkTag::VERS);
+		writer.write<uint32_t>(4);
+		writer.write<uint32_t>(1000);
+
+		write_SEQS_chunk(writer);
+		write_GLBS_chunk(writer);
 	}
 } // namespace mdx
