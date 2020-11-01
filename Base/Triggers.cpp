@@ -1,8 +1,7 @@
 #include "Triggers.h"
 
 #include <functional>
-#include <iostream>
-#include <map>
+#include <fstream>
 
 #include <QProcess>
 #include <QMessageBox>
@@ -13,13 +12,8 @@
 #include "HiveWE.h"
 #include "Utilities.h"
 #include "Hierarchy.h"
-#include <fstream>
 
 using namespace std::literals::string_literals;
-
-#include "BinaryWriter.h"
-
-int Trigger::next_id = 0;
 
 void Triggers::parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version) {
 	parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
@@ -106,7 +100,7 @@ void Triggers::load() {
 
 	std::string magic_number = reader.read_string(4);
 	if (magic_number != "WTG!") {
-		std::cout << "Unknown magic number for war3map.wtg " << magic_number << "\n";
+		fmt::print("Unknown magic number for war3map.wtg {}\n", magic_number);
 		return;
 	}
 
@@ -116,13 +110,14 @@ void Triggers::load() {
 	else if (version == 4 || version == 7)
 		load_version_pre31(reader, version);
 	else {
-		std::cout << "Unknown WTG format! Trying 1.31 loader\n";
+		fmt::print("Unknown WTG format! Trying 1.31 loader\n");
 		load_version_31(reader, version);
 	}
 }
 
 void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
-	std::cout << "Importing pre-1.31 trigger format\n";
+	fmt::print("Importing pre-1.31 trigger format\n");
+
 	categories.resize(reader.read<uint32_t>());
 	for (auto& i : categories) {
 		i.id = reader.read<uint32_t>();
@@ -192,7 +187,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	uint32_t sub_version = reader.read<uint32_t>();
 	if (sub_version != 7 && sub_version != 4) {
-		std::cout << "Unknown 1.31 WTG subformat! Trying anyway.\n";
+		fmt::print("Unknown 1.31 WTG subformat! Trying anyway.\n");
 	}
 
 	unknown1 = reader.read<uint32_t>();
@@ -251,8 +246,10 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	}
 
 	if (reader.remaining() == 0) {
-		if (element_count != 1)
-			std::cout << "Possibly corrupt WTG!";
+		if (element_count != 1) {
+			fmt::print("Possibly corrupt WTG!\n");
+		}
+
 		return;
 	}
 
@@ -328,13 +325,13 @@ void Triggers::load_jass() {
 			}
 			return;
 		} else {
-			std::cout << "Probably invalid WCT format\n";
+			fmt::print("Probably invalid WCT format\n");
 		}
 	} 
 
 	const int sub_version = reader.read<uint32_t>();
 	if (sub_version != 1 && sub_version != 0) {
-		std::cout << "Unknown WCT 1.31 subformat\n";
+		fmt::print("Unknown WCT 1.31 subformat\n");
 	}
 
 	if (sub_version == 1) {
@@ -535,7 +532,7 @@ void Triggers::save_jass() const {
 	hierarchy.map_file_write("war3map.wct", writer.buffer);
 }
 
-void Triggers::generate_global_variables(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables, std::map<std::string, std::string>& destructable_variables) {
+void Triggers::generate_global_variables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables) {
 	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Global variables\n");
@@ -656,7 +653,7 @@ void Triggers::generate_init_global_variables(BinaryWriter& writer) {
 	writer.write_string("endfunction\n\n");
 }
 
-void Triggers::generate_units(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables) {
+void Triggers::generate_units(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables) {
 	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Unit Creation\n");
@@ -774,7 +771,7 @@ void Triggers::generate_items(BinaryWriter& writer) {
 	writer.write_string("endfunction\n");
 }
 
-void Triggers::generate_destructables(BinaryWriter& writer, std::map<std::string, std::string>& destructable_variables) {
+void Triggers::generate_destructables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& destructable_variables) {
 	writer.write_string(separator);
 	writer.write_string("//*\n");
 	writer.write_string("//*  Destructable Objects\n");
@@ -1234,7 +1231,7 @@ void Triggers::generate_custom_teams(BinaryWriter& writer) {
 void Triggers::generate_ally_priorities(BinaryWriter& writer) {
 	writer.write_string("function InitAllyPriorities takes nothing returns nothing\n");
 
-	std::map<int, int> player_to_startloc;
+	std::unordered_map<int, int> player_to_startloc;
 
 	int current_player = 0;
 	for (const auto& i : map->info.players) {
@@ -1355,8 +1352,8 @@ void Triggers::generate_map_configuration(BinaryWriter& writer) {
 }
 
 QString Triggers::generate_map_script() {
-	std::map<std::string, std::string> unit_variables; // creation_number, unit_id
-	std::map<std::string, std::string> destructable_variables; // creation_number, destructable_id
+	std::unordered_map<std::string, std::string> unit_variables; // creation_number, unit_id
+	std::unordered_map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 	std::vector<std::string> initialization_triggers;
 
 	std::string trigger_script;
@@ -1438,7 +1435,6 @@ QString Triggers::generate_map_script() {
 	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
-	//std::cout << result.toStdString() << "\n";
 
 	if (result.contains("Compile error")) {
 		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
@@ -1449,7 +1445,6 @@ QString Triggers::generate_map_script() {
 	} else {
 		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
 		return "Compilation successful";
-		//std::cout << "Compilation successful\n";
 	}
 }
 
@@ -1802,7 +1797,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 	} else {
 		switch (parameter.type) {
 			case TriggerParameter::Type::invalid:
-				std::cout << "Invalid parameter type\n";
+				fmt::print("Invalid parameter type\n");
 				return "";
 			case TriggerParameter::Type::preset: {
 				const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
@@ -1851,7 +1846,7 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 				}
 		}
 	}
-	std::cout << "Unable to resolve parameter for trigger: " << trigger_name << " and parameter value " << parameter.value << "\n";
+	fmt::print("Unable to resolve parameter for trigger: {} and parameter value {}\n", trigger_name, parameter.value);
 	return "";
 }
 

@@ -92,9 +92,10 @@ namespace mdx {
 		TXAN = 1312905300,
 		BPOS = 1397706818,
 		FAFX = 1480999238,
-		MODL = 1279545165
+		MODL = 1279545165,
+		CAMS = 1397571907
 	};
-
+	constexpr auto t = int('C') + (int('A') << 8) + (int('M') << 16) + (int('S') << 24);
 	template <typename T>
 	struct Track {
 		int32_t frame;
@@ -131,11 +132,12 @@ namespace mdx {
 			}
 		}
 
-		void save(BinaryWriter& writer) const {
+		void save(TrackTag tag, BinaryWriter& writer) const {
 			if (tracks.empty()) {
 				return;
 			}
 
+			writer.write<uint32_t>(static_cast<uint32_t>(tag));
 			writer.write<uint32_t>(tracks.size());
 			writer.write<uint32_t>(interpolation_type);
 			writer.write<uint32_t>(global_sequence_ID);
@@ -175,6 +177,7 @@ namespace mdx {
 	struct Node {
 		Node() = default;
 		explicit Node(BinaryReader& reader, int& unique_tracks);
+		void save(BinaryWriter& writer) const;
 
 		std::string name;
 		int id;
@@ -392,13 +395,17 @@ namespace mdx {
 		uint32_t head_or_tail;
 		float tail_length;
 		float time_middle;
-		float segment_color[3][3]; // rows [Begin, Middle, End], column is color
-		uint8_t segment_alphas[3];
-		float segment_scaling[3];
-		uint32_t head_intervals[3];
-		uint32_t head_decay_intervals[3];
-		uint32_t tail_intervals[3];
-		uint32_t tail_decay_intervals[3];
+
+		glm::vec3 start_segment_color;
+		glm::vec3 middle_segment_color;
+		glm::vec3 end_segment_color;
+		//float segment_color[3][3]; // rows [Begin, Middle, End], column is color
+		glm::u8vec3 segment_alphas;
+		glm::vec3 segment_scaling;
+		glm::uvec3 head_intervals;
+		glm::uvec3 head_decay_intervals;
+		glm::uvec3 tail_intervals;
+		glm::uvec3 tail_decay_intervals;
 		uint32_t texture_id;
 		uint32_t squirt;
 		uint32_t priority_plane;
@@ -487,7 +494,6 @@ namespace mdx {
 	*/
 	struct EventObject {
 		Node node;
-		uint32_t count;
 		int global_sequence_id; // signed, -1 to specify "none"
 		std::vector<uint32_t> times;
 	};
@@ -500,40 +506,55 @@ namespace mdx {
 	};
 
 	/*
-		I was pretty sure that in the old days, not having a CollisionShape meant that
-		a unit was not able to be selected in-game. However, at some point,
-		I think they patched it so that it usually always works. Might've been
-		the 2009 patch cycle, could have been TFT.
+	I was pretty sure that in the old days, not having a CollisionShape meant that
+	a unit was not able to be selected in-game. However, at some point,
+	I think they patched it so that it usually always works. Might've been
+	the 2009 patch cycle, could have been TFT.
 
-		So at this point I've seen some models that didn't have collision shapes that
-		worked fine, but we need to parse them for rendering since they are legal
-		nodes and could technically be a parent of another node.
+	So at this point I've seen some models that didn't have collision shapes that
+	worked fine, but we need to parse them for rendering since they are legal
+	nodes and could technically be a parent of another node.
 
-		(They are used for ray intersection bounding cues, not for in-game "collision")
-		(World editor doesn't use them and uses MODL/GEOS for selection and bounding cues, which
-		is also why you don't ever have a doodad model that cant be clicked on in WE,
-		even though some doodad models can't be clicked on easily in-game)
+	(They are used for ray intersection bounding cues, not for in-game "collision")
+	(World editor doesn't use them and uses MODL/GEOS for selection and bounding cues, which
+	is also why you don't ever have a doodad model that cant be clicked on in WE,
+	even though some doodad models can't be clicked on easily in-game)
 	
-		Voidwalker's attack animation animates his CollisionShape to float outside
-		of his center and DracoL1ch said that for DotA at some point he had to
-		replace the Voidwalker model because of user complaints where the Voidwalker
-		model had "invincibility frames" effectively, where it could not be attacked,
-		because the CollisionShape had floated away.
+	Voidwalker's attack animation animates his CollisionShape to float outside
+	of his center and DracoL1ch said that for DotA at some point he had to
+	replace the Voidwalker model because of user complaints where the Voidwalker
+	model had "invincibility frames" effectively, where it could not be attacked,
+	because the CollisionShape had floated away.
 	*/
 	struct CollisionShape {
 		Node node;
 		CollisionShapeType type;
-		float vertices[2][3]; // sometimes only 1 is used
+		glm::vec3 vertices[2]; // sometimes only 1 is used
 		float radius;		  // used for sphere/cylinder
 	};
 
 	struct CornEmitter {
 		Node node;
-		// Actually has more data, but we don't care
+		std::vector<uint8_t> data; // Just store it so we can save it again
+	};
+
+	struct Camera {
+		std::vector<uint8_t> data; // Just store it so we can save it again
+	};
+
+	struct TextureAnimation {
+		std::vector<uint8_t> data; // Just store it so we can save it again
 	};
 
 	class MDX {
 		int version;
+		std::string name;
+		std::string animation_filename;
+		Extent extent;
+		uint32_t blend_time;
+
+		std::string face_target;
+		std::string face_path;
 
 		void read_GEOS_chunk(BinaryReader& reader);
 		void read_MTLS_chunk(BinaryReader& reader);
@@ -552,24 +573,30 @@ namespace mdx {
 		void read_EVTS_chunk(BinaryReader& reader);
 		void read_CLID_chunk(BinaryReader& reader);
 		void read_CORN_chunk(BinaryReader& reader);
+		void read_CAMS_chunk(BinaryReader& reader);
+		void read_BPOS_chunk(BinaryReader& reader);
+		void read_TXAN_chunk(BinaryReader& reader);
 
 		void write_GEOS_chunk(BinaryWriter& writer) const;
 		void write_MTLS_chunk(BinaryWriter& writer) const;
 		void write_SEQS_chunk(BinaryWriter& writer) const;
 		void write_GLBS_chunk(BinaryWriter& writer) const;
-		//void write_GEOA_chunk(BinaryWriter& writer) const;
-		//void write_BONE_chunk(BinaryWriter& writer) const;
-		//void write_TEXS_chunk(BinaryWriter& writer) const;
-		//void write_LITE_chunk(BinaryWriter& writer) const;
-		//void write_HELP_chunk(BinaryWriter& writer) const;
-		//void write_ATCH_chunk(BinaryWriter& writer) const;
-		//void write_PIVT_chunk(BinaryWriter& writer) const;
-		//void write_PREM_chunk(BinaryWriter& writer) const;
-		//void write_PRE2_chunk(BinaryWriter& writer) const;
-		//void write_RIBB_chunk(BinaryWriter& writer) const;
-		//void write_EVTS_chunk(BinaryWriter& writer) const;
-		//void write_CLID_chunk(BinaryWriter& writer) const;
-		//void write_CORN_chunk(BinaryWriter& writer) const;
+		void write_GEOA_chunk(BinaryWriter& writer) const;
+		void write_BONE_chunk(BinaryWriter& writer) const;
+		void write_TEXS_chunk(BinaryWriter& writer) const;
+		void write_LITE_chunk(BinaryWriter& writer) const;
+		void write_HELP_chunk(BinaryWriter& writer) const;
+		void write_ATCH_chunk(BinaryWriter& writer) const;
+		void write_PIVT_chunk(BinaryWriter& writer) const;
+		void write_PREM_chunk(BinaryWriter& writer) const;
+		void write_PRE2_chunk(BinaryWriter& writer) const;
+		void write_RIBB_chunk(BinaryWriter& writer) const;
+		void write_EVTS_chunk(BinaryWriter& writer) const;
+		void write_CLID_chunk(BinaryWriter& writer) const;
+		void write_CORN_chunk(BinaryWriter& writer) const;
+		void write_CAMS_chunk(BinaryWriter& writer) const;
+		void write_BPOS_chunk(BinaryWriter& writer) const;
+		void write_TXAN_chunk(BinaryWriter& writer) const;
 
 	  public:
 		explicit MDX(BinaryReader& reader);
@@ -597,6 +624,10 @@ namespace mdx {
 		std::vector<EventObject> eventObjects;
 		std::vector<CollisionShape> collisionShapes;
 		std::vector<CornEmitter> corn_emitters;
+
+		std::vector<Camera> cameras;
+		std::vector<float> bind_poses;
+		std::vector<TextureAnimation> texture_animations;
 
 		void forEachNode(const std::function<void(Node&)>& lambda);
 	};

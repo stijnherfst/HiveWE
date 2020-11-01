@@ -97,7 +97,7 @@ struct Trigger {
 	bool run_on_initialization = false;
 	std::vector<ECA> ecas;
 
-	static int next_id;
+	static inline int next_id = 0;
 };
 
 class Triggers {
@@ -137,11 +137,11 @@ class Triggers {
 	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
 
-	void generate_global_variables(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables, std::map<std::string, std::string>& destructable_variables);
+	void generate_global_variables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables);
 	void generate_init_global_variables(BinaryWriter& writer);
-	void generate_units(BinaryWriter& writer, std::map<std::string, std::string>& unit_variables);
+	void generate_units(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables);
 	void generate_items(BinaryWriter& writer);
-	void generate_destructables(BinaryWriter& writer, std::map<std::string, std::string>& destructable_variables);
+	void generate_destructables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& destructable_variables);
 	void generate_regions(BinaryWriter& writer);
 	void generate_cameras(BinaryWriter& writer);
 	void generate_sounds(BinaryWriter& writer);

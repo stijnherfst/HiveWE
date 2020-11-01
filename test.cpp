@@ -23,10 +23,7 @@ void execute_tests() {
 void parse_all_mdx() {
 	std::vector<fs::path> paths;
 
-	std::atomic<int> total;
-	std::atomic<int> opaques;
-
-	for (const auto i : fs::recursive_directory_iterator("C:/Users/User/Desktop/Warcraft/MPQContent/1.32.x/")) {
+	for (const auto i : fs::recursive_directory_iterator("C:/Users/User/Desktop/Warcraft/CASC/1.32.x/")) {
 		if (i.is_regular_file() && (i.path().extension() == ".mdx" || i.path().extension() == ".MDX")) {
 			paths.push_back(i.path());
 		}
@@ -38,23 +35,5 @@ void parse_all_mdx() {
 
 		BinaryReader reader(buffer);
 		auto mdx = mdx::MDX(reader);
-
-		for (const auto& i : mdx.geosets) {
-			bool opaque = false;
-			for (const auto& j : mdx.materials[i.material_id].layers) {
-				if (j.blend_mode == 0) {
-					opaque = true;
-					break;
-				}
-			}
-			if (opaque) {
-				opaques++;
-			} else {
-				fmt::print("{}\n", path.string());
-			}
-			total++;
-		}
 	});
-
-	fmt::print("{}\t{}", total, opaques);
 }

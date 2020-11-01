@@ -2,7 +2,7 @@
 
 #include "Utilities.h"
 #include <iostream>
-#include <bit>
+#include <fstream>
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -52,6 +52,25 @@ namespace mdx {
 			}
 		}
 	}
+
+	void Node::save(BinaryWriter& writer) const {
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		writer.write_c_string_padded(name, 80);
+		writer.write<uint32_t>(id);
+		writer.write<uint32_t>(parent_id);
+		writer.write<uint32_t>(flags);
+
+		KGTR.save(TrackTag::KGTR, writer);
+		KGRT.save(TrackTag::KGRT, writer);
+		KGSC.save(TrackTag::KGSC, writer);
+
+		const uint32_t temporary = writer.buffer.size() - inclusive_index;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
 
 	void MDX::validate() {
 		// Remove geoset animations that reference non existing geosets
@@ -425,29 +444,18 @@ namespace mdx {
 			emitter2.head_or_tail = reader.read<uint32_t>();
 			emitter2.tail_length = reader.read<float>();
 			emitter2.time_middle = reader.read<float>();
-			for (int time = 0; time < 3; time++) {
-				for (int i = 0; i < 3; i++) {
-					emitter2.segment_color[time][i] = reader.read<float>();
-				}
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.segment_alphas[i] = reader.read<uint8_t>();
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.segment_scaling[i] = reader.read<float>();
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.head_intervals[i] = reader.read<float>();
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.head_decay_intervals[i] = reader.read<float>();
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.tail_intervals[i] = reader.read<float>();
-			}
-			for (int i = 0; i < 3; i++) {
-				emitter2.tail_decay_intervals[i] = reader.read<float>();
-			}
+
+			emitter2.start_segment_color = reader.read<glm::vec3>();
+			emitter2.middle_segment_color = reader.read<glm::vec3>();
+			emitter2.end_segment_color = reader.read<glm::vec3>();
+
+			emitter2.segment_alphas = reader.read<glm::u8vec3>();
+			emitter2.segment_scaling = reader.read<glm::vec3>();
+			emitter2.head_intervals = reader.read<glm::uvec3>();
+			emitter2.head_decay_intervals = reader.read<glm::uvec3>();
+			emitter2.tail_intervals = reader.read<glm::uvec3>();
+			emitter2.tail_decay_intervals = reader.read<glm::uvec3>();
+
 			emitter2.texture_id = reader.read<uint32_t>();
 			emitter2.squirt = reader.read<uint32_t>();
 			emitter2.priority_plane = reader.read<uint32_t>();
@@ -529,11 +537,9 @@ namespace mdx {
 			EventObject evt;
 			evt.node = Node(reader, unique_tracks);
 			reader.read<uint32_t>(); // read KEVT
-			evt.count = reader.read<uint32_t>();
+			uint32_t count = reader.read<uint32_t>();
 			evt.global_sequence_id = reader.read<int32_t>(); //signed
-			for (int i = 0; i < evt.count; i++) {
-				evt.times.push_back(reader.read<uint32_t>());
-			}
+			evt.times = reader.read_vector<uint32_t>(count);
 			eventObjects.push_back(std::move(evt));
 		}
 	}
@@ -545,47 +551,31 @@ namespace mdx {
 		while (reader.position < reader_pos + size) {
 			CollisionShape shape;
 			shape.node = Node(reader, unique_tracks);
-
-			uint32_t type_index = reader.read<uint32_t>();
-			switch (type_index) {
-				case 1:
-					shape.type = CollisionShapeType::Plane;
-					break;
-				case 2:
-					shape.type = CollisionShapeType::Sphere;
-					break;
-				case 3:
-					shape.type = CollisionShapeType::Cylinder;
-					break;
-				default:
-				case 0:
-					shape.type = CollisionShapeType::Box;
-					break;
-			}
+			shape.type = static_cast<CollisionShapeType>(reader.read<uint32_t>());
 
 			for (int i = 0; i < 3; i++) {
 				if (reader.remaining() <= 0) {
-					shape.vertices[0][i] = 0;
+					shape.vertices[0][i] = 0.f;
 				} else {
 					shape.vertices[0][i] = reader.read<float>();
 				}
 			}
 
-			if (type_index != 2) {
+			if (shape.type != CollisionShapeType::Sphere) {
 				for (int i = 0; i < 3; i++) {
 					if (reader.remaining() <= 0) {
-						shape.vertices[1][i] = 0;
+						shape.vertices[1][i] = 0.f;
 					} else {
 						shape.vertices[1][i] = reader.read<float>();
 					}
 				}
 			}
 
-			if (type_index == 2 || type_index == 3) {
+			if (shape.type == CollisionShapeType::Sphere || shape.type == CollisionShapeType::Cylinder) {
 				if (reader.remaining() > 0) {
 					shape.radius = reader.read<float>();
 				} else {
-					shape.radius = 0;
+					shape.radius = 0.f;
 				}
 			}
 			collisionShapes.push_back(std::move(shape));
@@ -601,31 +591,54 @@ namespace mdx {
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			emitter.node = Node(reader, unique_tracks);
-
-			reader.advance(4);
-			reader.advance(4);
-			reader.advance(4);
-			reader.advance(16);
-			reader.advance(4);
-			reader.advance(260);
-			reader.advance(260);
-
-			reader.advance(inclusive_size - (reader.position - node_reader_pos));
-
-			//while (reader.position < node_reader_pos + inclusive_size) {
-			//	emitter.node.animated_data.load_tracks(reader);
-			//}
+			emitter.data = reader.read_vector<uint8_t>(inclusive_size - (reader.position - node_reader_pos));
 			corn_emitters.push_back(std::move(emitter));
 		}
 	}
 
+	void MDX::read_CAMS_chunk(BinaryReader& reader) {
+		const size_t reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			Camera camera;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+
+			camera.data = reader.read_vector<uint8_t>(inclusive_size - 4);
+			cameras.push_back(std::move(camera));
+		}
+	}
+
+	void MDX::read_BPOS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		bind_poses = reader.read_vector<float>(reader.read<uint32_t>() * 12);
+	}
+
+	void MDX::read_TXAN_chunk(BinaryReader& reader) {
+		const size_t reader_pos = reader.position;
+		const uint32_t size = reader.read<uint32_t>();
+
+		while (reader.position < reader_pos + size) {
+			TextureAnimation animation;
+			const uint32_t inclusive_size = reader.read<uint32_t>();
+
+			animation.data = reader.read_vector<uint8_t>(inclusive_size - 4);
+			texture_animations.push_back(std::move(animation));
+		}
+	}
+
 	void MDX::write_GEOS_chunk(BinaryWriter& writer) const {
+		if (geosets.empty()) {
+			return;
+		}
+
 		writer.write(ChunkTag::GEOS);
 		// Write temporary zero, remember location
 		int inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& geoset : geosets) {
+			// Write temporary zero, remember location
 			const int geoset_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
@@ -673,13 +686,17 @@ namespace mdx {
 				extent.save(writer);
 			}
 
-			writer.write_string("TANG");
-			writer.write<uint32_t>(geoset.tangents.size());
-			writer.write_vector(geoset.tangents);
+			if (geoset.tangents.size()) {
+				writer.write_string("TANG");
+				writer.write<uint32_t>(geoset.tangents.size());
+				writer.write_vector(geoset.tangents);
+			}
 
-			writer.write_string("SKIN");
-			writer.write<uint32_t>(geoset.skin.size());
-			writer.write_vector(geoset.skin);
+			if (geoset.skin.size()) {
+				writer.write_string("SKIN");
+				writer.write<uint32_t>(geoset.skin.size());
+				writer.write_vector(geoset.skin);
+			}
 
 			writer.write_string("UVAS");
 			writer.write<uint32_t>(geoset.texture_coordinate_sets.size());
@@ -692,11 +709,15 @@ namespace mdx {
 			const uint32_t temporary = writer.buffer.size() - geoset_index;
 			std::memcpy(writer.buffer.data() + geoset_index, &temporary, 4);
 		}
-		const uint32_t temporary = writer.buffer.size() - inclusive_index;
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
 	void MDX::write_MTLS_chunk(BinaryWriter& writer) const {
+		if (materials.empty()) {
+			return;
+		}
+
 		writer.write(ChunkTag::MTLS);
 		// Write temporary zero, remember location
 		int inclusive_index = writer.buffer.size();
@@ -723,19 +744,19 @@ namespace mdx {
 				writer.write<uint32_t>(layer.texture_id);
 				writer.write<uint32_t>(layer.texture_animation_id);
 				writer.write<uint32_t>(layer.coord_id);
-				writer.write<uint32_t>(layer.alpha);
+				writer.write<float>(layer.alpha);
 
 				writer.write<float>(layer.emissive_gain);
 				writer.write<glm::vec3>(layer.fresnel_color);
 				writer.write<float>(layer.fresnel_opacity);
 				writer.write<float>(layer.fresnel_team_color);
 
-				layer.KMTF.save(writer);
-				layer.KMTA.save(writer);
-				layer.KMTE.save(writer);
-				layer.KFC3.save(writer);
-				layer.KFCA.save(writer);
-				layer.KFTC.save(writer);
+				layer.KMTF.save(TrackTag::KMTF, writer);
+				layer.KMTA.save(TrackTag::KMTA, writer);
+				layer.KMTE.save(TrackTag::KMTE, writer);
+				layer.KFC3.save(TrackTag::KFC3, writer);
+				layer.KFCA.save(TrackTag::KFCA, writer);
+				layer.KFTC.save(TrackTag::KFTC, writer);
 				
 				const uint32_t temporary = writer.buffer.size() - layer_index;
 				std::memcpy(writer.buffer.data() + layer_index, &temporary, 4);
@@ -743,13 +764,17 @@ namespace mdx {
 			const uint32_t temporary = writer.buffer.size() - material_index;
 			std::memcpy(writer.buffer.data() + material_index, &temporary, 4);
 		}
-		const uint32_t temporary = writer.buffer.size() - inclusive_index;
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
 	void MDX::write_SEQS_chunk(BinaryWriter& writer) const {
+		if (sequences.empty()) {
+			return;
+		}
+
 		writer.write(ChunkTag::SEQS);
-		writer.write(sequences.size() * 132);
+		writer.write<uint32_t>(sequences.size() * 132);
 		for (const auto& i : sequences) {
 			writer.write_c_string_padded(i.name, 80);
 			writer.write<uint32_t>(i.start_frame);
@@ -758,13 +783,455 @@ namespace mdx {
 			writer.write<uint32_t>(i.flags);
 			writer.write<float>(i.rarity);
 			writer.write<uint32_t>(i.sync_point);
+			i.extent.save(writer);
 		}
 	}
 
 	void MDX::write_GLBS_chunk(BinaryWriter& writer) const {
+		if (global_sequences.empty()) {
+			return;
+		}
+
 		writer.write(ChunkTag::GLBS);
 		writer.write<uint32_t>(global_sequences.size() * 4);
 		writer.write_vector(global_sequences);
+	}
+
+	void MDX::write_GEOA_chunk(BinaryWriter& writer) const {
+		if (animations.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::GEOA);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& geoset_animation : animations) {
+			// Write temporary zero, remember location
+			int geoset_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			writer.write<float>(geoset_animation.alpha);
+			writer.write<uint32_t>(geoset_animation.flags);
+			writer.write<glm::vec3>(geoset_animation.color);
+			writer.write<uint32_t>(geoset_animation.geoset_id);
+
+			geoset_animation.KGAO.save(TrackTag::KGAO, writer);
+			geoset_animation.KGAC.save(TrackTag::KGAC, writer);
+
+			const uint32_t temporary = writer.buffer.size() - geoset_index;
+			std::memcpy(writer.buffer.data() + geoset_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_BONE_chunk(BinaryWriter& writer) const {
+		if (bones.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::BONE);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& bone : bones) {
+			bone.node.save(writer);
+			writer.write<int32_t>(bone.geoset_id);
+			writer.write<int32_t>(bone.geoset_animation_id);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_TEXS_chunk(BinaryWriter& writer) const {
+		if (textures.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::TEXS);
+		writer.write<uint32_t>(textures.size() * 268);
+		for (const auto& texture : textures) {
+			writer.write<uint32_t>(texture.replaceable_id);
+			writer.write_c_string_padded(texture.file_name.string(), 260);
+			writer.write<uint32_t>(texture.flags);
+		}
+	}
+
+	void MDX::write_LITE_chunk(BinaryWriter& writer) const {
+		if (lights.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::LITE);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& light : lights) {
+			// Write temporary zero, remember location
+			int light_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			light.node.save(writer);
+			writer.write<uint32_t>(light.type);
+			writer.write<float>(light.attenuation_start);
+			writer.write<float>(light.attenuation_end);
+			writer.write<glm::vec3>(light.color);
+			writer.write<float>(light.intensity);
+			writer.write<glm::vec3>(light.ambient_color);
+			writer.write<float>(light.ambient_intensity);
+
+			light.KLAS.save(TrackTag::KLAS, writer);
+			light.KLAE.save(TrackTag::KLAE, writer);
+			light.KLAC.save(TrackTag::KLAC, writer);
+			light.KLAI.save(TrackTag::KLAI, writer);
+			light.KLBI.save(TrackTag::KLBI, writer);
+			light.KLBC.save(TrackTag::KLBC, writer);
+			light.KLAV.save(TrackTag::KLAV, writer);
+
+			const uint32_t temporary = writer.buffer.size() - light_index;
+			std::memcpy(writer.buffer.data() + light_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_HELP_chunk(BinaryWriter& writer) const {
+		if (help_bones.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::HELP);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& help_bone : help_bones) {
+			help_bone.save(writer);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_ATCH_chunk(BinaryWriter& writer) const {
+		if (attachments.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::ATCH);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& attachment : attachments) {
+			// Write temporary zero, remember location
+			int attachment_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			attachment.node.save(writer);
+			writer.write_c_string_padded(attachment.path, 256);
+			writer.write<uint32_t>(attachment.reserved);
+			writer.write<uint32_t>(attachment.attachment_id);
+
+			attachment.KATV.save(TrackTag::KATV, writer);
+
+			const uint32_t temporary = writer.buffer.size() - attachment_index;
+			std::memcpy(writer.buffer.data() + attachment_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_PIVT_chunk(BinaryWriter& writer) const {
+		if (pivots.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::PIVT);
+		writer.write<uint32_t>(pivots.size() * 12);
+		for (const auto& pivot : pivots) {
+			writer.write<glm::vec3>(pivot);
+		}
+	}
+
+	void MDX::write_PREM_chunk(BinaryWriter& writer) const {
+		if (emitters1.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::PREM);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& emitter : emitters1) {
+			// Write temporary zero, remember location
+			int emitter_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			emitter.node.save(writer);
+			writer.write<float>(emitter.emission_rate);
+			writer.write<float>(emitter.gravity);
+			writer.write<float>(emitter.longitude);
+			writer.write<float>(emitter.latitude);
+			writer.write_c_string_padded(emitter.path, 260);
+			writer.write<uint32_t>(emitter.reserved);
+			writer.write<float>(emitter.life_span);
+			writer.write<float>(emitter.speed);
+
+			emitter.KPEE.save(TrackTag::KPEE, writer);
+			emitter.KPEG.save(TrackTag::KPEG, writer);
+			emitter.KPLN.save(TrackTag::KPLN, writer);
+			emitter.KPLT.save(TrackTag::KPLT, writer);
+			emitter.KPEL.save(TrackTag::KPEL, writer);
+			emitter.KPES.save(TrackTag::KPES, writer);
+			emitter.KPEV.save(TrackTag::KPEV, writer);
+
+			const uint32_t temporary = writer.buffer.size() - emitter_index;
+			std::memcpy(writer.buffer.data() + emitter_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_PRE2_chunk(BinaryWriter& writer) const {
+		if (emitters2.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::PRE2);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& emitter : emitters2) {
+			// Write temporary zero, remember location
+			int emitter_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			emitter.node.save(writer);
+			writer.write<float>(emitter.speed);
+			writer.write<float>(emitter.variation);
+			writer.write<float>(emitter.latitude);
+			writer.write<float>(emitter.gravity);
+			writer.write<float>(emitter.life_span);
+			writer.write<float>(emitter.emission_rate);
+			writer.write<float>(emitter.length);
+			writer.write<float>(emitter.width);
+			writer.write<uint32_t>(emitter.filter_mode);
+			writer.write<uint32_t>(emitter.rows);
+			writer.write<uint32_t>(emitter.columns);
+			writer.write<uint32_t>(emitter.head_or_tail);
+			writer.write<float>(emitter.tail_length);
+			writer.write<float>(emitter.time_middle);
+
+			writer.write<glm::vec3>(emitter.start_segment_color);
+			writer.write<glm::vec3>(emitter.middle_segment_color);
+			writer.write<glm::vec3>(emitter.end_segment_color);
+
+			writer.write<glm::u8vec3>(emitter.segment_alphas);
+			writer.write<glm::vec3>(emitter.segment_scaling);
+			writer.write<glm::uvec3>(emitter.head_intervals);
+			writer.write<glm::uvec3>(emitter.head_decay_intervals);
+			writer.write<glm::uvec3>(emitter.tail_intervals);
+			writer.write<glm::uvec3>(emitter.tail_decay_intervals);
+
+			writer.write<uint32_t>(emitter.texture_id);
+			writer.write<uint32_t>(emitter.squirt);
+			writer.write<uint32_t>(emitter.priority_plane);
+			writer.write<uint32_t>(emitter.replaceable_id);
+
+			emitter.KP2R.save(TrackTag::KP2R, writer);
+			emitter.KP2L.save(TrackTag::KP2L, writer);
+			emitter.KP2G.save(TrackTag::KP2G, writer);
+			emitter.KP2E.save(TrackTag::KP2E, writer);
+			emitter.KP2N.save(TrackTag::KP2N, writer);
+			emitter.KP2W.save(TrackTag::KP2W, writer);
+			emitter.KP2V.save(TrackTag::KP2V, writer);
+
+			const uint32_t temporary = writer.buffer.size() - emitter_index;
+			std::memcpy(writer.buffer.data() + emitter_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_RIBB_chunk(BinaryWriter& writer) const {
+		if (ribbons.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::RIBB);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& ribbon : ribbons) {
+			// Write temporary zero, remember location
+			int ribbon_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			ribbon.node.save(writer);
+			writer.write<float>(ribbon.height_above);
+			writer.write<float>(ribbon.height_below);
+			writer.write<float>(ribbon.alpha);
+			writer.write<glm::vec3>(ribbon.color);
+			writer.write<float>(ribbon.life_span);
+			writer.write<uint32_t>(ribbon.texture_slot);
+			writer.write<uint32_t>(ribbon.emission_rate);
+			writer.write<uint32_t>(ribbon.rows);
+			writer.write<uint32_t>(ribbon.columns);
+			writer.write<uint32_t>(ribbon.material_id);
+			writer.write<float>(ribbon.gravity);
+			
+			ribbon.KRHA.save(TrackTag::KRHA, writer);
+			ribbon.KRHB.save(TrackTag::KRHB, writer);
+			ribbon.KRAL.save(TrackTag::KRAL, writer);
+			ribbon.KRCO.save(TrackTag::KRCO, writer);
+			ribbon.KRTX.save(TrackTag::KRTX, writer);
+			ribbon.KRVS.save(TrackTag::KRVS, writer);
+
+			const uint32_t temporary = writer.buffer.size() - ribbon_index;
+			std::memcpy(writer.buffer.data() + ribbon_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_EVTS_chunk(BinaryWriter& writer) const {
+		if (eventObjects.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::EVTS);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& event_object : eventObjects) {
+			event_object.node.save(writer);
+			writer.write_string("KEVT");
+			writer.write<uint32_t>(event_object.times.size());
+			writer.write<int32_t>(event_object.global_sequence_id);
+			writer.write_vector(event_object.times);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_CLID_chunk(BinaryWriter& writer) const {
+		if (collisionShapes.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::CLID);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& shape : collisionShapes) {
+			shape.node.save(writer);
+			writer.write<uint32_t>(static_cast<uint32_t>(shape.type));
+
+			if (shape.type == CollisionShapeType::Sphere) {
+				writer.write<glm::vec3>(shape.vertices[0]);
+			} else {
+				writer.write<glm::vec3>(shape.vertices[0]);
+				writer.write<glm::vec3>(shape.vertices[1]);
+			}
+			if (shape.type == CollisionShapeType::Sphere || shape.type == CollisionShapeType::Cylinder) {
+				writer.write<float>(shape.radius);
+			}
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_CORN_chunk(BinaryWriter& writer) const {
+		if (corn_emitters.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::CORN);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& corn : corn_emitters) {
+			// Write temporary zero, remember location
+			int corn_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			corn.node.save(writer);
+			writer.write_vector(corn.data);
+
+			const uint32_t temporary = writer.buffer.size() - corn_index;
+			std::memcpy(writer.buffer.data() + corn_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_CAMS_chunk(BinaryWriter& writer) const {
+		if (cameras.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::CAMS);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& camera : cameras) {
+			// Write temporary zero, remember location
+			int camera_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			writer.write_vector(camera.data);
+
+			const uint32_t temporary = writer.buffer.size() - camera_index;
+			std::memcpy(writer.buffer.data() + camera_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
+	}
+
+	void MDX::write_BPOS_chunk(BinaryWriter& writer) const {
+		if (bind_poses.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::BPOS);
+		writer.write<uint32_t>(4 + bind_poses.size() * 4);
+		writer.write<uint32_t>(bind_poses.size() / 12);
+		writer.write_vector(bind_poses);
+	}
+
+	void MDX::write_TXAN_chunk(BinaryWriter& writer) const {
+		if (texture_animations.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::TXAN);
+		// Write temporary zero, remember location
+		int inclusive_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		for (const auto& texture_animation : texture_animations) {
+			// Write temporary zero, remember location
+			int texture_animation_index = writer.buffer.size();
+			writer.write<uint32_t>(0);
+
+			writer.write_vector(texture_animation.data);
+
+			const uint32_t temporary = writer.buffer.size() - texture_animation_index;
+			std::memcpy(writer.buffer.data() + texture_animation_index, &temporary, 4);
+		}
+		const uint32_t temporary = writer.buffer.size() - inclusive_index - 4;
+		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
 	void MDX::forEachNode(const std::function<void(Node&)>& F) {
@@ -827,6 +1294,13 @@ namespace mdx {
 					reader.advance(4);
 					version = reader.read<uint32_t>();
 					break;
+				case ChunkTag::MODL:
+					reader.advance(4);
+					name = reader.read_string(80);
+					animation_filename = reader.read_string(260);
+					extent = Extent(reader);
+					blend_time = reader.read<uint32_t>();
+					break;
 				case ChunkTag::GEOS:
 					read_GEOS_chunk(reader);
 					break;
@@ -878,6 +1352,20 @@ namespace mdx {
 				case ChunkTag::CORN:
 					read_CORN_chunk(reader);
 					break;
+				case ChunkTag::FAFX:
+					reader.advance(4);
+					face_target = reader.read_string(80);
+					face_path = reader.read_string(260);
+					break;
+				case ChunkTag::CAMS:
+					read_CAMS_chunk(reader);
+					break;
+				case ChunkTag::BPOS:
+					read_BPOS_chunk(reader);
+					break;
+				case ChunkTag::TXAN:
+					read_TXAN_chunk(reader);
+					break;
 				default:
 					reader.advance(reader.read<uint32_t>());
 			}
@@ -894,7 +1382,42 @@ namespace mdx {
 		writer.write<uint32_t>(4);
 		writer.write<uint32_t>(1000);
 
+		writer.write(ChunkTag::MODL);
+		writer.write<uint32_t>(372);
+		writer.write_c_string_padded(name, 80);
+		writer.write_c_string_padded(animation_filename, 260);
+		extent.save(writer);
+		writer.write<uint32_t>(blend_time);
+
 		write_SEQS_chunk(writer);
+		write_MTLS_chunk(writer);
+		write_TEXS_chunk(writer);
+		write_GEOS_chunk(writer);
+		write_GEOA_chunk(writer);
+		write_BONE_chunk(writer);
 		write_GLBS_chunk(writer);
+		write_LITE_chunk(writer);
+		write_HELP_chunk(writer);
+		write_ATCH_chunk(writer);
+		write_PIVT_chunk(writer);
+		write_PREM_chunk(writer);
+		write_PRE2_chunk(writer);
+		write_RIBB_chunk(writer);
+		write_CAMS_chunk(writer);
+		write_EVTS_chunk(writer);
+		write_CLID_chunk(writer);
+		write_CORN_chunk(writer);
+
+		if (face_target.size()) {
+			writer.write(ChunkTag::FAFX);
+			writer.write<uint32_t>(340);
+			writer.write_c_string_padded(face_target, 80);
+			writer.write_c_string_padded(face_path, 260);
+		}
+		write_BPOS_chunk(writer);
+		write_TXAN_chunk(writer);
+
+		std::ofstream file(path, std::ios::binary | std::ios::out);
+		file.write(reinterpret_cast<char*>(writer.buffer.data()), writer.buffer.size());
 	}
 } // namespace mdx
