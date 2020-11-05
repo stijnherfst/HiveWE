@@ -11,6 +11,8 @@
 #include "test.h"
 #include "DockManager.h"
 
+#include <fstream>
+
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available
 extern "C" {
@@ -20,6 +22,13 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
+	//std::ifstream stream("C:/Users/User/Desktop/Footman.mdx", std::ios::binary);
+	//auto buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+	//BinaryReader reader(buffer);
+	//auto mdx = mdx::MDX(reader);
+	//mdx.save("C:/Users/User/Desktop/Out.mdx");
+	//return 0;
+
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);

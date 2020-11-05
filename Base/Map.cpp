@@ -239,10 +239,6 @@ void Map::load(const fs::path& path) {
 			continue;
 		}
 
-		if (doodads_slk.row_headers.contains(i.id)) {
-			continue;
-		}
-
 		pathing_map.blit_pathing_texture(i.position, glm::degrees(i.angle) + 90, i.pathing);
 	}
 	pathing_map.upload_dynamic_pathing();

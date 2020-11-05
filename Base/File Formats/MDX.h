@@ -604,6 +604,7 @@ namespace mdx {
 		void save(const fs::path& path);
 
 		void validate();
+		void optimize();
 
 		int unique_tracks = 0;
 

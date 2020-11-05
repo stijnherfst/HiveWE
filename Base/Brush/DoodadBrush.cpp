@@ -99,8 +99,20 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 		bool down = event->key() == Qt::Key_7 || event->key() == Qt::Key_8 || event->key() == Qt::Key_9;
 		bool up = event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3;
 
-		float x_displacement = -0.25f * left + 0.25f * right;
-		float y_displacement = -0.25f * up + 0.25f * down;
+		bool free_movement = true;
+		for (const auto& i : selections) {
+			free_movement = free_movement && !i->pathing;
+		}
+
+		float x_displacement;
+		float y_displacement;
+		if (free_movement) {
+			x_displacement = -0.25f * left + 0.25f * right;
+			y_displacement = -0.25f * up + 0.25f * down;
+		} else {
+			x_displacement = -0.5f * left + 0.5f * right;
+			y_displacement = -0.5f * up + 0.5f * down;	
+		}
 
 		for (const auto& i : selections) {
 			i->position.x += x_displacement;
@@ -193,7 +205,7 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event) {
 		map->render_manager.colored_static_shader->use();
 		for (int i = 0; i < map->doodads.doodads.size(); i++) {
 			const Doodad& doodad = map->doodads.doodads[i];
-			mdx::Extent& extent = doodad.mesh->extent;
+			const mdx::Extent& extent = doodad.mesh->extent;
 			if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
 				doodad.mesh->render_color_coded(i + 1, doodad.matrix);
 			}
@@ -205,11 +217,17 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event) {
 		const int index = color.r + (color.g << 8) + (color.b << 16);
 		if (index != 0) {
 			Doodad& doodad = map->doodads.doodads[index - 1];
-			selections = { &doodad };
-			emit selection_changed();
+			// If the current index is already in a selection then we want to drag the entire group
+			if (std::find(selections.begin(), selections.end(), &doodad) == selections.end()) {
+				selections = { &doodad };
+				drag_offsets = { input_handler.mouse_world - doodad.position };
+				emit selection_changed();
+			}
 			dragging = true;
-			drag_x_offset = input_handler.mouse_world.x - doodad.position.x;
-			drag_y_offset = input_handler.mouse_world.y - doodad.position.y;
+			drag_offsets.clear();
+			for (const auto& i : selections) {
+				drag_offsets.push_back(input_handler.mouse_world - i->position);
+			}
 			return;
 		}
 	}
@@ -225,15 +243,29 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 				if (action == Action::none) {
 					start_action(Action::drag);
 				}
-				for (auto& i : selections) {
-					i->position.x = input_handler.mouse_world.x - drag_x_offset;
-					i->position.y = input_handler.mouse_world.y - drag_y_offset;
-					if (!lock_doodad_z) {
-						i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+
+				bool free_movement = true;
+				for (const auto& i : selections) {
+					free_movement = free_movement && !i->pathing;
+				}
+
+				//for (auto& i : selections) {
+				for (int i = 0; i < selections.size(); i++) {
+					Doodad* doodad = selections[i];
+					if (free_movement) {
+						doodad->position.x = input_handler.mouse_world.x - drag_offsets[i].x;
+						doodad->position.y = input_handler.mouse_world.y - drag_offsets[i].y;
+					} else {
+						doodad->position.x = (glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f).x - (glm::vec2(glm::ivec2(glm::round(drag_offsets[i]) * 2.f) * 2) / 4.f).x;
+						doodad->position.y = (glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f).y - (glm::vec2(glm::ivec2(glm::round(drag_offsets[i]) * 2.f) * 2) / 4.f).y;
 					}
-					i->update();
+					if (!lock_doodad_z) {
+						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y);
+					}
+					doodad->update();
 				}
 				emit position_changed();
+				map->doodads.update_doodad_pathing(selections);
 			} else if (event->modifiers() & Qt::ControlModifier) {
 				if (action == Action::none) {
 					start_action(Action::rotate);
@@ -464,8 +496,7 @@ void DoodadBrush::render_clipboard() {
 		if (clipboard_free_placement) {
 			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
 		} else {
-			// clipboard_mouse_position only per 0.5 units?
-			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 2.f)) / 2.f, 0) + i.position;
+			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
 		}
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 

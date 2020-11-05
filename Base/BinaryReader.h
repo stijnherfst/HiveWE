@@ -14,13 +14,7 @@ class BinaryReader {
 	std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer)
-		: buffer(std::move(buffer)) {
-	}
-	//explicit BinaryReader(std::vector<uint8_t>&& buffer) : buffer(buffer) {}
-	//BinaryReader& operator=(BinaryReader&& other) noexcept {
-	//	buffer = other.buffer;
-	//}
+	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer) : buffer(std::move(buffer)) {}
 
 	template<typename T>
 	[[nodiscard]] T read() {

@@ -71,28 +71,6 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-
-	void MDX::validate() {
-		// Remove geoset animations that reference non existing geosets
-		for (size_t i = animations.size(); i-- > 0;) {
-			if (animations[i].geoset_id >= geosets.size()) {
-				animations.erase(animations.begin() + i);
-			}
-		}
-
-		// Fix vertex groups that reference non existent bone groups
-		for (auto& i : geosets) {
-			for (auto& j : i.vertex_groups) {
-				if (i.bone_groups.empty()) {
-					// Do something like referencing an existing bone. I dunno
-				}
-				if (j >= i.bone_groups.size()) {
-					j = std::min<uint8_t>(j, i.bone_groups.size() - 1);
-				}
-			}
-		}
-	}
-
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {
 		const uint32_t size = reader.read<uint32_t>();
 		uint32_t total_size = 0;
@@ -1419,5 +1397,73 @@ namespace mdx {
 
 		std::ofstream file(path, std::ios::binary | std::ios::out);
 		file.write(reinterpret_cast<char*>(writer.buffer.data()), writer.buffer.size());
+	}
+
+	void MDX::validate() {
+		// Remove geoset animations that reference non existing geosets
+		for (size_t i = animations.size(); i-- > 0;) {
+			if (animations[i].geoset_id >= geosets.size()) {
+				animations.erase(animations.begin() + i);
+			}
+		}
+
+		// Fix vertex groups that reference non existent bone groups
+		for (auto& i : geosets) {
+			for (auto& j : i.vertex_groups) {
+				if (i.bone_groups.empty()) {
+					// Do something like referencing an existing bone. I dunno
+				}
+				if (j >= i.bone_groups.size()) {
+					j = std::min<uint8_t>(j, i.bone_groups.size() - 1);
+				}
+			}
+		}
+	}
+
+	void MDX::optimize() {
+		Bone& bone = bones.front();
+		auto& header = bone.node.KGTR;
+		auto new_tracks = header.tracks;
+
+		Sequence& current_sequence = sequences.front();
+		//for (const auto& track : header.tracks) {
+		for (int i = 0; i < new_tracks.size(); i++) {
+			auto& track = new_tracks[i];
+
+			if (track.frame > current_sequence.end_frame) {
+				for (const auto& i : sequences) {
+					if (i.start_frame <= track.frame && i.end_frame >= track.frame) {
+						current_sequence = i;
+						break;
+					}
+				}
+				// If we find a track that lies outside any sequence we skip it
+				if (track.frame > current_sequence.end_frame) {
+					continue;
+				}
+			}
+
+
+		}
+
+
+		if (header.interpolation_type == 1) {
+			for (const auto& i : sequences) {
+				
+			}
+			auto trackA = header.tracks[0];
+			auto trackB = header.tracks[1];
+			auto trackC = header.tracks[2];
+
+			int32_t diffAB = trackB.frame - trackA.frame;
+			int32_t diffBC = trackC.frame - trackB.frame;
+			int32_t total = trackC.frame - trackA.frame;
+
+			glm::vec3 between = trackA.value + trackC.value * (static_cast<float>(diffAB) / total);
+			glm::vec3 diff = (trackB.value - between) / between * 100.f;
+			if (diff.x < 1.f && diff.y < 1.f && diff.z < 1.f) {
+				std::cout << "yeet\n";
+			}
+		}
 	}
 } // namespace mdx

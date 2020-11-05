@@ -45,14 +45,14 @@ public:
 	std::unique_ptr<DoodadStateAction> doodad_state_undo;
 
 	std::vector<Doodad*> selections;
+
 	glm::vec2 clipboard_mouse_position;
-	bool clipboard_free_placement = false;
 	std::vector<Doodad> clipboard;
+	bool clipboard_free_placement = false;
 
 	bool dragging = false;
 	bool dragged = false;
-	float drag_x_offset;
-	float drag_y_offset;
+	std::vector<glm::vec2> drag_offsets;
 
 	enum class Action {
 		none,
