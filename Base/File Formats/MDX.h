@@ -249,8 +249,8 @@ namespace mdx {
 		std::vector<uint32_t> face_groups;
 		std::vector<uint16_t> faces;
 		std::vector<uint8_t> vertex_groups;
-		std::vector<uint32_t> bone_groups;
-		std::vector<uint32_t> bone_indices;
+		std::vector<uint32_t> matrix_groups;
+		std::vector<uint32_t> matrix_indices;
 
 		uint32_t material_id;
 		uint32_t selection_group;

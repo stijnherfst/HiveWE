@@ -67,6 +67,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 
 	setMouseTracking(true);
 	setFocus();
+	setFocusPolicy(Qt::WheelFocus);
 }
 
 void GLWidget::initializeGL() {
@@ -178,6 +179,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 		return;
 	}
 
+	input_handler.keys_pressed.emplace(event->key());
 	input_handler.keys_pressed.emplace(event->key());
 	switch (event->key()) {
 		//case Qt::Key_Escape:

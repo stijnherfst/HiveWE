@@ -25,14 +25,7 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 			return;
 		}
 
-		glm::vec3 pivot;
-		if (object.id < model->pivots.size()) {
-			pivot = model->pivots[object.id];
-		} else {
-			pivot = glm::vec3(0, 0, 0);
-		}
-
-		RenderNode renderNode = RenderNode(object, pivot);
+		RenderNode renderNode = RenderNode(object, model->pivots[object.id]);
 		if (object.parent_id != -1) {
 			renderNode.parent = &render_nodes[object.parent_id];
 		} else {

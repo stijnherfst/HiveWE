@@ -3,6 +3,7 @@
 #include "Utilities.h"
 #include <iostream>
 #include <fstream>
+#include <functional>
 
 namespace mdx {
 	std::map<int, std::string> replacable_id_to_texture{
@@ -99,10 +100,10 @@ namespace mdx {
 			geoset.vertex_groups = reader.read_vector<uint8_t>(vertex_groups_count);
 			reader.advance(4);
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
-			geoset.bone_groups = reader.read_vector<uint32_t>(matrix_group_count);
+			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
 			reader.advance(4); // Mats
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
-			geoset.bone_indices = reader.read_vector<uint32_t>(matrix_indices_count);
+			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
@@ -645,12 +646,12 @@ namespace mdx {
 			writer.write_vector(geoset.vertex_groups);
 
 			writer.write_string("MTGC");
-			writer.write<uint32_t>(geoset.bone_groups.size());
-			writer.write_vector(geoset.bone_groups);
+			writer.write<uint32_t>(geoset.matrix_groups.size());
+			writer.write_vector(geoset.matrix_groups);
 
 			writer.write_string("MATS");
-			writer.write<uint32_t>(geoset.bone_indices.size());
-			writer.write_vector(geoset.bone_indices);
+			writer.write<uint32_t>(geoset.matrix_indices.size());
+			writer.write_vector(geoset.matrix_indices);
 
 			writer.write<uint32_t>(geoset.material_id);
 			writer.write<uint32_t>(geoset.selection_group);
@@ -1407,14 +1408,65 @@ namespace mdx {
 			}
 		}
 
-		// Fix vertex groups that reference non existent bone groups
+		size_t node_count = bones.size() +
+						lights.size() +
+						help_bones.size() +
+						attachments.size() +
+						emitters1.size() +
+						emitters2.size() +
+						ribbons.size() +
+						eventObjects.size() +
+						collisionShapes.size() +
+						corn_emitters.size();
+
+		// If there are no bones we have to add one to prevent crashing and stuff.
+		if (bones.empty()) {
+			Bone bone{};
+			bone.node.parent_id = -1;
+			bone.node.id = node_count++;
+			bones.push_back(bone);
+		}
+
+		// Ensure that pivots is big enough
+		pivots.resize(node_count, {});
+		
+		// Compact node IDs
+		std::vector<int> IDs;
+		IDs.reserve(node_count);
+		forEachNode([&](mdx::Node& object) {
+			//if (object.id == -1) {
+			//	return;
+			//}
+			IDs.push_back(object.id);
+		});
+
+		const int max_id = *std::max_element(IDs.begin(), IDs.end());
+		std::vector<int> remapping(max_id + 1);
+		for (int i = 0; i < IDs.size(); i++) {
+			remapping[IDs[i]] = i;
+		}
+
+		forEachNode([&](mdx::Node& object) {
+			/*if (object.id == -1) {
+				return;
+			}*/
+			object.id = remapping[object.id];
+			if (object.parent_id != -1) {
+				object.parent_id = remapping[object.parent_id];
+			}
+		});
+
+		// Fix vertex groups that reference non existent matrix groups
 		for (auto& i : geosets) {
 			for (auto& j : i.vertex_groups) {
-				if (i.bone_groups.empty()) {
-					// Do something like referencing an existing bone. I dunno
+				// If no matrix groups exist we insert one
+				if (i.matrix_groups.empty()) {
+					i.matrix_groups.push_back(1);
+					i.matrix_indices.push_back(0);
 				}
-				if (j >= i.bone_groups.size()) {
-					j = std::min<uint8_t>(j, i.bone_groups.size() - 1);
+				// Don't reference non existing ones!
+				if (j >= i.matrix_groups.size()) {
+					j = std::min<uint8_t>(j, i.matrix_groups.size() - 1);
 				}
 			}
 		}

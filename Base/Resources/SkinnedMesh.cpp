@@ -34,7 +34,7 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 		}
 		vertices += i.vertices.size();
 		indices += i.faces.size();
-		matrices += i.bone_groups.size();
+		matrices += i.matrix_groups.size();
 	}
 
 	// Allocate space
@@ -90,14 +90,14 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 		std::vector<glm::u8vec4> weights;
 
 		int bone_offset = 0;
-		for (const auto& group_size : i.bone_groups) {
+		for (const auto& group_size : i.matrix_groups) {
 			int bone_count = std::min(group_size, 4u);
 			glm::uvec4 indices(0);
 			glm::uvec4 weightss(0);
 
 			int weight = 255 / bone_count;
 			for (int j = 0; j < bone_count; j++) {
-				indices[j] = i.bone_indices[bone_offset + j];
+				indices[j] = i.matrix_indices[bone_offset + j];
 				weightss[j] = weight;
 			}
 

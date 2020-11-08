@@ -14,16 +14,13 @@
 
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
-	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, (base_scale - 1.f + scale) / 128.f);
-	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
-
 	std::string max_roll;
 	if (doodads_slk.row_headers.contains(id)) {
 		color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
 		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
 		max_roll = doodads_slk.data("maxroll", id);
+		base_scale = glm::vec3(doodads_slk.data<int>("defscale", id));
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
@@ -31,7 +28,11 @@ void Doodad::update() {
 		max_roll = destructibles_slk.data("maxroll", id);
 	}
 
-	if (!max_roll.empty()) {
+	matrix = glm::translate(glm::mat4(1.f), position);
+	matrix = glm::scale(matrix, (base_scale * scale) / 128.f);
+	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+
+	if (!max_roll.empty() && max_roll != "-") {
 		matrix = glm::rotate(matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
 	}
 }
@@ -58,7 +59,6 @@ float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTextu
 		return target_angle;
 	}
 }
-
 
 bool Doodads::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.doo");
