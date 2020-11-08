@@ -193,7 +193,7 @@ void UnitBrush::copy_selection() {
 		clipboard.push_back(*i);
 		average_position += i->position;
 	}
-	clipboard_mouse_position = average_position / static_cast<float>(clipboard.size());
+	clipboard_mouse_offset = average_position / static_cast<float>(clipboard.size());
 }
 
 void UnitBrush::cut_selection() {
@@ -211,7 +211,7 @@ void UnitBrush::place_clipboard() {
 	for (const auto& i : clipboard) {
 		Unit& new_unit = map->units.add_unit(i);
 		new_unit.creation_number = ++Unit::auto_increment;
-		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
 
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 
@@ -294,7 +294,7 @@ void UnitBrush::render_clipboard() {
 		const float model_scale = units_slk.data<float>("modelscale", i.id);
 		const float move_height = units_slk.data<float>("moveheight", i.id);
 
-		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+		glm::vec3 final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y) + move_height / 128.f;
 
 		const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);

@@ -223,6 +223,7 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event) {
 				drag_offsets = { input_handler.mouse_world - doodad.position };
 				emit selection_changed();
 			}
+			drag_start = input_handler.mouse_world;
 			dragging = true;
 			drag_offsets.clear();
 			for (const auto& i : selections) {
@@ -249,16 +250,24 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 					free_movement = free_movement && !i->pathing;
 				}
 
-				//for (auto& i : selections) {
+				glm::vec3 offset;
+				if (free_movement) {
+					offset = input_handler.mouse_world - drag_start;
+
+				} else {
+					offset = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f;
+					offset -= glm::round((drag_start) * 2.f + 0.5f) / 2.f - 0.25f;
+				}
+				offset.z = 0;
+
+				if (!free_movement && offset.x == 0.f && offset.y == 0.f) {
+					return;
+				}
+				drag_start = input_handler.mouse_world;
+
 				for (int i = 0; i < selections.size(); i++) {
 					Doodad* doodad = selections[i];
-					if (free_movement) {
-						doodad->position.x = input_handler.mouse_world.x - drag_offsets[i].x;
-						doodad->position.y = input_handler.mouse_world.y - drag_offsets[i].y;
-					} else {
-						doodad->position.x = (glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f).x - (glm::vec2(glm::ivec2(glm::round(drag_offsets[i]) * 2.f) * 2) / 4.f).x;
-						doodad->position.y = (glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f).y - (glm::vec2(glm::ivec2(glm::round(drag_offsets[i]) * 2.f) * 2) / 4.f).y;
-					}
+					doodad->position += offset;
 					if (!lock_doodad_z) {
 						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y);
 					}
@@ -343,7 +352,7 @@ void DoodadBrush::copy_selection() {
 		clipboard.push_back(*i);
 		average_position += i->position;
 	}
-	clipboard_mouse_position = average_position / static_cast<float>(clipboard.size());
+	clipboard_mouse_offset = average_position / static_cast<float>(clipboard.size());
 }
 
 void DoodadBrush::cut_selection() {
@@ -364,9 +373,9 @@ void DoodadBrush::place_clipboard() {
 		new_doodad.creation_number = ++Doodad::auto_increment;
 		glm::vec3 final_position;
 		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
 		} else {
-			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
+			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
 		}
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
@@ -494,9 +503,9 @@ void DoodadBrush::render_clipboard() {
 
 		glm::vec3 final_position;
 		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_position, 0);
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
 		} else {
-			final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f - glm::vec2(glm::ivec2(clipboard_mouse_position * 4.f)) / 4.f, 0) + i.position;
+			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
 		}
 		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 

@@ -391,6 +391,7 @@ void Map::update(double delta, int width, int height) {
 
 		if (res.hasHit()) {
 			auto& hit = res.m_hitPointWorld;
+			input_handler.previous_mouse_world = input_handler.mouse_world;
 			input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
 		}
 	}

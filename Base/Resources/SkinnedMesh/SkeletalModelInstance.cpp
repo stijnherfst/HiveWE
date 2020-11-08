@@ -283,12 +283,15 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 		return defaultValue;
 	}
 	const CurrentKeyFrame& current = current_keyframes[header.id];
+	const mdx::Sequence& sequence = model->sequences[sequence_index];
 
-#if 1
 	int local_current_frame = current_frame;
+	int local_sequence_start = sequence.start_frame;
+	int local_sequence_end = sequence.end_frame;
 
 	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
-		int local_sequence_end = model->global_sequences[header.global_sequence_ID];
+		local_sequence_start = 0;
+		local_sequence_end = model->global_sequences[header.global_sequence_ID];
 		if (local_sequence_end == 0) {
 			local_current_frame = 0;
 		} else {
@@ -309,137 +312,37 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 	const T ceilInTan = header.tracks[current.right].inTan;
 	const T floorOutTan = header.tracks[current.left].outTan;
 
-	int floorTime = header.tracks[current.left].frame;
-	int ceilTime = header.tracks[current.right].frame;
-	T floorValue = header.tracks[current.left].value;
-	T ceilValue = header.tracks[current.right].value;
+	int floor_time = header.tracks[current.left].frame;
+	int ceil_time = header.tracks[current.right].frame;
+	T floor_value = header.tracks[current.left].value;
+	T ceil_value = header.tracks[current.right].value;
 
-	// ToDo Wrapping is wrong around sequence end/start 
-	float tt = (local_current_frame - floorTime) / static_cast<float>(ceilTime - floorTime);
-	float t = std::clamp(tt, 0.f, 1.f);
 
-	return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, header.interpolation_type);
-#else
-	if (header.tracks.empty()) {
-		return defaultValue;
-	}
+	// This is the implementation that correctly handles missing start/end frames. The game and WE however have a buggy implementation which is also used below
+	//float t;
+	//if (ceil_time - floor_time < 0) {
+	//	int duration = (local_sequence_end - floor_time) + (ceil_time - local_sequence_start);
 
-	int sequenceStart;
-	int sequenceEnd;
-	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
-		sequenceStart = 0;
-		sequenceEnd = model->global_sequences[header.global_sequence_ID];
-		if (sequenceEnd == 0) {
-			current_frame = 0;
-		} else {
-			current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % sequenceEnd;
-		}
-	} else if (model->sequences.size() && sequence_index != -1) {
-		mdx::Sequence& sequence = model->sequences[sequence_index];
-		sequenceStart = sequence.start_frame;
-		sequenceEnd = sequence.end_frame;
-	} else {
-		return defaultValue;
-	}
+	//	if (local_current_frame > floor_time) {
+	//		t = (local_current_frame - floor_time) / (float)duration;
+	//	} else {
+	//		t = (local_current_frame - local_sequence_start + (local_sequence_end - floor_time)) / (float)duration;
+	//	}
+	//} else {
+	//	t = (local_current_frame - floor_time) / static_cast<float>(ceil_time - floor_time);
+	//}
 
-	int ceilIndex = -1;
-	int floorIndex = 0;
-	// ToDo "if global seq" check is here in MXE java
-
-	int floorAnimStartIndex = 0;
-	int floorAnimEndIndex = 0;
-
-	// get floor:
-	for (int i = 0; i < header.tracks.size(); i++) {
-		const mdx::Track<T>& track = header.tracks[i];
-		if (track.frame <= sequenceStart) {
-			floorAnimStartIndex = i;
-		}
-		if (track.frame <= current_frame) {
-			floorIndex = i;
-		}
-		if (track.frame >= current_frame && ceilIndex == -1) {
-			ceilIndex = i;
-		}
-		if (track.frame <= sequenceEnd) {
-			floorAnimEndIndex = i;
-		} else {
-			// end of our sequence
-			break;
+	// The (incorrect) implementation both the game and WE use
+	int timeBetweenFrames = ceil_time - floor_time;
+	if (timeBetweenFrames < 0) {
+		timeBetweenFrames += (local_sequence_end - local_sequence_start);
+		if (local_current_frame < floor_time) {
+			floor_time = ceil_time;
 		}
 	}
-	if (ceilIndex == -1) {
-		ceilIndex = header.tracks.size() - 1;
-	}
+	float t = timeBetweenFrames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(timeBetweenFrames));
 
-	// end get floor
-	if (ceilIndex < floorIndex) {
-		ceilIndex = floorIndex;
-		// was a problem in matrix eater, different impl, not problem here?
-	}
-
-	T floorInTan{};
-	T floorOutTan{};
-	T floorValue{};
-	T ceilValue{};
-	int floorIndexTime;
-	int ceilIndexTime;
-
-	floorValue = header.tracks[floorIndex].value;
-	if (header.interpolation_type > 1) {
-		floorInTan = header.tracks[floorIndex].inTan;
-		floorOutTan = header.tracks[floorIndex].outTan;
-	}
-	ceilValue = header.tracks[ceilIndex].value;
-	floorIndexTime = header.tracks[floorIndex].frame;
-	ceilIndexTime = header.tracks[ceilIndex].frame;
-	if (ceilIndexTime < sequenceStart) {
-		return defaultValue;
-	}
-	if (floorIndexTime > sequenceEnd) {
-		return defaultValue;
-	}
-
-	if (floorIndexTime < sequenceStart && ceilIndexTime > sequenceEnd) {
-		return defaultValue;
-	} else if (floorIndexTime < sequenceStart) {
-		if (header.tracks[floorAnimEndIndex].frame == sequenceEnd) {
-			// no "floor" frame found, but we have a ceil frame,
-			// so the prev frame is a repeat of animation's end
-			// placed at the beginning
-			floorIndex = floorAnimEndIndex;
-			floorValue = header.tracks[floorAnimEndIndex].value;
-			floorIndexTime = sequenceStart;
-			if (header.interpolation_type > 1) {
-				floorInTan = header.tracks[floorAnimEndIndex].inTan;
-				floorOutTan = header.tracks[floorAnimEndIndex].outTan;
-			}
-		} else {
-			floorValue = defaultValue;
-			floorInTan = floorOutTan = defaultValue;
-			floorIndexTime = sequenceStart;
-		}
-	} else if (ceilIndexTime > sequenceEnd || (ceilIndexTime < current_frame && header.tracks[floorAnimEndIndex].frame < current_frame)) {
-		// if we have a floor frame but the "ceil" frame is after end of sequence,
-		// or our ceil frame is before our time, meaning that we're at the end of the
-		// entire timeline, then we need to inject a "ceil" frame at end of sequence
-		if (header.tracks[floorAnimStartIndex].frame == sequenceStart) {
-			ceilValue = header.tracks[floorAnimStartIndex].value;
-			ceilIndex = floorAnimStartIndex;
-			ceilIndexTime = sequenceStart;
-		}
-		// for the else case here, Matrix Eater code says to leave it blank,
-		// example model is Water Elemental's birth animation, to verify behavior
-	}
-	if (floorIndex == ceilIndex) {
-		return floorValue;
-	}
-	const T ceilInTan = header.tracks[ceilIndex].inTan;
-	float t = std::clamp((current_frame - floorIndexTime) / (float)(ceilIndexTime - floorIndexTime), 0.f, 1.f);
-
-	return interpolate(floorValue, floorOutTan, ceilInTan, ceilValue, t, header.interpolation_type);
-
-#endif
+	return interpolate(floor_value, floorOutTan, ceilInTan, ceil_value, t, header.interpolation_type);
 }
 
 template glm::vec3 SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue) const;

@@ -24,7 +24,7 @@ class UnitBrush : public Brush {
 	std::unique_ptr<UnitStateAction> unit_state_undo;
 
 	std::vector<Unit*> selections;
-	glm::vec2 clipboard_mouse_position;
+	glm::vec2 clipboard_mouse_offset;
 	bool clipboard_free_placement = false;
 	std::vector<Unit> clipboard;
 

@@ -46,12 +46,13 @@ public:
 
 	std::vector<Doodad*> selections;
 
-	glm::vec2 clipboard_mouse_position;
+	glm::vec2 clipboard_mouse_offset;
 	std::vector<Doodad> clipboard;
 	bool clipboard_free_placement = false;
 
 	bool dragging = false;
 	bool dragged = false;
+	glm::vec3 drag_start;
 	std::vector<glm::vec2> drag_offsets;
 
 	enum class Action {

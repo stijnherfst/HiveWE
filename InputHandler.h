@@ -16,6 +16,7 @@ public:
 	glm::vec2 previous_mouse;
 
 	glm::vec3 mouse_world;
+	glm::vec3 previous_mouse_world;
 
 	glm::vec3 drag_start;
 

@@ -1442,10 +1442,7 @@ namespace mdx {
 					continue;
 				}
 			}
-
-
 		}
-
 
 		if (header.interpolation_type == 1) {
 			for (const auto& i : sequences) {
