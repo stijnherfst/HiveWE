@@ -44,13 +44,13 @@ private:
 	BuffTreeModel* buffTreeModel;
 	UpgradeTreeModel* upgradeTreeModel;
 
-	QSortFilterProxyModel* unitTreeFilter;
-	QSortFilterProxyModel* doodadTreeFilter;
-	QSortFilterProxyModel* destructibleTreeFilter;
-	QSortFilterProxyModel* abilityTreeFilter;
-	QSortFilterProxyModel* itemTreeFilter;
-	QSortFilterProxyModel* buffTreeFilter;
-	QSortFilterProxyModel* upgradeTreeFilter;
+	BaseFilter* unitTreeFilter;
+	BaseFilter* doodadTreeFilter;
+	BaseFilter* destructibleTreeFilter;
+	BaseFilter* abilityTreeFilter;
+	BaseFilter* itemTreeFilter;
+	BaseFilter* buffTreeFilter;
+	BaseFilter* upgradeTreeFilter;
 
 	std::shared_ptr<QIconResource> custom_unit_icon;
 	std::shared_ptr<QIconResource> custom_item_icon;
@@ -70,5 +70,5 @@ private:
 		buff
 	};
 
-	void item_clicked(QSortFilterProxyModel* model, const QModelIndex& index, Category category);
+	void item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
 };

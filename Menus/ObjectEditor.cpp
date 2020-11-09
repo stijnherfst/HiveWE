@@ -5,8 +5,9 @@
 #include "SingleModel.h"
 #include <QTableView>
 #include <QLineEdit>
+#include <QToolBar>
 
-void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex& index, Category category) {
+void ObjectEditor::item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category) {
 	QModelIndex sourceIndex = model->mapToSource(index);
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
 	if (item->tableRow >= 0) {
@@ -17,6 +18,7 @@ void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex&
 			found->raise();
 			return;
 		}
+
 
 		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
@@ -33,94 +35,12 @@ void ObjectEditor::item_clicked(QSortFilterProxyModel* model, const QModelIndex&
 		dock_tab->setWidget(view);
 		dock_tab->setObjectName(QString::number(static_cast<int>(category)) + QString::number(item->tableRow));
 
-		SingleModel* single_model;
-		switch (category) {
-			case Category::unit: {
-				std::string id = units_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&units_slk, &units_meta_slk, this);
-				single_model->setSourceModel(units_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(units_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(unitTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::item: {
-				std::string id = items_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&items_slk, &items_meta_slk, this);
-				single_model->setSourceModel(items_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(items_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(itemTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::doodad: {
-				std::string id = doodads_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&doodads_slk, &doodads_meta_slk, this);
-				single_model->setSourceModel(doodads_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(doodads_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(doodadTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::destructible: {
-				std::string id = destructibles_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&destructibles_slk, &destructibles_meta_slk, this);
-				single_model->setSourceModel(destructibles_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(destructibles_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(destructibleTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::ability: {
-				std::string id = abilities_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&abilities_slk, &abilities_meta_slk, this);
-				single_model->setSourceModel(abilities_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(abilities_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(abilityTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::upgrade: {
-				std::string id = upgrade_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&upgrade_slk, &upgrade_meta_slk, this);
-				single_model->setSourceModel(upgrade_table);
-				single_model->setID(id);
-
-				dock_tab->setWindowTitle(QString::fromStdString(upgrade_slk.data("name", item->tableRow)));
-				dock_tab->setIcon(upgradeTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			case Category::buff: {
-				std::string id = buff_slk.index_to_row.at(item->tableRow);
-
-				single_model = new SingleModel(&buff_slk, &buff_meta_slk, this);
-				single_model->setSourceModel(buff_table);
-				single_model->setID(id);
-
-				std::string name = buff_slk.data("bufftip", item->tableRow);
-				if (name.empty()) {
-					name = buff_slk.data("editorname", item->tableRow);
-				}
-
-				dock_tab->setWindowTitle(QString::fromStdString(name));
-				dock_tab->setIcon(buffTreeModel->data(sourceIndex, Qt::DecorationRole).value<QIcon>());
-				break;
-			}
-			default:
-				return;
-		}
+		SingleModel* single_model = new SingleModel(table, this);
+		single_model->setID(table->slk->index_to_row.at(item->tableRow));
 		view->setModel(single_model);
+
+		dock_tab->setWindowTitle(model->data(index, Qt::DisplayRole).toString());
+		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
 
 		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 	}
@@ -154,22 +74,34 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	buffTreeModel = new BuffTreeModel(this);
 	
 	ads::CDockAreaWidget* area = nullptr;
-	auto addTypeTreeView = [&](BaseTreeModel* treeModel, QSortFilterProxyModel*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
+	auto addTypeTreeView = [&](BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
 		treeModel->setSourceModel(table);
-		filter = new QSortFilterProxyModel;
-		filter->setSourceModel(treeModel);
+		filter = new BaseFilter;
+		filter->slk = table->slk;
 		filter->setRecursiveFilteringEnabled(true);
 		filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+		filter->setSourceModel(treeModel);
 		view->setModel(filter);
 		view->header()->hide();
 		view->expandAll();
 
-		ads::CDockWidget* unit_tab = new ads::CDockWidget(name);
 		QLineEdit* search = new QLineEdit;
 		search->setPlaceholderText("Search " + name);
 		connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
-		unit_tab->layout()->addWidget(search);
-		unit_tab->layout()->addWidget(view);
+
+		QToolButton* hideDefault = new QToolButton;
+		hideDefault->setIcon(icon);
+		hideDefault->setToolTip("Hide default " + name);
+		hideDefault->setCheckable(true);
+		connect(hideDefault, &QToolButton::toggled, filter, &BaseFilter::setFilterCustom);
+
+		QToolBar* bar = new QToolBar;
+		bar->addWidget(search);
+		bar->addWidget(hideDefault);
+
+		ads::CDockWidget* unit_tab = new ads::CDockWidget(name);
+		unit_tab->setToolBar(bar);
+		unit_tab->setWidget(view);
 		unit_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 		unit_tab->setIcon(icon);
 		if (area == nullptr) {
@@ -189,13 +121,13 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 
 	area->setCurrentIndex(0);
 
-	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(unitTreeFilter, index, Category::unit); });
-	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(itemTreeFilter, index, Category::item); });
-	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(doodadTreeFilter, index, Category::doodad); });
-	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(destructibleTreeFilter, index, Category::destructible); });
-	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(abilityTreeFilter, index, Category::ability); });
-	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(upgradeTreeFilter, index, Category::upgrade); });
-	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(buffTreeFilter, index, Category::buff); });
+	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(unitTreeFilter, units_table, index, Category::unit); });
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(itemTreeFilter, items_table, index, Category::item); });
+	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(doodadTreeFilter, doodads_table, index, Category::doodad); });
+	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(destructibleTreeFilter, destructibles_table, index, Category::destructible); });
+	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(abilityTreeFilter, abilities_table, index, Category::ability); });
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(buffTreeFilter, buff_table, index, Category::buff); });
 
 	show();
 }

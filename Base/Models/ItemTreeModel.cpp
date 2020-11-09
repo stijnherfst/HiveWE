@@ -74,6 +74,17 @@ QVariant ItemTreeModel::data(const QModelIndex& index, int role) const {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, items_slk.column_headers.at("art")), role);
+		case Qt::TextColorRole:
+			if (item->tableRow < 0) {
+				return {};
+			}
+
+			//if (items_slk.shadow_data.contains(items_slk.index_to_row.at(item->tableRow)) && items_slk.shadow_data.at(items_slk.index_to_row.at(item->tableRow)).size()) {
+			if (items_slk.shadow_data.contains(items_slk.index_to_row.at(item->tableRow))) {
+				return QColor("violet");
+			} else {
+				return {};
+			}
 		default:
 			return {};
 	}

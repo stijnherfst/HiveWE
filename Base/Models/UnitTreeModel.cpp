@@ -95,7 +95,7 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->baseCategory) {
 				return QString::fromStdString(categories.at(rowToCategory[index.row()]).name);
 			} else if (item->subCategory) {
-				return QString::fromStdString(subCategories[index.row()]);
+				return QString::fromStdString(subCategories[index.row()] + " (" + std::to_string(item->children.size()) + ")");
 			} else {
 				if (units_slk.data("campaign", item->tableRow) == "1") {
 					const std::string properNames = units_slk.data("propernames", item->tableRow);
@@ -112,6 +112,16 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.column_headers.at("art")), role);
+		case Qt::TextColorRole:
+			if (item->tableRow < 0) {
+				return {};
+			}
+
+			if (units_slk.shadow_data.contains(units_slk.index_to_row.at(item->tableRow))) {
+				return QColor("violet");
+			} else {
+				return {};
+			} 
 		default:
 			return {};
 	}

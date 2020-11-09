@@ -67,6 +67,16 @@ QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
 			}
 
 			return categories.at(rowToCategory[index.parent().row()]).icon->icon;
+		case Qt::TextColorRole:
+			if (item->tableRow < 0) {
+				return {};
+			}
+
+			if (destructibles_slk.shadow_data.contains(destructibles_slk.index_to_row.at(item->tableRow))) {
+				return QColor("violet");
+			} else {
+				return {};
+			}
 		default:
 			return {};
 	}

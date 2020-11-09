@@ -25,11 +25,15 @@ public:
 };
 
 class UnitListFilter : public QSortFilterProxyModel {
+	Q_OBJECT
+
 	bool filterAcceptsRow(int sourceRow,const QModelIndex& sourceParent) const override;
 	bool lessThan(const QModelIndex& left,const QModelIndex& right) const override;
 	QString filterRace = "human";
 
 public:
-	void setFilterRace(QString race);
 	using QSortFilterProxyModel::QSortFilterProxyModel;
+	
+public slots:
+	void setFilterRace(QString race);
 };

@@ -101,6 +101,16 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.column_headers.at("art")), role);
+		case Qt::TextColorRole:
+			if (item->tableRow < 0) {
+				return {};
+			}
+
+			if (abilities_slk.shadow_data.contains(abilities_slk.index_to_row.at(item->tableRow))) {
+				return QColor("violet");
+			} else {
+				return {};
+			}
 		default:
 			return {};
 	}

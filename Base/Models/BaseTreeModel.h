@@ -3,6 +3,7 @@
 #include <QAbstractProxyModel>
 #include <QPainter>
 #include <QFileIconProvider>
+#include <QSortFilterProxyModel>
 
 #include <array>
 #include <vector>
@@ -48,4 +49,21 @@ public:
 
 	BaseTreeItem* rootItem;
 	QIcon folderIcon;
+};
+
+
+class BaseFilter : public QSortFilterProxyModel {
+	Q_OBJECT
+
+	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+
+	bool filterCustom = false;
+
+ public:
+	slk::SLK* slk;
+
+	using QSortFilterProxyModel::QSortFilterProxyModel;
+
+public slots:
+	void setFilterCustom(bool filter);
 };

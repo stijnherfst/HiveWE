@@ -23,7 +23,10 @@
 
 #include "fmt/format.h"
 
-SingleModel::SingleModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QIdentityProxyModel(parent), slk(slk), meta_slk(meta_slk) {
+SingleModel::SingleModel(TableModel* table, QObject* parent) : QIdentityProxyModel(parent) {
+	slk = table->slk;
+	meta_slk = table->meta_slk;
+	setSourceModel(table);
 	connect(this, &SingleModel::dataChanged, [this](const auto& index) {
 		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "numvar") {
 			buildMapping();
@@ -58,6 +61,18 @@ QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 	const std::string& column = id_mapping[proxyIndex.row()].field;
 	return sourceModel()->index(slk->row_headers.at(id), slk->column_headers.at(column));
+}
+
+QVariant SingleModel::data(const QModelIndex& index, int role) const {
+	if (role != Qt::TextColorRole) {
+		return QIdentityProxyModel::data(index, role);
+	}
+
+	if (slk->shadow_data.contains(id) && slk->shadow_data.at(id).contains(id_mapping[index.row()].field)) {
+		return QColor("violet");
+	}
+
+	return {};
 }
 
 QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {

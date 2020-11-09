@@ -115,3 +115,25 @@ QModelIndex BaseTreeModel::parent(const QModelIndex& index) const {
 
 	return createIndex(parentItem->row(), 0, parentItem);
 }
+
+bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
+	QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(index0.internalPointer());
+
+	if (filterCustom) {
+		if (item->tableRow == -1) {
+			return false;
+		}
+		if (!(slk->shadow_data.contains(slk->index_to_row.at(item->tableRow)) && slk->shadow_data.at(slk->index_to_row.at(item->tableRow)).contains("oldid"))) {
+			return false;
+		}
+	}
+
+
+	return sourceModel()->data(index0).toString().contains(filterRegExp());
+}
+
+void BaseFilter::setFilterCustom(bool filter) {
+	filterCustom = filter;
+	invalidateFilter();
+}

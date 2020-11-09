@@ -246,13 +246,22 @@ namespace slk {
 			add_column(column_header);
 		}
 
+		if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
+			if (base_data.at(row_header).at(column_header) == data) {
+				if (shadow_data.contains(row_header)) {
+					shadow_data.at(row_header).erase(column_header);
+					if (shadow_data.at(row_header).empty()) {
+						shadow_data.erase(row_header);
+					}
+				}
+				return;
+			}
+		}
+
 		shadow_data[row_header][column_header] = data;
 	}
 
 	void SLK::set_shadow_data(const int column, const int row, std::string data) {
-		assert(row < index_to_row.size());
-		assert(column < index_to_column.size());
-
-		set_shadow_data(index_to_column[column], index_to_row[row], data);
+		set_shadow_data(index_to_column.at(column), index_to_row.at(row), data);
 	}
 }

@@ -17,10 +17,10 @@ class TableModel : public QAbstractTableModel {
 	std::unordered_map<std::string, std::string> meta_field_to_key;
 	std::shared_ptr<QIconResource> invalid_icon;
 
-	slk::SLK* meta_slk;
-	slk::SLK* slk;
 
 public: 
+	slk::SLK* meta_slk;
+	slk::SLK* slk;
 	explicit TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 	
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

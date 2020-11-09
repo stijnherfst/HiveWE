@@ -180,15 +180,9 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 	}
 
 	input_handler.keys_pressed.emplace(event->key());
-	input_handler.keys_pressed.emplace(event->key());
-	switch (event->key()) {
-		//case Qt::Key_Escape:
-		//	exit(0);
-		//	break;
-		default:
-			if (map->brush) {
-				map->brush->key_press_event(event);
-			}
+
+	if (map->brush) {
+		map->brush->key_press_event(event);
 	}
 }
 
@@ -197,12 +191,11 @@ void GLWidget::keyReleaseEvent(QKeyEvent* event) {
 		return;
 	}
 
+	input_handler.keys_pressed.erase(event->key());
+
 	if (map->brush) {
 		map->brush->key_release_event(event);
 	}
-
-
-	input_handler.keys_pressed.erase(event->key());
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event) {

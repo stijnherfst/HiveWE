@@ -94,6 +94,16 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, buff_slk.column_headers.at("buffart")), role);
+		case Qt::TextColorRole:
+			if (item->tableRow < 0) {
+				return {};
+			}
+
+			if (buff_slk.shadow_data.contains(buff_slk.index_to_row.at(item->tableRow))) {
+				return QColor("violet");
+			} else {
+				return {};
+			}
 		default:
 			return {};
 	}

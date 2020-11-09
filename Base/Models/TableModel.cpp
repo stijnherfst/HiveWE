@@ -39,14 +39,17 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 
 			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
 			if (type == "bool") {
-				return QString::fromStdString(field_data) == "1" ? "true" : "false";
+				return field_data == "1" ? "true" : "false";
 			} else if (type == "unitList") {
 				auto parts = split(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
+					if (!units_slk.row_headers.contains(parts[i])) {
+						continue;
+					}
 					result += units_table->data(units_table->index(units_slk.row_headers.at(parts[i]), units_slk.column_headers.at("name")), role).toString();
 					if (i < parts.size() - 1) {
-							result += ", ";
+						result += ", ";
 					}
 				}
 				return result;
@@ -54,6 +57,9 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				auto parts = split(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
+					if (!abilities_slk.row_headers.contains(parts[i])) {
+						continue;
+					}
 					result += abilities_table->data(abilities_table->index(abilities_slk.row_headers.at(parts[i]), abilities_slk.column_headers.at("name")), role).toString();
 					if (i < parts.size() - 1) {
 						result += ", ";
@@ -64,6 +70,9 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				auto parts = split(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
+					if (!upgrade_slk.row_headers.contains(parts[i])) {
+						continue;
+					}
 					result += upgrade_table->data(upgrade_table->index(upgrade_slk.row_headers.at(parts[i]), upgrade_slk.column_headers.at("name")), role).toString();
 					if (i < parts.size() - 1) {
 						result += ", ";
