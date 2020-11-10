@@ -178,29 +178,23 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 			}
 		}
 
-		icons.emplace_back(object["src"].toString().toStdString(), text);
+		std::string string_path = object["src"].toString().toStdString() + ".dds";
+		if (!hierarchy.file_exists(string_path)) {
+			continue;
+		}
+		icons.emplace_back(string_path, text);
 	}
 }
 
 QVariant IconModel::data(const QModelIndex& index, int role) const {
 	switch (role) {
 		case Qt::DecorationRole: {
-			fs::path path = icons[index.row()].first;
-			path.replace_extension("");
-			std::string string_path = path.string();
+			std::string string_path = icons[index.row()].first;
 
 			if (icon_cache.contains(string_path)) {
 				return icon_cache.at(string_path)->icon;
 			} else {
-				path.replace_extension("");
-				if (!hierarchy.file_exists(path)) {
-					path.replace_extension(".dds");
-					if (!hierarchy.file_exists(path)) {
-						return {};
-					}
-				}
-
-				icon_cache.emplace(string_path, resource_manager.load<QIconResource>(path));
+				icon_cache.emplace(string_path, resource_manager.load<QIconResource>(string_path));
 				return icon_cache.at(string_path)->icon;
 			}
 		}

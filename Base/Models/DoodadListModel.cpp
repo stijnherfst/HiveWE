@@ -2,7 +2,7 @@
 
 #include "HiveWE.h"
 
-DoodadListModel::DoodadListModel(QObject* parent) : QAbstractProxyModel(parent) {
+DoodadListModel::DoodadListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {
 		const std::string tileset_key = value.front();
 		icons[key.front()] = resource_manager.load<QIconResource>(value[1]);
@@ -70,16 +70,6 @@ QModelIndex DoodadListModel::index(int row, int column, const QModelIndex& paren
 
 QModelIndex DoodadListModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
-}
-
-void DoodadListModel::setSourceModel(QAbstractItemModel* sourceModel) {
-	beginResetModel();
-	QAbstractProxyModel::setSourceModel(sourceModel);
-	endResetModel();
-
-	connect(sourceModel, &QAbstractItemModel::dataChanged, this, [&](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
-	});
 }
 
 bool DoodadListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {

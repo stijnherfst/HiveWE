@@ -30,7 +30,7 @@ int BaseTreeItem::row() const {
 	return 0;
 }
 
-BaseTreeModel::BaseTreeModel(QObject* parent) : QAbstractProxyModel(parent) {
+BaseTreeModel::BaseTreeModel(QObject* parent) : QIdentityProxyModel(parent) {
 	rootItem = new BaseTreeItem();
 
 	QFileIconProvider icons;
@@ -39,23 +39,6 @@ BaseTreeModel::BaseTreeModel(QObject* parent) : QAbstractProxyModel(parent) {
 
 BaseTreeModel::~BaseTreeModel() {
 	delete rootItem;
-}
-
-void BaseTreeModel::_q_sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
-	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
-
-	//BaseTreeItem* item = static_cast<BaseTreeItem*>(topLeft.internalPointer());
-
-	//std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
-	//std::cout << "Proxy model row " << mapFromSource(topLeft).row() << " column" << mapFromSource(topLeft).column() << "\n";
-	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), {});
-}
-
-void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
-	QAbstractProxyModel::setSourceModel(sourceModel);
-
-	connect(sourceModel, &QAbstractItemModel::dataChanged, this, &BaseTreeModel::_q_sourceDataChanged);
 }
 
 int BaseTreeModel::rowCount(const QModelIndex& parent) const {

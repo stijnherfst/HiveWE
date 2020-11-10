@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QFileIconProvider>
 #include <QSortFilterProxyModel>
+#include <QIdentityProxyModel>
 
 #include <array>
 #include <vector>
@@ -29,10 +30,7 @@ public:
 	bool subCategory = false;
 };
 
-class BaseTreeModel : public QAbstractProxyModel {
-
-	void _q_sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
-
+class BaseTreeModel : public QIdentityProxyModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
@@ -42,8 +40,6 @@ class BaseTreeModel : public QAbstractProxyModel {
 	QModelIndex parent(const QModelIndex& child) const override;
 
 public:
-	void setSourceModel(QAbstractItemModel* sourceModel) override;
-
 	explicit BaseTreeModel(QObject* parent = nullptr);
 	~BaseTreeModel();
 

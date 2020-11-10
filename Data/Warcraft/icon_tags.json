@@ -6996,7 +6996,7 @@
         ]
     },
     {
-        "src": "replaceabletextures\\commandbuttons\\btnrallypoint.blp",
+        "src": "replaceabletextures\\commandbuttons\\btnrallypoint",
         "tags": [
             "Rally"
         ]
@@ -7288,7 +7288,7 @@
         ]
     },
     {
-        "src": "replaceabletextures\\passivebuttons\\pasbtnhumanlumberupgrade1.blp",
+        "src": "replaceabletextures\\passivebuttons\\pasbtnhumanlumberupgrade1",
         "tags": [
             "Improved Lumber Harvesting,Improved Lumber Harvesting,Advanced Lumber Harvesting"
         ]
@@ -7468,7 +7468,7 @@
         ]
     },
     {
-        "src": "replaceabletextures\\passivebuttons\\pasbtnspikedbarricades.blp",
+        "src": "replaceabletextures\\passivebuttons\\pasbtnspikedbarricades",
         "tags": [
             "Spiked Barricades,Spiked Barricades,Improved Spiked Barricades"
         ]

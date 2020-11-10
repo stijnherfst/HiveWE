@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QAbstractProxyModel>
+#include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
 
-class UnitListModel : public QAbstractProxyModel {
+class UnitListModel : public QIdentityProxyModel {
 	Q_OBJECT
 
 public:
@@ -19,9 +19,7 @@ public:
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	void setSourceModel(QAbstractItemModel* sourceModel) override;
-
-	using QAbstractProxyModel::QAbstractProxyModel;
+	using QIdentityProxyModel::QIdentityProxyModel;
 };
 
 class UnitListFilter : public QSortFilterProxyModel {

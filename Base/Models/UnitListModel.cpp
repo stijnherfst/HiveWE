@@ -60,16 +60,6 @@ QModelIndex UnitListModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
 
-void UnitListModel::setSourceModel(QAbstractItemModel* sourceModel) {
-	beginResetModel();
-	QAbstractProxyModel::setSourceModel(sourceModel);
-	endResetModel();
-
-	connect(sourceModel, &QAbstractItemModel::dataChanged, this, [&](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) { 
-		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles); 
-	});
-}
-
 bool UnitListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
 	QModelIndex index0 = sourceModel()->index(sourceRow, 0);
 

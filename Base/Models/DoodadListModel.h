@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QAbstractProxyModel>
+#include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
 #include <QIconResource.h>
 
-class DoodadListModel : public QAbstractProxyModel {
+class DoodadListModel : public QIdentityProxyModel {
 	Q_OBJECT
 
 public:
@@ -21,8 +21,6 @@ public:
 
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
-
-	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
 private:
 	std::unordered_map<char, std::shared_ptr<QIconResource>> icons;

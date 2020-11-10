@@ -2,7 +2,7 @@
 
 #include "HiveWE.h"
 
-DestructableListModel::DestructableListModel(QObject* parent) : QAbstractProxyModel(parent) {
+DestructableListModel::DestructableListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {
 		const std::string tileset_key = value.front();
 		icons[key.front()] = resource_manager.load<QIconResource>(value[1]);
@@ -70,16 +70,6 @@ QModelIndex DestructableListModel::index(int row, int column, const QModelIndex&
 
 QModelIndex DestructableListModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
-}
-
-void DestructableListModel::setSourceModel(QAbstractItemModel* sourceModel) {
-	beginResetModel();
-	QAbstractProxyModel::setSourceModel(sourceModel);
-	endResetModel();
-
-	connect(sourceModel, &QAbstractItemModel::dataChanged, this, [&](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
-	});
 }
 
 bool DestructableListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
