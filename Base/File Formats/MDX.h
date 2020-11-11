@@ -98,7 +98,7 @@ namespace mdx {
 	constexpr auto t = int('C') + (int('A') << 8) + (int('M') << 16) + (int('S') << 24);
 	template <typename T>
 	struct Track {
-		int32_t frame;
+		uint32_t frame;
 		T value;
 		T inTan;
 		T outTan;

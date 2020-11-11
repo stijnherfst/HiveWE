@@ -558,22 +558,20 @@ float bezier(float a, float aOutTan, float bInTan, float b, float t) {
 
 float interpolate(const float start, const float outTan, const float inTan, const float end, float t, int interpolationType) {
 	switch (interpolationType) {
-		case 0:
-			return start;
 		case 1: // LINEAR
 			return glm::mix(start, end, t);
 		case 2: // HERMITE
 			return hermite(start, outTan, inTan, end, t);
 		case 3: // BEZIER
 			return bezier(start, outTan, inTan, end, t);
+		default:
+			return start;
 	}
 }
 
 glm::vec3 interpolate(const glm::vec3 start, const glm::vec3 outTan, const glm::vec3 inTan, const glm::vec3 end, float t, int interpolationType) {
 	switch (interpolationType) {
 		glm::vec3 out;
-		case 0:
-			return start;
 		case 1: // LINEAR
 			return glm::mix(start, end, t);
 		case 2: // HERMITE
@@ -586,12 +584,12 @@ glm::vec3 interpolate(const glm::vec3 start, const glm::vec3 outTan, const glm::
 			out.y = bezier(start.y, outTan.y, inTan.y, end.y, t);
 			out.z = bezier(start.z, outTan.z, inTan.z, end.z, t);
 			return out;
+		default:
+			return start;
 	}
 }
 glm::quat interpolate(const glm::quat start, const glm::quat outTan, const glm::quat inTan, const glm::quat end, float t, int interpolationType) {
 	switch (interpolationType) {
-		case 0:
-			return start;
 		case 1: // LINEAR
 			return glm::slerp(start, end, t);
 		case 2: // HERMITE
@@ -607,7 +605,7 @@ glm::quat interpolate(const glm::quat start, const glm::quat outTan, const glm::
 			//out = glm::squad(*start, *outTan, *inTan, *end, t);
 			return ghostwolfSquad(start, outTan, inTan, end, t);
 		default:
-			break;
+			return start;
 	}
 }
 uint32_t interpolate(const uint32_t start, const uint32_t outTan, const uint32_t inTan, const uint32_t end, float t, int interpolationType) {

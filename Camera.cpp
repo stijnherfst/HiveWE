@@ -5,8 +5,8 @@
 
 void Camera::reset() {
 	distance = 20;
-	horizontal_angle = 0.0;
-	vertical_angle = -0.977;
+	horizontal_angle = 0.0f;
+	vertical_angle = -0.977f;
 	update(0);
 }
 

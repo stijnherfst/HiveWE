@@ -43,19 +43,19 @@ void Sounds::load() {
 		if (version >= 2) {
 			// Sound asset data merged with sound data in v2?
 
-			reader.read_c_string();
-			reader.read_c_string();
-			reader.read_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
 			reader.advance(4); // int?
-			reader.read_c_string();
+			reader.advance_c_string();
 			reader.advance(4); // int?
 			if (reader.read<uint32_t>())
-				reader.read_c_string();
-			reader.read_c_string();
-			reader.read_c_string();
-			reader.read_c_string();
-			reader.read_c_string();
-			reader.read_c_string();
+				reader.advance_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
+			reader.advance_c_string();
 			if (version >= 3)
 				reader.advance(4); // int?
 		}

@@ -7,11 +7,11 @@
 void setTestArgs(Ui::SettingsEditor &ui) {
 	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString(ui.diff->currentIndex() + '0') +
 						(ui.windowmode->currentText() != "Default" ? " -windowmode " + QString([](int x) {
-		switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; case 3: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") +
+		switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; default: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") +
 						(ui.testhd->currentText() != "Default" ? " -hd " + QString([](int x) {
-		switch (x) { case 1: return "1"; case 2: return "0";} }(ui.testhd->currentIndex())) : "") +
+		switch (x) { case 1: return "1"; default: return "0";} }(ui.testhd->currentIndex())) : "") +
 						(ui.testteen->currentText() != "Default" ? " -teen " + QString([](int x) {
-		switch (x) { case 1: return "1"; case 2: return "0"; } }(ui.testteen->currentIndex())) : "") +
+		switch (x) { case 1: return "1"; default: return "0"; } }(ui.testteen->currentIndex())) : "") +
 						" -testmapprofile " + ui.profile->text() + " -fixedseed " + (ui.fixedseed->isChecked() ? "1" : "0") + (ui.nowfpause->isChecked() ? " -nowfpause" : ""));
 };
 

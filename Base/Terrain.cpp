@@ -43,8 +43,8 @@ bool Terrain::load() {
 		std::cout << "Invalid war3map.w3e file: Magic number is not W3E!" << std::endl;
 		return false;
 	}
-	// Version
-	reader.read<uint32_t>();
+	
+	reader.advance(4); // Version
 
 	tileset = reader.read<char>();
 	reader.advance(4); // Custom tileset
