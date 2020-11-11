@@ -28,6 +28,9 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QIdentityProxyMod
 	meta_slk = table->meta_slk;
 	setSourceModel(table);
 	connect(this, &SingleModel::dataChanged, [this](const auto& index) {
+		if (!index.isValid()) {
+			return;
+		}
 		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "numvar") {
 			buildMapping();
 		}
@@ -35,18 +38,15 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QIdentityProxyMod
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
-	}
-	if (sourceIndex.row() != slk->row_headers.at(id)) {
-		fmt::print("Invalid ID for SLK {}\n", id);
+	if (!sourceIndex.isValid() || sourceIndex.row() != slk->row_headers.at(id)) {
+		//fmt::print("Invalid ID for SLK {}\n", id);
 		return {};
 	}
 
 	const std::string& field = slk->index_to_column.at(sourceIndex.column());
 	for (int i = 0; i < id_mapping.size(); i++) {
 		if (id_mapping[i].field == field) {
-			fmt::print("Found {} at {} {} {}\n", field, i, headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString(), meta_slk->data("displayname", id_mapping[i].key));
+			//fmt::print("Found {} at {} {} {}\n", field, i, headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString(), meta_slk->data("displayname", id_mapping[i].key));
 			return createIndex(i, 0);
 		}
 	}
@@ -76,25 +76,32 @@ QVariant SingleModel::data(const QModelIndex& index, int role) const {
 }
 
 QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
-	if (role != Qt::DisplayRole) {
-		return {};
-	}
+	if (role == Qt::DisplayRole) {
+		if (orientation == Qt::Orientation::Vertical) {
+			std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", id_mapping[section].key));
+			category = string_replaced(category, "&", "");
+			std::string display_name = meta_slk->data("displayname", id_mapping[section].key);
 
-	if (orientation == Qt::Orientation::Vertical) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", id_mapping[section].key));
-		category = string_replaced(category, "&", "");
-		std::string display_name = meta_slk->data("displayname", id_mapping[section].key);
+			int level = id_mapping[section].level;
 
-		int level = id_mapping[section].level;
-
-		if (id_mapping[section].level > 0) {
-			return QString::fromStdString(fmt::format("{} - {} - Level {} ({})", category, display_name, id_mapping[section].level, id_mapping[section].key));
+			if (id_mapping[section].level > 0) {
+				return QString::fromStdString(fmt::format("{} - {} - Level {} ({})", category, display_name, id_mapping[section].level, id_mapping[section].key));
+			} else {
+				return QString::fromStdString(fmt::format("{} - {} ({})", category, display_name, id_mapping[section].key));
+			}
 		} else {
-			return QString::fromStdString(fmt::format("{} - {} ({})", category, display_name, id_mapping[section].key));
+			return "UnitID";
 		}
-	} else {
-		return "UnitID";
+	} else if (role == Qt::TextColorRole) {
+		if (orientation == Qt::Orientation::Vertical) {
+			if (slk->shadow_data.contains(id) && slk->shadow_data.at(id).contains(id_mapping[section].field)) {
+				return QColor("violet");
+			} else {
+				return QColor("white");
+			}
+		}
 	}
+	return {};
 }
 
 int SingleModel::rowCount(const QModelIndex& parent) const {
@@ -190,6 +197,8 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 		painter->fillRect(rect, palette().color(QPalette::Base));
 	}
 
+
+	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::TextColorRole).value<QColor>()));
 	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, 0, this), 0, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
 	painter->setPen(QPen(palette().color(QPalette::Base)));
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
@@ -545,6 +554,8 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			}
 		}
 	} else if (type == "icon") {
+		IconView* list = editor->findChild<IconView*>("iconView");
+		list->setCurrentIconPath(model->data(index, Qt::EditRole).toString());
 	} else {
 		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
 	}
@@ -563,6 +574,10 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	} else if (type == "string") {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
 	} else if (type == "unitList") {
+		auto fd = dynamic_cast<QDialog*>(editor);
+		if (!fd || fd->result() == QDialog::Rejected) {
+			return;
+		}
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
 		QString result;
@@ -575,6 +590,10 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		}
 		model->setData(index, result, Qt::EditRole);
 	} else if (type == "abilityList") {
+		auto fd = dynamic_cast<QDialog*>(editor);
+		if (!fd || fd->result() == QDialog::Rejected) {
+			return;
+		}
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 
 		QString result;
@@ -587,6 +606,10 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		}
 		model->setData(index, result, Qt::EditRole);
 	} else if (type == "targetList") {
+		auto fd = dynamic_cast<QDialog*>(editor);
+		if (!fd || fd->result() == QDialog::Rejected) {
+			return;
+		}
 		QString result;
 		for (const auto& [key, value] : unit_editor_data.section(type)) {
 			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
@@ -604,11 +627,20 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		model->setData(index, result, Qt::EditRole);
 
 	}  else if (type.ends_with("List")) {
+		auto fd = dynamic_cast<QDialog*>(editor);
+		if (!fd || fd->result() == QDialog::Rejected) {
+			return;
+		}
 		singlemodel->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
 	} else if (unit_editor_data.section_exists(type)) {
 		auto combo = static_cast<QComboBox*>(editor);
 		singlemodel->setData(index, combo->currentData());
 	} else if (type == "icon") {
+		auto fd = dynamic_cast<QDialog*>(editor);
+		if (!fd || fd->result() == QDialog::Rejected) {
+			return;
+		}
+
 		IconView* list = editor->findChild<IconView*>("iconView");
 		
 		singlemodel->setData(index, list->currentIconPath());

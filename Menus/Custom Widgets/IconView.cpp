@@ -256,6 +256,9 @@ IconView::IconView(QWidget* parent) : QWidget(parent) {
 }
 
 QString IconView::currentIconPath() {
-	//return filter->data(view->currentIndex(), Qt::EditRole).toString();
 	return finalPath->text();
+}
+
+void IconView::setCurrentIconPath(QString path) {
+	finalPath->setText(path);
 }

@@ -35,8 +35,7 @@
 
 #include "IconView.h"
 
-HiveWE::HiveWE(QWidget* parent)
-	: QMainWindow(parent) {
+HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();

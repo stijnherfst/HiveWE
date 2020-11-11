@@ -40,4 +40,5 @@ public:
 	IconView(QWidget* parent = nullptr);
 
 	QString currentIconPath();
+	void setCurrentIconPath(QString path);
 };
