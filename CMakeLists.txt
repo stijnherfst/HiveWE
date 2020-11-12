@@ -91,8 +91,8 @@ add_executable(HiveWE
 	Base/Resources/SkinnedMesh/SkeletalModelInstance.cpp
 
 	Menus/DoodadPalette.cpp
-	Menus/ImportManager.cpp
-	Menus/ImportManagerEdit.cpp
+	
+	
 	Menus/MapInfoEditor.cpp
 	Menus/Minimap.cpp
 	Menus/Palette.cpp

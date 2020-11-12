@@ -30,7 +30,7 @@ void GameCameras::load() {
 			i.local_roll = reader.read<float>();
 		}
 		i.name = reader.read_c_string();
-	}
+	}	
 }
 
 void GameCameras::save() {

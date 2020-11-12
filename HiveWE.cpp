@@ -29,7 +29,6 @@
 #include "DoodadPalette.h"
 #include "UnitPalette.h"
 #include "PathingPalette.h"
-#include "ImportManager.h"
 #include "ObjectEditor.h"
 #include "Camera.h"
 

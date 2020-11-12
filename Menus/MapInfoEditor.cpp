@@ -24,9 +24,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		ui.campaignLoadingScreen->addItem(QString::fromStdString(value[1]));
 	}
 
-	for (auto&& i : map->imports.find([](const ImportItem& item) { return item.full_path.extension() == ".mdx"; })) {
-		ui.importedLoadingScreen->addItem(QString::fromStdString(i.get().full_path.string()));
-	}
+	//for (auto&& i : map->imports.find([](const ImportItem& item) { return item.full_path.extension() == ".mdx"; })) {
+	//	ui.importedLoadingScreen->addItem(QString::fromStdString(i.get().full_path.string()));
+	//}
 
 	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {

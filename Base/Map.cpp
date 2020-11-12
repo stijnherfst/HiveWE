@@ -284,7 +284,7 @@ void Map::load(const fs::path& path) {
 	if (hierarchy.map_file_exists("war3map.w3r")) {
 		regions.load();
 	}
-
+	
 	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
 		cameras.load();
@@ -358,6 +358,7 @@ bool Map::save(const fs::path& path) {
 	triggers.save();
 	triggers.save_jass();
 	triggers.generate_map_script();
+	imports.save();
 
 	return true;
 }
