@@ -8,6 +8,8 @@
 #include "BaseTreeModel.h"
 
 class UnitTreeModel : public BaseTreeModel {
+	Q_OBJECT
+
 	struct Category {
 		std::string name;
 		BaseTreeItem* item;
@@ -26,7 +28,10 @@ class UnitTreeModel : public BaseTreeModel {
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
 
-public:
+	void rowsInserted(const QModelIndex& parent, int first, int last) override;
+	void rowsRemoved(const QModelIndex& parent, int first, int last) override;
+
+  public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 	explicit UnitTreeModel(QObject* parent = nullptr);
 };

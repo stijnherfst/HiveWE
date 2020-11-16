@@ -10,7 +10,7 @@
 #include "TableModel.h"
 #include "SLK.h"
 
-class SingleModel : public QIdentityProxyModel {
+class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT
 		
 public:
@@ -25,6 +25,8 @@ public:
 
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
+
+	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
 	explicit SingleModel(TableModel* table, QObject* parent = nullptr);
 	void setID(const std::string id);

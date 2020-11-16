@@ -227,6 +227,15 @@ namespace slk {
 		index_to_row[index] = new_row_header;
 	}
 
+	void SLK::remove_row(const std::string_view row_header) {
+		assert(base_data.contains(row_header));
+
+		base_data.erase(row_header);
+		shadow_data.erase(row_header);
+		index_to_row.erase(row_headers.at(row_header));
+		row_headers.erase(row_header);
+	}
+
 	/// Adds a (virtual) column
 	/// Since SLK2 is only a key/pair store it emulates being table like and thus this call is very cheap memory/cpu wise
 	/// column_header must be lowercase

@@ -27,6 +27,7 @@ private:
 
 	ads::CDockManager* dock_manager;
 	ads::CDockAreaWidget* dock_area = nullptr;
+	ads::CDockAreaWidget* explorer_area = nullptr;
 
 	QTreeView* unit_explorer = new QTreeView;
 	QTreeView* doodad_explorer = new QTreeView;
@@ -71,4 +72,8 @@ private:
 	};
 
 	void item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
+
+	void add_item();
+
+	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name);
 };

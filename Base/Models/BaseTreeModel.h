@@ -26,11 +26,12 @@ public:
 	BaseTreeItem* parent = nullptr;
 
 	int tableRow = -1;
+
 	bool baseCategory = false;
 	bool subCategory = false;
 };
 
-class BaseTreeModel : public QIdentityProxyModel {
+class BaseTreeModel : public QAbstractProxyModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
 	int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
@@ -39,9 +40,14 @@ class BaseTreeModel : public QIdentityProxyModel {
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-public:
+	virtual void rowsInserted(const QModelIndex& parent, int first, int last){};
+	virtual void rowsRemoved(const QModelIndex& parent, int first, int last){};
+
+  public:
 	explicit BaseTreeModel(QObject* parent = nullptr);
 	~BaseTreeModel();
+
+	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
 	BaseTreeItem* rootItem;
 	QIcon folderIcon;

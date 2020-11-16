@@ -31,7 +31,7 @@ QModelIndex UpgradeTreeModel::mapFromSource(const QModelIndex& sourceIndex) cons
 
 	std::string race = upgrade_slk.data("race", sourceIndex.row());
 
-	auto items = categories.at(race).item->children;
+	auto& items = categories.at(race).item->children;
 	for (int i = 0; i < items.size(); i++) {
 		BaseTreeItem* item = items[i];
 		if (item->tableRow == sourceIndex.row()) {
@@ -70,12 +70,12 @@ QVariant UpgradeTreeModel::data(const QModelIndex& index, int role) const {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(upgrade_slk.data("editorsuffix", item->tableRow));
 			}
 		case Qt::DecorationRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, upgrade_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 

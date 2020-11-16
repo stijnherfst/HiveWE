@@ -74,13 +74,8 @@ namespace slk {
 		template <typename T = std::string>
 		T data(const std::string_view column_header, size_t row) const {
 			if (row >= index_to_row.size()) {
-				return T();
+				throw;
 			}
-			if (column_header == "id") {
-				puts("s");
-			}
-
-			auto tt = index_to_row.at(row);
 
 			return data<T>(column_header, index_to_row.at(row));
 		}
@@ -89,11 +84,11 @@ namespace slk {
 		template <typename T = std::string>
 		T data(size_t column, size_t row) const {
 			if (row >= index_to_row.size()) {
-				return T();
+				throw;
 			}
 
 			if (column >= index_to_column.size()) {
-				return T();
+				throw;
 			}
 
 			return data<T>(index_to_column.at(column), index_to_row.at(row));
@@ -103,6 +98,7 @@ namespace slk {
 		void merge(const ini::INI& ini);
 		void substitute(const ini::INI& ini, const std::string& section);
 		void copy_row(const std::string_view row_header, const std::string_view new_row_header, bool copy_shadow_data);
+		void remove_row(const std::string_view row_header);
 
 		void add_column(const std::string_view column_header);
 

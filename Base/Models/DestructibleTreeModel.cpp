@@ -23,7 +23,7 @@ QModelIndex DestructibleTreeModel::mapFromSource(const QModelIndex& sourceIndex)
 
 	std::string category = destructibles_slk.data("category", sourceIndex.row());
 
-	auto items = categories.at(category.front()).item->children;
+	auto& items = categories.at(category.front()).item->children;
 	for (int i = 0; i < items.size(); i++) {
 		BaseTreeItem* item = items[i];
 		if (item->tableRow == sourceIndex.row()) {
@@ -62,13 +62,13 @@ QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", item->tableRow));
 			}
 		case Qt::DecorationRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
 
 			return categories.at(rowToCategory[index.parent().row()]).icon->icon;
 		case Qt::TextColorRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 

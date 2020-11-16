@@ -24,4 +24,7 @@ public:
 	explicit TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent = nullptr);
 	
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+
+	void copyRow(int row, std::string newID);
+	void deleteRow(int row);
 };

@@ -97,12 +97,12 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->tableRow));
 			}
 		case Qt::DecorationRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 

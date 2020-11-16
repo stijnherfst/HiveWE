@@ -1,6 +1,8 @@
 ﻿#include "Units.h"
 
 #include <iostream>
+#include <random>
+using namespace std::literals::string_literals;
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -326,6 +328,22 @@ void Units::process_field_change(const std::string& id, const std::string& field
 			}
 		}
 	}
+}
+
+std::string Units::get_free_id(bool hero) {
+	again:
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<int> dist(0, 25);
+	
+	std::string id = ""s + char((hero ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
+
+	if (units_slk.row_headers.contains(id)) {
+		std::cout << "Generated an existing ID: " << id << " what're the odds\n";
+		goto again;
+	}
+
+	return id;
 }
 
 std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {

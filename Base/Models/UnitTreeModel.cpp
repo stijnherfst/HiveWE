@@ -19,7 +19,6 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
-
 	for (int i = 0; i < units_slk.rows(); i++) {
 		std::string race = units_slk.data("race", i);
 		bool isBuilding = units_slk.data("isbldg", i) == "1";
@@ -59,7 +58,7 @@ QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 		subIndex = 2;
 	}
 
-	auto items = categories.at(race).item->children[subIndex]->children;
+	auto& items = categories.at(race).item->children[subIndex]->children;
 	for (int i = 0; i < items.size(); i++) {
 		BaseTreeItem* item = items[i];
 		if (item->tableRow == sourceIndex.row()) {
@@ -80,6 +79,57 @@ QModelIndex UnitTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
 		return createIndex(item->tableRow, units_slk.column_headers.at("name"), item);
 	}
 	return {};
+}
+
+void UnitTreeModel::rowsInserted(const QModelIndex& parent, int first, int last) {
+	assert(first == last);
+
+	std::string race = units_slk.data("race", first);
+	bool isBuilding = units_slk.data("isbldg", first) == "1";
+	bool isHero = isupper(units_slk.index_to_row.at(first).front());
+	bool isSpecial = units_slk.data("special", first) == "1";
+
+	int subIndex = 0;
+	if (isSpecial) {
+		subIndex = 3;
+	} else if (isBuilding) {
+		subIndex = 1;
+	} else if (isHero) {
+		subIndex = 2;
+	}
+	
+	BaseTreeItem* parent_item = categories[race].item->children[subIndex];
+	beginInsertRows(createIndex(parent_item->row(), 0, parent_item), parent_item->children.size(), parent_item->children.size());
+	BaseTreeItem* item = new BaseTreeItem(categories[race].item->children[subIndex]);
+	item->tableRow = first;
+	endInsertRows();
+}
+
+void UnitTreeModel::rowsRemoved(const QModelIndex& parent, int first, int last) {
+	std::string race = units_slk.data("race", first);
+	bool isBuilding = units_slk.data("isbldg", first) == "1";
+	bool isHero = isupper(units_slk.index_to_row.at(first).front());
+	bool isSpecial = units_slk.data("special", first) == "1";
+
+	int subIndex = 0;
+	if (isSpecial) {
+		subIndex = 3;
+	} else if (isBuilding) {
+		subIndex = 1;
+	} else if (isHero) {
+		subIndex = 2;
+	}
+
+	BaseTreeItem* parent_item = categories[race].item->children[subIndex];
+
+	beginRemoveRows(parent, first, last);
+	for (int i = 0; i < parent_item->children.size(); i++) {
+		if (parent_item->children[i]->tableRow == first) {
+			parent_item->children.remove(i);
+			break;
+		}
+	}
+	endRemoveRows();
 }
 
 QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
@@ -108,12 +158,12 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->tableRow));
 			}
 		case Qt::DecorationRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 

@@ -30,7 +30,7 @@ int BaseTreeItem::row() const {
 	return 0;
 }
 
-BaseTreeModel::BaseTreeModel(QObject* parent) : QIdentityProxyModel(parent) {
+BaseTreeModel::BaseTreeModel(QObject* parent) : QAbstractProxyModel(parent) {
 	rootItem = new BaseTreeItem();
 
 	QFileIconProvider icons;
@@ -99,19 +99,30 @@ QModelIndex BaseTreeModel::parent(const QModelIndex& index) const {
 	return createIndex(parentItem->row(), 0, parentItem);
 }
 
+void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
+	QAbstractProxyModel::setSourceModel(sourceModel);
+
+	connect(sourceModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+		Q_ASSERT(topLeft.isValid() ? topLeft.model() == this->sourceModel() : true);
+		Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == this->sourceModel() : true);
+		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
+	});
+
+	connect(sourceModel, &QAbstractItemModel::rowsInserted, this, &BaseTreeModel::rowsInserted);
+}
+
 bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
 	QModelIndex index0 = sourceModel()->index(sourceRow, 0, sourceParent);
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(index0.internalPointer());
 
 	if (filterCustom) {
-		if (item->tableRow == -1) {
+		if (item->baseCategory || item->subCategory) {
 			return false;
 		}
 		if (!(slk->shadow_data.contains(slk->index_to_row.at(item->tableRow)) && slk->shadow_data.at(slk->index_to_row.at(item->tableRow)).contains("oldid"))) {
 			return false;
 		}
 	}
-
 
 	return sourceModel()->data(index0).toString().contains(filterRegExp());
 }

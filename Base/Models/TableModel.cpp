@@ -228,3 +228,18 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const {
 
 	return flags;
 }
+
+void TableModel::copyRow(int row, std::string newID) {
+	auto t = rowCount();
+	beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
+	slk->copy_row(slk->index_to_row.at(row), newID, true);
+	endInsertRows();
+}
+
+void TableModel::deleteRow(int row) {
+	beginRemoveRows(QModelIndex(), row, row);
+
+	slk->remove_row(slk->index_to_row.at(row));
+	endRemoveRows();
+}

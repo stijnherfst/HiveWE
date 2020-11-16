@@ -23,7 +23,7 @@
 
 #include "fmt/format.h"
 
-SingleModel::SingleModel(TableModel* table, QObject* parent) : QIdentityProxyModel(parent) {
+SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyModel(parent) {
 	slk = table->slk;
 	meta_slk = table->meta_slk;
 	setSourceModel(table);
@@ -39,7 +39,7 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QIdentityProxyMod
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	if (!sourceIndex.isValid() || sourceIndex.row() != slk->row_headers.at(id)) {
-		//fmt::print("Invalid ID for SLK {}\n", id);
+		fmt::print("Invalid ID for SLK {}\n", id);
 		return {};
 	}
 
@@ -65,7 +65,7 @@ QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 QVariant SingleModel::data(const QModelIndex& index, int role) const {
 	if (role != Qt::TextColorRole) {
-		return QIdentityProxyModel::data(index, role);
+		return QAbstractProxyModel::data(index, role);
 	}
 
 	if (slk->shadow_data.contains(id) && slk->shadow_data.at(id).contains(id_mapping[index.row()].field)) {
@@ -119,6 +119,27 @@ QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) c
 QModelIndex SingleModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
+//
+//void SingleModel::_q_sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+//	
+//
+//	//BaseTreeItem* item = static_cast<BaseTreeItem*>(topLeft.internalPointer());
+//
+//	//std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
+//	//std::cout << "Proxy model row " << mapFromSource(topLeft).row() << " column" << mapFromSource(topLeft).column() << "\n";
+//	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), {});
+//}
+
+void SingleModel::setSourceModel(QAbstractItemModel* sourceModel) {
+	QAbstractProxyModel::setSourceModel(sourceModel);
+
+	connect(sourceModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+		Q_ASSERT(topLeft.isValid() ? topLeft.model() == this->sourceModel() : true);
+		Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == this->sourceModel() : true);
+		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);	
+	});
+}
+
 
 std::string SingleModel::getID() const {
 	return id;

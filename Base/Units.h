@@ -92,6 +92,7 @@ public:
 	void remove_units(const std::vector<Unit*>& list);
 
 	void process_field_change(const std::string& id, const std::string& field);
+	std::string get_free_id(bool hero);
 
 	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id);
 };

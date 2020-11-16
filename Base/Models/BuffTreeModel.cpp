@@ -44,7 +44,7 @@ QModelIndex BuffTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 
 	int subIndex = isEffect ? 1 : 0;
 
-	auto items = categories.at(race).item->children[subIndex]->children;
+	auto& items = categories.at(race).item->children[subIndex]->children;
 	for (int i = 0; i < items.size(); i++) {
 		BaseTreeItem* item = items[i];
 		if (item->tableRow == sourceIndex.row()) {
@@ -90,12 +90,12 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 				}
 			}
 		case Qt::DecorationRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
 			return sourceModel()->data(sourceModel()->index(item->tableRow, buff_slk.column_headers.at("buffart")), role);
 		case Qt::TextColorRole:
-			if (item->tableRow < 0) {
+			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 
