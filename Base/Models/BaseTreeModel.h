@@ -25,8 +25,7 @@ public:
 	QVector<BaseTreeItem*> children;
 	BaseTreeItem* parent = nullptr;
 
-	int tableRow = -1;
-
+	std::string id;
 	bool baseCategory = false;
 	bool subCategory = false;
 };
@@ -40,10 +39,19 @@ class BaseTreeModel : public QAbstractProxyModel {
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	virtual void rowsInserted(const QModelIndex& parent, int first, int last){};
-	virtual void rowsRemoved(const QModelIndex& parent, int first, int last){};
+	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
+	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
+
+	virtual void rowsInserted(const QModelIndex& parent, int first, int last);
+	virtual void rowsRemoved(const QModelIndex& parent, int first, int last);
+
+	virtual BaseTreeItem* getFolderParent(const std::string& id) const {
+		return nullptr;
+	};
+
 
   public:
+
 	explicit BaseTreeModel(QObject* parent = nullptr);
 	~BaseTreeModel();
 
@@ -51,6 +59,9 @@ class BaseTreeModel : public QAbstractProxyModel {
 
 	BaseTreeItem* rootItem;
 	QIcon folderIcon;
+	
+protected:
+	slk::SLK* slk;
 };
 
 

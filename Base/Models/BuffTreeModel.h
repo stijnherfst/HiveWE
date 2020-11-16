@@ -19,8 +19,7 @@ class BuffTreeModel : public BaseTreeModel {
 		"Effects",
 	};
 
-	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
-	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
+	BaseTreeItem* getFolderParent(const std::string& id) const override;
 
 public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

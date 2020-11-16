@@ -25,11 +25,7 @@ class UnitTreeModel : public BaseTreeModel {
 		"Special",
 	};
 
-	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
-	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
-
-	void rowsInserted(const QModelIndex& parent, int first, int last) override;
-	void rowsRemoved(const QModelIndex& parent, int first, int last) override;
+	BaseTreeItem* getFolderParent(const std::string& id) const override;
 
   public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

@@ -1,6 +1,8 @@
 #include "BuffTreeModel.h"
 
 BuffTreeModel::BuffTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &buff_slk;
+
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -20,51 +22,29 @@ BuffTreeModel::BuffTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	for (int i = 0; i < buff_slk.rows(); i++) {
-		std::string race = buff_slk.data("race", i);
-		if (race.empty()) {
-			std::cout << "Empty race for " << i << " in buffs\n";
+		const std::string& id = buff_slk.index_to_row.at(i);
+
+		BaseTreeItem* parent_item = getFolderParent(id);
+		if (!parent_item) {
 			continue;
 		}
-		bool isEffect = buff_slk.data("iseffect", i) == "1";
 
-		int subIndex = isEffect ? 1 : 0;
-
-		BaseTreeItem* item = new BaseTreeItem(categories[race].item->children[subIndex]);
-		item->tableRow = i;
+		BaseTreeItem* item = new BaseTreeItem(parent_item);
+		item->id = id;
 	}
 }
 
-QModelIndex BuffTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
+BaseTreeItem* BuffTreeModel::getFolderParent(const std::string& id) const {
+	std::string race = buff_slk.data("race", id);
+	if (race.empty()) {
+		std::cout << "Empty race for " << id << " in buffs\n";
+		return nullptr;
 	}
-
-	std::string race = buff_slk.data("race", sourceIndex.row());
-	bool isEffect = buff_slk.data("iseffect", sourceIndex.row()) == "1";
+	bool isEffect = buff_slk.data("iseffect", id) == "1";
 
 	int subIndex = isEffect ? 1 : 0;
 
-	auto& items = categories.at(race).item->children[subIndex]->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex BuffTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, buff_slk.column_headers.at("bufftip"), item);
-	}
-	return {};
+	return categories.at(race).item->children[subIndex];
 }
 
 QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
@@ -84,22 +64,22 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 			} else {
 				QString name = QAbstractProxyModel::data(index, role).toString();
 				if (name.isEmpty()) {
-					return QString::fromStdString(buff_slk.data("editorname", item->tableRow) + " " + buff_slk.data("editorsuffix", item->tableRow));
+					return QString::fromStdString(buff_slk.data("editorname", item->id) + " " + buff_slk.data("editorsuffix", item->id));
 				} else {
-					return name + " " + QString::fromStdString(buff_slk.data("editorsuffix", item->tableRow));
+					return name + " " + QString::fromStdString(buff_slk.data("editorsuffix", item->id));
 				}
 			}
 		case Qt::DecorationRole:
 			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, buff_slk.column_headers.at("buffart")), role);
+			return sourceModel()->data(sourceModel()->index(buff_slk.row_headers.at(item->id), buff_slk.column_headers.at("buffart")), role);
 		case Qt::TextColorRole:
 			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 
-			if (buff_slk.shadow_data.contains(buff_slk.index_to_row.at(item->tableRow))) {
+			if (buff_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

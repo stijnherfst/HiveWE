@@ -106,6 +106,8 @@ namespace slk {
 		void set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data);
 		void set_shadow_data(const int column, const int row, std::string data);
 
+		std::string get_free_row_header(bool first_uppercase);
+
 		size_t rows() {
 			return row_headers.size();
 		}

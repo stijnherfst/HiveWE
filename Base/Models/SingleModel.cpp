@@ -384,8 +384,6 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 
 			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
 
-			//UnitSelector* selector = new UnitSelector(selectdialog);
-
 			AbilityTreeModel* abilityTreeModel = new AbilityTreeModel(dialog);
 			abilityTreeModel->setSourceModel(abilities_table);
 			QSortFilterProxyModel* filter = new QSortFilterProxyModel;
@@ -413,23 +411,21 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 
 			auto add = [filter, list, selectdialog](const QModelIndex& index) {
 				QModelIndex sourceIndex = filter->mapToSource(index);
-				if (sourceIndex.parent().isValid()) {
-					if (sourceIndex.parent().parent().isValid()) {
-						//std::cout << "valid\n";
-						fmt::print("Valid\n");
-						BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
-
-						std::string id = abilities_slk.index_to_row.at(treeItem->tableRow);
-						QListWidgetItem* item = new QListWidgetItem;
-						item->setText(QString::fromStdString(abilities_slk.data("name", id)));
-						item->setData(Qt::StatusTipRole, QString::fromStdString(id));
-						auto one = abilities_slk.row_headers.at(id);
-						auto two = abilities_slk.column_headers.at("art");
-						item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
-						list->addItem(item);
-						selectdialog->close();
-					}
+				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+				if (treeItem->baseCategory || treeItem->subCategory) {
+					return;
 				}
+
+				fmt::print("Valid\n");
+
+				QListWidgetItem* item = new QListWidgetItem;
+				item->setText(QString::fromStdString(abilities_slk.data("name", treeItem->id)));
+				item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
+				auto one = abilities_slk.row_headers.at(treeItem->id);
+				auto two = abilities_slk.column_headers.at("art");
+				item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+				list->addItem(item);
+				selectdialog->close();
 			};
 
 			connect(view, &QTreeView::activated, [=](const QModelIndex& index) {

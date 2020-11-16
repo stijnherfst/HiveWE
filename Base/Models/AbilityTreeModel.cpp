@@ -1,6 +1,8 @@
 #include "AbilityTreeModel.h"
 
 AbilityTreeModel::AbilityTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &abilities_slk;
+
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -20,34 +22,26 @@ AbilityTreeModel::AbilityTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	for (int i = 0; i < abilities_slk.rows(); i++) {
-		std::string race = abilities_slk.data("race", i);
-		if (race.empty()) {
-			std::cout << "Empty race for " << i << " in abilities\n";
+		const std::string& id = abilities_slk.index_to_row.at(i);
+
+		BaseTreeItem* parent_item = getFolderParent(id);
+		if (!parent_item) {
 			continue;
 		}
-		bool isHero = abilities_slk.data("hero", i) == "1";
-		bool isItem = abilities_slk.data("item", i) == "1";
 
-		int subIndex = 0;
-		if (isHero) {
-			subIndex = 1;
-		} else if (isItem) {
-			subIndex = 2;
-		}
-
-		BaseTreeItem* item = new BaseTreeItem(categories[race].item->children[subIndex]);
-		item->tableRow = i;
+		BaseTreeItem* item = new BaseTreeItem(parent_item);
+		item->id = id;
 	}
 }
 
-QModelIndex AbilityTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
+BaseTreeItem* AbilityTreeModel::getFolderParent(const std::string& id) const {
+	std::string race = abilities_slk.data("race", id);
+	if (race.empty()) {
+		std::cout << "Empty race for " << id << " in abilities\n";
+		return nullptr;
 	}
-
-	std::string race = abilities_slk.data("race", sourceIndex.row());
-	bool isHero = abilities_slk.data("hero", sourceIndex.row()) == "1";
-	bool isItem = abilities_slk.data("item", sourceIndex.row()) == "1";
+	bool isHero = abilities_slk.data("hero", id) == "1";
+	bool isItem = abilities_slk.data("item", id) == "1";
 
 	int subIndex = 0;
 	if (isHero) {
@@ -56,27 +50,7 @@ QModelIndex AbilityTreeModel::mapFromSource(const QModelIndex& sourceIndex) cons
 		subIndex = 2;
 	}
 
-	auto items = categories.at(race).item->children[subIndex]->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex AbilityTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, abilities_slk.column_headers.at("name"), item);
-	}
-	return {};
+	return categories.at(race).item->children[subIndex];
 }
 
 QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
@@ -94,19 +68,19 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()]);
 			} else {
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->tableRow));
+				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->id));
 			}
 		case Qt::DecorationRole:
 			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, abilities_slk.column_headers.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(abilities_slk.row_headers.at(item->id), abilities_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
 			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 
-			if (abilities_slk.shadow_data.contains(abilities_slk.index_to_row.at(item->tableRow))) {
+			if (abilities_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

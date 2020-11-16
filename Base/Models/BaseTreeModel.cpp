@@ -99,6 +99,71 @@ QModelIndex BaseTreeModel::parent(const QModelIndex& index) const {
 	return createIndex(parentItem->row(), 0, parentItem);
 }
 
+QModelIndex BaseTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
+	if (!sourceIndex.isValid()) {
+		return {};
+	}
+
+	const std::string id = slk->index_to_row.at(sourceIndex.row());
+
+	BaseTreeItem* parent_item = getFolderParent(id);
+	for (int i = 0; i < parent_item->children.size(); i++) {
+		BaseTreeItem* item = parent_item->children[i];
+		if (item->id == id) {
+			return createIndex(i, 0, item);
+		}
+	}
+
+	return {};
+}
+
+QModelIndex BaseTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
+	if (!proxyIndex.isValid()) {
+		return {};
+	}
+
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
+
+	if (item->baseCategory || item->subCategory) {
+		return {};
+	}
+
+	if (slk->column_headers.contains("name")) {
+		return createIndex(slk->row_headers.at(item->id), slk->column_headers.at("name"), item);
+	} else {
+		return createIndex(slk->row_headers.at(item->id), slk->column_headers.at("bufftip"), item);
+	}
+
+}
+
+void BaseTreeModel::rowsInserted(const QModelIndex& parent, int first, int last) {
+	assert(first == last);
+
+	const std::string id = slk->index_to_row.at(first);
+	BaseTreeItem* parent_item = getFolderParent(id);
+
+	beginInsertRows(createIndex(parent_item->row(), 0, parent_item), parent_item->children.size(), parent_item->children.size());
+	BaseTreeItem* item = new BaseTreeItem(parent_item);
+	item->id = id;
+	endInsertRows();
+}
+
+void BaseTreeModel::rowsRemoved(const QModelIndex& parent, int first, int last) {
+	assert(first == last);
+
+	const std::string id = slk->index_to_row.at(first);
+	BaseTreeItem* parent_item = getFolderParent(id);
+
+	beginRemoveRows(parent, first, last);
+	for (int i = 0; i < parent_item->children.size(); i++) {
+		if (parent_item->children[i]->id == id) {
+			parent_item->children.remove(i);
+			break;
+		}
+	}
+	endRemoveRows();
+}
+
 void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
 	QAbstractProxyModel::setSourceModel(sourceModel);
 
@@ -119,7 +184,8 @@ bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent
 		if (item->baseCategory || item->subCategory) {
 			return false;
 		}
-		if (!(slk->shadow_data.contains(slk->index_to_row.at(item->tableRow)) && slk->shadow_data.at(slk->index_to_row.at(item->tableRow)).contains("oldid"))) {
+		//if (!(slk->shadow_data.contains(slk->index_to_row.at(item->tableRow)) && slk->shadow_data.at(slk->index_to_row.at(item->tableRow)).contains("oldid"))) {
+		if (!(slk->shadow_data.contains(item->id) && slk->shadow_data.at(item->id).contains("oldid"))) {
 			return false;
 		}
 	}

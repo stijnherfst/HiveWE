@@ -1,6 +1,8 @@
 #include "DestructibleTreeModel.h"
 
 DestructibleTreeModel::DestructibleTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &destructibles_slk;
+
 	for (const auto& [key, value] : world_edit_data.section("DestructibleCategories")) {
 		categories[key.front()].name = value[0];
 		categories[key.front()].icon = resource_manager.load<QIconResource>(value[1]);
@@ -9,41 +11,16 @@ DestructibleTreeModel::DestructibleTreeModel(QObject* parent) : BaseTreeModel(pa
 		rowToCategory.push_back(key.front());
 	}
 
-	for (int i = 0; i < destructibles_slk.rows(); i++) {
-		std::string category = destructibles_slk.data("category", i);
-		BaseTreeItem* item = new BaseTreeItem(categories[category.front()].item);
-		item->tableRow = i;
+	for (const auto& [id, index] : destructibles_slk.row_headers) {
+		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
+		item->id = id;
 	}
 }
 
-QModelIndex DestructibleTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
-	}
+BaseTreeItem* DestructibleTreeModel::getFolderParent(const std::string& id) const {
+	std::string category = destructibles_slk.data("category", id);
 
-	std::string category = destructibles_slk.data("category", sourceIndex.row());
-
-	auto& items = categories.at(category.front()).item->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex DestructibleTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory) {
-		return createIndex(item->tableRow, destructibles_slk.column_headers.at("name"), item);
-	}
-	return {};
+	return categories.at(category.front()).item;
 }
 
 QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
@@ -59,7 +36,7 @@ QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->baseCategory) {
 				return QString::fromStdString(categories.at(rowToCategory[index.row()]).name);
 			} else {
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", item->tableRow));
+				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", item->id));
 			}
 		case Qt::DecorationRole:
 			if (item->baseCategory || item->subCategory) {
@@ -72,7 +49,7 @@ QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
 				return {};
 			}
 
-			if (destructibles_slk.shadow_data.contains(destructibles_slk.index_to_row.at(item->tableRow))) {
+			if (destructibles_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

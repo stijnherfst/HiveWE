@@ -36,11 +36,6 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	abilityTreeModel = new AbilityTreeModel(this);
 	upgradeTreeModel = new UpgradeTreeModel(this);
 	buffTreeModel = new BuffTreeModel(this);
-	
-	
-	//auto addTypeTreeView = [&](BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
-	//
-	//};
 
 	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units");
 	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items");
@@ -64,41 +59,41 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 }
 
 void ObjectEditor::item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category) {
-	QModelIndex sourceIndex = model->mapToSource(index);
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
-	if (!item->baseCategory && !item->subCategory) {
-		// If there is already one open for this item
-		if (auto found = dock_manager->findDockWidget(QString::number(static_cast<int>(category)) + QString::number(item->tableRow)); found) {
-			found->dockAreaWidget()->setCurrentDockWidget(found);
-			found->setFocus();
-			found->raise();
-			return;
-		}
-
-		ads::CDockWidget* dock_tab = new ads::CDockWidget("");
-		dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
-
-		QTableView* view = new QTableView;
-		TableDelegate* delegate = new TableDelegate;
-		view->setItemDelegate(delegate);
-		view->horizontalHeader()->hide();
-		view->setAlternatingRowColors(true);
-		view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));
-		view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Fixed);
-		view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
-		view->setIconSize({ 24, 24 });
-		dock_tab->setWidget(view);
-		dock_tab->setObjectName(QString::number(static_cast<int>(category)) + QString::number(item->tableRow));
-
-		SingleModel* single_model = new SingleModel(table, this);
-		single_model->setID(table->slk->index_to_row.at(item->tableRow));
-		view->setModel(single_model);
-
-		dock_tab->setWindowTitle(model->data(index, Qt::DisplayRole).toString());
-		dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
-
-		dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(model->mapToSource(index).internalPointer());
+	if (item->baseCategory || item->subCategory) {
+		return;
 	}
+
+	// If there is already one open for this item
+	if (auto found = dock_manager->findDockWidget(QString::number(static_cast<int>(category)) + QString::fromStdString(item->id)); found) {
+		found->dockAreaWidget()->setCurrentDockWidget(found);
+		found->setFocus();
+		found->raise();
+		return;
+	}
+
+	QTableView* view = new QTableView;
+	TableDelegate* delegate = new TableDelegate;
+	view->setItemDelegate(delegate);
+	view->horizontalHeader()->hide();
+	view->setAlternatingRowColors(true);
+	view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));
+	view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Fixed);
+	view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
+	view->setIconSize({ 24, 24 });
+
+	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
+	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
+	dock_tab->setWidget(view);
+	dock_tab->setObjectName(QString::number(static_cast<int>(category)) + QString::fromStdString(item->id));
+	dock_tab->setWindowTitle(model->data(index, Qt::DisplayRole).toString());
+	dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+
+	SingleModel* single_model = new SingleModel(table, this);
+	single_model->setID(item->id);
+	view->setModel(single_model);
+
+	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 }
 
 void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
@@ -132,6 +127,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 			QLineEdit* id = new QLineEdit;
 			id->setPlaceholderText("Free ID");
+			id->setText(QString::fromStdString(table->slk->get_free_row_header(false)));
 
 			QHBoxLayout* nameLayout = new QHBoxLayout;
 			nameLayout->addWidget(nameEdit, 3);
@@ -164,18 +160,13 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 			connect(view, &QTreeView::activated, [table, filter, selectdialog](const QModelIndex& index) {
 				QModelIndex sourceIndex = filter->mapToSource(index);
-				if (sourceIndex.parent().isValid()) {
-					if (sourceIndex.parent().parent().isValid()) {
-						BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
-
-						//std::string id = table->slk->index_to_row.at(treeItem->tableRow);
-						//auto one = abilities_slk.row_headers.at(id);
-
-						selectdialog->close();
-						table->copyRow(treeItem->tableRow, map->units.get_free_id(false));
-					}
+				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+				if (treeItem->baseCategory || treeItem->subCategory) {
+					return;
 				}
-				//add(index);
+
+				selectdialog->close();
+				table->copyRow(table->slk->row_headers.at(treeItem->id), table->slk->get_free_row_header(false));
 			});
 
 			connect(selectdialog, &QDialog::accepted, [=]() {
@@ -192,7 +183,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			QItemSelection selection = view->selectionModel()->selection();
 			auto& index = selection.front().topLeft();
 			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(index.internalPointer());
-			table->deleteRow(treeItem->tableRow);
+			table->deleteRow(table->slk->row_headers.at(treeItem->id));
 			// ToDo change all other tablerows
 		});
 

@@ -1,6 +1,8 @@
 #include "ItemTreeModel.h"
 
 ItemTreeModel::ItemTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &items_slk;
+
 	for (const auto& [key, value] : unit_editor_data.section("itemClass")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -13,45 +15,25 @@ ItemTreeModel::ItemTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	for (int i = 0; i < items_slk.rows(); i++) {
-		std::string itemClass = items_slk.data("class", i);
-		if (itemClass.empty()) {
-			std::cout << "Empty class for " << i << " in items\n";
+		const std::string& id = items_slk.index_to_row.at(i);
+
+		BaseTreeItem* parent_item = getFolderParent(id);
+		if (!parent_item) {
 			continue;
 		}
-
-		BaseTreeItem* item = new BaseTreeItem(categories[itemClass].item);
-		item->tableRow = i;
+		BaseTreeItem* item = new BaseTreeItem(parent_item);
+		item->id = id;
 	}
 }
 
-QModelIndex ItemTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
+BaseTreeItem* ItemTreeModel::getFolderParent(const std::string& id) const {
+	std::string itemClass = items_slk.data("class", id);
+	if (itemClass.empty()) {
+		std::cout << "Empty class for " << id << " in items\n";
+		return nullptr;
 	}
 
-	std::string itemClass = items_slk.data("class", sourceIndex.row());
-
-	auto& items = categories.at(itemClass).item->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex ItemTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory) {
-		return createIndex(item->tableRow, items_slk.column_headers.at("name"), item);
-	}
-	return {};
+	return categories.at(itemClass).item;
 }
 
 QVariant ItemTreeModel::data(const QModelIndex& index, int role) const {
@@ -73,14 +55,13 @@ QVariant ItemTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, items_slk.column_headers.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(items_slk.row_headers.at(item->id), items_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
 			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 
-			//if (items_slk.shadow_data.contains(items_slk.index_to_row.at(item->tableRow)) && items_slk.shadow_data.at(items_slk.index_to_row.at(item->tableRow)).size()) {
-			if (items_slk.shadow_data.contains(items_slk.index_to_row.at(item->tableRow))) {
+			if (items_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

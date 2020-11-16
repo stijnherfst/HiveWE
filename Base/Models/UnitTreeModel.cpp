@@ -1,6 +1,8 @@
 #include "UnitTreeModel.h"
 
 UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &units_slk;
+
 	for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 		if (key == "Sort" || key == "NumValues") {
 			continue;
@@ -20,34 +22,17 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	for (int i = 0; i < units_slk.rows(); i++) {
-		std::string race = units_slk.data("race", i);
-		bool isBuilding = units_slk.data("isbldg", i) == "1";
-		bool isHero = isupper(units_slk.index_to_row.at(i).front());
-		bool isSpecial = units_slk.data("special", i) == "1";
-
-		int subIndex = 0;
-		if (isSpecial) {
-			subIndex = 3;
-		} else if (isBuilding) {
-			subIndex = 1;
-		} else if (isHero) {
-			subIndex = 2;
-		}
-
-		BaseTreeItem* item = new BaseTreeItem(categories[race].item->children[subIndex]);
-		item->tableRow = i;
+		const std::string id = units_slk.index_to_row.at(i); 
+		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
+		item->id = id;
 	}
 }
 
-QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
-	}
-
-	std::string race = units_slk.data("race", sourceIndex.row());
-	bool isBuilding = units_slk.data("isbldg", sourceIndex.row()) == "1";
-	bool isHero = isupper(units_slk.index_to_row.at(sourceIndex.row()).front());
-	bool isSpecial = units_slk.data("special", sourceIndex.row()) == "1";
+BaseTreeItem* UnitTreeModel::getFolderParent(const std::string& id) const {
+	std::string race = units_slk.data("race", id);
+	bool isBuilding = units_slk.data("isbldg", id) == "1";
+	bool isHero = isupper(id.front());
+	bool isSpecial = units_slk.data("special", id) == "1";
 
 	int subIndex = 0;
 	if (isSpecial) {
@@ -58,78 +43,7 @@ QModelIndex UnitTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 		subIndex = 2;
 	}
 
-	auto& items = categories.at(race).item->children[subIndex]->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex UnitTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory && !item->subCategory) {
-		return createIndex(item->tableRow, units_slk.column_headers.at("name"), item);
-	}
-	return {};
-}
-
-void UnitTreeModel::rowsInserted(const QModelIndex& parent, int first, int last) {
-	assert(first == last);
-
-	std::string race = units_slk.data("race", first);
-	bool isBuilding = units_slk.data("isbldg", first) == "1";
-	bool isHero = isupper(units_slk.index_to_row.at(first).front());
-	bool isSpecial = units_slk.data("special", first) == "1";
-
-	int subIndex = 0;
-	if (isSpecial) {
-		subIndex = 3;
-	} else if (isBuilding) {
-		subIndex = 1;
-	} else if (isHero) {
-		subIndex = 2;
-	}
-	
-	BaseTreeItem* parent_item = categories[race].item->children[subIndex];
-	beginInsertRows(createIndex(parent_item->row(), 0, parent_item), parent_item->children.size(), parent_item->children.size());
-	BaseTreeItem* item = new BaseTreeItem(categories[race].item->children[subIndex]);
-	item->tableRow = first;
-	endInsertRows();
-}
-
-void UnitTreeModel::rowsRemoved(const QModelIndex& parent, int first, int last) {
-	std::string race = units_slk.data("race", first);
-	bool isBuilding = units_slk.data("isbldg", first) == "1";
-	bool isHero = isupper(units_slk.index_to_row.at(first).front());
-	bool isSpecial = units_slk.data("special", first) == "1";
-
-	int subIndex = 0;
-	if (isSpecial) {
-		subIndex = 3;
-	} else if (isBuilding) {
-		subIndex = 1;
-	} else if (isHero) {
-		subIndex = 2;
-	}
-
-	BaseTreeItem* parent_item = categories[race].item->children[subIndex];
-
-	beginRemoveRows(parent, first, last);
-	for (int i = 0; i < parent_item->children.size(); i++) {
-		if (parent_item->children[i]->tableRow == first) {
-			parent_item->children.remove(i);
-			break;
-		}
-	}
-	endRemoveRows();
+	return categories.at(race).item->children[subIndex];
 }
 
 QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
@@ -147,27 +61,28 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()] + " (" + std::to_string(item->children.size()) + ")");
 			} else {
-				if (units_slk.data("campaign", item->tableRow) == "1") {
-					const std::string properNames = units_slk.data("propernames", item->tableRow);
+				//if (units_slk.data("campaign", item->tableRow) == "1") {
+				if (units_slk.data("campaign", item->id) == "1") {
+					const std::string properNames = units_slk.data("propernames", item->id);
 
 					if (!properNames.empty()) {
 						return QString::fromStdString(properNames).split(',').first();
 					}
 				}
 
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->tableRow));
+				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->id));
 			}
 		case Qt::DecorationRole:
 			if (item->baseCategory || item->subCategory) {
 				return folderIcon;
 			}
-			return sourceModel()->data(sourceModel()->index(item->tableRow, units_slk.column_headers.at("art")), role);
+			return sourceModel()->data(sourceModel()->index(units_slk.row_headers.at(item->id), units_slk.column_headers.at("art")), role);
 		case Qt::TextColorRole:
 			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
 
-			if (units_slk.shadow_data.contains(units_slk.index_to_row.at(item->tableRow))) {
+			if (units_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

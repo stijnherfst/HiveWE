@@ -1,6 +1,8 @@
 #include "DoodadTreeModel.h"
 
 DoodadTreeModel::DoodadTreeModel(QObject* parent) : BaseTreeModel(parent) {
+	slk = &doodads_slk;
+
 	for (const auto& [key, value] : world_edit_data.section("DoodadCategories")) {
 		categories[key.front()].name = value[0];
 		categories[key.front()].icon = resource_manager.load<QIconResource>(value[1]);
@@ -10,40 +12,16 @@ DoodadTreeModel::DoodadTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 
 	for (int i = 0; i < doodads_slk.rows(); i++) {
-		std::string category = doodads_slk.data("category", i);
-		BaseTreeItem* item = new BaseTreeItem(categories[category.front()].item);
-		item->tableRow = i;
+		const std::string& id = doodads_slk.index_to_row.at(i);
+		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
+		item->id = id;
 	}
 }
 
-QModelIndex DoodadTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid()) {
-		return {};
-	}
+BaseTreeItem* DoodadTreeModel::getFolderParent(const std::string& id) const {
+	std::string category = doodads_slk.data("category", id);
 
-	std::string category = doodads_slk.data("category", sourceIndex.row());
-
-	auto& items = categories.at(category.front()).item->children;
-	for (int i = 0; i < items.size(); i++) {
-		BaseTreeItem* item = items[i];
-		if (item->tableRow == sourceIndex.row()) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
-}
-
-QModelIndex DoodadTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
-	if (!proxyIndex.isValid()) {
-		return {};
-	}
-
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
-	if (!item->baseCategory) {
-		return createIndex(item->tableRow, doodads_slk.column_headers.at("name"), item);
-	}
-	return {};
+	return categories.at(category.front()).item;
 }
 
 QVariant DoodadTreeModel::data(const QModelIndex& index, int role) const {
@@ -72,7 +50,7 @@ QVariant DoodadTreeModel::data(const QModelIndex& index, int role) const {
 				return {};
 			}
 
-			if (doodads_slk.shadow_data.contains(doodads_slk.index_to_row.at(item->tableRow))) {
+			if (doodads_slk.shadow_data.contains(item->id)) {
 				return QColor("violet");
 			} else {
 				return {};

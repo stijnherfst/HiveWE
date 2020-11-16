@@ -14,8 +14,7 @@ class ItemTreeModel : public BaseTreeModel {
 	std::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
-	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
-	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
+	BaseTreeItem* getFolderParent(const std::string& id) const override;
 
 public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;

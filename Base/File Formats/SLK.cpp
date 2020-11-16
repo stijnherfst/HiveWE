@@ -4,6 +4,7 @@
 #include <numeric>
 #include <string_view>
 #include <charconv>
+#include <random>
 
 using namespace std::literals::string_literals;
 
@@ -272,5 +273,21 @@ namespace slk {
 
 	void SLK::set_shadow_data(const int column, const int row, std::string data) {
 		set_shadow_data(index_to_column.at(column), index_to_row.at(row), data);
+	}
+
+	std::string SLK::get_free_row_header(bool first_uppercase) {
+		std::random_device rd;
+		std::mt19937 mt(rd());
+		std::uniform_int_distribution<int> dist(0, 25);
+	again:
+
+		std::string id = ""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
+
+		if (row_headers.contains(id)) {
+			std::cout << "Generated an existing ID: " << id << " what're the odds\n";
+			goto again;
+		}
+
+		return id;
 	}
 }
