@@ -70,22 +70,7 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 			} else {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->id));
 			}
-		case Qt::DecorationRole:
-			if (item->baseCategory || item->subCategory) {
-				return folderIcon;
-			}
-			return sourceModel()->data(sourceModel()->index(abilities_slk.row_headers.at(item->id), abilities_slk.column_headers.at("art")), role);
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (abilities_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			}
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }

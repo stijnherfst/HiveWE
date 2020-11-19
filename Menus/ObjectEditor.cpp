@@ -6,6 +6,7 @@
 #include <QToolBar>
 #include <QDialogButtonBox>
 #include <QSortFilterProxyModel>
+#include <QPushButton>
 
 #include "SingleModel.h"
 #include "UnitSelector.h"
@@ -47,18 +48,18 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 
 	explorer_area->setCurrentIndex(0);
 
-	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(unitTreeFilter, units_table, index, Category::unit); });
-	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(itemTreeFilter, items_table, index, Category::item); });
-	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(doodadTreeFilter, doodads_table, index, Category::doodad); });
-	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(destructibleTreeFilter, destructibles_table, index, Category::destructible); });
-	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(abilityTreeFilter, abilities_table, index, Category::ability); });
-	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
-	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { item_clicked(buffTreeFilter, buff_table, index, Category::buff); });
+	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(unitTreeFilter, units_table, index, Category::unit); });
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(itemTreeFilter, items_table, index, Category::item); });
+	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(doodadTreeFilter, doodads_table, index, Category::doodad); });
+	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(destructibleTreeFilter, destructibles_table, index, Category::destructible); });
+	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(abilityTreeFilter, abilities_table, index, Category::ability); });
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index, Category::buff); });
 
 	show();
 }
 
-void ObjectEditor::item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category) {
+void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category) {
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(model->mapToSource(index).internalPointer());
 	if (item->baseCategory || item->subCategory) {
 		return;
@@ -105,16 +106,25 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	filter->setSourceModel(treeModel);
 	view->setModel(filter);
 	view->header()->hide();
-	view->expandAll();
 	view->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(view, &QTreeView::customContextMenuRequested, [view, name, table, treeModel, this](const QPoint& pos) {
+	view->setSelectionBehavior(QAbstractItemView::SelectRows);
+	view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+	view->setUniformRowHeights(true);
+	view->expandAll();
+
+	connect(view, &QTreeView::customContextMenuRequested, [view, name, table, filter, treeModel, this](const QPoint& pos) {
 		QMenu menu;
 		QAction* addAction = menu.addAction("Add " + name);
 		QAction* removeAction = menu.addAction("Remove " + name);
 
-		QItemSelection selection = view->selectionModel()->selection();
+		QModelIndexList selection = view->selectionModel()->selectedIndexes();
 		if (selection.empty()) {
 			removeAction->setDisabled(true);
+		} else {
+			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(selection.front()).internalPointer());
+			if (!table->slk->shadow_data.contains(treeItem->id) || !table->slk->shadow_data.at(treeItem->id).contains("oldid")) {
+				removeAction->setDisabled(true);	
+			}
 		}
 
 		connect(addAction, &QAction::triggered, [this, table, treeModel, name, selection]() {
@@ -128,6 +138,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			QLineEdit* id = new QLineEdit;
 			id->setPlaceholderText("Free ID");
 			id->setText(QString::fromStdString(table->slk->get_free_row_header(false)));
+			id->setFont(QFont("consolas"));
 
 			QHBoxLayout* nameLayout = new QHBoxLayout;
 			nameLayout->addWidget(nameEdit, 3);
@@ -145,46 +156,71 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 			QTreeView* view = new QTreeView;
 			view->setModel(filter);
+			view->setUniformRowHeights(true);
 			view->header()->hide();
 			view->expandAll();
+
+			QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+			connect(buttonBox, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
+			connect(buttonBox, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
 
 			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
 			selectlayout->addLayout(nameLayout);
 			selectlayout->addWidget(search);
 			selectlayout->addWidget(view);
+			selectlayout->addWidget(buttonBox);
 
-			QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-			connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
-			connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
-			selectlayout->addWidget(buttonBox2);
+			connect(view->selectionModel(), &QItemSelectionModel::currentChanged, [table, filter, id, nameEdit](const QModelIndex& current, const QModelIndex& previous) {
+				if (!current.isValid()) {
+					return;
+				}
+				nameEdit->setText(filter->data(current).toString());
+				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(current).internalPointer());
+				id->setText(QString::fromStdString(table->slk->get_free_row_header(!islower(treeItem->id.front()))));
+			});
 
-			connect(view, &QTreeView::activated, [table, filter, selectdialog](const QModelIndex& index) {
-				QModelIndex sourceIndex = filter->mapToSource(index);
-				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+			connect(id, &QLineEdit::textChanged, [buttonBox](const QString& text) {
+				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4);
+			});
+
+			auto select = [table, filter, selectdialog, id, nameEdit](const QModelIndex& index) {
+				if (id->text().size() != 4) {
+					return;
+				}
+
+				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(index).internalPointer());
 				if (treeItem->baseCategory || treeItem->subCategory) {
 					return;
 				}
 
 				selectdialog->close();
-				table->copyRow(table->slk->row_headers.at(treeItem->id), table->slk->get_free_row_header(false));
-			});
+				table->copyRow(treeItem->id, id->text().toStdString());
+				table->setData(table->index(table->rowCount() - 1, 0), nameEdit->text());
+			};
 
-			connect(selectdialog, &QDialog::accepted, [=]() {
+			connect(view, &QTreeView::activated, [select](const QModelIndex& index) { select(index); });
+
+			connect(selectdialog, &QDialog::accepted, [view, select]() {
 				auto indices = view->selectionModel()->selectedIndexes();
-				if (indices.size()) {
-					//add(indices.front());
+				if (indices.empty()) {
+					return;
 				}
+
+				select(indices.front());
 			});
 
 			selectdialog->show();
 		});
 
-		connect(removeAction, &QAction::triggered, [this, table, treeModel, view]() {
-			QItemSelection selection = view->selectionModel()->selection();
-			auto& index = selection.front().topLeft();
-			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(index.internalPointer());
-			table->deleteRow(table->slk->row_headers.at(treeItem->id));
-			// ToDo change all other tablerows
+		connect(removeAction, &QAction::triggered, [table, treeModel, filter, view, selection]() {
+			std::vector<std::string> ids_to_delete;
+			for (const auto& i : selection) {
+				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(i).internalPointer());
+				ids_to_delete.push_back(treeItem->id);
+			}
+			for (const auto& i : ids_to_delete) {
+				table->deleteRow(i);
+			}
 		});
 
 		menu.exec(view->mapToGlobal(pos));

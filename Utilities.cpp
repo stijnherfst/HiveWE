@@ -211,8 +211,6 @@ void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta
 
 		if (modification) {
 			slk.copy_row(original_id, modified_id, false);
-			// Required when saving the modification table again
-			slk.set_shadow_data("oldid", modified_id, original_id);
 		}
 
 		const uint32_t modifications = reader.read<uint32_t>();

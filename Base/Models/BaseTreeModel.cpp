@@ -154,13 +154,16 @@ void BaseTreeModel::rowsRemoved(const QModelIndex& parent, int first, int last) 
 	const std::string id = slk->index_to_row.at(first);
 	BaseTreeItem* parent_item = getFolderParent(id);
 
-	beginRemoveRows(parent, first, last);
+	int row = -1;
 	for (int i = 0; i < parent_item->children.size(); i++) {
 		if (parent_item->children[i]->id == id) {
-			parent_item->children.remove(i);
+			row = i;
 			break;
 		}
 	}
+
+	beginRemoveRows(createIndex(parent_item->row(), 0, parent_item), row, row);
+	parent_item->children.remove(row);
 	endRemoveRows();
 }
 
@@ -174,6 +177,39 @@ void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
 	});
 
 	connect(sourceModel, &QAbstractItemModel::rowsInserted, this, &BaseTreeModel::rowsInserted);
+	connect(sourceModel, &QAbstractItemModel::rowsAboutToBeRemoved, this, &BaseTreeModel::rowsRemoved);
+}
+
+QVariant BaseTreeModel::data(const QModelIndex& index, int role) const {
+	if (!index.isValid()) {
+		return {};
+	}
+
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(index.internalPointer());
+
+	switch (role) {
+		case Qt::DecorationRole:
+			if (item->baseCategory || item->subCategory) {
+				return folderIcon;
+			}
+			if (slk->column_headers.contains("art")) {
+				return sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("art")), role);
+			} else {
+				return sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("buffart")), role);
+			}
+		case Qt::TextColorRole:
+			if (item->baseCategory || item->subCategory) {
+				return {};
+			}
+
+			if (slk->shadow_data.contains(item->id)) {
+				return QColor("violet");
+			} else {
+				return {};
+			}
+		default:
+			return {};
+	}
 }
 
 bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
@@ -184,7 +220,7 @@ bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent
 		if (item->baseCategory || item->subCategory) {
 			return false;
 		}
-		//if (!(slk->shadow_data.contains(slk->index_to_row.at(item->tableRow)) && slk->shadow_data.at(slk->index_to_row.at(item->tableRow)).contains("oldid"))) {
+
 		if (!(slk->shadow_data.contains(item->id) && slk->shadow_data.at(item->id).contains("oldid"))) {
 			return false;
 		}

@@ -45,17 +45,7 @@ QVariant DoodadTreeModel::data(const QModelIndex& index, int role) const {
 			}
 
 			return categories.at(rowToCategory[index.parent().row()]).icon->icon;
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (doodads_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			}
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }

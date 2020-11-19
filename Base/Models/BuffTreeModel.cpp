@@ -69,22 +69,7 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 					return name + " " + QString::fromStdString(buff_slk.data("editorsuffix", item->id));
 				}
 			}
-		case Qt::DecorationRole:
-			if (item->baseCategory || item->subCategory) {
-				return folderIcon;
-			}
-			return sourceModel()->data(sourceModel()->index(buff_slk.row_headers.at(item->id), buff_slk.column_headers.at("buffart")), role);
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (buff_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			}
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }

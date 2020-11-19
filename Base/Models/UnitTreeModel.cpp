@@ -61,7 +61,6 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()] + " (" + std::to_string(item->children.size()) + ")");
 			} else {
-				//if (units_slk.data("campaign", item->tableRow) == "1") {
 				if (units_slk.data("campaign", item->id) == "1") {
 					const std::string properNames = units_slk.data("propernames", item->id);
 
@@ -72,22 +71,7 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->id));
 			}
-		case Qt::DecorationRole:
-			if (item->baseCategory || item->subCategory) {
-				return folderIcon;
-			}
-			return sourceModel()->data(sourceModel()->index(units_slk.row_headers.at(item->id), units_slk.column_headers.at("art")), role);
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (units_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			} 
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }

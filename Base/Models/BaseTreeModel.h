@@ -55,6 +55,8 @@ class BaseTreeModel : public QAbstractProxyModel {
 	explicit BaseTreeModel(QObject* parent = nullptr);
 	~BaseTreeModel();
 
+	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+
 	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
 	BaseTreeItem* rootItem;

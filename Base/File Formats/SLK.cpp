@@ -216,7 +216,7 @@ namespace slk {
 		assert(!base_data.contains(new_row_header));
 
 		// Get a weird allocation error if not done via a temporary 31/05/2020
-		auto t = base_data.at(row_header);
+		const auto t = base_data.at(row_header);
 		base_data[new_row_header] = t;
 
 		if (copy_shadow_data && shadow_data.contains(row_header)) {
@@ -226,6 +226,8 @@ namespace slk {
 		size_t index = row_headers.size();
 		row_headers.emplace(new_row_header, index);
 		index_to_row[index] = new_row_header;
+		
+		shadow_data[new_row_header]["oldid"] = row_header;
 	}
 
 	void SLK::remove_row(const std::string_view row_header) {
@@ -233,8 +235,20 @@ namespace slk {
 
 		base_data.erase(row_header);
 		shadow_data.erase(row_header);
-		index_to_row.erase(row_headers.at(row_header));
-		row_headers.erase(row_header);
+		
+		const int index = row_headers.at(row_header);
+		if (index == rows() - 1) {
+			index_to_row.erase(index);
+			row_headers.erase(row_header);
+		} else {
+			// Swap with a element from the end to avoid having to change all indices
+			const std::string replacement_id = index_to_row.at(rows() - 1);
+			index_to_row[index] = replacement_id;
+			row_headers[replacement_id] = index;
+			index_to_row.erase(rows() - 1);
+
+			row_headers.erase(row_header);
+		}
 	}
 
 	/// Adds a (virtual) column

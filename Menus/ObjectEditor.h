@@ -71,7 +71,7 @@ private:
 		buff
 	};
 
-	void item_clicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
+	void itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
 
 	void add_item();
 

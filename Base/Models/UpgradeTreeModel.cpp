@@ -58,22 +58,7 @@ QVariant UpgradeTreeModel::data(const QModelIndex& index, int role) const {
 			} else {
 				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(upgrade_slk.data("editorsuffix", item->id));
 			}
-		case Qt::DecorationRole:
-			if (item->baseCategory || item->subCategory) {
-				return folderIcon;
-			}
-			return sourceModel()->data(sourceModel()->index(upgrade_slk.row_headers.at(item->id), upgrade_slk.column_headers.at("art")), role);
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (upgrade_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			}
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }

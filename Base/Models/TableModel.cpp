@@ -229,17 +229,17 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const {
 	return flags;
 }
 
-void TableModel::copyRow(int row, std::string newID) {
-	auto t = rowCount();
+void TableModel::copyRow(std::string_view row_header, std::string_view new_row_header) {
 	beginInsertRows(QModelIndex(), rowCount(), rowCount());
 
-	slk->copy_row(slk->index_to_row.at(row), newID, true);
+	slk->copy_row(row_header, new_row_header, true);
 	endInsertRows();
 }
 
-void TableModel::deleteRow(int row) {
-	beginRemoveRows(QModelIndex(), row, row);
+void TableModel::deleteRow(const std::string_view row_header) {
+	const int row = slk->row_headers.at(row_header);
+	beginRemoveRows(QModelIndex(), row , row);
 
-	slk->remove_row(slk->index_to_row.at(row));
+	slk->remove_row(row_header);
 	endRemoveRows();
 }

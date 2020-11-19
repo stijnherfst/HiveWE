@@ -51,22 +51,7 @@ QVariant ItemTreeModel::data(const QModelIndex& index, int role) const {
 			} else {
 				return QAbstractProxyModel::data(index, role);
 			}
-		case Qt::DecorationRole:
-			if (item->baseCategory || item->subCategory) {
-				return folderIcon;
-			}
-			return sourceModel()->data(sourceModel()->index(items_slk.row_headers.at(item->id), items_slk.column_headers.at("art")), role);
-		case Qt::TextColorRole:
-			if (item->baseCategory || item->subCategory) {
-				return {};
-			}
-
-			if (items_slk.shadow_data.contains(item->id)) {
-				return QColor("violet");
-			} else {
-				return {};
-			}
 		default:
-			return {};
+			return BaseTreeModel::data(index, role);
 	}
 }
