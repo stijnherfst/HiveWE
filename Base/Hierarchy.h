@@ -17,7 +17,9 @@ public:
 
 	fs::path map_directory;
 	fs::path warcraft_directory;
+	fs::path root_directory;
 
+	bool ptr;
 	bool hd;
 	bool teen;
 
