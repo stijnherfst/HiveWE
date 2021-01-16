@@ -1,17 +1,13 @@
-#include <QPalette>
-#include <QCoreApplication>
 #include <QApplication>
-#include <QSurfaceFormat>
-#include <QFont>
-#include <QStyleFactory>
-#include <QSettings>
+#include <QCoreApplication>
 #include <QFile>
+#include <QFont>
+#include <QPalette>
+#include <QSurfaceFormat>
+#include <QSettings>
 
-#include "HiveWE.h"
-#include "test.h"
 #include "DockManager.h"
-
-#include <fstream>
+#include "HiveWE.h"
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available
@@ -22,13 +18,6 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
-	//std::ifstream stream("C:/Users/User/Desktop/Footman.mdx", std::ios::binary);
-	//auto buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-	//BinaryReader reader(buffer);
-	//auto mdx = mdx::MDX(reader);
-	//mdx.save("C:/Users/User/Desktop/Out.mdx");
-	//return 0;
-
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
@@ -42,14 +31,7 @@ int main(int argc, char *argv[]) {
 
 	QLocale::setDefault(QLocale("en_US"));
 
-	QApplication a(argc, argv);
-
-	qApp->setStyle(QStyleFactory::create("Fusion"));
-	// increase font size for better reading
-	QFont defaultFont = QApplication::font();
-	defaultFont.setPointSize(defaultFont.pointSize() + 2);
-	qApp->setFont(defaultFont);
-	// modify palette to dark
+	// Create a dark palette
 	QPalette darkPalette;
 	darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
 	darkPalette.setColor(QPalette::WindowText, Qt::white);
@@ -72,25 +54,27 @@ int main(int argc, char *argv[]) {
 	darkPalette.setColor(QPalette::HighlightedText, Qt::white);
 	darkPalette.setColor(QPalette::Disabled, QPalette::HighlightedText, QColor(127, 127, 127));
 
+	QApplication::setPalette(darkPalette);
+	QApplication::setStyle("fusion");
+	
+	QApplication a(argc, argv);
+
+	// Increase font size for better clarity
+	// Docs say not to use this in conjunction with stylesheet, refactor?
+	QFont defaultFont = QApplication::font();
+	defaultFont.setPointSize(defaultFont.pointSize() + 2);
+	QApplication::setFont(defaultFont);
+
 	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize);
 
-	qApp->setPalette(darkPalette);
-
 	QSettings settings;
-	if (!settings.contains("theme")) {
-		settings.setValue("theme", "Dark");
-	}
-
-	QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
+	QFile file("Data/Themes/" + settings.value("theme", "Dark").toString() + ".qss");
 	file.open(QFile::ReadOnly);
-	QString StyleSheet = QLatin1String(file.readAll());
-
-	qApp->setStyleSheet(StyleSheet);
+	a.setStyleSheet(QLatin1String(file.readAll()));
 
 	HiveWE w;
-
 	return QApplication::exec();
 }
