@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QApplication>
+#include <QMessageBox>
 
 #include <SOIL2/SOIL2.h>
 
@@ -213,6 +214,9 @@ void HiveWE::load_folder() {
 		return;
 	}
 
+	QMessageBox* loading_box = new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
+	loading_box->show();
+
 	delete map;
 	map = new Map();
 
@@ -220,6 +224,10 @@ void HiveWE::load_folder() {
 
 	ui.widget->makeCurrent();
 	map->load(directory);
+
+	loading_box->close();
+	delete loading_box;
+
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 	setWindowTitle("HiveWE 0.7 - " + QString::fromStdString(map->filesystem_path.string()));
 }

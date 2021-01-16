@@ -39,9 +39,6 @@ class BaseTreeModel : public QAbstractProxyModel {
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
-	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
-
 	virtual void rowsInserted(const QModelIndex& parent, int first, int last);
 	virtual void rowsRemoved(const QModelIndex& parent, int first, int last);
 
@@ -49,13 +46,15 @@ class BaseTreeModel : public QAbstractProxyModel {
 		return nullptr;
 	};
 
-
   public:
 
 	explicit BaseTreeModel(QObject* parent = nullptr);
 	~BaseTreeModel();
 
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
+
+	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
+	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
 
 	void setSourceModel(QAbstractItemModel* sourceModel) override;
 

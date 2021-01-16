@@ -7,6 +7,7 @@
 #include <QDialogButtonBox>
 #include <QSortFilterProxyModel>
 #include <QPushButton>
+#include <QTimer>
 
 #include "SingleModel.h"
 #include "UnitSelector.h"
@@ -126,14 +127,15 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				removeAction->setDisabled(true);	
 			}
 		}
-
-		connect(addAction, &QAction::triggered, [this, table, treeModel, name, selection]() {
+		
+		connect(addAction, &QAction::triggered, [this, table, treeModel, name, view, filter, selection]() {
 			QDialog* selectdialog = new QDialog(this, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 			selectdialog->resize(300, 560);
 			selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
 
 			QLineEdit* nameEdit = new QLineEdit;
 			nameEdit->setPlaceholderText("New name");
+			nameEdit->setReadOnly(true);
 
 			QLineEdit* id = new QLineEdit;
 			id->setPlaceholderText("Free ID");
@@ -144,21 +146,21 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			nameLayout->addWidget(nameEdit, 3);
 			nameLayout->addWidget(id, 1);
 
-			BaseFilter* filter = new BaseFilter;
-			filter->slk = table->slk;
-			filter->setRecursiveFilteringEnabled(true);
-			filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
-			filter->setSourceModel(treeModel);
+			BaseFilter* sub_filter = new BaseFilter;
+			sub_filter->slk = table->slk;
+			sub_filter->setRecursiveFilteringEnabled(true);
+			sub_filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+			sub_filter->setSourceModel(treeModel);
 
 			QLineEdit* search = new QLineEdit;
 			search->setPlaceholderText("Search " + name);
-			connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+			connect(search, &QLineEdit::textChanged, sub_filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
 
-			QTreeView* view = new QTreeView;
-			view->setModel(filter);
-			view->setUniformRowHeights(true);
-			view->header()->hide();
-			view->expandAll();
+			QTreeView* sub_view = new QTreeView;
+			sub_view->setModel(sub_filter);
+			sub_view->setUniformRowHeights(true);
+			sub_view->header()->hide();
+			sub_view->expandAll();
 
 			QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 			connect(buttonBox, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
@@ -167,15 +169,18 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
 			selectlayout->addLayout(nameLayout);
 			selectlayout->addWidget(search);
-			selectlayout->addWidget(view);
+			selectlayout->addWidget(sub_view);
 			selectlayout->addWidget(buttonBox);
 
-			connect(view->selectionModel(), &QItemSelectionModel::currentChanged, [table, filter, id, nameEdit](const QModelIndex& current, const QModelIndex& previous) {
+			connect(sub_view->selectionModel(), &QItemSelectionModel::currentChanged, [table, sub_filter, filter, id, nameEdit](const QModelIndex& current, const QModelIndex& previous) {
 				if (!current.isValid()) {
 					return;
 				}
-				nameEdit->setText(filter->data(current).toString());
-				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(current).internalPointer());
+				nameEdit->setText(sub_filter->data(current).toString());
+				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
+				if (treeItem->baseCategory || treeItem->subCategory) {
+					return;
+				}
 				id->setText(QString::fromStdString(table->slk->get_free_row_header(!islower(treeItem->id.front()))));
 			});
 
@@ -183,25 +188,28 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4);
 			});
 
-			auto select = [table, filter, selectdialog, id, nameEdit](const QModelIndex& index) {
+			auto select = [view, table, sub_filter, filter, selectdialog, id, nameEdit, treeModel](const QModelIndex& index) {
 				if (id->text().size() != 4) {
 					return;
 				}
 
-				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(index).internalPointer());
+				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(index).internalPointer());
 				if (treeItem->baseCategory || treeItem->subCategory) {
 					return;
 				}
 
 				selectdialog->close();
 				table->copyRow(treeItem->id, id->text().toStdString());
-				table->setData(table->index(table->rowCount() - 1, 0), nameEdit->text());
+
+				QModelIndex new_index = filter->mapFromSource(treeModel->mapFromSource(table->index(table->rowCount() - 1, 0)));
+				view->setCurrentIndex(new_index);
+				view->scrollTo(new_index, QAbstractItemView::ScrollHint::PositionAtCenter);
 			};
 
-			connect(view, &QTreeView::activated, [select](const QModelIndex& index) { select(index); });
+			connect(sub_view, &QTreeView::activated, [select](const QModelIndex& index) { select(index); });
 
-			connect(selectdialog, &QDialog::accepted, [view, select]() {
-				auto indices = view->selectionModel()->selectedIndexes();
+			connect(selectdialog, &QDialog::accepted, [sub_view, select]() {
+				auto indices = sub_view->selectionModel()->selectedIndexes();
 				if (indices.empty()) {
 					return;
 				}
