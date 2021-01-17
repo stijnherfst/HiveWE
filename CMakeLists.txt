@@ -39,7 +39,7 @@ add_subdirectory(src)
 
 target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
 target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
-target_include_directories(HiveWE PRIVATE "src" "src/Base" "src/Base/Brush" "src/Base/File Formats" "src/Base/Resources" "src/Base/Resources/SkinnedMesh" "src/Menus" "src/Menus/Custom Widgets" "src/Base/Models")
+target_include_directories(HiveWE PRIVATE "src" "src/Base" "src/Brush" "src/File Formats" "src/Resources" "src/Resources/SkinnedMesh" "src/Menus" "src/Custom Widgets" "src/Models")
 
 target_link_libraries(HiveWE
 	Qt5::Gui

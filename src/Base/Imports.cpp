@@ -1,18 +1,14 @@
-#include <iostream>
-#include <functional>
 #include <filesystem>
+#include <unordered_set>
 
 #include <QString>
 
 #include "Imports.h"
-#include "BinaryReader.h"
 #include "BinaryWriter.h"
 #include "Hierarchy.h"
-#include "ResourceManager.h"
 
 #include "HiveWE.h"
 
-using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 
 std::unordered_set<std::string> blacklist = {

@@ -1,18 +1,11 @@
 target_sources(HiveWE PRIVATE
 	HiveWE.rc
-	Camera.cpp
 	HiveWE.cpp
-	InputHandler.cpp
-	JassTokenizer.cpp
 	main.cpp
-	TerrainUndo.cpp
+	test.cpp
 	Utilities.cpp
-	WindowHandler.h
-
-	"test.cpp"
 
 	Base/Doodads.cpp
-	Base/FlowLayout.cpp
 	Base/GameCameras.cpp
 	Base/Hierarchy.cpp
 	Base/Imports.cpp
@@ -20,6 +13,10 @@ target_sources(HiveWE PRIVATE
 	Base/MapInfo.cpp
 	Base/PathingMap.cpp
 	Base/Regions.cpp
+	Base/Camera.cpp
+	Base/InputHandler.cpp
+	Base/TerrainUndo.cpp
+	Base/WindowHandler.h
 	
 	Base/RenderManager.cpp
 	Base/ShadowMap.cpp
@@ -30,32 +27,32 @@ target_sources(HiveWE PRIVATE
 	Base/Units.cpp
 	Base/Physics.cpp
 
-	Base/Brush/Brush.cpp
-	Base/Brush/DoodadBrush.cpp
-	Base/Brush/PathingBrush.cpp
-	Base/Brush/TerrainBrush.cpp
-	Base/Brush/UnitBrush.cpp
+	Brush/Brush.cpp
+	Brush/DoodadBrush.cpp
+	Brush/PathingBrush.cpp
+	Brush/TerrainBrush.cpp
+	Brush/UnitBrush.cpp
 
-	"Base/File Formats/BLP.cpp"
-	"Base/File Formats/CASC.cpp"
-	"Base/File Formats/INI.cpp"
-	"Base/File Formats/JSON.cpp"
-	"Base/File Formats/MDX.cpp"
-	"Base/File Formats/MPQ.cpp"
-	"Base/File Formats/SLK.cpp"
+	"File Formats/BLP.cpp"
+	"File Formats/CASC.cpp"
+	"File Formats/INI.cpp"
+	"File Formats/JSON.cpp"
+	"File Formats/MDX.cpp"
+	"File Formats/MPQ.cpp"
+	"File Formats/SLK.cpp"
 
-	Base/Resources/CliffMesh.cpp
-	Base/Resources/GPUTexture.cpp
-	Base/Resources/GroundTexture.cpp
-	Base/Resources/Shader.cpp
-	Base/Resources/SkinnedMesh.cpp
-	Base/Resources/StaticMesh.cpp
-	Base/Resources/Texture.cpp
-	Base/Resources/PathingTexture.cpp
-	Base/Resources/QIconResource.cpp
+	Resources/CliffMesh.cpp
+	Resources/GPUTexture.cpp
+	Resources/GroundTexture.cpp
+	Resources/Shader.cpp
+	Resources/SkinnedMesh.cpp
+	Resources/StaticMesh.cpp
+	Resources/Texture.cpp
+	Resources/PathingTexture.cpp
+	Resources/QIconResource.cpp
 
-	Base/Resources/SkinnedMesh/RenderNode.cpp
-	Base/Resources/SkinnedMesh/SkeletalModelInstance.cpp
+	Resources/SkinnedMesh/RenderNode.cpp
+	Resources/SkinnedMesh/SkeletalModelInstance.cpp
 
 	Menus/DoodadPalette.cpp
 	
@@ -74,31 +71,33 @@ target_sources(HiveWE PRIVATE
 	Menus/Selections.cpp
 	Menus/ObjectEditor.cpp
 
-	Base/Models/SingleModel.cpp
-	Base/Models/TableModel.cpp
-	Base/Models/BaseTreeModel.cpp
-	Base/Models/UnitTreeModel.cpp
-	Base/Models/DoodadTreeModel.cpp
-	Base/Models/ItemTreeModel.cpp
-	Base/Models/AbilityTreeModel.cpp
-	Base/Models/BuffTreeModel.cpp
-	Base/Models/UpgradeTreeModel.cpp
-	Base/Models/UnitListModel.cpp
-	Base/Models/DoodadListModel.cpp
-	Base/Models/DestructableListModel.cpp
-	Base/Models/DestructibleTreeModel.cpp
-	Base/Models/DestructibleTreeModel.h
+	Models/SingleModel.cpp
+	Models/TableModel.cpp
+	Models/BaseTreeModel.cpp
+	Models/UnitTreeModel.cpp
+	Models/DoodadTreeModel.cpp
+	Models/ItemTreeModel.cpp
+	Models/AbilityTreeModel.cpp
+	Models/BuffTreeModel.cpp
+	Models/UpgradeTreeModel.cpp
+	Models/UnitListModel.cpp
+	Models/DoodadListModel.cpp
+	Models/DestructableListModel.cpp
+	Models/DestructibleTreeModel.cpp
+	Models/DestructibleTreeModel.h
 
-	"Menus/Custom Widgets/AspectRatioPixmapLabel.cpp"
-	"Menus/Custom Widgets/ColorButton.cpp"
-	"Menus/Custom Widgets/GLWidget.cpp"
-	"Menus/Custom Widgets/JassEditor.cpp"
-	"Menus/Custom Widgets/QRibbon.cpp"
-	"Menus/Custom Widgets/MainRibbon.cpp"
-	"Menus/Custom Widgets/SearchWindow.cpp"
-	"Menus/Custom Widgets/VariableEditor.cpp"
-	"Menus/Custom Widgets/TriggerExplorer.cpp"
-	"Menus/Custom Widgets/UnitSelector.cpp"
-	"Menus/Custom Widgets/GenericSelectorList.cpp"
-	"Menus/Custom Widgets/IconView.cpp"
+	"Custom Widgets/AspectRatioPixmapLabel.cpp"
+	"Custom Widgets/ColorButton.cpp"
+	"Custom Widgets/GLWidget.cpp"
+	"Custom Widgets/JassEditor.cpp"
+	"Custom Widgets/QRibbon.cpp"
+	"Custom Widgets/MainRibbon.cpp"
+	"Custom Widgets/SearchWindow.cpp"
+	"Custom Widgets/VariableEditor.cpp"
+	"Custom Widgets/TriggerExplorer.cpp"
+	"Custom Widgets/UnitSelector.cpp"
+	"Custom Widgets/GenericSelectorList.cpp"
+	"Custom Widgets/IconView.cpp"
+	"Custom Widgets/JassTokenizer.cpp"
+	"Custom Widgets/FlowLayout.cpp"
 )
