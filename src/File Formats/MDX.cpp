@@ -613,12 +613,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::GEOS);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& geoset : geosets) {
 			// Write temporary zero, remember location
-			const int geoset_index = writer.buffer.size();
+			const size_t geoset_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			writer.write_string("VRTX");
@@ -699,12 +699,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::MTLS);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& material : materials) {
 			// Write temporary zero, remember location
-			const int material_index = writer.buffer.size();
+			const size_t material_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			writer.write<uint32_t>(material.priority_plane);
@@ -715,7 +715,7 @@ namespace mdx {
 
 			for (const auto& layer : material.layers) {
 				// Write temporary zero, remember location
-				const int layer_index = writer.buffer.size();
+				const size_t layer_index = writer.buffer.size();
 				writer.write<uint32_t>(0);
 
 				writer.write<uint32_t>(layer.blend_mode);
@@ -783,12 +783,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::GEOA);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& geoset_animation : animations) {
 			// Write temporary zero, remember location
-			int geoset_index = writer.buffer.size();
+			const size_t geoset_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			writer.write<float>(geoset_animation.alpha);
@@ -813,7 +813,7 @@ namespace mdx {
 
 		writer.write(ChunkTag::BONE);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& bone : bones) {
@@ -846,12 +846,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::LITE);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& light : lights) {
 			// Write temporary zero, remember location
-			int light_index = writer.buffer.size();
+			const size_t light_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			light.node.save(writer);
@@ -885,7 +885,7 @@ namespace mdx {
 
 		writer.write(ChunkTag::HELP);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& help_bone : help_bones) {
@@ -902,12 +902,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::ATCH);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& attachment : attachments) {
 			// Write temporary zero, remember location
-			int attachment_index = writer.buffer.size();
+			const size_t attachment_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			attachment.node.save(writer);
@@ -943,12 +943,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::PREM);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& emitter : emitters1) {
 			// Write temporary zero, remember location
-			int emitter_index = writer.buffer.size();
+			const size_t emitter_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			emitter.node.save(writer);
@@ -983,12 +983,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::PRE2);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& emitter : emitters2) {
 			// Write temporary zero, remember location
-			int emitter_index = writer.buffer.size();
+			const size_t emitter_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			emitter.node.save(writer);
@@ -1045,12 +1045,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::RIBB);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& ribbon : ribbons) {
 			// Write temporary zero, remember location
-			int ribbon_index = writer.buffer.size();
+			const size_t ribbon_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			ribbon.node.save(writer);
@@ -1087,7 +1087,7 @@ namespace mdx {
 
 		writer.write(ChunkTag::EVTS);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& event_object : eventObjects) {
@@ -1108,7 +1108,7 @@ namespace mdx {
 
 		writer.write(ChunkTag::CLID);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& shape : collisionShapes) {
@@ -1136,12 +1136,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::CORN);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& corn : corn_emitters) {
 			// Write temporary zero, remember location
-			int corn_index = writer.buffer.size();
+			const size_t corn_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			corn.node.save(writer);
@@ -1161,12 +1161,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::CAMS);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& camera : cameras) {
 			// Write temporary zero, remember location
-			int camera_index = writer.buffer.size();
+			const size_t camera_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			writer.write_vector(camera.data);
@@ -1196,12 +1196,12 @@ namespace mdx {
 
 		writer.write(ChunkTag::TXAN);
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		for (const auto& texture_animation : texture_animations) {
 			// Write temporary zero, remember location
-			int texture_animation_index = writer.buffer.size();
+			const size_t texture_animation_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
 			writer.write_vector(texture_animation.data);

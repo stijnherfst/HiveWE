@@ -236,7 +236,7 @@ namespace slk {
 		base_data.erase(row_header);
 		shadow_data.erase(row_header);
 		
-		const int index = row_headers.at(row_header);
+		const size_t index = row_headers.at(row_header);
 		if (index == rows() - 1) {
 			index_to_row.erase(index);
 			row_headers.erase(row_header);
