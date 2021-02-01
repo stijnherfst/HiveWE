@@ -197,7 +197,7 @@ void StaticMesh::render_opaque_sd() const {
 			continue;
 		}
 
-		for (const auto j : layers) {
+		for (const auto& j : layers) {
 			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
 
 			switch (j.blend_mode) {

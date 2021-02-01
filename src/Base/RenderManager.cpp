@@ -36,7 +36,7 @@ RenderManager::~RenderManager() {
 	gl->glDeleteFramebuffers(1, &color_picking_framebuffer);
 }
 
-void RenderManager::render(bool render_lighting) {
+void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 	GLint old_vao;
 	gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
@@ -46,6 +46,7 @@ void RenderManager::render(bool render_lighting) {
 	instance_static_mesh_shader_sd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(3, 1, &light_direction.x);
 
 	for (const auto& i : meshes) {
 		i->render_opaque_sd();
@@ -54,6 +55,7 @@ void RenderManager::render(bool render_lighting) {
 	instance_static_mesh_shader_hd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(3, 1, &light_direction.x);
 
 	for (const auto& i : meshes) {
 		i->render_opaque_hd();
@@ -63,6 +65,7 @@ void RenderManager::render(bool render_lighting) {
 	instance_skinned_mesh_shader_sd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(6, 1, &light_direction.x);
 		
 	for (const auto& i : skinned_meshes) {
 		i->render_opaque_sd();
@@ -71,6 +74,7 @@ void RenderManager::render(bool render_lighting) {
 	instance_skinned_mesh_shader_hd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(6, 1, &light_direction.x);
 
 	for (const auto& i : skinned_meshes) {
 		i->render_opaque_hd();
@@ -82,7 +86,7 @@ void RenderManager::render(bool render_lighting) {
 
 	static_mesh_shader_sd->use();
 	gl->glUniform1i(2, render_lighting);
-
+	gl->glUniform3fv(3, 1, &light_direction.x);
 
 
 	for (const auto& i : transparent_instances) {
@@ -92,6 +96,7 @@ void RenderManager::render(bool render_lighting) {
 	static_mesh_shader_hd->use();
 	gl->glUniform1f(1, -1.f);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(4, 1, &light_direction.x);
 
 	for (const auto& i : transparent_instances) {
 		i.mesh->render_transparent_hd(i.instance_id);
@@ -100,6 +105,7 @@ void RenderManager::render(bool render_lighting) {
 	// Skinned
 	skinned_mesh_shader_sd->use();
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(7, 1, &light_direction.x);
 
 	for (const auto& i : skinned_transparent_instances) {
 		i.mesh->render_transparent_sd(i.instance_id);
@@ -108,6 +114,7 @@ void RenderManager::render(bool render_lighting) {
 	skinned_mesh_shader_hd->use();
 	gl->glUniform1f(1, -1.f);
 	gl->glUniform1i(2, render_lighting);
+	gl->glUniform3fv(8, 1, &light_direction.x);
 
 	for (const auto& i : skinned_transparent_instances) {
 		i.mesh->render_transparent_hd(i.instance_id);

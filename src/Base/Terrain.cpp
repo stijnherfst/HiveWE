@@ -336,6 +336,7 @@ void Terrain::render_ground() const {
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, map->render_pathing);
 	gl->glUniform1i(3, map->render_lighting);
+	gl->glUniform3fv(4, 1, &map->light_direction.x);
 
 	gl->glBindTextureUnit(0, ground_height);
 	gl->glBindTextureUnit(1, ground_corner_height);

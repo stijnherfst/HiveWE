@@ -12,6 +12,7 @@ layout (location = 4) uniform int instanceID;
 layout (location = 5) uniform mat4 M;
 layout (location = 6) uniform int layer_skip_count;
 layout (location = 7) uniform int layer_index;
+layout (location = 8) uniform vec3 light_direction;
 
 layout(std430, binding = 0) buffer layoutName {
     vec4 layer_colors[];
@@ -40,21 +41,17 @@ void main() {
 	const float w1 = ((vSkin.y & 0x0000FF00) >> 8) / 255.f;
 	const float w2 = ((vSkin.y & 0x00FF0000) >> 16) / 255.f;
 	const float w3 = ((vSkin.y & 0xFF000000) >> 24) / 255.f;
+	mat4 skinMatrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 	
-	vec4 position = vec4(vPosition, 1.f);
-	position = b0 * position * w0 + b1 * position * w1 + b2 * position * w2 + b3 * position * w3;
-	position.w = 1.f;
+	gl_Position = MVP * skinMatrix * vec4(vPosition, 1.f);
 
-	gl_Position = MVP * position;
-
-	mat3 Matrix = mat3(M);
+	mat3 Matrix = mat3(M * skinMatrix);
 	vec3 T = normalize(Matrix * vec3(vTangent));
 	vec3 N = normalize(Matrix * vNormal);
 	vec3 B = cross(N, T);
 	mat3 TBN = transpose(mat3(T, B, N));
 
 	UV = vUV;
-	vec3 light_direction = normalize(vec3(-0.3f, -0.3f, 0.25f));
 	TangentLightDirection = TBN * light_direction;
 	vertexColor = layer_colors[instanceID * layer_skip_count + layer_index];
 }

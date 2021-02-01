@@ -7,6 +7,7 @@ layout (location = 3) in vec4 vTangent;
 
 layout (location = 0) uniform mat4 VP;
 layout (location = 3) uniform mat4 M;
+layout (location = 4) uniform vec3 light_direction;
 
 out vec2 UV;
 out vec3 TangentLightDirection;
@@ -21,6 +22,5 @@ void main() {
 	vec3 B = cross(N, T);
 	mat3 TBN = transpose(mat3(T, B, N));
 
-	vec3 light_direction = normalize(vec3(-0.3f, -0.3f, 0.25f));
 	TangentLightDirection = TBN * light_direction;
 }

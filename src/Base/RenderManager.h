@@ -46,7 +46,7 @@ public:
 	RenderManager();
 	~RenderManager();
 
-	void render(bool render_lighting);
+	void render(bool render_lighting, glm::vec3 light_direction);
 
 	void resize_framebuffers(int width, int height);
 };

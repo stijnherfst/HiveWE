@@ -54,6 +54,8 @@ public:
 	bool render_wireframe = false;
 	bool render_debug = false;
 
+	glm::vec3 light_direction = glm::normalize(glm::vec3(-1.f, -1.f, -2.f));
+
 	fs::path filesystem_path;
 	std::string name;
 

@@ -93,6 +93,7 @@ void GLWidget::initializeGL() {
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
+
 	int extension_count;
 	gl->glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
 
@@ -130,12 +131,10 @@ void GLWidget::paintGL() {
 		return;
 	}
 
-	//gl->glEnable(GL_FRAMEBUFFER_SRGB);
 	gl->glEnable(GL_DEPTH_TEST);
 	gl->glDepthMask(true);
-	gl->glClearColor(0.f, 0.f, 0.f, 1.f);
+	gl->glClearColor(0, 0, 0, 1);
 	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 	gl->glBindVertexArray(vao);
 	map->render();

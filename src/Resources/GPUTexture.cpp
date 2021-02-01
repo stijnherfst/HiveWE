@@ -38,9 +38,12 @@ GPUTexture::GPUTexture(const fs::path& path) {
 		gl->glGenerateTextureMipmap(id);
 		delete data;
 	} else {
-		id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), reader.buffer.size(), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT);
+		id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), reader.buffer.size(), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE);
+		if (id == 0) {
+			std::cout << "Error loading texture: " << path << "\n";
+		}
 	}
-
+	
 	gl->glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	gl->glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	gl->glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

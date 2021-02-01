@@ -374,6 +374,10 @@ void Map::update(double delta, int width, int height) {
 		terrain.current_texture = 0;
 	}
 
+	auto current_time = std::chrono::steady_clock::now().time_since_epoch();
+	auto seconds = std::chrono::duration_cast<std::chrono::milliseconds>(current_time).count() / 1000.f;
+	light_direction = glm::normalize(glm::vec3(std::cos(seconds), std::sin(seconds), -2.f));
+
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
@@ -448,7 +452,7 @@ void Map::render() {
 		brush->render();
 	}
 
-	render_manager.render(render_lighting);
+	render_manager.render(render_lighting, light_direction);
 
 	terrain.render_water();
 

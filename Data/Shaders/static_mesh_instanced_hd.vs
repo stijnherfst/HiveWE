@@ -9,6 +9,8 @@ layout (location = 8) in vec3 vGeosetColor;
 
 layout (location = 0) uniform mat4 VP;
 
+layout (location = 3) uniform vec3 light_direction;
+
 out vec2 UV;
 out vec3 TangentLightDirection;
 out vec3 vertexColor;
@@ -23,7 +25,6 @@ void main() {
 	vec3 B = cross(N, T);
 	mat3 TBN = transpose(mat3(T, B, N));
 
-	vec3 light_direction = normalize(vec3(-0.3f, -0.3f, 0.25f));
 	TangentLightDirection = TBN * light_direction;
 	vertexColor = vGeosetColor;
 }

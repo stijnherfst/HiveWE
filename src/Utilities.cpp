@@ -21,6 +21,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <fmt/format.h>
+
 QOpenGLFunctions_4_5_Core* gl;
 Shapes shapes;
 
@@ -129,9 +131,10 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 
 
 	gl->glGetShaderiv(vertex, GL_COMPILE_STATUS, &status);
-	gl->glGetShaderInfoLog(vertex, 512, nullptr, buffer);
 	if (!status) {
-		std::cout << buffer << std::endl;
+		gl->glGetShaderInfoLog(vertex, 512, nullptr, buffer);
+		fmt::print("{}\n{}\n", vertex_shader.string(), buffer);
+		return -1;
 	}
 
 	// Fragment Shader
@@ -140,9 +143,10 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 	gl->glCompileShader(fragment);
 
 	gl->glGetShaderiv(fragment, GL_COMPILE_STATUS, &status);
-	gl->glGetShaderInfoLog(fragment, 512, nullptr, buffer);
 	if (!status) {
-		std::cout << buffer << std::endl;
+		gl->glGetShaderInfoLog(fragment, 512, nullptr, buffer);
+		fmt::print("{}\n{}\n", fragment_shader.string(), buffer);
+		return -1;
 	}
 
 	// Link
@@ -154,7 +158,8 @@ GLuint compile_shader(const fs::path& vertex_shader, const fs::path& fragment_sh
 	gl->glGetProgramiv(shader, GL_LINK_STATUS, &status);
 	if (!status) {
 		gl->glGetProgramInfoLog(shader, 512, nullptr, buffer);
-		std::cout << buffer << std::endl;
+		fmt::print("{}\n{}\n{}\n", vertex_shader.string(), fragment_shader.string(), buffer);
+		return -1;
 	}
 
 	gl->glDeleteShader(vertex);

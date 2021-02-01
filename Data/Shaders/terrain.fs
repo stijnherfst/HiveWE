@@ -2,6 +2,7 @@
 
 layout (location = 2) uniform bool show_pathing_map;
 layout (location = 3) uniform bool show_lighting;
+layout (location = 4) uniform vec3 light_direction;
 
 layout (binding = 3) uniform sampler2DArray sample0;
 layout (binding = 4) uniform sampler2DArray sample1;
@@ -84,12 +85,12 @@ void main() {
 	color = mix(get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)), color, color.a);
 
 	if (show_lighting) {
-		vec3 light_direction = vec3(-0.3f, -0.3f, 0.25f);
-		light_direction = normalize(light_direction);
+		// vec3 light_direction = vec3(-1.f, -1.f, -2.f);
+		// light_direction = normalize(light_direction);
 
-		float contribution = (dot(normal, light_direction) + 1.f) * 0.5f;
+		float contribution = (dot(-light_direction, normal) + 1.f) * 0.5f;
 
-		color.rgb *= clamp(contribution + 0.3f, 0.f, 1.f);
+		color.rgb *= clamp(contribution, 0.f, 1.f);
 	}
 
 	uint byte_static = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0).r;
