@@ -2,7 +2,7 @@
 
 #include <QRadioButton>
 #include <QCheckBox>
-#include <QFormlayout>
+#include <QFormLayout>
 #include <QDoubleValidator>
 #include <QComboBox>
 #include <QListView>

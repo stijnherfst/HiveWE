@@ -15,10 +15,10 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt5 REQUIRED
-	Gui
-	Widgets
-)
+find_package(Qt5 REQUIRED Gui Widgets)
+if(NOT DEFINED WIN32)
+find_package(Qt5 REQUIRED X11Extras)
+endif()
 find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
@@ -69,6 +69,9 @@ target_link_libraries(HiveWE
 	fmt::fmt
 	fmt::fmt-header-only
 )
+if(NOT DEFINED WIN32)
+target_link_libraries(HiveWE Qt5::X11Extras)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because of casclib and stormlib
 	# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
