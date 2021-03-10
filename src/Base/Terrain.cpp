@@ -25,14 +25,16 @@ Terrain::~Terrain() {
 	gl->glDeleteTextures(1, &ground_height);
 	gl->glDeleteTextures(1, &ground_corner_height);
 	gl->glDeleteTextures(1, &ground_texture_data);
+	gl->glDeleteTextures(1, &ground_exists);
 	gl->glDeleteTextures(1, &cliff_texture_array);
 
 	gl->glDeleteTextures(1, &water_texture_array);
 	gl->glDeleteTextures(1, &water_exists);
 	gl->glDeleteTextures(1, &water_height);
 
-//	delete collision_body;
-//	delete collision_shape;
+	//map->physics.dynamicsWorld->removeRigidBody(collision_body);
+	//delete collision_body;
+	//delete collision_shape;
 }
 
 bool Terrain::load() {
@@ -186,16 +188,15 @@ void Terrain::create() {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
 	}
 
-	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
-
 	// prepare GPU data
 	ground_heights.resize(width * height);
 	ground_corner_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
+	ground_exists_data.resize(width * height);
+
 	water_heights.resize(width * height);
 	water_exists_data.resize(width * height);
 
-	update_ground_textures({ 0, 0, width - 1, height - 1 });
 	for (int i = 0; i < width; i++) {
 		for (int j = 0; j < height; j++) {
 			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
@@ -206,12 +207,6 @@ void Terrain::create() {
 	}
 
 	// Ground
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
-	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
-	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
 	gl->glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
 	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
@@ -234,6 +229,14 @@ void Terrain::create() {
 		sub += 1;
 	}
 	gl->glGenerateTextureMipmap(cliff_texture_array);
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
+	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
+	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
+	gl->glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
 
 	// Water
 	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
@@ -263,6 +266,8 @@ void Terrain::create() {
 	}
 	gl->glGenerateTextureMipmap(water_texture_array);
 
+	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+	update_ground_textures({ 0, 0, width - 1, height - 1 });
 	update_ground_heights({ 0, 0, width - 1, height - 1 });
 
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
@@ -271,7 +276,7 @@ void Terrain::create() {
 
 	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {
-		std::cout << "error\n";
+		std::cout << "Error creating Bullet collision shape\n";
 	}
 
 	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
@@ -332,6 +337,7 @@ void Terrain::render_ground() const {
 	ground_shader->use();
 
 	gl->glDisable(GL_BLEND);
+	gl->glEnable(GL_CULL_FACE);
 
 	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, map->render_pathing);
@@ -341,6 +347,7 @@ void Terrain::render_ground() const {
 	gl->glBindTextureUnit(0, ground_height);
 	gl->glBindTextureUnit(1, ground_corner_height);
 	gl->glBindTextureUnit(2, ground_texture_data);
+	gl->glBindTextureUnit(22, ground_exists);
 
 	for (size_t i = 0; i < ground_textures.size(); i++) {
 		gl->glBindTextureUnit(3 + i, ground_textures[i]->id);
@@ -368,6 +375,10 @@ void Terrain::render_ground() const {
 
 		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
 									top_left.layer_height - 2,		top_right.layer_height - 2 });
+
+		if (bottom_left.special_doodad) {
+			continue;
+		}
 
 		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottom_left.cliff_texture });
 	}
@@ -467,13 +478,13 @@ int Terrain::real_tile_texture(const int x, const int y) const {
 						}
 					}
 				}
+
 				if (corners[x + i][y + j].romp || corners[x + i][y + j].cliff) {
 					int texture = corners[x + i][y + j].cliff_texture;
 					// Number 15 seems to be something
 					if (texture == 15) {
 						texture -= 14;
 					}
-
 
 					return cliff_to_ground_texture[texture];
 				}
@@ -641,6 +652,12 @@ void Terrain::upload_ground_texture() const {
 	gl->glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
 }
 
+void Terrain::upload_ground_exists() const {
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	gl->glTextureSubImage2D(ground_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, ground_exists_data.data());
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+}
+
 void Terrain::upload_water_exists() const {
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 	gl->glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
@@ -661,10 +678,10 @@ void Terrain::update_ground_heights(const QRect& area) {
 			for (int x_offset = -1; x_offset <= 0; x_offset++) {
 				for (int y_offset = -1; y_offset <= 0; y_offset++) {
 					if (i + x_offset >= 0 && i + x_offset < width - 1 && j + y_offset >= 0 && j + y_offset < height - 1) {
-						Corner& bottom_left = corners[i + x_offset][j + y_offset];
-						Corner& bottom_right = corners[i + 1 + x_offset][j + y_offset];
-						Corner& top_left = corners[i + x_offset][j + 1 + y_offset];
-						Corner& top_right = corners[i + 1 + x_offset][j + 1 + y_offset];
+						const Corner& bottom_left = corners[i + x_offset][j + y_offset];
+						const Corner& bottom_right = corners[i + 1 + x_offset][j + y_offset];
+						const Corner& top_left = corners[i + x_offset][j + 1 + y_offset];
+						const Corner& top_right = corners[i + 1 + x_offset][j + 1 + y_offset];
 
 						const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
 						if (corners[i][j].layer_height != base) {
@@ -690,38 +707,27 @@ void Terrain::update_ground_heights(const QRect& area) {
 
 /// Updates the ground texture variation information and uploads it to the GPU
 void Terrain::update_ground_textures(const QRect& area) {
-	QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
+	const QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
 		for (int i = update_area.left(); i <= update_area.right(); i++) {
 			ground_texture_list[j * (width - 1) + i] = get_texture_variations(i, j);
-
-			if (corners[i][j].cliff || corners[i][j].romp) {
-				if (is_corner_ramp_entrance(i, j)) {
-					continue;
-				}
-				ground_texture_list[j * (width - 1) + i].a |= 32768u;
-			}
 		}
 	}
 
-	//for (const auto& i : map->doodads.special_doodads) {
-	//	if (!i.pathing) {
-	//		continue;
-	//	}
-
-	//	for (int k = 0; k < i.pathing->height / 4; k++) {
-	//		for (int j = 0; j < i.pathing->width / 4; j++) {
-	//			int x = i.position.x + j - i.pathing->width / 8;
-	//			x = std::clamp(x, 0, width - 1);
-	//			int y = i.position.y + k - i.pathing->height / 8;
-	//			y = std::clamp(y, 0, height - 1);
-	//			ground_texture_list[y * (width - 1) + x].a |= 32768u;
-	//		}
-	//	}
-	//}
-
 	upload_ground_texture();
+}
+
+void Terrain::update_ground_exists(const QRect& area) {
+	QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
+
+	for (int j = update_area.top(); j <= update_area.bottom(); j++) {
+		for (int i = update_area.left(); i <= update_area.right(); i++) {
+			ground_exists_data[j * (width - 1) + i] = !(((corners[i][j].cliff || corners[i][j].romp) && !is_corner_ramp_entrance(i, j)) || corners[i][j].special_doodad);
+		}
+	}
+
+	upload_ground_exists();
 }
 
 /// Updates and uploads the water data for the GPU
@@ -834,6 +840,103 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 			}
 		}
 	}
+
+	update_ground_exists(ramp_area);
+}
+
+void Terrain::resize(size_t new_width, size_t new_height) {
+	gl->glDeleteTextures(1, &ground_height);
+	gl->glDeleteTextures(1, &ground_corner_height);
+	gl->glDeleteTextures(1, &ground_texture_data);
+	gl->glDeleteTextures(1, &ground_exists);
+
+	gl->glDeleteTextures(1, &water_exists);
+	gl->glDeleteTextures(1, &water_height);
+
+	width = new_width;
+	height = new_height;
+
+	//offset = 
+
+	auto t = corners[0][0];
+	corners.clear();
+	corners.resize(width, std::vector<Corner>(height, t));
+
+	ground_heights.resize(width * height);
+	ground_corner_heights.resize(width * height);
+	ground_texture_list.resize((width - 1) * (height - 1));
+	ground_exists_data.resize(width * height);
+
+	water_heights.resize(width * height);
+	water_exists_data.resize(width * height);
+
+	for (int i = 0; i < width; i++) {
+		for (int j = 0; j < height; j++) {
+			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
+			water_exists_data[j * width + i] = corners[i][j].water;
+			ground_heights[j * width + i] = corners[i][j].height;
+			water_heights[j * width + i] = corners[i][j].water_height;
+		}
+	}
+
+	for (int i = 0; i < width - 1; i++) {
+		for (int j = 0; j < height - 1; j++) {
+			Corner& bottom_left = corners[i][j];
+			Corner& bottom_right = corners[i + 1][j];
+			Corner& top_left = corners[i][j + 1];
+			Corner& top_right = corners[i + 1][j + 1];
+
+			bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height || bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
+		}
+	}
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
+	gl->glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	gl->glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
+	gl->glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+	gl->glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
+	gl->glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
+	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
+	gl->glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
+
+	// Water
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
+	gl->glTextureStorage2D(water_height, 1, GL_R16F, width, height);
+	gl->glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
+
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
+	gl->glTextureStorage2D(water_exists, 1, GL_R8, width, height);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	gl->glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+
+	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+	update_ground_textures({ 0, 0, width - 1, height - 1 });
+	update_ground_heights({ 0, 0, width - 1, height - 1 });
+
+	map->physics.dynamicsWorld->removeRigidBody(collision_body);
+	delete collision_body;
+	delete collision_shape;
+
+	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	if (collision_shape == nullptr) {
+		std::cout << "Error creating Bullet collision shape\n";
+	}
+	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 }
 
 void Terrain::update_minimap() {

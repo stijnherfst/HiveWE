@@ -154,6 +154,16 @@ void PathingMap::add_undo(const QRect& area) {
 	map->terrain_undo.add_undo_action(std::move(undo_action));
 }
 
+void PathingMap::resize(size_t new_width, size_t new_height) {
+	width = new_width;
+	height = new_height;
+
+	pathing_cells_static.resize(width * height);
+	pathing_cells_dynamic.resize(width * height);
+
+	old_pathing_cells_static.resize(width * height);
+}
+
 void PathingMapAction::undo() {
 	for (int j = area.top(); j <= area.bottom(); j++) {
 		for (int i = area.left(); i <= area.right(); i++) {

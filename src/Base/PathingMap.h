@@ -49,6 +49,8 @@ class PathingMap {
 
 	void new_undo_group();
 	void add_undo(const QRect& area);
+
+	void resize(size_t width, size_t height);
 };
 
 // Undo/redo structures

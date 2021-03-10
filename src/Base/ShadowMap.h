@@ -13,4 +13,6 @@ class ShadowMap {
 
 	bool load(BinaryReader& reader);
 	void save() const;
+
+	void resize(size_t width, size_t height);
 };

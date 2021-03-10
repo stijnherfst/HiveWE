@@ -54,7 +54,7 @@ public:
 	bool render_wireframe = false;
 	bool render_debug = false;
 
-	glm::vec3 light_direction = glm::normalize(glm::vec3(-1.f, -1.f, -2.f));
+	glm::vec3 light_direction = glm::normalize(glm::vec3(1.f, 0.f, -3.f));
 
 	fs::path filesystem_path;
 	std::string name;
@@ -66,4 +66,6 @@ public:
 
 	void update(double delta, int width, int height);
 	void render();
+
+	void resize(size_t width, size_t height);
 };

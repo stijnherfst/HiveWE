@@ -14,6 +14,7 @@
 
 #include <fstream>
 #include <bullet/btBulletDynamicsCommon.h>
+#include <fmt/format.h>
 
 void Map::load(const fs::path& path) {
 	auto begin = std::chrono::steady_clock::now();
@@ -234,18 +235,6 @@ void Map::load(const fs::path& path) {
 	std::cout << "Doodad loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();
 
-	for (const auto& i : doodads.doodads) {
-		if (!i.pathing) {
-			continue;
-		}
-
-		pathing_map.blit_pathing_texture(i.position, glm::degrees(i.angle) + 90, i.pathing);
-	}
-	pathing_map.upload_dynamic_pathing();
-
-	std::cout << "Doodad blitting: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
-
 
 	if (hierarchy.map_file_exists("war3map.w3u")) {
 		load_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
@@ -369,14 +358,16 @@ void Map::update(double delta, int width, int height) {
 	}
 
 	camera->update(delta);
+
+	// Update current water texture index
 	terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
 	if (terrain.current_texture >= terrain.water_textures_nr) {
 		terrain.current_texture = 0;
 	}
 
-	auto current_time = std::chrono::steady_clock::now().time_since_epoch();
+	/*auto current_time = std::chrono::steady_clock::now().time_since_epoch();
 	auto seconds = std::chrono::duration_cast<std::chrono::milliseconds>(current_time).count() / 1000.f;
-	light_direction = glm::normalize(glm::vec3(std::cos(seconds), std::sin(seconds), -2.f));
+	light_direction = glm::normalize(glm::vec3(std::cos(seconds), std::sin(seconds), -2.f));*/
 
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse) {
@@ -401,13 +392,7 @@ void Map::update(double delta, int width, int height) {
 		}
 	}
 
-	//for (auto& i : units.units) {
-	//	if (i.id == "sloc") {
-	//		continue;
-	//	} // ToDo handle starting locations
-	//	i.skeleton.update(delta);
-	//}
-
+	// Animate units
 	std::for_each(std::execution::par_unseq, units.units.begin(), units.units.end(), [&](Unit& i) {
 		if (i.id == "sloc") {
 			return;
@@ -421,6 +406,7 @@ void Map::update(double delta, int width, int height) {
 		i.skeleton.update(delta);
 	});
 
+	// Animate items
 	for (auto& i : units.items) {
 		i.skeleton.update(delta);
 	}
@@ -435,15 +421,12 @@ void Map::render() {
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
-	// Render Terrain
 	terrain.render_ground();
 
-	// Render Doodads
 	if (render_doodads) {
 		doodads.render();
 	}
 
-	// Render units
 	if (render_units) {
 		units.render();
 	}
@@ -458,4 +441,9 @@ void Map::render() {
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();
+}
+
+void Map::resize(size_t width, size_t height) {
+	terrain.resize(width, height);
+	pathing_map.resize(width * 4, height * 4);
 }

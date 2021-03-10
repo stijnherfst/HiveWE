@@ -36,6 +36,7 @@ struct Corner {
 	bool boundary;
 	bool cliff = false;
 	bool romp = false;
+	bool special_doodad = false;
 
 	int ground_variation;
 	int cliff_variation;
@@ -70,6 +71,8 @@ class Terrain : public QObject {
 	std::vector<float> ground_heights;
 	std::vector<float> ground_corner_heights;
 	std::vector<glm::u16vec4> ground_texture_list;
+	std::vector<unsigned char> ground_exists_data;
+
 	std::vector<float> water_heights;
 	std::vector<unsigned char> water_exists_data;
 	
@@ -94,6 +97,7 @@ public:
 	GLuint ground_height;
 	GLuint ground_corner_height;
 	GLuint ground_texture_data;
+	GLuint ground_exists;
 	GLuint water_height;
 	GLuint water_exists;
 
@@ -175,15 +179,20 @@ public:
 	void upload_ground_heights() const;
 	void upload_corner_heights() const;
 	void upload_ground_texture() const;
+	void upload_ground_exists() const;
 	void upload_water_exists() const;
 	void upload_water_heights() const;
 
 	void update_ground_heights(const QRect& area);
 	void update_ground_textures(const QRect& area);
+	void update_ground_exists(const QRect& area);
 	void update_water(const QRect& area);
 	void update_cliff_meshes(const QRect& area);
 
 	void update_minimap();
+
+	void resize(size_t width, size_t height);
+
 signals:
 	void minimap_changed(Texture minimap);
 };
