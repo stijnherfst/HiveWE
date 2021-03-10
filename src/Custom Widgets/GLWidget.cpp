@@ -73,7 +73,7 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
-
+	
 	gl->glEnable(GL_DEBUG_OUTPUT);
 	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	gl->glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);

@@ -26,7 +26,7 @@ GPUTexture::GPUTexture(const fs::path& path) {
 
 	BinaryReader reader = hierarchy.open_file(new_path);
 
-	if (new_path.extension() == ".blp") {
+	if (new_path.extension() == ".blp" || new_path.extension() == ".BLP") {
 		int width;
 		int height;
 		int channels;

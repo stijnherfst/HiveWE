@@ -195,6 +195,7 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 }
 
 void DoodadBrush::mouse_press_event(QMouseEvent* event) {
+	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
 		gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
 
@@ -253,7 +254,6 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event) {
 				glm::vec3 offset;
 				if (free_movement) {
 					offset = input_handler.mouse_world - drag_start;
-
 				} else {
 					offset = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f;
 					offset -= glm::round((drag_start) * 2.f + 0.5f) / 2.f - 0.25f;

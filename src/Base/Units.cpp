@@ -302,9 +302,7 @@ std::vector<Unit*> Units::query_area(const QRectF& area) {
 }
 
 void Units::remove_units(const std::vector<Unit*>& list) {
-	units.erase(std::remove_if(units.begin(), units.end(), [&](Unit& unit) {
-		return std::find(list.begin(), list.end(), &unit) != list.end();
-	}), units.end());
+	std::erase_if(units, [&](Unit& unit) { return std::find(list.begin(), list.end(), &unit) != list.end(); });
 }
 
 void Units::process_field_change(const std::string& id, const std::string& field) {

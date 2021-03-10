@@ -23,7 +23,7 @@ Texture::Texture(const fs::path& path) {
 	BinaryReader reader = hierarchy.open_file(new_path);
 	uint8_t* image_data;
 
-	if (new_path.extension() == ".blp") {
+	if (new_path.extension() == ".blp" || new_path.extension() == ".BLP") {
 		image_data = blp::load(reader, width, height, channels);
 	} else {
 		image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);

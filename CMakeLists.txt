@@ -81,6 +81,12 @@ if(WIN32)
 	#target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF TRACY_ENABLE)
 	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 	target_link_options(HiveWE PUBLIC /PROFILE)
+
+	add_custom_command(
+        TARGET HiveWE POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                "$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/bin/qscintilla2_qt5d.dll"
+                "${CMAKE_CURRENT_BINARY_DIR}/qscintilla2_qt5d.dll")
 endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)

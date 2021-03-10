@@ -290,15 +290,6 @@ void StaticMesh::render_opaque_hd() const {
 	}
 }
 
-//bool unshaded = j.shading_flags & 0x1;
-//bool environment_map = j.shading_flags & 0x2;
-//bool unknown1 = j.shading_flags & 0x4;
-//bool unknown2 = j.shading_flags & 0x8;
-//bool two_sided = j.shading_flags & 0x10;
-//bool unfogged = j.shading_flags & 0x20;
-//bool no_depth_test = j.shading_flags & 0x30;
-//bool no_depth_set = j.shading_flags & 0x40;
-
 void StaticMesh::render_transparent_sd(int instance_id) const {
 	if (!has_mesh) {
 		return;

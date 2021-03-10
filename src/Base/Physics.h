@@ -32,7 +32,6 @@ struct Physics {
 	btCollisionDispatcher* dispatcher;
 	btSequentialImpulseConstraintSolver* solver;
 	btDiscreteDynamicsWorld* dynamicsWorld;
-
 	
 	PhysicsDebugDraw* draw;
 	
