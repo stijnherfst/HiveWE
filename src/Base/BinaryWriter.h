@@ -4,13 +4,21 @@ class BinaryWriter {
 public:
 	std::vector<uint8_t> buffer;
 
-	template<typename T>
-	void write(const T value) {
-		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
+	template <typename T = void, typename U>
+	void write(U value) {
+		static_assert(std::is_standard_layout<U>::value, "U must be of standard layout.");
 
-		T temp = static_cast<T>(value);
-		buffer.resize(buffer.size() + sizeof(T));
-		std::memcpy(buffer.data() + buffer.size() - sizeof(T), &temp, sizeof(T));
+		if constexpr (not std::is_void_v<T>) {
+			static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
+
+			T temp = static_cast<T>(value);
+			buffer.resize(buffer.size() + sizeof(T));
+			std::memcpy(buffer.data() + buffer.size() - sizeof(T), &temp, sizeof(T));
+		} else {
+			U temp = value;
+			buffer.resize(buffer.size() + sizeof(U));
+			std::memcpy(buffer.data() + buffer.size() - sizeof(U), &temp, sizeof(U));
+		}
 	}
 
 	/// Writes the string to the buffer (null terminated if the input string is null terminated)

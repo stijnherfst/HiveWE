@@ -6,7 +6,7 @@
 #include <functional>
 
 namespace mdx {
-	std::map<int, std::string> replacable_id_to_texture{
+	std::unordered_map<int, std::string> replacable_id_to_texture{
 		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.dds" },
 		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.dds" },
 		{ 11, "ReplaceableTextures/Cliff/Cliff0.dds" },
@@ -56,7 +56,7 @@ namespace mdx {
 
 	void Node::save(BinaryWriter& writer) const {
 		// Write temporary zero, remember location
-		int inclusive_index = writer.buffer.size();
+		size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
 		writer.write_c_string_padded(name, 80);
