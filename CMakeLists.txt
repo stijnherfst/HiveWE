@@ -1,10 +1,9 @@
 if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
-			CACHE STRING "")
+	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 endif ()
+
 if (DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
-	set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}"
-			CACHE STRING "")
+	set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif ()
 
 cmake_minimum_required(VERSION 3.13)
@@ -32,19 +31,29 @@ find_package(fmt CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
-	#tracy/TracyClient.cpp
  )
 
 add_subdirectory(src)
 
-target_include_directories(HiveWE PRIVATE ${JPEG_INCLUDE_DIR}})
-target_include_directories(HiveWE PRIVATE ${BULLET_INCLUDE_DIR})
-target_include_directories(HiveWE PRIVATE "src" "src/Base" "src/Brush" "src/File Formats" "src/Resources" "src/Resources/SkinnedMesh" "src/Menus" "src/Custom Widgets" "src/Models")
+target_include_directories(HiveWE PRIVATE 
+	"src" 
+	"src/Base" 
+	"src/Brush" 
+	"src/File Formats" 
+	"src/Resources" 
+	"src/Resources/SkinnedMesh" 
+	"src/Menus" 
+	"src/Custom Widgets" 
+	"src/Models"
+
+	${BULLET_INCLUDE_DIR}
+	${JPEG_INCLUDE_DIR}}
+)
 
 target_link_libraries(HiveWE
 	Qt5::Gui
 	Qt5::Widgets
-	glm
+	glm::glm
 	soil2
 	stormlib::stormlib
 	casclib
@@ -62,6 +71,7 @@ target_link_libraries(HiveWE
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because of casclib and stormlib
+	# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
 	target_link_libraries(HiveWE
 		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libqscintilla2_qt5.so"
 		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libturbojpeg.so"
@@ -69,24 +79,22 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because
 endif()
 
 if(WIN32)
-	if (CMAKE_BUILD_TYPE STREQUAL "Release")
+	# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 		target_link_libraries(HiveWE
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/qscintilla2_qt5.lib")
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/turbojpegd.lib"
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
 	else()
 		target_link_libraries(HiveWE
 			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
+			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/qscintilla2_qt5.lib")
 	endif()
-	#target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF TRACY_ENABLE)
-	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
-	target_link_options(HiveWE PUBLIC /PROFILE)
 
-	add_custom_command(
-        TARGET HiveWE POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                "$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/bin/qscintilla2_qt5d.dll"
-                "${CMAKE_CURRENT_BINARY_DIR}/qscintilla2_qt5d.dll")
+	# _HAS_DEPRECATED_RESULT_OF is because of abseil using deprecated functionality. Last checked at 10-03-2021
+	# _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING is because of abseil using deprecated functionality. Last checked at 10-03-2021
+	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
+
+	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)
