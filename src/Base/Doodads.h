@@ -47,6 +47,7 @@ struct SpecialDoodad {
 	std::string id;
 	int variation;
 	glm::vec3 position;
+	glm::vec3 old_position;
 
 	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
@@ -81,6 +82,8 @@ public:
 	void update_doodad_pathing(const std::vector<Doodad*>& target_doodads);
 	void update_doodad_pathing(const std::vector<Doodad>& target_doodads);
 	void update_doodad_pathing(const QRectF& area);
+
+	void update_special_doodad_pathing(const QRectF& area);
 
 	void process_doodad_field_change(const std::string& id, const std::string& field);
 	void process_destructible_field_change(const std::string& id, const std::string& field);

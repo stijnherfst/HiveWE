@@ -68,7 +68,7 @@ QVariant AbilityTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()]);
 			} else {
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", item->id));
+				return QAbstractProxyModel::data(index, role).toString() + " " + sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("editorsuffix")), role).toString();
 			}
 		default:
 			return BaseTreeModel::data(index, role);

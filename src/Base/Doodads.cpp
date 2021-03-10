@@ -20,7 +20,7 @@ void Doodad::update() {
 		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
 		max_roll = doodads_slk.data("maxroll", id);
-		base_scale = glm::vec3(doodads_slk.data<int>("defscale", id));
+		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
@@ -119,6 +119,7 @@ bool Doodads::load() {
 		i.id = reader.read_string(4);
 		i.variation = reader.read<uint32_t>();
 		i.position = glm::ivec3(reader.read<glm::ivec2>(), 0);
+		i.old_position = i.position;
 	}
 
 	return true;
@@ -162,7 +163,7 @@ void Doodads::save() const {
 	for (auto&& i : special_doodads) {
 		writer.write_string(i.id);
 		writer.write<uint32_t>(i.variation);
-		writer.write<glm::ivec2>(glm::ivec2(i.position.x, i.position.y));
+		writer.write<glm::ivec2>(glm::ivec2(i.old_position.x, i.old_position.y));
 	}
 
 	hierarchy.map_file_write("war3map.doo", writer.buffer);
@@ -184,17 +185,33 @@ void Doodads::create() {
 	}
 
 	for (auto&& i : special_doodads) {
-		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
-		i.matrix = glm::translate(i.matrix, i.position);
-		i.matrix = glm::scale(i.matrix, { 1.f / 128.f, 1.f / 128.f, 1.f / 128.f });
-		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
-
 		i.mesh = get_mesh(i.id, i.variation);
 		const std::string pathing_texture_path = doodads_slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+			i.position += glm::vec3(glm::vec2(i.pathing->width / 8.f, i.pathing->height / 8.f), 0.f);
 		}
+
+		i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y);
+
+		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
+		i.matrix = glm::translate(i.matrix, i.position);
+		i.matrix = glm::scale(i.matrix, { 1.f / 128.f, 1.f / 128.f, 1.f / 128.f });
+		i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
 	}
+
+	// Blit doodad pathing
+	for (const auto& i : doodads) {
+		if (!i.pathing) {
+			continue;
+		}
+
+		map->pathing_map.blit_pathing_texture(i.position, glm::degrees(i.angle) + 90, i.pathing);
+	}
+	map->pathing_map.upload_dynamic_pathing();
+
+	// Update terrain exists
+	update_special_doodad_pathing(QRect(0, 0, map->terrain.width, map->terrain.height));
 }
 
 void Doodads::render() {
@@ -300,9 +317,48 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 	map->pathing_map.upload_dynamic_pathing();
 }
 
+void Doodads::update_special_doodad_pathing(const QRectF& area) {
+	QRectF new_area = area.adjusted(-6.f, -6.f, 6.f, 6.f);
+	new_area = new_area.intersected({ 0, 0, static_cast<float>(map->terrain.width), static_cast<float>(map->terrain.height) });
+
+	for (int i = new_area.left(); i < new_area.right(); i++) {
+		for (int j = new_area.top(); j < new_area.bottom(); j++) {
+			map->terrain.corners[i][j].special_doodad = false;
+		}
+	}
+
+	new_area = area.adjusted(-6, -6, 6, 6);
+
+	for (const auto& i : special_doodads) {
+		if (!new_area.contains(i.position.x, i.position.y)) {
+			continue;
+		}
+
+		if (!i.pathing) {
+			continue;
+		}
+
+		for (int j = 0; j < i.pathing->width / 4; j++) {
+			for (int k = 0; k < i.pathing->height / 4; k++) {
+				const int x = i.position.x - i.pathing->width / 8.f + j;
+				const int y = i.position.y - i.pathing->height / 8.f + k;
+
+				if (x < 0 || y < 0 || x >= map->terrain.width || y >= map->terrain.height) {
+					continue;
+				}
+
+				map->terrain.corners[x][y].special_doodad = true;
+			}
+		}
+	}
+
+	map->terrain.update_ground_exists(area.toRect());
+}
+
 void Doodads::process_doodad_field_change(const std::string& id, const std::string& field) {
 	if (field == "file" || field == "numvar") {
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
+		// ToDo just use the numvar field from the SLKs
 		for (int i = 0; i < 20; i++) {
 			if (id_to_mesh.contains(id + std::to_string(i))) {
 				id_to_mesh.erase(id_to_mesh.find(id));
@@ -328,6 +384,7 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 void Doodads::process_destructible_field_change(const std::string& id, const std::string& field) {
 	if (field == "file" || field == "numvar") {
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
+		// ToDo just use the numvar field from the SLKs
 		for (int i = 0; i < 20; i++) {
 			if (id_to_mesh.contains(id + std::to_string(i))) {
 				id_to_mesh.erase(id_to_mesh.find(id + std::to_string(i)));
