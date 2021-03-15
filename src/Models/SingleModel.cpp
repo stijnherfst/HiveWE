@@ -12,7 +12,7 @@
 #include <QCheckBox>
 #include <QListWidget>
 #include <QPushButton>
-#include <QtreeView>
+#include <QTreeView>
 
 #include "UnitSelector.h"
 #include "GenericSelectorList.h"

@@ -1,4 +1,6 @@
 .vs
+.vscode
 *.j
 backups
+build
 logs
