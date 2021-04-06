@@ -5,6 +5,7 @@ layout (binding = 2) uniform usampler2D pathing_map_static;
 
 layout (location = 1) uniform bool show_pathing_map_static;
 layout (location = 2) uniform bool show_lighting;
+layout (location = 3) uniform vec3 light_direction;
 
 layout (location = 0) in vec3 UV;
 layout (location = 1) in vec3 Normal;
@@ -16,10 +17,12 @@ void main() {
 	color = texture(cliff_textures, UV);
 
 	if (show_lighting) {
-		vec3 light_direction = vec3(-0.3, -0.3, 0.25);
-		light_direction = normalize(light_direction);
+		// vec3 light_direction = vec3(-0.3, -0.3, 0.25);
+		// light_direction = normalize(light_direction);
 
-		color.rgb *= clamp(dot(Normal, light_direction) + 0.45, 0, 1);
+		// color.rgb *= clamp(dot(Normal, light_direction), 0, 1);
+
+		color.rgb *= (dot(-light_direction, Normal) + 1.f) * 0.5f;
 	}
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);

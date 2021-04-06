@@ -36,8 +36,7 @@ public:
 
 // String functions
 std::string string_replaced(const std::string& source, const std::string& from, const std::string& to);
-std::vector<std::string> split(const std::string& string, char delimiter);
-std::vector<std::string_view> splitSV(std::string_view str, char delimiter);
+
 std::string to_lowercase_copy(const std::string_view& string);
 void to_lowercase(std::string& string);
 

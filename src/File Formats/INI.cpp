@@ -3,6 +3,8 @@
 #include "Hierarchy.h"
 #include "Utilities.h"
 
+#include <absl/strings/str_split.h>
+
 namespace ini {
 	INI::INI(const fs::path& path) {
 		load(path);
@@ -47,7 +49,11 @@ namespace ini {
 					continue;
 				}
 
-				auto parts = split(std::string(value), ',');
+				std::vector<std::string> parts = absl::StrSplit(value, "\",\"");
+				if (parts.size() == 1) {
+					parts = absl::StrSplit(value, ',');
+				}
+
 				// Strip off quotes at the front/back
 				for (auto&& i : parts) {
 					if (i.size() < 2) {

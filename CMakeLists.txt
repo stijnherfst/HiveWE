@@ -66,6 +66,7 @@ target_link_libraries(HiveWE
 	BulletCollision
 	LinearMath
 	absl::flat_hash_map
+	absl::flat_hash_set
 	fmt::fmt
 	fmt::fmt-header-only
 )

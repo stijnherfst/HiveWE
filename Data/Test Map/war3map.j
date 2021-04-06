@@ -1,13 +1,3 @@
-globals
-    // Generated
-trigger gg_trg_Melee_Initialization= null
-
-
-//JASSHelper struct globals:
-
-endglobals
-
-
 //===========================================================================
 // 
 // Just another Warcraft III map
@@ -24,6 +14,10 @@ endglobals
 //*
 //***************************************************************************
 
+globals
+    // Generated
+    trigger                 gg_trg_Melee_Initialization = null
+endglobals
 
 function InitGlobals takes nothing returns nothing
 endfunction
@@ -42,14 +36,14 @@ endfunction
 
 //===========================================================================
 function CreateUnitsForPlayer0 takes nothing returns nothing
-    local player p= Player(0)
+    local player p = Player(0)
     local unit u
     local integer unitID
     local trigger t
     local real life
 
-    set u=BlzCreateUnitWithSkin(p, 'hfoo', - 230.2, - 301.5, 255.934, 'hfoo')
-    set u=BlzCreateUnitWithSkin(p, 'hpea', - 129.6, - 283.6, 233.324, 'hpea')
+    set u = BlzCreateUnitWithSkin( p, 'hfoo', -230.2, -301.5, 255.934, 'hfoo' )
+    set u = BlzCreateUnitWithSkin( p, 'hpea', -129.6, -283.6, 233.324, 'hpea' )
 endfunction
 
 //===========================================================================
@@ -58,13 +52,13 @@ endfunction
 
 //===========================================================================
 function CreatePlayerUnits takes nothing returns nothing
-    call CreateUnitsForPlayer0()
+    call CreateUnitsForPlayer0(  )
 endfunction
 
 //===========================================================================
 function CreateAllUnits takes nothing returns nothing
-    call CreatePlayerBuildings()
-    call CreateUnitsForPlayer0() // INLINED!!
+    call CreatePlayerBuildings(  )
+    call CreatePlayerUnits(  )
 endfunction
 
 //***************************************************************************
@@ -79,30 +73,30 @@ endfunction
 // Default melee game initialization for all players
 //===========================================================================
 function Trig_Melee_Initialization_Actions takes nothing returns nothing
-    call MeleeStartingVisibility()
-    call MeleeStartingHeroLimit()
-    call MeleeGrantHeroItems()
-    call MeleeStartingResources()
-    call MeleeClearExcessUnits()
-    call MeleeStartingUnits()
-    call MeleeStartingAI()
-    call MeleeInitVictoryDefeat()
+    call MeleeStartingVisibility(  )
+    call MeleeStartingHeroLimit(  )
+    call MeleeGrantHeroItems(  )
+    call MeleeStartingResources(  )
+    call MeleeClearExcessUnits(  )
+    call MeleeStartingUnits(  )
+    call MeleeStartingAI(  )
+    call MeleeInitVictoryDefeat(  )
 endfunction
 
 //===========================================================================
 function InitTrig_Melee_Initialization takes nothing returns nothing
-    set gg_trg_Melee_Initialization=CreateTrigger()
-    call TriggerAddAction(gg_trg_Melee_Initialization, function Trig_Melee_Initialization_Actions)
+    set gg_trg_Melee_Initialization = CreateTrigger(  )
+    call TriggerAddAction( gg_trg_Melee_Initialization, function Trig_Melee_Initialization_Actions )
 endfunction
 
 //===========================================================================
 function InitCustomTriggers takes nothing returns nothing
-    call InitTrig_Melee_Initialization()
+    call InitTrig_Melee_Initialization(  )
 endfunction
 
 //===========================================================================
 function RunInitializationTriggers takes nothing returns nothing
-    call ConditionalTriggerExecute(gg_trg_Melee_Initialization)
+    call ConditionalTriggerExecute( gg_trg_Melee_Initialization )
 endfunction
 
 //***************************************************************************
@@ -114,17 +108,17 @@ endfunction
 function InitCustomPlayerSlots takes nothing returns nothing
 
     // Player 0
-    call SetPlayerStartLocation(Player(0), 0)
-    call SetPlayerColor(Player(0), ConvertPlayerColor(0))
-    call SetPlayerRacePreference(Player(0), RACE_PREF_HUMAN)
-    call SetPlayerRaceSelectable(Player(0), true)
-    call SetPlayerController(Player(0), MAP_CONTROL_USER)
+    call SetPlayerStartLocation( Player(0), 0 )
+    call SetPlayerColor( Player(0), ConvertPlayerColor(0) )
+    call SetPlayerRacePreference( Player(0), RACE_PREF_HUMAN )
+    call SetPlayerRaceSelectable( Player(0), true )
+    call SetPlayerController( Player(0), MAP_CONTROL_USER )
 
 endfunction
 
 function InitCustomTeams takes nothing returns nothing
     // Force: TRIGSTR_002
-    call SetPlayerTeam(Player(0), 0)
+    call SetPlayerTeam( Player(0), 0 )
 
 endfunction
 
@@ -136,19 +130,17 @@ endfunction
 
 //===========================================================================
 function main takes nothing returns nothing
-    call SetCameraBounds(- 3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), - 3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), - 3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), - 3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM))
-    call SetDayNightModels("Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdl", "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdl")
-    call NewSoundEnvironment("Default")
-    call SetAmbientDaySound("LordaeronSummerDay")
-    call SetAmbientNightSound("LordaeronSummerNight")
-    call SetMapMusic("Music", true, 0)
-    call CreateAllUnits()
-    call InitBlizzard()
-
-
-    call InitGlobals()
-    call InitTrig_Melee_Initialization() // INLINED!!
-    call ConditionalTriggerExecute(gg_trg_Melee_Initialization) // INLINED!!
+    call SetCameraBounds( -3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), -3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), -3328.0 + GetCameraMargin(CAMERA_MARGIN_LEFT), 3072.0 - GetCameraMargin(CAMERA_MARGIN_TOP), 3328.0 - GetCameraMargin(CAMERA_MARGIN_RIGHT), -3584.0 + GetCameraMargin(CAMERA_MARGIN_BOTTOM) )
+    call SetDayNightModels( "Environment\\DNC\\DNCLordaeron\\DNCLordaeronTerrain\\DNCLordaeronTerrain.mdl", "Environment\\DNC\\DNCLordaeron\\DNCLordaeronUnit\\DNCLordaeronUnit.mdl" )
+    call NewSoundEnvironment( "Default" )
+    call SetAmbientDaySound( "LordaeronSummerDay" )
+    call SetAmbientNightSound( "LordaeronSummerNight" )
+    call SetMapMusic( "Music", true, 0 )
+    call CreateAllUnits(  )
+    call InitBlizzard(  )
+    call InitGlobals(  )
+    call InitCustomTriggers(  )
+    call RunInitializationTriggers(  )
 
 endfunction
 
@@ -159,22 +151,17 @@ endfunction
 //***************************************************************************
 
 function config takes nothing returns nothing
-    call SetMapName("Just another Warcraft III map")
-    call SetMapDescription("Nondescript")
-    call SetPlayers(1)
-    call SetTeams(1)
-    call SetGamePlacement(MAP_PLACEMENT_USE_MAP_SETTINGS)
+    call SetMapName( "Just another Warcraft III map" )
+    call SetMapDescription( "Nondescript" )
+    call SetPlayers( 1 )
+    call SetTeams( 1 )
+    call SetGamePlacement( MAP_PLACEMENT_USE_MAP_SETTINGS )
 
-    call DefineStartLocation(0, - 1856.0, - 768.0)
+    call DefineStartLocation( 0, -1856.0, -768.0 )
 
     // Player setup
-    call InitCustomPlayerSlots()
-    call SetPlayerSlotAvailable(Player(0), MAP_CONTROL_USER)
-    call InitGenericPlayerSlots()
+    call InitCustomPlayerSlots(  )
+    call SetPlayerSlotAvailable( Player(0), MAP_CONTROL_USER )
+    call InitGenericPlayerSlots(  )
 endfunction
-
-
-
-
-//Struct method generated initializers/callers:
 

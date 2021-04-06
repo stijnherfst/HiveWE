@@ -19,7 +19,10 @@ void main() {
 	ivec2 size = textureSize(height_texture, 0);
 	float value = texture(height_texture, (vOffset.xy + vec2(vPosition.x + 192, vPosition.y + 64) / 128) / vec2(size)).r;
 
-	gl_Position = MVP * vec4(vPosition + vec3(vOffset.xy + vec2(1, 0), vOffset.z + value) * 128, 1);
+	// WC3 cliff meshes seem to be rotated by 90 degrees so we unrotate
+	const vec3 rotated_position = vec3(vPosition.y, -vPosition.x, vPosition.z);
+	gl_Position = MVP * vec4(rotated_position + vec3(vOffset.xy, vOffset.z + value) * 128, 1);
+
 	UV = vec3(vUV, vOffset.a);
 
 	ivec2 height_pos = ivec2(vOffset.xy + vec2(vPosition.x + 128, vPosition.y) / 128);

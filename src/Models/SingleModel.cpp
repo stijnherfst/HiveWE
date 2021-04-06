@@ -119,16 +119,6 @@ QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) c
 QModelIndex SingleModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
-//
-//void SingleModel::_q_sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-//	
-//
-//	//BaseTreeItem* item = static_cast<BaseTreeItem*>(topLeft.internalPointer());
-//
-//	//std::cout << "Source model row " << topLeft.row() << " column" << topLeft.column() << "\n";
-//	//std::cout << "Proxy model row " << mapFromSource(topLeft).row() << " column" << mapFromSource(topLeft).column() << "\n";
-//	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), {});
-//}
 
 void SingleModel::setSourceModel(QAbstractItemModel* sourceModel) {
 	QAbstractProxyModel::setSourceModel(sourceModel);
@@ -139,7 +129,6 @@ void SingleModel::setSourceModel(QAbstractItemModel* sourceModel) {
 		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);	
 	});
 }
-
 
 std::string SingleModel::getID() const {
 	return id;
@@ -167,12 +156,13 @@ void SingleModel::buildMapping() {
 		}
 
 		if (meta_slk->column_headers.contains("repeat") && meta_slk->data<int>("repeat", key) > 0) {
-
 			int iterations = 1;
 			if (slk->column_headers.contains("levels")) {
 				iterations = slk->data<int>("levels", id);
 			} else if (slk->column_headers.contains("numvar")) {
 				iterations = slk->data<int>("numvar", id);
+			} else if (slk->column_headers.contains("maxlevel")) {
+				iterations = slk->data<int>("maxlevel", id);
 			}
 
 			for (int i = 0; i < iterations; i++) {

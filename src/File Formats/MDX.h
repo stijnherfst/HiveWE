@@ -96,7 +96,7 @@ namespace mdx {
 
 	template <typename T>
 	struct Track {
-		uint32_t frame;
+		int32_t frame;
 		T value;
 		T inTan;
 		T outTan;

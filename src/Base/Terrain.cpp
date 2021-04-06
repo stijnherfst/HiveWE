@@ -390,6 +390,7 @@ void Terrain::render_ground() const {
 	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &MVP[0][0]);
 	gl->glUniform1i(1, map->render_pathing);
 	gl->glUniform1i(2, map->render_lighting);
+	gl->glUniform3fv(3, 1, &map->light_direction.x);
 
 	gl->glBindTextureUnit(0, cliff_texture_array);
 	gl->glBindTextureUnit(1, ground_height);
@@ -824,10 +825,10 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 				}
 
 				// Cliff model path
-				std::string file_name = ""s + char('A' + bottom_left.layer_height - base)
-					+ char('A' + top_left.layer_height - base)
+				std::string file_name = ""s + char('A' + top_left.layer_height - base)
 					+ char('A' + top_right.layer_height - base)
-					+ char('A' + bottom_right.layer_height - base);
+					+ char('A' + bottom_right.layer_height - base)
+					+ char('A' + bottom_left.layer_height - base);
 
 				if (file_name == "AAAA") {
 					continue;

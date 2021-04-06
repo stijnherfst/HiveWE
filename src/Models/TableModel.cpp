@@ -2,6 +2,8 @@
 #include "QIconResource.h"
 #include "HiveWE.h"
 
+#include <absl/strings/str_split.h>
+
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
 TableModel::TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractTableModel(parent), slk(slk), meta_slk(meta_slk) {
@@ -41,7 +43,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			if (type == "bool") {
 				return field_data == "1" ? "true" : "false";
 			} else if (type == "unitList") {
-				auto parts = split(field_data, ',');
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
 					if (!units_slk.row_headers.contains(parts[i])) {
@@ -54,7 +56,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				}
 				return result;
 			} else if (type == "abilityList" || type == "abilitySkinList") {
-				auto parts = split(field_data, ',');
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
 					if (!abilities_slk.row_headers.contains(parts[i])) {
@@ -67,7 +69,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				}
 				return result;
 			} else if (type == "upgradeList" ) {
-				auto parts = split(field_data, ',');
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
 					if (!upgrade_slk.row_headers.contains(parts[i])) {
@@ -80,7 +82,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				}
 				return result;
 			} else if (type == "targetList") {
-				auto parts = split(field_data, ',');
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				std::string result;
 				for (int i = 0; i < parts.size(); i++) {
 					for (const auto& [key, value] : unit_editor_data.section(type)) {

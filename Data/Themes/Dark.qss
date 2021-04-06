@@ -195,7 +195,7 @@ ads--CDockWidgetTab {
     border-style: solid;
     border-width: 0 px 0 0;
     padding: 0;
-
+    qproperty-iconSize: 23px;
 }
 
 ads--CDockWidgetTab[activeTab="true"] {

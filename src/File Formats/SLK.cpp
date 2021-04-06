@@ -5,6 +5,8 @@
 #include <string_view>
 #include <charconv>
 #include <random>
+#include <absl/container/flat_hash_set.h>
+
 
 using namespace std::literals::string_literals;
 
@@ -144,11 +146,39 @@ namespace slk {
 			base_data[id].insert(properties.begin(), properties.end());
 		}
 	}
+	
+	absl::flat_hash_set<std::string> repeated_fields = {
+		"area",
+		"art",
+		"buffid",
+		"cast",
+		"cool",
+		"cost",
+		"data",
+		"dur",
+		"editorsuffix",
+		"efctid",
+		"herodur",
+		"hotkey",
+		"name",
+		"requires",
+		"requiresamount"
+		"rng",
+		"targs",
+		"tip",
+		"ubertip",
+		"unitid",
+		"untip",
+		"unubertip",
+		"vertb",
+		"vertg",
+		"vertr",
+	};
 
 	/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
 	/// If an unknown section key is encountered then that section is skipped
 	/// If an unknown column key is encountered then the column is added
-	void SLK::merge(const ini::INI& ini) {
+	void SLK::merge(const ini::INI& ini, const SLK& meta_slk) {
 		for (const auto& [section_key, section_value] : ini.ini_data) {
 			if (!base_data.contains(section_key)) {
 				continue;
@@ -163,13 +193,33 @@ namespace slk {
 
 				// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
 				// This means we have to manually split these into the correct column
-				if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos") && column_headers.contains(key_lower + "2")) {
+				if (value.size() > 1 && (
+					key_lower == "missilearc" 
+					|| key_lower == "missileart" 
+					|| key_lower == "missilehoming" 
+					|| key_lower == "missilespeed" 
+					|| key_lower == "buttonpos" 
+					|| key_lower == "unbuttonpos" 
+					|| key_lower == "researchbuttonpos") && column_headers.contains(key_lower + "2")) {
+
 					base_data[section_key][key_lower] = value[0];
 					base_data[section_key][key_lower + "2"] = value[1];
 					continue;
 				}
 
-				if (value.size() > 1 && (key_lower == "vertr" || key_lower == "vertg" || key_lower == "vertb")) {
+				auto b = repeated_fields.contains(key_lower);
+				if (value.size() > 1 && repeated_fields.contains(key_lower)) {
+					for (int i = 0; i < value.size(); i++) {
+						const std::string new_key = key_lower + std::to_string(i + 1);
+						if (!column_headers.contains(new_key)) {
+							add_column(new_key);
+						}
+						base_data[section_key][new_key] = value[i];
+					}
+					continue;
+				}
+
+				/*if (value.size() > 1 && (key_lower == "vertr" || key_lower == "vertg" || key_lower == "vertb")) {
 					for (int i = 0; i < value.size(); i++) {
 						const std::string new_key = key_lower + std::to_string(i + 1);
 						if (!column_headers.contains(new_key)) {
@@ -179,7 +229,7 @@ namespace slk {
 
 					}
 					continue;
-				}
+				}*/
 
 				std::string final_value;
 				for (int i = 0; i < value.size(); i++) {

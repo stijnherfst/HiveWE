@@ -54,31 +54,6 @@ std::string string_replaced(const std::string& source, const std::string& from, 
 	return new_string;
 }
 
-std::vector<std::string> split(const std::string& string, const char delimiter) {
-	std::vector<std::string> elems;
-	std::stringstream ss(string);
-
-	std::string item;
-	while (std::getline(ss, item, delimiter)) {
-		elems.push_back(item);
-	}
-	return elems;
-}
-
-std::vector<std::string_view> splitSV(std::string_view str, const char delimiter) {
-	std::vector<std::string_view> output;
-	output.reserve(str.size() / 2);
-
-	for (auto first = str.data(), second = str.data(), last = first + str.size(); second != last && first != last; first = second + 1) {
-		while (++second < last && *second != delimiter) {}
-		if (first != second) {
-			output.emplace_back(first, second - first);
-		}
-	}
-
-	return output;
-}
-
 std::string to_lowercase_copy(const std::string_view& string) {
 	std::string output(string);
 	std::transform(output.begin(), output.end(), output.begin(), [](unsigned char c) { return std::tolower(c); });

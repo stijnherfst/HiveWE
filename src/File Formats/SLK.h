@@ -31,6 +31,7 @@ namespace slk {
 		T data(std::string_view column_header, std::string_view row_header) const {
 			assert(to_lowercase_copy(column_header) == column_header);
 
+			// Todo, do find() directly as the .contains() and .at().at() do multiple lookups
 			if (shadow_data.contains(row_header) && shadow_data.at(row_header).contains(column_header)) {
 				if constexpr (std::is_same<T, std::string>()) {
 					return shadow_data.at(row_header).at(column_header);
@@ -41,6 +42,7 @@ namespace slk {
 				}
 			}
 
+			// Todo, do .find() directly as the .contains() and .at().at() do multiple lookups
 			if (hierarchy.hd && column_headers.contains(std::string(column_header) + ":hd")) {
 				std::string hd_data = data(std::string(column_header) + ":hd", row_header);
 				if (!hd_data.empty()) {
@@ -54,6 +56,7 @@ namespace slk {
 				}
 			}
 
+			// Todo, do find() directly as the .contains() and .at().at() do multiple lookups
 			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
 				if constexpr (std::is_same<T, std::string>()) {
 					return base_data.at(row_header).at(column_header);
@@ -95,7 +98,7 @@ namespace slk {
 		}
 
 		void merge(const SLK& slk);
-		void merge(const ini::INI& ini);
+		void merge(const ini::INI& ini, const SLK& meta_slk);
 		void substitute(const ini::INI& ini, const std::string& section);
 		void copy_row(const std::string_view row_header, const std::string_view new_row_header, bool copy_shadow_data);
 		void remove_row(const std::string_view row_header);
