@@ -1,9 +1,5 @@
 #pragma once
 
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 #include "TriggerStrings.h"
 #include "Triggers.h"
 #include "MapInfo.h"
@@ -21,6 +17,10 @@ namespace fs = std::filesystem;
 #include "Brush.h"
 #include "StaticMesh.h"
 #include "Physics.h"
+
+#include <filesystem> // Filesystem include at the bottom due to QTBUG-73263
+
+namespace fs = std::filesystem;
 
 class Map : public QObject {
 	Q_OBJECT

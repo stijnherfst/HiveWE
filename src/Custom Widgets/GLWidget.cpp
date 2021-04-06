@@ -102,27 +102,25 @@ void GLWidget::initializeGL() {
 void GLWidget::resizeGL(const int w, const int h) {
 	gl->glViewport(0, 0, w, h);
 
-	const double delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
+	const double delta = elapsed_timer.elapsed();
 	camera->aspect_ratio = double(w) / h;
 
 	if (!map || !map->loaded) {
 		return;
 	}
-	camera->update(delta);
+	camera->update(delta/1000);
 	map->render_manager.resize_framebuffers(w, h);
 }
 
 void GLWidget::update_scene() {
-	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
+	delta = elapsed_timer.elapsed();
 	elapsed_timer.start();
 
 	update();
 	if (map) {
-		map->update(delta, width(), height());
-		QTimer::singleShot(std::max(0.0, 16.0 - delta), this, &GLWidget::update_scene);
-	} else {
-		QTimer::singleShot(std::max(0.0, 16.0), this, &GLWidget::update_scene);
+		map->update(delta/1000, width(), height());
 	}
+	QTimer::singleShot(16.67 - std::clamp(delta, 0.1, 16.0), this, &GLWidget::update_scene);
 }
 
 void GLWidget::paintGL() {

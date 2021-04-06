@@ -1,4 +1,5 @@
 #pragma once
+#include <cstring>
 
 class BinaryWriter {
 public:
