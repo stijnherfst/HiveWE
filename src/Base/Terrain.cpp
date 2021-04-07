@@ -386,8 +386,7 @@ void Terrain::render_ground() const {
 	cliff_shader->use();
 
 	// WC3 models are 128x too large
-	glm::mat4 MVP = glm::scale(camera->projection_view, glm::vec3(1.f / 128.f));
-	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &MVP[0][0]);
+	gl->glUniformMatrix4fv(0, 1, GL_FALSE, &camera->projection_view[0][0]);
 	gl->glUniform1i(1, map->render_pathing);
 	gl->glUniform1i(2, map->render_lighting);
 	gl->glUniform3fv(3, 1, &map->light_direction.x);

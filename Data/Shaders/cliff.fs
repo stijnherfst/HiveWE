@@ -17,11 +17,6 @@ void main() {
 	color = texture(cliff_textures, UV);
 
 	if (show_lighting) {
-		// vec3 light_direction = vec3(-0.3, -0.3, 0.25);
-		// light_direction = normalize(light_direction);
-
-		// color.rgb *= clamp(dot(Normal, light_direction), 0, 1);
-
 		color.rgb *= (dot(-light_direction, Normal) + 1.f) * 0.5f;
 	}
 
