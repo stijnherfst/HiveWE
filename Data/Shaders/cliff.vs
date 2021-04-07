@@ -18,7 +18,7 @@ void main() {
 	const vec3 rotated_world_position = vec3(vPosition.y, -vPosition.x, vPosition.z) / 128.f + vOffset.xyz;
 
 	const ivec2 size = textureSize(height_texture, 0);
-	const float height = texture(height_texture, rotated_world_position.xy / vec2(size)).r;
+	const float height = texture(height_texture, (rotated_world_position.xy + 0.5f) / vec2(size)).r;
 
 	const ivec2 height_pos = ivec2(rotated_world_position.xy);
 	const ivec3 off = ivec3(1, 1, 0);
