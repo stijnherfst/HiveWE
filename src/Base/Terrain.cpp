@@ -770,74 +770,106 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 			Corner& top_left = corners[i][j + 1];
 			Corner& top_right = corners[i + 1][j + 1];
 
-			if (bottom_left.cliff) {
-				const int base = std::min({ bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height });
+			// Vertical ramps
+			if (j < height - 2) {
+				const Corner& top_top_left = corners[i][j + 2];
+				const Corner& top_top_right = corners[i + 1][j + 2];
+				const int ae = std::min(bottom_left.layer_height, top_top_left.layer_height);
+				const int cf = std::min(bottom_right.layer_height, top_top_right.layer_height);
 
-				// First we check if we need a ramp. Ramp logic is mostly hacked together and not entirely correct.
-				const bool facing_down = top_left.layer_height >= bottom_left.layer_height && top_right.layer_height >= bottom_right.layer_height;
-				const bool facing_left = bottom_right.layer_height >= bottom_left.layer_height && top_right.layer_height >= top_left.layer_height;
+				if (top_left.layer_height == ae && top_right.layer_height == cf) {
+					int base = std::min(ae, cf);
+					if (bottom_left.ramp == top_left.ramp 
+						&& bottom_left.ramp == top_top_left.ramp 
+						&& bottom_right.ramp == top_right.ramp 
+						&& bottom_right.ramp == top_top_right.ramp 
+						&& bottom_left.ramp != bottom_right.ramp) {
 
-				if (!(facing_down && j == 0) && !(!facing_down && j >= height - 2) && !(facing_left && i == 0) && !(!facing_left && i >= width - 2)) {
-					const bool br = bottom_left.ramp != bottom_right.ramp && top_left.ramp != top_right.ramp && !corners[i + bottom_right.ramp][j + (facing_down ? -1 : 1)].cliff;
-					const bool bo = bottom_left.ramp != top_left.ramp && bottom_right.ramp != top_right.ramp && !corners[i + (facing_left ? -1 : 1)][j + top_left.ramp].cliff;
-
-					if (br || bo) {
 						std::string file_name = ""s
-							+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1))
-							+ char((top_left.ramp ? 'L' : 'A') + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
-							+ char((top_right.ramp ? 'L' : 'A') + (top_right.layer_height - base) * (top_right.ramp ? -4 : 1))
-							+ char((bottom_right.ramp ? 'L' : 'A') + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1));
+							+ char((top_top_left.ramp ? 'L' : 'A') + (top_top_left.layer_height - base) * (top_top_left.ramp ? -4 : 1))
+							+ char((top_top_right.ramp ? 'L' : 'A') + (top_top_right.layer_height - base) * (top_top_right.ramp ? -4 : 1))
+							+ char((bottom_right.ramp ? 'L' : 'A') + (bottom_right.layer_height - base) * (bottom_right.ramp ? -4 : 1))
+							+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1));
 
 						file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
 						if (hierarchy.file_exists(file_name)) {
-
 							if (!path_to_cliff.contains(file_name)) {
 								cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
 								path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
 							}
 
-							for (size_t ji = cliffs.size(); ji-- > 0;) {
-								glm::ivec3& pos = cliffs[ji];
-								if (pos.x == (i + bo * !facing_left) && pos.y == (j - br * facing_down)) {
-									cliffs.erase(cliffs.begin() + ji);
-									break;
-								}
-							}
-
-							cliffs.emplace_back(i + bo * !facing_left, j - br * facing_down, path_to_cliff[file_name]);
+							cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 							bottom_left.romp = true;
-
-							corners[i + (facing_left ? -1 : 1) * bo][j + (facing_down ? -1 : 1) * br].romp = true;
+							top_left.romp = true;
 
 							continue;
 						}
 					}
 				}
-
-				if (is_corner_ramp_entrance(i, j)) {
-					continue;
-				}
-
-				// Ramps move 1 right/down in some cases and thus their area is one bigger to the top and left.
-				if (!area.contains(i, j)) {
-					continue;
-				}
-
-				// Cliff model path
-				std::string file_name = ""s + char('A' + top_left.layer_height - base)
-					+ char('A' + top_right.layer_height - base)
-					+ char('A' + bottom_right.layer_height - base)
-					+ char('A' + bottom_left.layer_height - base);
-
-				if (file_name == "AAAA") {
-					continue;
-				}
-
-				// Clamp to within max variations
-				file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
-
-				cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 			}
+
+			// Horizontal ramps
+			if (i < width - 2) {
+				const Corner& bottom_right_right = corners[i + 2][j];
+				const Corner& top_right_right = corners[i + 2][j + 1];
+				const int ae = std::min(bottom_left.layer_height, bottom_right_right.layer_height);
+				const int bf = std::min(top_left.layer_height, top_right_right.layer_height);
+
+				if (bottom_right.layer_height == ae && top_right.layer_height == bf) {
+					int base = std::min(ae, bf);
+					if (bottom_left.ramp == bottom_right.ramp 
+						&& bottom_left.ramp == bottom_right_right.ramp 
+						&& top_left.ramp == top_right.ramp 
+						&& top_left.ramp == top_right_right.ramp 
+						&& bottom_left.ramp != top_left.ramp) {
+
+						std::string file_name = ""s
+							+ char((top_left.ramp ? 'L' : 'A') + (top_left.layer_height - base) * (top_left.ramp ? -4 : 1))
+							+ char((top_right_right.ramp ? 'L' : 'A') + (top_right_right.layer_height - base) * (top_right_right.ramp ? -4 : 1))
+							+ char((bottom_right_right.ramp ? 'L' : 'A') + (bottom_right_right.layer_height - base) * (bottom_right_right.ramp ? -4 : 1))
+							+ char((bottom_left.ramp ? 'L' : 'A') + (bottom_left.layer_height - base) * (bottom_left.ramp ? -4 : 1));
+
+						file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
+						if (hierarchy.file_exists(file_name)) {
+							if (!path_to_cliff.contains(file_name)) {
+								cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name));
+								path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
+							}
+
+							cliffs.emplace_back(i, j, path_to_cliff[file_name]);
+							bottom_left.romp = true;
+							bottom_right.romp = true;
+
+							continue;
+						}
+					}
+				}
+			}
+
+			if (!bottom_left.cliff || bottom_left.romp) {
+				continue;
+			}
+
+			if (is_corner_ramp_entrance(i, j)) {
+				continue;
+			}
+
+			const int base = std::min({bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height});
+
+			// Cliff model path
+			std::string file_name = ""s + char('A' + top_left.layer_height - base)
+				+ char('A' + top_right.layer_height - base)
+				+ char('A' + bottom_right.layer_height - base)
+				+ char('A' + bottom_left.layer_height - base);
+
+			if (file_name == "AAAA") {
+				continue;
+			}
+
+			// Clamp to within max variations
+			file_name += std::to_string(std::clamp(bottom_left.cliff_variation, 0, cliff_variations[file_name]));
+
+			cliffs.emplace_back(i, j, path_to_cliff[file_name]);
 		}
 	}
 

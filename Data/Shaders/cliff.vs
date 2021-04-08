@@ -32,5 +32,7 @@ void main() {
 
 	pathing_map_uv = rotated_world_position.xy * 4;
 	UV = vec3(vUV, vOffset.a);
-	Normal = terrain_normal;
+
+	const vec3 rotated_normal = vec3(vNormal.y, -vNormal.x, vNormal.z);
+	Normal = normalize(vec3(rotated_normal.xy + terrain_normal.xy, rotated_normal.z * terrain_normal.z));
 }
