@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 	format.setStencilBufferSize(8);
 	format.setVersion(4, 5);
 	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setSwapInterval(0);
 	//format.setColorSpace(QSurfaceFormat::sRGBColorSpace);
 	QSurfaceFormat::setDefaultFormat(format);
 

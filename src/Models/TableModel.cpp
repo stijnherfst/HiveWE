@@ -7,9 +7,9 @@
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
 TableModel::TableModel(slk::SLK* slk, slk::SLK* meta_slk, QObject* parent) : QAbstractTableModel(parent), slk(slk), meta_slk(meta_slk) {
-	for (const auto& [key, index] : meta_slk->row_headers) {
+	/*for (const auto& [key, index] : meta_slk->row_headers) {
 		meta_field_to_key.emplace(to_lowercase_copy(meta_slk->data("field", key)), key);
-	}
+	}*/
 
 	invalid_icon = resource_manager.load<QIconResource>("ReplaceableTextures/WorldEditUI/DoodadPlaceholder.dds");
 }
@@ -27,19 +27,19 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 		return {};
 	}
 
+	const std::string& id = slk->index_to_row.at(index.row());
+	const std::string& field = slk->index_to_column.at(index.column());
+	const std::string meta_id = fieldToMetaID(id, field);
+
 	switch (role) {
 		case Qt::DisplayRole: {
 			const std::string field_data = slk->data(index.column(), index.row());
-			const std::string field = slk->index_to_column.at(index.column());
-			if (!meta_field_to_key.contains(field)) {
-				return QString::fromStdString(field_data);
-			}
 
 			if (field_data.starts_with("TRIGSTR")) {
 				return QString::fromStdString(map->trigger_strings.string(field_data));
 			}
 
-			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
+			const std::string type = meta_slk->data("type", meta_id);
 			if (type == "bool") {
 				return field_data == "1" ? "true" : "false";
 			} else if (type == "unitList") {
@@ -120,12 +120,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 		case Qt::EditRole:
 			return QString::fromStdString(slk->data(index.column(), index.row()));
 		case Qt::CheckStateRole: {
-			const std::string field = slk->index_to_column.at(index.column());
-			if (!meta_field_to_key.contains(field)) {
-				return {};
-			}
-
-			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
+			const std::string type = meta_slk->data("type", meta_id);
 			if (type != "bool") {
 				return {};
 			}
@@ -133,12 +128,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			return (slk->data(index.column(), index.row()) == "1") ? Qt::Checked : Qt::Unchecked;
 		}
 		case Qt::DecorationRole:
-			const std::string field = slk->index_to_column.at(index.column());
-			if (!meta_field_to_key.contains(field)) {
-				return {};
-			}
-
-			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
+			const std::string type = meta_slk->data("type", meta_id);
 			if (type != "icon") {
 				return {};
 			}
@@ -176,14 +166,10 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
 			slk->set_shadow_data(index.column(), index.row(), value.toString().toStdString());
 			emit dataChanged(index, index, { Qt::DisplayRole, Qt::EditRole, Qt::DecorationRole });
 			return true;
-		case Qt::CheckStateRole:
-		{
-			const std::string field = slk->index_to_column.at(index.column());
-			if (!meta_field_to_key.contains(field)) {
-				return {};
-			}
-
-			const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
+		case Qt::CheckStateRole: {
+			const std::string& id = slk->index_to_row.at(index.row());
+			const std::string& field = slk->index_to_column.at(index.column());
+			const std::string type = meta_slk->data("type", fieldToMetaID(id, field));
 			if (type != "bool") {
 				return false;
 			}
@@ -216,12 +202,11 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const {
 
 	Qt::ItemFlags flags = QAbstractTableModel::flags(index);
 
-	const std::string field = slk->index_to_column.at(index.column());
-	if (meta_field_to_key.contains(field)) {
-		const std::string type = meta_slk->data("type", meta_field_to_key.at(field));
-		if (type == "bool") {
-			flags |= Qt::ItemIsUserCheckable;
-		}
+	const std::string& id = slk->index_to_row.at(index.row());
+	const std::string& field = slk->index_to_column.at(index.column());
+	const std::string type = meta_slk->data("type", fieldToMetaID(id, field));
+	if (type == "bool") {
+		flags |= Qt::ItemIsUserCheckable;
 	}
 
 	if (!(flags & Qt::ItemIsUserCheckable)) {
@@ -244,4 +229,19 @@ void TableModel::deleteRow(const std::string_view row_header) {
 
 	slk->remove_row(row_header);
 	endRemoveRows();
+}
+
+std::string TableModel::fieldToMetaID(const std::string& id, const std::string& field) const {
+	if (meta_slk->meta_map.contains(field)) {
+		return meta_slk->meta_map.at(field);
+	}
+
+	const size_t nr_position = field.find_first_of("0123456789");
+	const std::string new_field = field.substr(0, nr_position);
+	
+	if (meta_slk->meta_map.contains(new_field)) {
+		return meta_slk->meta_map.at(new_field);
+	}
+
+	return meta_slk->meta_map.at(new_field + id);
 }

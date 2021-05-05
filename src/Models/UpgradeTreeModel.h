@@ -16,6 +16,10 @@ class UpgradeTreeModel : public BaseTreeModel {
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override;
 
+
+	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
+
+
 public:
 	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
 	explicit UpgradeTreeModel(QObject* parent = nullptr);

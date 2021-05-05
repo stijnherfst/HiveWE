@@ -151,6 +151,11 @@ void SingleModel::buildMapping() {
 		}
 
 		std::string field_name = to_lowercase_copy(meta_slk->data("field", key));
+
+		if (field_name.starts_with("requires")) {
+			puts("s");
+		}
+
 		if (meta_slk->column_headers.contains("data") && meta_slk->data<int>("data", key) > 0) {
 			field_name += static_cast<char>('a' + (meta_slk->data<int>("data", key) - 1));
 		}
@@ -166,7 +171,18 @@ void SingleModel::buildMapping() {
 			}
 
 			for (int i = 0; i < iterations; i++) {
-				std::string new_field_name = field_name + std::to_string(i + 1);
+
+				std::string new_field_name;
+				if (meta_slk->column_headers.contains("appendindex") && meta_slk->data<int>("appendindex", key) > 0) {
+					if (i == 0) {
+						new_field_name = field_name;
+					} else {
+						new_field_name = field_name + std::to_string(i);
+					}
+				} else {
+					new_field_name = field_name + std::to_string(i + 1);
+				}
+
 
 				// We add a virtual column if it does not exist in the base table
 				if (!slk->column_headers.contains(new_field_name)) {

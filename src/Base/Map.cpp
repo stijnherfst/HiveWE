@@ -37,6 +37,8 @@ void Map::load(const fs::path& path) {
 
 	units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
 	units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	units_meta_slk.build_meta_map();
+
 	unit_editor_data = ini::INI("UI/UnitEditorData.txt");
 	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 	// Have to substitute twice since some of the keys refer to other keys in the same file
@@ -77,6 +79,7 @@ void Map::load(const fs::path& path) {
 	abilities_meta_slk.set_shadow_data("field", "abpy", "buttonpos2");
 	abilities_meta_slk.set_shadow_data("field", "auby", "unbuttonpos2");
 	abilities_meta_slk.set_shadow_data("field", "arpy", "researchbuttonpos2");
+	abilities_meta_slk.build_meta_map();
 
 	abilities_slk.merge(ini::INI("Units/AbilitySkin.txt"), abilities_meta_slk);
 	abilities_slk.merge(ini::INI("Units/AbilitySkinStrings.txt"), abilities_meta_slk);
@@ -102,6 +105,7 @@ void Map::load(const fs::path& path) {
 	items_slk = slk::SLK("Units/ItemData.slk");
 	items_meta_slk = slk::SLK("Data/Warcraft/ItemMetaData.slk", true);
 	items_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	items_meta_slk.build_meta_map();
 
 	items_slk.merge(ini::INI("Units/ItemSkin.txt"), items_meta_slk);
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"), items_meta_slk);
@@ -112,6 +116,7 @@ void Map::load(const fs::path& path) {
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
 	doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
 	doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	doodads_meta_slk.build_meta_map();
 
 	doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
 	doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
@@ -123,6 +128,7 @@ void Map::load(const fs::path& path) {
 
 	destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 	destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	destructibles_meta_slk.build_meta_map();
 
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"), destructibles_meta_slk);
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
@@ -131,10 +137,11 @@ void Map::load(const fs::path& path) {
 	upgrade_slk = slk::SLK("Units/UpgradeData.slk");
 	upgrade_meta_slk = slk::SLK("Units/UpgradeMetaData.slk");
 	upgrade_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
-	
+
 	// Patch the SLKs
 	upgrade_slk.add_column("buttonpos2");
 	upgrade_meta_slk.set_shadow_data("field", "gbpy", "buttonpos2");
+	upgrade_meta_slk.build_meta_map();
 
 	upgrade_slk.merge(ini::INI("Units/AbilitySkin.txt"), upgrade_meta_slk);
 	upgrade_slk.merge(ini::INI("Units/UpgradeSkin.txt"), upgrade_meta_slk);
@@ -157,6 +164,7 @@ void Map::load(const fs::path& path) {
 	buff_slk = slk::SLK("Units/AbilityBuffData.slk");
 	buff_meta_slk = slk::SLK("Units/AbilityBuffMetaData.slk");
 	buff_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
+	buff_meta_slk.build_meta_map();
 
 	buff_slk.merge(ini::INI("Units/AbilitySkin.txt"), buff_meta_slk);
 	buff_slk.merge(ini::INI("Units/AbilitySkinStrings.txt"), buff_meta_slk);

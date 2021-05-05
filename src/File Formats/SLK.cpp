@@ -6,7 +6,8 @@
 #include <charconv>
 #include <random>
 #include <absl/container/flat_hash_set.h>
-
+#include <absl/strings/str_split.h>
+#include <absl/strings/str_join.h>
 
 using namespace std::literals::string_literals;
 
@@ -128,6 +129,33 @@ namespace slk {
 			}
 		}
 	}
+	void SLK::build_meta_map() {
+		// Check if we are a meta_slk
+		if (!column_headers.contains("field")) {
+			return;
+		}
+
+		for (const auto& [header, row] : row_headers) {
+			std::string field = to_lowercase_copy(data("field", header));
+
+			const int repeat = data<int>("data", header);
+			if (repeat > 0) {
+				field += 'A' + (repeat - 1);
+			}
+			if (column_headers.contains("usespecific")) {
+				std::vector<std::string> parts = absl::StrSplit(data("usespecific", header), ",");
+				if (!parts.empty()) {
+					for (const auto& i : parts) {
+						meta_map.emplace(field, header + i);
+					}
+				} else {
+					meta_map.emplace(field, header);
+				}
+			} else {
+				meta_map.emplace(field, header);
+			}
+		}
+	}
 
 	// Merges the base data of the files
 	// Shadow data is not merged
@@ -146,34 +174,6 @@ namespace slk {
 			base_data[id].insert(properties.begin(), properties.end());
 		}
 	}
-	
-	absl::flat_hash_set<std::string> repeated_fields = {
-		"area",
-		"art",
-		"buffid",
-		"cast",
-		"cool",
-		"cost",
-		"data",
-		"dur",
-		"editorsuffix",
-		"efctid",
-		"herodur",
-		"hotkey",
-		"name",
-		"requires",
-		"requiresamount"
-		"rng",
-		"targs",
-		"tip",
-		"ubertip",
-		"unitid",
-		"untip",
-		"unubertip",
-		"vertb",
-		"vertg",
-		"vertr",
-	};
 
 	/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
 	/// If an unknown section key is encountered then that section is skipped
@@ -206,9 +206,48 @@ namespace slk {
 					base_data[section_key][key_lower + "2"] = value[1];
 					continue;
 				}
+				
+				const std::string key_lower_stripped = key_lower.substr(0, key_lower.find_first_of(':'));
 
-				auto b = repeated_fields.contains(key_lower);
-				if (value.size() > 1 && repeated_fields.contains(key_lower)) {
+				if (key_lower_stripped.starts_with("requires")) {
+					puts("s");
+				}
+
+				std::string id;
+				if (meta_slk.meta_map.contains(key_lower_stripped)) {
+					id = meta_slk.meta_map.at(key_lower_stripped);
+				} else if (meta_slk.meta_map.contains(key_lower_stripped + section_key)) {
+					id = meta_slk.meta_map.at(key_lower_stripped + section_key);
+				} else {
+					size_t nr_position = key_lower_stripped.find_first_of("0123456789");
+					std::string without_numbers = key_lower_stripped.substr(0, nr_position);
+
+					if (meta_slk.meta_map.contains(without_numbers)) {
+						std::cout << "Thingyboi meta map key: " << key_lower << "\n";
+						id = meta_slk.meta_map.at(without_numbers);
+					} else {
+						std::cout << "Missing meta map key: " << key_lower << "\n";
+						continue;
+					}
+				}
+
+				if (section_key == "Rhme") {
+					if (key_lower_stripped == "requires" || key_lower_stripped == "requires1" || key_lower_stripped == "requires2") {
+						puts("s");
+					}
+				}
+
+
+				//if (meta_slk.column_headers.contains("appendIndex") && meta_slk.data<int>("appendIndex", id) > 0) {
+				//		if (!column_headers.contains(key_lower)) {
+				//			add_column(key_lower);
+				//		}
+				//	}
+				//} else {
+				//}
+
+				const int repeat = meta_slk.data<int>("repeat", id);
+				if (repeat > 0 && !(meta_slk.column_headers.contains("appendindex") && meta_slk.data<int>("appendindex", id) > 0)) {
 					for (int i = 0; i < value.size(); i++) {
 						const std::string new_key = key_lower + std::to_string(i + 1);
 						if (!column_headers.contains(new_key)) {
@@ -218,18 +257,6 @@ namespace slk {
 					}
 					continue;
 				}
-
-				/*if (value.size() > 1 && (key_lower == "vertr" || key_lower == "vertg" || key_lower == "vertb")) {
-					for (int i = 0; i < value.size(); i++) {
-						const std::string new_key = key_lower + std::to_string(i + 1);
-						if (!column_headers.contains(new_key)) {
-							add_column(new_key);
-						}
-						base_data[section_key][new_key] = value[i];
-
-					}
-					continue;
-				}*/
 
 				std::string final_value;
 				for (int i = 0; i < value.size(); i++) {
@@ -239,6 +266,7 @@ namespace slk {
 						final_value += ',';
 					}
 				}
+				//absl::StrJoin(value, ",")
 
 				base_data[section_key][key_lower] = final_value;
 			}
