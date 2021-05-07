@@ -151,11 +151,6 @@ void SingleModel::buildMapping() {
 		}
 
 		std::string field_name = to_lowercase_copy(meta_slk->data("field", key));
-
-		if (field_name.starts_with("requires")) {
-			puts("s");
-		}
-
 		if (meta_slk->column_headers.contains("data") && meta_slk->data<int>("data", key) > 0) {
 			field_name += static_cast<char>('a' + (meta_slk->data<int>("data", key) - 1));
 		}

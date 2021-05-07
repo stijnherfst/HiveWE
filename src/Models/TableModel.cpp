@@ -55,7 +55,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 					}
 				}
 				return result;
-			} else if (type == "abilityList" || type == "abilitySkinList") {
+			} else if (type == "abilityList" || type == "abilitySkinList" || type == "heroAbilityList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
 				for (int i = 0; i < parts.size(); i++) {
@@ -81,6 +81,25 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 					}
 				}
 				return result;
+			} else if (type == "buffList") {
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					if (!buff_slk.row_headers.contains(parts[i])) {
+						continue;
+					}
+					QString editorname = buff_table->data(buff_table->index(buff_slk.row_headers.at(parts[i]), buff_slk.column_headers.at("editorname")), role).toString();
+					if (editorname.isEmpty()) {
+						result += buff_table->data(buff_table->index(buff_slk.row_headers.at(parts[i]), buff_slk.column_headers.at("bufftip")), role).toString();
+					} else {
+						result += editorname;
+					}
+
+					if (i < parts.size() - 1) {
+						result += ", ";
+					}
+				}
+				return result;
 			} else if (type == "targetList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				std::string result;
@@ -101,6 +120,20 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 				QString result_qstring = QString::fromStdString(result);
 				result_qstring.replace('&', "");
 				return result_qstring;
+			} else if (type == "tilesetList") {
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					if (parts[i] == "*") {
+						result += "All";
+					} else {
+						result += QString::fromStdString(world_edit_data.data("TileSets", std::string(parts[i])));
+					}
+					if (i < parts.size() - 1) {
+						result += ", ";
+					}
+				}
+				return result;
 			} else if (unit_editor_data.section_exists(type)) {
 				for (const auto& [key, value] : unit_editor_data.section(type)) {
 					if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
@@ -113,7 +146,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 						return displayText;
 					}
 				}
-			}
+			} 
 
 			return QString::fromStdString(field_data);
 		}

@@ -140,7 +140,7 @@ namespace slk {
 
 			const int repeat = data<int>("data", header);
 			if (repeat > 0) {
-				field += 'A' + (repeat - 1);
+				field += 'a' + (repeat - 1);
 			}
 			if (column_headers.contains("usespecific")) {
 				std::vector<std::string> parts = absl::StrSplit(data("usespecific", header), ",");
@@ -209,10 +209,6 @@ namespace slk {
 				
 				const std::string key_lower_stripped = key_lower.substr(0, key_lower.find_first_of(':'));
 
-				if (key_lower_stripped.starts_with("requires")) {
-					puts("s");
-				}
-
 				std::string id;
 				if (meta_slk.meta_map.contains(key_lower_stripped)) {
 					id = meta_slk.meta_map.at(key_lower_stripped);
@@ -231,21 +227,6 @@ namespace slk {
 					}
 				}
 
-				if (section_key == "Rhme") {
-					if (key_lower_stripped == "requires" || key_lower_stripped == "requires1" || key_lower_stripped == "requires2") {
-						puts("s");
-					}
-				}
-
-
-				//if (meta_slk.column_headers.contains("appendIndex") && meta_slk.data<int>("appendIndex", id) > 0) {
-				//		if (!column_headers.contains(key_lower)) {
-				//			add_column(key_lower);
-				//		}
-				//	}
-				//} else {
-				//}
-
 				const int repeat = meta_slk.data<int>("repeat", id);
 				if (repeat > 0 && !(meta_slk.column_headers.contains("appendindex") && meta_slk.data<int>("appendindex", id) > 0)) {
 					for (int i = 0; i < value.size(); i++) {
@@ -256,19 +237,14 @@ namespace slk {
 						base_data[section_key][new_key] = value[i];
 					}
 					continue;
-				}
-
-				std::string final_value;
-				for (int i = 0; i < value.size(); i++) {
-					final_value += value[i];
-
-					if (i < value.size() - 1) {
-						final_value += ',';
+				} else {
+					if (meta_slk.data<std::string>("type", id).ends_with("List")) {
+						base_data[section_key][key_lower] = absl::StrJoin(value, ",");
+					} else {
+						base_data[section_key][key_lower] = value[0];
+					
 					}
 				}
-				//absl::StrJoin(value, ",")
-
-				base_data[section_key][key_lower] = final_value;
 			}
 		}
 	}
