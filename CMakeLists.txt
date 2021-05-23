@@ -71,27 +71,21 @@ target_link_libraries(HiveWE
 	fmt::fmt-header-only
 )
 if(NOT DEFINED WIN32)
-target_link_libraries(HiveWE Qt5::X11Extras)
+	target_link_libraries(HiveWE Qt5::X11Extras)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux") #Sadly only dynamic triplets work because of casclib and stormlib
-	# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
-	target_link_libraries(HiveWE
-		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libqscintilla2_qt5.so"
-		"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/libturbojpeg.so"
-	)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux") # Sadly only dynamic triplets work because of casclib and stormlib
+	find_library(QSCINTILLA_LIBRARY qscintilla2_qt5)
+	find_library(TURBOJPEG_LIBRARY turbojpeg)
 endif()
 
 if(WIN32)
-	# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-		target_link_libraries(HiveWE
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/turbojpegd.lib"
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/debug/lib/qscintilla2_qt5d.lib")
+		find_library(QSCINTILLA_LIBRARY qscintilla2_qt5d)
+		find_library(TURBOJPEG_LIBRARY turbojpegd)
 	else()
-		target_link_libraries(HiveWE
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/turbojpeg.lib"
-			"$ENV{VCPKG_ROOT}/installed/${VCPKG_TARGET_TRIPLET}/lib/qscintilla2_qt5.lib")
+		find_library(QSCINTILLA_LIBRARY qscintilla2_qt5)
+		find_library(TURBOJPEG_LIBRARY turbojpeg)
 	endif()
 
 	# _HAS_DEPRECATED_RESULT_OF is because of abseil using deprecated functionality. Last checked at 10-03-2021
@@ -100,6 +94,12 @@ if(WIN32)
 
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
+
+# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
+target_link_libraries(HiveWE
+	${QSCINTILLA_LIBRARY}
+	${TURBOJPEG_LIBRARY}
+)
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
