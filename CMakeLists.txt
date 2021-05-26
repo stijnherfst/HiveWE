@@ -29,12 +29,38 @@ find_package(qtadvanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
-add_executable(HiveWE 
-	${QT_RESOURCES}
- )
-
 add_subdirectory(src)
 
+get_property(target_files GLOBAL PROPERTY "target_files" ) 
+
+file(GLOB_RECURSE project_headers src/*.h)
+file(GLOB_RECURSE project_headers2 "src/Menus/Custom Widgets/*.h")
+foreach(sgbd_file ${project_headers2})
+	message(${sgbd_file})
+	list(REMOVE_ITEM project_headers ${sgbd_file})
+endforeach(sgbd_file)
+
+list(APPEND target_files ${project_headers})
+
+list(REMOVE_DUPLICATES target_files)
+
+add_executable(HiveWE
+	${target_files}
+	${QT_RESOURCES}
+)
+
+set(src_path ${PROJECT_SOURCE_DIR})
+
+message(${src_path})
+
+foreach(sgbd_file ${target_files})
+	string(REGEX REPLACE ${src_path}/ ""  sgbd_fpath ${sgbd_file})
+	string(REGEX REPLACE  "\(.*\)/.*" \\1  sgbd_fpath2 ${sgbd_fpath})
+	string(REGEX REPLACE  "src" "source files"  sgbd_fpath3 ${sgbd_fpath2})
+	source_group(${sgbd_fpath3} FILES ${sgbd_file})
+endforeach(sgbd_file)
+
+ 
 target_include_directories(HiveWE PRIVATE 
 	"src" 
 	"src/Base" 

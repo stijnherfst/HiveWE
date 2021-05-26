@@ -1,4 +1,5 @@
-target_sources(HiveWE PRIVATE
+
+FILE(GLOB target_files
 	HiveWE.rc
 	HiveWE.cpp
 	main.cpp
@@ -101,3 +102,8 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/JassTokenizer.cpp"
 	"Custom Widgets/FlowLayout.cpp"
 )
+
+
+set_property(GLOBAL PROPERTY target_files ${target_files} )
+
+
