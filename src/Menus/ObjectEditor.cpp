@@ -48,6 +48,8 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs");
 
 	explorer_area->setCurrentIndex(0);
+	// Set initial sizes, the second size doesn't really matter with only 2 dock areas
+	dock_manager->setSplitterSizes(explorer_area, { 645, 9999 });
 
 	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(unitTreeFilter, units_table, index, Category::unit); });
 	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(itemTreeFilter, items_table, index, Category::item); });
@@ -56,6 +58,12 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(abilityTreeFilter, abilities_table, index, Category::ability); });
 	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
 	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index, Category::buff); });
+
+	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, [&]() {
+		auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
+		edit->setFocus();
+		edit->selectAll();
+	});
 
 	show();
 }
@@ -235,6 +243,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	});
 
 	QLineEdit* search = new QLineEdit;
+	search->setObjectName("search");
 	search->setPlaceholderText("Search " + name);
 	connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
 

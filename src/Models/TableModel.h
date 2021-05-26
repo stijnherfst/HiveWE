@@ -6,7 +6,7 @@
 #include "SLK.h"
 
 class TableModel : public QAbstractTableModel {
-	std::unordered_map<std::string, std::string> meta_field_to_key;
+	//std::unordered_map<std::string, std::string> meta_field_to_key;
 	std::shared_ptr<QIconResource> invalid_icon;
 
 public: 
@@ -26,4 +26,6 @@ public:
 
 	void copyRow(std::string_view row_header, std::string_view new_row_header);
 	void deleteRow(const std::string_view);
+
+	std::string fieldToMetaID(const std::string& id, const std::string& field) const;
 };

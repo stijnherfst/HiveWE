@@ -21,10 +21,14 @@ namespace slk {
 		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> base_data;
 		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> shadow_data;
 
+		// The following map is only used in meta SLKs and maps the field (+unit/ability ID) to a meta ID
+		absl::flat_hash_map<std::string, std::string> meta_map;
+
 		SLK() = default;
 		explicit SLK(const fs::path & path, bool local = false);
 
 		void load(const fs::path&, bool local = false);
+		void build_meta_map();
 
 		// column_header should be lowercase
 		template <typename T = std::string>
@@ -42,6 +46,18 @@ namespace slk {
 				}
 			}
 
+			//if (const auto found = column_headers.find(std::string(column_header) + ":hd"); found) {
+			//	if (!found->first.empty()) {
+			//		if constexpr (std::is_same<T, std::string>()) {
+			//			return found->first;
+			//		} else if constexpr (std::is_same<T, float>()) {
+			//			return std::stof(found->first);
+			//		} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+			//			return std::stoi(found->first);
+			//		}
+			//	}
+			//}
+
 			// Todo, do .find() directly as the .contains() and .at().at() do multiple lookups
 			if (hierarchy.hd && column_headers.contains(std::string(column_header) + ":hd")) {
 				std::string hd_data = data(std::string(column_header) + ":hd", row_header);
@@ -55,6 +71,19 @@ namespace slk {
 					}
 				}
 			}
+
+			/*if (const auto found = base_data.find(row_header); found) {
+				if (const auto found_sub = found->second.find(column_header); found_sub) {
+					if constexpr (std::is_same<T, std::string>()) {
+						return found_sub->second;
+					} else if constexpr (std::is_same<T, float>()) {
+						return std::stof(found_sub->second);
+					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+						return std::stoi(found_sub->second);
+					}
+				}
+			}*/
+
 
 			// Todo, do find() directly as the .contains() and .at().at() do multiple lookups
 			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
@@ -74,6 +103,7 @@ namespace slk {
 		// Gets the data by first checking the shadow table and then checking the base table
 		// Also does :hd tag resolution
 		// column_header should be lowercase
+		// If you have both an integer row index and the string row name then use the overload that takes string_view as it will do a index->name conversion internally
 		template <typename T = std::string>
 		T data(const std::string_view column_header, size_t row) const {
 			if (row >= index_to_row.size()) {

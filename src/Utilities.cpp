@@ -356,12 +356,14 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				}
 
 				if (meta_data_key.empty()) {
-					puts("s");
+					puts("Empty meta data key");
+					exit(0);
 				}
 			}
 
 			if (meta_data_key.empty()) {
-				puts("s");
+				puts("Empty meta data key");
+				exit(0);
 			}
 
 			sub_writer.write_string(meta_data_key);

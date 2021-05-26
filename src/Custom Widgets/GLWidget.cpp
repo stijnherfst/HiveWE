@@ -70,6 +70,9 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	setFocusPolicy(Qt::WheelFocus);
 }
 
+std::chrono::steady_clock::time_point begin;
+
+
 void GLWidget::initializeGL() {
 	gl = new QOpenGLFunctions_4_5_Core;
 	gl->initializeOpenGLFunctions();
@@ -95,32 +98,36 @@ void GLWidget::initializeGL() {
 
 	int extension_count;
 	gl->glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
-
+	
 	shapes.init();
+
+	begin = std::chrono::steady_clock::now();
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
 	gl->glViewport(0, 0, w, h);
 
-	const double delta = elapsed_timer.elapsed();
+	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	camera->aspect_ratio = double(w) / h;
 
 	if (!map || !map->loaded) {
 		return;
 	}
-	camera->update(delta/1000);
+	camera->update(delta);
 	map->render_manager.resize_framebuffers(w, h);
 }
 
+
 void GLWidget::update_scene() {
-	delta = elapsed_timer.elapsed();
+	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
 	update();
 	if (map) {
-		map->update(delta/1000, width(), height());
+		map->update(delta, width(), height());
 	}
-	QTimer::singleShot(16.67 - std::clamp(delta, 0.1, 16.0), this, &GLWidget::update_scene);
+
+	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), this, &GLWidget::update_scene);
 }
 
 void GLWidget::paintGL() {
@@ -147,7 +154,7 @@ void GLWidget::paintGL() {
 
 		// Rendering time
 		static std::vector<double> frametimes;
-		frametimes.push_back(delta * 1000.f);
+		frametimes.push_back(delta);
 		if (frametimes.size() > 60) {
 			frametimes.erase(frametimes.begin());
 		}

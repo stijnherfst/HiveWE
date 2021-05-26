@@ -33,6 +33,20 @@ UpgradeTreeModel::UpgradeTreeModel(QObject* parent) : BaseTreeModel(parent) {
 	}
 }
 
+QModelIndex UpgradeTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
+	if (!proxyIndex.isValid()) {
+		return {};
+	}
+
+	BaseTreeItem* item = static_cast<BaseTreeItem*>(proxyIndex.internalPointer());
+
+	if (item->baseCategory || item->subCategory) {
+		return {};
+	}
+
+	return createIndex(slk->row_headers.at(item->id), slk->column_headers.at("name1"), item);
+}
+
 BaseTreeItem* UpgradeTreeModel::getFolderParent(const std::string& id) const {
 	std::string race = upgrade_slk.data("race", id);
 	if (race.empty()) {
@@ -51,6 +65,11 @@ QVariant UpgradeTreeModel::data(const QModelIndex& index, int role) const {
 	BaseTreeItem* item = static_cast<BaseTreeItem*>(index.internalPointer());
 
 	switch (role) {
+		case Qt::DecorationRole:
+			if (item->baseCategory || item->subCategory) {
+				return folderIcon;
+			}
+			return sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("art1")), role);
 		case Qt::EditRole:
 		case Qt::DisplayRole:
 			if (item->baseCategory) {

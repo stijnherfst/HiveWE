@@ -35,22 +35,25 @@ namespace ini {
 			if (view.front() == '[') {
 				current_section = view.substr(1, view.find(']') - 1);
 			} else {
-				size_t found = view.find_first_of('=');
+				const size_t found = view.find_first_of('=');
 				if (found == std::string_view::npos) {
 					view.remove_prefix(eol + 1);
 					continue;
 				}
 
-				std::string_view key = view.substr(0, found);
-				std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
+				const std::string_view key = view.substr(0, found);
+				const std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
 
 				if (key.empty() || value.empty()) {
 					view.remove_prefix(eol + 1);
 					continue;
 				}
 
-				std::vector<std::string> parts = absl::StrSplit(value, "\",\"");
-				if (parts.size() == 1) {
+				std::vector<std::string> parts;
+
+				if (value.front() == '\"') {
+					parts = absl::StrSplit(value, "\",\"");
+				} else {
 					parts = absl::StrSplit(value, ',');
 				}
 

@@ -62,11 +62,11 @@ QVariant BuffTreeModel::data(const QModelIndex& index, int role) const {
 			} else if (item->subCategory) {
 				return QString::fromStdString(subCategories[index.row()]);
 			} else {
-				QString name = QAbstractProxyModel::data(index, role).toString();
-				if (name.isEmpty()) {
-					return QString::fromStdString(buff_slk.data("editorname", item->id) + " " + buff_slk.data("editorsuffix", item->id));
+				const std::string editorname = buff_slk.data("editorname", item->id);
+				if (editorname.empty()) {
+					return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(buff_slk.data("editorsuffix", item->id));
 				} else {
-					return name + " " + QString::fromStdString(buff_slk.data("editorsuffix", item->id));
+					return QString::fromStdString(editorname + " " + buff_slk.data("editorsuffix", item->id));
 				}
 			}
 		default:
