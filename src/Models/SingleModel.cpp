@@ -31,7 +31,7 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyMod
 		if (!index.isValid()) {
 			return;
 		}
-		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "numvar") {
+		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "maxlevel" || id_mapping[index.row()].field == "numvar") {
 			buildMapping();
 		}
 	});
@@ -521,6 +521,18 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 
 		dialog->show();
 		return dialog;
+	} else if (type == "doodadCategory") {
+		QComboBox* editor = new QComboBox(parent);
+		for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {
+			editor->addItem(QString::fromStdString(value[0]), QString::fromStdString(key));
+		}
+		return editor;
+	} else if (type == "destructableCategory") {
+		QComboBox* editor = new QComboBox(parent);
+		for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {
+			editor->addItem(QString::fromStdString(value[0]), QString::fromStdString(key));
+		}
+		return editor;
 	} else {
 		return new QLineEdit(parent);
 	}
@@ -585,6 +597,20 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "icon") {
 		IconView* list = editor->findChild<IconView*>("iconView");
 		list->setCurrentIconPath(model->data(index, Qt::EditRole).toString());
+	} else if (type == "doodadCategory") {
+		auto combo = static_cast<QComboBox*>(editor);
+		for (int i = 0; i < combo->count(); i++) {
+			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+				combo->setCurrentIndex(i);
+			}
+		}
+	} else if (type == "destructableCategory") {
+		auto combo = static_cast<QComboBox*>(editor);
+		for (int i = 0; i < combo->count(); i++) {
+			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+				combo->setCurrentIndex(i);
+			}
+		}
 	} else {
 		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
 	}
@@ -673,6 +699,12 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		IconView* list = editor->findChild<IconView*>("iconView");
 		
 		singlemodel->setData(index, list->currentIconPath());
+	} else if (type == "doodadCategory") {
+		auto combo = static_cast<QComboBox*>(editor);
+		singlemodel->setData(index, combo->currentData());
+	} else if (type == "destructableCategory") {
+		auto combo = static_cast<QComboBox*>(editor);
+		singlemodel->setData(index, combo->currentData());
 	} else {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
 	}

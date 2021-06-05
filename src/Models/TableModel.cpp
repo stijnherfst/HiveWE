@@ -146,7 +146,19 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 						return displayText;
 					}
 				}
-			} 
+			} else if (type == "doodadCategory") {
+				for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {
+					if (field_data == key) {
+						return QString::fromStdString(value[0]);
+					}
+				}
+			} else if (type == "destructableCategory") {
+				for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {
+					if (field_data == key) {
+						return QString::fromStdString(value[0]);
+					}
+				}
+			}
 
 			return QString::fromStdString(field_data);
 		}
