@@ -11,16 +11,13 @@ BaseTreeItem::~BaseTreeItem() {
 }
 
 void BaseTreeItem::appendChild(BaseTreeItem* item) {
+	item->parent = this;
 	children.append(item);
 }
 
 void BaseTreeItem::removeChild(BaseTreeItem* item) {
+	item->parent = nullptr;
 	children.removeOne(item);
-	delete item;
-}
-
-QVariant BaseTreeItem::data() const {
-	return "dab";
 }
 
 int BaseTreeItem::row() const {
@@ -75,10 +72,11 @@ QModelIndex BaseTreeModel::index(int row, int column, const QModelIndex& parent)
 
 	BaseTreeItem* parentItem;
 
-	if (!parent.isValid())
+	if (!parent.isValid()) {
 		parentItem = rootItem;
-	else
+	} else {
 		parentItem = static_cast<BaseTreeItem*>(parent.internalPointer());
+	}
 
 	BaseTreeItem* childItem = parentItem->children.at(row);
 	if (childItem)
@@ -87,8 +85,9 @@ QModelIndex BaseTreeModel::index(int row, int column, const QModelIndex& parent)
 }
 
 QModelIndex BaseTreeModel::parent(const QModelIndex& index) const {
-	if (!index.isValid())
-		return QModelIndex();
+	if (!index.isValid()) {
+		return {};
+	}
 
 	BaseTreeItem* childItem = static_cast<BaseTreeItem*>(index.internalPointer());
 	BaseTreeItem* parentItem = childItem->parent;
@@ -105,16 +104,9 @@ QModelIndex BaseTreeModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	}
 
 	const std::string id = slk->index_to_row.at(sourceIndex.row());
-
-	BaseTreeItem* parent_item = getFolderParent(id);
-	for (int i = 0; i < parent_item->children.size(); i++) {
-		BaseTreeItem* item = parent_item->children[i];
-		if (item->id == id) {
-			return createIndex(i, 0, item);
-		}
-	}
-
-	return {};
+	const BaseTreeItem* parent_item = items.at(id)->parent;
+	const int row = parent_item->children.indexOf(items.at(id));
+	return createIndex(row, 0, items.at(id));
 }
 
 QModelIndex BaseTreeModel::mapToSource(const QModelIndex& proxyIndex) const {
@@ -145,6 +137,7 @@ void BaseTreeModel::rowsInserted(const QModelIndex& parent, int first, int last)
 	beginInsertRows(createIndex(parent_item->row(), 0, parent_item), parent_item->children.size(), parent_item->children.size());
 	BaseTreeItem* item = new BaseTreeItem(parent_item);
 	item->id = id;
+	items.emplace(id, item);
 	endInsertRows();
 }
 
@@ -152,32 +145,62 @@ void BaseTreeModel::rowsRemoved(const QModelIndex& parent, int first, int last) 
 	assert(first == last);
 
 	const std::string id = slk->index_to_row.at(first);
-	BaseTreeItem* parent_item = getFolderParent(id);
+	BaseTreeItem* child = items.at(id);
 
-	int row = -1;
-	for (int i = 0; i < parent_item->children.size(); i++) {
-		if (parent_item->children[i]->id == id) {
-			row = i;
-			break;
-		}
-	}
+	BaseTreeItem* parent_item = child->parent;
+	const int row = parent_item->children.indexOf(child);
 
 	beginRemoveRows(createIndex(parent_item->row(), 0, parent_item), row, row);
-	parent_item->children.remove(row);
+	parent_item->removeChild(child);
+	items.erase(id);
+	delete child;
 	endRemoveRows();
 }
 
-void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
-	QAbstractProxyModel::setSourceModel(sourceModel);
+void BaseTreeModel::sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+	Q_ASSERT(topLeft.isValid());
+	Q_ASSERT(topLeft.model() == this->sourceModel());
+	Q_ASSERT(bottomRight.isValid());
+	Q_ASSERT(bottomRight.model() == this->sourceModel());
 
-	connect(sourceModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-		Q_ASSERT(topLeft.isValid() ? topLeft.model() == this->sourceModel() : true);
-		Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == this->sourceModel() : true);
-		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
-	});
+	// If the changed field is one of those that determine the item's location in the tree we have to move it
+	if (std::find(categoryChangeFields.begin(), categoryChangeFields.end(), slk->index_to_column[topLeft.column()]) != categoryChangeFields.end()) {
+		const std::string id = slk->index_to_row.at(topLeft.row());
+
+		BaseTreeItem* parent_item = items.at(id)->parent;
+		int row = parent_item->children.indexOf(items.at(id));
+
+		BaseTreeItem* new_parent = getFolderParent(id);
+		const QModelIndex source_parent = createIndex(parent_item->row(), 0, parent_item);
+		const QModelIndex target_parent = createIndex(new_parent->row(), 0, new_parent);
+
+		beginMoveRows(source_parent, row, row, target_parent, new_parent->children.size());
+		BaseTreeItem* child = parent_item->children[row];
+		parent_item->removeChild(child);
+		new_parent->appendChild(child);
+		endMoveRows();
+	}
+
+	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
+}
+
+
+void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
+	beginResetModel();
+
+	if (this->sourceModel()) {
+		disconnect(sourceModel, &QAbstractItemModel::rowsInserted, this, &BaseTreeModel::rowsInserted);
+		disconnect(sourceModel, &QAbstractItemModel::rowsAboutToBeRemoved, this, &BaseTreeModel::rowsRemoved);
+		disconnect(sourceModel, &QAbstractItemModel::dataChanged, this, &BaseTreeModel::sourceDataChanged);
+	}
+
+	QAbstractProxyModel::setSourceModel(sourceModel);
 
 	connect(sourceModel, &QAbstractItemModel::rowsInserted, this, &BaseTreeModel::rowsInserted);
 	connect(sourceModel, &QAbstractItemModel::rowsAboutToBeRemoved, this, &BaseTreeModel::rowsRemoved);
+	connect(sourceModel, &QAbstractItemModel::dataChanged, this, &BaseTreeModel::sourceDataChanged);
+
+	endResetModel();
 }
 
 QVariant BaseTreeModel::data(const QModelIndex& index, int role) const {

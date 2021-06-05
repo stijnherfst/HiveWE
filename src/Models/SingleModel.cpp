@@ -121,13 +121,17 @@ QModelIndex SingleModel::parent(const QModelIndex& child) const {
 }
 
 void SingleModel::setSourceModel(QAbstractItemModel* sourceModel) {
+	beginResetModel();
+
+	if (this->sourceModel()) {
+		disconnect(sourceModel, &QAbstractItemModel::dataChanged, this, &SingleModel::sourceDataChanged);
+	}
+
 	QAbstractProxyModel::setSourceModel(sourceModel);
 
-	connect(sourceModel, &QAbstractItemModel::dataChanged, [this](const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
-		Q_ASSERT(topLeft.isValid() ? topLeft.model() == this->sourceModel() : true);
-		Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == this->sourceModel() : true);
-		emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);	
-	});
+	connect(sourceModel, &QAbstractItemModel::dataChanged, this, &SingleModel::sourceDataChanged);
+
+	endResetModel();
 }
 
 std::string SingleModel::getID() const {
@@ -208,6 +212,13 @@ void SingleModel::buildMapping() {
 		return left_string < right_string;
 	});
 	endResetModel();
+}
+
+void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles) {
+	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
+	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
+
+	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
 }
 
 void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {

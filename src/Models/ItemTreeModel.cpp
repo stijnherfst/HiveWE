@@ -23,7 +23,10 @@ ItemTreeModel::ItemTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 		BaseTreeItem* item = new BaseTreeItem(parent_item);
 		item->id = id;
+		items.emplace(id, item);
 	}
+
+	categoryChangeFields = { "class" };
 }
 
 BaseTreeItem* ItemTreeModel::getFolderParent(const std::string& id) const {

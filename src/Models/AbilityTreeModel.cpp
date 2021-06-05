@@ -31,7 +31,10 @@ AbilityTreeModel::AbilityTreeModel(QObject* parent) : BaseTreeModel(parent) {
 
 		BaseTreeItem* item = new BaseTreeItem(parent_item);
 		item->id = id;
+		items.emplace(id, item);
 	}
+
+	categoryChangeFields = { "race", "hero", "item" };
 }
 
 BaseTreeItem* AbilityTreeModel::getFolderParent(const std::string& id) const {

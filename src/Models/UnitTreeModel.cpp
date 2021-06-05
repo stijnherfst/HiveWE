@@ -25,7 +25,10 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		const std::string id = units_slk.index_to_row.at(i); 
 		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
 		item->id = id;
+		items.emplace(id, item);	
 	}
+
+	categoryChangeFields = { "race", "isbldg", "special" };
 }
 
 BaseTreeItem* UnitTreeModel::getFolderParent(const std::string& id) const {

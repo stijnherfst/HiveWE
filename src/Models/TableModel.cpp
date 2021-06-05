@@ -197,6 +197,7 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
 	switch (role) {
 		case Qt::EditRole:
 			slk->set_shadow_data(index.column(), index.row(), value.toString().toStdString());
+			Q_ASSERT(index.model() == this);
 			emit dataChanged(index, index, { Qt::DisplayRole, Qt::EditRole, Qt::DecorationRole });
 			return true;
 		case Qt::CheckStateRole: {

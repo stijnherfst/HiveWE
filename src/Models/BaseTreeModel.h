@@ -13,17 +13,16 @@
 
 class BaseTreeItem {
 public:
+	QVector<BaseTreeItem*> children;
+	BaseTreeItem* parent = nullptr;
+
 	explicit BaseTreeItem(BaseTreeItem* parentItem = nullptr);
 	~BaseTreeItem();
 
 	void appendChild(BaseTreeItem* child);
 	void removeChild(BaseTreeItem* child);
 
-	QVariant data() const;
 	int row() const;
-
-	QVector<BaseTreeItem*> children;
-	BaseTreeItem* parent = nullptr;
 
 	std::string id;
 	bool baseCategory = false;
@@ -39,8 +38,15 @@ class BaseTreeModel : public QAbstractProxyModel {
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-	virtual void rowsInserted(const QModelIndex& parent, int first, int last);
-	virtual void rowsRemoved(const QModelIndex& parent, int first, int last);
+	void rowsInserted(const QModelIndex& parent, int first, int last);
+	void rowsRemoved(const QModelIndex& parent, int first, int last);
+	void sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
+
+
+
+	//BaseTreeItem* newItem(std::string id);
+	//void removeItem(std::string id);
+
 
 	virtual BaseTreeItem* getFolderParent(const std::string& id) const {
 		return nullptr;
@@ -60,9 +66,12 @@ class BaseTreeModel : public QAbstractProxyModel {
 
 	BaseTreeItem* rootItem;
 	QIcon folderIcon;
+
+	std::vector<std::string> categoryChangeFields;
 	
 protected:
 	slk::SLK* slk;
+	std::unordered_map<std::string, BaseTreeItem*> items;
 };
 
 

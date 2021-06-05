@@ -30,7 +30,10 @@ UpgradeTreeModel::UpgradeTreeModel(QObject* parent) : BaseTreeModel(parent) {
 
 		BaseTreeItem* item = new BaseTreeItem(parent_item);
 		item->id = id;
+		items.emplace(id, item);
 	}
+
+	categoryChangeFields = { "race" };
 }
 
 QModelIndex UpgradeTreeModel::mapToSource(const QModelIndex& proxyIndex) const {

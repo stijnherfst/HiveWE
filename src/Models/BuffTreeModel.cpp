@@ -31,7 +31,10 @@ BuffTreeModel::BuffTreeModel(QObject* parent) : BaseTreeModel(parent) {
 
 		BaseTreeItem* item = new BaseTreeItem(parent_item);
 		item->id = id;
+		items.emplace(id, item);
 	}
+
+	categoryChangeFields = { "race", "iseffect" };
 }
 
 BaseTreeItem* BuffTreeModel::getFolderParent(const std::string& id) const {

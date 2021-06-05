@@ -14,7 +14,10 @@ DestructibleTreeModel::DestructibleTreeModel(QObject* parent) : BaseTreeModel(pa
 	for (const auto& [id, index] : destructibles_slk.row_headers) {
 		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
 		item->id = id;
+		items.emplace(id, item);
 	}
+
+	categoryChangeFields = { "category" };
 }
 
 BaseTreeItem* DestructibleTreeModel::getFolderParent(const std::string& id) const {

@@ -50,6 +50,9 @@ private:
 
 	std::string id = "hpea";
 	std::vector<Mapping> id_mapping;
+
+	void sourceDataChanged(const QModelIndex& topLeft, const QModelIndex& bottomRight, const QVector<int>& roles);
+
 };
 
 // Provides row headers that have alternate colors

@@ -88,9 +88,12 @@ if(WIN32)
 		find_library(TURBOJPEG_LIBRARY turbojpeg)
 	endif()
 
-	# _HAS_DEPRECATED_RESULT_OF is because of abseil using deprecated functionality. Last checked at 10-03-2021
-	# _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING is because of abseil using deprecated functionality. Last checked at 10-03-2021
-	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE _HAS_DEPRECATED_RESULT_OF _SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
+	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
+
+	if (MSVC)
+		# Properly sets the __cplusplus macro to the newest version. Might not be needed anymore in vsNext. Last checked 25/05/2021
+		target_compile_options(HiveWE PUBLIC "/Zc:__cplusplus")
+	endif()
 
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
