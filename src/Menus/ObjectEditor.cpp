@@ -147,7 +147,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 			QLineEdit* id = new QLineEdit;
 			id->setPlaceholderText("Free ID");
-			id->setText(QString::fromStdString(table->slk->get_free_row_header(false)));
+			id->setText(QString::fromStdString(map->get_unique_id(false)));
 			id->setFont(QFont("consolas"));
 
 			QHBoxLayout* nameLayout = new QHBoxLayout;
@@ -189,7 +189,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				if (treeItem->baseCategory || treeItem->subCategory) {
 					return;
 				}
-				id->setText(QString::fromStdString(table->slk->get_free_row_header(!islower(treeItem->id.front()))));
+				id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
 			});
 
 			connect(id, &QLineEdit::textChanged, [buttonBox](const QString& text) {

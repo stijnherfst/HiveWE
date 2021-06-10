@@ -75,7 +75,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 					if (!upgrade_slk.row_headers.contains(parts[i])) {
 						continue;
 					}
-					result += upgrade_table->data(upgrade_table->index(upgrade_slk.row_headers.at(parts[i]), upgrade_slk.column_headers.at("name")), role).toString();
+					result += upgrade_table->data(upgrade_table->index(upgrade_slk.row_headers.at(parts[i]), upgrade_slk.column_headers.at("name1")), role).toString();
 					if (i < parts.size() - 1) {
 						result += ", ";
 					}
@@ -158,6 +158,23 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 						return QString::fromStdString(value[0]);
 					}
 				}
+			} else if (type == "techList") {
+				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
+				QString result;
+				for (int i = 0; i < parts.size(); i++) {
+					if (units_slk.row_headers.contains(parts[i])) {
+						result += units_table->data(units_table->index(units_slk.row_headers.at(parts[i]), units_slk.column_headers.at("name")), role).toString();
+					} else if (upgrade_slk.row_headers.contains(parts[i])) {
+						result += upgrade_table->data(upgrade_table->index(upgrade_slk.row_headers.at(parts[i]), upgrade_slk.column_headers.at("name1")), role).toString();
+					} else {
+						result += QString::fromStdString(std::string(parts[i]));
+					}
+					if (i < parts.size() - 1) {
+						result += ", ";
+					}
+				}
+
+				return result;
 			}
 
 			return QString::fromStdString(field_data);

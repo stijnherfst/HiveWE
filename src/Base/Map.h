@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
 class Map : public QObject {
 	Q_OBJECT
 
-public:
+  public:
 	bool loaded = false;
 
 	TriggerStrings trigger_strings;
@@ -68,4 +68,6 @@ public:
 	void render();
 
 	void resize(size_t width, size_t height);
+
+	std::string get_unique_id(bool first_uppercase);
 };

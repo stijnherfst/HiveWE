@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <execution>
+#include <random>
 
 #include <QMessageBox>
 #include <QOpenGLFunctions_4_5_Core>
@@ -15,6 +16,8 @@
 #include <fstream>
 #include <bullet/btBulletDynamicsCommon.h>
 #include <fmt/format.h>
+
+using namespace std::literals::string_literals;
 
 void Map::load(const fs::path& path) {
 	auto begin = std::chrono::steady_clock::now();
@@ -455,4 +458,27 @@ void Map::render() {
 void Map::resize(size_t width, size_t height) {
 	terrain.resize(width, height);
 	pathing_map.resize(width * 4, height * 4);
+}
+
+std::string Map::get_unique_id(bool first_uppercase) {
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_int_distribution<int> dist(0, 25);
+again:
+
+	std::string id = ""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
+
+	if (units_slk.row_headers.contains(id) 
+		|| items_slk.row_headers.contains(id) 
+		|| abilities_slk.row_headers.contains(id)
+		|| doodads_slk.row_headers.contains(id) 
+		|| destructibles_slk.row_headers.contains(id)
+		|| upgrade_slk.row_headers.contains(id)
+		|| buff_slk.row_headers.contains(id)) {
+		
+		std::cout << "Generated an existing ID: " << id << " what're the odds\n";
+		goto again;
+	}
+
+	return id;
 }
