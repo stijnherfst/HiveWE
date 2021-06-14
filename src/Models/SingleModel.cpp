@@ -368,7 +368,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		dialog->show();
 
 		return dialog;
-	} else if (type == "abilityList") {
+	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		dialog->resize(256, 360);
 		dialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -571,7 +571,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
 			list->addItem(item);
 		}
-	} else if (type == "abilityList") {
+	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 
 		auto parts = model->data(index, Qt::EditRole).toString().split(',', QString::SkipEmptyParts);
@@ -644,7 +644,7 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			result += item->data(Qt::StatusTipRole).toString();
 		}
 		model->setData(index, result, Qt::EditRole);
-	} else if (type == "abilityList") {
+	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		auto fd = dynamic_cast<QDialog*>(editor);
 		if (!fd || fd->result() == QDialog::Rejected) {
 			return;

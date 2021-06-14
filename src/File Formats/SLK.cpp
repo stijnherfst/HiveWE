@@ -219,10 +219,8 @@ namespace slk {
 					std::string without_numbers = key_lower_stripped.substr(0, nr_position);
 
 					if (meta_slk.meta_map.contains(without_numbers)) {
-						std::cout << "Thingyboi meta map key: " << key_lower << "\n";
 						id = meta_slk.meta_map.at(without_numbers);
 					} else {
-						std::cout << "Missing meta map key: " << key_lower << "\n";
 						continue;
 					}
 				}
