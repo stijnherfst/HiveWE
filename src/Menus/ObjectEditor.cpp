@@ -162,7 +162,6 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 			QLineEdit* search = new QLineEdit;
 			search->setPlaceholderText("Search " + name);
-			connect(search, &QLineEdit::textChanged, sub_filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
 
 			QTreeView* sub_view = new QTreeView;
 			sub_view->setModel(sub_filter);
@@ -179,6 +178,11 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			selectlayout->addWidget(search);
 			selectlayout->addWidget(sub_view);
 			selectlayout->addWidget(buttonBox);
+
+			connect(search, &QLineEdit::textChanged, [=](const QString& string) {
+				sub_filter->setFilterFixedString(string);
+				sub_view->expandAll();
+			});
 
 			connect(sub_view->selectionModel(), &QItemSelectionModel::currentChanged, [table, sub_filter, filter, id, nameEdit](const QModelIndex& current, const QModelIndex& previous) {
 				if (!current.isValid()) {
@@ -225,7 +229,13 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				select(indices.front());
 			});
 
+			connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), selectdialog), &QShortcut::activated, [=]() {
+				search->setFocus();
+				search->selectAll();
+			});
+
 			selectdialog->show();
+			search->setFocus();
 		});
 
 		connect(removeAction, &QAction::triggered, [table, treeModel, filter, view, selection]() {
@@ -245,7 +255,10 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	QLineEdit* search = new QLineEdit;
 	search->setObjectName("search");
 	search->setPlaceholderText("Search " + name);
-	connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+	connect(search, &QLineEdit::textChanged, [=](const QString& string) {
+		filter->setFilterFixedString(string);
+		view->expandAll();
+	});
 
 	QToolButton* hideDefault = new QToolButton;
 	hideDefault->setIcon(icon);
