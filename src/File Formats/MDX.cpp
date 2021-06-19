@@ -1,9 +1,9 @@
 #include "MDX.h"
 
 #include "Utilities.h"
-#include <iostream>
 #include <fstream>
 #include <functional>
+#include <fmt/format.h>
 
 namespace mdx {
 	std::unordered_map<int, std::string> replacable_id_to_texture{
@@ -49,7 +49,7 @@ namespace mdx {
 			} else if (tag == TrackTag::KGSC) {
 				KGSC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 			} else {
-				std::cout << "Unknown track tag\n";
+				fmt::print("Unknown track tag {}\n", tag);
 			}
 		}
 	}
@@ -195,7 +195,7 @@ namespace mdx {
 					} else if (tag == TrackTag::KFTC) {
 						layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 					} else {
-						std::cout << "Unknown track tag\n";
+						fmt::print("Unknown track tag {}\n", tag);
 					}
 				}
 
@@ -243,7 +243,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KGAC) {
 					animation.KGAC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 
@@ -313,7 +313,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KLAV) {
 					light.KLAV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 			lights.push_back(std::move(light));
@@ -344,7 +344,7 @@ namespace mdx {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				attachment.KATV = TrackHeader<float>(reader, unique_tracks++);
 				if (tag != TrackTag::KATV) {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 			attachments.push_back(std::move(attachment));
@@ -392,7 +392,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KPEV) {
 					emitter.KPEV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 			emitters1.push_back(std::move(emitter));
@@ -459,7 +459,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KP2V) {
 					emitter2.KP2V = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 			emitters2.push_back(std::move(emitter2));
@@ -501,7 +501,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KRVS) {
 					emitter.KRVS = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					std::cout << "Unknown track tag\n";
+					fmt::print("Unknown track tag {}\n", tag);
 				}
 			}
 			ribbons.push_back(std::move(emitter));
@@ -1261,7 +1261,7 @@ namespace mdx {
 	void MDX::load(BinaryReader& reader) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
-			std::cout << "The file's magic number is incorrect. Should be MDLX, is: " << magic_number << std::endl;
+			fmt::print("Incorrect file magic number. Should be MDLX, is {}\n", magic_number);
 			return;
 		}
 
@@ -1433,11 +1433,12 @@ namespace mdx {
 		// Compact node IDs
 		std::vector<int> IDs;
 		IDs.reserve(node_count);
-		forEachNode([&](mdx::Node& object) {
-			//if (object.id == -1) {
-			//	return;
-			//}
-			IDs.push_back(object.id);
+		forEachNode([&](mdx::Node& node) {
+			if (node.id == -1) {
+				fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
+				return;
+			}
+			IDs.push_back(node.id);
 		});
 
 		const int max_id = *std::max_element(IDs.begin(), IDs.end());
@@ -1446,13 +1447,14 @@ namespace mdx {
 			remapping[IDs[i]] = i;
 		}
 
-		forEachNode([&](mdx::Node& object) {
-			/*if (object.id == -1) {
+		forEachNode([&](mdx::Node& node) {
+			if (node.id == -1) {
+				fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
 				return;
-			}*/
-			object.id = remapping[object.id];
-			if (object.parent_id != -1) {
-				object.parent_id = remapping[object.parent_id];
+			}
+			node.id = remapping[node.id];
+			if (node.parent_id != -1) {
+				node.parent_id = remapping[node.parent_id];
 			}
 		});
 
@@ -1511,7 +1513,7 @@ namespace mdx {
 			glm::vec3 between = trackA.value + trackC.value * (static_cast<float>(diffAB) / total);
 			glm::vec3 diff = (trackB.value - between) / between * 100.f;
 			if (diff.x < 1.f && diff.y < 1.f && diff.z < 1.f) {
-				std::cout << "yeet\n";
+				fmt::print("yeet");
 			}
 		}
 	}

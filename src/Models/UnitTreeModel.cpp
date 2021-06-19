@@ -72,7 +72,7 @@ QVariant UnitTreeModel::data(const QModelIndex& index, int role) const {
 					}
 				}
 
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", item->id));
+				return QAbstractProxyModel::data(index, role).toString() + " " + sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("editorsuffix")), role).toString();
 			}
 		default:
 			return BaseTreeModel::data(index, role);

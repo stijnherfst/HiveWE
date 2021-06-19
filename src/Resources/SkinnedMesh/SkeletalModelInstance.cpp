@@ -18,21 +18,21 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 	// ToDo: for each camera: add camera source node to renderNodes
 	render_nodes.resize(node_count);
 	world_matrices.resize(node_count);
-	model->forEachNode([&](mdx::Node& object) {
+	model->forEachNode([&](mdx::Node& node) {
 		// Seen it happen with Emmitter1, is this an error in the model?
 		// ToDo purge (when adding a validation layer or just crashing)
-		if (object.id == -1) {
+		if (node.id == -1) {
 			return;
 		}
 
-		RenderNode renderNode = RenderNode(object, model->pivots[object.id]);
-		if (object.parent_id != -1) {
-			renderNode.parent = &render_nodes[object.parent_id];
+		RenderNode renderNode = RenderNode(node, model->pivots[node.id]);
+		if (node.parent_id != -1) {
+			renderNode.parent = &render_nodes[node.parent_id];
 		} else {
 			renderNode.parent = nullptr;
 		}
 
-		render_nodes[object.id] = renderNode;
+		render_nodes[node.id] = renderNode;
 	});
 
 	current_keyframes.resize(model->unique_tracks);

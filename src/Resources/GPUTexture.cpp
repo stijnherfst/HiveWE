@@ -34,7 +34,7 @@ GPUTexture::GPUTexture(const fs::path& path) {
 
 		gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
 		gl->glTextureStorage2D(id, log2(std::max(width, height)) + 1, GL_RGBA8, width, height);
-		gl->glTextureSubImage2D(id, 0, 0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, data);
+		gl->glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 		gl->glGenerateTextureMipmap(id);
 		delete data;
 	} else {

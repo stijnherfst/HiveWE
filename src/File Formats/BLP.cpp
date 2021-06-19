@@ -1,7 +1,7 @@
 #include "BLP.h"
 
-#include <iostream>
 #include <cmath>
+#include <fmt/format.h>
 
 #include <turbojpeg.h>
 
@@ -9,7 +9,7 @@ namespace blp {
 	uint8_t* load(BinaryReader& reader, int& width, int& height, int& channels) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "BLP1") {
-			std::cout << "Could not load file as it is not a BLP1 file. Maybe it is BLP0 or BLP2.\n";
+			fmt::print("Wrong magic number, should be BLP1, is {}\n", magic_number);
 			return nullptr;
 		}
 
@@ -40,7 +40,7 @@ namespace blp {
 			const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[0] - header_size, header_size + mipmap_sizes[0], data, width, 0, height, TJPF_CMYK, 0); // Actually BGRA
 
 			if (success == -1) {
-				std::cout << "Error loading JPEG data from blp: " << tjGetErrorStr() << std::endl;
+				fmt::print("Error loading JPEG data from BLP {}\n", tjGetErrorStr());
 			}
 			tjDestroy(handle);
 		} else if (content_type == 1) { // direct
@@ -78,6 +78,12 @@ namespace blp {
 				}
 			}
 		}
+
+		// Data is BGR(A) instead of RGB(A). While GPUs can natively load BGRA some of the code would have to deal with both RGBA and BGRA which is a pita
+		for (int i = 0; i < width * height; i++) {
+			std::swap(data[i * channels], data[i * channels + 2]);
+		}
+
 		return data;
 	}
 }

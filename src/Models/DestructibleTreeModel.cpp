@@ -39,7 +39,7 @@ QVariant DestructibleTreeModel::data(const QModelIndex& index, int role) const {
 			if (item->baseCategory) {
 				return QString::fromStdString(categories.at(rowToCategory[index.row()]).name);
 			} else {
-				return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", item->id));
+				return QAbstractProxyModel::data(index, role).toString() + " " + sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("editorsuffix")), role).toString();
 			}
 		case Qt::DecorationRole:
 			if (item->baseCategory || item->subCategory) {

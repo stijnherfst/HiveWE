@@ -75,7 +75,7 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	}
 
 	// If there is already one open for this item
-	if (auto found = dock_manager->findDockWidget(QString::number(static_cast<int>(category)) + QString::fromStdString(item->id)); found) {
+	if (auto found = dock_manager->findDockWidget(QString::fromStdString(item->id)); found) {
 		found->dockAreaWidget()->setCurrentDockWidget(found);
 		found->setFocus();
 		found->raise();
@@ -95,7 +95,7 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 	dock_tab->setWidget(view);
-	dock_tab->setObjectName(QString::number(static_cast<int>(category)) + QString::fromStdString(item->id));
+	dock_tab->setObjectName(QString::fromStdString(item->id));
 	dock_tab->setWindowTitle(model->data(index, Qt::DisplayRole).toString());
 	dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
 
@@ -121,7 +121,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	view->setUniformRowHeights(true);
 	view->expandAll();
 
-	connect(view, &QTreeView::customContextMenuRequested, [view, name, table, filter, treeModel, this](const QPoint& pos) {
+	connect(view, &QTreeView::customContextMenuRequested, [=, this](const QPoint& pos) {
 		QMenu menu;
 		QAction* addAction = menu.addAction("Add " + name);
 		QAction* removeAction = menu.addAction("Remove " + name);
@@ -136,7 +136,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			}
 		}
 		
-		connect(addAction, &QAction::triggered, [this, table, treeModel, name, view, filter, selection]() {
+		connect(addAction, &QAction::triggered, [=, this]() {
 			QDialog* selectdialog = new QDialog(this, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 			selectdialog->resize(300, 560);
 			selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -238,11 +238,16 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			search->setFocus();
 		});
 
-		connect(removeAction, &QAction::triggered, [table, treeModel, filter, view, selection]() {
+		connect(removeAction, &QAction::triggered, [=, this]() {
 			std::vector<std::string> ids_to_delete;
 			for (const auto& i : selection) {
 				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(i).internalPointer());
 				ids_to_delete.push_back(treeItem->id);
+
+				// Close any open dock widget
+				if (auto found = dock_manager->findDockWidget(QString::fromStdString(treeItem->id)); found) {
+					found->closeDockWidget();
+				}
 			}
 			for (const auto& i : ids_to_delete) {
 				table->deleteRow(i);
