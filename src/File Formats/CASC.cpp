@@ -40,8 +40,8 @@ namespace casc {
 		close();
 	}
 
-	void CASC::open(const fs::path& path, bool ptr) {
-		const bool opened = CascOpenStorage((path / (ptr ? ":w3t" : ":w3")).c_str(), CASC_LOCALE_ALL, &handle);
+	void CASC::open(const fs::path& path) {
+		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
 			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
 		}
