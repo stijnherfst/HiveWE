@@ -53,17 +53,28 @@
            </item>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QCheckBox" name="comments">
+         <item row="1" column="0">
+          <widget class="QLabel" name="typeLabel">
            <property name="text">
-            <string>Enable Comments</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Game Data</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
+          <widget class="QComboBox" name="flavour">
+           <item>
+            <property name="text">
+             <string>Retail</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PTR</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="1">
           <widget class="QCheckBox" name="hd">
            <property name="text">
             <string>Enable HD Mode</string>
@@ -73,12 +84,22 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="QCheckBox" name="teen">
            <property name="text">
             <string>Enable Teen Mode</string>
            </property>
           </widget>
+         </item>
+         <item row="4" column="1">
+           <widget class="QCheckBox" name="comments">
+             <property name="text">
+               <string>Enable Comments</string>
+             </property>
+             <property name="checked">
+               <bool>true</bool>
+             </property>
+           </widget>
          </item>
         </layout>
        </widget>
