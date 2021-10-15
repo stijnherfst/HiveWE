@@ -40,11 +40,13 @@ namespace casc {
 		close();
 	}
 
-	void CASC::open(const fs::path& path) {
+	bool CASC::open(const fs::path& path) {
+		if (handle != nullptr) close();
 		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
 			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
 		}
+		return opened;
 	}
 
 	File CASC::file_open(const fs::path& path) const {

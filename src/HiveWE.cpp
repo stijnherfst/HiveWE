@@ -39,7 +39,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "Warcraft III Launcher.exe")) {
+	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "Warcraft III Launcher.exe") || !hierarchy.open_casc(directory)) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
@@ -47,7 +47,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	}
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
-	hierarchy.open_casc(directory);
 
 	// Place common.j and blizzard.j in the data folder. Needed by JassHelper
 	BinaryReader common = hierarchy.open_file("scripts/common.j");
@@ -397,19 +396,16 @@ void HiveWE::moveEvent(QMoveEvent* event) {
 }
 
 void HiveWE::switch_warcraft() {
+	QSettings settings;
 	fs::path directory;
 	do {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "")
-			directory = hierarchy.warcraft_directory;
-	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "Warcraft III Launcher.exe"));
-	QSettings settings;
-	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
+			directory = settings.value("warcraftDirectory").toString().toStdString();
+	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "Warcraft III Launcher.exe") || (directory != hierarchy.warcraft_directory && !hierarchy.open_casc(directory)));
 
-	if (directory != hierarchy.warcraft_directory) {
-		hierarchy.game_data.close();
-		hierarchy.open_casc(directory);
-	}
+	if (directory != hierarchy.warcraft_directory)
+		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 }
 
 void HiveWE::switch_camera() {
