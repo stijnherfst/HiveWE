@@ -22,7 +22,7 @@
      <item>
       <widget class="QTabWidget" name="tabs">
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="usesScrollButtons">
         <bool>false</bool>
@@ -53,17 +53,28 @@
            </item>
           </widget>
          </item>
-         <item row="3" column="1">
-          <widget class="QCheckBox" name="comments">
+         <item row="1" column="0">
+          <widget class="QLabel" name="typeLabel">
            <property name="text">
-            <string>Enable Comments</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
+            <string>Game Data</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
+          <widget class="QComboBox" name="flavour">
+           <item>
+            <property name="text">
+             <string>Retail</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PTR</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="1">
           <widget class="QCheckBox" name="hd">
            <property name="text">
             <string>Enable HD Mode</string>
@@ -73,7 +84,7 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
+         <item row="3" column="1">
           <widget class="QCheckBox" name="teen">
            <property name="text">
             <string>Enable Teen Mode</string>
@@ -81,17 +92,14 @@
           </widget>
          </item>
          <item row="4" column="1">
-          <spacer name="verticalSpacer_3">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
+           <widget class="QCheckBox" name="comments">
+             <property name="text">
+               <string>Enable Comments</string>
+             </property>
+             <property name="checked">
+               <bool>true</bool>
+             </property>
+           </widget>
          </item>
         </layout>
        </widget>
@@ -137,7 +145,7 @@
            <item row="1" column="1">
             <widget class="QComboBox" name="diff">
              <property name="currentText">
-              <string>Easy</string>
+              <string>Normal</string>
              </property>
              <item>
               <property name="text">
@@ -288,19 +296,6 @@
             </widget>
            </item>
           </layout>
-         </item>
-         <item row="1" column="0">
-          <spacer name="verticalSpacer_2">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </widget>

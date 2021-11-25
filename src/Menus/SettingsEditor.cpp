@@ -19,8 +19,9 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 	: QDialog(parent) {
 	ui.setupUi(this);
 	QSettings settings;
-	ui.theme->setCurrentText(settings.value("theme").toString());
+	ui.theme->setCurrentText(settings.value("theme", "Dark").toString());
 	ui.comments->setChecked(settings.value("comments", "True").toString() != "False");
+	ui.flavour->setCurrentText(settings.value("flavour").toString());
 	ui.hd->setChecked(settings.value("hd", "True").toString() != "False");
 	ui.teen->setChecked(settings.value("teen", "False").toString() != "False");
 
@@ -66,6 +67,7 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 void SettingsEditor::save() const {
 	QSettings settings;
 	settings.setValue("theme", ui.theme->currentText());
+	settings.setValue("flavour", ui.flavour->currentText());
 	settings.setValue("comments", ui.comments->isChecked() ? "True" : "False");
 	settings.setValue("hd", ui.hd->isChecked() ? "True" : "False");
 	settings.setValue("teen", ui.teen->isChecked() ? "True" : "False");
