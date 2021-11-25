@@ -18,6 +18,7 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
+	std::cout << '0' + 2 << "\n";
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);

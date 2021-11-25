@@ -6,7 +6,7 @@ if (DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
 	set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif ()
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.19)
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -15,12 +15,9 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-set (DVCPKG_CHAINLOAD_TOOLCHAIN_FILE "C:/Qt/5.15.0/msvc2019_64")
 
-find_package(Qt5 REQUIRED Gui Widgets)
-if(NOT DEFINED WIN32)
-find_package(Qt5 REQUIRED X11Extras)
-endif()
+
+find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
@@ -33,7 +30,7 @@ find_package(fmt CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
- )
+)
 
 add_subdirectory(src)
 
@@ -52,13 +49,15 @@ target_include_directories(HiveWE PRIVATE
 	${JPEG_INCLUDE_DIR}}
 )
 
-target_link_libraries(HiveWE
-	Qt5::Gui
-	Qt5::Widgets
+target_link_libraries(HiveWE PRIVATE
+	Qt6::Gui
+	Qt6::Widgets
+	Qt6::OpenGL
+	Qt6::OpenGLWidgets
 	glm::glm
 	soil2
 	stormlib::stormlib
-	casclib
+	CascLib::casc
 	${JPEG_LIBRARIES}
 	ads::qtadvanceddocking
 	Bullet3Common
@@ -73,20 +72,17 @@ target_link_libraries(HiveWE
 	fmt::fmt-header-only
 )
 if(NOT DEFINED WIN32)
-	target_link_libraries(HiveWE Qt5::X11Extras)
+	target_link_libraries(HiveWE PRIVATE Qt5::X11Extras)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux") # Sadly only dynamic triplets work because of casclib and stormlib
-	find_library(QSCINTILLA_LIBRARY qscintilla2_qt5)
 	find_library(TURBOJPEG_LIBRARY turbojpeg)
 endif()
 
 if(WIN32)
 	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library(QSCINTILLA_LIBRARY qscintilla2_qt5d)
 		find_library(TURBOJPEG_LIBRARY turbojpegd)
 	else()
-		find_library(QSCINTILLA_LIBRARY qscintilla2_qt5)
 		find_library(TURBOJPEG_LIBRARY turbojpeg)
 	endif()
 
@@ -100,9 +96,8 @@ if(WIN32)
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
 
-# libjpeg-turbo and qscintilla provide incomplete targets and thus need manual linking
-target_link_libraries(HiveWE
-	${QSCINTILLA_LIBRARY}
+# libjpeg-turbo provides incomplete targets and thus need manual linking
+ target_link_libraries(HiveWE PRIVATE
 	${TURBOJPEG_LIBRARY}
 )
 

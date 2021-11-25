@@ -19,7 +19,7 @@ UnitSelector::UnitSelector(QWidget* parent) : QWidget(parent) {
 	units->setModel(filter_model);
 
 	QVBoxLayout* layout = new QVBoxLayout;
-	layout->setMargin(0);
+	layout->setContentsMargins(0, 0, 0, 0);
 	layout->addWidget(race);
 	layout->addWidget(search);
 	layout->addWidget(units);

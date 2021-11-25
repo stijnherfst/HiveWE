@@ -53,6 +53,8 @@ private:
 	QAction* group_height_average = new QAction("Average");
 	QAction* group_height_maximum = new QAction("Maximum");
 
+	QLabel* selection_name = new QLabel;
+
 	QShortcut* find_this;
 	QShortcut* find_parent;
 

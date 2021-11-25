@@ -64,6 +64,8 @@ class BaseTreeModel : public QAbstractProxyModel {
 
 	void setSourceModel(QAbstractItemModel* sourceModel) override;
 
+	QModelIndex getIdIndex(const std::string& id);
+
 	BaseTreeItem* rootItem;
 	QIcon folderIcon;
 

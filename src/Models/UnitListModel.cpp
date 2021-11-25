@@ -63,8 +63,8 @@ QModelIndex UnitListModel::parent(const QModelIndex& child) const {
 bool UnitListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
 	QModelIndex index0 = sourceModel()->index(sourceRow, 0);
 
-	if (!filterRegExp().isEmpty()) {
-		return sourceModel()->data(index0).toString().contains(filterRegExp());
+	if (!filterRegularExpression().pattern().isEmpty()) {
+		return sourceModel()->data(index0).toString().contains(filterRegularExpression());
 	} else {
 		return QString::fromStdString(units_slk.data(units_slk.column_headers.at("race"), sourceRow)) == filterRace;
 	}

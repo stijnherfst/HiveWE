@@ -3,6 +3,11 @@
 
 /******************************************************/
 /* QRibbon */
+
+QRibbon {
+	max-height: 121px;
+}
+
 QRibbon QWidget {
 	font: 8pt "Segoe UI";
 	color: white;
@@ -16,6 +21,7 @@ QRibbon::pane {
 	border-top: 1px solid rgb(38, 38, 38);
 	border-bottom: 1px solid rgb(38, 38, 38);
 	margin-top: -1;
+	margin-bottom: -0;
 }
 
 QRibbon QTabBar::tab { 
@@ -184,6 +190,13 @@ QRibbonButton QMenu::item {
 
 QRibbonButton QMenu::item:selected {
 	background-color: rgb(85, 85, 85);
+}
+
+QSmallRibbonButton {
+	height: 23;
+	max-height: 23;
+	qproperty-iconSize: 16px 16px;
+	qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
 }
 
 /******************************************************/

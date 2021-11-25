@@ -373,7 +373,7 @@ void DoodadBrush::place_clipboard() {
 		new_doodad.creation_number = ++Doodad::auto_increment;
 		glm::vec3 final_position;
 		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, i.position.z);
 		} else {
 			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
 		}
@@ -503,11 +503,14 @@ void DoodadBrush::render_clipboard() {
 
 		glm::vec3 final_position;
 		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, 0);
+			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, i.position.z);
 		} else {
 			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
 		}
-		final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+
+		if (!lock_doodad_z) {
+			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+		}
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, final_position);

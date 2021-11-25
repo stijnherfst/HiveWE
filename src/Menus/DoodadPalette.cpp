@@ -11,6 +11,7 @@
 #include "Selections.h"
 
 #include "TableModel.h"
+#include <ObjectEditor.h>
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -203,12 +204,28 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	height_layout->addRow("Absolute Height:", absolute_height);
 	height_layout->addRow("Relative Height:", relative_height);
 
+	QSmallRibbonButton* edit_in_oe = new QSmallRibbonButton;
+	edit_in_oe->setText("Edit in OE");
+	edit_in_oe->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
+
+	QSmallRibbonButton* select_in_palette = new QSmallRibbonButton;
+	select_in_palette->setText("Select in Palette");
+	select_in_palette->setToolTip("Or click the doodad with middle mouse button");
+	select_in_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
+
+	QVBoxLayout* info_layout = new QVBoxLayout;
+	info_layout->addWidget(selection_name);
+	info_layout->addWidget(edit_in_oe);
+	info_layout->addWidget(select_in_palette);
+
 	current_selection_section->addLayout(scaling_layout);
 	current_selection_section->addSpacing(5);
 	current_selection_section->addLayout(rotation_layout);
 	current_selection_section->addSpacing(5);
 	current_selection_section->addLayout(height_layout);
 	current_selection_section->addWidget(average_z);
+	current_selection_section->addSpacing(5);
+	current_selection_section->addLayout(info_layout);
 
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(placement_section);
@@ -284,6 +301,21 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(group_height_minimum, &QAction::triggered, this, &DoodadPalette::set_group_height_minimum);
 	connect(group_height_average, &QAction::triggered, this, &DoodadPalette::set_group_height_average);
 	connect(group_height_maximum, &QAction::triggered, this, &DoodadPalette::set_group_height_maximum);
+	
+	connect(edit_in_oe, &QSmallRibbonButton::clicked, [&]() {
+		bool created;
+		auto editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
+		const Doodad& doodad = *brush.selections.front();
+		editor->select_id(doodad.id);
+	});
+
+	//connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
+	//	const Doodad& doodad = *brush.selections.front();
+	//	ui.type
+	//	auto model = ui.doodads->selectionModel()->select(;
+	//	
+	//});
+
 
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
@@ -364,7 +396,7 @@ void DoodadPalette::deactivate(QRibbonTab* tab) {
 
 QString toString(float num) {
 	QString str = QString::number(num, 'f', 3);
-	str.remove(QRegExp("\\.?0+$"));
+	str.remove(QRegularExpression("\\.?0+$"));
 	return str;
 }
 
@@ -403,6 +435,19 @@ void DoodadPalette::update_selection_info() {
 		rotation->setText(same_angle ? toString(glm::degrees(doodad.angle)) : "Differing");
 		absolute_height->setText(same_angle ? toString(doodad.position.z) : "Differing");
 		relative_height->setText(same_angle ? toString(first_relative_height) : "Differing");
+
+		// Set the name
+		if (brush.selections.size() == 1) {
+			if (doodads_slk.row_headers.contains(doodad.id)) {
+				auto index = doodads_table->index(doodads_slk.row_headers.at(doodad.id), doodads_slk.column_headers.at("name"));
+				selection_name->setText(doodads_table->data(index).toString());
+			} else {
+				auto index = destructibles_table->index(destructibles_slk.row_headers.at(doodad.id), destructibles_slk.column_headers.at("name"));
+				selection_name->setText(destructibles_table->data(index).toString());
+			}
+		} else {
+			selection_name->setText("Various");
+		}
 	}
 }
 

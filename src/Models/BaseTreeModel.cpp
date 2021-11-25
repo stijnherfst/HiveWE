@@ -203,6 +203,10 @@ void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
 	endResetModel();
 }
 
+QModelIndex BaseTreeModel::getIdIndex(const std::string& id) {
+	return createIndex(slk->row_headers.at(id), slk->column_headers.at("name"), getFolderParent(id));
+}
+
 QVariant BaseTreeModel::data(const QModelIndex& index, int role) const {
 	if (!index.isValid()) {
 		return {};
@@ -220,7 +224,7 @@ QVariant BaseTreeModel::data(const QModelIndex& index, int role) const {
 			} else {
 				return sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("buffart")), role);
 			}
-		case Qt::TextColorRole:
+		case Qt::ForegroundRole:
 			if (item->baseCategory || item->subCategory) {
 				return {};
 			}
@@ -249,7 +253,7 @@ bool BaseFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent
 		}
 	}
 
-	return sourceModel()->data(index0).toString().contains(filterRegExp());
+	return sourceModel()->data(index0).toString().contains(filterRegularExpression());
 }
 
 void BaseFilter::setFilterCustom(bool filter) {

@@ -22,6 +22,8 @@ class ObjectEditor : public QMainWindow {
 public:
 	ObjectEditor(QWidget* parent = nullptr);
 
+	void select_id(std::string id);
+
 private:
 	Ui::ObjectEditor ui;
 
@@ -63,8 +65,8 @@ private:
 
 	enum class Category {
 		unit,
-		doodad,
 		item,
+		doodad,
 		destructible,
 		ability,
 		upgrade,

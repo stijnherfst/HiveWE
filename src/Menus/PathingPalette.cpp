@@ -15,7 +15,7 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	connect(ui.addType, &QPushButton::clicked, [&]() { brush.operation = PathingBrush::Operation::add; });
 	connect(ui.removeType, &QPushButton::clicked, [&]() { brush.operation = PathingBrush::Operation::remove; });
 
-	connect(ui.brushTypeGroup, QOverload<int, bool>::of(&QButtonGroup::buttonToggled), [&]() {
+	connect(ui.brushTypeGroup, &QButtonGroup::buttonToggled, [&]() {
 		brush.brush_mask = 0;
 
 		if (ui.walkable->isChecked()) {

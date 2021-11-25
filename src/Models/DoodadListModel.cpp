@@ -75,8 +75,8 @@ QModelIndex DoodadListModel::parent(const QModelIndex& child) const {
 bool DoodadListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
 	QModelIndex index0 = sourceModel()->index(sourceRow, 0);
 
-	if (!filterRegExp().isEmpty()) {
-		return sourceModel()->data(index0).toString().contains(filterRegExp());
+	if (!filterRegularExpression().pattern().isEmpty()) {
+		return sourceModel()->data(index0).toString().contains(filterRegularExpression());
 	} else {
 		const std::string tilesets = doodads_slk.data("tilesets", sourceRow);
 		return QString::fromStdString(doodads_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');

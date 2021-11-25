@@ -234,10 +234,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	QRibbonSection* editor_section = new QRibbonSection;
 	editor_section->setText("Editor/Viewer");
 
-	trigger_editor->setIcon(QIcon("Data/Icons/Ribbon/triggereditor32x32.png"));
-	trigger_editor->setText("Trigger\nEditor");
-	editor_section->addWidget(trigger_editor);
-
 	object_editor->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
 	object_editor->setText("Object\nEditor");
 	editor_section->addWidget(object_editor);

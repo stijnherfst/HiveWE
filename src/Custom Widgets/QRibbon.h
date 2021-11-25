@@ -27,6 +27,18 @@ public:
 	void disconnectShortcuts();
 };
 
+class QSmallRibbonButton : public QRibbonButton {
+	Q_OBJECT
+
+  public:
+
+	using QRibbonButton::QRibbonButton;
+
+
+	//QSmallRibbonButton(QWidget* parent = nullptr);
+	//~QSmallRibbonButton();
+};
+
 class QRibbonContainer : public QFrame {
 	Q_OBJECT
 

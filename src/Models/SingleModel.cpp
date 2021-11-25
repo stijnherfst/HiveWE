@@ -64,7 +64,7 @@ QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 }
 
 QVariant SingleModel::data(const QModelIndex& index, int role) const {
-	if (role != Qt::TextColorRole) {
+	if (role != Qt::ForegroundRole) {
 		return QAbstractProxyModel::data(index, role);
 	}
 
@@ -92,7 +92,7 @@ QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int r
 		} else {
 			return "UnitID";
 		}
-	} else if (role == Qt::TextColorRole) {
+	} else if (role == Qt::ForegroundRole) {
 		if (orientation == Qt::Orientation::Vertical) {
 			if (slk->shadow_data.contains(id) && slk->shadow_data.at(id).contains(id_mapping[section].field)) {
 				return QColor("violet");
@@ -231,7 +231,7 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	}
 
 
-	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::TextColorRole).value<QColor>()));
+	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::ForegroundRole).value<QColor>()));
 	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, 0, this), 0, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
 	painter->setPen(QPen(palette().color(QPalette::Base)));
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
@@ -561,7 +561,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
-		auto parts = model->data(index, Qt::EditRole).toString().split(',', QString::SkipEmptyParts);
+		auto parts = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& i : parts) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(QString::fromStdString(units_slk.data("name", i.toStdString())));
@@ -574,7 +574,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 
-		auto parts = model->data(index, Qt::EditRole).toString().split(',', QString::SkipEmptyParts);
+		auto parts = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& i : parts) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(QString::fromStdString(abilities_slk.data("name", i.toStdString())));

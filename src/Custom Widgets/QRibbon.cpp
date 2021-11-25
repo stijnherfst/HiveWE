@@ -69,11 +69,11 @@ QRibbonSection::QRibbonSection(QWidget* parent) : QWidget(parent) {
 
 	section_inner->setContentsMargins(0, 0, 0, 0);
 	section_inner->setSpacing(5);
-	section_inner->setMargin(0);
+	section_inner->setContentsMargins(0, 0, 0, 0);
 
 	section_outer->setContentsMargins(0, 0, 0, 0);
 	section_outer->setSpacing(0);
-	section_outer->setMargin(0);
+	section_outer->setContentsMargins(0, 0, 0, 0);
 
 	layout()->setContentsMargins(0, 0, 0, 0);
 	setContentsMargins(0, 0, 0, 0);
@@ -115,7 +115,7 @@ void QRibbonTab::enableShortcuts() {
 
 void QRibbonTab::paintEvent(QPaintEvent* event) {
 	QStyleOption opt;
-	opt.init(this);
+	opt.initFrom(this);
 	QPainter p(this);
 	style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
 

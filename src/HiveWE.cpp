@@ -19,7 +19,6 @@
 
 #include "MPQ.h"
 #include "Hierarchy.h"
-#include "TriggerEditor.h"
 #include "TileSetter.h"
 #include "MapInfoEditor.h"
 #include "TerrainPalette.h"
@@ -83,11 +82,11 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map->render_debug = checked; });
 	connect(ui.ribbon->minimap_visible, &QPushButton::toggled, [&](bool checked) { (checked) ? minimap->show() : minimap->hide(); });
 
-	connect(new QShortcut(Qt::CTRL + Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::CTRL + Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::CTRL + Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::CTRL + Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
-	connect(new QShortcut(Qt::CTRL + Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_T, this), &QShortcut::activated, ui.ribbon->wireframe_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::Key_F3, this), &QShortcut::activated, ui.ribbon->debug_visible, &QPushButton::click);
 
 	// Reload theme
@@ -105,14 +104,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	connect(new QShortcut(Qt::Key_F1, this), &QShortcut::activated, ui.ribbon->switch_camera, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_folder, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_folder, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
 
 	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
@@ -165,16 +164,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 
 	setAutoFillBackground(true);
-
-	//connect(ui.ribbon->import_manager, &QRibbonButton::clicked, [this]() {
-	//	bool created = false;
-	//	window_handler.create_or_raise<ImportManager>(this, created);
-	//});
-	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
-		bool created = false;
-		auto editor = window_handler.create_or_raise<TriggerEditor>(nullptr, created);
-		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
-	});
 
 	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;

@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QListView>
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -154,7 +155,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	//file.write(output.data(), output.size());
 	//file.close();
 
-	QFile file("Data/Warcraft/icon_tags.json");
+	QFile file(fs::path("Data/Warcraft/icon_tags.json"));
 	file.open(QIODevice::ReadOnly);
 
 	QJsonParseError error;
@@ -223,7 +224,7 @@ IconView::IconView(QWidget* parent) : QWidget(parent) {
 	view->setModel(filter);
 
 	QVBoxLayout* layout = new QVBoxLayout;
-	layout->setMargin(0);
+	layout->setContentsMargins(0, 0, 0, 0);
 	//layout->addWidget(type);
 	layout->addWidget(search);
 	layout->addWidget(view);

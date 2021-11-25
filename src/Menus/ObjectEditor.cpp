@@ -286,3 +286,11 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 		dock_manager->addDockWidget(ads::CenterDockWidgetArea, unit_tab, explorer_area);
 	}
 }
+
+
+void ObjectEditor::select_id(std::string id) {
+	explorer_area->setCurrentIndex(static_cast<int>(Category::doodad));
+	auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
+	edit->clear();
+	doodad_explorer->selectionModel()->select(doodadTreeModel->getIdIndex(id), QItemSelectionModel::SelectionFlag::ClearAndSelect);
+}
