@@ -49,7 +49,10 @@ target_include_directories(HiveWE PRIVATE
 	${JPEG_INCLUDE_DIR}}
 )
 
-target_link_libraries(HiveWE PRIVATE
+# libjpeg-turbo provides incomplete targets and thus need manual linking
+find_library(TURBOJPEG_LIBRARY turbojpeg)
+
+target_link_libraries(HiveWE PUBLIC
 	Qt6::Gui
 	Qt6::Widgets
 	Qt6::OpenGL
@@ -59,6 +62,7 @@ target_link_libraries(HiveWE PRIVATE
 	stormlib::stormlib
 	CascLib::casc
 	${JPEG_LIBRARIES}
+	${TURBOJPEG_LIBRARY}
 	ads::qtadvanceddocking
 	Bullet3Common
 	BulletDynamics
@@ -71,21 +75,8 @@ target_link_libraries(HiveWE PRIVATE
 	fmt::fmt
 	fmt::fmt-header-only
 )
-if(NOT DEFINED WIN32)
-	target_link_libraries(HiveWE PRIVATE Qt5::X11Extras)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux") # Sadly only dynamic triplets work because of casclib and stormlib
-	find_library(TURBOJPEG_LIBRARY turbojpeg)
-endif()
 
 if(WIN32)
-	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-		find_library(TURBOJPEG_LIBRARY turbojpegd)
-	else()
-		find_library(TURBOJPEG_LIBRARY turbojpeg)
-	endif()
-
 	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
 
 	if (MSVC)
@@ -95,11 +86,6 @@ if(WIN32)
 
 	target_link_options(HiveWE PUBLIC /PROFILE)
 endif()
-
-# libjpeg-turbo provides incomplete targets and thus need manual linking
- target_link_libraries(HiveWE PRIVATE
-	${TURBOJPEG_LIBRARY}
-)
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)
 
