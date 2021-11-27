@@ -91,6 +91,8 @@ void TerrainBrush::apply_begin() {
 				break;
 			case cliff_operation::ramp:
 				break;
+			case cliff_operation::level:
+				break;
 		}
 		layer_height = std::clamp(layer_height, 0, 15);
 	}
@@ -269,6 +271,8 @@ void TerrainBrush::apply() {
 						case cliff_operation::deep_water:
 							corners[i][j].water = true;
 							corners[i][j].water_height = corners[i][j].layer_height;
+							break;
+						case cliff_operation::ramp:
 							break;
 					}
 

@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	QCoreApplication::setApplicationName("HiveWE");
 
 	QLocale::setDefault(QLocale("en_US"));
-
+	
 	// Create a dark palette
 	QPalette darkPalette;
 	darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
 	darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
 	darkPalette.setColor(QPalette::ToolTipText, Qt::white);
 	darkPalette.setColor(QPalette::Text, Qt::white);
+	darkPalette.setColor(QPalette::PlaceholderText, Qt::gray);
 	darkPalette.setColor(QPalette::Disabled, QPalette::Text, QColor(127, 127, 127));
 	darkPalette.setColor(QPalette::Dark, QColor(35, 35, 35));
 	darkPalette.setColor(QPalette::Shadow, QColor(20, 20, 20));
@@ -61,12 +62,6 @@ int main(int argc, char *argv[]) {
 	QApplication::setStyle("fusion");
 	
 	QApplication a(argc, argv);
-
-	// Increase font size for better clarity
-	// Docs say not to use this in conjunction with stylesheet, refactor?
-	QFont defaultFont = QApplication::font();
-	defaultFont.setPointSize(defaultFont.pointSize() + 2);
-	QApplication::setFont(defaultFont);
 
 	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
