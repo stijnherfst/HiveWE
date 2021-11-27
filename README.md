@@ -13,17 +13,14 @@ Some of the benefits over the vanilla WE:
 
 ## Features
 
-- Directly edit the pathing map  
-![Edit the Pathing Map](http://g2f.nl/0bgv29i)
-
-- Directly edit the pathing map  
-![Edit the Pathing Map](http://g2f.nl/0bgv29i)
 - Edit the terrain
 ![HiveWE Screenshot](/Screenshots/HiveWE.png)
 - Advanced Object Editor
 ![HiveWE Screenshot](/Screenshots/ObjectEditor.png)
+- Directly edit the pathing map  
+![Edit the Pathing Map](/Screenshots/PathingEditing.png)
 - Edit global tile pathing  
-![Edit global tile pathing](http://g2f.nl/0202154)
+![Edit global tile pathing](/Screenshots/GlobalPathingEditing.png)
 
 ## Download
 
