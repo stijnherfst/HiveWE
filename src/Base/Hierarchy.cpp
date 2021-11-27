@@ -11,7 +11,7 @@ using namespace std::literals::string_literals;
 
 Hierarchy hierarchy;
 
-void Hierarchy::open_casc(fs::path directory) {
+bool Hierarchy::open_casc(fs::path directory) {
 	warcraft_directory = directory;
 	QSettings settings;
 	ptr = settings.value("flavour", "Retail").toString() != "Retail";
@@ -21,9 +21,10 @@ void Hierarchy::open_casc(fs::path directory) {
 	local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
 
 	std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
-	game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
+	bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
 	root_directory = warcraft_directory / (ptr ? "_ptr_" : "_retail_");
-	aliases.load("filealiases.json");
+	if (open) aliases.load("filealiases.json");
+	return open;
 }
 
 BinaryReader Hierarchy::open_file(const fs::path& path) const {

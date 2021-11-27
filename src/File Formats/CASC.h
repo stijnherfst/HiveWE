@@ -60,7 +60,7 @@ namespace casc {
 			return *this;
 		}
 
-		void open(const fs::path& path);
+		bool open(const fs::path& path);
 		void close();
 
 		File file_open(const fs::path& path) const;
