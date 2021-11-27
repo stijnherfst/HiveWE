@@ -5,7 +5,7 @@
 
 
 void setTestArgs(Ui::SettingsEditor &ui) {
-	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString::fromStdString(std::to_string(ui.diff->currentIndex() + '0')) +
+	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString::fromStdString(std::string("") + char(ui.diff->currentIndex() + '0')) +
 						(ui.windowmode->currentText() != "Default" ? " -windowmode " + QString([](int x) {
 		switch (x) { case 1: return "windowed"; case 2: return "windowedfullscreen"; default: return "fullscreen";} }(ui.windowmode->currentIndex())) : "") +
 						(ui.testhd->currentText() != "Default" ? " -hd " + QString([](int x) {

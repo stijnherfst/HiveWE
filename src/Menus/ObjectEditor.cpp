@@ -28,8 +28,14 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
 
-	dock_area = dock_manager->setCentralWidget(new ads::CDockWidget(""));
-	dock_area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+	QLabel* image = new QLabel();
+	image->setPixmap(QPixmap("Data/Icons/ObjectEditor/background.png"));
+	image->setAlignment(Qt::AlignCenter);
+
+	auto centraldock_widget = new ads::CDockWidget("CentralWidget");
+	centraldock_widget->setWidget(image);
+	centraldock_widget->setFeature(ads::CDockWidget::NoTab, true);
+	dock_area = dock_manager->setCentralWidget(centraldock_widget);
 
 	unitTreeModel = new UnitTreeModel(this);
 	itemTreeModel = new ItemTreeModel(this);
@@ -269,21 +275,27 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	hideDefault->setIcon(icon);
 	hideDefault->setToolTip("Hide default " + name);
 	hideDefault->setCheckable(true);
-	connect(hideDefault, &QToolButton::toggled, filter, &BaseFilter::setFilterCustom);
+	connect(hideDefault, &QToolButton::toggled, [=](bool checked) {
+		filter->setFilterCustom(checked);
+		if (!checked) {
+			view->expandAll();
+		}
+	});
 
 	QToolBar* bar = new QToolBar;
 	bar->addWidget(search);
 	bar->addWidget(hideDefault);
 
-	ads::CDockWidget* unit_tab = new ads::CDockWidget(name);
-	unit_tab->setToolBar(bar);
-	unit_tab->setWidget(view);
-	unit_tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-	unit_tab->setIcon(icon);
+	ads::CDockWidget* tab = new ads::CDockWidget(name);
+	tab->setToolBar(bar);
+	tab->setWidget(view);
+	tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+	tab->setFeature(ads::CDockWidget::DockWidgetAlwaysCloseAndDelete, false);
+	tab->setIcon(icon);
 	if (explorer_area == nullptr) {
-		explorer_area = dock_manager->addDockWidget(ads::LeftDockWidgetArea, unit_tab);
+		explorer_area = dock_manager->addDockWidget(ads::LeftDockWidgetArea, tab);
 	} else {
-		dock_manager->addDockWidget(ads::CenterDockWidgetArea, unit_tab, explorer_area);
+		dock_manager->addDockWidget(ads::CenterDockWidgetArea, tab, explorer_area);
 	}
 }
 

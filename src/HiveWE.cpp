@@ -38,7 +38,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
-	while (!fs::exists(directory / "Data") || directory == "" || !fs::exists(directory / "Warcraft III Launcher.exe") || !hierarchy.open_casc(directory)) {
+	while (!hierarchy.open_casc(directory)) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
 			exit(EXIT_SUCCESS);
@@ -47,7 +47,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	QSettings settings;
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
-	// Place common.j and blizzard.j in the data folder. Needed by JassHelper
+	// Place common.j and blizzard.j in the data folder. Required by JassHelper
 	BinaryReader common = hierarchy.open_file("scripts/common.j");
 	std::ofstream output("Data/Tools/common.j");
 	output.write((char*)common.buffer.data(), common.buffer.size());
@@ -293,8 +293,7 @@ void HiveWE::save_as() {
 
 	fs::path file_name = QFileDialog::getExistingDirectory(this, "Choose Save Location",
 														   settings.value("openDirectory", QDir::current().path()).toString(),
-														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
-							 .toStdString();
+														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdString();
 
 	if (file_name.empty()) {
 		return;
@@ -316,9 +315,7 @@ void HiveWE::save_as() {
 void HiveWE::export_mpq() {
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
-	QString file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ",
-													 directory,
-													 "Warcraft III Scenario (*.w3x)");
+	QString file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)");
 
 	if (file_name == "") {
 		return;
@@ -389,12 +386,14 @@ void HiveWE::switch_warcraft() {
 	fs::path directory;
 	do {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
-		if (directory == "")
+		if (directory == "") {
 			directory = settings.value("warcraftDirectory").toString().toStdString();
-	} while (!fs::exists(directory / "Data") || !fs::exists(directory / "Warcraft III Launcher.exe") || (directory != hierarchy.warcraft_directory && !hierarchy.open_casc(directory)));
+		}
+	} while (!hierarchy.open_casc(directory));
 
-	if (directory != hierarchy.warcraft_directory)
+	if (directory != hierarchy.warcraft_directory) {
 		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
+	}
 }
 
 void HiveWE::switch_camera() {

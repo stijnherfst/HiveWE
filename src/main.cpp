@@ -18,7 +18,6 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
-	std::cout << '0' + 2 << "\n";
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
@@ -67,6 +66,7 @@ int main(int argc, char *argv[]) {
 	ads::CDockManager::setConfigFlag(ads::CDockManager::AllTabsHaveCloseButton);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::DockAreaDynamicTabsMenuButtonVisibility);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize);
+	ads::CDockManager::setConfigFlag(ads::CDockManager::MiddleMouseButtonClosesTab);
 
 	QSettings settings;
 	QFile file("Data/Themes/" + settings.value("theme", "Dark").toString() + ".qss");
