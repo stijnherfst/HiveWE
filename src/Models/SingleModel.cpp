@@ -38,7 +38,11 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyMod
 }
 
 QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
-	if (!sourceIndex.isValid() || sourceIndex.row() != slk->row_headers.at(id)) {
+	if (!sourceIndex.isValid()) {
+		return {};
+	}
+
+	if (sourceIndex.row() != slk->row_headers.at(id)) {
 		fmt::print("Invalid ID for SLK {}\n", id);
 		return {};
 	}

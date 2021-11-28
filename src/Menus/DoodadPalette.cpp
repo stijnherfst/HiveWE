@@ -306,7 +306,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		bool created;
 		auto editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
 		const Doodad& doodad = *brush.selections.front();
-		editor->select_id(doodad.id);
+		if (destructibles_slk.row_headers.contains(doodad.id)) {
+			editor->select_id(ObjectEditor::Category::destructible, doodad.id);
+		} else {
+			editor->select_id(ObjectEditor::Category::doodad, doodad.id);
+		}
 	});
 
 	//connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {

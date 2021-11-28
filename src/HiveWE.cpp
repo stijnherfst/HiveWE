@@ -155,10 +155,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 
 	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
+		ui.ribbon->pathing_visible->setChecked(true);
 		open_palette<PathingPalette>();
 	});
 
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
+		ui.ribbon->pathing_visible->setChecked(true);
 		open_palette<PathingPalette>();
 	});
 

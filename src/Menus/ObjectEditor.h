@@ -22,7 +22,17 @@ class ObjectEditor : public QMainWindow {
 public:
 	ObjectEditor(QWidget* parent = nullptr);
 
-	void select_id(std::string id);
+	enum class Category {
+		unit,
+		item,
+		doodad,
+		destructible,
+		ability,
+		upgrade,
+		buff
+	};
+
+	void select_id(Category category, std::string id);
 
 private:
 	Ui::ObjectEditor ui;
@@ -63,19 +73,6 @@ private:
 	std::shared_ptr<QIconResource> custom_buff_icon;
 	std::shared_ptr<QIconResource> custom_upgrade_icon;
 
-	enum class Category {
-		unit,
-		item,
-		doodad,
-		destructible,
-		ability,
-		upgrade,
-		buff
-	};
-
 	void itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
-
-	void add_item();
-
 	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name);
 };

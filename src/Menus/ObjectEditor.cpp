@@ -299,10 +299,60 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	}
 }
 
-
-void ObjectEditor::select_id(std::string id) {
-	explorer_area->setCurrentIndex(static_cast<int>(Category::doodad));
+void ObjectEditor::select_id(Category category, std::string id) {
+	explorer_area->setCurrentIndex(static_cast<int>(category));
 	auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
 	edit->clear();
-	doodad_explorer->selectionModel()->select(doodadTreeModel->getIdIndex(id), QItemSelectionModel::SelectionFlag::ClearAndSelect);
+
+	switch (category) {
+		case Category::unit: {
+			auto index = unitTreeFilter->mapFromSource(unitTreeModel->getIdIndex(id));
+			unit_explorer->setCurrentIndex(index);
+			unit_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit unit_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::item: {
+			auto index = itemTreeFilter->mapFromSource(itemTreeModel->getIdIndex(id));
+			item_explorer->setCurrentIndex(index);
+			item_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit item_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::doodad: {
+			auto index = doodadTreeFilter->mapFromSource(doodadTreeModel->getIdIndex(id));
+			doodad_explorer->setCurrentIndex(index);
+			doodad_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit doodad_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::destructible: {
+			auto index = destructibleTreeFilter->mapFromSource(destructibleTreeModel->getIdIndex(id));
+			destructible_explorer->setCurrentIndex(index);
+			destructible_explorer->scrollTo(index, QAbstractItemView::PositionAtCenter);
+			emit destructible_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::ability: {
+			auto index = abilityTreeFilter->mapFromSource(abilityTreeModel->getIdIndex(id));
+			ability_explorer->setCurrentIndex(index);
+			ability_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit ability_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::upgrade: {
+			auto index = upgradeTreeFilter->mapFromSource(upgradeTreeModel->getIdIndex(id));
+			upgrade_explorer->setCurrentIndex(index);
+			upgrade_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit upgrade_explorer->doubleClicked(index);
+			break;
+		}
+		case Category::buff: {
+			auto index = buffTreeFilter->mapFromSource(buffTreeModel->getIdIndex(id));
+			buff_explorer->setCurrentIndex(index);
+			buff_explorer->scrollTo(index, QAbstractItemView::ScrollHint::PositionAtCenter);
+			emit buff_explorer->doubleClicked(index);
+			break;
+		}
+	}
 }

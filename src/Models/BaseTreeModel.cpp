@@ -204,7 +204,9 @@ void BaseTreeModel::setSourceModel(QAbstractItemModel* sourceModel) {
 }
 
 QModelIndex BaseTreeModel::getIdIndex(const std::string& id) {
-	return createIndex(slk->row_headers.at(id), slk->column_headers.at("name"), getFolderParent(id));
+	const BaseTreeItem* parent_item = items.at(id)->parent;
+	const int row = parent_item->children.indexOf(items.at(id));
+	return createIndex(row, 0, items.at(id));
 }
 
 QVariant BaseTreeModel::data(const QModelIndex& index, int role) const {
