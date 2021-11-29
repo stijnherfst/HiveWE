@@ -18,7 +18,7 @@ namespace casc {
 #endif
 		const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
 		if (!success) {
-			fmt::print("Failed to read file: {}\n", GetLastError());
+			fmt::print("Failed to read file: {}\n", GetCascError());
 		}
 		return buffer;
 	}
@@ -44,7 +44,7 @@ namespace casc {
 		if (handle != nullptr) close();
 		const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 		if (!opened) {
-			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
+			fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
 		}
 		return opened;
 	}
@@ -53,7 +53,7 @@ namespace casc {
 		File file;
 		const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 		if (!opened) {
-			fmt::print("Error opening {} with error: {}\n", path.string(), GetLastError());
+			fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
 		}
 		return file;
 	}

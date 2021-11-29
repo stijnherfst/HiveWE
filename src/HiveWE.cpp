@@ -81,8 +81,8 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		map->terrain_undo.redo(); 
 	});
 
-	connect(new QShortcut(Qt::CTRL + Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
-	connect(new QShortcut(Qt::CTRL + Qt::Key_Y, this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_Y, this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
 
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
@@ -387,12 +387,12 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 
 void HiveWE::resizeEvent(QResizeEvent* event) {
 	QMainWindow::resizeEvent(event);
-	QTimer::singleShot(0, [=] { save_window_state(); });
+	QTimer::singleShot(0, [&] { save_window_state(); });
 }
 
 void HiveWE::moveEvent(QMoveEvent* event) {
 	QMainWindow::moveEvent(event);
-	QTimer::singleShot(0, [=] { save_window_state(); });
+	QTimer::singleShot(0, [&] { save_window_state(); });
 }
 
 void HiveWE::switch_warcraft() {
