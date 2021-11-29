@@ -213,7 +213,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 	camera->mouse_move_event(event);
 
 	if (map->brush) {
-		map->brush->mouse_move_event(event);
+		map->brush->mouse_move_event(event, delta);
 	}
 }
 
@@ -228,7 +228,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 
 	camera->mouse_press_event(event);
 	if (map->brush) {
-		map->brush->mouse_press_event(event);
+		map->brush->mouse_press_event(event, delta);
 	}
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
 	gl->glBindVertexArray(0);

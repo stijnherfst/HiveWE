@@ -78,8 +78,7 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 //	//}
 //}
 
-void UnitBrush::mouse_press_event(QMouseEvent* event) {
-
+void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
 
 	gl->glClearColor(0, 0, 0, 1);
@@ -113,11 +112,11 @@ void UnitBrush::mouse_press_event(QMouseEvent* event) {
 			return;
 		}
 	}
-	Brush::mouse_press_event(event);
+	Brush::mouse_press_event(event, frame_delta);
 }
 
-void UnitBrush::mouse_move_event(QMouseEvent* event) {
-	Brush::mouse_move_event(event);
+void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(event,	frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -227,7 +226,7 @@ void UnitBrush::apply_begin() {
 	unit_undo = std::make_unique<UnitAddAction>();
 }
 
-void UnitBrush::apply() {
+void UnitBrush::apply(double frame_delta) {
 	if (id.empty()) {
 		return;
 	}

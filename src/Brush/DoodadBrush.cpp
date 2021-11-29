@@ -194,7 +194,7 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 	}
 }
 
-void DoodadBrush::mouse_press_event(QMouseEvent* event) {
+void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
 		gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
@@ -233,11 +233,11 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event) {
 			return;
 		}
 	}
-	Brush::mouse_press_event(event);
+	Brush::mouse_press_event(event, frame_delta);
 }
 
-void DoodadBrush::mouse_move_event(QMouseEvent* event) {
-	Brush::mouse_move_event(event);
+void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(event, frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -398,7 +398,7 @@ void DoodadBrush::apply_begin() {
 	doodad_undo = std::make_unique<DoodadAddAction>();
 }
 
-void DoodadBrush::apply() {
+void DoodadBrush::apply(double frame_delta) {
 	if (id == "") {
 		return;
 	}

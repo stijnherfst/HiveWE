@@ -51,8 +51,8 @@ public:
 
 	virtual void key_press_event(QKeyEvent* event);
 	virtual void key_release_event(QKeyEvent* event) {}
-	virtual void mouse_move_event(QMouseEvent* event);
-	virtual void mouse_press_event(QMouseEvent* event);
+	virtual void mouse_move_event(QMouseEvent* event, double frame_delta);
+	virtual void mouse_press_event(QMouseEvent* event, double frame_delta);
 	virtual void mouse_release_event(QMouseEvent* event);
 
 	virtual void delete_selection() {};
@@ -73,7 +73,7 @@ public:
 		return true;
 	};
 	virtual void apply_begin() {};
-	virtual void apply() = 0;
+	virtual void apply(double frame_delta) = 0;
 	virtual void apply_end() {};
 protected:
 	Shape shape = Shape::circle;

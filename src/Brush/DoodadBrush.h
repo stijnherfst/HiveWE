@@ -71,8 +71,8 @@ public:
 
 	void key_press_event(QKeyEvent* event) override;
 	void key_release_event(QKeyEvent* event) override;
-	void mouse_press_event(QMouseEvent* event) override;
-	void mouse_move_event(QMouseEvent* event) override;
+	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
+	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
 	void mouse_release_event(QMouseEvent* event) override;
 
 	void delete_selection() override;
@@ -82,7 +82,7 @@ public:
 	void place_clipboard() override;
 
 	void apply_begin() override;
-	void apply() override;
+	void apply(double frame_delta) override;
 	void apply_end() override;
 	void render_brush() override;
 	void render_selection() const override;

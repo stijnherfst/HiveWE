@@ -98,7 +98,7 @@ void TerrainBrush::apply_begin() {
 	}
 }
 
-void TerrainBrush::apply() {
+void TerrainBrush::apply(double frame_delta) {
 	int width = map->terrain.width;
 	int height = map->terrain.height;
 	auto& corners = map->terrain.corners;
@@ -151,7 +151,7 @@ void TerrainBrush::apply() {
 	}
 
 	if (apply_height) {
-		std::vector< std::vector <float> > heights(area.width(), std::vector<float>(area.height()));
+		std::vector<std::vector<float>> heights(area.width(), std::vector<float>(area.height()));
 
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			for (int j = area.y(); j < area.y() + area.height(); j++) {
@@ -167,12 +167,12 @@ void TerrainBrush::apply() {
 				switch (deformation_type) {
 					case deformation::raise: {
 						auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-						new_height += std::max(0.0, 1 - distance / size * std::sqrt(2)) * 0.1f;
+						new_height += std::max(0.0, 1 - distance / size * std::sqrt(2)) * frame_delta;
 						break;
 					}
 					case deformation::lower: {
 						auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-						new_height -= std::max(0.0, 1 - distance / size * std::sqrt(2)) * 0.1f;
+						new_height -= std::max(0.0, 1 - distance / size * std::sqrt(2)) * frame_delta;
 						break;
 					}
 					case deformation::plateau: {
@@ -185,9 +185,12 @@ void TerrainBrush::apply() {
 						float accumulate = 0;
 
 						QRect acum_area = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, width, height});
+
 						for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
 							for (int l = acum_area.y(); l < acum_area.bottom() + 1; l++) {
-								if ((k < i || l < j) && k <= i && k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
+								if ((k < i || l < j) && k <= i && 
+									// The checks below are required because the code is just wrong (area is too small so we cant convolute a cell from at the edges of the area)
+									k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
 									accumulate += heights[k - area.x()][l - area.y()];
 								} else {
 									accumulate += corners[k][l].height;

@@ -21,6 +21,6 @@ public:
 	PathingBrush();
 
 	void apply_begin() override;
-	void apply() override;
+	void apply(double frame_delta) override;
 	void apply_end() override;
 };

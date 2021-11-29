@@ -48,7 +48,7 @@ public:
 	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
 
 	void apply_begin() override;
-	void apply() override;
+	void apply(double frame_delta) override;
 	void apply_end() override;
 
 	int get_random_variation() const;

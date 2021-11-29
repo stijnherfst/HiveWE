@@ -23,7 +23,7 @@ void PathingBrush::apply_begin() {
 	map->pathing_map.new_undo_group();
 }
 
-void PathingBrush::apply() {
+void PathingBrush::apply(double frame_delta) {
 	const int x = position.x * 4 + uv_offset.x;
 	const int y = position.y * 4 + uv_offset.y;
 
