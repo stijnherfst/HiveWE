@@ -54,7 +54,7 @@ class Map : public QObject {
 	bool render_wireframe = false;
 	bool render_debug = false;
 
-	glm::vec3 light_direction = glm::normalize(glm::vec3(1.f, 0.f, -3.f));
+	glm::vec3 light_direction = glm::normalize(glm::vec3(1.f, 1.f, -3.f));
 
 	fs::path filesystem_path;
 	std::string name;

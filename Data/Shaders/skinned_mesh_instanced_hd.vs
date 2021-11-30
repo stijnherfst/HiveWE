@@ -20,7 +20,7 @@ layout(std430, binding = 0) buffer layoutName {
 layout (binding = 5) uniform samplerBuffer nodeMatrices;
 
 out vec2 UV;
-out vec3 TangentLightDirection;
+out vec3 tangent_light_direction;
 out vec4 vertexColor;
 
 mat4 fetchMatrix(int bone_index) {
@@ -44,13 +44,13 @@ void main() {
 	
 	gl_Position = VP * skinMatrix * vec4(vPosition, 1.f);
 
-	mat3 Matrix = mat3(skinMatrix);
-	vec3 T = normalize(Matrix * vec3(vTangent));
-	vec3 N = normalize(Matrix * vNormal);
-	vec3 B = cross(N, T);
+	mat3 model = mat3(skinMatrix);
+	vec3 T = normalize(model * vTangent.xyz);
+	vec3 N = normalize(model * vNormal);
+	vec3 B = cross(N, T) * vTangent.w; // to fix handedness
 	mat3 TBN = transpose(mat3(T, B, N));
 
 	UV = vUV;
-	TangentLightDirection = TBN * light_direction;
+	tangent_light_direction = normalize(TBN * light_direction);
 	vertexColor = layer_colors[gl_InstanceID * layer_skip_count + layer_index];
 }

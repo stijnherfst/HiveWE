@@ -10,7 +10,7 @@ layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
 
 in vec2 UV;
-in vec3 TangentLightDirection;
+in vec3 tangent_light_direction;
 in vec4 vertexColor;
 
 out vec4 color;
@@ -18,16 +18,19 @@ out vec4 color;
 void main() {
 	color = texture(diffuse, UV) * vertexColor;
 	
-	// normal is a 2 channel normal map so we have to deduce the 3rd value
-	vec2 texel = texture(normal, UV).rg;
-
 	if (show_lighting) {
-		vec3 normal = vec3(texel, 1.f - sqrt(texel.x * texel.x + texel.y * texel.y));
-		normal = normalize(normal * 2.f - 1.f);
-		
-		float contribution = (dot(normal, TangentLightDirection) + 1.f) * 0.5f;
-		color.rgb *= clamp(contribution, 0.f, 1.f);
+		vec3 emissive_texel = texture(emissive, UV).rgb;
+		vec4 orm_texel = texture(orm, UV);
+
+		// normal is a 2 channel normal map so we have to deduce the 3rd value
+		vec2 normal_texel = texture(normal, UV).xy * 2.0 - 1.0;
+		vec3 normal = vec3(normal_texel, sqrt(1.0 - dot(normal_texel, normal_texel)));
+
+		float lambert = clamp(dot(normal, -tangent_light_direction), 0.f, 1.f);
+		color.rgb *= clamp(lambert + 0.1, 0.f, 1.f);
+		color.rgb += emissive_texel;
 	}
+
 
 	if (color.a < alpha_test) {
 		discard;

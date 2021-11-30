@@ -174,7 +174,7 @@ void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 		// Check if ellegible for placement
 		if (event->button() == Qt::LeftButton) {
 			apply_begin();
-			apply(frame_delta);
+			apply(1.0);
 		}
 	} else if (mode == Mode::pasting && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 		clear_selection();

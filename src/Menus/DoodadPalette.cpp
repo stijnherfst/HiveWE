@@ -216,7 +216,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	QVBoxLayout* info_layout = new QVBoxLayout;
 	info_layout->addWidget(selection_name);
 	info_layout->addWidget(edit_in_oe);
-	info_layout->addWidget(select_in_palette);
+	//info_layout->addWidget(select_in_palette);
 
 	current_selection_section->addLayout(scaling_layout);
 	current_selection_section->addSpacing(5);
