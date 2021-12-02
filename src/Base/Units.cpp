@@ -233,6 +233,7 @@ void Units::create() {
 		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		i.update();
 	}	
+
 	for (auto& i : items) {
 		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
 
@@ -251,12 +252,7 @@ void Units::render() {
 		i.mesh->render_queue(i.skeleton, i.color);
 	}
 	for (auto& i : items) {
-		//glm::vec4 color;
-		//color.r = items_slk.data<float>("red", i.id) / 255.f;
-		//color.g = items_slk.data<float>("green", i.id) / 255.f;
-		//color.b = items_slk.data<float>("blue", i.id) / 255.f;
-		//i.mesh->render_queue(i.skeleton, color);
-		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		i.mesh->render_queue(i.skeleton, i.color);
 	}
 }
 

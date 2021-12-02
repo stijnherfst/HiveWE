@@ -209,7 +209,7 @@ SkinnedMesh::~SkinnedMesh() {
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
 	if (model->sequences.size()) {
-		mdx::Extent& extent = model->sequences.front().extent;
+		mdx::Extent& extent = model->sequences.front().extent; // Todo, use skeleton.sequence_index and test
 		if (!camera->inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
@@ -256,7 +256,6 @@ void SkinnedMesh::render_opaque_sd() {
 	for (int i = 0; i < render_jobs.size(); i++) {
 		instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + model->bones.size());
 	}
-
 	gl->glNamedBufferData(bone_matrix_buffer, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
 	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
 	gl->glBindTextureUnit(5, bone_matrix_texture);

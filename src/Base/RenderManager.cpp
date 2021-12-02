@@ -80,7 +80,7 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 		i->render_opaque_hd();
 	}
 
-	//// Render transparent meshes
+	// Render transparent meshes
 	std::sort(transparent_instances.begin(), transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
 	std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
 

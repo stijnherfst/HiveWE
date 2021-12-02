@@ -311,7 +311,8 @@ T SkeletalModelInstance::interpolate_keyframes(mdx::TrackHeader<T>& header, cons
 	T ceil_value = header.tracks[current.right].value;
 
 
-	// This is the implementation that correctly handles missing start/end frames. The game and WE however have a buggy implementation which is also used below
+	// This is the implementation that correctly handles missing start/end frames. 
+	// The game and WE however have a buggy implementation which is the one we end up using for compatibility
 	//float t;
 	//if (ceil_time - floor_time < 0) {
 	//	int duration = (local_sequence_end - floor_time) + (ceil_time - local_sequence_start);
