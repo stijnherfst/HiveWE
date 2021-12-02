@@ -54,6 +54,13 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 			// Add more when required
 		}
 	}
+
+	for (size_t i = 0; i < model->sequences.size(); i++) {
+		if (model->sequences[i].name.find("Stand") != std::string::npos) {
+			sequence_index = i;
+			break;
+		}
+	}
 }
 
 void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
