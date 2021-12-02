@@ -407,9 +407,8 @@ void SkinnedMesh::render_opaque_hd() {
 			gl->glDepthMask(true);
 		}
 
-		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id);
-		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id);
-		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id);
+		for (short i = 0; i < 6; i++)
+			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
 
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
@@ -573,9 +572,8 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 			gl->glEnable(GL_CULL_FACE);
 		}
 
-		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id);
-		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id);
-		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id);
+		for (short i = 0; i < 6; i++)
+			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
 
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
