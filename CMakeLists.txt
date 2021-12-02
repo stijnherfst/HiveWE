@@ -22,11 +22,12 @@ find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
-find_package(casclib CONFIG REQUIRED)
+find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(TBB CONFIG REQUIRED)
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -60,7 +61,6 @@ target_link_libraries(HiveWE PUBLIC
 	glm::glm
 	soil2
 	stormlib::stormlib
-	CascLib::casc
 	${JPEG_LIBRARIES}
 	${TURBOJPEG_LIBRARY}
 	ads::qtadvanceddocking
@@ -74,6 +74,7 @@ target_link_libraries(HiveWE PUBLIC
 	absl::flat_hash_set
 	fmt::fmt
 	fmt::fmt-header-only
+	TBB::tbb
 )
 
 if(WIN32)
@@ -85,6 +86,14 @@ if(WIN32)
 	endif()
 
 	target_link_options(HiveWE PUBLIC /PROFILE)
+
+	target_link_libraries(HiveWE PUBLIC CascLib::casc)
+else()
+	target_compile_definitions(HiveWE PUBLIC TBB_SUPPRESS_DEPRECATED_MESSAGES)
+
+	target_compile_options(HiveWE PUBLIC "-Wno-multichar")
+
+	target_link_libraries(HiveWE PUBLIC CascLib::casc_static)
 endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_20)

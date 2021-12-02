@@ -282,9 +282,8 @@ void StaticMesh::render_opaque_hd() const {
 			gl->glDepthMask(true);
 		}
 
-		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
-		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
-		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+		for (short i = 0; i < 6; i++)
+			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
 
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
@@ -417,9 +416,8 @@ void StaticMesh::render_transparent_hd(int instance_id) const {
 			gl->glDepthMask(true);
 		}
 
-		gl->glBindTextureUnit(0, textures[layers[0].texture_id]->id); // diffuse
-		gl->glBindTextureUnit(1, textures[layers[1].texture_id]->id); // normal
-		gl->glBindTextureUnit(2, textures[layers[2].texture_id]->id); // orm
+		for (short i = 0; i < 6; i++)
+			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}

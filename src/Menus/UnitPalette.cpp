@@ -36,8 +36,8 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
-	find_this = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
-	find_parent = new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	find_this = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	find_parent = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	ribbon_tab->addSection(selection_section);

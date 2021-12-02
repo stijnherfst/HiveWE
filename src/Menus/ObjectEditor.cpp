@@ -65,7 +65,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
 	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index, Category::buff); });
 
-	connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), this), &QShortcut::activated, [&]() {
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this), &QShortcut::activated, [&]() {
 		auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
 		edit->setFocus();
 		edit->selectAll();
@@ -235,7 +235,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				select(indices.front());
 			});
 
-			connect(new QShortcut(QKeySequence(Qt::CTRL + Qt::Key_F), selectdialog), &QShortcut::activated, [=]() {
+			connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), selectdialog), &QShortcut::activated, [=]() {
 				search->setFocus();
 				search->selectAll();
 			});
