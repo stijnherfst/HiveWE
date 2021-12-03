@@ -37,27 +37,9 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 
 	current_keyframes.resize(model->unique_tracks);
 
-	for (const auto& i : render_nodes) {
-		calculate_sequence_extents(i.node->KGTR);
-		calculate_sequence_extents(i.node->KGRT);
-		calculate_sequence_extents(i.node->KGSC);
-	}
-
-	for (const auto& i : model->animations) {
-		calculate_sequence_extents(i.KGAC);
-		calculate_sequence_extents(i.KGAO);
-	}
-
-	for (const auto& i : model->materials) {
-		for (const auto& j : i.layers) {
-			calculate_sequence_extents(j.KMTA);
-			// Add more when required
-		}
-	}
-
 	for (size_t i = 0; i < model->sequences.size(); i++) {
 		if (model->sequences[i].name.find("Stand") != std::string::npos) {
-			sequence_index = i;
+			set_sequence(i);
 			break;
 		}
 	}
@@ -149,8 +131,28 @@ void SkeletalModelInstance::updateNodes() {
 	}
 }
 
+/// Sets the current sequence to sequence_index and recalculates required keyframe data
 void SkeletalModelInstance::set_sequence(int sequence_index) {
-	
+	this->sequence_index = sequence_index;
+	current_frame = model->sequences[sequence_index].start_frame;
+
+	for (const auto& i : render_nodes) {
+		calculate_sequence_extents(i.node->KGTR);
+		calculate_sequence_extents(i.node->KGRT);
+		calculate_sequence_extents(i.node->KGSC);
+	}
+
+	for (const auto& i : model->animations) {
+		calculate_sequence_extents(i.KGAC);
+		calculate_sequence_extents(i.KGAO);
+	}
+
+	for (const auto& i : model->materials) {
+		for (const auto& j : i.layers) {
+			calculate_sequence_extents(j.KMTA);
+			// Add more when required
+		}
+	}
 }
 
 template <typename T>
@@ -158,28 +160,21 @@ void SkeletalModelInstance::calculate_sequence_extents(const mdx::TrackHeader<T>
 	if (header.id == -1) {
 		return;
 	}
-	CurrentKeyFrame& current = current_keyframes[header.id];
 
 	const mdx::Sequence& sequence = model->sequences[sequence_index];
-
 	int local_sequence_start = sequence.start_frame;
 	int local_sequence_end = sequence.end_frame;
-	int local_current_frame = current_frame;
 
 	if (header.global_sequence_ID >= 0 && model->global_sequences.size()) {
 		local_sequence_start = 0;
 		local_sequence_end = model->global_sequences[header.global_sequence_ID];
-
-		if (local_sequence_end == 0) {
-			local_current_frame = 0;
-		} else {
-			local_current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % local_sequence_end;
-		}
 	}
 
+	CurrentKeyFrame& current = current_keyframes[header.id];
 	current.start = -1;
 	current.right = -1;
 
+	// Find the sequence start and end tracks, these are not always exactly at the sequence start/end
 	for (int i = 0; i < header.tracks.size(); i++) {
 		const mdx::Track<T>& track = header.tracks[i];
 
@@ -191,15 +186,18 @@ void SkeletalModelInstance::calculate_sequence_extents(const mdx::TrackHeader<T>
 			current.start = i;
 		}
 
-		if (track.frame <= local_current_frame) {
-			current.left = i;
-		}
-
-		if (track.frame >= local_current_frame && current.right == -1) {
-			current.right = i;
-		}
-
 		current.end = i;
+	}
+
+	// Set the starting left/right track index
+	if (current.start != -1) {
+		current.left = current.start;
+
+		if (current.end > current.start) {
+			current.right = current.left + 1;
+		} else {
+			current.right = current.left;
+		}
 	}
 }
 
@@ -249,11 +247,14 @@ void SkeletalModelInstance::advance_keyframes(const mdx::TrackHeader<T>& header)
 		if (current.right > current.end) {
 			break;
 		}
+
+		// No need for interpolation if current_frame is exactly on a track
 		if (header.tracks[current.right].frame == local_current_frame) {
 			current.left = current.right;
 		}
 	}
 
+	// The first/last tracks are not always exactly at the sequence start/end
 	const bool past_end = header.tracks[current.end].frame < local_current_frame;
 	const bool before_start = header.tracks[current.start].frame > local_current_frame;
 	if (past_end || before_start) {

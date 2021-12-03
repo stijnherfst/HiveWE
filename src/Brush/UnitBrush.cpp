@@ -112,6 +112,7 @@ void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			return;
 		}
 	}
+
 	Brush::mouse_press_event(event, frame_delta);
 }
 

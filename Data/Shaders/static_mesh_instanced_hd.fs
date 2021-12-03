@@ -23,7 +23,7 @@ void main() {
 		vec3 emissive_texel = texture(emissive, UV).rgb;
 		vec4 orm_texel = texture(orm, UV);
 		vec3 tc_texel = texture(teamColor, UV).rgb;
-		color.rgb = (color.rgb * (1 - orm_texel.w) + color.rgb * tc_texel * orm_texel.w);
+		//color.rgb = (color.rgb * (1 - orm_texel.w) + color.rgb * tc_texel * orm_texel.w);
 
 		// normal is a 2 channel normal map so we have to deduce the 3rd value
 		vec2 normal_texel = texture(normal, UV).xy * 2.0 - 1.0;

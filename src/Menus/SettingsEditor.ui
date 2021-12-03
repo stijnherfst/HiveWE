@@ -77,7 +77,7 @@
          <item row="2" column="1">
           <widget class="QCheckBox" name="hd">
            <property name="text">
-            <string>Enable HD Mode</string>
+            <string>Enable HD Mode (requires restart)</string>
            </property>
            <property name="checked">
             <bool>true</bool>
