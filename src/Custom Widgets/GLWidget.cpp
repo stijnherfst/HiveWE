@@ -219,8 +219,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 
 void GLWidget::mousePressEvent(QMouseEvent* event) {
 	makeCurrent();
-	gl->glBindVertexArray(vao);
-	gl->glViewport(0, 0, width(), height());
 
 	if (!map) {
 		return;
@@ -230,8 +228,6 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 	if (map->brush) {
 		map->brush->mouse_press_event(event, delta);
 	}
-	gl->glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-	gl->glBindVertexArray(0);
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent* event) {

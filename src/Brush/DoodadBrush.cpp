@@ -197,38 +197,23 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
-		gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
+		auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
+		if (id) {
+			Doodad& doodad = map->doodads.doodads[id.value()];
 
-		gl->glClearColor(0, 0, 0, 1);
-		gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		gl->glViewport(0, 0, map->render_manager.window_width, map->render_manager.window_height);
+			drag_start = input_handler.mouse_world;
+			dragging = true;
 
-		map->render_manager.colored_static_shader->use();
-		for (int i = 0; i < map->doodads.doodads.size(); i++) {
-			const Doodad& doodad = map->doodads.doodads[i];
-			const mdx::Extent& extent = doodad.mesh->extent;
-			if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
-				doodad.mesh->render_color_coded(i + 1, doodad.matrix);
-			}
-		}
-
-		glm::u8vec4 color;
-		glReadPixels(input_handler.mouse.x, map->render_manager.window_height - input_handler.mouse.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-
-		const int index = color.r + (color.g << 8) + (color.b << 16);
-		if (index != 0) {
-			Doodad& doodad = map->doodads.doodads[index - 1];
 			// If the current index is already in a selection then we want to drag the entire group
-			if (std::find(selections.begin(), selections.end(), &doodad) == selections.end()) {
+			if (std::find(selections.begin(), selections.end(), &doodad) != selections.end()) {
+				drag_offsets.clear();
+				for (const auto& i : selections) {
+					drag_offsets.push_back(input_handler.mouse_world - i->position);
+				}
+			} else {
 				selections = { &doodad };
 				drag_offsets = { input_handler.mouse_world - doodad.position };
 				emit selection_changed();
-			}
-			drag_start = input_handler.mouse_world;
-			dragging = true;
-			drag_offsets.clear();
-			for (const auto& i : selections) {
-				drag_offsets.push_back(input_handler.mouse_world - i->position);
 			}
 			return;
 		}

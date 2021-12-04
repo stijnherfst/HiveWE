@@ -2,6 +2,8 @@
 
 #include "ResourceManager.h"
 #include "Camera.h"
+#include "Units.h"
+#include "HiveWE.h"
 
 RenderManager::RenderManager() {
 	instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
@@ -26,8 +28,9 @@ RenderManager::RenderManager() {
 	gl->glNamedRenderbufferStorage(depth_buffer, GL_DEPTH24_STENCIL8, 800, 600);
 	gl->glNamedFramebufferRenderbuffer(color_picking_framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 
-	if (gl->glCheckNamedFramebufferStatus(color_picking_framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	if (gl->glCheckNamedFramebufferStatus(color_picking_framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+	}
 }
 
 RenderManager::~RenderManager() {
@@ -88,7 +91,6 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 	gl->glUniform1i(2, render_lighting);
 	gl->glUniform3fv(3, 1, &light_direction.x);
 
-
 	for (const auto& i : transparent_instances) {
 		i.mesh->render_transparent_sd(i.instance_id);
 	}
@@ -145,4 +147,78 @@ void RenderManager::resize_framebuffers(int width, int height) {
 	gl->glNamedRenderbufferStorage(depth_buffer, GL_DEPTH24_STENCIL8, width, height);
 	window_width = width;
 	window_height = height;
+}
+
+std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_position) {
+	GLint old_fbo;
+	gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
+	GLint old_vao;
+	gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, color_picking_framebuffer);
+
+	gl->glClearColor(0, 0, 0, 1);
+	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	gl->glViewport(0, 0, window_width, window_height);
+
+	colored_skinned_shader->use();
+	for (int i = 0; i < map->units.units.size(); i++) {
+		const Unit& unit = map->units.units[i];
+		if (unit.id == "sloc") {
+			continue;
+		} // ToDo handle starting locations
+
+		mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+		if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
+			unit.mesh->render_color_coded(unit.skeleton, i + 1);
+		}
+	}
+
+	glm::u8vec4 color;
+	glReadPixels(mouse_position.x, window_height - mouse_position.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
+	gl->glBindVertexArray(old_vao);
+
+	const int index = color.r + (color.g << 8) + (color.b << 16);
+	if (index != 0) {
+		return { index - 1 };
+	} else {
+		return {};
+	}
+}
+
+std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_position) {
+	GLint old_fbo;
+	gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
+	GLint old_vao;
+	gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, color_picking_framebuffer);
+
+	gl->glClearColor(0, 0, 0, 1);
+	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	gl->glViewport(0, 0, window_width, window_height);
+
+	colored_static_shader->use();
+	for (int i = 0; i < map->doodads.doodads.size(); i++) {
+		const Doodad& doodad = map->doodads.doodads[i];
+		const mdx::Extent& extent = doodad.mesh->extent;
+		if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
+			doodad.mesh->render_color_coded(i + 1, doodad.matrix);
+		}
+	}
+
+	glm::u8vec4 color;
+	glReadPixels(mouse_position.x, window_height - mouse_position.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
+
+	gl->glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
+	gl->glBindVertexArray(old_vao);
+
+	const int index = color.r + (color.g << 8) + (color.b << 16);
+	if (index != 0) {
+		return { index - 1 };
+	} else {
+		return {};
+	}
 }

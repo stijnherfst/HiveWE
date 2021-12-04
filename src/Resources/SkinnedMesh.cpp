@@ -583,16 +583,7 @@ void SkinnedMesh::render_color_coded(const SkeletalModelInstance& skeleton, int 
 		return;
 	}
 
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
-	gl->glVertexAttribIPointer(1, 2, GL_UNSIGNED_INT, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	gl->glBindVertexArray(vao);
 
 	glm::mat4 MVP = camera->projection_view * skeleton.matrix;
 	gl->glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
@@ -600,7 +591,7 @@ void SkinnedMesh::render_color_coded(const SkeletalModelInstance& skeleton, int 
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(7, id);
 
-	gl->glUniformMatrix4fv(8, model->bones.size(), false, &instance_bone_matrices[0][0][0]);
+	gl->glUniformMatrix4fv(8, model->bones.size(), false, &skeleton.world_matrices[0][0][0]);
 
 	for (auto& i : geosets) {
 		glm::vec3 geoset_color(1.0f);

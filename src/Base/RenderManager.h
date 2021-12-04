@@ -49,4 +49,12 @@ public:
 	void render(bool render_lighting, glm::vec3 light_direction);
 
 	void resize_framebuffers(int width, int height);
+	
+	/// Returns the unit ID of the unit that is currently under the mouse coordinates
+	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
+	std::optional<size_t> pick_unit_id_under_mouse(glm::vec2 mouse_position);
+
+	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates
+	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
+	std::optional<size_t> pick_doodad_id_under_mouse(glm::vec2 mouse_position);
 };

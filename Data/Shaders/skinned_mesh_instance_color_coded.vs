@@ -1,7 +1,7 @@
 #version 450 core
 
 layout (location = 0) in vec3 vPosition;
-layout (location = 1) in uvec2 vSkin;
+layout (location = 4) in uvec2 vSkin;
 
 layout (location = 0) uniform mat4 MVP;
 layout (location = 3) uniform int bone_count;

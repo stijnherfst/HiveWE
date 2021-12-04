@@ -79,32 +79,10 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 //}
 
 void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
-	gl->glBindFramebuffer(GL_FRAMEBUFFER, map->render_manager.color_picking_framebuffer);
-
-	gl->glClearColor(0, 0, 0, 1);
-	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	gl->glViewport(0, 0, map->render_manager.window_width, map->render_manager.window_height);
-
 	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
-		map->render_manager.colored_skinned_shader->use();
-		for (int i = 0; i < map->units.units.size(); i++) {
-			const Unit& unit = map->units.units[i];
-			if (unit.id == "sloc") {
-				continue;
-			} // ToDo handle starting locations
-
-			mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
-			if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
-				unit.mesh->render_color_coded(unit.skeleton, i + 1);
-			}
-		}
-
-		glm::u8vec4 color;
-		glReadPixels(input_handler.mouse.x, map->render_manager.window_height - input_handler.mouse.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-
-		const int index = color.r + (color.g << 8) + (color.b << 16);
-		if (index != 0) {
-			Unit& unit = map->units.units[index - 1];
+		auto id = map->render_manager.pick_unit_id_under_mouse(input_handler.mouse);
+		if (id) {
+			Unit& unit = map->units.units[id.value()];
 			selections = { &unit };
 			dragging = true;
 			drag_x_offset = input_handler.mouse_world.x - unit.position.x;
