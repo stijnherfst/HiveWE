@@ -1331,11 +1331,15 @@ namespace mdx {
 				case ChunkTag::CORN:
 					read_CORN_chunk(reader);
 					break;
-				case ChunkTag::FAFX:
-					reader.advance(4);
-					face_target = reader.read_string(80);
-					face_path = reader.read_string(260);
+				case ChunkTag::FAFX: {
+					int size = reader.read<uint32_t>();
+					while (size > 0) {
+						face_target = reader.read_string(80);
+						face_path = reader.read_string(260);
+						size -= 340;
+					}
 					break;
+				}
 				case ChunkTag::CAMS:
 					read_CAMS_chunk(reader);
 					break;

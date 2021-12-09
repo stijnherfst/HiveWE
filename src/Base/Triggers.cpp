@@ -46,7 +46,7 @@ void Triggers::parse_parameter_structure(BinaryReader& reader, TriggerParameter&
 		parameter.parameters.resize(1);
 		parse_parameter_structure(reader, parameter.parameters.front(), version);
 	}
-};
+}
 
 void Triggers::parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version) {
 	eca.type = static_cast<ECA::Type>(reader.read<uint32_t>());
@@ -65,7 +65,7 @@ void Triggers::parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child
 			parse_eca_structure(reader, i, true, version);
 		}
 	}
-};
+}
 
 void Triggers::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.wtg");
@@ -120,6 +120,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 
 	categories.resize(reader.read<uint32_t>());
 	for (auto& i : categories) {
+		i.classifier = Classifier::category;
 		i.id = reader.read<uint32_t>();
 		i.name = reader.read_c_string();
 		i.parent_id = 0;
@@ -128,20 +129,24 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		}
 
 		Trigger::next_id = std::max(Trigger::next_id, i.id + 1);
+		if (i.id == 0) {
+			i.id = -2;
+		}
 	}
 
 
 	reader.advance(4); // dunno
 
-	int variable_category = ++Trigger::next_id;
-	categories.insert(categories.begin(), { variable_category, "Variables", false,  0 });
+	int variable_category = Trigger::next_id++;
+	categories.insert(categories.begin(), { Classifier::map, 0, "Map Header", true, false, -1 });
+	categories.insert(categories.begin(), { Classifier::category, variable_category, "Variables", true, false, 0 });
 
 	variables.resize(reader.read<uint32_t>());
 	for (auto& i : variables) {
 		i.name = reader.read_c_string();
 		i.type = reader.read_c_string();
-		reader.advance(4); // Unknown always 1
-		i.id = ++Trigger::next_id;
+		i.unknown = reader.read<uint32_t>();
+		i.id = Trigger::next_id++;
 
 		i.is_array = reader.read<uint32_t>();
 		if (version == 7) {
@@ -164,7 +169,7 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		i.initially_on = !reader.read<uint32_t>();
 		i.run_on_initialization = reader.read<uint32_t>();
 
-		i.id = ++Trigger::next_id;
+		i.id = Trigger::next_id++;
 
 		if (i.run_on_initialization && i.is_script) {
 			i.classifier = Classifier::gui;
@@ -177,6 +182,9 @@ void Triggers::load_version_pre31(BinaryReader& reader, uint32_t version) {
 		}
     
 		i.parent_id = reader.read<uint32_t>();
+		if (i.parent_id == 0) {
+			i.parent_id = -2;
+		}
 		i.ecas.resize(reader.read<uint32_t>());
 		for (auto& j : i.ecas) {
 			parse_eca_structure(reader, j, false, version);
@@ -189,30 +197,31 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	if (sub_version != 7 && sub_version != 4) {
 		fmt::print("Unknown 1.31 WTG subformat! Trying anyway.\n");
 	}
+	
+	map_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //map ids of deleted maps
+
+	library_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //library ids of deleted libraries
+	
+	category_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //category ids of deleted categories
+
+	trigger_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //trigger ids of deleted triggers
+
+	comment_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //comment ids of deleted comments
+
+	script_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //script ids of deleted scripts
+
+	variable_count = reader.read<uint32_t>();
+	reader.advance(4 * reader.read<uint32_t>()); //variable ids of deleted variables
 
 	unknown1 = reader.read<uint32_t>();
 	unknown2 = reader.read<uint32_t>();
-	unknown3 = reader.read<uint32_t>();
-	unknown4 = reader.read<uint32_t>();
-
-	reader.advance(4); // category_count
-	reader.advance(4 * reader.read<uint32_t>()); //category ids of deleted categories
-	
-	reader.advance(4); // trigger_count
-	reader.advance(4 * reader.read<uint32_t>()); //trigger ids of deleted triggers
-
-	reader.advance(4); // trigger_comment_count
-	reader.advance(4 * reader.read<uint32_t>()); //comment ids of deleted comments
-
-	reader.advance(4); // script_count
-	reader.advance(4 * reader.read<uint32_t>()); //script ids of deleted scripts
-
-	reader.advance(4); // variable_count
-	reader.advance(4 * reader.read<uint32_t>()); //variable ids of deleted variables
-
-	unknown5 = reader.read<uint32_t>();
-	unknown6 = reader.read<uint32_t>();
-	unknown7 = reader.read<uint32_t>();
+	trig_def_ver = reader.read<uint32_t>();
 
 	uint32_t variable_count = reader.read<uint32_t>();
 	for (uint32_t i = 0; i < variable_count; i++) {
@@ -234,36 +243,21 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 	}
 	
 	uint32_t element_count = reader.read<uint32_t>();
-	unknown8 = reader.read<uint32_t>();	
-	unknown9 = reader.read<uint32_t>();
 
-	reader.advance_c_string(); //last name the map was saved under, don't care
-
-	unknown10 = reader.read<uint32_t>();
-	unknown11 = reader.read<uint32_t>();
-	if (sub_version == 7) {
-		unknown12 = reader.read<uint32_t>();
-	}
-
-	if (reader.remaining() == 0) {
-		if (element_count != 1) {
-			fmt::print("Possibly corrupt WTG!\n");
-		}
-
-		return;
-	}
-
-	for (uint32_t i = 0; i < (element_count - 1); i++) {
+	for (uint32_t i = 0; i < element_count; i++) {
 		Classifier classifier = static_cast<Classifier>(reader.read<uint32_t>());
 		switch (classifier) {
+			case Classifier::map:
+			case Classifier::library:
 			case Classifier::category: {
 				TriggerCategory cat;
+				cat.classifier = classifier;
 				cat.id = reader.read<uint32_t>();
 				cat.name = reader.read_c_string();
 				if (sub_version == 7) {
 					cat.is_comment = reader.read<uint32_t>();
 				}
-				cat.unknown = reader.read<uint32_t>();
+				cat.open_state = reader.read<uint32_t>();
 				cat.parent_id = reader.read<uint32_t>();
 				categories.push_back(cat);
 
@@ -399,46 +393,30 @@ void Triggers::save() const {
 	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(write_sub_version);
 
-	writer.write<uint32_t>(unknown1);
-	writer.write<uint32_t>(unknown2);
-	writer.write<uint32_t>(unknown3);
-	writer.write<uint32_t>(unknown4);
+	writer.write<uint32_t>(map_count);
+	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(categories.size());
-	writer.write<uint32_t>(0); // Deleted category count
+	writer.write<uint32_t>(library_count);
+	writer.write<uint32_t>(0);
 
-	int trigger_count = 0;
-	int script_count = 0;
-	int comment_count = 0;
-	for (const auto& i : triggers) {
-		switch (i.classifier) {
-			case Classifier::gui:
-				trigger_count++;
-				break;
-			case Classifier::script:
-				script_count++;
-				break;
-			case Classifier::comment:
-				comment_count++;
-				break;
-		}
-	}
+	writer.write<uint32_t>(category_count);
+	writer.write<uint32_t>(0);
 
 	writer.write<uint32_t>(trigger_count);
-	writer.write<uint32_t>(0); // Deleted category count
+	writer.write<uint32_t>(0);
 
 	writer.write<uint32_t>(comment_count);
-	writer.write<uint32_t>(0); // Deleted comment count
+	writer.write<uint32_t>(0);
 
 	writer.write<uint32_t>(script_count);
-	writer.write<uint32_t>(0); // Deleted script count
+	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(variables.size());
-	writer.write<uint32_t>(0); // Deleted variable count
+	writer.write<uint32_t>(variable_count);
+	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(unknown5);
-	writer.write<uint32_t>(unknown6);
-	writer.write<uint32_t>(unknown7);
+	writer.write<uint32_t>(unknown1);
+	writer.write<uint32_t>(unknown2);
+	writer.write<uint32_t>(trig_def_ver);
 	writer.write<uint32_t>(variables.size());
 
 	for (const auto& i : variables) {
@@ -453,21 +431,14 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.parent_id);
 	}
 
-	writer.write<uint32_t>(categories.size() + triggers.size() + variables.size() +  1);
-	writer.write<uint32_t>(unknown8);
-	writer.write<uint32_t>(unknown9);
-	writer.write_c_string("It'll quench ya");
-
-	writer.write<uint32_t>(unknown10);
-	writer.write<uint32_t>(unknown11);
-	writer.write<uint32_t>(unknown12);
+	writer.write<uint32_t>(categories.size() + triggers.size() + variables.size());
 	
 	for (const auto& i : categories) {
-		writer.write<uint32_t>(static_cast<int>(Classifier::category));
+		writer.write<uint32_t>(static_cast<int>(i.classifier));
 		writer.write<uint32_t>(i.id);
 		writer.write_c_string(i.name);
 		writer.write<uint32_t>(i.is_comment);
-		writer.write<uint32_t>(i.unknown);
+		writer.write<uint32_t>(i.open_state);
 		writer.write<uint32_t>(i.parent_id);
 	}
 
@@ -677,13 +648,14 @@ void Triggers::generate_units(BinaryWriter& writer, std::unordered_map<std::stri
 			unit_reference = fmt::format("gg_unit_{}_{}", i.id, i.creation_number);
 		}
 
-		writer.write_string(fmt::format("\tset {} = CreateUnit(Player({}), '{}', {:.4f}, {:.4f}, {:.4f})\n", 
+		writer.write_string(fmt::format("\tset {} = BlzCreateUnitWithSkin(Player({}), '{}', {:.4f}, {:.4f}, {:.4f}, '{}')\n", 
 			unit_reference, 
 			i.player, 
 			i.id, 
 			i.position.x * 128.f + map->terrain.offset.x, 
 			i.position.y * 128.f + map->terrain.offset.y, 
-			glm::degrees(i.angle)));
+			glm::degrees(i.angle),
+			i.skin_id));
 
 		if (i.health != -1) {
 			writer.write_string(fmt::format("\tset life = GetUnitState({}, UNIT_STATE_LIFE)\n", unit_reference));
@@ -729,11 +701,11 @@ void Triggers::generate_units(BinaryWriter& writer, std::unordered_map<std::stri
 				if (order_on.empty()) {
 					order_on = abilities_slk.data("order", std::get<0>(j));
 				}
-				writer.write_string(fmt::format("\t call IssueImmediateOrder({}, {})\n", unit_reference, order_on));
+				writer.write_string(fmt::format("\t call IssueImmediateOrder({}, \"{}\")\n", unit_reference, order_on));
 			} else {
 				std::string order_off = abilities_slk.data("orderoff", std::get<0>(j));
 				if (!order_off.empty()) {
-					writer.write_string(fmt::format("\tcall IssueImmediateOrder({}, '{}')\n", unit_reference, order_off));
+					writer.write_string(fmt::format("\tcall IssueImmediateOrder({}, \"{}\")\n", unit_reference, order_off));
 				}
 			}
 
@@ -794,13 +766,15 @@ void Triggers::generate_destructables(BinaryWriter& writer, std::unordered_map<s
 			continue;
 		}
 
-		writer.write_string("\tset " + id + " = CreateDestructable('" +
+		writer.write_string("\tset " + id + " = BlzCreateDestructableZWithSkin('" +
 			i.id + "', " +
 			std::to_string(i.position.x * 128.f + map->terrain.offset.x) + ", " +
 			std::to_string(i.position.y * 128.f + map->terrain.offset.y) + ", " +
+			std::to_string(i.position.z * 128.f) + ", " +
 			std::to_string(glm::degrees(i.angle)) + ", " +
 			std::to_string(i.scale.x) + ", " +
-			std::to_string(i.variation) + ")\n");
+			std::to_string(i.variation) + ", " +
+			i.skin_id + ")\n");
 
 		if (i.life != 100) {
 			writer.write_string("\tset life = GetDestructableLife(" + id + ")\n");

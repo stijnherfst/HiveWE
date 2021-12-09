@@ -227,7 +227,9 @@ void Map::load(const fs::path& path) {
 	begin = std::chrono::steady_clock::now();
 
 	// Pathing Map
-	pathing_map.load();
+	if (hierarchy.map_file_exists("war3map.wpm")) {
+		pathing_map.load();
+	}
 
 	std::cout << "Pathing loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();

@@ -8,23 +8,23 @@
 #include "BinaryReader.h"
 #include "BinaryWriter.h"
 
-struct TriggerCategory {
-	int id;
-	std::string name;
-	uint32_t unknown;
-	bool is_comment = false;
-	int parent_id;
+enum class Classifier
+{
+	map = 1,
+	library = 2,
+	category = 4,
+	gui = 8,
+	comment = 16,
+	script = 32,
+	variable = 64
 };
 
-struct TriggerVariable {
-	std::string name;
-	std::string type;
-	uint32_t unknown;
-	bool is_array;
-	int array_size = 0;
-	bool is_initialized;
-	std::string initial_value;
+struct TriggerCategory {
+	Classifier classifier;
 	int id;
+	std::string name;
+	bool open_state = true;
+	bool is_comment = false;
 	int parent_id;
 };
 
@@ -75,14 +75,6 @@ struct ECA {
 	std::vector<ECA> ecas;
 };
 
-enum class Classifier {
-	category = 4,
-	gui = 8,
-	comment = 16,
-	script = 32,
-	variable = 64
-};
-
 struct Trigger {
 	Classifier classifier;
 	int id;
@@ -100,6 +92,18 @@ struct Trigger {
 	static inline int next_id = 0;
 };
 
+struct TriggerVariable {
+	std::string name;
+	std::string type;
+	uint32_t unknown;
+	bool is_array;
+	int array_size = 0;
+	bool is_initialized;
+	std::string initial_value;
+	int id;
+	int parent_id;
+};
+
 class Triggers {
 	std::unordered_map<std::string, int> argument_counts;
 	const std::string separator = "//===========================================================================\n";
@@ -108,20 +112,17 @@ class Triggers {
 	static constexpr int write_sub_version = 7;
 	static constexpr int write_string_version = 1;
 
+	int map_count = 0;
+	int library_count = 0;
+	int category_count = 0;
+	int trigger_count = 0;
+	int comment_count = 0;
+	int script_count = 0;
+	int variable_count = 0;
+
 	int unknown1 = 0;
 	int unknown2 = 0;
-	int unknown3 = 0;
-	int unknown4 = 0;
-
-	int unknown5 = 0;
-	int unknown6 = 0;
-	int unknown7 = 0;
-	int unknown8 = 0;
-	int unknown9 = 0;
-
-	int unknown10 = 0;
-	int unknown11 = 0;
-	int unknown12 = 0;
+	int trig_def_ver = 2;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version);
 	void parse_eca_structure(BinaryReader& reader, ECA& eca, bool is_child, uint32_t version);

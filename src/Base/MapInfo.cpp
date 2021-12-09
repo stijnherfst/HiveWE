@@ -12,17 +12,20 @@ void MapInfo::load() {
 
 	const int version = reader.read<uint32_t>();
 
-	if (version != 18 && version != 25 && version != 28 && version != 31) {
+	if (version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
 		std::cout << "Unknown war3map.w3i version\n";
 	}
 
-	map_version = reader.read<uint32_t>();
-	editor_version = reader.read<uint32_t>();
-	if (version >= 28) {
-		game_version_major = reader.read<uint32_t>();
-		game_version_minor = reader.read<uint32_t>();
-		game_version_patch = reader.read<uint32_t>();
-		game_version_build = reader.read<uint32_t>();
+	if (version >= 18) {
+		map_version = reader.read<uint32_t>();
+		editor_version = reader.read<uint32_t>();
+
+		if (version >= 28) {
+			game_version_major = reader.read<uint32_t>();
+			game_version_minor = reader.read<uint32_t>();
+			game_version_patch = reader.read<uint32_t>();
+			game_version_build = reader.read<uint32_t>();
+		}
 	}
 	name = reader.read_c_string();
 	author = reader.read_c_string();
@@ -108,7 +111,14 @@ void MapInfo::load() {
 		prologue_text = reader.read_c_string();
 		prologue_title = reader.read_c_string();
 		prologue_subtitle = reader.read_c_string();
+	} else {
+		reader.advance(1); //unknown, loading screen number but only 1 digit?
+		loading_screen_text = reader.read_c_string();
+		loading_screen_title = reader.read_c_string();
+		loading_screen_subtitle = reader.read_c_string();
+		reader.advance(4); //prologue stuff?
 	}
+
 	players.resize(reader.read<uint32_t>());
 	for (auto&& i : players) {
 		i.internal_number = reader.read<uint32_t>();
@@ -138,6 +148,10 @@ void MapInfo::load() {
 		i.name = reader.read_c_string();
 	}
 
+	if (reader.remaining() < 4) {
+		return;
+	}
+
 	available_upgrades.resize(reader.read<uint32_t>());
 	for (auto&& i : available_upgrades) {
 		i.player_flags = reader.read<uint32_t>();
@@ -146,10 +160,18 @@ void MapInfo::load() {
 		i.availability = reader.read<uint32_t>();
 	}
 
+	if (reader.remaining() < 4) {
+		return;
+	}
+
 	available_tech.resize(reader.read<uint32_t>());
 	for (auto&& i : available_tech) {
 		i.player_flags = reader.read<uint32_t>();
 		i.id = reader.read_string(4);
+	}
+
+	if (reader.remaining() < 4) {
+		return;
 	}
 
 	random_unit_tables.resize(reader.read<uint32_t>());
@@ -165,6 +187,10 @@ void MapInfo::load() {
 				j.ids.push_back(reader.read_string(4));
 			}
 		}
+	}
+
+	if (reader.remaining() < 4) {
+		return;
 	}
 
 	if (version >= 25) {
