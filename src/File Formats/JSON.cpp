@@ -58,7 +58,8 @@ namespace json {
 	bool JSON::exists(const std::string& file) const {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
-
+		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
+			[](char c) {if (c == '/')return '\\'; return c; });
 		if (json_data.contains(file_lower_case)) {
 			return true;
 		}
@@ -68,6 +69,8 @@ namespace json {
 	std::string JSON::alias(const std::string& file) const {
 		std::string file_lower_case = file;
 		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+		std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
+					   [](char c) {if (c == '/')return '\\'; return c; });
 		return json_data.at(file_lower_case);
 	}
 }

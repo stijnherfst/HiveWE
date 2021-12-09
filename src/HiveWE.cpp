@@ -329,12 +329,15 @@ void HiveWE::save_as() {
 void HiveWE::export_mpq() {
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
-	QString file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)");
+	std::wstring file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)").toStdWString();
 
-	if (file_name == "") {
+	if (file_name == L"") {
 		return;
 	}
-
+	if (fs::exists(file_name)) {
+		fs::remove(file_name);
+		std::wcout << L"Overwriting path: " << file_name << L'\n';
+	}
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 
@@ -343,10 +346,15 @@ void HiveWE::export_mpq() {
 	HANDLE handle;
 
 #ifdef _MSC_VER
-	SFileCreateArchive(file_name.toStdWString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
 #else
-	SFileCreateArchive(file_name.toStdString().c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
 #endif
+	if (!open) {
+		QMessageBox::critical(this, "Exporting failed", "There was an error creating the archive.");
+		std::cout << GetLastError() << "\n";
+		return;
+	}
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {

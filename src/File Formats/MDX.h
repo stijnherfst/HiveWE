@@ -531,6 +531,11 @@ namespace mdx {
 		float radius;		  // used for sphere/cylinder
 	};
 
+	struct FaceFX {
+		std::string name;
+		fs::path path;
+	};
+
 	struct CornEmitter {
 		Node node;
 		std::vector<uint8_t> data; // Just store it so we can save it again
@@ -574,6 +579,7 @@ namespace mdx {
 		void read_CAMS_chunk(BinaryReader& reader);
 		void read_BPOS_chunk(BinaryReader& reader);
 		void read_TXAN_chunk(BinaryReader& reader);
+		void read_FAFX_chunk(BinaryReader& reader);
 
 		void write_GEOS_chunk(BinaryWriter& writer) const;
 		void write_MTLS_chunk(BinaryWriter& writer) const;
@@ -595,6 +601,7 @@ namespace mdx {
 		void write_CAMS_chunk(BinaryWriter& writer) const;
 		void write_BPOS_chunk(BinaryWriter& writer) const;
 		void write_TXAN_chunk(BinaryWriter& writer) const;
+		void write_FAFX_chunk(BinaryWriter& writer) const;
 
 	  public:
 		explicit MDX(BinaryReader& reader);
@@ -623,6 +630,7 @@ namespace mdx {
 		std::vector<EventObject> eventObjects;
 		std::vector<CollisionShape> collisionShapes;
 		std::vector<CornEmitter> corn_emitters;
+		std::vector<FaceFX> facefxes;
 
 		std::vector<Camera> cameras;
 		std::vector<float> bind_poses;

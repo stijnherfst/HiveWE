@@ -606,6 +606,16 @@ namespace mdx {
 		}
 	}
 
+	void MDX::read_FAFX_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		for (size_t i = 0; i < size / 340; i++) {
+			FaceFX facefx;
+			facefx.name = reader.read_string(80);
+			facefx.path = reader.read_string(260);
+			facefxes.push_back(std::move(facefx));
+		}
+	}
+
 	void MDX::write_GEOS_chunk(BinaryWriter& writer) const {
 		if (geosets.empty()) {
 			return;
@@ -1213,6 +1223,19 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
+	void MDX::write_FAFX_chunk(BinaryWriter& writer) const {
+		if (facefxes.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::FAFX);
+		writer.write<uint32_t>(facefxes.size() * 340);
+		for (const auto& facefx : facefxes) {
+			writer.write_c_string_padded(facefx.name, 80);
+			writer.write_c_string_padded(facefx.path.string(), 260);
+		}
+	}
+
 	void MDX::forEachNode(const std::function<void(Node&)>& F) {
 		for (auto& i : bones) {
 			F(i.node);
@@ -1332,9 +1355,7 @@ namespace mdx {
 					read_CORN_chunk(reader);
 					break;
 				case ChunkTag::FAFX:
-					reader.advance(4);
-					face_target = reader.read_string(80);
-					face_path = reader.read_string(260);
+					read_FAFX_chunk(reader);
 					break;
 				case ChunkTag::CAMS:
 					read_CAMS_chunk(reader);
@@ -1386,13 +1407,7 @@ namespace mdx {
 		write_EVTS_chunk(writer);
 		write_CLID_chunk(writer);
 		write_CORN_chunk(writer);
-
-		if (face_target.size()) {
-			writer.write(ChunkTag::FAFX);
-			writer.write<uint32_t>(340);
-			writer.write_c_string_padded(face_target, 80);
-			writer.write_c_string_padded(face_path, 260);
-		}
+		write_FAFX_chunk(writer);
 		write_BPOS_chunk(writer);
 		write_TXAN_chunk(writer);
 

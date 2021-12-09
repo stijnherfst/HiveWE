@@ -4,14 +4,21 @@
 #include "Utilities.h"
 
 #include <absl/strings/str_split.h>
+#include <fstream>
 
 namespace ini {
-	INI::INI(const fs::path& path) {
-		load(path);
+	INI::INI(const fs::path& path, bool local) {
+		load(path, local);
 	}
 
-	void INI::load(const fs::path& path) {
-		std::vector<uint8_t, default_init_allocator<uint8_t>> buffer = hierarchy.open_file(path).buffer;
+	void INI::load(const fs::path& path, bool local) {
+		std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
+		if (local) {
+			std::ifstream stream(path, std::ios::binary);
+			buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+		} else {
+			buffer = hierarchy.open_file(path).buffer;
+		}
 		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
 		// Strip byte order marking
