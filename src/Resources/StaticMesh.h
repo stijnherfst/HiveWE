@@ -36,7 +36,7 @@ public:
 	GLuint color_buffer;
 
 	fs::path path;
-	std::vector<std::shared_ptr<GPUTexture>> textures;
+	std::unordered_map<int, std::shared_ptr<GPUTexture>> textures;
 	std::vector<mdx::Material> materials;
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
@@ -46,6 +46,7 @@ public:
 	explicit StaticMesh(const fs::path& path);
 	virtual ~StaticMesh();
 
+	const std::string typeToSuffix(mdx::LayerType type);
 	void render_queue(const glm::mat4& model, glm::vec3 color);
 
 	void render_opaque_sd() const;

@@ -456,7 +456,7 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	if (replace_texture) {
 		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + (hierarchy.hd ? "_diffuse.dds" : ".dds");
+		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string();
 	}
 
 	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, replace_texture ? texture_name.string() : ""));

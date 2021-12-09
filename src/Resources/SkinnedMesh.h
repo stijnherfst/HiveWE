@@ -48,7 +48,7 @@ class SkinnedMesh : public Resource {
 
 	fs::path path;
 //	int mesh_id;
-	std::vector<std::shared_ptr<GPUTexture>> textures;
+	std::unordered_map<int, std::shared_ptr<GPUTexture>> textures;
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
 	std::vector<const SkeletalModelInstance*> skeletons;
@@ -59,6 +59,7 @@ class SkinnedMesh : public Resource {
 	explicit SkinnedMesh(const fs::path& path);
 	virtual ~SkinnedMesh();
 
+	const std::string typeToSuffix(mdx::LayerType type);
 	void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);
 	void render_color_coded(const SkeletalModelInstance& skeleton, int id);
 

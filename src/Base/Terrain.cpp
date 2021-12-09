@@ -175,7 +175,7 @@ void Terrain::create() {
 	// Ground textures
 	for (const auto& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id)));
-		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
+		ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);
@@ -183,7 +183,7 @@ void Terrain::create() {
 
 	// Cliff Textures
 	for (auto&& cliff_id : cliffset_ids) {
-		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id)));
+		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
 		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
 	}
@@ -447,7 +447,7 @@ void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, st
 
 	for (const auto& tile_id : tileset_ids) {
 		ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
-		ground_texture_to_id.emplace(tile_id, ground_textures.size() - 1);
+		ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
 	}
 	blight_texture = static_cast<int>(ground_textures.size());
 	ground_texture_to_id.emplace("blight", blight_texture);

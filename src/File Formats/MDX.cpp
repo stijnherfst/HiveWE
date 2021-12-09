@@ -7,16 +7,16 @@
 
 namespace mdx {
 	std::unordered_map<int, std::string> replacable_id_to_texture{
-		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.dds" },
-		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.dds" },
-		{ 11, "ReplaceableTextures/Cliff/Cliff0.dds" },
-		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.dds" },
-		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.dds" },
-		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.dds" },
-		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.dds" },
-		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.dds" },
-		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.dds" },
-		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
+		{ 1, "ReplaceableTextures/TeamColor/TeamColor00" },
+		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00" },
+		{ 11, "ReplaceableTextures/Cliff/Cliff0" },
+		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree" },
+		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree" },
+		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree" },
+		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree" },
+		{ 35, "ReplaceableTextures/Mushroom/MushroomTree" },
+		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree" },
+		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree" }
 	};
 
 	Extent::Extent(BinaryReader& reader) {
@@ -165,6 +165,8 @@ namespace mdx {
 			for (size_t i = 0; i < layers_count; i++) {
 				const size_t reader_pos = reader.position;
 				Layer layer;
+				if (material.shader_name == "Shader_HD_DefaultUnit")
+					layer.type = (LayerType)i;
 				const uint32_t size = reader.read<uint32_t>();
 				layer.blend_mode = reader.read<uint32_t>();
 				layer.shading_flags = reader.read<uint32_t>();
@@ -271,7 +273,7 @@ namespace mdx {
 			texture.replaceable_id = reader.read<uint32_t>();
 			texture.file_name = reader.read_string(260);
 			texture.flags = reader.read<uint32_t>();
-			textures.push_back(std::move(texture));
+			textures[i] = texture;
 		}
 	}
 
@@ -832,7 +834,8 @@ namespace mdx {
 
 		writer.write(ChunkTag::TEXS);
 		writer.write<uint32_t>(textures.size() * 268);
-		for (const auto& texture : textures) {
+		for (auto const& texturepair : textures) {
+			Texture texture = texturepair.second;
 			writer.write<uint32_t>(texture.replaceable_id);
 			writer.write_c_string_padded(texture.file_name.string(), 260);
 			writer.write<uint32_t>(texture.flags);

@@ -5,6 +5,21 @@
 
 #include "HiveWE.h"
 
+const std::string StaticMesh::typeToSuffix(mdx::LayerType type) {
+	switch (type) {
+		case mdx::LayerType::DIFFUSE:
+			return "_diffuse.dds";
+		case mdx::LayerType::NORMAL:
+			return "_normal.dds";
+		case mdx::LayerType::ORM:
+			return "_orm.dds";
+		case mdx::LayerType::EMISSIVE:
+			return "_emissive.dds";
+		default:
+			return ".dds";
+	}
+}
+
 StaticMesh::StaticMesh(const fs::path& path) {
 	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
 		throw;
@@ -90,18 +105,25 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		extent = model.sequences.front().extent;
 	}
 
-	for (const auto& i : model.textures) {
-		if (i.replaceable_id != 0) {
-			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
-				std::cout << "Unknown replaceable ID found\n";
+	for (const auto& i : model.materials) {
+		for (const auto& j : i.layers) {
+			auto tex = model.textures[j.texture_id];
+			if (tex.replaceable_id != 0) {
+				if (!mdx::replacable_id_to_texture.contains(tex.replaceable_id)) {
+						std::cout << "Unknown replaceable ID found\n";
+				}
+				textures[j.texture_id] = resource_manager.load<GPUTexture>(
+					mdx::replacable_id_to_texture[tex.replaceable_id] + typeToSuffix(j.type),
+					(tex.flags & 1) ? "W" : "");
+			} else {
+				textures[j.texture_id] = resource_manager.load<GPUTexture>(tex.file_name,
+					(tex.flags & 1) ? "W" : "");
 			}
-			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
-		} else {
-			textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
 
-			// ToDo Same texture on different model with different flags?
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			gl->glTextureParameteri(textures[j.texture_id]->id, GL_TEXTURE_WRAP_S,
+									(tex.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			gl->glTextureParameteri(textures[j.texture_id]->id, GL_TEXTURE_WRAP_T,
+									(tex.flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
 	}
 
@@ -240,7 +262,7 @@ void StaticMesh::render_opaque_sd() const {
 				gl->glDepthMask(true);
 			}
 
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			gl->glBindTextureUnit(0, textures.at(j.texture_id)->id);
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 		}
 	}
@@ -283,7 +305,7 @@ void StaticMesh::render_opaque_hd() const {
 		}
 
 		for (short i = 0; i < 6; i++)
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
+			gl->glBindTextureUnit(i, textures.at(layers[i].texture_id)->id);
 
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
@@ -353,7 +375,7 @@ void StaticMesh::render_transparent_sd(int instance_id) const {
 				gl->glDepthMask(true);
 			}
 
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			gl->glBindTextureUnit(0, textures.at(j.texture_id)->id);
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 		}
@@ -417,7 +439,7 @@ void StaticMesh::render_transparent_hd(int instance_id) const {
 		}
 
 		for (short i = 0; i < 6; i++)
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
+			gl->glBindTextureUnit(i, textures.at(layers[i].texture_id)->id);
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}

@@ -151,7 +151,19 @@ namespace mdx {
 		}
 	};
 
+	enum class LayerType {
+		DEFAULT = -1,
+		DIFFUSE = 0,
+		NORMAL = 1,
+		ORM = 2,
+		EMISSIVE = 3,
+		TEAM_COLOR = 4,
+		ENVIRONMENT = 5
+	};
+
 	struct Layer {
+
+		LayerType type = LayerType::DEFAULT;
 		uint32_t blend_mode;
 		uint32_t shading_flags;
 		uint32_t texture_id;
@@ -612,7 +624,7 @@ namespace mdx {
 		std::vector<GeosetAnimation> animations;
 		std::vector<Bone> bones;
 		std::vector<Material> materials;
-		std::vector<Texture> textures;
+		std::unordered_map<int, Texture> textures;
 		std::vector<Light> lights;
 		std::vector<Node> help_bones;
 		std::vector<Attachment> attachments;
