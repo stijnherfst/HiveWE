@@ -180,7 +180,11 @@ namespace slk {
 	/// If an unknown column key is encountered then the column is added
 	void SLK::merge(const ini::INI& ini, const SLK& meta_slk) {
 		for (const auto& [section_key, section_value] : ini.ini_data) {
-			if (!base_data.contains(section_key)) {
+			std::string section_key_temp = section_key;
+			if (section_key_temp == "YTsc") {
+				section_key_temp = "Ytsc";
+			}
+			if (!base_data.contains(section_key_temp)) {
 				continue;
 			}
 
@@ -202,8 +206,8 @@ namespace slk {
 					|| key_lower == "unbuttonpos" 
 					|| key_lower == "researchbuttonpos") && column_headers.contains(key_lower + "2")) {
 
-					base_data[section_key][key_lower] = value[0];
-					base_data[section_key][key_lower + "2"] = value[1];
+					base_data[section_key_temp][key_lower] = value[0];
+					base_data[section_key_temp][key_lower + "2"] = value[1];
 					continue;
 				}
 				
@@ -232,14 +236,14 @@ namespace slk {
 						if (!column_headers.contains(new_key)) {
 							add_column(new_key);
 						}
-						base_data[section_key][new_key] = value[i];
+						base_data[section_key_temp][new_key] = value[i];
 					}
 					continue;
 				} else {
 					if (meta_slk.data<std::string>("type", id).ends_with("List")) {
-						base_data[section_key][key_lower] = absl::StrJoin(value, ",");
+						base_data[section_key_temp][key_lower] = absl::StrJoin(value, ",");
 					} else {
-						base_data[section_key][key_lower] = value[0];
+						base_data[section_key_temp][key_lower] = value[0];
 					
 					}
 				}
