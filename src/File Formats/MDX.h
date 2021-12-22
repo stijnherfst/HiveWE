@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 #include "BinaryWriter.h"
 
 namespace mdx {
-	extern std::unordered_map<int, std::string> replacable_id_to_texture;
+	extern const std::unordered_map<int, std::string> replacable_id_to_texture;
 
 	enum class TrackTag {
 		KMTF = 'FTMK',

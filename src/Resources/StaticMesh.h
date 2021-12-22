@@ -43,7 +43,7 @@ public:
 	
 	static constexpr const char* name = "StaticMesh";
 
-	explicit StaticMesh(const fs::path& path);
+	explicit StaticMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override);
 	virtual ~StaticMesh();
 
 	void render_queue(const glm::mat4& model, glm::vec3 color);

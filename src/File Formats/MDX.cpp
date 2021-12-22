@@ -6,17 +6,17 @@
 #include <fmt/format.h>
 
 namespace mdx {
-	std::unordered_map<int, std::string> replacable_id_to_texture{
-		{ 1, "ReplaceableTextures/TeamColor/TeamColor00.dds" },
-		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00.dds" },
-		{ 11, "ReplaceableTextures/Cliff/Cliff0.dds" },
-		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree.dds" },
-		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree.dds" },
-		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree.dds" },
-		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree.dds" },
-		{ 35, "ReplaceableTextures/Mushroom/MushroomTree.dds" },
-		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree.dds" },
-		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree.dds" }
+	const std::unordered_map<int, std::string> replacable_id_to_texture{
+		{ 1, "ReplaceableTextures/TeamColor/TeamColor00" },
+		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00" },
+		{ 11, "ReplaceableTextures/Cliff/Cliff0" },
+		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree" },
+		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree" },
+		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree" },
+		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree" },
+		{ 35, "ReplaceableTextures/Mushroom/MushroomTree" },
+		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree" },
+		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree" }
 	};
 
 	Extent::Extent(BinaryReader& reader) {

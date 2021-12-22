@@ -149,14 +149,12 @@ SkinnedMesh::SkinnedMesh(const fs::path& path) {
 			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
 				std::cout << "Unknown replacable ID found\n";
 			}
-			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
+			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture.at(i.replaceable_id), std::to_string(i.flags)));
 		} else {
-			textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
-			
-			// ToDo Same texture on different model with different flags?
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			textures.push_back(resource_manager.load<GPUTexture>(i.file_name, std::to_string(i.flags)));
 		}
+		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	}
 
 	gl->glEnableVertexAttribArray(0);

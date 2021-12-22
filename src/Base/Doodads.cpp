@@ -1,6 +1,7 @@
 #include "Doodads.h"
 
 #include <iostream>
+#include <optional>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -445,25 +446,14 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
-		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
+		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
 		return id_to_mesh[full_id];
 	}
 
-	// Switch around the texture in the replaceable_id table so the mesh loader will pick the correct texture
-	std::string replaceable_texture;
-
-	bool replace_texture = is_number(replaceable_id) && texture_name != "_";
-
-	if (replace_texture) {
-		replaceable_texture = mdx::replacable_id_to_texture[std::stoi(replaceable_id)];
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = texture_name.string() + (hierarchy.hd ? "_diffuse.dds" : ".dds");
-	}
-
-	id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, replace_texture ? texture_name.string() : ""));
-
-	// Switch it back
-	if (replace_texture) {
-		mdx::replacable_id_to_texture[std::stoi(replaceable_id)] = replaceable_texture;
+	if (is_number(replaceable_id) && texture_name != "_") {
+		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, texture_name.string(), std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))));
+	} else {
+		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, "", std::nullopt));
 	}
 
 	return id_to_mesh[full_id];

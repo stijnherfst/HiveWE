@@ -5,7 +5,7 @@
 
 #include "HiveWE.h"
 
-StaticMesh::StaticMesh(const fs::path& path) {
+StaticMesh::StaticMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
 		throw;
 	}
@@ -90,19 +90,49 @@ StaticMesh::StaticMesh(const fs::path& path) {
 		extent = model.sequences.front().extent;
 	}
 
-	for (const auto& i : model.textures) {
-		if (i.replaceable_id != 0) {
-			if (!mdx::replacable_id_to_texture.contains(i.replaceable_id)) {
-				std::cout << "Unknown replaceable ID found\n";
-			}
-			textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture[i.replaceable_id]));
-		} else {
-			textures.push_back(resource_manager.load<GPUTexture>(i.file_name));
+	for (size_t i = 0; i < model.textures.size(); i++) {
+		const mdx::Texture& texture = model.textures[i];
 
-			// ToDo Same texture on different model with different flags?
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, i.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		if (texture.replaceable_id != 0) {
+			// Figure out if this is an HD texture
+			// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
+			// So we take a guess using the index
+			bool is_hd = false;
+			size_t layer_id;
+			for (const auto& material : model.materials) {
+				for (size_t k = 0; k < material.layers.size(); k++) {
+					if (material.layers[k].texture_id == i) {
+						is_hd = !material.shader_name.empty();
+						layer_id = k;
+						break;
+					}
+				}
+				if (is_hd) {
+					break;
+				}
+			}
+
+			std::string suffix;
+			if (is_hd) {
+				if (layer_id == 0) {
+					suffix = "_diffuse";
+				} else if (layer_id == 1) {
+					suffix = "_normal";
+				} else if (layer_id == 2) {
+					suffix = "_orm";	
+				}
+			}
+
+			if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
+				textures.push_back(resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags)));
+			} else {
+				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
+			}
+		} else {
+			textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
 		}
+		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, texture.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	}
 
 	gl->glEnableVertexAttribArray(0);

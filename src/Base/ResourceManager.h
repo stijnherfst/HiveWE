@@ -13,15 +13,17 @@ public:
 
 class ResourceManager {
 public:
-	template<typename T>
-	std::shared_ptr<T> load(const fs::path& path, const std::string& custom_identifier = "") {
+	/// Loads and caches a resource in memory until no longer referenced.
+	/// Whether two load paths lead to different cached instances is determined by the path, T::name and custom_identifier
+	/// Any additional arguments are passed to your type its constructor
+	template<typename T, typename... Args>
+	std::shared_ptr<T> load(const fs::path& path, const std::string& custom_identifier = "", Args... args) {
 		static_assert(std::is_base_of<Resource, T>::value, "T must inherit from Resource");
-
 		const std::string resource = path.string() + T::name + custom_identifier;
 
 		auto res = resources[resource].lock();
 		if (!res) {
-			resources[resource] = res = std::make_shared<T>(path);
+			resources[resource] = res = std::make_shared<T>(path, args...);
 		}
 
 		return std::dynamic_pointer_cast<T>(res);
