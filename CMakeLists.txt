@@ -37,12 +37,13 @@ target_include_directories(HiveWE PRIVATE
 	"src" 
 	"src/Base" 
 	"src/Brush" 
+	"src/Custom Widgets" 
 	"src/File Formats" 
+	"src/Menus" 
+	"src/Models"
 	"src/Resources" 
 	"src/Resources/SkinnedMesh" 
-	"src/Menus" 
-	"src/Custom Widgets" 
-	"src/Models"
+	"src/Utilities"
 
 	${BULLET_INCLUDE_DIR}
 	${JPEG_INCLUDE_DIR}}

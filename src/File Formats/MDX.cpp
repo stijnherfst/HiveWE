@@ -519,7 +519,7 @@ namespace mdx {
 			uint32_t count = reader.read<uint32_t>();
 			evt.global_sequence_id = reader.read<int32_t>(); //signed
 			evt.times = reader.read_vector<uint32_t>(count);
-			eventObjects.push_back(std::move(evt));
+			event_objects.push_back(std::move(evt));
 		}
 	}
 
@@ -557,7 +557,7 @@ namespace mdx {
 					shape.radius = 0.f;
 				}
 			}
-			collisionShapes.push_back(std::move(shape));
+			collision_shapes.push_back(std::move(shape));
 		}
 	}
 
@@ -1091,7 +1091,7 @@ namespace mdx {
 	}
 
 	void MDX::write_EVTS_chunk(BinaryWriter& writer) const {
-		if (eventObjects.empty()) {
+		if (event_objects.empty()) {
 			return;
 		}
 
@@ -1100,7 +1100,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& event_object : eventObjects) {
+		for (const auto& event_object : event_objects) {
 			event_object.node.save(writer);
 			writer.write_string("KEVT");
 			writer.write<uint32_t>(event_object.times.size());
@@ -1112,7 +1112,7 @@ namespace mdx {
 	}
 
 	void MDX::write_CLID_chunk(BinaryWriter& writer) const {
-		if (collisionShapes.empty()) {
+		if (collision_shapes.empty()) {
 			return;
 		}
 
@@ -1121,7 +1121,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& shape : collisionShapes) {
+		for (const auto& shape : collision_shapes) {
 			shape.node.save(writer);
 			writer.write<uint32_t>(static_cast<uint32_t>(shape.type));
 
@@ -1265,13 +1265,14 @@ namespace mdx {
 			F(i.node);
 		}
 
-		for (auto& i : eventObjects) {
+		for (auto& i : event_objects) {
 			F(i.node);
 		}
 
-		for (auto& i : collisionShapes) {
+		for (auto& i : collision_shapes) {
 			F(i.node);
 		}
+
 		for (auto& i : corn_emitters) {
 			F(i.node);
 		}
@@ -1284,7 +1285,7 @@ namespace mdx {
 	void MDX::load(BinaryReader& reader) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
-			fmt::print("Incorrect file magic number. Should be MDLX, is {}\n", magic_number);
+			fmt::print("Incorrect file magic number, expected MDLX but got {}\n", magic_number);
 			return;
 		}
 
@@ -1430,8 +1431,8 @@ namespace mdx {
 						emitters1.size() +
 						emitters2.size() +
 						ribbons.size() +
-						eventObjects.size() +
-						collisionShapes.size() +
+						event_objects.size() +
+						collision_shapes.size() +
 						corn_emitters.size();
 
 		// If there are no bones we have to add one to prevent crashing and stuff.

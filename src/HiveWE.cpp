@@ -331,25 +331,19 @@ void HiveWE::export_mpq() {
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
 	std::wstring file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)").toStdWString();
 
-	if (file_name == L"") {
+	if (file_name.empty()) {
 		return;
 	}
-	if (fs::exists(file_name)) {
-		fs::remove(file_name);
-		std::wcout << L"Overwriting path: " << file_name << L'\n';
-	}
+
+	fs::remove(file_name);
+
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 
 	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
 
 	HANDLE handle;
-
-#ifdef _MSC_VER
 	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
-#else
-	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
-#endif
 	if (!open) {
 		QMessageBox::critical(this, "Exporting failed", "There was an error creating the archive.");
 		std::cout << GetLastError() << "\n";

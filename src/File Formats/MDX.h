@@ -627,8 +627,8 @@ namespace mdx {
 		std::vector<ParticleEmitter1> emitters1;
 		std::vector<ParticleEmitter2> emitters2;
 		std::vector<RibbonEmitter> ribbons;
-		std::vector<EventObject> eventObjects;
-		std::vector<CollisionShape> collisionShapes;
+		std::vector<EventObject> event_objects;
+		std::vector<CollisionShape> collision_shapes;
 		std::vector<CornEmitter> corn_emitters;
 		std::vector<FaceFX> facefxes;
 

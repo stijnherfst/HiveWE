@@ -11,8 +11,8 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 		model->emitters1.size() +
 		model->emitters2.size() +
 		model->ribbons.size() +
-		model->eventObjects.size() +
-		model->collisionShapes.size() +
+		model->event_objects.size() +
+		model->collision_shapes.size() +
 		model->corn_emitters.size();
 	
 	// ToDo: for each camera: add camera source node to renderNodes

@@ -1,6 +1,5 @@
 #include "Map.h"
 
-#include <iostream>
 #include <execution>
 #include <random>
 
@@ -12,6 +11,7 @@
 #include "InputHandler.h"
 #include "Physics.h"
 #include "Camera.h"
+#include "Timer.h"
 
 #include <fstream>
 #include <bullet/btBulletDynamicsCommon.h>
@@ -20,7 +20,7 @@
 using namespace std::literals::string_literals;
 
 void Map::load(const fs::path& path) {
-	auto begin = std::chrono::steady_clock::now();
+	Timer timer;
 
 	hierarchy.map_directory = path;
 	filesystem_path = fs::absolute(path) / "";
@@ -200,8 +200,8 @@ void Map::load(const fs::path& path) {
 	upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
 	buff_table = new TableModel(&buff_slk, &buff_meta_slk);
 
-	std::cout << "\nSLK loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("\nSLK loading:\t {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	// Trigger strings
 	if (hierarchy.map_file_exists("war3map.wts")) {
@@ -218,24 +218,25 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-	std::cout << "Trigger loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+
+	fmt::print("Trigger loading: {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	info.load();
-
-	// Terrain
 	terrain.load();
 
-	std::cout << "Terrain loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("Terrain loading: {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	// Pathing Map
 	if (hierarchy.map_file_exists("war3map.wpm")) {
 		pathing_map.load();
+	} else {
+		pathing_map.resize(terrain.width * 4, terrain.height * 4);
 	}
 
-	std::cout << "Pathing loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("Pathing loading: {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	// Doodads
 	if (hierarchy.map_file_exists("war3map.w3d")) {
@@ -249,8 +250,8 @@ void Map::load(const fs::path& path) {
 	doodads.load();
 	doodads.create();
 
-	std::cout << "Doodad loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("Doodad loading:\t {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 
 	if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -267,9 +268,8 @@ void Map::load(const fs::path& path) {
 		units.create();
 	}
 
-
-	std::cout << "Unit loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("Unit loading:\t {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	// Abilities 
 	if (hierarchy.map_file_exists("war3map.w3a")) {
@@ -301,8 +301,8 @@ void Map::load(const fs::path& path) {
 		sounds.load();
 	}
 
-	std::cout << "Regions/cameras/sounds loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
-	begin = std::chrono::steady_clock::now();
+	fmt::print("Misc loading:\t {:>5}ms\n", timer.elapsed_ms());
+	timer.reset();
 
 	// Center camera
 	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
@@ -481,7 +481,7 @@ again:
 		|| upgrade_slk.row_headers.contains(id)
 		|| buff_slk.row_headers.contains(id)) {
 		
-		std::cout << "Generated an existing ID: " << id << " what're the odds\n";
+		fmt::print("Generated an existing ID: {} what're the odds\n", id);
 		goto again;
 	}
 

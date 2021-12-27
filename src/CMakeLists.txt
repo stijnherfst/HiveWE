@@ -94,4 +94,6 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/GenericSelectorList.cpp"
 	"Custom Widgets/IconView.cpp"
 	"Custom Widgets/FlowLayout.cpp"
+
+	"Utilities/Timer.cpp"
 )

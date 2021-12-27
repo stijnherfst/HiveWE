@@ -1,6 +1,6 @@
 #include "PathingMap.h"
 
-#include <iostream>
+#include "fmt/format.h"
 
 #include "Utilities.h"
 #include "Texture.h"
@@ -14,19 +14,20 @@ bool PathingMap::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.wpm");
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "MP3W") {
-		std::cout << "Invalid war3map.wpm file: Magic number is not MP3W" << std::endl;
+		fmt::print("Invalid war3map.wpm magic number, expected MP3W but got {}", magic_number);
 		return false;
 	}
 
 	const int version = reader.read<uint32_t>();
 	if (version != 0) {
-		std::cout << "Unknown Pathmap version. Attempting to load, but may crash.";
+		fmt::print("Unknown war3map.wpm version, expected 0 but got {}. Attempting to load, but may crash.\n", version);
 	}
 
 	width = reader.read<uint32_t>();
 	height = reader.read<uint32_t>();
 
-	if ((width == 0) || (height == 0)) {
+	if (width == 0 || height == 0) {
+		resize(map->terrain.width * 4, map->terrain.height * 4);
 		return true;
 	}
 
@@ -54,10 +55,6 @@ bool PathingMap::load() {
 }
 
 void PathingMap::save() const {
-	if ((width == 0) || (height == 0)) {
-		return;
-	}
-
 	BinaryWriter writer;
 	writer.write_string("MP3W");
 	writer.write<uint32_t>(write_version);
@@ -170,6 +167,25 @@ void PathingMap::resize(size_t new_width, size_t new_height) {
 	pathing_cells_dynamic.resize(width * height);
 
 	old_pathing_cells_static.resize(width * height);
+
+	gl->glDeleteTextures(1, &texture_static);
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
+	gl->glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
+	gl->glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
+	gl->glTextureParameteri(texture_static, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(texture_static, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	gl->glDeleteTextures(1, &texture_dynamic);
+	gl->glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
+	gl->glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
+	const uint8_t clear_color = 0;
+	gl->glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
+	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	gl->glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void PathingMapAction::undo() {
