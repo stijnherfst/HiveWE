@@ -204,9 +204,8 @@ QSmallRibbonButton {
 
 ads--CDockWidgetTab {
     background: palette(window);
-    border-color: palette(dark);
     border-style: solid;
-    border-width: 0 px 0 0;
+    border-width: 0px 0 0;
     padding: 0;
     qproperty-iconSize: 23px;
 }
@@ -254,6 +253,7 @@ QScrollArea#dockWidgetScrollArea {
 }
 
 #tabCloseButton::pressed {
+	border: 1px solid rgb(98, 162, 228);
 	background: rgba(128, 128, 128, 255);
 }
 
@@ -288,7 +288,6 @@ QDialogButtonBox QPushButton {
 JassEditor QFrame {
 	background-color: palette(window);
 }
-
 
 QTableView::indicator {
 	border: 1px solid rgb(100, 100, 100);

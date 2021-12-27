@@ -3,6 +3,11 @@
 
 /******************************************************/
 /* QRibbon */
+
+QRibbon {
+	max-height: 121px;
+}
+
 QRibbon QWidget {
 	font: 8pt "Segoe UI";
 	color: black;
@@ -16,6 +21,7 @@ QRibbon::pane {
 	border-top: 1px solid rgb(218, 219, 220);
 	border-bottom: 1px solid rgb(218, 219, 220);
 	margin-top: -1;
+	margin-bottom: -0;
 }
 
 QRibbon QTabBar::tab { 
@@ -134,37 +140,102 @@ QRibbonButton {
 }
 
 QRibbonButton::hover {
-	border: 1px solid rgb(164, 206, 249);
 	background-color: rgb(232, 239, 247);
 }
 
 QRibbonButton::pressed {
-	border: 1px solid rgb(98, 162, 228);
 	background-color: rgb(201, 224, 247);
 }
 
 QRibbonButton::checked {
-	border: 1px solid rgb(98, 162, 228);
 	background-color: rgb(201, 224, 247);
 }
 
+QRibbonButton::checked:hover {
+	border: 1px solid rgb(120, 120, 120);
+}
+
+QRibbon QLineEdit {
+	height: 21px;
+	max-width: 50px;
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(255, 255, 255);
+	color: rgb(0, 0, 0);
+}
+
+QRibbon QLineEdit::hover {
+	/*background-color: rgb(75, 75, 75);*/
+}
+
+QRibbon QLineEdit::focus {
+	/*border: 1px solid rgb(100, 150, 255);*/
+}
+
+QRibbon QLineEdit::disabled {
+	/*background-color: rgb(67, 67, 67);*/
+}
+
+QRibbonButton::menu-indicator {
+    top: -3;
+}
+
+QRibbonButton QMenu {
+	/*border: 1px solid rgb(100, 100, 100);*/
+}
+
+QRibbonButton QMenu::item {
+	height: 28px;
+	padding-left: 30px;
+    padding-right: 30px;
+    margin: 1px;
+}
+
+QRibbonButton QMenu::item:selected {
+	background-color: rgb(85, 85, 85);
+}
+
+QSmallRibbonButton {
+	height: 23;
+	max-height: 23;
+	qproperty-iconSize: 16px 16px;
+	qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+}
 
 /******************************************************/
 /* Docking */
 
 ads--CDockWidgetTab {
     background: palette(window);
-    border-color: palette(light);
     border-style: solid;
-    border-width: 0 1px 0 0;
+    border-width: 0px 0 0;
     padding: 0 0px;
 
 }
 
 ads--CDockWidgetTab[activeTab="true"] {
     background: palette(highlight);
+    border-color: palette(highlight);
 }
 
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:hover {
+	background: rgba(255, 255, 255, 48);
+}
+
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:pressed {
+	background: rgba(255, 255, 255, 92);
+}
+
+ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid transparent;
+	padding-bottom: 0px;
+}
+
+ads--CDockAreaWidget[focused="true"] ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid palette(highlight);
+	padding-bottom: 0px;
+}
 
 QScrollArea#dockWidgetScrollArea {
     padding: 0px;
@@ -220,7 +291,6 @@ JassEditor QFrame {
 	background-color: palette(window);
 }
 
-
 QTableView::indicator {
 	border: 1px solid rgb(100, 100, 100);
 	background-color: rgb(60, 60, 60);
@@ -240,4 +310,32 @@ QTableView::indicator:checked{
 	border: 1px solid rgb(120, 120, 120);
 	background-color: rgb(100, 100, 100);
 	image: url("Data/Icons/check.png");
+}
+
+/******************************************************/
+/* Object Editor */
+
+ObjectEditor QLineEdit {
+	background-color: rgb(66, 66, 66);
+}
+
+IconButton {
+	border: 1px solid transparent;
+	padding-left: 3px;
+	padding-right: 2px;
+}
+
+IconButton::hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+IconButton::pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+IconButton::checked {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
 }
