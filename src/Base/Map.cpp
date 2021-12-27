@@ -133,6 +133,9 @@ void Map::load(const fs::path& path) {
 	destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_meta_slk.build_meta_map();
 
+	//Fix Scorched tree
+	destructibles_slk.merge(ini::INI("Data/Warcraft/DestructableSkin.txt", true), destructibles_meta_slk);
+
 	destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"), destructibles_meta_slk);
 	destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 	destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
@@ -227,7 +230,9 @@ void Map::load(const fs::path& path) {
 	begin = std::chrono::steady_clock::now();
 
 	// Pathing Map
-	pathing_map.load();
+	if (hierarchy.map_file_exists("war3map.wpm")) {
+		pathing_map.load();
+	}
 
 	std::cout << "Pathing loading: " << (std::chrono::steady_clock::now() - begin).count() / 1'000'000 << "ms\n";
 	begin = std::chrono::steady_clock::now();

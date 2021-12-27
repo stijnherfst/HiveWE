@@ -26,6 +26,10 @@ bool PathingMap::load() {
 	width = reader.read<uint32_t>();
 	height = reader.read<uint32_t>();
 
+	if ((width == 0) || (height == 0)) {
+		return true;
+	}
+
 	pathing_cells_static = reader.read_vector<uint8_t>(width * height);
 	pathing_cells_dynamic.resize(width * height);
 
@@ -50,6 +54,10 @@ bool PathingMap::load() {
 }
 
 void PathingMap::save() const {
+	if ((width == 0) || (height == 0)) {
+		return;
+	}
+
 	BinaryWriter writer;
 	writer.write_string("MP3W");
 	writer.write<uint32_t>(write_version);

@@ -67,6 +67,9 @@ void Units::load() {
 		i.flags = reader.read<uint8_t>();
 
 		i.player = reader.read<uint32_t>();
+		if (i.player > 11 && map->info.editor_version < 6061) {
+			i.player += 12;
+		}
 
 		i.unknown1 = reader.read<uint8_t>();
 		i.unknown2 = reader.read<uint8_t>();

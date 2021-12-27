@@ -15,9 +15,9 @@ namespace ini {
 		std::map<std::string, std::map<std::string, std::vector<std::string>>> ini_data;
 
 		INI() = default;
-		explicit INI(const fs::path& path);
+		explicit INI(const fs::path& path, bool local = false);
 
-		void load(const fs::path& path);
+		void load(const fs::path& path, bool local = false);
 		void substitute(const INI& ini, const std::string& section);
 
 		std::map<std::string, std::vector<std::string>> section(const std::string& section) const;
