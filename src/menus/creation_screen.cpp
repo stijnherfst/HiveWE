@@ -110,16 +110,24 @@ void CreationScreen::create(const fs::path path) const {
 	w3e.write_string("CXdiCXsq");
 	w3e.write(width + 1);
 	w3e.write(height + 1);
-	float centx = -1 * width * 128.f / 2;
-	float centy = -1 * height * 128.f / 2;
-	w3e.write(centx);
-	w3e.write(centy);
+	w3e.write(-64.f * width);
+	w3e.write(-64.f * height);
+	
+	auto random_var = [](uint16_t x) -> uint8_t {
+		x ^= x >> 7;
+		x *= 0x19b3U;
+		x ^= x >> 7;
+		x *= 0xecb5U;
+		x ^= x >> 7;
+		return x % 18;
+	};
 
 	for (int i = 0; i < (height + 1) * (width + 1); i++) {
-		w3e.write<uint32_t>(0);
-		w3e.write<char>(0);
-		w3e.write<char>(0);
-		w3e.write<char>(0);
+		w3e.write<uint16_t>(0x2000);
+		w3e.write<uint16_t>(0x2000);
+		w3e.write<uint8_t>(0);
+		w3e.write<uint8_t>(random_var(i));
+		w3e.write<uint8_t>(0xF2);
 	}
 
 	//BinaryWriter wpm;
