@@ -41,11 +41,11 @@ class PathingMap {
 
 	void dynamic_clear_area(const QRect& area);
 
-	void blit_pathing_texture(glm::vec2 pos, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture);
+	bool is_area_free(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, uint8_t mask);
+	void blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture);
 
 	void upload_static_pathing();
 	void upload_dynamic_pathing();
-
 
 	void new_undo_group();
 	void add_undo(const QRect& area);

@@ -149,8 +149,7 @@ void Brush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	set_position(input_handler.mouse_world);
 
 	if (event->buttons() == Qt::LeftButton) {
-		if (mode == Mode::selection) {
-		} else if (mode == Mode::placement) {
+		if (mode == Mode::placement && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 			apply(frame_delta);
 		}
 	}
@@ -170,11 +169,13 @@ void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			selection_started = true;
 			selection_start = input_handler.mouse_world;
 		}
-	} else if (mode == Mode::placement && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
+	} else if (mode == Mode::placement) {
 		// Check if ellegible for placement
 		if (event->button() == Qt::LeftButton) {
 			apply_begin();
-			apply(0.5);
+			if (can_place() || event->modifiers() & Qt::ShiftModifier) {
+				apply(0.5);
+			}
 		}
 	} else if (mode == Mode::pasting && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 		clear_selection();

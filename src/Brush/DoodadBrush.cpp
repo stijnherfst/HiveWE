@@ -305,7 +305,6 @@ void DoodadBrush::delete_selection() {
 
 	QRectF update_pathing_area;
 	// Undo/redo
-	map->terrain_undo.new_undo_group();
 	auto action = std::make_unique<DoodadDeleteAction>();
 	for (const auto& i : selections) {
 		action->doodads.push_back(*i);
@@ -315,9 +314,10 @@ void DoodadBrush::delete_selection() {
 		}
 		update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
 	}
+	map->terrain_undo.new_undo_group();
 	map->terrain_undo.add_undo_action(std::move(action));
-	map->doodads.remove_doodads(selections);
 
+	map->doodads.remove_doodads(selections);
 	map->doodads.update_doodad_pathing(update_pathing_area);
 
 	selections.clear();
@@ -379,7 +379,6 @@ void DoodadBrush::place_clipboard() {
 }
 
 void DoodadBrush::apply_begin() {
-	map->terrain_undo.new_undo_group();
 	doodad_undo = std::make_unique<DoodadAddAction>();
 }
 
@@ -426,6 +425,10 @@ void DoodadBrush::apply(double frame_delta) {
 }
 
 void DoodadBrush::apply_end() {
+	if (doodad_undo->doodads.empty()) {
+		return;
+	}
+	map->terrain_undo.new_undo_group();
 	map->terrain_undo.add_undo_action(std::move(doodad_undo));
 }
 
@@ -504,6 +507,21 @@ void DoodadBrush::render_clipboard() {
 
 		i.mesh->render_queue(model, glm::vec3(1.f));
 	}
+}
+
+bool DoodadBrush::can_place() {
+	if (!pathing_texture) {
+		return true;
+	}
+
+	glm::vec3 doodad_position;
+	if (free_placement) {
+		doodad_position = input_handler.mouse_world;
+	} else {
+		doodad_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
+	}
+
+	return map->pathing_map.is_area_free(doodad_position, glm::degrees(rotation) + 90, pathing_texture, PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
 }
 
 void DoodadBrush::set_random_variation() {

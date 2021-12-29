@@ -76,6 +76,52 @@ void PathingMap::dynamic_clear_area(const QRect& area) {
 	}
 }
 
+/// Checks for every cell on the supplied pathing_texture where (pathing_texture & mask == true) whether (existing_pathing & mask == true) and if so returns false
+/// Expects position in whole grid tiles
+/// Rotation in multiples of 90
+bool PathingMap::is_area_free(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, uint8_t mask) {
+	const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
+	const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
+	for (int j = 0; j < pathing_texture->height; j++) {
+		for (int i = 0; i < pathing_texture->width; i++) {
+			int x = i;
+			int y = j;
+
+			switch (rotation) {
+				case 90:
+					x = pathing_texture->height - 1 - j;
+					y = i;
+					break;
+				case 180:
+					x = pathing_texture->width - 1 - i;
+					y = pathing_texture->height - 1 - j;
+					break;
+				case 270:
+					x = j;
+					y = pathing_texture->width - 1 - i;
+					break;
+			}
+
+			// Width and height for centering change if rotation is not divisible by 180
+			const int xx = position.x * 4 + x - div_w / 2;
+			const int yy = position.y * 4 + y - div_h / 2;
+
+			if (xx < 0 || xx > width - 1 || yy < 0 || yy > height - 1) {
+				continue;
+			}
+
+			const unsigned int index = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
+
+			uint8_t pathing_texture_mask = (pathing_texture->data[index] > 250) * Flags::unwalkable | (pathing_texture->data[index + 1] > 250) * Flags::unflyable | (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
+
+			if (pathing_texture_mask & mask && pathing_cells_dynamic[yy * width + xx] && mask) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
 /// Blits a pathing texture to the specified location on the pathing map. Manually call update_dynamic() afterwards to upload the changes to the GPU
 /// Expects position in whole grid tiles and draws the texture centered around this position
 /// Rotation in multiples of 90
