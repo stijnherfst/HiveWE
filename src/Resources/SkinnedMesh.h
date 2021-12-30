@@ -56,7 +56,7 @@ class SkinnedMesh : public Resource {
 
 	static constexpr const char* name = "SkinnedMesh";
 
-	explicit SkinnedMesh(const fs::path& path);
+	explicit SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override);
 	virtual ~SkinnedMesh();
 
 	void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);

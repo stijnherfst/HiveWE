@@ -3,7 +3,7 @@
 #include <vector>
 #include <memory>
 
-#include "StaticMesh.h"
+#include "SkinnedMesh.h"
 #include "Utilities.h"
 #include "PathingTexture.h"
 
@@ -35,7 +35,8 @@ struct Doodad {
 
 	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
-	std::shared_ptr<StaticMesh> mesh;
+	SkeletalModelInstance skeleton;
+	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color;
 
@@ -51,12 +52,13 @@ struct SpecialDoodad {
 
 	// Auxiliary data
 	glm::mat4 matrix = glm::mat4(1.f);
-	std::shared_ptr<StaticMesh> mesh;
+	SkeletalModelInstance skeleton;
+	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 };
 
 class Doodads {
-	std::unordered_map<std::string, std::shared_ptr<StaticMesh>> id_to_mesh;
+	std::unordered_map<std::string, std::shared_ptr<SkinnedMesh>> id_to_mesh;
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
@@ -88,7 +90,7 @@ public:
 	void process_doodad_field_change(const std::string& id, const std::string& field);
 	void process_destructible_field_change(const std::string& id, const std::string& field);
 
-	std::shared_ptr<StaticMesh> get_mesh(std::string id, int variation);
+	std::shared_ptr<SkinnedMesh> get_mesh(std::string id, int variation);
 };
 
 // Undo/redo structures

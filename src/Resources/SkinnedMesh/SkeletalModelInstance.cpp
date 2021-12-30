@@ -46,17 +46,13 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 }
 
 void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
-	//this->position = position;
-	//this->facingAngle = angle;
-	glm::vec3 origin = glm::vec3(0, 0, 0);
-	glm::vec3 stackScale = scale;
 	glm::vec3 axis = glm::vec3(0, 0, 1);
 	glm::quat rotation = glm::angleAxis(angle, axis);
 	inverseInstanceRotation.x = -rotation.x;
 	inverseInstanceRotation.y = -rotation.y;
 	inverseInstanceRotation.z = -rotation.z;
 	inverseInstanceRotation.w = rotation.w;
-	fromRotationTranslationScaleOrigin(rotation, position, stackScale, matrix, origin);
+	fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 }
 
 void SkeletalModelInstance::update(double delta) {

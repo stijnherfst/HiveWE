@@ -17,7 +17,9 @@ class DoodadBrush : public Brush {
 	std::string id;
 	int variation = 0;
 
-	std::shared_ptr<StaticMesh> mesh;
+	std::shared_ptr<SkinnedMesh> mesh;
+	SkeletalModelInstance skeleton;
+
 public:
 	Doodad::State state = Doodad::State::visible_solid;
 	std::shared_ptr<PathingTexture> pathing_texture;

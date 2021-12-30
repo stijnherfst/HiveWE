@@ -342,11 +342,11 @@ std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
-		id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx"));
+		id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
 		return id_to_mesh[id];
 	}
 
-	id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>(mesh_path));
+	id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt));
 
 	return id_to_mesh[id];
 }

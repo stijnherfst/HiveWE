@@ -437,20 +437,20 @@ void DoodadBrush::render_brush() {
 		Brush::render_brush();
 	}
 
-	glm::mat4 matrix(1.f);
+	if (!mesh) {
+		return;
+	}
+
+	glm::vec3 final_position;
 	if (free_placement) {
-		matrix = glm::translate(matrix, input_handler.mouse_world);
+		final_position = input_handler.mouse_world;
 	} else {
-		matrix = glm::translate(matrix, glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z));
+		final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
 	}
 
-	matrix = glm::scale(matrix, glm::vec3(1.f / 128.f) * scale);
-	matrix = glm::rotate(matrix, rotation, glm::vec3(0, 0, 1));
-	matrix = glm::rotate(matrix, roll, glm::vec3(1, 0, 0));
-
-	if (mesh) {
-		mesh->render_queue(matrix, glm::vec3(1.f));
-	}
+	skeleton.updateLocation(final_position, rotation, glm::vec3(1.f / 128.f) * scale);
+	skeleton.update(0.016f);
+	mesh->render_queue(skeleton, glm::vec3(1.f));
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle
@@ -460,7 +460,8 @@ void DoodadBrush::render_selection() const {
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
+		//float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
+		float selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -505,7 +506,7 @@ void DoodadBrush::render_clipboard() {
 		model = glm::scale(model, (base_scale - 1.f + i.scale) / 128.f);
 		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
 
-		i.mesh->render_queue(model, glm::vec3(1.f));
+		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}
 }
 
@@ -528,6 +529,7 @@ void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
 	context->makeCurrent();
 	mesh = map->doodads.get_mesh(id, variation);
+	skeleton = SkeletalModelInstance(mesh->model);
 }
 
 void DoodadBrush::set_random_rotation() {

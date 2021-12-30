@@ -36,6 +36,8 @@ void Doodad::update() {
 	if (!max_roll.empty() && max_roll != "-") {
 		matrix = glm::rotate(matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
 	}
+
+	skeleton.updateLocation(position, angle, (base_scale * scale) / 128.f);
 }
 
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
@@ -172,9 +174,8 @@ void Doodads::save() const {
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		i.update();
 		i.mesh = get_mesh(i.id, i.variation);
-
+		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -183,10 +184,12 @@ void Doodads::create() {
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
+		i.update();
 	}
 
 	for (auto&& i : special_doodads) {
 		i.mesh = get_mesh(i.id, i.variation);
+		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		const std::string pathing_texture_path = doodads_slk.data("pathtex", i.id);
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
@@ -217,10 +220,10 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		i.mesh->render_queue(i.matrix, i.color);
+		i.mesh->render_queue(i.skeleton, i.color);
 	}
 	for (auto&& i : special_doodads) {
-		i.mesh->render_queue(i.matrix, glm::vec3(1.f));
+		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}
 }
 
@@ -235,6 +238,7 @@ Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	doodad.scale = { 1, 1, 1 };
 	doodad.angle = 0;
 	doodad.creation_number = ++Doodad::auto_increment;
+	doodad.skeleton = SkeletalModelInstance(doodad.mesh->model);
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -408,7 +412,7 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 	}
 }
 
-std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
+std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
 	std::string full_id = id + std::to_string(variation);
 	if (id_to_mesh.contains(full_id)) {
 		return id_to_mesh[full_id];
@@ -446,14 +450,14 @@ std::shared_ptr<StaticMesh> Doodads::get_mesh(std::string id, int variation) {
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
-		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
+		id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
 		return id_to_mesh[full_id];
 	}
 
 	if (is_number(replaceable_id) && texture_name != "_") {
-		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, texture_name.string(), std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))));
+		id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>(mesh_path, texture_name.string(), std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))));
 	} else {
-		id_to_mesh.emplace(full_id, resource_manager.load<StaticMesh>(mesh_path, "", std::nullopt));
+		id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt));
 	}
 
 	return id_to_mesh[full_id];

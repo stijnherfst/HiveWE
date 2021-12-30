@@ -47,11 +47,10 @@ void Map::load(const fs::path& path) {
 	// Have to substitute twice since some of the keys refer to other keys in the same file
 	unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
-
 	units_slk.merge(ini::INI("Units/UnitSkin.txt"), units_meta_slk);
 	units_slk.merge(ini::INI("Units/UnitWeaponsFunc.txt"), units_meta_slk);
 	units_slk.merge(ini::INI("Units/UnitWeaponsSkin.txt"), units_meta_slk);
-	
+
 	units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
 	units_slk.merge(slk::SLK("Units/unitUI.slk"));
 	units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
@@ -113,7 +112,6 @@ void Map::load(const fs::path& path) {
 	items_slk.merge(ini::INI("Units/ItemSkin.txt"), items_meta_slk);
 	items_slk.merge(ini::INI("Units/ItemFunc.txt"), items_meta_slk);
 	items_slk.merge(ini::INI("Units/ItemStrings.txt"), items_meta_slk);
-
 
 	// Doodads
 	doodads_slk = slk::SLK("Doodads/Doodads.slk");
@@ -182,7 +180,7 @@ void Map::load(const fs::path& path) {
 	buff_slk.merge(ini::INI("Units/ItemAbilityFunc.txt"), buff_meta_slk);
 	buff_slk.merge(ini::INI("Units/CommonAbilityFunc.txt"), buff_meta_slk);
 	buff_slk.merge(ini::INI("Units/CampaignAbilityFunc.txt"), buff_meta_slk);
-	
+
 	buff_slk.merge(ini::INI("Units/HumanAbilityStrings.txt"), buff_meta_slk);
 	buff_slk.merge(ini::INI("Units/OrcAbilityStrings.txt"), buff_meta_slk);
 	buff_slk.merge(ini::INI("Units/UndeadAbilityStrings.txt"), buff_meta_slk);
@@ -218,7 +216,6 @@ void Map::load(const fs::path& path) {
 		}
 	}
 
-
 	fmt::print("Trigger loading: {:>5}ms\n", timer.elapsed_ms());
 	timer.reset();
 
@@ -253,7 +250,6 @@ void Map::load(const fs::path& path) {
 	fmt::print("Doodad loading:\t {:>5}ms\n", timer.elapsed_ms());
 	timer.reset();
 
-
 	if (hierarchy.map_file_exists("war3map.w3u")) {
 		load_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
 	}
@@ -271,7 +267,7 @@ void Map::load(const fs::path& path) {
 	fmt::print("Unit loading:\t {:>5}ms\n", timer.elapsed_ms());
 	timer.reset();
 
-	// Abilities 
+	// Abilities
 	if (hierarchy.map_file_exists("war3map.w3a")) {
 		load_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
 	}
@@ -290,7 +286,7 @@ void Map::load(const fs::path& path) {
 	if (hierarchy.map_file_exists("war3map.w3r")) {
 		regions.load();
 	}
-	
+
 	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
 		cameras.load();
@@ -333,7 +329,7 @@ bool Map::save(const fs::path& path) {
 	if (!fs::equivalent(path, filesystem_path)) {
 		try {
 			fs::copy(filesystem_path, fs::absolute(path), fs::copy_options::recursive);
-		} catch (fs::filesystem_error & e) {
+		} catch (fs::filesystem_error& e) {
 			QMessageBox msgbox;
 			msgbox.setText(e.what());
 			msgbox.exec();
@@ -427,6 +423,18 @@ void Map::update(double delta, int width, int height) {
 	for (auto& i : units.items) {
 		i.skeleton.update(delta);
 	}
+
+	// Animate doodads
+	std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
+		if (!i.mesh->model->sequences.empty()) {
+			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
+			if (!camera->inside_frustrum(i.matrix * glm::vec4(extent.minimum, 1.f), i.matrix * glm::vec4(extent.maximum, 1.f))) {
+				return;
+			}
+		}
+
+		i.skeleton.update(delta);
+	});
 }
 
 void Map::render() {
@@ -475,12 +483,12 @@ again:
 
 	if (units_slk.row_headers.contains(id) 
 		|| items_slk.row_headers.contains(id) 
-		|| abilities_slk.row_headers.contains(id)
+		|| abilities_slk.row_headers.contains(id) 
 		|| doodads_slk.row_headers.contains(id) 
-		|| destructibles_slk.row_headers.contains(id)
-		|| upgrade_slk.row_headers.contains(id)
+		|| destructibles_slk.row_headers.contains(id) 
+		|| upgrade_slk.row_headers.contains(id) 
 		|| buff_slk.row_headers.contains(id)) {
-		
+
 		fmt::print("Generated an existing ID: {} what're the odds\n", id);
 		goto again;
 	}

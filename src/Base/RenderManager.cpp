@@ -200,12 +200,12 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	gl->glViewport(0, 0, window_width, window_height);
 
-	colored_static_shader->use();
+	colored_skinned_shader->use();
 	for (int i = 0; i < map->doodads.doodads.size(); i++) {
 		const Doodad& doodad = map->doodads.doodads[i];
-		const mdx::Extent& extent = doodad.mesh->extent;
+		const mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
 		if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
-			doodad.mesh->render_color_coded(i + 1, doodad.matrix);
+			doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
 		}
 	}
 
