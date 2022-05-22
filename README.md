@@ -1,5 +1,9 @@
 # HiveWE
-HiveWE is a Warcraft III World Editor (WE) that focusses on speed and ease of use. It improves massively on the vanilla WE, especially for large maps where the regular World Editor is often too slow and clunky.  [Thread on Hive](https://www.hiveworkshop.com/threads/introducing-hivewe.303183/)
+HiveWE is a Warcraft III World Editor (WE) that focusses on speed and ease of use. 
+It improves massively on the vanilla WE, especially for large maps where the regular World Editor is often too slow and clunky.
+The aim is to be a lightweight tool that only does what it needs to and relegates other tasks to high-quality apps.
+
+[Thread on the Hiveworkshop](https://www.hiveworkshop.com/threads/introducing-hivewe.303183/)
 
 Some of the benefits over the vanilla WE:
 - Faster loading
@@ -26,6 +30,12 @@ Some of the benefits over the vanilla WE:
 
 See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for binary downloads.
 
+## Other Community Tools
+
+Trigger editing: [WC3 Typescript](https://cipherxof.github.io/w3ts/)  
+Model editing: [3DS Max Plugin](https://github.com/TaylorMouse/warcraft_III_reforged_tools)
+or [Retera Model Studio](https://github.com/Retera/ReterasModelStudio)
+
 ## Build Instructions
 
 1. Clone HiveWE somewhere 
@@ -38,6 +48,7 @@ See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for bina
 - `VCPKG_DEFAULT_TRIPLET`: depending on your operating system (`x64-windows`, `x64-linux`, `x64-osx`)
 5. Open Visual Studio as an **Administrator** and using the open folder button to open the HiveWE folder. (**Administrator required** for creating a symbolic link on Windows)
 6. Dependencies will be automatically compiled, might take about 15-20 minutes (mostly due to Qt)
+
 **Done**
 
 If you run into any issues then feel free to contact me at HiveWorkshop (eejin) or on Discord eejin#4240
@@ -55,4 +66,4 @@ Want to help with the development of HiveWE? Below is a list of features that yo
 - Advanced terrain editing tools (e.g. flood fill, magic wand selection)
 - Or any other functionality you think would be cool
 
-If you have any questions then don't be afraid to message me here, at HiveWorkshop (eejin) or on Discord eejin#4240
+If you have any questions then don't be afraid to message me here, on the HiveWorkshop (eejin) or on Discord eejin#4240
