@@ -42,29 +42,11 @@ RenderManager::~RenderManager() {
 void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 	GLint old_vao;
 	gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
-
+	
 	// Render opaque meshes
 	// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
-	
-	instance_static_mesh_shader_sd->use();
-	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
-	gl->glUniform1i(2, render_lighting);
-	gl->glUniform3fv(3, 1, &light_direction.x);
 
-	for (const auto& i : meshes) {
-		i->render_opaque_sd();
-	}
-	
-	instance_static_mesh_shader_hd->use();
-	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
-	gl->glUniform1i(2, render_lighting);
-	gl->glUniform3fv(3, 1, &light_direction.x);
 
-	for (const auto& i : meshes) {
-		i->render_opaque_hd();
-	}
-
-	// Skinned
 	instance_skinned_mesh_shader_sd->use();
 	gl->glUniformMatrix4fv(0, 1, false, &camera->projection_view[0][0]);
 	gl->glUniform1i(2, render_lighting);
@@ -84,27 +66,9 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 	}
 
 	// Render transparent meshes
-	std::sort(transparent_instances.begin(), transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
 	std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
 
-	static_mesh_shader_sd->use();
-	gl->glUniform1i(2, render_lighting);
-	gl->glUniform3fv(3, 1, &light_direction.x);
 
-	for (const auto& i : transparent_instances) {
-		i.mesh->render_transparent_sd(i.instance_id);
-	}
-
-	static_mesh_shader_hd->use();
-	gl->glUniform1f(1, -1.f);
-	gl->glUniform1i(2, render_lighting);
-	gl->glUniform3fv(4, 1, &light_direction.x);
-
-	for (const auto& i : transparent_instances) {
-		i.mesh->render_transparent_hd(i.instance_id);
-	}
-
-	// Skinned
 	skinned_mesh_shader_sd->use();
 	gl->glUniform1i(2, render_lighting);
 	gl->glUniform3fv(7, 1, &light_direction.x);
@@ -162,7 +126,7 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 	gl->glViewport(0, 0, window_width, window_height);
 
 	colored_skinned_shader->use();
-	for (int i = 0; i < map->units.units.size(); i++) {
+	for (size_t i = 0; i < map->units.units.size(); i++) {
 		const Unit& unit = map->units.units[i];
 		if (unit.id == "sloc") {
 			continue;
@@ -201,7 +165,7 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 	gl->glViewport(0, 0, window_width, window_height);
 
 	colored_skinned_shader->use();
-	for (int i = 0; i < map->doodads.doodads.size(); i++) {
+	for (size_t i = 0; i < map->doodads.doodads.size(); i++) {
 		const Doodad& doodad = map->doodads.doodads[i];
 		const mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
 		if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {

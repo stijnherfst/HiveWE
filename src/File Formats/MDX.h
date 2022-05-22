@@ -4,6 +4,7 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 #include <unordered_map>
+#include <string_view>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -118,7 +119,7 @@ namespace mdx {
 			id = track_id;
 
 			tracks.reserve(tracks_count);
-			for (int i = 0; i < tracks_count; i++) {
+			for (size_t i = 0; i < tracks_count; i++) {
 				Track<T> track;
 				track.frame = reader.read<int32_t>();
 				track.value = reader.read<T>();
@@ -170,6 +171,17 @@ namespace mdx {
 		TrackHeader<glm::vec3> KFC3;
 		TrackHeader<float> KFCA;
 		TrackHeader<float> KFTC;
+
+		enum ShadingFlags {
+			unshaded = 1,
+			sphere_environment_map = 2,
+			uknown1 = 4,
+			unknown2 = 8,
+			two_sided = 16,
+			unfogged = 32,
+			no_depth_test = 64,
+			no_depth_set = 128
+		};
 	};
 
 	struct Node {
@@ -203,9 +215,9 @@ namespace mdx {
 			collision_shape = 0x2000,
 			ribbon_emitter = 0x4000,
 			//if_particle_emitter : emitter_uses_mdl,
-			//if_particle_emitter_2 : unshaded = 0x8000,
+			unshaded = 0x8000,
 			//if_particle_emitter : emitter_uses_tga,
-			//if_particle_emitter_2 : sort_primitives_far_z = 0x10000,
+			sort_primitives_far_z = 0x10000,
 			line_emitter = 0x20000,
 			unfogged = 0x40000,
 			model_space = 0x80000,
@@ -280,6 +292,11 @@ namespace mdx {
 		uint32_t replaceable_id;
 		fs::path file_name;
 		uint32_t flags;
+
+		enum Flags {
+			wrap_width = 1,
+			wrap_height
+		};
 	};
 
 	struct Material {
@@ -397,7 +414,6 @@ namespace mdx {
 		glm::vec3 start_segment_color;
 		glm::vec3 middle_segment_color;
 		glm::vec3 end_segment_color;
-		//float segment_color[3][3]; // rows [Begin, Middle, End], column is color
 		glm::u8vec3 segment_alphas;
 		glm::vec3 segment_scaling;
 		glm::uvec3 head_intervals;
@@ -496,13 +512,6 @@ namespace mdx {
 		std::vector<uint32_t> times;
 	};
 
-	enum class CollisionShapeType {
-		Box = 0,	 // 2 verts
-		Plane = 1,	 // 2 verts
-		Sphere = 2,	 // 1 verts
-		Cylinder = 3 // 2 vert
-	};
-
 	/*
 	I was pretty sure that in the old days, not having a CollisionShape meant that
 	a unit was not able to be selected in-game. However, at some point,
@@ -525,8 +534,15 @@ namespace mdx {
 	because the CollisionShape had floated away.
 	*/
 	struct CollisionShape {
+		enum class Shape {
+			Box = 0,	 // 2 verts
+			Plane = 1,	 // 2 verts
+			Sphere = 2,	 // 1 verts
+			Cylinder = 3 // 2 vert
+		};
+
 		Node node;
-		CollisionShapeType type;
+		Shape type;
 		glm::vec3 vertices[2]; // sometimes only 1 is used
 		float radius;		  // used for sphere/cylinder
 	};
@@ -603,13 +619,16 @@ namespace mdx {
 		void write_TXAN_chunk(BinaryWriter& writer) const;
 		void write_FAFX_chunk(BinaryWriter& writer) const;
 
+		void load(BinaryReader& reader);
 	  public:
 		explicit MDX(BinaryReader& reader);
-		void load(BinaryReader& reader);
 		void save(const fs::path& path);
 
 		void validate();
 		void optimize();
+
+		std::string to_mdl();
+		static MDX from_mdl(std::string_view mdl);
 
 		int unique_tracks = 0;
 

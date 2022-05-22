@@ -69,6 +69,7 @@ target_sources(HiveWE PRIVATE
 	Menus/TileSetter.cpp
 	Menus/Selections.cpp
 	Menus/ObjectEditor.cpp
+	Menus/ModelEditor.cpp
 
 	Models/SingleModel.cpp
 	Models/TableModel.cpp
@@ -94,6 +95,7 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/GenericSelectorList.cpp"
 	"Custom Widgets/IconView.cpp"
 	"Custom Widgets/FlowLayout.cpp"
+	"Custom Widgets/ModelEditorGLWidget.cpp"
 
 	"Utilities/Timer.cpp"
 )

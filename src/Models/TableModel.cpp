@@ -45,7 +45,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "unitList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (!units_slk.row_headers.contains(parts[i])) {
 						continue;
 					}
@@ -58,7 +58,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "abilityList" || type == "abilitySkinList" || type == "heroAbilityList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (!abilities_slk.row_headers.contains(parts[i])) {
 						continue;
 					}
@@ -71,7 +71,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "upgradeList" ) {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (!upgrade_slk.row_headers.contains(parts[i])) {
 						continue;
 					}
@@ -84,7 +84,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "buffList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (!buff_slk.row_headers.contains(parts[i])) {
 						continue;
 					}
@@ -103,7 +103,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "targetList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				std::string result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					for (const auto& [key, value] : unit_editor_data.section(type)) {
 						if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
 							continue;
@@ -123,7 +123,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "tilesetList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (parts[i] == "*") {
 						result += "All";
 					} else {
@@ -161,7 +161,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const {
 			} else if (type == "techList") {
 				std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
 				QString result;
-				for (int i = 0; i < parts.size(); i++) {
+				for (size_t i = 0; i < parts.size(); i++) {
 					if (units_slk.row_headers.contains(parts[i])) {
 						result += units_table->data(units_table->index(units_slk.row_headers.at(parts[i]), units_slk.column_headers.at("name")), role).toString();
 					} else if (upgrade_slk.row_headers.contains(parts[i])) {

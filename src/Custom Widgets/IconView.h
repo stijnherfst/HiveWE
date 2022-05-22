@@ -14,7 +14,7 @@
 
 class IconModel : public QAbstractListModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override {
-		return icons.size();
+		return static_cast<int>(icons.size());
 	}
 
 public:

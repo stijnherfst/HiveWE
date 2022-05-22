@@ -22,7 +22,7 @@ namespace ini {
 		std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
 		// Strip byte order marking
-		if (view.starts_with(std::string{ (char)0xEF, (char)0xBB, (char)0xBF })) {
+		if (view.starts_with(std::string{ static_cast<char>(0xEF), static_cast<char>(0xBB), static_cast<char>(0xBF) })) {
 			view.remove_prefix(3);
 		}
 

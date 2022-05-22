@@ -20,7 +20,7 @@ PathingTexture::PathingTexture(const fs::path& path) {
 	delete image_data;
 
 	homogeneous = true;
-	for (int i = 0; i < data.size(); i += channels) {
+	for (size_t i = 0; i < data.size(); i += channels) {
 		if (channels == 3) {
 			homogeneous = homogeneous && *reinterpret_cast<glm::u8vec3*>(data.data() + i) == *reinterpret_cast<glm::u8vec3*>(data.data());
 		} else if (channels == 4) {

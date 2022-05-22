@@ -227,7 +227,7 @@ namespace slk {
 
 				const int repeat = meta_slk.data<int>("repeat", id);
 				if (repeat > 0 && !(meta_slk.column_headers.contains("appendindex") && meta_slk.data<int>("appendindex", id) > 0)) {
-					for (int i = 0; i < value.size(); i++) {
+					for (size_t i = 0; i < value.size(); i++) {
 						const std::string new_key = key_lower + std::to_string(i + 1);
 						if (!column_headers.contains(new_key)) {
 							add_column(new_key);

@@ -112,14 +112,6 @@ class Triggers {
 	static constexpr int write_sub_version = 7;
 	static constexpr int write_string_version = 1;
 
-	int map_count = 0;
-	int library_count = 0;
-	int category_count = 0;
-	int trigger_count = 0;
-	int comment_count = 0;
-	int script_count = 0;
-	int variable_count = 0;
-
 	int unknown1 = 0;
 	int unknown2 = 0;
 	int trig_def_ver = 2;

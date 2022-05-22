@@ -15,19 +15,19 @@ CliffMesh::CliffMesh(const fs::path& path) {
 		auto set = model.geosets.front();
 
 		gl->glCreateBuffers(1, &vertex_buffer);
-		gl->glNamedBufferData(vertex_buffer, set.vertices.size() * sizeof(glm::vec3), set.vertices.data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(vertex_buffer, static_cast<int>(set.vertices.size() * sizeof(glm::vec3)), set.vertices.data(), GL_STATIC_DRAW);
 
 		gl->glCreateBuffers(1, &uv_buffer);
-		gl->glNamedBufferData(uv_buffer, set.texture_coordinate_sets.front().size() * sizeof(glm::vec2), set.texture_coordinate_sets.front().data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(uv_buffer, static_cast<int>(set.texture_coordinate_sets.front().size() * sizeof(glm::vec2)), set.texture_coordinate_sets.front().data(), GL_STATIC_DRAW);
 
 		gl->glCreateBuffers(1, &normal_buffer);
-		gl->glNamedBufferData(normal_buffer, set.normals.size() * sizeof(glm::vec3), set.normals.data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(normal_buffer, static_cast<int>(set.normals.size() * sizeof(glm::vec3)), set.normals.data(), GL_STATIC_DRAW);
 
 		gl->glCreateBuffers(1, &instance_buffer);
 
 		indices = set.faces.size();
 		gl->glCreateBuffers(1, &index_buffer);
-		gl->glNamedBufferData(index_buffer, set.faces.size() * sizeof(uint16_t), set.faces.data(), GL_STATIC_DRAW);
+		gl->glNamedBufferData(index_buffer, static_cast<int>(set.faces.size() * sizeof(uint16_t)), set.faces.data(), GL_STATIC_DRAW);
 	}
 }
 
@@ -48,7 +48,7 @@ void CliffMesh::render() {
 		return;
 	}
 
-	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::vec4), render_jobs.data(), GL_STATIC_DRAW);
+	gl->glNamedBufferData(instance_buffer, static_cast<int>(render_jobs.size() * sizeof(glm::vec4)), render_jobs.data(), GL_STATIC_DRAW);
 
 	gl->glEnableVertexAttribArray(0);
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -68,7 +68,7 @@ void CliffMesh::render() {
 	gl->glVertexAttribDivisor(3, 1);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-	gl->glDrawElementsInstanced(GL_TRIANGLES, indices, GL_UNSIGNED_SHORT, nullptr, render_jobs.size());
+	gl->glDrawElementsInstanced(GL_TRIANGLES, indices, GL_UNSIGNED_SHORT, nullptr, static_cast<int>(render_jobs.size()));
 
 	gl->glVertexAttribDivisor(3, 0); // ToDo use vao
 	gl->glDisableVertexAttribArray(0);

@@ -159,7 +159,7 @@ void GLWidget::paintGL() {
 			frametimes.erase(frametimes.begin());
 		}
 		float average_frametime = std::accumulate(frametimes.begin(), frametimes.end(), 0.f) / frametimes.size();
-		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.4f}ms", average_frametime)));
+		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.2f}ms", average_frametime * 1000.0)));
 
 		// General info
 		p.drawText(300, 20, QString::fromStdString(fmt::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));

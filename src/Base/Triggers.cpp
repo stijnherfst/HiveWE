@@ -198,26 +198,26 @@ void Triggers::load_version_31(BinaryReader& reader, uint32_t version) {
 		fmt::print("Unknown 1.31 WTG subformat! Trying anyway.\n");
 	}
 
-	map_count = reader.read<uint32_t>();
+	reader.advance(4);							 // map_count
 	reader.advance(4 * reader.read<uint32_t>()); //map ids of deleted maps
 
-	library_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //library ids of deleted libraries
+	reader.advance(4);							 // library_count
+	reader.advance(4 * reader.read<uint32_t>()); // library ids of deleted libraries
 	
-	category_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //category ids of deleted categories
+	reader.advance(4);							 // category_count
+	reader.advance(4 * reader.read<uint32_t>()); // category ids of deleted categories
 
-	trigger_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //trigger ids of deleted triggers
+	reader.advance(4);							 // trigger_count
+	reader.advance(4 * reader.read<uint32_t>()); // trigger ids of deleted triggers
 
-	comment_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //comment ids of deleted comments
+	reader.advance(4);							 // comment_count
+	reader.advance(4 * reader.read<uint32_t>()); // comment ids of deleted comments
 
-	script_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //script ids of deleted scripts
+	reader.advance(4);							 // script_count
+	reader.advance(4 * reader.read<uint32_t>()); // script ids of deleted scripts
 
-	variable_count = reader.read<uint32_t>();
-	reader.advance(4 * reader.read<uint32_t>()); //variable ids of deleted variables
+	reader.advance(4);							 // variable_count
+	reader.advance(4 * reader.read<uint32_t>()); // variable ids of deleted variables
 
 	unknown1 = reader.read<uint32_t>();
 	unknown2 = reader.read<uint32_t>();
@@ -393,25 +393,25 @@ void Triggers::save() const {
 	writer.write<uint32_t>(write_version);
 	writer.write<uint32_t>(write_sub_version);
 
-	writer.write<uint32_t>(map_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(library_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(category_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(trigger_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(comment_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(script_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
-	writer.write<uint32_t>(variable_count);
+	writer.write<uint32_t>(0);
 	writer.write<uint32_t>(0);
 
 	writer.write<uint32_t>(unknown1);
@@ -455,8 +455,8 @@ void Triggers::save() const {
 		writer.write<uint32_t>(i.run_on_initialization);
 		writer.write<uint32_t>(i.parent_id);
 		writer.write<uint32_t>(i.ecas.size());
-		for (const auto& i : i.ecas) {
-			print_eca_structure(writer, i, false);
+		for (const auto& eca : i.ecas) {
+			print_eca_structure(writer, eca, false);
 		}
 	}
 
@@ -1740,7 +1740,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		return (add_call ? "call " : "") + output;
 	}
 
-	for (int k = 0; k < parameters.size(); k++) {
+	for (size_t k = 0; k < parameters.size(); k++) {
 		const auto& i = parameters[k];
 
 		const std::string type = get_type(parent_name, k);
@@ -1896,7 +1896,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 					continue;
 				}
 				events += "\tcall " + i.name + "(" + trigger_variable_name + ", ";
-				for (int k = 0; k < i.parameters.size(); k++) {
+				for (size_t k = 0; k < i.parameters.size(); k++) {
 					const auto& p = i.parameters[k];
 
 					if (get_type(i.name, k) == "VarAsString_Real") {

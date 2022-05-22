@@ -21,7 +21,7 @@ UnitTreeModel::UnitTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		}
 	}
 
-	for (int i = 0; i < units_slk.rows(); i++) {
+	for (size_t i = 0; i < units_slk.rows(); i++) {
 		const std::string id = units_slk.index_to_row.at(i); 
 		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
 		item->id = id;

@@ -252,11 +252,11 @@ void StaticMesh::render_opaque_sd() const {
 					break;
 			}
 
-			if (j.shading_flags & 0x10) {
-				gl->glDisable(GL_CULL_FACE);
-			} else {
-				gl->glEnable(GL_CULL_FACE);
-			}
+			//if (j.shading_flags & 0x10) {
+			//	gl->glDisable(GL_CULL_FACE);
+			//} else {
+			//	gl->glEnable(GL_CULL_FACE);
+			//}
 
 			if (j.shading_flags & 0x40) {
 				gl->glDisable(GL_DEPTH_TEST);
@@ -366,11 +366,11 @@ void StaticMesh::render_transparent_sd(int instance_id) const {
 					break;
 			}
 
-			if (j.shading_flags & 0x10) {
-				gl->glDisable(GL_CULL_FACE);
-			} else {
-				gl->glEnable(GL_CULL_FACE);
-			}
+			//if (j.shading_flags & 0x10) {
+			//	gl->glDisable(GL_CULL_FACE);
+			//} else {
+			//	gl->glEnable(GL_CULL_FACE);
+			//}
 
 			if (j.shading_flags & 0x40) {
 				gl->glDisable(GL_DEPTH_TEST);

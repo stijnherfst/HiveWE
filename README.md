@@ -36,17 +36,13 @@ See the [releases page](https://github.com/stijnherfst/HiveWE/releases) for bina
 4. Add 2 environment variables to your system:
 - `VCPKG_ROOT`: the location where vcpkg is installed (e.g. "C:\vcpkg")
 - `VCPKG_DEFAULT_TRIPLET`: depending on your operating system (`x64-windows`, `x64-linux`, `x64-osx`)
-5. Add the vcpkg location to your System Path variable (eg. "C:\vcpkg")
-6. Close and reopen your CMD (so it reloads environment variables)
-7. Install dependencies  
-`vcpkg install qtbase[default-features] glm soil2 stormlib casclib libjpeg-turbo bullet3 qt-advanced-docking-system abseil[cxx17] fmt`  
-Estimated to take about 30 minutes
-8. Open Visual Studio as an Administrator and using the open folder button to open the HiveWE folder. (Administrator required for creating a symbolic link on Windows)  
+5. Open Visual Studio as an **Administrator** and using the open folder button to open the HiveWE folder. (**Administrator required** for creating a symbolic link on Windows)
+6. Dependencies will be automatically compiled, might take about 15-20 minutes (mostly due to Qt)
 **Done**
 
-If you run into any issues then feel free to contact me.
+If you run into any issues then feel free to contact me at HiveWorkshop (eejin) or on Discord eejin#4240
 
-## Possible Contributions
+## Potential Contributions
 
 Want to help with the development of HiveWE? Below is a list of features that you could implement. You can try one of these or just add something else you feel like HiveWE should have. Any contributions are welcome!
 

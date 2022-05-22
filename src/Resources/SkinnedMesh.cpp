@@ -86,45 +86,49 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 
 		geosets.push_back(entry);
 
-		std::vector<glm::u8vec4> groups;
-		std::vector<glm::u8vec4> weights;
+		// If the skin vector is empty then the model has SD bone weights and we convert them to the HD skin weights. 
+		// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
+		// This could cause graphical inconsistensies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
+		if (i.skin.empty()) {
+			std::vector<glm::u8vec4> groups;
+			std::vector<glm::u8vec4> weights;
 
-		int bone_offset = 0;
-		for (const auto& group_size : i.matrix_groups) {
-			int bone_count = std::min(group_size, 4u);
-			glm::uvec4 indices(0);
-			glm::uvec4 weightss(0);
+			int bone_offset = 0;
+			for (const auto& group_size : i.matrix_groups) {
+				int bone_count = std::min(group_size, 4u);
+				glm::uvec4 indices(0);
+				glm::uvec4 weightss(0);
 
-			int weight = 255 / bone_count;
-			for (int j = 0; j < bone_count; j++) {
-				indices[j] = i.matrix_indices[bone_offset + j];
-				weightss[j] = weight;
+				int weight = 255 / bone_count;
+				for (int j = 0; j < bone_count; j++) {
+					indices[j] = i.matrix_indices[bone_offset + j];
+					weightss[j] = weight;
+				}
+
+				int remainder = 255 - weight * bone_count;
+				weightss[0] += remainder;
+
+				groups.push_back(indices);
+				weights.push_back(weightss);
+				bone_offset += group_size;
 			}
 
-			int remainder = 255 - weight * bone_count;
-			weightss[0] += remainder;
+			std::vector<glm::u8vec4> skin_weights;
+			skin_weights.reserve(entry.vertices * 2);
+			for (const auto& vertex_group : i.vertex_groups) {
+				skin_weights.push_back(groups[vertex_group]);
+				skin_weights.push_back(weights[vertex_group]);
+			}
 
-			groups.push_back(indices);
-			weights.push_back(weightss);
-			bone_offset += group_size;
-		}
-
-		std::vector<glm::u8vec4> skin_weights;
-		skin_weights.reserve(entry.vertices * 2);
-		for (const auto& vertex_group : i.vertex_groups) {
-			skin_weights.push_back(groups[vertex_group]);
-			skin_weights.push_back(weights[vertex_group]);
+			gl->glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, skin_weights.data());
+		} else {
+			gl->glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
 		}
 
 		gl->glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
 		gl->glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
 		gl->glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
 		gl->glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
-		if (i.skin.size()) {
-			gl->glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::vec2), i.skin.data());
-		} else {
-			gl->glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::vec2), skin_weights.data());		
-		}
 		gl->glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
 		base_vertex += entry.vertices;
@@ -238,8 +242,9 @@ SkinnedMesh::~SkinnedMesh() {
 }
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
-	if (model->sequences.size()) {
-		mdx::Extent& extent = model->sequences.front().extent; // Todo, use skeleton.sequence_index and test
+
+	if (!model->sequences.empty()) {
+		mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
 		if (!camera->inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
@@ -267,8 +272,12 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 
 			t.mesh = this;
 			t.instance_id = render_jobs.size() - 1;
 			t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]));
+			// hack to improve performance
+			if (t.distance > 256.f) {
+				continue;
+			}
 			map->render_manager.skinned_transparent_instances.push_back(t);
-			return;
+			break;
 		}
 	}
 }
@@ -293,7 +302,7 @@ void SkinnedMesh::render_opaque_sd() {
 	gl->glUniform1i(3, model->bones.size());
 
 	std::vector<glm::vec4> layer_colors;
-	for (int k = 0; k < render_jobs.size(); k++) {
+	for (size_t k = 0; k < render_jobs.size(); k++) {
 		for (auto& i : geosets) {
 			glm::vec3 geoset_color(1.f);
 			float geoset_anim_visibility = 1.0f;
@@ -502,6 +511,12 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 					break;
 			}
 
+			if (j.shading_flags & 0x10) {
+				gl->glDisable(GL_CULL_FACE);
+			} else {
+				gl->glEnable(GL_CULL_FACE);
+			}
+
 			if (j.shading_flags & 0x40) {
 				gl->glDisable(GL_DEPTH_TEST);
 			} else {
@@ -514,15 +529,9 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 				gl->glDepthMask(true);
 			}
 
-			if (j.shading_flags & 0x10) {
-				gl->glDisable(GL_CULL_FACE);
-			} else {
-				gl->glEnable(GL_CULL_FACE);
-			}
-
 			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
 
-			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 			laya++;
 		}
 	}
@@ -583,6 +592,12 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 				break;
 		}
 
+		if (layers[0].shading_flags & 0x10) {
+			gl->glDisable(GL_CULL_FACE);
+		} else {
+			gl->glEnable(GL_CULL_FACE);
+		}
+
 		if (layers[0].shading_flags & 0x40) {
 			gl->glDisable(GL_DEPTH_TEST);
 		} else {
@@ -595,16 +610,12 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 			gl->glDepthMask(true);
 		}
 
-		if (layers[0].shading_flags & 0x10) {
-			gl->glDisable(GL_CULL_FACE);
-		} else {
-			gl->glEnable(GL_CULL_FACE);
+
+		for (size_t i = 0; i < 6; i++) {
+			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
 		}
 
-		for (short i = 0; i < 6; i++)
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
-
-		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}
 }
 

@@ -48,7 +48,7 @@ QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	}
 
 	const std::string& field = slk->index_to_column.at(sourceIndex.column());
-	for (int i = 0; i < id_mapping.size(); i++) {
+	for (size_t i = 0; i < id_mapping.size(); i++) {
 		if (id_mapping[i].field == field) {
 			//fmt::print("Found {} at {} {} {}\n", field, i, headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString(), meta_slk->data("displayname", id_mapping[i].key));
 			return createIndex(i, 0);

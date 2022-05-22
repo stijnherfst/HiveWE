@@ -250,7 +250,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				}
 				drag_start = input_handler.mouse_world;
 
-				for (int i = 0; i < selections.size(); i++) {
+				for (size_t i = 0; i < selections.size(); i++) {
 					Doodad* doodad = selections[i];
 					doodad->position += offset;
 					if (!lock_doodad_z) {

@@ -183,7 +183,7 @@ void MapInfo::load() {
 		i.lines.resize(reader.read<uint32_t>());
 		for (auto&& j : i.lines) {
 			j.chance = reader.read<uint32_t>();
-			for (int k = 0; k < i.positions.size(); k++) {
+			for (size_t k = 0; k < i.positions.size(); k++) {
 				j.ids.push_back(reader.read_string(4));
 			}
 		}

@@ -23,7 +23,7 @@ namespace json {
 					if (line.substr(0, 2) == "//" || line.empty() || line.front() == ';') {
 						continue;
 					}
-					for (int i = 0; i < line.length(); i++) {
+					for (size_t i = 0; i < line.length(); i++) {
 						if (line.at(i) == '/') {
 							line.replace(i, 1, "\\");
 						}

@@ -11,7 +11,7 @@ DoodadTreeModel::DoodadTreeModel(QObject* parent) : BaseTreeModel(parent) {
 		rowToCategory.push_back(key.front());
 	}
 
-	for (int i = 0; i < doodads_slk.rows(); i++) {
+	for (size_t i = 0; i < doodads_slk.rows(); i++) {
 		const std::string& id = doodads_slk.index_to_row.at(i);
 		BaseTreeItem* item = new BaseTreeItem(getFolderParent(id));
 		item->id = id;

@@ -6,7 +6,7 @@ if (DEFINED ENV{VCPKG_DEFAULT_TRIPLET} AND NOT DEFINED VCPKG_TARGET_TRIPLET)
 	set(VCPKG_TARGET_TRIPLET "$ENV{VCPKG_DEFAULT_TRIPLET}" CACHE STRING "")
 endif ()
 
-cmake_minimum_required(VERSION 3.19)
+cmake_minimum_required(VERSION 3.22)
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -26,6 +26,9 @@ find_package(qtadvanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
+find_package(libjpeg-turbo CONFIG REQUIRED)
+
+qt_standard_project_setup()
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
@@ -46,11 +49,10 @@ target_include_directories(HiveWE PRIVATE
 	"src/Utilities"
 
 	${BULLET_INCLUDE_DIR}
-	${JPEG_INCLUDE_DIR}}
 )
 
 # libjpeg-turbo provides incomplete targets and thus need manual linking
-find_library(TURBOJPEG_LIBRARY turbojpeg)
+# find_library(TURBOJPEG_LIBRARY turbojpeg)
 
 target_link_libraries(HiveWE PUBLIC
 	Qt6::Gui
@@ -60,8 +62,8 @@ target_link_libraries(HiveWE PUBLIC
 	glm::glm
 	soil2
 	stormlib::stormlib
-	${JPEG_LIBRARIES}
-	${TURBOJPEG_LIBRARY}
+	libjpeg-turbo::jpeg
+	libjpeg-turbo::turbojpeg
 	ads::qtadvanceddocking
 	Bullet3Common
 	BulletDynamics
@@ -75,6 +77,12 @@ target_link_libraries(HiveWE PUBLIC
 	fmt::fmt-header-only
 	TBB::tbb
 )
+
+#target_compile_options(HiveWE PRIVATE
+#  $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /W4 /WX /sdl /permissive->
+#  $<$<CXX_COMPILER_ID:Clang>: -Wextra -Wpedantic -Werror>
+#  $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror>
+#)
 
 if(WIN32)
 	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
@@ -104,3 +112,16 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	"${CMAKE_CURRENT_BINARY_DIR}/Data"
 	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Data"
 )
+
+install(TARGETS HiveWE
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+qt_generate_deploy_app_script(
+    TARGET HiveWE
+    FILENAME_VARIABLE deploy_script
+    NO_UNSUPPORTED_PLATFORM_ERROR
+)
+
+install(SCRIPT ${deploy_script})

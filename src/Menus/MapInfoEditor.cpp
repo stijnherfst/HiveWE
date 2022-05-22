@@ -73,7 +73,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	weather_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
-	for (int i = 1; i < weather_slk.rows(); i++) {
+	for (size_t i = 1; i < weather_slk.rows(); i++) {
 		ui.globalWeatherCombo->addItem(QString::fromStdString(weather_slk.data("name", i)), QString::fromStdString(weather_slk.data("effectid", i)));
 	}
 	std::string weather_id = { reinterpret_cast<char*>(&map->info.weather_id), 4 };
@@ -84,7 +84,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	environment_sounds_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
-	for (int i = 1; i < environment_sounds_slk.rows(); i++) {
+	for (size_t i = 1; i < environment_sounds_slk.rows(); i++) {
 		ui.customSoundCombo->addItem(QString::fromStdString(environment_sounds_slk.data("displaytext", i)), QString::fromStdString(environment_sounds_slk.data("environmenttype", i)));
 	}
 	ui.customSoundCombo->setCurrentText(QString::fromStdString(environment_sounds_slk.data("displaytext", map->info.custom_sound_environment)));
