@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BinaryReader.h"
+import BinaryReader;
 
 #include <map>
 #include<string>

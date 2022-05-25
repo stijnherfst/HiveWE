@@ -10,8 +10,9 @@ using namespace std::literals::string_literals;
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "HiveWE.h"
-#include "BinaryWriter.h"
-#include "Hierarchy.h"
+import BinaryWriter;
+import Hierarchy;
+
 
 void Unit::update() {
 	const float model_scale = units_slk.data<float>("modelscale", id);

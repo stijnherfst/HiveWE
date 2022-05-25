@@ -1,6 +1,7 @@
 #include "StaticMesh.h"
 
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "Camera.h"
 
 #include "HiveWE.h"

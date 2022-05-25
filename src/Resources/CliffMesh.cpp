@@ -2,10 +2,10 @@
 
 #include <QOpenGLFunctions_4_5_Core>
 #include "Utilities.h"
-
-#include "BinaryReader.h"
+import BinaryReader;
 #include "MDX.h"
-#include "Hierarchy.h"
+import Hierarchy;
+
 
 CliffMesh::CliffMesh(const fs::path& path) {
 	if (path.extension() == ".mdx" || path.extension() == ".MDX") {

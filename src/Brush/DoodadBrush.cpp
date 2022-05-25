@@ -12,7 +12,8 @@
 #include "InputHandler.h"
 #include "TerrainUndo.h"
 #include "HiveWE.h"
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "Texture.h"
 
 DoodadBrush::DoodadBrush() : Brush() {

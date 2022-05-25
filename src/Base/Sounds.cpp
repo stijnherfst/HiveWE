@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-#include "Hierarchy.h"
+//#include "Hierarchy.h"
+import Hierarchy;
+
 
 void Sounds::load() {
 	BinaryReader reader = hierarchy.map_file_read("war3map.w3s");

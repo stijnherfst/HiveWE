@@ -5,12 +5,15 @@ target_sources(HiveWE PRIVATE
 	test.cpp
 	Utilities.cpp
 
+	Base/BinaryReader.ixx
+	Base/BinaryWriter.ixx
+	Base/no_init_allocator.ixx
 	Base/Doodads.cpp
-	Base/GameCameras.cpp
-	Base/Hierarchy.cpp
-	Base/Imports.cpp
+	Base/Hierarchy.ixx
+	Base/GameCameras.ixx
+	Base/Imports.ixx
 	Base/Map.cpp
-	Base/MapInfo.cpp
+	Base/MapInfo.ixx
 	Base/PathingMap.cpp
 	Base/Regions.cpp
 	Base/Camera.cpp
@@ -33,12 +36,12 @@ target_sources(HiveWE PRIVATE
 	Brush/TerrainBrush.cpp
 	Brush/UnitBrush.cpp
 
-	"File Formats/BLP.cpp"
-	"File Formats/CASC.cpp"
+	"File Formats/BLP.ixx"
+	"File Formats/CASC.ixx"
 	"File Formats/INI.cpp"
-	"File Formats/JSON.cpp"
+	"File Formats/JSON.ixx"
 	"File Formats/MDX.cpp"
-	"File Formats/MPQ.cpp"
+	"File Formats/MPQ.ixx"
 	"File Formats/SLK.cpp"
 
 	Resources/CliffMesh.cpp
@@ -97,5 +100,5 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/FlowLayout.cpp"
 	"Custom Widgets/ModelEditorGLWidget.cpp"
 
-	"Utilities/Timer.cpp"
+	"Utilities/Timer.ixx"
 )

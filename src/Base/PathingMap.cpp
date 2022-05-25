@@ -4,8 +4,9 @@
 
 #include "Utilities.h"
 #include "Texture.h"
-#include "Hierarchy.h"
-#include "BinaryWriter.h"
+import Hierarchy;
+
+import BinaryWriter;
 
 #include "HiveWE.h"
 

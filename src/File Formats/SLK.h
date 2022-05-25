@@ -5,7 +5,8 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
-#include "Hierarchy.h"
+
+import Hierarchy;
 
 #include <absl/container/flat_hash_map.h>
 

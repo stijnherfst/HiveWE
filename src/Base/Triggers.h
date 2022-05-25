@@ -5,8 +5,8 @@
 #include <unordered_map>
 
 #include "INI.h"
-#include "BinaryReader.h"
-#include "BinaryWriter.h"
+import BinaryReader;
+import BinaryWriter;
 
 enum class Classifier
 {

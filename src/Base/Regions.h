@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 
-#include "BinaryReader.h"
+import BinaryReader;
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS

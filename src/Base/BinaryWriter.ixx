@@ -1,8 +1,13 @@
-#pragma once
-#include <cstring>
+module;
 
-class BinaryWriter {
-public:
+#include <cstring>
+#include <string>
+#include <vector>
+
+export module BinaryWriter;
+
+export class BinaryWriter {
+  public:
 	std::vector<uint8_t> buffer;
 
 	template <typename T = void, typename U>
@@ -52,7 +57,7 @@ public:
 	}
 
 	/// Copies the contents of the array to the buffer, has special code for std::string
-	template<typename T>
+	template <typename T>
 	void write_vector(const std::vector<T>& vector) {
 		if constexpr (std::is_same_v<T, std::string>) {
 			for (const auto& i : vector) {
@@ -61,7 +66,7 @@ public:
 		} else {
 			static_assert(std::is_standard_layout<T>::value, "T must be of standard layout or std::string.");
 			buffer.resize(buffer.size() + vector.size() * sizeof(T));
-			//std::copy(vector.begin(), vector.end(), buffer.end() - vector.size() * sizeof(T));
+			// std::copy(vector.begin(), vector.end(), buffer.end() - vector.size() * sizeof(T));
 			std::memcpy(buffer.data() + buffer.size() - vector.size() * sizeof(T), vector.data(), vector.size() * sizeof(T));
 		}
 	}

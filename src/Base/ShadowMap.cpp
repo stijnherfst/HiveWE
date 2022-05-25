@@ -1,6 +1,7 @@
 #include "ShadowMap.h"
 
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "HiveWE.h"
 
 bool ShadowMap::load(BinaryReader& reader) {

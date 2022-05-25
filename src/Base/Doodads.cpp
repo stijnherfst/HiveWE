@@ -10,8 +10,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "HiveWE.h"
-#include "BinaryWriter.h"
-#include "Hierarchy.h"
+import BinaryWriter;
+import Hierarchy;
+
 
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);

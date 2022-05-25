@@ -2,8 +2,10 @@
 
 #include <SOIL2/SOIL2.h>
 
-#include "BLP.h"
-#include "Hierarchy.h"
+import BLP;
+
+import Hierarchy;
+
 
 GroundTexture::GroundTexture(const fs::path& path) {
 	fs::path new_path = path;

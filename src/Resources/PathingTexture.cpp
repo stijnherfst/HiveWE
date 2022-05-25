@@ -3,9 +3,10 @@
 #include <SOIL2/SOIL2.h>
 #include <glm/glm.hpp>
 
-#include "BinaryReader.h"
-#include "Hierarchy.h"
-#include "BLP.h"
+import Hierarchy;
+
+import BLP;
+import BinaryReader;
 
 PathingTexture::PathingTexture(const fs::path& path) {
 	BinaryReader reader = hierarchy.open_file(path);

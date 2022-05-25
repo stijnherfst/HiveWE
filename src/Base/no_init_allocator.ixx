@@ -1,19 +1,19 @@
-#pragma once
+module;
 
 #include <memory>
 
-template <typename T, typename A = std::allocator<T>>
+export module no_init_allocator;
+
+export template <typename T, typename A = std::allocator<T>>
 class default_init_allocator : public A {
 	typedef std::allocator_traits<A> a_t;
 
   public:
-	// http://en.cppreference.com/w/cpp/language/using_declaration
 	using A::A; // Inherit constructors from A
 
 	template <typename U>
 	struct rebind {
-		using other =
-			default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
+		using other = default_init_allocator<U, typename a_t::template rebind_alloc<U>>;
 	};
 
 	template <typename U>

@@ -11,7 +11,8 @@
 
 #include "HiveWE.h"
 #include "Utilities.h"
-#include "Hierarchy.h"
+import Hierarchy;
+
 
 using namespace std::literals::string_literals;
 

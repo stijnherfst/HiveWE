@@ -17,7 +17,7 @@
 #include "GroundTexture.h"
 #include "CliffMesh.h"
 #include "Texture.h"
-#include "BinaryReader.h"
+import BinaryReader;
 #include "Shader.h"
 #include "SLK.h"
 

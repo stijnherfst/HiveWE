@@ -13,8 +13,8 @@ namespace fs = std::filesystem;
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "BinaryReader.h"
-#include "BinaryWriter.h"
+import BinaryReader;
+import BinaryWriter;
 
 namespace mdx {
 	extern const std::unordered_map<int, std::string> replacable_id_to_texture;

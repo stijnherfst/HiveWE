@@ -5,8 +5,9 @@
 #include <algorithm>
 #include <cmath>
 
-#include "BinaryWriter.h"
-#include "Hierarchy.h"
+import BinaryWriter;
+import Hierarchy;
+
 
 #undef min
 #undef max

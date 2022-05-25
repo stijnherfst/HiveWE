@@ -1,12 +1,17 @@
-#include "BLP.h"
+module;
+
 
 #include <cmath>
 #include <fmt/format.h>
 
 #include <turbojpeg.h>
 
+export module BLP;
+
+import BinaryReader;
+
 namespace blp {
-	uint8_t* load(BinaryReader& reader, int& width, int& height, int& channels) {
+	export uint8_t* load(BinaryReader& reader, int& width, int& height, int& channels) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "BLP1") {
 			fmt::print("Wrong magic number, should be BLP1, is {}\n", magic_number);
@@ -65,8 +70,7 @@ namespace blp {
 						case 8:
 							data[j * 4 + 3] = alpha[j];
 							break;
-						case 4:
-						{
+						case 4: {
 							uint8_t byte = alpha[j / 2];
 							data[j * 4 + 3] = j % 2 ? byte >> 4 : byte & 0b00001111;
 							break;
@@ -86,4 +90,4 @@ namespace blp {
 
 		return data;
 	}
-}
+} // namespace blp

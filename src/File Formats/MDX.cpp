@@ -1,6 +1,5 @@
 #include "MDX.h"
 
-#include "Utilities.h"
 #include <fstream>
 #include <functional>
 #include <fmt/format.h>

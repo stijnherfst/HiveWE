@@ -9,9 +9,10 @@
 #include <absl/strings/str_split.h>
 #include <absl/strings/str_join.h>
 
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "Utilities.h"
-#include "BinaryReader.h"
+import BinaryReader;
 
 #undef mix
 #undef max

@@ -17,8 +17,8 @@
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 
-#include "MPQ.h"
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "TileSetter.h"
 #include "MapInfoEditor.h"
 #include "TerrainPalette.h"
@@ -33,6 +33,8 @@
 #include "Camera.h"
 
 #include "IconView.h"
+
+import MPQ;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);

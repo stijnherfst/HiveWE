@@ -5,9 +5,9 @@
 #include <QImage>
 #include <QPixmap>
 
-#include "BinaryReader.h"
-#include "Hierarchy.h"
-#include "BLP.h"
+import Hierarchy;
+import BLP;
+import BinaryReader;
 
 QIconResource::QIconResource(const fs::path& path) {
 	const auto image = resource_manager.load<Texture>(path);

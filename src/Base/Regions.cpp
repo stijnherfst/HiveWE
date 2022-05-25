@@ -1,5 +1,7 @@
 #include "Regions.h"
-#include "Hierarchy.h"
+//#include "Hierarchy.h"
+import Hierarchy;
+
 
 #include <iostream>
 

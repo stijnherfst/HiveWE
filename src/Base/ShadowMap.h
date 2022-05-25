@@ -2,7 +2,7 @@
 
 #include <QOpenGLFunctions_4_5_Core>
 
-#include "BinaryReader.h"
+import BinaryReader;
 
 class ShadowMap {
 	int width;

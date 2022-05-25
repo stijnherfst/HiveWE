@@ -2,15 +2,13 @@
 
 #include "TriggerStrings.h"
 #include "Triggers.h"
-#include "MapInfo.h"
+//#include "MapInfo.h"
 #include "Terrain.h"
 #include "TerrainUndo.h"
 #include "PathingMap.h"
-#include "Imports.h"
 #include "Doodads.h"
 #include "Units.h"
 #include "Regions.h"
-#include "GameCameras.h"
 #include "Sounds.h"
 #include "RenderManager.h"
 
@@ -20,6 +18,10 @@
 
 #include <filesystem> // Filesystem include at the bottom due to QTBUG-73263
 
+
+import GameCameras;
+import Imports;
+import MapInfo;
 namespace fs = std::filesystem;
 
 class Map : public QObject {

@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 
 #include "fmt/format.h"
 
-#include "BinaryReader.h"
+import BinaryReader;
 #include "MDX.h"
 
 void execute_tests() {

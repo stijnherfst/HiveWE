@@ -6,12 +6,14 @@
 #include <QMessageBox>
 #include <QOpenGLFunctions_4_5_Core>
 
-#include "Hierarchy.h"
+import Hierarchy;
+
 #include "HiveWE.h"
 #include "InputHandler.h"
 #include "Physics.h"
 #include "Camera.h"
-#include "Timer.h"
+
+import Timer;
 
 #include <fstream>
 #include <bullet/btBulletDynamicsCommon.h>
@@ -289,7 +291,7 @@ void Map::load(const fs::path& path) {
 
 	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
-		cameras.load();
+		cameras.load(map->info.game_version_major, map->info.game_version_minor);
 	}
 
 	// Sounds
@@ -355,12 +357,12 @@ bool Map::save(const fs::path& path) {
 	save_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
 	save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);
 
-	info.save();
+	info.save(terrain.tileset);
 	trigger_strings.save();
 	triggers.save();
 	triggers.save_jass();
 	triggers.generate_map_script();
-	imports.save();
+	imports.save(map->filesystem_path);
 
 	return true;
 }

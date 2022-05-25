@@ -1,10 +1,12 @@
 #include "INI.h"
 
-#include "Hierarchy.h"
+//#include "Hierarchy.h"
 #include "Utilities.h"
 
 #include <absl/strings/str_split.h>
 #include <fstream>
+
+import Hierarchy;
 
 namespace ini {
 	INI::INI(const fs::path& path, bool local) {

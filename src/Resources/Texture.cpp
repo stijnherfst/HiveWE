@@ -2,9 +2,10 @@
 
 #include <SOIL2/SOIL2.h>
 
-#include "BinaryReader.h"
-#include "Hierarchy.h"
-#include "BLP.h"
+import Hierarchy;
+
+import BLP;
+import BinaryReader;
 
 Texture::Texture(const fs::path& path) {
 	fs::path new_path = path;

@@ -8,8 +8,8 @@
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
-#include "BinaryReader.h"
-#include "BinaryWriter.h"
+import BinaryReader;
+import BinaryWriter;
 #include "SLK.h"
 
 constexpr int mod_table_write_version = 2;

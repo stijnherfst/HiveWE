@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "BinaryReader.h"
+import BinaryReader;
 
 struct Sound {
 	std::string name;

@@ -11,10 +11,6 @@ project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
-
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
@@ -51,9 +47,6 @@ target_include_directories(HiveWE PRIVATE
 	${BULLET_INCLUDE_DIR}
 )
 
-# libjpeg-turbo provides incomplete targets and thus need manual linking
-# find_library(TURBOJPEG_LIBRARY turbojpeg)
-
 target_link_libraries(HiveWE PUBLIC
 	Qt6::Gui
 	Qt6::Widgets
@@ -89,7 +82,7 @@ if(WIN32)
 
 	if (MSVC)
 		# Properly sets the __cplusplus macro to the newest version. Might not be needed anymore in vsNext. Last checked 25/05/2021
-		target_compile_options(HiveWE PUBLIC "/Zc:__cplusplus")
+		target_compile_options(HiveWE PUBLIC "/Zc:__cplusplus; /MP")
 	endif()
 
 	target_link_options(HiveWE PUBLIC /PROFILE)

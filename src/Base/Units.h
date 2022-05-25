@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <memory>
 
-#include "BinaryReader.h"
+import BinaryReader;
 #include "SkinnedMesh.h"
 #include "Terrain.h"
 #include "SkeletalModelInstance.h"

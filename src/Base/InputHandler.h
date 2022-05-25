@@ -2,7 +2,6 @@
 
 #include <unordered_set>
 
-#include <QEvent>
 #include <QMouseEvent>
 
 #define GLM_FORCE_CXX17

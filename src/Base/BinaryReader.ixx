@@ -1,22 +1,23 @@
-#pragma once
+module;
 
 #include <stdexcept>
 #include <vector>
 #include <string>
 
-#include <filesystem>
-namespace fs = std::filesystem;
+export module BinaryReader;
 
-#include "no_init_allocator.h"
+import no_init_allocator;
 
-class BinaryReader {
+export class BinaryReader {
   public:
 	std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer) : buffer(std::move(buffer)) {}
+	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer)
+		: buffer(std::move(buffer)) {
+	}
 
-	template<typename T>
+	template <typename T>
 	[[nodiscard]] T read() {
 		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
 
@@ -24,7 +25,7 @@ class BinaryReader {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
 		T result = *reinterpret_cast<T*>(&buffer[position]);
-		
+
 		position += sizeof(T);
 		return result;
 	}
@@ -46,7 +47,7 @@ class BinaryReader {
 	[[nodiscard]] std::string read_c_string() {
 		const std::string string(reinterpret_cast<char*>(buffer.data() + position));
 		position += string.size() + 1;
-		
+
 		if (position > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
@@ -54,7 +55,7 @@ class BinaryReader {
 		return string;
 	}
 
-	template<typename T>
+	template <typename T>
 	[[nodiscard]] std::vector<T> read_vector(const size_t size) {
 		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
 
