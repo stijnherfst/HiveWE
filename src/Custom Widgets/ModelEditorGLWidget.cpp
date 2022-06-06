@@ -5,11 +5,12 @@
 #include <QTimer>
 #include <QOpenGLFunctions_4_5_Core>
 #include <QPainter>
+#include <OpenGLUtilities.h>
 
-#include "Utilities.h"
 #include "InputHandler.h"
 
 #include "HiveWE.h"
+
 
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	//QTimer::singleShot(16, this, &GLWidget::update_scene);

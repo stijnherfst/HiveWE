@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Utilities.h"
+#include "OpenGLUtilities.h"
 
-#include "ResourceManager.h"
+import ResourceManager;
 
 class Shader : public Resource {
 public:

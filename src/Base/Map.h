@@ -9,11 +9,9 @@
 #include "Doodads.h"
 #include "Units.h"
 #include "Regions.h"
-#include "Sounds.h"
 #include "RenderManager.h"
 
 #include "Brush.h"
-#include "StaticMesh.h"
 #include "Physics.h"
 
 #include <filesystem> // Filesystem include at the bottom due to QTBUG-73263
@@ -22,6 +20,7 @@
 import GameCameras;
 import Imports;
 import MapInfo;
+import Sounds;
 namespace fs = std::filesystem;
 
 class Map : public QObject {

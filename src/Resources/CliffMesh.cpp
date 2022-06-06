@@ -1,9 +1,10 @@
 #include "CliffMesh.h"
+#include <OpenGLUtilities.h>
 
 #include <QOpenGLFunctions_4_5_Core>
-#include "Utilities.h"
+
 import BinaryReader;
-#include "MDX.h"
+import MDX;
 import Hierarchy;
 
 

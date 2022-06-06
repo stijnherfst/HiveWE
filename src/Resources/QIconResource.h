@@ -1,6 +1,9 @@
 #pragma once
 
-#include "ResourceManager.h"
+#include <filesystem>
+namespace fs = std::filesystem;
+
+import ResourceManager;
 
 #include <vector>
 

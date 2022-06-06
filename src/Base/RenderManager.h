@@ -1,17 +1,27 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
-#include "StaticMesh.h"
-#include "SkinnedMesh.h"
+#define GLM_FORCE_CXX17
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_SILENT_WARNINGS
+#include <glm/glm.hpp>
+
+#include "Shader.h"
+
+//#include "StaticMesh.h"
+//#include "SkinnedMesh.h"
+
+class SkinnedMesh; 
 
 class RenderManager {
 public:
-	struct StaticInstance {
-		StaticMesh* mesh;
-		int instance_id;
-		float distance;
-	};
+	//struct StaticInstance {
+	//	StaticMesh* mesh;
+	//	int instance_id;
+	//	float distance;
+	//};
 
 	struct SkinnedInstance {
 		SkinnedMesh* mesh;
@@ -19,11 +29,11 @@ public:
 		float distance;
 	};
 
-	std::shared_ptr<Shader> instance_static_mesh_shader_sd;
-	std::shared_ptr<Shader> instance_static_mesh_shader_hd;
-	std::shared_ptr<Shader> static_mesh_shader_sd;
-	std::shared_ptr<Shader> static_mesh_shader_hd;
-	std::shared_ptr<Shader> colored_static_shader;
+	//std::shared_ptr<Shader> instance_static_mesh_shader_sd;
+	//std::shared_ptr<Shader> instance_static_mesh_shader_hd;
+	//std::shared_ptr<Shader> static_mesh_shader_sd;
+	//std::shared_ptr<Shader> static_mesh_shader_hd;
+	//std::shared_ptr<Shader> colored_static_shader;
 
 	std::shared_ptr<Shader> instance_skinned_mesh_shader_sd;
 	std::shared_ptr<Shader> instance_skinned_mesh_shader_hd;
@@ -31,9 +41,9 @@ public:
 	std::shared_ptr<Shader> skinned_mesh_shader_hd;
 	std::shared_ptr<Shader> colored_skinned_shader;
 
-	std::vector<StaticMesh*> meshes;
+	//std::vector<StaticMesh*> meshes;
 	std::vector<SkinnedMesh*> skinned_meshes;
-	std::vector<StaticInstance> transparent_instances;
+	//std::vector<StaticInstance> transparent_instances;
 	std::vector<SkinnedInstance> skinned_transparent_instances;
 
 	GLuint color_buffer;

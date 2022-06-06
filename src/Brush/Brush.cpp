@@ -250,7 +250,7 @@ void Brush::render_brush() {
 	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
+	gl->glDrawElementsInstanced(GL_TRIANGLES, Shapes::index_count * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
 
 	gl->glDisableVertexAttribArray(0);
 	gl->glEnable(GL_DEPTH_TEST);

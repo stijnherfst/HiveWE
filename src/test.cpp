@@ -10,7 +10,7 @@ namespace fs = std::filesystem;
 #include "fmt/format.h"
 
 import BinaryReader;
-#include "MDX.h"
+import MDX;
 
 void execute_tests() {
 	fmt::print("[INFO] Parsing all MDX files\n");

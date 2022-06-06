@@ -2,7 +2,8 @@
 #include "TilePicker.h"
 
 #include "HiveWE.h"
-#include "ResourceManager.h"
+
+import ResourceManager;
 
 TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

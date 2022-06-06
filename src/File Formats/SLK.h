@@ -1,12 +1,14 @@
 #pragma once
 
-#include "INI.h"
-
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include <filesystem>
 
 import Hierarchy;
+import INI;
+
+namespace fs = std::filesystem;
 
 #include <absl/container/flat_hash_map.h>
 

@@ -1,9 +1,7 @@
 module;
 
-
 #include <cmath>
 #include <fmt/format.h>
-
 #include <turbojpeg.h>
 
 export module BLP;

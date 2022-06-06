@@ -3,11 +3,13 @@ module;
 #include <vector>
 #include <filesystem>
 #include <map>
-//#include <QSettings>
+// import<QSettings>;
 #include <iostream>
 #include <fstream>
 
 export module Hierarchy;
+
+
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;

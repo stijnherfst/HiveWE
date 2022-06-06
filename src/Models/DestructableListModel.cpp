@@ -2,6 +2,8 @@
 
 #include "HiveWE.h"
 
+import INI;
+
 DestructableListModel::DestructableListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {
 		const std::string tileset_key = value.front();

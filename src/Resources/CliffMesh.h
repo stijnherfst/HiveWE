@@ -5,9 +5,10 @@
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <QOpenGLFunctions_4_5_Core>
+#include <filesystem>
+namespace fs = std::filesystem;
 
-
-#include "ResourceManager.h"
+import ResourceManager;
 
 class CliffMesh : public Resource {
 public:

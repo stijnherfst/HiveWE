@@ -5,7 +5,6 @@ module;
 #include <iostream>
 
 #define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 export module MapInfo;

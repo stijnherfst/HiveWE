@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Utilities.h"
+#include "OpenGLUtilities.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include "ResourceManager.h"
+import ResourceManager;
 
 class GPUTexture : public Resource {
 public:

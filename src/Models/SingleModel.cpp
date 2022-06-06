@@ -23,6 +23,8 @@
 
 #include "fmt/format.h"
 
+import INI;
+
 SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyModel(parent) {
 	slk = table->slk;
 	meta_slk = table->meta_slk;

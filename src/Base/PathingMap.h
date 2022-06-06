@@ -1,6 +1,7 @@
 #pragma once
 
 import BinaryReader;
+import PathingTexture;
 
 #include <memory>
 
@@ -8,7 +9,6 @@ import BinaryReader;
 #include <QRect>
 
 #include "TerrainUndo.h"
-#include "PathingTexture.h"
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS

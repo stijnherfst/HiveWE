@@ -16,10 +16,10 @@
 
 #include "GroundTexture.h"
 #include "CliffMesh.h"
-#include "Texture.h"
+import Texture;
 import BinaryReader;
 #include "Shader.h"
-#include "SLK.h"
+#include <SLK.h>
 
 #include "TerrainUndo.h"
 

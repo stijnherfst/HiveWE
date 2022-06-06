@@ -1,9 +1,16 @@
 #pragma once
 
-#include "ResourceManager.h"
+import ResourceManager;
 
-#include "Utilities.h"
+#include "OpenGLUtilities.h"
 #include <QOpenGLFunctions_4_5_Core>
+
+#define GLM_FORCE_CXX17
+#define GLM_FORCE_SILENT_WARNINGS
+#include <glm/glm.hpp>
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 class GroundTexture : public Resource {
 public:

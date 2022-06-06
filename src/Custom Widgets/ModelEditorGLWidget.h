@@ -5,7 +5,8 @@
 
 #include "Camera.h"
 #include <QElapsedTimer>
-#include <MDX.h>
+
+import MDX;
 
 class ModelEditorGLWidget : public QOpenGLWidget {
 	Q_OBJECT
