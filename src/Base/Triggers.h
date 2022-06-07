@@ -137,6 +137,7 @@ class Triggers {
 	void generate_regions(BinaryWriter& writer);
 	void generate_cameras(BinaryWriter& writer);
 	void generate_sounds(BinaryWriter& writer);
+	void write_item_table_entry(BinaryWriter& writer, int chance, const std::string& id);
 	void generate_item_tables(BinaryWriter& writer);
 	void generate_unit_item_tables(BinaryWriter& writer);
 	void generate_trigger_initialization(BinaryWriter& writer, std::vector<std::string> initialization_triggers);
