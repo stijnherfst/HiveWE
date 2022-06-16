@@ -4,11 +4,13 @@
 #include <memory>
 
 #include "SkinnedMesh.h"
-import PathingTexture;
-import Utilities;
+#include "Utilities.h"
+#include "PathingTexture.h"
 
 #include "Terrain.h"
 #include "TerrainUndo.h"
+
+#include <SkeletalModelInstance.h>
 
 struct Doodad {
 	static inline int auto_increment;

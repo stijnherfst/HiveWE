@@ -11,7 +11,7 @@
 
 import Hierarchy;
 
-import Utilities;
+#include "Utilities.h"
 import BinaryReader;
 
 #undef mix

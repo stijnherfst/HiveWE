@@ -1,6 +1,5 @@
 #pragma once
 
-#define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
@@ -25,12 +24,12 @@ struct Camera {
 
 	float fov = 70.f;
 	float aspect_ratio = 16.f / 9.f;
-	float draw_distance = 2000.f;
 	float draw_distance_close = 0.05f;
+	float draw_distance_far = 2000.f;
 	float fov_rad = (glm::pi<double>() / 180.f) * static_cast<double>(fov); // Need radians
 	float tan_height = 2.f * glm::tan(fov_rad * 0.5f);
 
-	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance, draw_distance_close);
+	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 	glm::mat4 view = glm::lookAt(position - direction * distance, position, up);
 	glm::mat4 projection_view;
 

@@ -11,12 +11,23 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Object Editor</string>
+   <string>Model Editor</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout"/>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="ModelEditorGLWidget" name="openGLWidget"/>
+    </item>
+   </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>ModelEditorGLWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header>ModelEditorGLWidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

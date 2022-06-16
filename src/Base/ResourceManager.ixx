@@ -5,7 +5,6 @@ module;
 #include <memory>
 #include <filesystem>
 
-
 export module ResourceManager;
 
 namespace fs = std::filesystem;

@@ -1,13 +1,14 @@
 module;
 
-#define STORMLIB_NO_AUTO_LINK
-#include <StormLib.h>
 #include <string>
 #include <vector>
 #include <stdexcept>
 #include <optional>
 #include <iostream>
 #include <filesystem>
+
+#define STORMLIB_NO_AUTO_LINK
+#include <StormLib.h>
 
 export module MPQ;
 

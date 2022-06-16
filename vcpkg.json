@@ -5,6 +5,11 @@
   "dependencies": [
     "qtbase",
     "glm",
+    {
+      "name": "glad",
+      "features": [ "loader", "extensions", "gl-api-46" ]
+    },
+    "imgui",
     "soil2",
     "stormlib",
     "casclib",

@@ -37,6 +37,7 @@ public:
 	QRibbonButton* switch_warcraft = new QRibbonButton;
 
 	QRibbonButton* object_editor = new QRibbonButton;
+	QRibbonButton* model_editor = new QRibbonButton;
 
 	QRibbonButton* terrain_palette = new QRibbonButton;
 	QRibbonButton* doodad_palette = new QRibbonButton;

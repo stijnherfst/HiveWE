@@ -7,7 +7,6 @@
 import BLP;
 import Hierarchy;
 
-
 GPUTexture::GPUTexture(const fs::path& path) {
 	fs::path new_path = path;
 

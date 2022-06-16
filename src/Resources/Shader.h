@@ -1,8 +1,11 @@
 #pragma once
 
-#include "OpenGLUtilities.h"
+#include "Utilities.h"
 
 import ResourceManager;
+
+#include <filesystem>
+namespace fs = std::filesystem;
 
 class Shader : public Resource {
 public:

@@ -3,7 +3,7 @@
 #include <QAbstractTableModel>
 
 #include "QIconResource.h"
-#include <SLK.h>
+#include "SLK.h"
 
 class TableModel : public QAbstractTableModel {
 	//std::unordered_map<std::string, std::string> meta_field_to_key;

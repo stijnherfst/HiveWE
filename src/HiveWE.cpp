@@ -30,6 +30,7 @@ import Hierarchy;
 #include "UnitPalette.h"
 #include "PathingPalette.h"
 #include "ObjectEditor.h"
+#include "ModelEditor.h"
 #include "Camera.h"
 
 #include "IconView.h"
@@ -183,6 +184,11 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;
 		window_handler.create_or_raise<ObjectEditor>(nullptr, created);
+	});
+
+	connect(ui.ribbon->model_editor, &QRibbonButton::clicked, [this]() {
+		bool created = false;
+		window_handler.create_or_raise<ModelEditor>(nullptr, created);
 	});
 
 	minimap->setParent(ui.widget);

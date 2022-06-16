@@ -3,9 +3,8 @@
 #include <QString>
 
 #include <unordered_map>
-#include <map>
 
-import INI;
+#include "INI.h"
 import BinaryReader;
 import BinaryWriter;
 

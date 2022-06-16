@@ -157,7 +157,7 @@ void FPSCamera::update(const double delta) {
 
 	direction = glm::normalize(direction);
 
-	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
+	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 	view = glm::lookAt(position, position + direction, up);
 	projection_view = projection * view;
 
@@ -222,7 +222,7 @@ void TPSCamera::update(double delta) {
 	}
 	position.z = map->terrain.interpolated_height(position.x, position.y);
 
-	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance);
+	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 	view = glm::lookAt(position - direction * distance, position, up);
 	projection_view = projection * view;
 

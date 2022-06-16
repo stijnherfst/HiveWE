@@ -4,17 +4,10 @@
 #include <unordered_map>
 #include <memory>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 import BinaryReader;
 #include "SkinnedMesh.h"
 #include "Terrain.h"
-import SkeletalModelInstance;
-import Utilities;
+#include <SkeletalModelInstance.h>
 
 struct Unit {
 	static inline int auto_increment;

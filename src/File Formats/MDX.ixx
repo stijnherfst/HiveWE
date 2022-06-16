@@ -110,7 +110,7 @@ namespace mdx {
 		CAMS = 'SMAC'
 	};
 
-	export template<typename T>
+	export template <typename T>
 	struct Track {
 		int32_t frame;
 		T value;
@@ -118,7 +118,7 @@ namespace mdx {
 		T outTan;
 	};
 
-	export template<typename T>
+	export template <typename T>
 	struct TrackHeader {
 		int32_t interpolation_type = 0;
 		int32_t global_sequence_ID = -1;
@@ -2051,7 +2051,7 @@ namespace mdx {
 					fmt::print("yeet");
 				}
 			}
-		} 
+		}
 
 		/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces
 		struct MDLWriter {

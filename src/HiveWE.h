@@ -8,11 +8,10 @@
 #include "QRibbon.h"
 #include "Minimap.h"
 #include "Map.h"
+#include "INI.h"
 #include "TableModel.h"
 #include "SLK.h"
 #include "GLWidget.h"
-
-import INI;
 
 inline WindowHandler window_handler;
 

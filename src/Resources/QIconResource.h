@@ -1,9 +1,9 @@
 #pragma once
 
+import ResourceManager;
+
 #include <filesystem>
 namespace fs = std::filesystem;
-
-import ResourceManager;
 
 #include <vector>
 

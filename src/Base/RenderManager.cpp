@@ -1,17 +1,17 @@
 #include "RenderManager.h"
 
 import ResourceManager;
+
 #include "Camera.h"
 #include "Units.h"
 #include "HiveWE.h"
-#include "SkinnedMesh.h"
 
 RenderManager::RenderManager() {
-	/*instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
+	instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
 	instance_static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_hd.vs", "Data/Shaders/static_mesh_instanced_hd.fs" });
 	static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_sd.vs", "Data/Shaders/static_mesh_sd.fs" });
 	static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_hd.vs", "Data/Shaders/static_mesh_hd.fs" });
-	colored_static_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_color_coded.vs", "Data/Shaders/static_mesh_color_coded.fs" });*/
+	colored_static_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_color_coded.vs", "Data/Shaders/static_mesh_color_coded.fs" });
 	
 	instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
 	instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_hd.vs", "Data/Shaders/skinned_mesh_instanced_hd.fs" });
@@ -89,10 +89,10 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 
 	gl->glBindVertexArray(old_vao);
 
-	//for (const auto& i : meshes) {
-	//	i->render_jobs.clear();
-	//	i->render_colors.clear();
-	//}
+	for (const auto& i : meshes) {
+		i->render_jobs.clear();
+		i->render_colors.clear();
+	}
 
 	for (const auto& i : skinned_meshes) {
 		i->render_jobs.clear();
@@ -101,9 +101,9 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 		i->instance_bone_matrices.clear();
 	}
 
-	//meshes.clear();
+	meshes.clear();
 	skinned_meshes.clear();
-	//transparent_instances.clear();
+	transparent_instances.clear();
 	skinned_transparent_instances.clear();
 }
 

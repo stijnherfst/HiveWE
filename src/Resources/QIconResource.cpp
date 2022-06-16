@@ -1,4 +1,5 @@
 #include "QIconResource.h"
+#include "Texture.h"
 
 #include <SOIL2/SOIL2.h>
 #include <QImage>
@@ -7,7 +8,6 @@
 import Hierarchy;
 import BLP;
 import BinaryReader;
-import Texture;
 
 QIconResource::QIconResource(const fs::path& path) {
 	const auto image = resource_manager.load<Texture>(path);

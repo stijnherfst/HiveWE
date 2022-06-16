@@ -5,8 +5,8 @@
 
 #include "Camera.h"
 #include <QElapsedTimer>
-
-import MDX;
+#include "EditableMesh.h"
+#include <ModelEditor/ModelEditorCamera.h>
 
 class ModelEditorGLWidget : public QOpenGLWidget {
 	Q_OBJECT
@@ -35,4 +35,13 @@ public:
 	void mousePressEvent(QMouseEvent* event) override;
 	void mouseReleaseEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
+
+	std::shared_ptr<EditableMesh> mesh;
+	SkeletalModelInstance skeleton;
+
+	std::shared_ptr<Shader> shader;
+	std::shared_ptr<Shader> test_shader;
+
+	ModelEditorCamera camera;
+	InputHandler my_input_handler;
 };

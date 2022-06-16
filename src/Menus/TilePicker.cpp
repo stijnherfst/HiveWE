@@ -4,7 +4,8 @@
 
 import ResourceManager;
 #include "HiveWE.h"
-import Texture;
+#include "Texture.h"
+
 
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);

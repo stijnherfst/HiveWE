@@ -3,6 +3,12 @@
 #include <iostream>
 using namespace std::literals::string_literals;
 
+#define GLM_FORCE_CXX17
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_SILENT_WARNINGS
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "HiveWE.h"
 import BinaryWriter;
 import Hierarchy;

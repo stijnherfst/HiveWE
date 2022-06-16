@@ -2,7 +2,6 @@
 #include "TilePicker.h"
 
 #include "HiveWE.h"
-
 import ResourceManager;
 
 TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {

@@ -9,15 +9,10 @@
 
 #include "fmt/format.h"
 
-//#include "HiveWE.h"
-
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
+#include "HiveWE.h"
+#include "Utilities.h"
 import Hierarchy;
-import BinaryReader;
+
 
 using namespace std::literals::string_literals;
 

@@ -6,7 +6,6 @@ module;
 
 export module BinaryReader;
 
-
 import no_init_allocator;
 
 export class BinaryReader {

@@ -1,21 +1,17 @@
 #pragma once
 
 #include <memory>
-#include <vector>
+
+import MDX;
+
+import ResourceManager;
+
 #include <filesystem>
 namespace fs = std::filesystem;
 
 #include "GPUTexture.h"
 #include "Shader.h"
-
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-
-import ResourceManager;
-import MDX;
-import SkeletalModelInstance;
+#include "SkeletalModelInstance.h"
 
 class SkinnedMesh : public Resource {
   public:

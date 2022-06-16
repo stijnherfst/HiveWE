@@ -14,6 +14,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(CascLib CONFIG REQUIRED)
@@ -23,6 +24,7 @@ find_package(absl CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -53,6 +55,7 @@ target_link_libraries(HiveWE PUBLIC
 	Qt6::OpenGL
 	Qt6::OpenGLWidgets
 	glm::glm
+	glad::glad
 	soil2
 	stormlib::stormlib
 	libjpeg-turbo::jpeg
@@ -69,6 +72,7 @@ target_link_libraries(HiveWE PUBLIC
 	fmt::fmt
 	fmt::fmt-header-only
 	TBB::tbb
+	imgui::imgui
 )
 
 #target_compile_options(HiveWE PRIVATE

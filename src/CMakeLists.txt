@@ -3,11 +3,11 @@ target_sources(HiveWE PRIVATE
 	HiveWE.cpp
 	main.cpp
 	test.cpp
+	Utilities.cpp
 
 	Base/BinaryReader.ixx
 	Base/BinaryWriter.ixx
 	Base/no_init_allocator.ixx
-	Base/ResourceManager.ixx
 	Base/Doodads.cpp
 	Base/Hierarchy.ixx
 	Base/GameCameras.ixx
@@ -20,15 +20,17 @@ target_sources(HiveWE PRIVATE
 	Base/InputHandler.cpp
 	Base/TerrainUndo.cpp
 	Base/WindowHandler.h
-	Base/Sounds.ixx
+	Base/MathOperations.ixx
+	Base/ResourceManager.ixx
+	
 	Base/RenderManager.cpp
 	Base/ShadowMap.cpp
+	Base/Sounds.cpp
 	Base/Terrain.cpp
 	Base/Triggers.cpp
 	Base/TriggerStrings.cpp
 	Base/Units.cpp
 	Base/Physics.cpp
-	Base/MathOperations.ixx
 
 	Brush/Brush.cpp
 	Brush/DoodadBrush.cpp
@@ -38,7 +40,7 @@ target_sources(HiveWE PRIVATE
 
 	"File Formats/BLP.ixx"
 	"File Formats/CASC.ixx"
-	"File Formats/INI.ixx"
+	"File Formats/INI.cpp"
 	"File Formats/JSON.ixx"
 	"File Formats/MDX.ixx"
 	"File Formats/MPQ.ixx"
@@ -49,12 +51,14 @@ target_sources(HiveWE PRIVATE
 	Resources/GroundTexture.cpp
 	Resources/Shader.cpp
 	Resources/SkinnedMesh.cpp
-	Resources/Texture.ixx
-	Resources/PathingTexture.ixx
+	Resources/EditableMesh.cpp
+	Resources/StaticMesh.cpp
+	Resources/Texture.cpp
+	Resources/PathingTexture.cpp
 	Resources/QIconResource.cpp
 
 	Resources/SkinnedMesh/RenderNode.ixx
-	Resources/SkinnedMesh/SkeletalModelInstance.ixx
+	Resources/SkinnedMesh/SkeletalModelInstance.cpp
 
 	Menus/DoodadPalette.cpp
 	
@@ -99,8 +103,10 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/FlowLayout.cpp"
 	"Custom Widgets/ModelEditorGLWidget.cpp"
 
+	"ModelEditor/ModelEditorCamera.cpp"
+
+	"QtImgui/ImGuiRenderer.cpp"
+	"QtImgui/QtImGui.cpp"
+
 	"Utilities/Timer.ixx"
-	"Utilities/OpenGLUtilities.cpp"
-	"Utilities/Utilities.ixx"
-	"Utilities/ModificationTables.ixx"
 )

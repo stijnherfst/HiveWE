@@ -2,9 +2,10 @@
 
 #include "fmt/format.h"
 
-#include "OpenGLUtilities.h"
-import Texture;
+#include "Utilities.h"
+#include "Texture.h"
 import Hierarchy;
+
 import BinaryWriter;
 
 #include "HiveWE.h"

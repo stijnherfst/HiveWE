@@ -3,13 +3,13 @@ module;
 #include <filesystem>
 #include <vector>
 #include <span>
-#include <fmt/format.h>
 
 #define __CASCLIB_SELF__
 #define WIN32_LEAN_AND_MEAN
 #include <CascLib.h>
 
-
+//#include "no_init_allocator.h"
+#include "fmt/format.h"
 
 export module CASC;
 
