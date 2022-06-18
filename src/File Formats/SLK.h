@@ -1,10 +1,13 @@
 #pragma once
 
-#include "INI.h"
 
 #include <string>
 #include <iostream>
 #include <unordered_map>
+#include <filesystem>
+#include <INI.h>
+
+namespace fs = std::filesystem;
 
 import Hierarchy;
 

@@ -1,6 +1,5 @@
 #include "ModelEditorCamera.h"
 
-#include "HiveWE.h"
 #include "InputHandler.h"
 
 void ModelEditorCamera::reset() {
@@ -29,8 +28,6 @@ void ModelEditorCamera::update(double delta) {
 	// The vector that is perpendicular to the up vector, thus points forward
 	forward = glm::cross(X, up);
 
-	position.z = map->terrain.interpolated_height(position.x, position.y);
-
 	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 	view = glm::lookAt(position - direction * distance, position, up);
 	projection_view = projection * view;
@@ -52,14 +49,13 @@ void ModelEditorCamera::mouse_move_event(QMouseEvent* event, const InputHandler&
 	glm::vec2 diff = my_input_handler.mouse - my_input_handler.previous_mouse;
 
 	if (rolling || (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier)) {
-		horizontal_angle += diff.x * 0.0025f;
-		vertical_angle -= diff.y * 0.0025f;
+		horizontal_angle += diff.x * 0.01f;
+		vertical_angle -= diff.y * 0.01f;
 		vertical_angle = std::max(-glm::pi<float>() / 2.f + 0.001f, std::min(vertical_angle, glm::pi<float>() / 2.f - 0.001f));
 		update(0);
 	} else if (event->buttons() == Qt::RightButton) {
 		position += X * (-diff.x * 0.025f * (distance / 30.f));
 		position += forward * (-diff.y * 0.025f * (distance / 30.f));
-		position.z = map->terrain.interpolated_height(position.x, position.y);
 		update(0);
 	}
 }

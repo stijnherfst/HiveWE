@@ -19,6 +19,7 @@ namespace fs = std::filesystem;
 
 import BinaryReader;
 import BinaryWriter;
+import Timer;
 
 namespace mdx {
 	export extern const std::unordered_map<int, std::string> replacable_id_to_texture{
@@ -625,7 +626,148 @@ namespace mdx {
 		std::vector<uint8_t> data; // Just store it so we can save it again
 	};
 
+	/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces
+	struct MDLWriter {
+		std::string mdl;
+		size_t current_indentation = 0;
+
+		/// Writes a line and automatically handles indentation and the newline character
+		void write_line(std::string_view line) {
+			for (size_t i = 0; i < current_indentation; i++) {
+				mdl += '\t';
+			}
+			mdl += line;
+			mdl += '\n';
+		}
+
+		// template <typename OutputIt, typename... T>
+		// void write_line2(fmt::format_string<T...> fmt, T&&... args) {
+		//	for (size_t i = 0; i < current_indentation; i++) {
+		//		mdl += '\t';
+		//	}
+		//	fmt::format_to(std::back_inserter(mdl), fmt, args);
+		//	mdl += '\n';
+
+		//	//for (size_t i = 0; i < current_indentation; i++) {
+		//	//	mdl += '\t';
+		//	//}
+		//	//mdl += line;
+		//	//mdl += '\n';
+		//}
+
+		template <typename T>
+		void write_track(const TrackHeader<T>& track_header, std::string name, T static_value) {
+			if (track_header.tracks.empty()) {
+				if constexpr (std::is_same_v<T, glm::vec2>) {
+					write_line(fmt::format("static {} {{ {}, {} }},", name, static_value.x, static_value.y));
+				} else if constexpr (std::is_same_v<T, glm::vec3>) {
+					write_line(fmt::format("static {} {{ {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z));
+				} else if constexpr (std::is_same_v<T, glm::quat>) {
+					write_line(fmt::format("static {} {{ {}, {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z, static_value.w));
+				} else {
+					write_line(fmt::format("static {} {},", name, static_value));
+				}
+
+				// write_line(fmt::format("static {} {},", name, static_value));
+			} else {
+				start_group(name, [&]() {
+					switch (track_header.interpolation_type) {
+						case 0:
+							write_line("DontInterp,");
+							break;
+						case 1:
+							write_line("Linear,");
+							break;
+						case 2:
+							write_line("Hermite,");
+							break;
+						case 3:
+							write_line("Bezier,");
+							break;
+					}
+
+					write_line(fmt::format("GlobalSeqId {},", track_header.global_sequence_ID));
+
+					for (const auto& track : track_header.tracks) {
+						if constexpr (std::is_same_v<T, glm::vec2>) {
+							write_line(fmt::format("{}: {{ {}, {} }},", track.frame, track.value.x, track.value.y));
+						} else if constexpr (std::is_same_v<T, glm::vec3>) {
+							write_line(fmt::format("{}: {{ {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z));
+						} else if constexpr (std::is_same_v<T, glm::quat>) {
+							write_line(fmt::format("{}: {{ {}, {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z, track.value.w));
+						} else {
+							write_line(fmt::format("{}: {},", track.frame, track.value));
+						}
+
+						if (track_header.interpolation_type == 2 || track_header.interpolation_type == 3) {
+							if constexpr (std::is_same_v<T, glm::vec2>) {
+								write_line(fmt::format("InTan {{ {}, {} }},", track.inTan.x, track.inTan.y));
+								write_line(fmt::format("OutTan {{ {}, {} }},", track.outTan.x, track.outTan.y));
+							} else if constexpr (std::is_same_v<T, glm::vec3>) {
+								write_line(fmt::format("InTan {{ {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z));
+								write_line(fmt::format("OutTan {{ {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z));
+							} else if constexpr (std::is_same_v<T, glm::quat>) {
+								write_line(fmt::format("InTan {{ {}, {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z, track.inTan.w));
+								write_line(fmt::format("OutTan {{ {}, {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z, track.outTan.w));
+							} else {
+								write_line(fmt::format("InTan {},", track.inTan));
+								write_line(fmt::format("OutTan {},", track.outTan));
+							}
+						}
+					}
+				});
+			}
+		}
+
+		void write_node(const Node& node) {
+			write_line(fmt::format("ObjectId {},", node.id));
+			write_line(fmt::format("Parent {},", node.parent_id));
+
+			if (node.flags & Node::Flags::billboarded) {
+				write_line("Billboarded,");
+			}
+
+			if (node.flags & Node::Flags::unfogged) {
+				write_line("Unfogged,");
+			}
+
+			if (node.flags & Node::Flags::line_emitter) {
+				write_line("LineEmitter,");
+			}
+
+			if (node.flags & Node::Flags::unshaded) {
+				write_line("Unshaded,");
+			}
+
+			if (node.flags & Node::Flags::model_space) {
+				write_line("ModelSpace,");
+			}
+
+			write_track(node.KGRT, "Rotation", glm::quat(0.f, 0.f, 0.f, 0.f));
+			write_track(node.KGTR, "Translation", glm::vec3(0.0));
+			write_track(node.KGSC, "Scale", glm::vec3(1.0));
+		}
+
+		template <typename T>
+		void start_group(std::string name, T callback) {
+			for (size_t i = 0; i < current_indentation; i++) {
+				mdl += '\t';
+			}
+			mdl += name + " {\n";
+			current_indentation += 1;
+			callback();
+			current_indentation -= 1;
+			for (size_t i = 0; i < current_indentation; i++) {
+				mdl += '\t';
+			}
+			mdl += "}\n";
+		}
+	};
+
 	export class MDX {
+	  public:
+		int unique_tracks = 0;
+
 		int version;
 		std::string name;
 		std::string animation_filename;
@@ -634,6 +776,31 @@ namespace mdx {
 
 		std::string face_target;
 		std::string face_path;
+
+		std::vector<Geoset> geosets;
+		std::vector<Sequence> sequences;
+		std::vector<uint32_t> global_sequences;
+		std::vector<GeosetAnimation> animations;
+		std::vector<Bone> bones;
+		std::vector<Material> materials;
+		std::vector<Texture> textures;
+		std::vector<Light> lights;
+		std::vector<Node> help_bones;
+		std::vector<Attachment> attachments;
+		std::vector<glm::vec3> pivots;
+		std::vector<ParticleEmitter1> emitters1;
+		std::vector<ParticleEmitter2> emitters2;
+		std::vector<RibbonEmitter> ribbons;
+		std::vector<EventObject> event_objects;
+		std::vector<CollisionShape> collision_shapes;
+		std::vector<CornEmitter> corn_emitters;
+		std::vector<FaceFX> facefxes;
+
+		std::vector<Camera> cameras;
+		std::vector<float> bind_poses;
+		std::vector<TextureAnimation> texture_animations;
+
+	  private:
 
 		void read_GEOS_chunk(BinaryReader& reader) {
 			const uint32_t size = reader.read<uint32_t>();
@@ -2053,134 +2220,15 @@ namespace mdx {
 			}
 		}
 
-		/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces
-		struct MDLWriter {
-			std::string mdl;
-			size_t current_indentation = 0;
-
-			/// Writes a line and automatically handles indentation and the newline character
-			void write_line(std::string_view line) {
-				for (size_t i = 0; i < current_indentation; i++) {
-					mdl += '\t';
-				}
-				mdl += line;
-				mdl += '\n';
-			}
-
-			template <typename T>
-			void write_track(const TrackHeader<T>& track_header, std::string name, T static_value) {
-				if (track_header.tracks.empty()) {
-					if constexpr (std::is_same_v<T, glm::vec2>) {
-						write_line(fmt::format("static {} {{ {}, {} }},", name, static_value.x, static_value.y));
-					} else if constexpr (std::is_same_v<T, glm::vec3>) {
-						write_line(fmt::format("static {} {{ {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z));
-					} else if constexpr (std::is_same_v<T, glm::quat>) {
-						write_line(fmt::format("static {} {{ {}, {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z, static_value.w));
-					} else {
-						write_line(fmt::format("static {} {},", name, static_value));
-					}
-
-					// write_line(fmt::format("static {} {},", name, static_value));
-				} else {
-					start_group(name, [&]() {
-						switch (track_header.interpolation_type) {
-							case 0:
-								write_line("DontInterp,");
-								break;
-							case 1:
-								write_line("Linear,");
-								break;
-							case 2:
-								write_line("Hermite,");
-								break;
-							case 3:
-								write_line("Bezier,");
-								break;
-						}
-
-						write_line(fmt::format("GlobalSeqId {},", track_header.global_sequence_ID));
-
-						for (const auto& track : track_header.tracks) {
-							if constexpr (std::is_same_v<T, glm::vec2>) {
-								write_line(fmt::format("{}: {{ {}, {} }},", track.frame, track.value.x, track.value.y));
-							} else if constexpr (std::is_same_v<T, glm::vec3>) {
-								write_line(fmt::format("{}: {{ {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z));
-							} else if constexpr (std::is_same_v<T, glm::quat>) {
-								write_line(fmt::format("{}: {{ {}, {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z, track.value.w));
-							} else {
-								write_line(fmt::format("{}: {},", track.frame, track.value));
-							}
-
-							if (track_header.interpolation_type == 2 || track_header.interpolation_type == 3) {
-								if constexpr (std::is_same_v<T, glm::vec2>) {
-									write_line(fmt::format("InTan {{ {}, {} }},", track.inTan.x, track.inTan.y));
-									write_line(fmt::format("OutTan {{ {}, {} }},", track.outTan.x, track.outTan.y));
-								} else if constexpr (std::is_same_v<T, glm::vec3>) {
-									write_line(fmt::format("InTan {{ {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z));
-									write_line(fmt::format("OutTan {{ {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z));
-								} else if constexpr (std::is_same_v<T, glm::quat>) {
-									write_line(fmt::format("InTan {{ {}, {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z, track.inTan.w));
-									write_line(fmt::format("OutTan {{ {}, {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z, track.outTan.w));
-								} else {
-									write_line(fmt::format("InTan {},", track.inTan));
-									write_line(fmt::format("OutTan {},", track.outTan));
-								}
-							}
-						}
-					});
-				}
-			}
-
-			void write_node(const Node& node) {
-				write_line(fmt::format("ObjectId {},", node.id));
-				write_line(fmt::format("Parent {},", node.parent_id));
-
-				if (node.flags & Node::Flags::billboarded) {
-					write_line("Billboarded,");
-				}
-
-				if (node.flags & Node::Flags::unfogged) {
-					write_line("Unfogged,");
-				}
-
-				if (node.flags & Node::Flags::line_emitter) {
-					write_line("LineEmitter,");
-				}
-
-				if (node.flags & Node::Flags::unshaded) {
-					write_line("Unshaded,");
-				}
-
-				if (node.flags & Node::Flags::model_space) {
-					write_line("ModelSpace,");
-				}
-
-				write_track(node.KGRT, "Rotation", glm::quat(0.f, 0.f, 0.f, 0.f));
-				write_track(node.KGTR, "Translation", glm::vec3(0.0));
-				write_track(node.KGSC, "Scale", glm::vec3(1.0));
-			}
-
-			template <typename T>
-			void start_group(std::string name, T callback) {
-				for (size_t i = 0; i < current_indentation; i++) {
-					mdl += '\t';
-				}
-				mdl += name + " {\n";
-				current_indentation += 1;
-				callback();
-				current_indentation -= 1;
-				mdl += "}\n";
-			}
-		};
-
 		std::string to_mdl() {
+			Timer timer;
 			MDLWriter mdl;
 
 			mdl.start_group("Version", [&]() {
 				mdl.write_line("FormatVersion 1000,");
 			});
 
-			mdl.start_group(fmt::format("Model {}", name), [&]() {
+			mdl.start_group(fmt::format("Model \"{}\"", name), [&]() {
 				mdl.write_line(fmt::format("BlendTime {},", blend_time));
 				mdl.write_line(fmt::format("MinimumExtent {{ {}, {}, {} }},", extent.minimum.x, extent.minimum.y, extent.minimum.z));
 				mdl.write_line(fmt::format("MaximumExtent {{ {}, {}, {} }},", extent.maximum.x, extent.maximum.y, extent.maximum.z));
@@ -2188,7 +2236,7 @@ namespace mdx {
 
 			mdl.start_group(fmt::format("Sequences {}", sequences.size()), [&]() {
 				for (const auto& i : sequences) {
-					mdl.start_group(fmt::format("Anim {}", i.name), [&]() {
+					mdl.start_group(fmt::format("Anim \"{}\"", i.name), [&]() {
 						mdl.write_line(fmt::format("Interval {{ {}, {} }},", i.start_frame, i.end_frame));
 						mdl.write_line(fmt::format("Movespeed {},", i.movespeed));
 						mdl.write_line(fmt::format("SyncPoint {},", i.sync_point));
@@ -2214,7 +2262,7 @@ namespace mdx {
 			mdl.start_group(fmt::format("Textures {}", textures.size()), [&]() {
 				for (const auto& i : textures) {
 					mdl.start_group("Bitmap", [&]() {
-						mdl.write_line(fmt::format("Image {},", i.file_name.string()));
+						mdl.write_line(fmt::format("Image \"{}\",", i.file_name.string()));
 						mdl.write_line(fmt::format("ReplaceableId {},", i.replaceable_id));
 						if (i.flags & Texture::Flags::wrap_width) {
 							mdl.write_line("WrapWidth");
@@ -2229,7 +2277,7 @@ namespace mdx {
 			mdl.start_group(fmt::format("Materials {}", materials.size()), [&]() {
 				for (const auto& material : materials) {
 					mdl.start_group("Material", [&]() {
-						mdl.write_line(fmt::format("Shader {},", material.shader_name));
+						mdl.write_line(fmt::format("Shader \"{}\",", material.shader_name));
 
 						for (const auto& layer : material.layers) {
 							mdl.start_group("Layer", [&]() {
@@ -2516,35 +2564,11 @@ namespace mdx {
 					}
 				});
 			}
+			fmt::print("Elapsed {}ms", timer.elapsed_ms());
 			return mdl.mdl;
 		}
 
 		static MDX from_mdl(std::string_view mdl);
-
-		int unique_tracks = 0;
-
-		std::vector<Geoset> geosets;
-		std::vector<Sequence> sequences;
-		std::vector<uint32_t> global_sequences;
-		std::vector<GeosetAnimation> animations;
-		std::vector<Bone> bones;
-		std::vector<Material> materials;
-		std::vector<Texture> textures;
-		std::vector<Light> lights;
-		std::vector<Node> help_bones;
-		std::vector<Attachment> attachments;
-		std::vector<glm::vec3> pivots;
-		std::vector<ParticleEmitter1> emitters1;
-		std::vector<ParticleEmitter2> emitters2;
-		std::vector<RibbonEmitter> ribbons;
-		std::vector<EventObject> event_objects;
-		std::vector<CollisionShape> collision_shapes;
-		std::vector<CornEmitter> corn_emitters;
-		std::vector<FaceFX> facefxes;
-
-		std::vector<Camera> cameras;
-		std::vector<float> bind_poses;
-		std::vector<TextureAnimation> texture_animations;
 
 		void forEachNode(const std::function<void(Node&)>& F) {
 			for (auto& i : bones) {

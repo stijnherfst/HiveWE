@@ -3,7 +3,7 @@
 #include "fmt/format.h"
 
 #include "Utilities.h"
-#include "Texture.h"
+import Texture;
 import Hierarchy;
 
 import BinaryWriter;

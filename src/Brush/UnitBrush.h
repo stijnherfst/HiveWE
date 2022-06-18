@@ -6,7 +6,7 @@
 #include "Units.h"
 #include "Brush.h"
 #include "SkinnedMesh.h"
-#include "PathingTexture.h"
+import PathingTexture;
 
 class UnitBrush : public Brush {
 	std::string id;

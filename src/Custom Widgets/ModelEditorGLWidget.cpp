@@ -1,24 +1,24 @@
 #include "ModelEditorGLWidget.h"
 
 #include "fmt/format.h"
+#include <fstream>
 
 //#include <glad/glad.h>
 
 #include <QTimer>
-//#include <QOpenGLFunctions_4_5_Core>
 #include <QPainter>
+#include <QFileDialog>
+#include <QSettings>
+#include <QStandardPaths>
+#include <QDesktopServices>
 
-//#include "Utilities.h"
 #include "InputHandler.h"
 #include <QtImgui/QtImGui.h>
 #include <imgui.h>
 
 #include "HiveWE.h"
 
-
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	//QTimer::singleShot(16, this, &GLWidget::update_scene);
-
 	makeCurrent();
 
 	setMouseTracking(true);
@@ -51,11 +51,12 @@ void ModelEditorGLWidget::initializeGL() {
 	gl->glBindVertexArray(vao);
 
 	mesh = resource_manager.load<EditableMesh>("units/human/footman/footman.mdx", "", std::nullopt);
-	// mesh = std::make_shared<EditableMesh>("units/human/footman/footman.mdx", "", std::nullopt);
-	skeleton = SkeletalModelInstance(mesh->model);
+	skeleton = SkeletalModelInstance(mesh->mdx);
+
+	auto& extent = mesh->mdx->sequences[skeleton.sequence_index].extent;
+	camera.position.z = (extent.maximum.z - extent.minimum.z) / 2.f;
 
 	shader = resource_manager.load<Shader>({ "Data/Shaders/editable_mesh_hd.vs", "Data/Shaders/editable_mesh_hd.fs" });
-	test_shader = resource_manager.load<Shader>({ "Data/Shaders/test.vs", "Data/Shaders/test.fs" });
 
 	begin = std::chrono::steady_clock::now();
 
@@ -64,7 +65,8 @@ void ModelEditorGLWidget::initializeGL() {
 
 void ModelEditorGLWidget::resizeGL(const int w, const int h) {
 	gl->glViewport(0, 0, w, h);
-
+	camera.aspect_ratio = double(w) / h;
+	camera.update(delta);
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 }
 
@@ -79,30 +81,20 @@ void ModelEditorGLWidget::update_scene() {
 
 	update();
 
-
 	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), this, &ModelEditorGLWidget::update_scene);
 }
 
 void ModelEditorGLWidget::paintGL() {
 	makeCurrent();
 
-	//gl->glEnable(GL_DEPTH_TEST);
-	//gl->glDepthMask(true);
-	//gl->glEnable(GL_CULL_FACE);
-	//gl->glDepthFunc(GL_LEQUAL);
-
-	//gl->glClearColor(0.25f, 0.25f, 0.f, 1.f);
-	//gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//gl->glEnable(GL_BLEND);
-
 	gl->glBindVertexArray(vao);
 	gl->glEnable(GL_DEPTH_TEST);
 	gl->glDepthMask(true);
-	gl->glClearColor(0.f, 0.f, 0.f, 1.f);
+	gl->glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shader->use();
-	mesh->render(skeleton, camera.projection_view);
+	mesh->render(skeleton, camera.projection_view, camera.direction);
 
 	gl->glEnable(GL_BLEND);
 
@@ -113,12 +105,80 @@ void ModelEditorGLWidget::paintGL() {
 	gl->glEnable(GL_BLEND);
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+	// ImGui
 	QtImGui::newFrame();
 
-	for (const auto& i : mesh->model->textures) {
-		ImGui::Text(i.file_name.string().c_str());
+	ImGui::Begin("General");
+
+	if (ImGui::Button("Edit MDL")) {
+
+		auto mdl = mesh->mdx->to_mdl();
+
+		auto path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/" + QString::fromStdString(mesh->mdx->name) + ".mdl";
+
+		std::ofstream file(path.toStdString());
+		file.write(mdl.data(), mdl.size());
+		file.close();
+
+		QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
 	}
-	ImGui::Text("Hello");
+
+	if (ImGui::Button("Open Model")) {
+		QSettings settings;
+
+		QString file_name = QFileDialog::getOpenFileName(this, "Open Model File",
+														 settings.value("openDirectory", QDir::current().path()).toString(),
+														 "MDX (*.mdx *.MDX)");
+
+		if (file_name == "") {
+			return;
+		}
+
+		mesh = resource_manager.load<EditableMesh>(file_name.toStdString(), "", std::nullopt);
+		skeleton = SkeletalModelInstance(mesh->mdx);
+	}
+
+	ImGui::Text(fmt::format("name: {}", mesh->mdx->name).c_str());
+
+	size_t vertices = 0;
+	size_t triangles = 0;
+	for (const auto& i : mesh->mdx->geosets) {
+		vertices += i.vertices.size();
+		triangles += i.faces.size() / 3;
+	}
+
+	ImGui::Text(fmt::format("Vertices: {}", vertices).c_str());
+	ImGui::Text(fmt::format("Triangles: {}", triangles).c_str());
+
+	ImGui::End();
+
+	ImGui::Begin("Animation");
+
+	static const char* current_item = nullptr;
+	if (ImGui::BeginCombo("##combo", current_item)) {
+		bool is_selected = false;
+		for (const auto& i : mesh->mdx->sequences) {
+			ImGui::Selectable(i.name.c_str(), is_selected);
+			//set_sequence(static_cast<int>(i));
+		}
+
+		//for (int n = 0; n < IM_ARRAYSIZE(items); n++) {
+		//	bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+		//	if (ImGui::Selectable(items[n], is_selected)
+		//		current_item = items[n];
+		//	if (is_selected)
+		//		ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+		//}
+		ImGui::EndCombo();
+	}
+
+	ImGui::End();
+
+	//for (const auto& i : mesh->model->textures) {
+	//	ImGui::Text(i.file_name.string().c_str());
+	//}
+	
+
 	// more widgets...
 
 	ImGui::Render();
@@ -147,7 +207,7 @@ void ModelEditorGLWidget::mouseMoveEvent(QMouseEvent* event) {
 
 void ModelEditorGLWidget::mousePressEvent(QMouseEvent* event) {
 	makeCurrent();
-
+	
 	camera.mouse_press_event(event);
 }
 

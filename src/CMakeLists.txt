@@ -53,8 +53,8 @@ target_sources(HiveWE PRIVATE
 	Resources/SkinnedMesh.cpp
 	Resources/EditableMesh.cpp
 	Resources/StaticMesh.cpp
-	Resources/Texture.cpp
-	Resources/PathingTexture.cpp
+	Resources/Texture.ixx
+	Resources/PathingTexture.ixx
 	Resources/QIconResource.cpp
 
 	Resources/SkinnedMesh/RenderNode.ixx

@@ -40,7 +40,6 @@ public:
 	SkeletalModelInstance skeleton;
 
 	std::shared_ptr<Shader> shader;
-	std::shared_ptr<Shader> test_shader;
 
 	ModelEditorCamera camera;
 	InputHandler my_input_handler;

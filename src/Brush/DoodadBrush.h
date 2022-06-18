@@ -6,7 +6,7 @@
 #include "Doodads.h"
 #include "Brush.h"
 #include "StaticMesh.h"
-#include "PathingTexture.h"
+import PathingTexture;
 
 class DoodadBrush : public Brush {
 	Q_OBJECT

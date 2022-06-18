@@ -11,7 +11,7 @@
 #include <QIcon>
 #include <QOpenGLFunctions_4_5_Core>
 
-#include "Texture.h"
+import Texture;
 import ResourceManager;
 
 #define GLM_FORCE_CXX17

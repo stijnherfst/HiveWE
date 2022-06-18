@@ -27,7 +27,7 @@ class EditableMesh : public Resource {
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
 	};
 
-	std::shared_ptr<mdx::MDX> model;
+	std::shared_ptr<mdx::MDX> mdx;
 
 	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
@@ -50,14 +50,14 @@ class EditableMesh : public Resource {
 	explicit EditableMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override);
 	virtual ~EditableMesh();
 
-	void render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view);
+	void render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction);
 
 private:
 	//void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);
 	//void render_color_coded(const SkeletalModelInstance& skeleton, int id);
 
 	//void render_opaque_sd();
-	void render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view);
+  void render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction);
 
 	//void render_transparent_sd(int instance_id);
 	//void render_transparent_hd(int instance_id);

@@ -3,8 +3,8 @@
 #include <QPushButton>
 
 import ResourceManager;
+import Texture;
 #include "HiveWE.h"
-#include "Texture.h"
 
 
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {

@@ -13,8 +13,7 @@
 #include "TerrainUndo.h"
 #include "HiveWE.h"
 import Hierarchy;
-
-#include "Texture.h"
+import Texture;
 
 UnitBrush::UnitBrush() : Brush() {
 }

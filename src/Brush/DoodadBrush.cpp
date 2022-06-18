@@ -13,8 +13,7 @@
 #include "TerrainUndo.h"
 #include "HiveWE.h"
 import Hierarchy;
-
-#include "Texture.h"
+import Texture;
 
 DoodadBrush::DoodadBrush() : Brush() {
 	uv_offset_granularity = 2;

@@ -10,7 +10,6 @@
 #include <QProcess>
 #include <QPushButton>
 #include <QApplication>
-#include <QMessageBox>
 
 #include <SOIL2/SOIL2.h>
 

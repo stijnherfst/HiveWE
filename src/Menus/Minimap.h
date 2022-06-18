@@ -2,7 +2,7 @@
 
 #include "ui_Minimap.h"
 
-#include "Texture.h"
+import Texture;
 
 class Minimap : public QWidget {
 	Q_OBJECT

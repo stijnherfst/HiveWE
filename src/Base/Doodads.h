@@ -5,7 +5,7 @@
 
 #include "SkinnedMesh.h"
 #include "Utilities.h"
-#include "PathingTexture.h"
+import PathingTexture;
 
 #include "Terrain.h"
 #include "TerrainUndo.h"

@@ -14,18 +14,18 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 	size_t indices = 0;
 	size_t matrices = 0;
 
-	model = std::make_shared<mdx::MDX>(reader);
+	mdx = std::make_shared<mdx::MDX>(reader);
 
 	gl->glGenVertexArrays(1, &vao);
 	gl->glBindVertexArray(vao);
 
-	has_mesh = model->geosets.size();
+	has_mesh = mdx->geosets.size();
 	if (!has_mesh) {
 		return;
 	}
 
 	// Calculate required space
-	for (const auto& i : model->geosets) {
+	for (const auto& i : mdx->geosets) {
 		if (i.lod != 0) {
 			continue;
 		}
@@ -57,7 +57,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 	int base_vertex = 0;
 	int base_index = 0;
 
-	for (const auto& i : model->geosets) {
+	for (const auto& i : mdx->geosets) {
 		if (i.lod != 0) {
 			continue;
 		}
@@ -69,7 +69,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 		entry.base_index = base_index;
 
 		entry.material_id = i.material_id;
-		entry.hd = !model->materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
+		entry.hd = !mdx->materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
 		entry.geoset_anim = nullptr;
 		entry.extent = i.extent;
 
@@ -125,14 +125,14 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 	}
 
 	// animations geoset ids > geosets
-	for (auto& i : model->animations) {
+	for (auto& i : mdx->animations) {
 		if (i.geoset_id >= 0 && i.geoset_id < geosets.size()) {
 			geosets[i.geoset_id].geoset_anim = &i;
 		}
 	}
 
-	for (size_t i = 0; i < model->textures.size(); i++) {
-		const mdx::Texture& texture = model->textures[i];
+	for (size_t i = 0; i < mdx->textures.size(); i++) {
+		const mdx::Texture& texture = mdx->textures[i];
 
 		if (texture.replaceable_id != 0) {
 			// Figure out if this is an HD texture
@@ -140,7 +140,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 			// So we take a guess using the index
 			bool is_hd = false;
 			size_t layer_id;
-			for (const auto& material : model->materials) {
+			for (const auto& material : mdx->materials) {
 				for (size_t k = 0; k < material.layers.size(); k++) {
 					if (material.layers[k].texture_id == i) {
 						is_hd = !material.shader_name.empty();
@@ -211,33 +211,32 @@ EditableMesh::~EditableMesh() {
 	gl->glDeleteBuffers(1, &geoset_color);
 }
 
-void EditableMesh::render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view) {
-	render_opaque_hd(skeleton, projection_view);
+void EditableMesh::render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction) {
+	render_opaque_hd(skeleton, projection_view, light_direction);
 }
 
 // Opaque rendering doesn't have to be sorted and can thus be instanced
-void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view) {
+void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction) {
 	if (!has_mesh) {
 		return;
 	}
 	glm::mat4 M = glm::mat4(1.f);
 	glm::mat4 MVP = projection_view * M;
-	glm::vec3 light_direction = glm::normalize(glm::vec3(1.f, 1.f, -3.f));
 
 	gl->glBindVertexArray(vao);
 	gl->glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
 	gl->glUniform1i(2, true);
-	gl->glUniform1i(3, model->bones.size());
+	gl->glUniform1i(3, mdx->bones.size());
 	gl->glUniformMatrix4fv(4, 1, false, &M[0][0]);
 	gl->glUniform3fv(6, 1, &light_direction.x);
-	gl->glUniformMatrix4fv(8, model->bones.size(), false, &skeleton.world_matrices[0][0][0]);
+	gl->glUniformMatrix4fv(8, mdx->bones.size(), false, &skeleton.world_matrices[0][0][0]);
 
 	for (const auto& i : geosets) {
 		if (!i.hd) {
 			continue;
 		}
 
-		const auto& layers = model->materials[i.material_id].layers;
+		const auto& layers = mdx->materials[i.material_id].layers;
 		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
 			continue;
 		}
