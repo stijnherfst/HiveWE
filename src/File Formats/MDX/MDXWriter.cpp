@@ -115,7 +115,6 @@ namespace mdx {
 
 			writer.write<uint32_t>(material.priority_plane);
 			writer.write<uint32_t>(material.flags);
-			writer.write_c_string_padded(material.shader_name, 80);
 			writer.write_string("LAYS");
 			writer.write<uint32_t>(material.layers.size());
 
@@ -136,7 +135,14 @@ namespace mdx {
 				writer.write<float>(layer.fresnel_opacity);
 				writer.write<float>(layer.fresnel_team_color);
 
-				layer.KMTF.save(TrackTag::KMTF, writer);
+				writer.write<uint32_t>(layer.hd);
+				writer.write<uint32_t>(layer.textures.size());
+				for (auto& pair : layer.textures) {
+					writer.write<uint32_t>(pair.second.id);
+					writer.write<uint32_t>(pair.first);
+					pair.second.KMTF.save(TrackTag::KMTF, writer);
+				}
+
 				layer.KMTA.save(TrackTag::KMTA, writer);
 				layer.KMTE.save(TrackTag::KMTE, writer);
 				layer.KFC3.save(TrackTag::KFC3, writer);
@@ -638,7 +644,7 @@ namespace mdx {
 		writer.write_string("MDLX");
 		writer.write(ChunkTag::VERS);
 		writer.write<uint32_t>(4);
-		writer.write<uint32_t>(1000);
+		writer.write<uint32_t>(1100);
 
 		writer.write(ChunkTag::MODL);
 		writer.write<uint32_t>(372);

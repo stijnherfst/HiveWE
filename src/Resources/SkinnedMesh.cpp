@@ -1,4 +1,4 @@
-#include "StaticMesh.h"
+#include "SkinnedMesh.h"
 
 import Hierarchy;
 
@@ -81,7 +81,6 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 		entry.base_index = base_index;
 
 		entry.material_id = i.material_id;
-		entry.hd = !model->materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
 		entry.geoset_anim = nullptr;
 		entry.extent = i.extent;
 
@@ -156,29 +155,41 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 			// Figure out if this is an HD texture
 			// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
 			// So we take a guess using the index
-			bool is_hd = false;
-			size_t layer_id;
+			std::string suffix("");
+			bool found = false;
 			for (const auto& material : model->materials) {
-				for (size_t k = 0; k < material.layers.size(); k++) {
-					if (material.layers[k].texture_id == i) {
-						is_hd = !material.shader_name.empty();
-						layer_id = k;
+				for (const auto& layer : material.layers) {
+					for (const auto& texture : layer.textures) {
+						if (texture.second.id != i) {
+							continue;
+						}
+
+						found = true;
+
+						if (layer.hd) {
+							switch (texture.first) {
+								case 0:
+									suffix = "_diffuse";
+									break;
+								case 1:
+									suffix = "_normal";
+									break;
+								case 2:
+									suffix = "_orm";
+									break;
+								case 3:
+									suffix = "_emmisive";
+									break;
+							}
+						}
+						break;
+					}
+					if (found) {
 						break;
 					}
 				}
-				if (is_hd) {
+				if (found) {
 					break;
-				}
-			}
-
-			std::string suffix;
-			if (is_hd) {
-				if (layer_id == 0) {
-					suffix = "_diffuse";
-				} else if (layer_id == 1) {
-					suffix = "_normal";
-				} else if (layer_id == 2) {
-					suffix = "_orm";
 				}
 			}
 
@@ -334,7 +345,7 @@ void SkinnedMesh::render_opaque_sd() {
 	int laya = 0;
 	for (auto& i : geosets) {
 		auto& layers = model->materials[i.material_id].layers;
-		if (i.hd) {
+		if (layers[0].hd) {
 			laya += layers.size();
 			continue;
 		}
@@ -388,7 +399,7 @@ void SkinnedMesh::render_opaque_sd() {
 				gl->glEnable(GL_CULL_FACE);
 			}
 
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			gl->glBindTextureUnit(0, textures[j.textures.at(0).id]->id);
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 			laya++;
@@ -415,11 +426,11 @@ void SkinnedMesh::render_opaque_hd() {
 
 	int laya = 0;
 	for (auto& i : geosets) {
-		if (!i.hd) {
+		auto& layers = model->materials[i.material_id].layers;
+		if (!layers[0].hd) {
 			continue;
 		}
 
-		auto& layers = model->materials[i.material_id].layers;
 		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
 			continue;
 		}
@@ -446,9 +457,9 @@ void SkinnedMesh::render_opaque_hd() {
 			gl->glDepthMask(true);
 		}
 
-		for (short i = 0; i < 6; i++)
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
-
+		for (auto& texture : layers[0].textures) {
+			gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
+		}
 		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
 	}
 }
@@ -476,7 +487,7 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 	int laya = 0;
 	for (auto& i : geosets) {
 		auto& layers = model->materials[i.material_id].layers;
-		if (i.hd) {
+		if (layers[0].hd) {
 			laya += layers.size();
 			continue;
 		}
@@ -530,7 +541,7 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 				gl->glDepthMask(true);
 			}
 
-			gl->glBindTextureUnit(0, textures[j.texture_id]->id);
+			gl->glBindTextureUnit(0, textures[j.textures.at(0).id]->id);
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 			laya++;
@@ -562,7 +573,7 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 	int laya = 0;
 	for (auto& i : geosets) {
 		auto& layers = model->materials[i.material_id].layers;
-		if (!i.hd) {
+		if (!layers[0].hd) {
 			laya += layers.size();
 			continue;
 		}
@@ -572,51 +583,52 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 			continue;
 		}
 
-		gl->glUniform1i(7, laya);
-		laya += layers.size();
-		
-		switch (layers[0].blend_mode) {
-			case 2:
-				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				break;
-			case 3:
-				gl->glBlendFunc(GL_ONE, GL_ONE);
-				break;
-			case 4:
-				gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				break;
-			case 5:
-				gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-				break;
-			case 6:
-				gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-				break;
+		for (auto& j : layers) {
+			gl->glUniform1i(7, laya);
+
+			switch (j.blend_mode) {
+				case 2:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					break;
+				case 3:
+					gl->glBlendFunc(GL_ONE, GL_ONE);
+					break;
+				case 4:
+					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+					break;
+				case 5:
+					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+					break;
+				case 6:
+					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+					break;
+			}
+
+			if (j.shading_flags & 0x10) {
+				gl->glDisable(GL_CULL_FACE);
+			} else {
+				gl->glEnable(GL_CULL_FACE);
+			}
+
+			if (j.shading_flags & 0x40) {
+				gl->glDisable(GL_DEPTH_TEST);
+			} else {
+				gl->glEnable(GL_DEPTH_TEST);
+			}
+
+			if (j.shading_flags & 0x80) {
+				gl->glDepthMask(false);
+			} else {
+				gl->glDepthMask(true);
+			}
+
+			for (auto& texture : j.textures) {
+				gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
+			}
+
+			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
+			laya++;
 		}
-
-		if (layers[0].shading_flags & 0x10) {
-			gl->glDisable(GL_CULL_FACE);
-		} else {
-			gl->glEnable(GL_CULL_FACE);
-		}
-
-		if (layers[0].shading_flags & 0x40) {
-			gl->glDisable(GL_DEPTH_TEST);
-		} else {
-			gl->glEnable(GL_DEPTH_TEST);
-		}
-
-		if (layers[0].shading_flags & 0x80) {
-			gl->glDepthMask(false);
-		} else {
-			gl->glDepthMask(true);
-		}
-
-
-		for (size_t i = 0; i < 6; i++) {
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
-		}
-
-		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
 	}
 }
 
