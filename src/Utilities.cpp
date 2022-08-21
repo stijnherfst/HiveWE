@@ -174,21 +174,24 @@ void load_modification_file(const std::string file_name, slk::SLK& base_data, sl
 	BinaryReader reader = hierarchy.map_file_read(file_name);
 
 	const int version = reader.read<uint32_t>();
-	if (version != 1 && version != 2) {
+	if (version != 1 && version != 2 && version != 3) {
 		std::cout << "Unknown modification table version of " << version << " detected. Attempting to load, but may crash.\n";
 	}
 
-	load_modification_table(reader, base_data, meta_slk, false, optional_ints);
-	load_modification_table(reader, base_data, meta_slk, true, optional_ints);
+	load_modification_table(reader, version, base_data, meta_slk, false, optional_ints);
+	load_modification_table(reader, version, base_data, meta_slk, true, optional_ints);
 }
 
-void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta_slk, const bool modification, bool optional_ints) {
+void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& slk, slk::SLK& meta_slk, const bool modification, bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
 		const std::string modified_id = reader.read_string(4);
 
-		if (modification) {
+		if (version >= 3) {
+			reader.advance(4 * reader.read<uint32_t>());
+		}
+		if (modification && !slk.base_data.contains(modified_id)) {
 			slk.copy_row(original_id, modified_id, false);
 		}
 
@@ -246,19 +249,19 @@ void load_modification_table(BinaryReader& reader, slk::SLK& slk, slk::SLK& meta
 	}
 }
 
-void save_modification_file(const std::string file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints) {
+void save_modification_file(const std::string file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints, bool skin) {
 	BinaryWriter writer;
 	writer.write<uint32_t>(mod_table_write_version);
 
-	save_modification_table(writer, slk, meta_slk, false, optional_ints);
-	save_modification_table(writer, slk, meta_slk, true, optional_ints);
+	save_modification_table(writer, slk, meta_slk, false, optional_ints, skin);
+	save_modification_table(writer, slk, meta_slk, true, optional_ints, skin);
 
 	hierarchy.map_file_write(file_name, writer.buffer);
 }
 
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
-void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints) {
+void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints, bool skin) {
 	// Create an temporary index to speed up field lookups
 	absl::flat_hash_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
@@ -286,6 +289,17 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 			sub_writer.write<uint32_t>(0);
 		}
 
+		// 1.33 fields not yet researched
+		sub_writer.write<uint32_t>(1);
+		sub_writer.write<uint32_t>(0);
+
+		// Split properties, or another way to save war3mapSkin.w3* files correctly?
+		// netsafe slk field is probably what vanilla uses (if anyone wants to try this)
+		// No changes in skin files and all in main ones is a valid state, but not nice
+		if (skin) {
+			sub_writer.write<uint32_t>(0); // "no changes"
+			continue;
+		}
 		sub_writer.write<uint32_t>(properties.size() - (properties.contains("oldid") ? 1 : 0));
 
 		const std::string base_id = custom ? properties.at("oldid") : id;
