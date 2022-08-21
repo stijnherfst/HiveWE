@@ -904,6 +904,48 @@ void Triggers::generate_sounds(BinaryWriter& writer) {
 	writer.write_string("endfunction\n");
 }
 
+void Triggers::write_item_table_entry(BinaryWriter &writer, int chance, const std::string &id) {
+	if (id == "") {
+		writer.write_string("\t\tcall RandomDistAddItem(-1, " + std::to_string(chance) + ")\n");
+	} else if (id[0] == 'Y' && id[2] == 'I' &&
+			   ((id[1] >= 'i' && id[1] <= 'o') || id[1] == 'Y')) { // Random items
+		writer.write_string("\t\tcall RandomDistAddItem(ChooseRandomItemEx(ITEM_TYPE_");
+		switch (id[1]) {
+			case 'i': // permanent
+				writer.write_string("PERMANENT, ");
+				break;
+			case 'j': // charged
+				writer.write_string("CHARGED, ");
+				break;
+			case 'k': // powerup
+				writer.write_string("POWERUP, ");
+				break;
+			case 'l': // artifact
+				writer.write_string("ARTIFACT, ");
+				break;
+			case 'm': // purchasable
+				writer.write_string("PURCHASABLE, ");
+				break;
+			case 'n': // campaign
+				writer.write_string("CAMPAIGN, ");
+				break;
+			case 'o': // miscellaneous
+				writer.write_string("MISCELLANEOUS, ");
+				break;
+			case 'Y': // any category
+				writer.write_string("ANY, ");
+				break;
+		}
+		if (id[3] == '/') // any level
+			writer.write_string("-1), ");
+		else
+			writer.write_string(std::string(1, id[3]) + "), ");
+		writer.write_string(std::to_string(chance) + ")\n");
+	} else {
+		writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
+	}
+}
+
 void Triggers::generate_item_tables(BinaryWriter& writer) {
 	writer.write_string(separator);
 	writer.write_string("//*\n");
@@ -941,7 +983,7 @@ void Triggers::generate_item_tables(BinaryWriter& writer) {
 		for (const auto& j : i.item_sets) {
 			writer.write_string("\t\tcall RandomDistReset()\n");
 			for (const auto& [chance, id] : j.items) {
-				writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
+				write_item_table_entry(writer, chance, id);
 			}
 
 			writer.write_string(R"(
@@ -1006,7 +1048,7 @@ void Triggers::generate_unit_item_tables(BinaryWriter& writer) {
 			for (const auto& j : i.item_sets) {
 				writer.write_string("\t\tcall RandomDistReset()\n");
 				for (const auto& [id, chance] : j.items) {
-					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
+					write_item_table_entry(writer, chance, id);
 				}
 
 				writer.write_string(R"(
@@ -1064,7 +1106,7 @@ endfunction
 			for (const auto& j : i.item_sets) {
 				writer.write_string("\t\tcall RandomDistReset()\n");
 				for (const auto& [id, chance] : j.items) {
-					writer.write_string("\t\tcall RandomDistAddItem('" + id + "', " + std::to_string(chance) + ")\n");
+					write_item_table_entry(writer, chance, id);
 				}
 
 				writer.write_string(R"(
