@@ -242,8 +242,16 @@ void Map::load(const fs::path& path) {
 		load_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true);
 	}
 
+	if (hierarchy.map_file_exists("war3mapSkin.w3d")) {
+		load_modification_file("war3mapSkin.w3d", doodads_slk, doodads_meta_slk, true);
+	}
+
 	if (hierarchy.map_file_exists("war3map.w3b")) {
 		load_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false);
+	}
+
+	if (hierarchy.map_file_exists("war3mapSkin.w3b")) {
+		load_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false);
 	}
 
 	doodads.load();
@@ -256,8 +264,16 @@ void Map::load(const fs::path& path) {
 		load_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
 	}
 
+	if (hierarchy.map_file_exists("war3mapSkin.w3u")) {
+		load_modification_file("war3mapSkin.w3u", units_slk, units_meta_slk, false);
+	}
+
 	if (hierarchy.map_file_exists("war3map.w3t")) {
 		load_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
+	}
+
+	if (hierarchy.map_file_exists("war3mapSkin.w3t")) {
+		load_modification_file("war3mapSkin.w3t", items_slk, items_meta_slk, false);
 	}
 
 	// Units/Items
@@ -274,14 +290,26 @@ void Map::load(const fs::path& path) {
 		load_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
 	}
 
+	if (hierarchy.map_file_exists("war3mapSkin.w3a")) {
+		load_modification_file("war3mapSkin.w3a", abilities_slk, abilities_meta_slk, true);
+	}
+
 	// Buffs
 	if (hierarchy.map_file_exists("war3map.w3h")) {
 		load_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
 	}
 
+	if (hierarchy.map_file_exists("war3mapSkin.w3h")) {
+		load_modification_file("war3mapSkin.w3h", buff_slk, buff_meta_slk, false);
+	}
+
 	// Upgrades
 	if (hierarchy.map_file_exists("war3map.w3q")) {
 		load_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);
+	}
+
+	if (hierarchy.map_file_exists("war3mapSkin.w3q")) {
+		load_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true);
 	}
 
 	// Regions
@@ -344,18 +372,25 @@ bool Map::save(const fs::path& path) {
 	pathing_map.save();
 	terrain.save();
 
-	save_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true);
-	save_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false);
+	save_modification_file("war3map.w3d", doodads_slk, doodads_meta_slk, true, false);
+	save_modification_file("war3mapSkin.w3d", doodads_slk, doodads_meta_slk, true, true);
+	save_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false, false);
+	save_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false, true);
 	doodads.save();
 
-	save_modification_file("war3map.w3u", units_slk, units_meta_slk, false);
-	save_modification_file("war3map.w3t", items_slk, items_meta_slk, false);
+	save_modification_file("war3map.w3u", units_slk, units_meta_slk, false, false);
+	save_modification_file("war3mapSkin.w3u", units_slk, units_meta_slk, false, true);
+	save_modification_file("war3map.w3t", items_slk, items_meta_slk, false, false);
+	save_modification_file("war3mapSkin.w3t", items_slk, items_meta_slk, false, true);
 	units.save();
 
-	save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true);
+	save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true, false);
+	save_modification_file("war3mapSkin.w3a", abilities_slk, abilities_meta_slk, true, true);
 
-	save_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false);
-	save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true);
+	save_modification_file("war3map.w3h", buff_slk, buff_meta_slk, false, false);
+	save_modification_file("war3mapSkin.w3h", buff_slk, buff_meta_slk, false, true);
+	save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true, false);
+	save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
 	info.save(terrain.tileset);
 	trigger_strings.save();
