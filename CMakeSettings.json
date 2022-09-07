@@ -9,7 +9,9 @@
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
-      "ctestCommandArgs": ""
+      "ctestCommandArgs": "",
+      "enableClangTidyCodeAnalysis": true,
+      "clangTidyChecks": "-*,cppcoreguidelines-*"
     },
     {
       "name": "x64-RelWithDebInfo",

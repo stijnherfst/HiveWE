@@ -43,6 +43,7 @@ target_sources(HiveWE PRIVATE
 	"File Formats/INI.cpp"
 	"File Formats/JSON.ixx"
 	"File Formats/MDX/MDX.ixx"
+	"File Formats/MDX/MDLReader.cpp"
 	"File Formats/MDX/MDLWriter.cpp"
 	"File Formats/MDX/MDXReader.cpp"
 	"File Formats/MDX/MDXWriter.cpp"

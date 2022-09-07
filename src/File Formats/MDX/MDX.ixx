@@ -12,10 +12,13 @@ module;
 #include <string_view>
 #include <fstream>
 #include <fmt/format.h>
+#include <outcome/outcome.hpp>
 
 export module MDX;
 
 namespace fs = std::filesystem;
+using outcome_v2_35644f5c::failure;
+using outcome_v2_35644f5c::result;
 
 import BinaryReader;
 import BinaryWriter;
@@ -710,6 +713,8 @@ namespace mdx {
 
 		void load(BinaryReader& reader);
 
+		MDX() = default;
+
 	  public:
 		explicit MDX(BinaryReader& reader) {
 			load(reader);
@@ -794,7 +799,7 @@ namespace mdx {
 		void optimize() {
 			Bone& bone = bones.front();
 			auto& header = bone.node.KGTR;
-			auto new_tracks = header.tracks;
+			const auto& new_tracks = header.tracks;
 
 			Sequence& current_sequence = sequences.front();
 			// for (const auto& track : header.tracks) {
@@ -818,9 +823,9 @@ namespace mdx {
 			if (header.interpolation_type == 1) {
 				for (const auto& i : sequences) {
 				}
-				auto trackA = header.tracks[0];
-				auto trackB = header.tracks[1];
-				auto trackC = header.tracks[2];
+				const auto& trackA = header.tracks[0];
+				const auto& trackB = header.tracks[1];
+				const auto& trackC = header.tracks[2];
 
 				int32_t diffAB = trackB.frame - trackA.frame;
 				int32_t diffBC = trackC.frame - trackB.frame;
@@ -835,7 +840,7 @@ namespace mdx {
 		}
 
 		std::string to_mdl();
-		static MDX from_mdl(std::string_view mdl);
+		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		void forEachNode(const std::function<void(Node&)>& F) {
 			for (auto& i : bones) {

@@ -23,7 +23,7 @@ void execute_tests() {
 void parse_all_mdx() {
 	std::vector<fs::path> paths;
 
-	for (const auto i : fs::recursive_directory_iterator("C:/Users/User/Desktop/Warcraft/CASC/1.32.x/")) {
+	for (const auto i : fs::recursive_directory_iterator("C:/Users/User/Desktop/1.00/")) {
 		if (i.is_regular_file() && (i.path().extension() == ".mdx" || i.path().extension() == ".MDX")) {
 			paths.push_back(i.path());
 		}

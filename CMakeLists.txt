@@ -25,6 +25,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+find_package(outcome CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -73,6 +74,7 @@ target_link_libraries(HiveWE PUBLIC
 	fmt::fmt-header-only
 	TBB::tbb
 	imgui::imgui
+	outcome::hl
 )
 
 #target_compile_options(HiveWE PRIVATE

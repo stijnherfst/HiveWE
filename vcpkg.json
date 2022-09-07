@@ -21,7 +21,8 @@
       "features": [ "cxx17" ]
     },
     "fmt",
-    "tbb"
+    "tbb",
+    "outcome"
   ]
 }
 

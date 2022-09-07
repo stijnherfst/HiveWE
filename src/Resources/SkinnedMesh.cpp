@@ -269,10 +269,14 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 
 	for (const auto& i : geosets) {
 		const auto& layer = model->materials[i.material_id].layers[0];
 		if (layer.blend_mode != 0 && layer.blend_mode != 1) {
-			RenderManager::SkinnedInstance t;
-			t.mesh = this;
-			t.instance_id = render_jobs.size() - 1;
-			t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]));
+			RenderManager::SkinnedInstance t {
+				.mesh = this,
+				.instance_id = static_cast<int>(render_jobs.size() - 1),
+				.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]))
+			};
+			//t.mesh = this;
+			//t.instance_id = render_jobs.size() - 1;
+			//t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]));
 			// hack to improve performance
 			if (t.distance > 256.f) {
 				continue;
@@ -454,6 +458,7 @@ void SkinnedMesh::render_opaque_hd() {
 }
 
 void SkinnedMesh::render_transparent_sd(int instance_id) {
+	// ToDo We don't have to render fully transparent meshes. Many meshes are hidden using transparency so this might be a major optimization
 	if (!has_mesh) {
 		return;
 	}
@@ -539,6 +544,7 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 }
 
 void SkinnedMesh::render_transparent_hd(int instance_id) {
+	// ToDo We don't have to render fully transparent meshes. Many meshes are hidden using transparency so this might be a major optimization
 	if (!has_mesh) {
 		return;
 	}

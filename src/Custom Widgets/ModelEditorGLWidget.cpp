@@ -154,23 +154,38 @@ void ModelEditorGLWidget::paintGL() {
 
 	ImGui::Begin("Animation");
 
-	static const char* current_item = nullptr;
-	if (ImGui::BeginCombo("##combo", current_item)) {
-		bool is_selected = false;
-		for (const auto& i : mesh->mdx->sequences) {
-			ImGui::Selectable(i.name.c_str(), is_selected);
-			//set_sequence(static_cast<int>(i));
+	ImGui::Text("Animation");
+	ImGui::SameLine();
+	if (ImGui::BeginCombo("##combo", mesh->mdx->sequences[skeleton.sequence_index].name.c_str())) {
+		for (size_t i = 0; i < mesh->mdx->sequences.size(); i++) {
+			if (ImGui::Selectable(mesh->mdx->sequences[i].name.c_str(), i == skeleton.sequence_index)) {
+				skeleton.set_sequence(i);
+			}
+			if (i == skeleton.sequence_index) {
+				ImGui::SetItemDefaultFocus();
+			}
 		}
-
-		//for (int n = 0; n < IM_ARRAYSIZE(items); n++) {
-		//	bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-		//	if (ImGui::Selectable(items[n], is_selected)
-		//		current_item = items[n];
-		//	if (is_selected)
-		//		ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-		//}
 		ImGui::EndCombo();
 	}
+
+	//std::string name;
+	//uint32_t start_frame;
+	//uint32_t end_frame;
+	//float movespeed;
+	//uint32_t flags;
+	//float rarity;
+	//uint32_t sync_point;
+	//Extent extent;
+
+	//enum Flags {
+	//	looping,
+	//	non_looping
+	//};
+
+	ImGui::Text(fmt::format("Start frame: {}", mesh->mdx->sequences[skeleton.sequence_index].start_frame).c_str());
+	ImGui::Text(fmt::format("End frame: {}", mesh->mdx->sequences[skeleton.sequence_index].end_frame).c_str());
+	ImGui::Text(fmt::format("Current frame: {}", skeleton.current_frame).c_str());
+	ImGui::Text(fmt::format("Looping: {}", mesh->mdx->sequences[skeleton.sequence_index].flags == mdx::Sequence::Flags::looping).c_str());
 
 	ImGui::End();
 
