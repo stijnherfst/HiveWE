@@ -171,6 +171,11 @@ namespace mdx {
 		}
 	};
 
+	export struct LayerTexture {
+		uint32_t id;
+		TrackHeader<uint32_t> KMTF;
+	};
+
 	export struct Layer {
 		uint32_t blend_mode;
 		uint32_t shading_flags;
@@ -184,7 +189,11 @@ namespace mdx {
 		float fresnel_opacity;
 		float fresnel_team_color;
 
-		TrackHeader<uint32_t> KMTF;
+		bool hd;
+
+		std::unordered_map<uint32_t, LayerTexture> textures;
+
+		TrackHeader<uint32_t> KMTFTemp;
 		TrackHeader<float> KMTA;
 		TrackHeader<float> KMTE;
 		TrackHeader<glm::vec3> KFC3;
@@ -366,7 +375,6 @@ namespace mdx {
 	export struct Material {
 		uint32_t priority_plane;
 		uint32_t flags;
-		std::string shader_name;
 		std::vector<Layer> layers;
 	};
 

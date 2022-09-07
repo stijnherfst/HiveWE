@@ -1,6 +1,7 @@
 import Hierarchy;
 
 #include "EditableMesh.h"
+#include <unordered_map>
 
 EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
@@ -69,7 +70,6 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 		entry.base_index = base_index;
 
 		entry.material_id = i.material_id;
-		entry.hd = !mdx->materials[i.material_id].shader_name.empty(); // A heuristic to determine whether a material is SD or HD
 		entry.geoset_anim = nullptr;
 		entry.extent = i.extent;
 
@@ -138,29 +138,41 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 			// Figure out if this is an HD texture
 			// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
 			// So we take a guess using the index
-			bool is_hd = false;
-			size_t layer_id;
+			std::string suffix("");
+			bool found = false;
 			for (const auto& material : mdx->materials) {
-				for (size_t k = 0; k < material.layers.size(); k++) {
-					if (material.layers[k].texture_id == i) {
-						is_hd = !material.shader_name.empty();
-						layer_id = k;
+				for (const auto& layer : material.layers) {
+					for (const auto& texture : layer.textures) {
+						if (texture.second.id != i) {
+							continue;
+						}
+
+						found = true;
+
+						if (layer.hd) {
+							switch (texture.first) {
+								case 0:
+									suffix = "_diffuse";
+									break;
+								case 1:
+									suffix = "_normal";
+									break;
+								case 2:
+									suffix = "_orm";
+									break;
+								case 3:
+									suffix = "_emmisive";
+									break;
+							}
+						}
+						break;
+					}
+					if (found) {
 						break;
 					}
 				}
-				if (is_hd) {
+				if (found) {
 					break;
-				}
-			}
-
-			std::string suffix;
-			if (is_hd) {
-				if (layer_id == 0) {
-					suffix = "_diffuse";
-				} else if (layer_id == 1) {
-					suffix = "_normal";
-				} else if (layer_id == 2) {
-					suffix = "_orm";
 				}
 			}
 
@@ -276,8 +288,8 @@ void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const
 			gl->glDepthMask(true);
 		}
 
-		for (size_t i = 0; i < 6; i++) {
-			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
+		for (const auto& texture : layers[0].textures) {
+			gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
 		}
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
@@ -442,8 +454,8 @@ void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const
 //			gl->glDepthMask(true);
 //		}
 //
-//		for (size_t i = 0; i < 6; i++) {
-//			gl->glBindTextureUnit(i, textures[layers[i].texture_id]->id);
+//		for (auto& texture : layers[0].textures) {
+//			gl->glBindTextureUnit(texture.first, textures[texture.second]->id);
 //		}
 //
 //		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);

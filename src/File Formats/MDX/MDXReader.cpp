@@ -95,9 +95,14 @@ namespace mdx {
 			Material material;
 			material.priority_plane = reader.read<uint32_t>();
 			material.flags = reader.read<uint32_t>();
-			if (version > 800) {
-				material.shader_name = reader.read_string(80);
+
+			bool oldSD = version == 800;
+			bool oldHD = false;
+			if (version == 900 || version == 1000) {
+				oldSD = reader.read_string(80).empty();
+				oldHD = !oldSD;
 			}
+
 			reader.advance(4);
 			const uint32_t layers_count = reader.read<uint32_t>();
 
@@ -119,10 +124,28 @@ namespace mdx {
 					layer.fresnel_team_color = reader.read<float>();
 				}
 
+				layer.hd = false;
+				if (version > 1000) {
+					layer.hd = reader.read<uint32_t>();
+					uint32_t texs = reader.read<uint32_t>();
+					for (int i = 0; i < texs; i++) {
+						uint32_t id = reader.read<uint32_t>();
+						uint32_t slot = reader.read<uint32_t>();
+						//slot is sometimes wrong, namely when KMTF is present
+						layer.textures[i].id = id;
+						TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+						if (tag == TrackTag::KMTF) {
+							layer.textures[i].KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+						} else {
+							reader.advance(-4);
+						}
+					}
+				}
+
 				while (reader.position < reader_pos + size) {
 					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 					if (tag == TrackTag::KMTF) {
-						layer.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+						layer.KMTFTemp = TrackHeader<uint32_t>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTA) {
 						layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTE) {
@@ -139,6 +162,20 @@ namespace mdx {
 				}
 
 				material.layers.push_back(std::move(layer));
+			}
+
+			if (oldHD) {
+				material.layers[0].hd = true;
+				for (int i = 0; i < 6; i++) {
+					material.layers[0].textures[i].id = material.layers[i].texture_id;
+					material.layers[0].textures[i].KMTF = material.layers[i].KMTFTemp;
+				}
+				material.layers.resize(1);
+			} else if (oldSD) {
+				for (auto& layer : material.layers) {
+					layer.textures[0].id = layer.texture_id;
+					layer.textures[0].KMTF = layer.KMTFTemp;
+				}
 			}
 
 			materials.push_back(std::move(material));

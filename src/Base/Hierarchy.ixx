@@ -37,9 +37,9 @@ export class Hierarchy {
 		/*QSettings settings;
 		ptr = settings.value("flavour", "Retail").toString() != "Retail";
 		hd = settings.value("hd", "True").toString() != "False";
-		teen = settings.value("teen", "False").toString() != "False";*/
-		//QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
-		//local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
+		teen = settings.value("teen", "False").toString() != "False";
+		QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
+		local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;*/
 
 		std::cout << "Loading CASC data from: " << warcraft_directory << "\n";
 		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));

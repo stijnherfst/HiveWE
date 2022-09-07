@@ -11,8 +11,6 @@ import BinaryWriter;
 
 namespace fs = std::filesystem;
 
-constexpr int mod_table_write_version = 2;
-
 class Shapes {
   public:
 	void init();

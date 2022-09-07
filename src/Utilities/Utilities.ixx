@@ -14,8 +14,6 @@ export module Utilities;
 
 namespace fs = std::filesystem;
 
-constexpr int mod_table_write_version = 2;
-
 // String functions
 export std::string string_replaced(const std::string& source, const std::string& from, const std::string& to) {
 	std::string new_string;

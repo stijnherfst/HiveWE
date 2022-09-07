@@ -200,10 +200,10 @@ namespace mdx {
 		mdl.start_group(fmt::format("Materials {}", materials.size()), [&]() {
 			for (const auto& material : materials) {
 				mdl.start_group("Material", [&]() {
-					mdl.write_line(fmt::format("Shader \"{}\",", material.shader_name));
-
-					for (const auto& layer : material.layers) {
-						mdl.start_group("Layer", [&]() {
+					if (material.layers[0].hd) {
+						mdl.write_line("Shader \"Shader_HD_DefaultUnit\",");
+						const auto& layer = material.layers[0];
+						for (int i = 0; i < 6; i++) {
 							switch (layer.blend_mode) {
 								case 0:
 									mdl.write_line("FilterMode None");
@@ -244,13 +244,67 @@ namespace mdx {
 								mdl.write_line("NoDepthSet");
 							}
 
-							mdl.write_track(layer.KMTF, "TextureID", layer.texture_id);
+							mdl.write_track(layer.textures.at(i).KMTF, "TextureID", layer.textures.at(i).id);
 							mdl.write_track(layer.KMTA, "Alpha", layer.alpha);
 							mdl.write_track(layer.KMTE, "EmissiveGain", layer.emissive_gain);
 							mdl.write_track(layer.KFC3, "FresnelColor", layer.fresnel_color);
 							mdl.write_track(layer.KFCA, "FresnelAlpha", layer.fresnel_opacity);
 							mdl.write_track(layer.KFTC, "FresnelTeamColor", layer.fresnel_team_color);
-						});
+						}
+					}
+					else {
+						mdl.write_line("Shader \"\",");
+
+						for (const auto& layer : material.layers) {
+							mdl.start_group("Layer", [&]() {
+								switch (layer.blend_mode) {
+									case 0:
+										mdl.write_line("FilterMode None");
+										break;
+									case 1:
+										mdl.write_line("FilterMode Transparent");
+										break;
+									case 2:
+										mdl.write_line("FilterMode Blend");
+										break;
+									case 3:
+										mdl.write_line("FilterMode Additive");
+										break;
+									case 4:
+										mdl.write_line("FilterMode AddAlpha");
+										break;
+									case 5:
+										mdl.write_line("FilterMode Modulate");
+										break;
+									case 6:
+										mdl.write_line("FilterMode Modulate2x");
+										break;
+								}
+
+								if (layer.shading_flags & Layer::ShadingFlags::unshaded) {
+									mdl.write_line("Unshaded");
+								}
+
+								if (layer.shading_flags & Layer::ShadingFlags::unfogged) {
+									mdl.write_line("Unfogged");
+								}
+
+								if (layer.shading_flags & Layer::ShadingFlags::no_depth_test) {
+									mdl.write_line("NoDepthTest");
+								}
+
+								if (layer.shading_flags & Layer::ShadingFlags::no_depth_set) {
+									mdl.write_line("NoDepthSet");
+								}
+
+								mdl.write_track(layer.textures.at(0).KMTF, "TextureID", layer.textures.at(0).id);
+								mdl.write_track(layer.KMTA, "Alpha", layer.alpha);
+								mdl.write_track(layer.KMTE, "EmissiveGain", layer.emissive_gain);
+								mdl.write_track(layer.KFC3, "FresnelColor", layer.fresnel_color);
+								mdl.write_track(layer.KFCA, "FresnelAlpha", layer.fresnel_opacity);
+								mdl.write_track(layer.KFTC, "FresnelTeamColor", layer.fresnel_team_color);
+							});
+						}
 					}
 				});
 			}
