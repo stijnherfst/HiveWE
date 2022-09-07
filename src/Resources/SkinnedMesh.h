@@ -24,7 +24,6 @@ class SkinnedMesh : public Resource {
 		int material_id = 0;
 		mdx::Extent extent;
 
-		bool hd = true;
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
 	};
 
