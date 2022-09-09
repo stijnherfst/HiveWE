@@ -13,7 +13,6 @@
 #include "RenderManager.h"
 
 #include "Brush.h"
-#include "StaticMesh.h"
 #include "Physics.h"
 
 #include <filesystem> // Filesystem include at the bottom due to QTBUG-73263

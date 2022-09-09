@@ -85,34 +85,82 @@ namespace mdx {
 		}
 	}
 
-	void MDX::read_MTLS_chunk(BinaryReader& reader) {
-		const uint32_t size = reader.read<uint32_t>();
-		uint32_t total_size = 0;
+	// Transform from the old version format to our new v1100 based internal representation
+	void read_MTLS_texs_pre_v1100(BinaryReader& reader, bool is_hd, uint32_t version, Material& material, int& unique_tracks) {
+		reader.advance(4);
+		const uint32_t layers_count = reader.read<uint32_t>();
 
-		while (total_size < size) {
-			total_size += reader.read<uint32_t>();
-
-			Material material;
-			material.priority_plane = reader.read<uint32_t>();
-			material.flags = reader.read<uint32_t>();
-
-			bool oldSD = version == 800;
-			bool oldHD = false;
-			if (version == 900 || version == 1000) {
-				oldSD = reader.read_string(80).empty();
-				oldHD = !oldSD;
-			}
-
-			reader.advance(4);
-			const uint32_t layers_count = reader.read<uint32_t>();
+		// These older versions encoded HD materials by having a layer for each PBR material
+		// We combine these into the new format
+		if (is_hd) {
+			Layer layer;
+			layer.hd = is_hd;
 
 			for (size_t i = 0; i < layers_count; i++) {
 				const size_t reader_pos = reader.position;
-				Layer layer;
 				const uint32_t size = reader.read<uint32_t>();
+
+				// Only the first layer's properties matter
+				if (i > 0) {
+					reader.read<uint32_t>();
+					reader.read<uint32_t>();
+					LayerTexture layer_texture;
+					layer_texture.id = reader.read<uint32_t>();
+					layer.textures.push_back(layer_texture);
+
+					reader.advance(size - 16);
+					continue;
+				}
+
 				layer.blend_mode = reader.read<uint32_t>();
 				layer.shading_flags = reader.read<uint32_t>();
-				layer.texture_id = reader.read<uint32_t>();
+				LayerTexture layer_texture;
+				layer_texture.id = reader.read<uint32_t>();
+				layer.texture_animation_id = reader.read<uint32_t>();
+				layer.coord_id = reader.read<uint32_t>();
+				layer.alpha = reader.read<float>();
+
+				layer.emissive_gain = reader.read<float>();
+				layer.fresnel_color = reader.read<glm::vec3>();
+				layer.fresnel_opacity = reader.read<float>();
+				layer.fresnel_team_color = reader.read<float>();
+
+				while (reader.position < reader_pos + size) {
+					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+					if (tag == TrackTag::KMTF) {
+						layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+					} else if (tag == TrackTag::KMTA) {
+						layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
+					} else if (tag == TrackTag::KMTE) {
+						layer.KMTE = TrackHeader<float>(reader, unique_tracks++);
+					} else if (tag == TrackTag::KFC3) {
+						layer.KFC3 = TrackHeader<glm::vec3>(reader, unique_tracks++);
+					} else if (tag == TrackTag::KFCA) {
+						layer.KFCA = TrackHeader<float>(reader, unique_tracks++);
+					} else if (tag == TrackTag::KFTC) {
+						layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
+					} else {
+						fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					}
+				}
+
+				layer.textures.push_back(layer_texture);
+			}
+
+			material.layers.push_back(std::move(layer));
+		} else {
+			for (size_t i = 0; i < layers_count; i++) {
+				const size_t reader_pos = reader.position;
+				const uint32_t size = reader.read<uint32_t>();
+				Layer layer;
+				layer.hd = is_hd;
+				layer.blend_mode = reader.read<uint32_t>();
+				layer.shading_flags = reader.read<uint32_t>();
+
+				LayerTexture layer_texture;
+				layer_texture.id = reader.read<uint32_t>();
+				layer.textures.push_back(layer_texture);
+
 				layer.texture_animation_id = reader.read<uint32_t>();
 				layer.coord_id = reader.read<uint32_t>();
 				layer.alpha = reader.read<float>();
@@ -124,28 +172,10 @@ namespace mdx {
 					layer.fresnel_team_color = reader.read<float>();
 				}
 
-				layer.hd = false;
-				if (version > 1000) {
-					layer.hd = reader.read<uint32_t>();
-					uint32_t texs = reader.read<uint32_t>();
-					for (int i = 0; i < texs; i++) {
-						uint32_t id = reader.read<uint32_t>();
-						uint32_t slot = reader.read<uint32_t>();
-						//slot is sometimes wrong, namely when KMTF is present
-						layer.textures[i].id = id;
-						TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
-						if (tag == TrackTag::KMTF) {
-							layer.textures[i].KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
-						} else {
-							reader.advance(-4);
-						}
-					}
-				}
-
 				while (reader.position < reader_pos + size) {
 					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 					if (tag == TrackTag::KMTF) {
-						layer.KMTFTemp = TrackHeader<uint32_t>(reader, unique_tracks++);
+						layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTA) {
 						layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTE) {
@@ -163,20 +193,195 @@ namespace mdx {
 
 				material.layers.push_back(std::move(layer));
 			}
+		}
+	}
 
-			if (oldHD) {
-				material.layers[0].hd = true;
-				for (int i = 0; i < 6; i++) {
-					material.layers[0].textures[i].id = material.layers[i].texture_id;
-					material.layers[0].textures[i].KMTF = material.layers[i].KMTFTemp;
+	void read_MTLS_texs_post_v1100(BinaryReader& reader, Material& material, int& unique_tracks) {
+		reader.advance(4);
+		const uint32_t layers_count = reader.read<uint32_t>();
+		for (size_t i = 0; i < layers_count; i++) {
+			const size_t reader_pos = reader.position;
+			Layer layer;
+			const uint32_t size = reader.read<uint32_t>();
+			layer.blend_mode = reader.read<uint32_t>();
+			layer.shading_flags = reader.read<uint32_t>();
+			reader.advance(4); // skip texture_id
+			layer.texture_animation_id = reader.read<uint32_t>();
+			layer.coord_id = reader.read<uint32_t>();
+			layer.alpha = reader.read<float>();
+
+			layer.emissive_gain = reader.read<float>();
+			layer.fresnel_color = reader.read<glm::vec3>();
+			layer.fresnel_opacity = reader.read<float>();
+			layer.fresnel_team_color = reader.read<float>();
+
+			layer.hd = reader.read<uint32_t>();
+			uint32_t texs = reader.read<uint32_t>();
+			for (size_t j = 0; j < texs; j++) {
+				LayerTexture layer_texture;
+				layer_texture.id = reader.read<uint32_t>();
+				uint32_t slot = reader.read<uint32_t>(); // always a garbage value?
+
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KMTF) {
+					layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+				} else {
+					reader.advance(-4);
 				}
-				material.layers.resize(1);
-			} else if (oldSD) {
-				for (auto& layer : material.layers) {
-					layer.textures[0].id = layer.texture_id;
-					layer.textures[0].KMTF = layer.KMTFTemp;
+				layer.textures.push_back(layer_texture);
+			}
+
+			while (reader.position < reader_pos + size) {
+				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KMTA) {
+					layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
+				} else if (tag == TrackTag::KMTE) {
+					layer.KMTE = TrackHeader<float>(reader, unique_tracks++);
+				} else if (tag == TrackTag::KFC3) {
+					layer.KFC3 = TrackHeader<glm::vec3>(reader, unique_tracks++);
+				} else if (tag == TrackTag::KFCA) {
+					layer.KFCA = TrackHeader<float>(reader, unique_tracks++);
+				} else if (tag == TrackTag::KFTC) {
+					layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
+				} else {
+					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
+
+			material.layers.push_back(std::move(layer));
+		}
+	}
+
+	void MDX::read_MTLS_chunk(BinaryReader& reader) {
+		const uint32_t size = reader.read<uint32_t>();
+		uint32_t total_size = 0;
+
+		while (total_size < size) {
+			total_size += reader.read<uint32_t>();
+
+			Material material;
+			material.priority_plane = reader.read<uint32_t>();
+			material.flags = reader.read<uint32_t>();
+
+			//bool oldSD = version == 800;
+			//bool oldHD = false;
+			//if (version == 900 || version == 1000) {
+			//	oldSD = reader.read_string(80).empty();
+			//	oldHD = !oldSD;
+			//}
+
+			if (version < 1100) {
+				bool is_hd = false;
+				if (version == 900 || version == 1000) {
+					is_hd = !reader.read_string(80).empty();
+				}
+				read_MTLS_texs_pre_v1100(reader, is_hd, version, material, unique_tracks);
+			} else {
+				read_MTLS_texs_post_v1100(reader, material, unique_tracks);
+			}
+
+
+			//bool old_hd = false;
+			//if (version == 900 || version == 1000) {
+			//	old_hd = !reader.read_string(80).empty();
+			//}
+
+			//reader.advance(4);
+			//const uint32_t layers_count = reader.read<uint32_t>();
+
+			//for (size_t i = 0; i < layers_count; i++) {
+			//	const size_t reader_pos = reader.position;
+			//	Layer layer;
+			//	const uint32_t size = reader.read<uint32_t>();
+			//	layer.blend_mode = reader.read<uint32_t>();
+			//	layer.shading_flags = reader.read<uint32_t>();
+
+			//	//if (version == 800 || version == 900 || version == 1000) {
+			//	//	layer.hd = reader.read<uint32_t>();
+
+			//	//	LayerTexture layer_texture;
+			//	//	layer_texture.id = reader.read<uint32_t>();
+
+			//	//	TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+			//	//	if (tag == TrackTag::KMTF) {
+			//	//		layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+			//	//	} else {
+			//	//		reader.advance(-4);
+			//	//	}
+			//	//	layer.textures.push_back(layer_texture);
+			//	//}
+
+			//	layer.texture_id = reader.read<uint32_t>();
+			//	layer.texture_animation_id = reader.read<uint32_t>();
+			//	layer.coord_id = reader.read<uint32_t>();
+			//	layer.alpha = reader.read<float>();
+
+			//	if (version > 800) {
+			//		layer.emissive_gain = reader.read<float>();
+			//		layer.fresnel_color = reader.read<glm::vec3>();
+			//		layer.fresnel_opacity = reader.read<float>();
+			//		layer.fresnel_team_color = reader.read<float>();
+			//	}
+
+			//	layer.hd = false;
+			//	if (version > 1000) {
+			//		layer.hd = reader.read<uint32_t>();
+			//		uint32_t texs = reader.read<uint32_t>();
+			//		for (size_t j = 0; j < texs; j++) {
+			//			LayerTexture layer_texture;
+			//			layer_texture.id = reader.read<uint32_t>();
+			//			uint32_t slot = reader.read<uint32_t>();
+
+			//			TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+			//			if (tag == TrackTag::KMTF) {
+			//				layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
+			//			} else {
+			//				reader.advance(-4);
+			//			}
+			//			layer.textures.push_back(layer_texture);
+			//		}
+			//	}
+
+			//	while (reader.position < reader_pos + size) {
+			//		TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+			//		if (tag == TrackTag::KMTF) {
+			//			layer.KMTFTemp = TrackHeader<uint32_t>(reader, unique_tracks++);
+			//		} else if (tag == TrackTag::KMTA) {
+			//			layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
+			//		} else if (tag == TrackTag::KMTE) {
+			//			layer.KMTE = TrackHeader<float>(reader, unique_tracks++);
+			//		} else if (tag == TrackTag::KFC3) {
+			//			layer.KFC3 = TrackHeader<glm::vec3>(reader, unique_tracks++);
+			//		} else if (tag == TrackTag::KFCA) {
+			//			layer.KFCA = TrackHeader<float>(reader, unique_tracks++);
+			//		} else if (tag == TrackTag::KFTC) {
+			//			layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
+			//		} else {
+			//			fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+			//		}
+			//	}
+
+			//	material.layers.push_back(std::move(layer));
+			//}
+
+			//if (oldHD) {
+			//	material.layers[0].hd = true;
+			//	for (int i = 1; i < 6; i++) {
+			//		material.layers[0].textures[i].id = material.layers[i].textures[0].id;
+			//		material.layers[0].textures[i].KMTF = material.layers[i].KMTFTemp;
+
+			//		//LayerTexture layer_texture;
+			//		//layer_texture.id = material.layers[i].textures[0].id;
+
+			//		material.layers[0].textures.push_back()
+			//	}
+			//	material.layers.resize(1);
+			//} else if (oldSD) {
+			//	for (auto& layer : material.layers) {
+			//		layer.textures[0].id = layer.textures[0].id;
+			//		layer.textures[0].KMTF = layer.KMTFTemp;
+			//	}
+			//}
 
 			materials.push_back(std::move(material));
 		}

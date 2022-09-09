@@ -6,6 +6,7 @@ layout (location = 2) in vec3 vNormal;
 layout (location = 3) in vec4 vTangent;
 layout (location = 4) in uvec2 vSkin;
 
+// Should match the uniform locations in skinned_mesh_sd.vs
 layout (location = 0) uniform mat4 MVP;
 layout (location = 3) uniform int bone_count;
 layout (location = 4) uniform int instanceID;

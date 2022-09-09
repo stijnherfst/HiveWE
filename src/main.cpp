@@ -22,19 +22,18 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
-	std::string b = R"(
-Version {
-	FormatVersion 1000,
-}
-Model "Wi sp" {
-	BlendTime 150,
-	MinimumExtent { -134.261, -213.936, -143.006 },
-	MaximumExtent { 154.078, 213.709, 284.64 },
-}
-)";
+//	std::string b = R"(
+//Version {
+//	FormatVersion 1000,
+//}
+//Model "Wi sp" {
+//	BlendTime 150,
+//	MinimumExtent { -134.261, -213.936, -143.006 },
+//	MaximumExtent { 154.078, 213.709, 284.64 },
+//}
+//)";
 
-	//mdx::MDX::from_mdl2(b);
-	mdx::MDX::from_mdl(b);
+	//mdx::MDX::from_mdl(b);
 
 
 	QSurfaceFormat format;

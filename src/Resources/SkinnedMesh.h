@@ -56,6 +56,7 @@ class SkinnedMesh : public Resource {
 	std::vector<glm::vec3> render_colors;
 	std::vector<const SkeletalModelInstance*> skeletons;
 	std::vector<glm::mat4> instance_bone_matrices;
+	std::vector<glm::vec4> layer_colors;
 
 	static constexpr const char* name = "SkinnedMesh";
 
@@ -65,9 +66,13 @@ class SkinnedMesh : public Resource {
 	void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);
 	void render_color_coded(const SkeletalModelInstance& skeleton, int id);
 
-	void render_opaque_sd();
-	void render_opaque_hd();
+	//void render_opaque_sd();
+	//void render_opaque_hd();
 
-	void render_transparent_sd(int instance_id);
-	void render_transparent_hd(int instance_id);
+	void upload_render_data();
+
+	void render_opaque(bool render_hd);
+	void render_transparent(int instance_id, bool render_hd);
+	//void render_transparent_sd(int instance_id);
+	//void render_transparent_hd(int instance_id);
 };

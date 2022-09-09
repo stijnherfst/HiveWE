@@ -159,15 +159,15 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 			bool found = false;
 			for (const auto& material : model->materials) {
 				for (const auto& layer : material.layers) {
-					for (const auto& texture : layer.textures) {
-						if (texture.second.id != i) {
+					for (size_t j = 0; j < layer.textures.size(); j++) {
+						if (layer.textures[j].id != i) {
 							continue;
 						}
 
 						found = true;
 
 						if (layer.hd) {
-							switch (texture.first) {
+							switch (j) {
 								case 0:
 									suffix = "_diffuse";
 									break;
@@ -285,9 +285,6 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 
 				.instance_id = static_cast<int>(render_jobs.size() - 1),
 				.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]))
 			};
-			//t.mesh = this;
-			//t.instance_id = render_jobs.size() - 1;
-			//t.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]));
 			// hack to improve performance
 			if (t.distance > 256.f) {
 				continue;
@@ -298,26 +295,20 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 
 	}
 }
 
-// Opaque rendering doesn't have to be sorted and can thus be instanced
-void SkinnedMesh::render_opaque_sd() {
+void SkinnedMesh::upload_render_data() {
 	if (!has_mesh) {
 		return;
 	}
 
-	gl->glBindVertexArray(vao);
-
-	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_STATIC_DRAW);
+	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_DYNAMIC_DRAW);
 
 	for (int i = 0; i < render_jobs.size(); i++) {
 		instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + model->bones.size());
 	}
+
 	gl->glNamedBufferData(bone_matrix_buffer, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
-	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-	gl->glBindTextureUnit(5, bone_matrix_texture);
 
-	gl->glUniform1i(3, model->bones.size());
-
-	std::vector<glm::vec4> layer_colors;
+	layer_colors.clear();
 	for (size_t k = 0; k < render_jobs.size(); k++) {
 		for (auto& i : geosets) {
 			glm::vec3 geoset_color(1.f);
@@ -339,27 +330,40 @@ void SkinnedMesh::render_opaque_sd() {
 		}
 	}
 
-	gl->glNamedBufferData(layer_colors_ssbo, layer_colors.size() * sizeof(glm::vec4), layer_colors.data(), GL_STREAM_DRAW);
+	gl->glNamedBufferData(layer_colors_ssbo, layer_colors.size() * sizeof(glm::vec4), layer_colors.data(), GL_DYNAMIC_DRAW);
+}
+
+void SkinnedMesh::render_opaque(bool render_hd) {
+	if (!has_mesh) {
+		return;
+	}
+
+	gl->glBindVertexArray(vao);
+
+	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
+	gl->glBindTextureUnit(5, bone_matrix_texture);
+
 	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
 	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
 
-
+	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, skip_count);
 
 	int laya = 0;
-	for (auto& i : geosets) {
-		auto& layers = model->materials[i.material_id].layers;
-		if (layers[0].hd) {
-			laya += layers.size();
-			continue;
-		}
+	for (const auto& i : geosets) {
+		const auto& layers = model->materials[i.material_id].layers;
 
 		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
 			laya += layers.size();
 			continue;
 		}
 
-		for (auto& j : layers) {
+		for (const auto& j : layers) {
+			if (j.hd != render_hd) {
+				laya += 1;
+				continue;
+			}
+
 			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
 			gl->glUniform1i(5, laya);
 
@@ -385,6 +389,12 @@ void SkinnedMesh::render_opaque_sd() {
 					break;
 			}
 
+			if (j.shading_flags & 0x10) {
+				gl->glDisable(GL_CULL_FACE);
+			} else {
+				gl->glEnable(GL_CULL_FACE);
+			}
+
 			if (j.shading_flags & 0x40) {
 				gl->glDisable(GL_DEPTH_TEST);
 			} else {
@@ -397,79 +407,17 @@ void SkinnedMesh::render_opaque_sd() {
 				gl->glDepthMask(true);
 			}
 
-			if (j.shading_flags & 0x10) {
-				gl->glDisable(GL_CULL_FACE);
-			} else {
-				gl->glEnable(GL_CULL_FACE);
+			for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
+				gl->glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 			}
-
-			gl->glBindTextureUnit(0, textures[j.textures.at(0).id]->id);
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-			laya++;
+			laya += 1;
 		}
 	}
 }
 
-// Opaque rendering doesn't have to be sorted and can thus be instanced
-void SkinnedMesh::render_opaque_hd() {
-	if (!has_mesh) {
-		return;
-	}
-
-	gl->glBindVertexArray(vao);
-
-	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-	gl->glBindTextureUnit(5, bone_matrix_texture);
-
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
-
-	gl->glUniform1i(3, model->bones.size());
-	gl->glUniform1i(4, skip_count);
-
-	int laya = 0;
-	for (auto& i : geosets) {
-		auto& layers = model->materials[i.material_id].layers;
-		if (!layers[0].hd) {
-			continue;
-		}
-
-		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
-			continue;
-		}
-
-		gl->glUniform1f(1, layers[0].blend_mode == 1 ? 0.75f : -1.f);
-		gl->glUniform1i(5, laya);
-		laya += layers.size();
-
-		if (layers[0].shading_flags & 0x10) {
-			gl->glDisable(GL_CULL_FACE);
-		} else {
-			gl->glEnable(GL_CULL_FACE);
-		}
-
-		if (layers[0].shading_flags & 0x40) {
-			gl->glDisable(GL_DEPTH_TEST);
-		} else {
-			gl->glEnable(GL_DEPTH_TEST);
-		}
-
-		if (layers[0].shading_flags & 0x80) {
-			gl->glDepthMask(false);
-		} else {
-			gl->glDepthMask(true);
-		}
-
-		for (auto& texture : layers[0].textures) {
-			gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
-		}
-		gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-	}
-}
-
-void SkinnedMesh::render_transparent_sd(int instance_id) {
-	// ToDo We don't have to render fully transparent meshes. Many meshes are hidden using transparency so this might be a major optimization
+void SkinnedMesh::render_transparent(int instance_id, bool render_hd) {
 	if (!has_mesh) {
 		return;
 	}
@@ -478,111 +426,23 @@ void SkinnedMesh::render_transparent_sd(int instance_id) {
 
 	glm::mat4 MVP = camera->projection_view * render_jobs[instance_id];
 	gl->glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
+	if (render_hd) {
+		gl->glUniformMatrix4fv(5, 1, false, &render_jobs[instance_id][0][0]);
+	}
 
 	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
 	gl->glBindTextureUnit(5, bone_matrix_texture);
-
-	gl->glUniform1i(3, model->bones.size());
-	gl->glUniform1i(4, instance_id);
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
-
-	gl->glUniform1i(5, skip_count);
-
-	int laya = 0;
-	for (auto& i : geosets) {
-		auto& layers = model->materials[i.material_id].layers;
-		if (layers[0].hd) {
-			laya += layers.size();
-			continue;
-		}
-
-		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
-			laya += layers.size();
-			continue;
-		}
-
-		for (auto& j : layers) {
-			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
-			gl->glUniform1i(6, laya);
-
-			switch (j.blend_mode) {
-				case 0:
-				case 1:
-					gl->glBlendFunc(GL_ONE, GL_ZERO);
-					break;
-				case 2:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-					break;
-				case 3:
-					gl->glBlendFunc(GL_ONE, GL_ONE);
-					break;
-				case 4:
-					gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-					break;
-				case 5:
-					gl->glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-					break;
-				case 6:
-					gl->glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-					break;
-			}
-
-			if (j.shading_flags & 0x10) {
-				gl->glDisable(GL_CULL_FACE);
-			} else {
-				gl->glEnable(GL_CULL_FACE);
-			}
-
-			if (j.shading_flags & 0x40) {
-				gl->glDisable(GL_DEPTH_TEST);
-			} else {
-				gl->glEnable(GL_DEPTH_TEST);
-			}
-
-			if (j.shading_flags & 0x80) {
-				gl->glDepthMask(false);
-			} else {
-				gl->glDepthMask(true);
-			}
-
-			gl->glBindTextureUnit(0, textures[j.textures.at(0).id]->id);
-
-			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-			laya++;
-		}
-	}
-}
-
-void SkinnedMesh::render_transparent_hd(int instance_id) {
-	// ToDo We don't have to render fully transparent meshes. Many meshes are hidden using transparency so this might be a major optimization
-	if (!has_mesh) {
-		return;
-	}
-
-	gl->glBindVertexArray(vao);
-
-	glm::mat4 MVP = camera->projection_view * render_jobs[instance_id];
-	gl->glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-	gl->glUniformMatrix4fv(5, 1, false, &render_jobs[instance_id][0][0]);
-
-	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-	gl->glBindTextureUnit(5, bone_matrix_texture);
-
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
 
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, instance_id);
 	gl->glUniform1i(6, skip_count);
 
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
+	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
+
 	int laya = 0;
-	for (auto& i : geosets) {
-		auto& layers = model->materials[i.material_id].layers;
-		if (!layers[0].hd) {
-			laya += layers.size();
-			continue;
-		}
+	for (const auto& i : geosets) {
+		const auto& layers = model->materials[i.material_id].layers;
 
 		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
 			laya += layers.size();
@@ -590,6 +450,17 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 		}
 
 		for (auto& j : layers) {
+			// We don't have to render fully transparent meshes
+			if (layer_colors[instance_id * skip_count + laya].a <= 0.01) {
+				laya += 1;
+				continue;
+			}
+
+			if (j.hd != render_hd) {
+				laya += 1;
+				continue;
+			}
+
 			gl->glUniform1i(7, laya);
 
 			switch (j.blend_mode) {
@@ -628,12 +499,12 @@ void SkinnedMesh::render_transparent_hd(int instance_id) {
 				gl->glDepthMask(true);
 			}
 
-			for (auto& texture : j.textures) {
-				gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
+			for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
+				gl->glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 			}
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-			laya++;
+			laya += 1;
 		}
 	}
 }

@@ -2,17 +2,10 @@
 
 #include <vector>
 
-#include "StaticMesh.h"
 #include "SkinnedMesh.h"
 
 class RenderManager {
 public:
-	struct StaticInstance {
-		StaticMesh* mesh;
-		int instance_id;
-		float distance;
-	};
-
 	struct SkinnedInstance {
 		SkinnedMesh* mesh;
 		int instance_id;
@@ -31,9 +24,7 @@ public:
 	std::shared_ptr<Shader> skinned_mesh_shader_hd;
 	std::shared_ptr<Shader> colored_skinned_shader;
 
-	std::vector<StaticMesh*> meshes;
 	std::vector<SkinnedMesh*> skinned_meshes;
-	std::vector<StaticInstance> transparent_instances;
 	std::vector<SkinnedInstance> skinned_transparent_instances;
 
 	GLuint color_buffer;

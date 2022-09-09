@@ -5,11 +5,12 @@ layout (location = 1) in vec2 vUV;
 layout (location = 2) in vec3 vNormal;
 layout (location = 4) in uvec2 vSkin;
 
+// Should match the uniform locations in skinned_mesh_hd.vs
 layout (location = 0) uniform mat4 MVP;
 layout (location = 3) uniform int bone_count;
 layout (location = 4) uniform int instanceID;
-layout (location = 5) uniform int layer_skip_count;
-layout (location = 6) uniform int layer_index;
+layout (location = 6) uniform int layer_skip_count;
+layout (location = 7) uniform int layer_index;
 
 layout(std430, binding = 0) buffer layoutName {
     vec4 layer_colors[];

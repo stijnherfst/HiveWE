@@ -142,15 +142,15 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 			bool found = false;
 			for (const auto& material : mdx->materials) {
 				for (const auto& layer : material.layers) {
-					for (const auto& texture : layer.textures) {
-						if (texture.second.id != i) {
+					for (size_t j = 0; j < layer.textures.size(); j++) {
+						if (layer.textures[j].id != i) {
 							continue;
 						}
 
 						found = true;
 
 						if (layer.hd) {
-							switch (texture.first) {
+							switch (j) {
 								case 0:
 									suffix = "_diffuse";
 									break;
@@ -288,8 +288,8 @@ void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const
 			gl->glDepthMask(true);
 		}
 
-		for (const auto& texture : layers[0].textures) {
-			gl->glBindTextureUnit(texture.first, textures[texture.second.id]->id);
+		for (size_t texture_slot = 0; texture_slot < layers[0].textures.size(); texture_slot++) {
+			gl->glBindTextureUnit(texture_slot, textures[layers[0].textures[texture_slot].id]->id);
 		}
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);

@@ -125,7 +125,7 @@ namespace mdx {
 
 				writer.write<uint32_t>(layer.blend_mode);
 				writer.write<uint32_t>(layer.shading_flags);
-				writer.write<uint32_t>(layer.texture_id);
+				writer.write<uint32_t>(0); // texture_id irrelevant when writing V1100
 				writer.write<uint32_t>(layer.texture_animation_id);
 				writer.write<uint32_t>(layer.coord_id);
 				writer.write<float>(layer.alpha);
@@ -137,10 +137,12 @@ namespace mdx {
 
 				writer.write<uint32_t>(layer.hd);
 				writer.write<uint32_t>(layer.textures.size());
-				for (auto& pair : layer.textures) {
-					writer.write<uint32_t>(pair.second.id);
-					writer.write<uint32_t>(pair.first);
-					pair.second.KMTF.save(TrackTag::KMTF, writer);
+
+
+				for (size_t i = 0; i < layer.textures.size(); i++) {
+					writer.write<uint32_t>(layer.textures[i].id);
+					writer.write<uint32_t>(i);
+					layer.textures[i].KMTF.save(TrackTag::KMTF, writer);
 				}
 
 				layer.KMTA.save(TrackTag::KMTA, writer);

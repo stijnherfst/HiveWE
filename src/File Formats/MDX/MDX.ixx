@@ -179,7 +179,6 @@ namespace mdx {
 	export struct Layer {
 		uint32_t blend_mode;
 		uint32_t shading_flags;
-		uint32_t texture_id;
 		uint32_t texture_animation_id;
 		uint32_t coord_id;
 		float alpha;
@@ -191,7 +190,7 @@ namespace mdx {
 
 		bool hd;
 
-		std::unordered_map<uint32_t, LayerTexture> textures;
+		std::vector<LayerTexture> textures;
 
 		TrackHeader<uint32_t> KMTFTemp;
 		TrackHeader<float> KMTA;

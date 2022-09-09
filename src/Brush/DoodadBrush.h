@@ -5,7 +5,6 @@
 
 #include "Doodads.h"
 #include "Brush.h"
-#include "StaticMesh.h"
 import PathingTexture;
 
 class DoodadBrush : public Brush {

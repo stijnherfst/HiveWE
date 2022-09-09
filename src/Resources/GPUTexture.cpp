@@ -41,6 +41,7 @@ GPUTexture::GPUTexture(const fs::path& path) {
 	} else {
 		id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE);
 		if (id == 0) {
+			gl->glCreateTextures(GL_TEXTURE_2D, 1, &id);
 			std::cout << "Error loading texture: " << path << "\n";
 		}
 	}
