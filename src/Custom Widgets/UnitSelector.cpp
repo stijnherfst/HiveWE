@@ -1,5 +1,6 @@
 #include "UnitSelector.h"
-#include "HiveWE.h"
+#include "Globals.h"
+#include <QVBoxLayout>
 
 UnitSelector::UnitSelector(QWidget* parent) : QWidget(parent) {
 	list_model = new UnitListModel(this);

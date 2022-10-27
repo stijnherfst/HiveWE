@@ -29,10 +29,11 @@ import Hierarchy;
 #include "UnitPalette.h"
 #include "PathingPalette.h"
 #include "ObjectEditor.h"
-#include "ModelEditor.h"
+#include "ModelEditor/ModelEditor.h"
 #include "Camera.h"
 
 #include "IconView.h"
+#include "Globals.h"
 
 import MPQ;
 

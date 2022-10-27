@@ -18,10 +18,10 @@ import MDX;
 
 // Ghostwolf mentioned this to me once, so I used it,
 // as 0.75, experimentally determined as a guess at
-// whatever WC3 is doing. Do more reserach if necessary?
+// whatever WC3 is doing. Do more research if necessary?
 #define MAGIC_RENDER_SHOW_CONSTANT 0.75
 
-// To keep track of what
+// Instead of recalculating the extents of the current sequence every frame we can keep track of it
 struct CurrentKeyFrame {
 	int start = -1;
 	int end = 0;
@@ -50,11 +50,11 @@ class SkeletalModelInstance {
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model);
 
-	void updateLocation(glm::vec3 position, float angle, const glm::vec3& scale);
+	void update_location(glm::vec3 position, float angle, const glm::vec3& scale);
 
 	void update(double delta);
 
-	void updateNodes();
+	void update_nodes();
 
 	void set_sequence(int sequence_index);
 
@@ -69,5 +69,5 @@ class SkeletalModelInstance {
 	float get_layer_visiblity(const mdx::Layer& layer) const;
 
 	template <typename T>
-	T interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& defaultValue) const;
+	T interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& default_value) const;
 };

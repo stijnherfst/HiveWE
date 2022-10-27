@@ -2,7 +2,7 @@
 
 import Hierarchy;
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 bool ShadowMap::load(BinaryReader& reader) {
 	width = map->terrain.width * 4;

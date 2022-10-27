@@ -11,7 +11,7 @@
 
 #include "InputHandler.h"
 #include "TerrainUndo.h"
-#include "HiveWE.h"
+#include "Globals.h"
 import Hierarchy;
 import Texture;
 
@@ -49,7 +49,11 @@ void UnitBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::ControlModifier) {
 		switch (event->key()) {
 			case Qt::Key_A:
-				selections = map->units.query_area({ 0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height) });
+				selections.clear();
+				selections.reserve(map->units.units.size());
+				for (auto& i : map->units.units) {
+					selections.push_back(&i);
+				}
 				break;
 			default:
 				Brush::key_press_event(event);
@@ -235,7 +239,7 @@ void UnitBrush::render_brush() {
 	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
 
 	if (mesh) {
-		skeleton.updateLocation(final_position, rotation, final_scale);
+		skeleton.update_location(final_position, rotation, final_scale);
 		skeleton.update(0.016f);
 		mesh->render_queue(skeleton, glm::vec3(1.f));
 	}
@@ -277,7 +281,7 @@ void UnitBrush::render_clipboard() {
 
 		const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
 
-		i.skeleton.updateLocation(final_position, i.angle, final_scale);
+		i.skeleton.update_location(final_position, i.angle, final_scale);
 		i.skeleton.update(0.016f);
 		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}

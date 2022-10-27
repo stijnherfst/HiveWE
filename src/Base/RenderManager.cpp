@@ -4,7 +4,7 @@ import ResourceManager;
 
 #include "Camera.h"
 #include "Units.h"
-#include "HiveWE.h"
+#include "Globals.h"
 
 RenderManager::RenderManager() {
 	instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
@@ -71,7 +71,8 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 
 	// Render transparent meshes
 	std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
-
+	gl->glEnable(GL_BLEND);
+	gl->glDepthMask(false);
 
 	skinned_mesh_shader_sd->use();
 	gl->glUniform1i(2, render_lighting);
@@ -148,6 +149,7 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 	}
 }
 
+// Requires the OpenGL context to be active/current
 std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_position) {
 	GLint old_fbo;
 	gl->glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);

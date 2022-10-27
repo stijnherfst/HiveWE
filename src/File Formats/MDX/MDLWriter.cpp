@@ -251,8 +251,7 @@ namespace mdx {
 							mdl.write_track(layer.KFCA, "FresnelAlpha", layer.fresnel_opacity);
 							mdl.write_track(layer.KFTC, "FresnelTeamColor", layer.fresnel_team_color);
 						}
-					}
-					else {
+					} else {
 						mdl.write_line("Shader \"\",");
 
 						for (const auto& layer : material.layers) {
@@ -544,4 +543,4 @@ namespace mdx {
 		fmt::print("Elapsed {}ms", timer.elapsed_ms());
 		return mdl.mdl;
 	}
-} // namespace MDX
+} // namespace mdx

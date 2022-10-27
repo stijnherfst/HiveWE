@@ -18,7 +18,7 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 	// ToDo: for each camera: add camera source node to renderNodes
 	render_nodes.resize(node_count);
 	world_matrices.resize(node_count);
-	model->forEachNode([&](mdx::Node& node) {
+	model->for_each_node([&](mdx::Node& node) {
 		// Seen it happen with Emmitter1, is this an error in the model?
 		// ToDo purge (when adding a validation layer or just crashing)
 		if (node.id == -1) {
@@ -45,7 +45,7 @@ SkeletalModelInstance::SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : 
 	}
 }
 
-void SkeletalModelInstance::updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
+void SkeletalModelInstance::update_location(glm::vec3 position, float angle, const glm::vec3& scale) {
 	glm::vec3 axis = glm::vec3(0, 0, 1);
 	glm::quat rotation = glm::angleAxis(angle, axis);
 	inverseInstanceRotation.x = -rotation.x;
@@ -89,10 +89,10 @@ void SkeletalModelInstance::update(double delta) {
 		}
 	}
 
-	updateNodes();
+	update_nodes();
 }
 
-void SkeletalModelInstance::updateNodes() {
+void SkeletalModelInstance::update_nodes() {
 	assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
 	// update skeleton to position based on animation @ time
@@ -111,19 +111,33 @@ void SkeletalModelInstance::updateNodes() {
 			world_matrices[node.node->id] = world_matrices[node.node->parent_id] * world_matrices[node.node->id];
 		}
 
-		//if (node.billboarded || node.billboardedX) {
-		//	// Cancel the parent's rotation
-		//	if (node.parent) {
-		//		node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
-		//	} else {
-		//		node.localRotation = inverseInstanceRotation;
-		//	}
 
-		//	node.localRotation *= camera->decomposed_rotation;
-		//}
- 
 
-		//node.recalculateTransformation();
+		if (node.billboarded || node.billboardedX) {
+
+			world_matrices[node.node->id][1][0] = 0.f;
+			world_matrices[node.node->id][2][0] = 0.f;
+			world_matrices[node.node->id][3][0] = 0.f;
+			world_matrices[node.node->id][2][1] = 0.f;
+			world_matrices[node.node->id][3][1] = 0.f;
+			world_matrices[node.node->id][3][2] = 0.f;
+
+			world_matrices[node.node->id][0][1] = 0.f;
+			world_matrices[node.node->id][0][2] = 0.f;
+			world_matrices[node.node->id][0][3] = 0.f;
+			world_matrices[node.node->id][1][2] = 0.f;
+			world_matrices[node.node->id][1][3] = 0.f;
+			world_matrices[node.node->id][2][3] = 0.f;
+
+			// Cancel the parent's rotation
+			/*if (node.parent) {
+				node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
+			} else {
+				node.localRotation = inverseInstanceRotation;
+			}
+
+			node.localRotation *= camera->decomposed_rotation;*/
+		}
 	}
 }
 
@@ -275,10 +289,11 @@ float SkeletalModelInstance::get_layer_visiblity(const mdx::Layer& layer) const 
 }
 
 template <typename T>
-T SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& defaultValue) const {
+T SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& default_value) const {
 	if (header.id == -1) {
-		return defaultValue;
+		return default_value;
 	}
+
 	const CurrentKeyFrame& current = current_keyframes[header.id];
 	const mdx::Sequence& sequence = model->sequences[sequence_index];
 
@@ -298,7 +313,7 @@ T SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<T>& header
 
 	// If there are no tracks in sequence
 	if (current.start == -1) {
-		return defaultValue;
+		return default_value;
 	}
 
 	// If there is only 1 track
@@ -306,13 +321,13 @@ T SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<T>& header
 		return header.tracks[current.left].value;
 	}
 
-	const T ceilInTan = header.tracks[current.right].inTan;
-	const T floorOutTan = header.tracks[current.left].outTan;
+	const T ceil_in_tan = header.tracks[current.right].inTan;
+	const T floor_out_tan = header.tracks[current.left].outTan;
 
 	int floor_time = header.tracks[current.left].frame;
-	int ceil_time = header.tracks[current.right].frame;
-	T floor_value = header.tracks[current.left].value;
-	T ceil_value = header.tracks[current.right].value;
+	const int ceil_time = header.tracks[current.right].frame;
+	const T floor_value = header.tracks[current.left].value;
+	const T ceil_value = header.tracks[current.right].value;
 
 
 	// This is the implementation that correctly handles missing start/end frames. 
@@ -331,17 +346,17 @@ T SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<T>& header
 	//}
 
 	// The (incorrect) implementation both the game and WE use
-	int timeBetweenFrames = ceil_time - floor_time;
-	if (timeBetweenFrames < 0) {
-		timeBetweenFrames += (local_sequence_end - local_sequence_start);
+	int time_between_frames = ceil_time - floor_time;
+	if (time_between_frames < 0) {
+		time_between_frames += (local_sequence_end - local_sequence_start);
 		if (local_current_frame < floor_time) {
 			floor_time = ceil_time;
 		}
 	}
-	float t = timeBetweenFrames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(timeBetweenFrames));
+	const float t = time_between_frames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(time_between_frames));
 
-	return interpolate(floor_value, floorOutTan, ceilInTan, ceil_value, t, header.interpolation_type);
+	return interpolate(floor_value, floor_out_tan, ceil_in_tan, ceil_value, t, header.interpolation_type);
 }
 
-template glm::vec3 SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue) const;
-template glm::quat SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<glm::quat>& header, const glm::quat& defaultValue) const;
+template glm::vec3 SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<glm::vec3>& header, const glm::vec3& default_value) const;
+template glm::quat SkeletalModelInstance::interpolate_keyframes(const mdx::TrackHeader<glm::quat>& header, const glm::quat& default_value) const;

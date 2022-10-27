@@ -2,7 +2,7 @@
 
 #include <QRect>
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS

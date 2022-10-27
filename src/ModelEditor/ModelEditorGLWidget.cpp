@@ -16,7 +16,7 @@
 #include <QtImgui/QtImGui.h>
 #include <imgui.h>
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	makeCurrent();
@@ -74,7 +74,7 @@ void ModelEditorGLWidget::update_scene() {
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	skeleton.updateLocation(glm::vec3(0.f), 0.f, glm::vec3(1.f));
+	skeleton.update_location(glm::vec3(0.f), 0.f, glm::vec3(1.f));
 	skeleton.update(delta);
 
 	camera.update(16.666);

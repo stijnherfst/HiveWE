@@ -8,7 +8,7 @@
 #include <QStyleFactory>
 
 #include "DockManager.h"
-#include "HiveWE.h"
+#include "MainWindow/HiveWE.h"
 #include "test.h"
 
 import MDX;

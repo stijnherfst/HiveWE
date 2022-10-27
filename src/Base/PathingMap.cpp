@@ -8,7 +8,7 @@ import Hierarchy;
 
 import BinaryWriter;
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 
 bool PathingMap::load() {

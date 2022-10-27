@@ -8,7 +8,7 @@
 
 import Hierarchy;
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "InputHandler.h"
 #include "Physics.h"
 #include "Camera.h"

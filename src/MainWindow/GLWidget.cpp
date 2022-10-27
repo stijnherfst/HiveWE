@@ -9,7 +9,7 @@
 #include "Utilities.h"
 #include "InputHandler.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei, const GLchar *message, void *) {
 	// Skip buffer info messages, framebuffer info messages, texture usage state warning, redundant state change buffer

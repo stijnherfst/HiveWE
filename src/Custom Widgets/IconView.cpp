@@ -1,5 +1,5 @@
 #include "IconView.h"
-#include "HiveWE.h"
+#include "Globals.h"
 
 #include <fstream>
 
@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QLabel>
 
 #include "fmt/format.h"
 

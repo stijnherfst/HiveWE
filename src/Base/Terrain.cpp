@@ -7,7 +7,7 @@ import Hierarchy;
 
 #include "Camera.h"
 #include "SLK.h"
-#include "HiveWE.h"
+#include "Globals.h"
 import BinaryReader;
 import BinaryWriter;
 #include "Physics.h"

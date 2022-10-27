@@ -11,7 +11,7 @@
 
 #include "InputHandler.h"
 #include "TerrainUndo.h"
-#include "HiveWE.h"
+#include "Globals.h"
 import Hierarchy;
 import Texture;
 
@@ -130,7 +130,12 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::ControlModifier) {
 		switch (event->key()) {
 			case Qt::Key_A:
-				selections = map->doodads.query_area({0.0, 0.0, static_cast<double>(map->terrain.width), static_cast<double>(map->terrain.height)});
+				selections.clear();
+				selections.reserve(map->doodads.doodads.size());
+				for (auto& i : map->doodads.doodads) {
+					selections.push_back(&i);
+				}
+
 				emit selection_changed();
 				break;
 			case Qt::Key_PageUp:
@@ -448,7 +453,7 @@ void DoodadBrush::render_brush() {
 		final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
 	}
 
-	skeleton.updateLocation(final_position, rotation, glm::vec3(1.f / 128.f) * scale);
+	skeleton.update_location(final_position, rotation, glm::vec3(1.f / 128.f) * scale);
 	skeleton.update(0.016f);
 	mesh->render_queue(skeleton, glm::vec3(1.f));
 }

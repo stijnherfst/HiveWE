@@ -8,6 +8,11 @@
 #include <QSortFilterProxyModel>
 #include <QPushButton>
 #include <QTimer>
+#include <QLabel>
+#include <QShortcut>
+#include <QDialog>
+#include <QToolButton>
+#include <QMenu>
 
 #include "SingleModel.h"
 #include "UnitSelector.h"

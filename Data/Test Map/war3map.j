@@ -62,14 +62,6 @@ function CreateUnits takes nothing returns nothing
  local integer unitID
  local trigger t
  local real life
-	set u=BlzCreateUnitWithSkin(Player(0), 'hfoo', - 230.2307, - 301.4792, 255.9343, 'hfoo')
-	set u=BlzCreateUnitWithSkin(Player(0), 'hpea', - 129.6125, - 283.6453, 233.3238, 'hpea')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfrl', - 43.0085, - 2931.5239, 277.2452, 'nfrl')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfrl', - 811.5940, - 3568.9565, 56.4535, 'nfrl')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfrg', 160.0796, - 3502.9846, 129.5556, 'nfrg')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfr1', - 999.6355, - 3479.5576, 325.7144, 'nfr1')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfr2', 290.9966, - 3293.5903, 229.7782, 'nfr2')
-	set u=BlzCreateUnitWithSkin(Player(0), 'nfrb', - 780.0398, - 3323.5308, 29.6704, 'nfrb')
 endfunction
 //===========================================================================
 //*

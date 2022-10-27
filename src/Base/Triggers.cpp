@@ -9,7 +9,7 @@
 
 #include "fmt/format.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "Utilities.h"
 import Hierarchy;
 

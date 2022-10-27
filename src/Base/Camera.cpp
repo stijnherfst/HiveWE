@@ -1,6 +1,6 @@
 #include "Camera.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "InputHandler.h"
 
 void Camera::reset() {

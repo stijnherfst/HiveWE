@@ -1,6 +1,6 @@
 #include "DestructableListModel.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 DestructableListModel::DestructableListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {

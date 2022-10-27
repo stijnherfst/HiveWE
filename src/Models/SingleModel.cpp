@@ -13,13 +13,13 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QTreeView>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
 
 #include "UnitSelector.h"
 #include "GenericSelectorList.h"
 #include "IconView.h"
 #include "AbilityTreeModel.h"
-
-#include "HiveWE.h"
 
 #include "fmt/format.h"
 

@@ -1,6 +1,6 @@
 #include "DoodadListModel.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 DoodadListModel::DoodadListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {

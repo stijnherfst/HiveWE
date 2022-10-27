@@ -9,7 +9,7 @@ using namespace std::literals::string_literals;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "HiveWE.h"
+#include "Globals.h"
 import BinaryWriter;
 import Hierarchy;
 
@@ -25,7 +25,7 @@ void Unit::update() {
 	matrix = glm::scale(matrix, final_scale);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	skeleton.updateLocation(final_position, angle, final_scale);
+	skeleton.update_location(final_position, angle, final_scale);
 
 	color.r = units_slk.data<float>("red", id) / 255.f;
 	color.g = units_slk.data<float>("green", id) / 255.f;

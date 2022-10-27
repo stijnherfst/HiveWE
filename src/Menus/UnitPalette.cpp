@@ -4,7 +4,7 @@
 #include <QLineEdit>
 #include <QListView>
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "Selections.h"
 
 #include "TableModel.h"

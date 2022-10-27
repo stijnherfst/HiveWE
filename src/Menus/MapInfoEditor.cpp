@@ -1,6 +1,6 @@
 #include "MapInfoEditor.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 
 MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {

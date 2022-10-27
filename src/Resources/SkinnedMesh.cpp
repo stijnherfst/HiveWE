@@ -4,7 +4,7 @@ import Hierarchy;
 
 #include "Camera.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
@@ -309,17 +309,17 @@ void SkinnedMesh::upload_render_data() {
 	gl->glNamedBufferData(bone_matrix_buffer, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
 
 	layer_colors.clear();
+
 	for (size_t k = 0; k < render_jobs.size(); k++) {
-		for (auto& i : geosets) {
-			glm::vec3 geoset_color(1.f);
+		for (const auto& i : geosets) {
+			glm::vec3 geoset_color = render_colors[k];
 			float geoset_anim_visibility = 1.0f;
 			if (i.geoset_anim && skeletons[k]->sequence_index >= 0) {
-				geoset_color = skeletons[k]->get_geoset_animation_color(*i.geoset_anim);
+				geoset_color *= skeletons[k]->get_geoset_animation_color(*i.geoset_anim);
 				geoset_anim_visibility = skeletons[k]->get_geoset_animation_visiblity(*i.geoset_anim);
 			}
-			geoset_color *= render_colors[k];
 
-			auto& layers = model->materials[i.material_id].layers;
+			const auto& layers = model->materials[i.material_id].layers;
 			for (auto& j : layers) {
 				float layer_visibility = 1.0f;
 				if (skeletons[k]->sequence_index >= 0) {
@@ -349,23 +349,23 @@ void SkinnedMesh::render_opaque(bool render_hd) {
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, skip_count);
 
-	int laya = 0;
+	int lay_index = 0;
 	for (const auto& i : geosets) {
 		const auto& layers = model->materials[i.material_id].layers;
 
 		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
-			laya += layers.size();
+			lay_index += layers.size();
 			continue;
 		}
 
 		for (const auto& j : layers) {
 			if (j.hd != render_hd) {
-				laya += 1;
+				lay_index += 1;
 				continue;
 			}
 
 			gl->glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
-			gl->glUniform1i(5, laya);
+			gl->glUniform1i(5, lay_index);
 
 			switch (j.blend_mode) {
 				case 0:
@@ -412,7 +412,7 @@ void SkinnedMesh::render_opaque(bool render_hd) {
 			}
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
-			laya += 1;
+			lay_index += 1;
 		}
 	}
 }
@@ -440,28 +440,28 @@ void SkinnedMesh::render_transparent(int instance_id, bool render_hd) {
 	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
 	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
 
-	int laya = 0;
+	int lay_index = 0;
 	for (const auto& i : geosets) {
 		const auto& layers = model->materials[i.material_id].layers;
 
 		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
-			laya += layers.size();
+			lay_index += layers.size();
 			continue;
 		}
 
 		for (auto& j : layers) {
 			// We don't have to render fully transparent meshes
-			if (layer_colors[instance_id * skip_count + laya].a <= 0.01) {
-				laya += 1;
+			if (layer_colors[instance_id * skip_count + lay_index].a <= 0.01) {
+				lay_index += 1;
 				continue;
 			}
 
 			if (j.hd != render_hd) {
-				laya += 1;
+				lay_index += 1;
 				continue;
 			}
 
-			gl->glUniform1i(7, laya);
+			gl->glUniform1i(7, lay_index);
 
 			switch (j.blend_mode) {
 				case 2:
@@ -493,18 +493,18 @@ void SkinnedMesh::render_transparent(int instance_id, bool render_hd) {
 				gl->glEnable(GL_DEPTH_TEST);
 			}
 
-			if (j.shading_flags & 0x80) {
-				gl->glDepthMask(false);
-			} else {
-				gl->glDepthMask(true);
-			}
+			//if (j.shading_flags & 0x80) {
+			//	gl->glDepthMask(false);
+			//} else {
+			//	gl->glDepthMask(true);
+			//}
 
 			for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
 				gl->glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 			}
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-			laya += 1;
+			lay_index += 1;
 		}
 	}
 }

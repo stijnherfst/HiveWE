@@ -2,7 +2,7 @@
 
 #include <random>
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "Terrain.h"
 
 TerrainBrush::TerrainBrush() : Brush() {

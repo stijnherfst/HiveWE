@@ -1,6 +1,6 @@
 #include "TerrainPalette.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);

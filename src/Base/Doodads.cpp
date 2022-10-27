@@ -9,7 +9,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "HiveWE.h"
+#include "Globals.h"
 import BinaryWriter;
 import Hierarchy;
 
@@ -37,7 +37,7 @@ void Doodad::update() {
 		matrix = glm::rotate(matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
 	}
 
-	skeleton.updateLocation(position, angle, (base_scale * scale) / 128.f);
+	skeleton.update_location(position, angle, (base_scale * scale) / 128.f);
 }
 
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {

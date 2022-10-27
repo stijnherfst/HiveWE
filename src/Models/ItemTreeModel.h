@@ -2,7 +2,6 @@
 
 #include <array>
 
-#include "HiveWE.h"
 #include "BaseTreeModel.h"
 
 class ItemTreeModel : public BaseTreeModel {

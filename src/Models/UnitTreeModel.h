@@ -4,7 +4,7 @@
 
 #include <QSortFilterProxyModel>
 
-#include "HiveWE.h"
+#include "Globals.h"
 #include "BaseTreeModel.h"
 
 class UnitTreeModel : public BaseTreeModel {

@@ -9,7 +9,7 @@
 #include <array>
 #include <vector>
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 class BaseTreeItem {
 public:

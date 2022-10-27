@@ -1,6 +1,6 @@
 #include "TableModel.h"
 #include "QIconResource.h"
-#include "HiveWE.h"
+#include "Globals.h"
 
 #include <absl/strings/str_split.h>
 

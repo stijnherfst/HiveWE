@@ -762,7 +762,7 @@ namespace mdx {
 			// Compact node IDs
 			std::vector<int> IDs;
 			IDs.reserve(node_count);
-			forEachNode([&](mdx::Node& node) {
+			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
 					fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
 					return;
@@ -776,7 +776,7 @@ namespace mdx {
 				remapping[IDs[i]] = i;
 			}
 
-			forEachNode([&](mdx::Node& node) {
+			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
 					fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
 					return;
@@ -849,7 +849,7 @@ namespace mdx {
 		std::string to_mdl();
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
-		void forEachNode(const std::function<void(Node&)>& F) {
+		void for_each_node(const std::function<void(Node&)>& F) {
 			for (auto& i : bones) {
 				F(i.node);
 			}

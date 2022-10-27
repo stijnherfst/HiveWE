@@ -1,6 +1,6 @@
 #include "TilePather.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 #include <QOpenGLFunctions_4_5_Core>
 

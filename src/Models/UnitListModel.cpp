@@ -1,6 +1,6 @@
 #include "UnitListModel.h"
 
-#include "HiveWE.h"
+#include "Globals.h"
 
 QModelIndex UnitListModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	if (!sourceIndex.isValid()) {
