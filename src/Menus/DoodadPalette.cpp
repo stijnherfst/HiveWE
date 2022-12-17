@@ -11,7 +11,7 @@
 #include "Selections.h"
 
 #include "TableModel.h"
-#include <ObjectEditor.h>
+#include <ObjectEditor/ObjectEditor.h>
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);

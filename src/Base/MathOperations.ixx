@@ -123,19 +123,22 @@ export float interpolate(const float start, const float outTan, const float inTa
 
 export glm::vec3 interpolate(const glm::vec3 start, const glm::vec3 outTan, const glm::vec3 inTan, const glm::vec3 end, float t, int interpolationType) {
 	switch (interpolationType) {
-		glm::vec3 out;
 		case 1: // LINEAR
 			return glm::mix(start, end, t);
-		case 2: // HERMITE
+		case 2: { // HERMITE
+			glm::vec3 out;
 			out.x = hermite(start.x, outTan.x, inTan.x, end.x, t);
 			out.y = hermite(start.y, outTan.y, inTan.y, end.y, t);
 			out.z = hermite(start.z, outTan.z, inTan.z, end.z, t);
 			return out;
-		case 3: // BEZIER
+		}
+		case 3: { // BEZIER
+			glm::vec3 out;
 			out.x = bezier(start.x, outTan.x, inTan.x, end.x, t);
 			out.y = bezier(start.y, outTan.y, inTan.y, end.y, t);
 			out.z = bezier(start.z, outTan.z, inTan.z, end.z, t);
 			return out;
+		}
 		default:
 			return start;
 	}
@@ -161,7 +164,7 @@ export glm::quat interpolate(const glm::quat start, const glm::quat outTan, cons
 			return start;
 	}
 }
-export uint32_t interpolate(const uint32_t start, const uint32_t outTan, const uint32_t inTan, const uint32_t end, float t, int interpolationType) {
+export uint32_t interpolate(const uint32_t start, const uint32_t, const uint32_t, const uint32_t, float, int) {
 	return start;
 }
 

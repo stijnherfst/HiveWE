@@ -190,7 +190,7 @@ namespace mdx {
 
 		bool hd;
 
-		std::vector<LayerTexture> textures;
+		std::vector<LayerTexture> texturess;
 
 		TrackHeader<uint32_t> KMTFTemp;
 		TrackHeader<float> KMTA;

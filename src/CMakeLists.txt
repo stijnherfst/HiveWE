@@ -70,7 +70,6 @@ target_sources(HiveWE PRIVATE
 
 	"Menus/DoodadPalette.cpp"
 	
-	
 	"Menus/MapInfoEditor.cpp"
 	"Menus/Minimap.cpp"
 	"Menus/Palette.cpp"
@@ -82,7 +81,6 @@ target_sources(HiveWE PRIVATE
 	"Menus/TilePicker.cpp"
 	"Menus/TileSetter.cpp"
 	"Menus/Selections.cpp"
-	"Menus/ObjectEditor.cpp"
 
 	"Models/SingleModel.cpp"
 	"Models/TableModel.cpp"
@@ -104,13 +102,15 @@ target_sources(HiveWE PRIVATE
 	"Custom Widgets/QRibbon.cpp"
 	"Custom Widgets/UnitSelector.cpp"
 	"Custom Widgets/GenericSelectorList.cpp"
-	"Custom Widgets/IconView.cpp"
 	"Custom Widgets/FlowLayout.cpp"
 	
 
 	"ModelEditor/ModelEditorCamera.cpp"
 	"ModelEditor/ModelEditor.cpp"
 	"ModelEditor/ModelEditorGLWidget.cpp"
+
+	"ObjectEditor/IconView.cpp"
+	"ObjectEditor/ObjectEditor.cpp"
 
 	"QtImgui/ImGuiRenderer.cpp"
 	"QtImgui/QtImGui.cpp"

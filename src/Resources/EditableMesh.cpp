@@ -142,8 +142,8 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 			bool found = false;
 			for (const auto& material : mdx->materials) {
 				for (const auto& layer : material.layers) {
-					for (size_t j = 0; j < layer.textures.size(); j++) {
-						if (layer.textures[j].id != i) {
+					for (size_t j = 0; j < layer.texturess.size(); j++) {
+						if (layer.texturess[j].id != i) {
 							continue;
 						}
 
@@ -188,11 +188,13 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	}
 
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
-	gl->glEnableVertexAttribArray(2);
-	gl->glEnableVertexAttribArray(3);
-	gl->glEnableVertexAttribArray(4);
+	gl->glEnableVertexArrayAttrib(vao, 0);
+	gl->glEnableVertexArrayAttrib(vao, 1);
+	gl->glEnableVertexArrayAttrib(vao, 2);
+	gl->glEnableVertexArrayAttrib(vao, 3);
+	gl->glEnableVertexArrayAttrib(vao, 4);
+
+	gl->glVertexArrayElementBuffer(vao, index_buffer);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -208,8 +210,6 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
 	gl->glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
-
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
 }
 
 EditableMesh::~EditableMesh() {
@@ -288,8 +288,8 @@ void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const
 			gl->glDepthMask(true);
 		}
 
-		for (size_t texture_slot = 0; texture_slot < layers[0].textures.size(); texture_slot++) {
-			gl->glBindTextureUnit(texture_slot, textures[layers[0].textures[texture_slot].id]->id);
+		for (size_t texture_slot = 0; texture_slot < layers[0].texturess.size(); texture_slot++) {
+			gl->glBindTextureUnit(texture_slot, textures[layers[0].texturess[texture_slot].id]->id);
 		}
 
 		gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);

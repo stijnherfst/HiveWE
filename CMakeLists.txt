@@ -73,50 +73,45 @@ target_link_libraries(HiveWE PUBLIC
 	outcome::hl
 )
 
-#target_compile_options(HiveWE PRIVATE
-#  $<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /W4 /WX /sdl /permissive->
-#  $<$<CXX_COMPILER_ID:Clang>: -Wextra -Wpedantic -Werror>
-#  $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror>
-#)
+target_compile_options(HiveWE PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /W4 /sdl>
+	$<$<CXX_COMPILER_ID:Clang>:-Wextra -Wpedantic -Werror -Wno-multichar>
+	$<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror -Wno-multichar>
+)
+
+target_compile_definitions(HiveWE PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:UNICODE _UNICODE>
+	$<$<CXX_COMPILER_ID:Clang>:TBB_SUPPRESS_DEPRECATED_MESSAGES>
+	$<$<CXX_COMPILER_ID:GNU>:TBB_SUPPRESS_DEPRECATED_MESSAGES>
+)
 
 if(WIN32)
-	target_compile_definitions(HiveWE PUBLIC UNICODE _UNICODE)
-
-	if (MSVC)
-		# Properly sets the __cplusplus macro to the newest version. Might not be needed anymore in vsNext. Last checked 25/05/2021
-		target_compile_options(HiveWE PUBLIC "/Zc:__cplusplus; /MP")
-	endif()
-
-	target_link_options(HiveWE PUBLIC /PROFILE)
-
 	target_link_libraries(HiveWE PUBLIC CascLib::casc)
 else()
-	target_compile_definitions(HiveWE PUBLIC TBB_SUPPRESS_DEPRECATED_MESSAGES)
-
-	target_compile_options(HiveWE PUBLIC "-Wno-multichar")
-
 	target_link_libraries(HiveWE PUBLIC CascLib::casc_static)
 endif()
 
-target_compile_features(HiveWE PUBLIC cxx_std_20)
+target_compile_features(HiveWE PUBLIC cxx_std_23)
 
+
+message("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND}
 	-E
 	create_symlink "${PROJECT_SOURCE_DIR}/Data"
-	"${CMAKE_CURRENT_BINARY_DIR}/Data"
-	DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/Data"
+	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
+	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
 )
 
-install(TARGETS HiveWE
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+#install(TARGETS HiveWE
+#    BUNDLE  DESTINATION .
+#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#)
 
-qt_generate_deploy_app_script(
-    TARGET HiveWE
-    FILENAME_VARIABLE deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
-)
+#qt_generate_deploy_app_script(
+ #   TARGET HiveWE
+#    FILENAME_VARIABLE deploy_script
+#    NO_UNSUPPORTED_PLATFORM_ERROR
+#)
 
-install(SCRIPT ${deploy_script})
+#install(SCRIPT ${deploy_script})

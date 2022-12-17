@@ -99,6 +99,8 @@ void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {
 		i->instance_bone_matrices.clear();
 	}
 
+	gl->glDepthMask(true);
+
 	skinned_meshes.clear();
 	skinned_transparent_instances.clear();
 }

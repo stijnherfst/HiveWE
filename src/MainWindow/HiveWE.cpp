@@ -17,6 +17,7 @@
 #include <StormLib.h>
 
 import Hierarchy;
+import MPQ;
 
 #include "TileSetter.h"
 #include "MapInfoEditor.h"
@@ -28,14 +29,13 @@ import Hierarchy;
 #include "DoodadPalette.h"
 #include "UnitPalette.h"
 #include "PathingPalette.h"
-#include "ObjectEditor.h"
+#include "ObjectEditor/ObjectEditor.h"
 #include "ModelEditor/ModelEditor.h"
 #include "Camera.h"
 
-#include "IconView.h"
+#include "ObjectEditor/IconView.h"
 #include "Globals.h"
 
-import MPQ;
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);

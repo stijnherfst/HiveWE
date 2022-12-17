@@ -159,8 +159,8 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 			bool found = false;
 			for (const auto& material : model->materials) {
 				for (const auto& layer : material.layers) {
-					for (size_t j = 0; j < layer.textures.size(); j++) {
-						if (layer.textures[j].id != i) {
+					for (size_t j = 0; j < layer.texturess.size(); j++) {
+						if (layer.texturess[j].id != i) {
 							continue;
 						}
 
@@ -205,15 +205,61 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 		gl->glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 	}
 
-	gl->glEnableVertexAttribArray(0);
-	gl->glEnableVertexAttribArray(1);
-	gl->glEnableVertexAttribArray(2);
-	gl->glEnableVertexAttribArray(3);
-	gl->glEnableVertexAttribArray(4);
-	gl->glEnableVertexAttribArray(5);
-	gl->glEnableVertexAttribArray(6);
-	gl->glEnableVertexAttribArray(7);
-	gl->glEnableVertexAttribArray(8);
+	//gl->glVertexArrayElementBuffer(vao, index_buffer);
+
+	//gl->glEnableVertexArrayAttrib(vao, 0);
+	//gl->glEnableVertexArrayAttrib(vao, 1);
+	//gl->glEnableVertexArrayAttrib(vao, 2);
+	//gl->glEnableVertexArrayAttrib(vao, 3);
+	//gl->glEnableVertexArrayAttrib(vao, 4);
+	//gl->glEnableVertexArrayAttrib(vao, 5);
+	//gl->glEnableVertexArrayAttrib(vao, 6);
+	//gl->glEnableVertexArrayAttrib(vao, 7);
+	//gl->glEnableVertexArrayAttrib(vao, 8);
+
+	//gl->glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	//gl->glVertexArrayAttribFormat(vao, 1, 2, GL_FLOAT, GL_FALSE, 0);
+	//gl->glVertexArrayAttribFormat(vao, 2, 3, GL_FLOAT, GL_FALSE, 0);
+	//gl->glVertexArrayAttribFormat(vao, 3, 4, GL_FLOAT, GL_FALSE, 0);
+	//gl->glVertexArrayAttribIFormat(vao, 4, 2, GL_UNSIGNED_INT, 0);
+
+	//gl->glVertexArrayAttribBinding(vao, 0, 0);
+	//gl->glVertexArrayAttribBinding(vao, 1, 1);
+	//gl->glVertexArrayAttribBinding(vao, 2, 2);
+	//gl->glVertexArrayAttribBinding(vao, 3, 3);
+	//gl->glVertexArrayAttribBinding(vao, 4, 4);
+	//
+	//gl->glVertexArrayVertexBuffer(vao, 0, vertex_buffer, 0, 0);
+	//gl->glVertexArrayVertexBuffer(vao, 1, uv_buffer, 0, 0);
+	//gl->glVertexArrayVertexBuffer(vao, 2, normal_buffer, 0, 0);
+	//gl->glVertexArrayVertexBuffer(vao, 3, tangent_buffer, 0, 0);
+	//gl->glVertexArrayVertexBuffer(vao, 4, weight_buffer, 0, 0);
+	//
+	//for (int i = 0; i < 4; i++) {
+	//	gl->glVertexArrayVertexBuffer(vao, 5 + i, instance_buffer, 0, sizeof(glm::mat4));
+	//	gl->glVertexArrayAttribFormat(vao, 5 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4) * i);
+	//	gl->glVertexArrayAttribBinding(vao, 5 + i, 5 + i);
+	//	gl->glVertexAttribDivisor(5 + i, 1);
+	//}
+
+	//gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+
+	//gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
+	//for (int i = 0; i < 4; i++) {
+	//	gl->glEnableVertexAttribArray(5 + i);
+	//	gl->glVertexAttribPointer(5 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+	//	gl->glVertexAttribDivisor(5 + i, 1);
+	//}
+
+	gl->glEnableVertexArrayAttrib(vao, 0);
+	gl->glEnableVertexArrayAttrib(vao, 1);
+	gl->glEnableVertexArrayAttrib(vao, 2);
+	gl->glEnableVertexArrayAttrib(vao, 3);
+	gl->glEnableVertexArrayAttrib(vao, 4);
+	gl->glEnableVertexArrayAttrib(vao, 5);
+	gl->glEnableVertexArrayAttrib(vao, 6);
+	gl->glEnableVertexArrayAttrib(vao, 7);
+	gl->glEnableVertexArrayAttrib(vao, 8);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -230,14 +276,14 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 	gl->glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
 	gl->glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
 
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-
-	gl->glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
 	for (int i = 0; i < 4; i++) {
-		gl->glEnableVertexAttribArray(5 + i);
-		gl->glVertexAttribPointer(5 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), reinterpret_cast<const void*>(sizeof(glm::vec4) * i));
+		gl->glVertexArrayVertexBuffer(vao, 5 + i, instance_buffer, 0, sizeof(glm::mat4));
+		gl->glVertexArrayAttribFormat(vao, 5 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4) * i);
+		gl->glVertexArrayAttribBinding(vao, 5 + i, 5 + i);
 		gl->glVertexAttribDivisor(5 + i, 1);
 	}
+
+	gl->glVertexArrayElementBuffer(vao, index_buffer);
 }
 
 SkinnedMesh::~SkinnedMesh() {
@@ -344,7 +390,6 @@ void SkinnedMesh::render_opaque(bool render_hd) {
 	gl->glBindTextureUnit(5, bone_matrix_texture);
 
 	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
 
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, skip_count);
@@ -407,8 +452,8 @@ void SkinnedMesh::render_opaque(bool render_hd) {
 				gl->glDepthMask(true);
 			}
 
-			for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
-				gl->glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
+			for (size_t texture_slot = 0; texture_slot < j.texturess.size(); texture_slot++) {
+				gl->glBindTextureUnit(texture_slot, textures[j.texturess[texture_slot].id]->id);
 			}
 
 			gl->glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
@@ -499,8 +544,8 @@ void SkinnedMesh::render_transparent(int instance_id, bool render_hd) {
 			//	gl->glDepthMask(true);
 			//}
 
-			for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
-				gl->glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
+			for (size_t texture_slot = 0; texture_slot < j.texturess.size(); texture_slot++) {
+				gl->glBindTextureUnit(texture_slot, textures[j.texturess[texture_slot].id]->id);
 			}
 
 			gl->glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);

@@ -13,7 +13,7 @@ export class Timer {
 	}
 
 	double elapsed_ms() {
-		return (std::chrono::steady_clock::now() - start_time).count() / 1'000'000;
+		return static_cast<double>((std::chrono::steady_clock::now() - start_time).count()) / 1'000'000;
 	}
 
 	void reset() {

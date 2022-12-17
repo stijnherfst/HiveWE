@@ -403,6 +403,7 @@ void Terrain::render_ground() const {
 void Terrain::render_water() const {
 	gl->glEnable(GL_BLEND);
 	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl->glDepthMask(false);
 
 	water_shader->use();
 
@@ -427,6 +428,7 @@ void Terrain::render_water() const {
 	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
 
 	gl->glDisableVertexAttribArray(0);
+	gl->glDepthMask(true);
 }
 
 void Terrain::change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {

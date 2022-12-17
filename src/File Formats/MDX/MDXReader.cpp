@@ -106,7 +106,7 @@ namespace mdx {
 					reader.read<uint32_t>();
 					LayerTexture layer_texture;
 					layer_texture.id = reader.read<uint32_t>();
-					layer.textures.push_back(layer_texture);
+					layer.texturess.push_back(layer_texture);
 
 					reader.advance(size - 16);
 					continue;
@@ -144,7 +144,7 @@ namespace mdx {
 					}
 				}
 
-				layer.textures.push_back(layer_texture);
+				layer.texturess.push_back(layer_texture);
 			}
 
 			material.layers.push_back(std::move(layer));
@@ -159,7 +159,7 @@ namespace mdx {
 
 				LayerTexture layer_texture;
 				layer_texture.id = reader.read<uint32_t>();
-				layer.textures.push_back(layer_texture);
+				layer.texturess.push_back(layer_texture);
 
 				layer.texture_animation_id = reader.read<uint32_t>();
 				layer.coord_id = reader.read<uint32_t>();
@@ -228,7 +228,7 @@ namespace mdx {
 				} else {
 					reader.advance(-4);
 				}
-				layer.textures.push_back(layer_texture);
+				layer.texturess.push_back(layer_texture);
 			}
 
 			while (reader.position < reader_pos + size) {

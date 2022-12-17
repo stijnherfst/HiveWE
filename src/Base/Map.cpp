@@ -497,9 +497,9 @@ void Map::render() {
 		brush->render();
 	}
 
+	terrain.render_water();
 	render_manager.render(render_lighting, light_direction);
 
-	terrain.render_water();
 
 	//physics.dynamicsWorld->debugDrawWorld();
 	//physics.draw->render();

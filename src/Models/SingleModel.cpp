@@ -18,7 +18,7 @@
 
 #include "UnitSelector.h"
 #include "GenericSelectorList.h"
-#include "IconView.h"
+#include "ObjectEditor/IconView.h"
 #include "AbilityTreeModel.h"
 
 #include "fmt/format.h"
