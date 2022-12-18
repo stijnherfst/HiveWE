@@ -39,13 +39,12 @@ class SkinnedMesh : public Resource {
 	GLuint tangent_buffer;
 	GLuint weight_buffer;
 	GLuint index_buffer;
-	GLuint instance_buffer;
-	GLuint bone_matrix_buffer;
-	GLuint bone_matrix_texture;
 	GLuint layer_alpha;
 	GLuint geoset_color;
 
+	GLuint instance_ssbo;
 	GLuint layer_colors_ssbo;
+	GLuint bones_ssbo;
 
 	int skip_count = 0;
 

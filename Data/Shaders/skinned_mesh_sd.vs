@@ -16,18 +16,16 @@ layout(std430, binding = 0) buffer layoutName {
     vec4 layer_colors[];
 };
 
-layout (binding = 5) uniform samplerBuffer nodeMatrices;
+layout(std430, binding = 2) buffer layoutName3 {
+    mat4 bone_matrices[];
+};
 
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
 
 mat4 fetchMatrix(int bone_index) {
-	return mat4(
-		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4),
-		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 1),
-		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 2),
-		texelFetch(nodeMatrices, instanceID * bone_count * 4 + bone_index * 4 + 3));
+	return bone_matrices[gl_InstanceID * bone_count + bone_index];
 }
 
 void main() {

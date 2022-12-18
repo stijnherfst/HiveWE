@@ -54,16 +54,12 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 	gl->glCreateBuffers(1, &weight_buffer);
 	gl->glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_DRAW);
 
-	gl->glCreateBuffers(1, &instance_buffer);
-
 	gl->glCreateBuffers(1, &index_buffer);
 	gl->glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
 
-	gl->glCreateBuffers(1, &bone_matrix_buffer);
-	gl->glCreateTextures(GL_TEXTURE_BUFFER, 1, &bone_matrix_texture);
-	
+	gl->glCreateBuffers(1, &instance_ssbo);
 	gl->glCreateBuffers(1, &layer_colors_ssbo);
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, layer_colors_ssbo);
+	gl->glCreateBuffers(1, &bones_ssbo);
 
 	// Buffer Data
 	int base_vertex = 0;
@@ -251,15 +247,15 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 	//	gl->glVertexAttribDivisor(5 + i, 1);
 	//}
 
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, instance_ssbo);
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bones_ssbo);
+
 	gl->glEnableVertexArrayAttrib(vao, 0);
 	gl->glEnableVertexArrayAttrib(vao, 1);
 	gl->glEnableVertexArrayAttrib(vao, 2);
 	gl->glEnableVertexArrayAttrib(vao, 3);
 	gl->glEnableVertexArrayAttrib(vao, 4);
-	gl->glEnableVertexArrayAttrib(vao, 5);
-	gl->glEnableVertexArrayAttrib(vao, 6);
-	gl->glEnableVertexArrayAttrib(vao, 7);
-	gl->glEnableVertexArrayAttrib(vao, 8);
 
 	gl->glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	gl->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
@@ -276,13 +272,6 @@ SkinnedMesh::SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std:
 	gl->glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
 	gl->glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
 
-	for (int i = 0; i < 4; i++) {
-		gl->glVertexArrayVertexBuffer(vao, 5 + i, instance_buffer, 0, sizeof(glm::mat4));
-		gl->glVertexArrayAttribFormat(vao, 5 + i, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4) * i);
-		gl->glVertexArrayAttribBinding(vao, 5 + i, 5 + i);
-		gl->glVertexAttribDivisor(5 + i, 1);
-	}
-
 	gl->glVertexArrayElementBuffer(vao, index_buffer);
 }
 
@@ -293,10 +282,11 @@ SkinnedMesh::~SkinnedMesh() {
 	gl->glDeleteBuffers(1, &tangent_buffer);
 	gl->glDeleteBuffers(1, &weight_buffer);
 	gl->glDeleteBuffers(1, &index_buffer);
-	gl->glDeleteBuffers(1, &instance_buffer);
-	gl->glDeleteBuffers(1, &bone_matrix_buffer);
 	gl->glDeleteBuffers(1, &layer_alpha);
 	gl->glDeleteBuffers(1, &geoset_color);
+	gl->glDeleteBuffers(1, &layer_colors_ssbo);
+	gl->glDeleteBuffers(1, &instance_ssbo);
+	gl->glDeleteBuffers(1, &bones_ssbo);
 }
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
@@ -331,10 +321,7 @@ void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 
 				.instance_id = static_cast<int>(render_jobs.size() - 1),
 				.distance = glm::distance(camera->position - camera->direction * camera->distance, glm::vec3(skeleton.matrix[3]))
 			};
-			// hack to improve performance
-			if (t.distance > 256.f) {
-				continue;
-			}
+
 			map->render_manager.skinned_transparent_instances.push_back(t);
 			break;
 		}
@@ -346,13 +333,13 @@ void SkinnedMesh::upload_render_data() {
 		return;
 	}
 
-	gl->glNamedBufferData(instance_buffer, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_DYNAMIC_DRAW);
+	gl->glNamedBufferData(instance_ssbo, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_DYNAMIC_DRAW);
 
 	for (int i = 0; i < render_jobs.size(); i++) {
 		instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + model->bones.size());
 	}
 
-	gl->glNamedBufferData(bone_matrix_buffer, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
+	gl->glNamedBufferData(bones_ssbo, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
 
 	layer_colors.clear();
 
@@ -385,11 +372,6 @@ void SkinnedMesh::render_opaque(bool render_hd) {
 	}
 
 	gl->glBindVertexArray(vao);
-
-	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-	gl->glBindTextureUnit(5, bone_matrix_texture);
-
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
 
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, skip_count);
@@ -475,15 +457,13 @@ void SkinnedMesh::render_transparent(int instance_id, bool render_hd) {
 		gl->glUniformMatrix4fv(5, 1, false, &render_jobs[instance_id][0][0]);
 	}
 
-	gl->glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-	gl->glBindTextureUnit(5, bone_matrix_texture);
-
 	gl->glUniform1i(3, model->bones.size());
 	gl->glUniform1i(4, instance_id);
 	gl->glUniform1i(6, skip_count);
 
-	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-	gl->glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
+	/*gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, instance_ssbo);
+	gl->glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bones_ssbo);*/
 
 	int lay_index = 0;
 	for (const auto& i : geosets) {
