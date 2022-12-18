@@ -42,7 +42,6 @@ void main() {
 	const float w2 = ((vSkin.y & 0x00FF0000) >> 16) / 255.f;
 	const float w3 = ((vSkin.y & 0xFF000000) >> 24) / 255.f;
 	mat4 skinMatrix = instance_matrices[gl_InstanceID] * (b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3);
-	// mat4 skinMatrix = vInstance * (b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3);
 	
 	gl_Position = VP * skinMatrix * vec4(vPosition, 1.f);
 

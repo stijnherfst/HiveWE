@@ -1,18 +1,14 @@
 #include "RenderManager.h"
 
 import ResourceManager;
+import Timer;
 
 #include "Camera.h"
 #include "Units.h"
 #include "Globals.h"
+#include <SOIL2/SOIL2.h>
 
 RenderManager::RenderManager() {
-	instance_static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_sd.vs", "Data/Shaders/static_mesh_instanced_sd.fs" });
-	instance_static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_instanced_hd.vs", "Data/Shaders/static_mesh_instanced_hd.fs" });
-	static_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_sd.vs", "Data/Shaders/static_mesh_sd.fs" });
-	static_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_hd.vs", "Data/Shaders/static_mesh_hd.fs" });
-	colored_static_shader = resource_manager.load<Shader>({ "Data/Shaders/static_mesh_color_coded.vs", "Data/Shaders/static_mesh_color_coded.fs" });
-	
 	instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
 	instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_hd.vs", "Data/Shaders/skinned_mesh_instanced_hd.fs" });
 	skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_sd.vs", "Data/Shaders/skinned_mesh_sd.fs" });
@@ -124,6 +120,9 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	gl->glViewport(0, 0, window_width, window_height);
 
+	gl->glDepthMask(true);
+	gl->glDisable(GL_BLEND);
+
 	colored_skinned_shader->use();
 	for (size_t i = 0; i < map->units.units.size(); i++) {
 		const Unit& unit = map->units.units[i];
@@ -131,7 +130,13 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 			continue;
 		} // ToDo handle starting locations
 
-		mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+		mdx::Extent extent;
+		if (unit.mesh->model->sequences.empty()) {
+			extent = unit.mesh->model->extent;
+		} else {
+			extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+		}
+
 		if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
 			unit.mesh->render_color_coded(unit.skeleton, i + 1);
 		}
@@ -142,6 +147,7 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
 	gl->glBindVertexArray(old_vao);
+	gl->glEnable(GL_BLEND);
 
 	const int index = color.r + (color.g << 8) + (color.b << 16);
 	if (index != 0) {
@@ -164,10 +170,20 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 	gl->glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	gl->glViewport(0, 0, window_width, window_height);
 
+	gl->glDepthMask(true);
+	gl->glDisable(GL_BLEND);
+
 	colored_skinned_shader->use();
 	for (size_t i = 0; i < map->doodads.doodads.size(); i++) {
 		const Doodad& doodad = map->doodads.doodads[i];
-		const mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
+
+		mdx::Extent extent;
+		if (doodad.mesh->model->sequences.empty()) {
+			extent = doodad.mesh->model->extent;
+		} else {
+			extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
+		}
+
 		if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
 			doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
 		}
@@ -178,6 +194,7 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 
 	gl->glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
 	gl->glBindVertexArray(old_vao);
+	gl->glEnable(GL_BLEND);
 
 	const int index = color.r + (color.g << 8) + (color.b << 16);
 	if (index != 0) {

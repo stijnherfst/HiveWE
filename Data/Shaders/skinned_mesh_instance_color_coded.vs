@@ -7,7 +7,10 @@ layout (location = 0) uniform mat4 MVP;
 layout (location = 3) uniform int bone_count;
 layout (location = 4) uniform vec3 geoset_color;
 layout (location = 5) uniform float layer_alpha;
-layout (location = 8) uniform mat4 bones[217]; // Thats a lotta boners. max 200 because the shader compiler issues an error when going higher
+
+layout(std430, binding = 0) buffer layoutName {
+    mat4 bones[];
+};
 
 void main() {
 	const mat4 b0 = bones[int(vSkin.x & 0x000000FF)];

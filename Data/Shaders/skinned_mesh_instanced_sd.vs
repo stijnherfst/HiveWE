@@ -44,7 +44,6 @@ void main() {
 	position = b0 * position * w0 + b1 * position * w1 + b2 * position * w2 + b3 * position * w3;
 	position.w = 1.f;
 
-	// gl_Position = VP * vInstance * position;
 	gl_Position = VP * instance_matrices[gl_InstanceID] * position;
 
 	UV = vUV;
