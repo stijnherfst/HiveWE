@@ -539,13 +539,11 @@ void SkinnedMesh::render_color_coded(const SkeletalModelInstance& skeleton, int 
 			gl->glUniform3f(4, geoset_color.x, geoset_color.y, geoset_color.z);
 			gl->glUniform1f(5, final_visibility);
 
-			if (j.blend_mode == 0) {
-				gl->glUniform1f(1, -1.f);
-			} else if (j.blend_mode == 1) {
-				gl->glUniform1f(1, 0.75f);
-			} else {
-				continue;
-			}
+			//if (j.blend_mode == 0) {
+			//	gl->glUniform1f(1, -1.f);
+			//} else if (j.blend_mode == 1) {
+			//	gl->glUniform1f(1, 0.75f);
+			//}
 
 			if (j.shading_flags & 0x40) {
 				gl->glDisable(GL_DEPTH_TEST);

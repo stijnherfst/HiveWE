@@ -28,4 +28,5 @@ public:
 	void deleteRow(const std::string_view);
 
 	std::string fieldToMetaID(const std::string& id, const std::string& field) const;
+	QModelIndex rowIDToIndex(const std::string& id) const;
 };

@@ -34,10 +34,10 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		ui.type->addItem(QString::fromStdString(text), QString::fromStdString(key));
 	}
 
-	DoodadListModel* doodad_list_model = new DoodadListModel;
+	doodad_list_model = new DoodadListModel;
 	doodad_list_model->setSourceModel(doodads_table);
 
-	DestructableListModel* destructable_list_model = new DestructableListModel;
+	destructable_list_model = new DestructableListModel;
 	destructable_list_model->setSourceModel(destructibles_table);
 
 	doodad_filter_model = new DoodadListFilter(this);
@@ -50,11 +50,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	destructable_filter_model->setSourceModel(destructable_list_model);
 	destructable_filter_model->sort(0, Qt::AscendingOrder);
 
-	table = new QConcatenateTablesProxyModel;
-	table->addSourceModel(doodad_filter_model);
-	table->addSourceModel(destructable_filter_model);
+	concat_table = new QConcatenateTablesProxyModel;
+	concat_table->addSourceModel(doodad_filter_model);
+	concat_table->addSourceModel(destructable_filter_model);
 
-	ui.doodads->setModel(table);
+	ui.doodads->setModel(concat_table);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -88,6 +88,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRibbonButton* random_rotation = new QRibbonButton;
 	random_rotation->setText("Random\nRotation");
+	random_rotation->setToolTip("Placed doodads will get a random rotation as long as their properties allow it");
 	random_rotation->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
 	random_rotation->setCheckable(true);
 	random_rotation->setChecked(true);
@@ -95,6 +96,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRibbonButton* random_scale = new QRibbonButton;
 	random_scale->setText("Random\nScale");
+	random_scale->setToolTip("Placed doodads will get a random scale each time between their minScale and maxScale");
 	random_scale->setIcon(QIcon("Data/Icons/Ribbon/scale32x32.png"));
 	random_scale->setCheckable(true);
 	random_scale->setChecked(true);
@@ -102,6 +104,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRibbonButton* lock_height = new QRibbonButton;
 	lock_height->setText("Lock\nHeight");
+	lock_height->setToolTip("Locks the absolute height of selected doodads when moved");
 	lock_height->setIcon(QIcon("Data/Icons/Ribbon/lock.png"));
 	lock_height->setCheckable(true);
 	placement_section->addWidget(lock_height);
@@ -111,6 +114,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRibbonButton* random_variation = new QRibbonButton;
 	random_variation->setText("Random\nVariation");
+	random_variation->setToolTip("Placed doodads will get a random variation. You can control which ones on the right ->");
 	random_variation->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
 	random_variation->setCheckable(true);
 	random_variation->setChecked(true);
@@ -124,12 +128,15 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	QRadioButton* invisible_non_solid = new QRadioButton;
 	invisible_non_solid->setText("Invisible non solid");
+	invisible_non_solid->setToolTip("Invisible and can units walk through");
 
 	QRadioButton* visible_non_solid = new QRadioButton;
 	visible_non_solid->setText("Visible non solid");
+	visible_non_solid->setToolTip("Visible but units can walk through");
 
 	QRadioButton* visible_solid = new QRadioButton;
 	visible_solid->setText("Visible solid");
+	visible_solid->setToolTip("Visible and units cannot walk through");
 	visible_solid->setChecked(true);
 
 	visibility_flags_layout->addWidget(invisible_non_solid);
@@ -216,7 +223,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	QVBoxLayout* info_layout = new QVBoxLayout;
 	info_layout->addWidget(selection_name);
 	info_layout->addWidget(edit_in_oe);
-	//info_layout->addWidget(select_in_palette);
+	info_layout->addWidget(select_in_palette);
 
 	current_selection_section->addLayout(scaling_layout);
 	current_selection_section->addSpacing(5);
@@ -305,21 +312,36 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(edit_in_oe, &QSmallRibbonButton::clicked, [&]() {
 		bool created;
 		auto editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
-		const Doodad& doodad = *brush.selections.front();
-		if (destructibles_slk.row_headers.contains(doodad.id)) {
-			editor->select_id(ObjectEditor::Category::destructible, doodad.id);
+		const Doodad* doodad = *brush.selections.begin();
+		if (destructibles_slk.row_headers.contains(doodad->id)) {
+			editor->select_id(ObjectEditor::Category::destructible, doodad->id);
 		} else {
-			editor->select_id(ObjectEditor::Category::doodad, doodad.id);
+			editor->select_id(ObjectEditor::Category::doodad, doodad->id);
 		}
 	});
 
-	//connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
-	//	const Doodad& doodad = *brush.selections.front();
-	//	ui.type
-	//	auto model = ui.doodads->selectionModel()->select(;
-	//	
-	//});
+	connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
+		const Doodad* doodad = *brush.selections.begin();
+		ui.search->clear();
 
+		if (destructibles_slk.row_headers.contains(doodad->id)) {
+			const auto category = destructibles_slk.data("category", doodad->id);
+			ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+
+			const auto index = destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(doodad->id)));
+			const auto finally = concat_table->mapFromSource(index);
+			ui.doodads->setCurrentIndex(finally);
+			selection_changed(finally);
+		} else {
+			const auto category = doodads_slk.data("category", doodad->id);
+			ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+
+			const auto index = doodad_filter_model->mapFromSource(doodad_list_model->mapFromSource(doodads_table->rowIDToIndex(doodad->id)));
+			const auto finally = concat_table->mapFromSource(index);
+			ui.doodads->setCurrentIndex(finally);
+			selection_changed(finally);
+		}
+	});
 
 	// Default to Trees/Destructibles
 	ui.type->setCurrentIndex(ui.type->count() - 2);
@@ -355,12 +377,12 @@ bool DoodadPalette::event(QEvent *e) {
 void DoodadPalette::selection_changed(const QModelIndex& index) {
 	std::string id;
 
-	const auto model = table->mapToSource(index).model();
+	const auto model = concat_table->mapToSource(index).model();
 	if (model == destructable_filter_model) {
-		const int row = destructable_filter_model->mapToSource(table->mapToSource(index)).row();
+		const int row = destructable_filter_model->mapToSource(concat_table->mapToSource(index)).row();
 		id = destructibles_slk.index_to_row.at(row);
 	} else if (model == doodad_filter_model) {
-		const int row = doodad_filter_model->mapToSource(table->mapToSource(index)).row();
+		const int row = doodad_filter_model->mapToSource(concat_table->mapToSource(index)).row();
 		id = doodads_slk.index_to_row.at(row);
 	}
 
@@ -413,9 +435,10 @@ void DoodadPalette::update_selection_info() {
 		if (!current_selection_section->isEnabled()) {
 			current_selection_section->setEnabled(true);
 		}
-		const Doodad& doodad = *brush.selections.front();
+		const Doodad& doodad = **brush.selections.begin();
 
 		float first_relative_height = doodad.position.z - map->terrain.interpolated_height(doodad.position.x, doodad.position.y);
+		bool same_object = true;
 		bool same_x = true;
 		bool same_y = true;
 		bool same_z = true;
@@ -425,23 +448,24 @@ void DoodadPalette::update_selection_info() {
 		for (const auto& i : brush.selections) {
 			float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y);
 
+			same_object = same_object && i->id == doodad.id;
 			same_x = same_x && i->scale.x == doodad.scale.x;
 			same_y = same_y && i->scale.y == doodad.scale.y;
 			same_z = same_z && i->scale.z == doodad.scale.z;
 			same_angle = same_angle && i->angle == doodad.angle;
-			same_absolute_height = same_absolute_height && i->position.z == doodad.position.z;
-			same_relative_height = same_relative_height && other_relative_height == first_relative_height;
+			same_absolute_height = same_absolute_height && std::abs(i->position.z - doodad.position.z) < 0.001f;
+			same_relative_height = same_relative_height && std::abs(other_relative_height - first_relative_height) < 0.001f;
 		}
 
 		x_scale->setText(same_x ? QString::number(doodad.scale.x) : "Differing");
 		y_scale->setText(same_y ? QString::number(doodad.scale.y) : "Differing");
 		z_scale->setText(same_z ? QString::number(doodad.scale.z) : "Differing");
 		rotation->setText(same_angle ? toString(glm::degrees(doodad.angle)) : "Differing");
-		absolute_height->setText(same_angle ? toString(doodad.position.z) : "Differing");
-		relative_height->setText(same_angle ? toString(first_relative_height) : "Differing");
+		absolute_height->setText(same_absolute_height ? toString(doodad.position.z) : "Differing");
+		relative_height->setText(same_relative_height ? toString(first_relative_height) : "Differing");
 
 		// Set the name
-		if (brush.selections.size() == 1) {
+		if (same_object) {
 			if (doodads_slk.row_headers.contains(doodad.id)) {
 				auto index = doodads_table->index(doodads_slk.row_headers.at(doodad.id), doodads_slk.column_headers.at("name"));
 				selection_name->setText(doodads_table->data(index).toString());
@@ -508,7 +532,8 @@ void DoodadPalette::set_group_height_maximum() {
 	brush.set_selection_absolute_height(maximum);
 }
 
-void DoodadPalette::set_selection_rotation(float rotation) {
-	brush.set_selection_angle(glm::radians(rotation));
+// new_rotation in degrees
+void DoodadPalette::set_selection_rotation(float new_rotation) {
+	brush.set_selection_angle(glm::radians(new_rotation));
 	update_selection_info();
 }

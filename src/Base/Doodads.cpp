@@ -275,11 +275,10 @@ std::vector<Doodad*> Doodads::query_area(const QRectF& area) {
 	return result;
 }
 
-void Doodads::remove_doodads(const std::vector<Doodad*>& list) {
-	doodads.erase(std::remove_if(doodads.begin(), doodads.end(), [&](Doodad& doodad) {
-					  return std::find(list.begin(), list.end(), &doodad) != list.end();
-				  }),
-				  doodads.end());
+void Doodads::remove_doodads(const std::unordered_set<Doodad*>& list) {
+	std::erase_if(doodads, [&](Doodad& doodad) {
+		return list.contains(&doodad); 
+	});
 }
 
 void Doodads::update_doodad_pathing(const std::vector<Doodad>& target_doodads) {
@@ -294,7 +293,7 @@ void Doodads::update_doodad_pathing(const std::vector<Doodad>& target_doodads) {
 	update_doodad_pathing(update_pathing_area);
 }
 
-void Doodads::update_doodad_pathing(const std::vector<Doodad*>& target_doodads) {
+void Doodads::update_doodad_pathing(const std::unordered_set<Doodad*>& target_doodads) {
 	QRectF update_pathing_area;
 	for (const auto& i : target_doodads) {
 		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
@@ -435,6 +434,8 @@ std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
 		texture_name = destructibles_slk.data("texfile", id);
 		texture_name.replace_extension("");
 	}
+	//std::cout << variations << " vars\n";
+	//std::cout << (variations == "1" ? "" : std::to_string(variation)) << " string\n";
 
 	const std::string stem = mesh_path.stem().string();
 	mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));

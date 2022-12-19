@@ -15,9 +15,10 @@
 import Hierarchy;
 import Texture;
 
-DoodadBrush::DoodadBrush() : Brush() {
+DoodadBrush::DoodadBrush()
+	: Brush() {
 	uv_offset_granularity = 2;
-	brush_offset = { 0.25f , 0.25f };
+	brush_offset = { 0.25f, 0.25f };
 }
 
 /// Gets a random variation from the possible_variation list
@@ -73,9 +74,9 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 				// Have to check for > 250 because sometimes the pathing textures are not properly thresholded
 				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
-					pathing_texture->data[in + 1] > 250 ? 255 : 0,
-					pathing_texture->data[in] > 250 ? 255 : 0,
-					128 };
+									pathing_texture->data[in + 1] > 250 ? 255 : 0,
+									pathing_texture->data[in] > 250 ? 255 : 0,
+									128 };
 
 				if (color.r || color.g || color.b) {
 					brush[index] = color;
@@ -111,7 +112,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			y_displacement = -0.25f * up + 0.25f * down;
 		} else {
 			x_displacement = -0.5f * left + 0.5f * right;
-			y_displacement = -0.5f * up + 0.5f * down;	
+			y_displacement = -0.5f * up + 0.5f * down;
 		}
 
 		for (const auto& i : selections) {
@@ -133,7 +134,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				selections.clear();
 				selections.reserve(map->doodads.doodads.size());
 				for (auto& i : map->doodads.doodads) {
-					selections.push_back(&i);
+					selections.emplace(&i);
 				}
 
 				emit selection_changed();
@@ -193,7 +194,7 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 	if (event->isAutoRepeat()) {
 		return;
 	}
-		
+
 	if (action == Action::move) {
 		end_action();
 	}
@@ -201,26 +202,46 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 
 void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
-	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
-		auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
-		if (id) {
-			Doodad& doodad = map->doodads.doodads[id.value()];
-
-			drag_start = input_handler.mouse_world;
-			dragging = true;
-
-			// If the current index is already in a selection then we want to drag the entire group
-			if (std::find(selections.begin(), selections.end(), &doodad) != selections.end()) {
-				drag_offsets.clear();
-				for (const auto& i : selections) {
-					drag_offsets.push_back(input_handler.mouse_world - i->position);
+	if (event->button() == Qt::LeftButton && input_handler.mouse.y > 0.f) {
+		if (mode == Mode::selection) {
+			if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
+				auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
+				if (id) {
+					if (selections.contains(&map->doodads.doodads[id.value()])) {
+						selections.erase(&map->doodads.doodads[id.value()]);
+					} else {
+						selections.emplace(&map->doodads.doodads[id.value()]);
+					}
+					//if (auto found = std::find(selections.begin(), selections.end(), &map->doodads.doodads[id.value()]); found != selections.end()) {
+						//selections.erase(found);
+					//} else {
+					//}
+					return;
 				}
-			} else {
-				selections = { &doodad };
-				drag_offsets = { input_handler.mouse_world - doodad.position };
-				emit selection_changed();
 			}
-			return;
+
+			if (!event->modifiers()) {
+				auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
+				if (id) {
+					Doodad& doodad = map->doodads.doodads[id.value()];
+
+					drag_start = input_handler.mouse_world;
+					dragging = true;
+
+					// If the current index is already in a selection then we want to drag the entire group
+					if (std::find(selections.begin(), selections.end(), &doodad) != selections.end()) {
+						drag_offsets.clear();
+						for (const auto& i : selections) {
+							drag_offsets.push_back(input_handler.mouse_world - i->position);
+						}
+					} else {
+						selections = { &doodad };
+						drag_offsets = { input_handler.mouse_world - doodad.position };
+						emit selection_changed();
+					}
+					return;
+				}
+			}
 		}
 	}
 	Brush::mouse_press_event(event, frame_delta);
@@ -246,7 +267,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					offset = input_handler.mouse_world - drag_start;
 				} else {
 					offset = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f;
-					offset -= glm::round((drag_start) * 2.f + 0.5f) / 2.f - 0.25f;
+					offset -= glm::round((drag_start)*2.f + 0.5f) / 2.f - 0.25f;
 				}
 				offset.z = 0;
 
@@ -255,8 +276,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				}
 				drag_start = input_handler.mouse_world;
 
-				for (size_t i = 0; i < selections.size(); i++) {
-					Doodad* doodad = selections[i];
+				for (const auto& doodad : selections) {
 					doodad->position += offset;
 					if (!lock_doodad_z) {
 						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y);
@@ -284,7 +304,19 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				map->doodads.update_doodad_pathing(selections);
 			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
-				selections = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+
+				auto query = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+				if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
+					selections.insert(query.begin(), query.end());
+				} else if (event->modifiers() & Qt::KeyboardModifier::AltModifier) {
+					for (const auto& i : query) {
+						selections.erase(i);
+					}
+				} else {
+					selections.clear();
+					selections.insert(query.begin(), query.end());
+				}
+
 				emit selection_changed();
 			}
 		}
@@ -374,7 +406,7 @@ void DoodadBrush::place_clipboard() {
 		new_doodad.position = final_position;
 		new_doodad.update();
 		doodad_undo->doodads.push_back(new_doodad);
-		
+
 		if (new_doodad.pathing) {
 			map->pathing_map.blit_pathing_texture(new_doodad.position, glm::degrees(rotation) + 90, new_doodad.pathing);
 		}
@@ -465,8 +497,16 @@ void DoodadBrush::render_selection() const {
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		//float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
-		float selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
+		// float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
+		float selection_scale = 1.f;
+		if (i->mesh->model->sequences.empty()) {
+			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
+		} else {
+			selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
+		}
+		if (selection_scale < 0.1f) { // hack, what is the correct approach?
+			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
+		}
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -480,7 +520,6 @@ void DoodadBrush::render_selection() const {
 
 		gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
 		gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
 	}
 
 	gl->glDisableVertexAttribArray(0);
@@ -554,10 +593,10 @@ void DoodadBrush::set_random_rotation() {
 		if (pathing_texture->homogeneous) {
 			rotation = target_rotation;
 		} else {
-			rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+			rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
 		}
 	} else {
-		rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4)* glm::pi<float>() * 0.5f;
+		rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
 	}
 }
 
@@ -577,14 +616,14 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-	
+
 	min_scale = slk.data<float>("minscale", id);
 	max_scale = slk.data<float>("maxscale", id);
 
 	std::string maxRoll = doodads_slk.data("maxroll", id);
 	if (!maxRoll.empty()) {
 		roll = -std::stof(maxRoll);
-	} else{
+	} else {
 		roll = 0;
 	}
 

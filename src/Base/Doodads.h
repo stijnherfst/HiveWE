@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <memory>
+#include <unordered_set>
 
 #include "SkinnedMesh.h"
 #include "Utilities.h"
@@ -81,9 +82,9 @@ public:
 	void remove_doodad(Doodad* doodad);
 
 	std::vector<Doodad*> query_area(const QRectF& area);
-	void remove_doodads(const std::vector<Doodad*>& list);
+	void remove_doodads(const std::unordered_set<Doodad*>& list);
 
-	void update_doodad_pathing(const std::vector<Doodad*>& target_doodads);
+	void update_doodad_pathing(const std::unordered_set<Doodad*>& target_doodads);
 	void update_doodad_pathing(const std::vector<Doodad>& target_doodads);
 	void update_doodad_pathing(const QRectF& area);
 

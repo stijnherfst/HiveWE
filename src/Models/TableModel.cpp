@@ -307,3 +307,8 @@ std::string TableModel::fieldToMetaID(const std::string& id, const std::string& 
 
 	return meta_slk->meta_map.at(new_field + id);
 }
+
+// Returns the model index belonging to the row with the given id
+QModelIndex TableModel::rowIDToIndex(const std::string& id) const {
+	return createIndex(slk->row_headers.at(id), 0);
+}

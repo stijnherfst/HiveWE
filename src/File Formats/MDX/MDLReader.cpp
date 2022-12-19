@@ -16,8 +16,8 @@ module;
 
 module MDX;
 
-using outcome_v2_35644f5c::failure;
-using outcome_v2_35644f5c::result;
+using OUTCOME_V2_NAMESPACE::failure;
+using OUTCOME_V2_NAMESPACE::result;
 
 namespace mdx {
 #define TRY(r)                                \

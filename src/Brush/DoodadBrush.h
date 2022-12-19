@@ -45,7 +45,8 @@ public:
 	std::unique_ptr<DoodadAddAction> doodad_undo;
 	std::unique_ptr<DoodadStateAction> doodad_state_undo;
 
-	std::vector<Doodad*> selections;
+	//std::vector<Doodad*> selections;
+	std::unordered_set<Doodad*> selections;
 
 	glm::vec2 clipboard_mouse_offset;
 	std::vector<Doodad> clipboard;

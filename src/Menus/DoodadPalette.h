@@ -32,7 +32,7 @@ private:
 	DoodadListFilter* doodad_filter_model;
 	DestructableListModel* destructable_list_model;
 	DestructableListFilter* destructable_filter_model;
-	QConcatenateTablesProxyModel* table;
+	QConcatenateTablesProxyModel* concat_table;
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;
