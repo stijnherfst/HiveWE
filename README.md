@@ -43,11 +43,11 @@ or [Retera Model Studio](https://github.com/Retera/ReterasModelStudio)
 2. Clone [vcpkg](https://github.com/microsoft/vcpkg) somewhere central (eg. "C:/")
 `git clone https://github.com/Microsoft/vcpkg.git`
 3. Run vcpkg/bootstrap-vcpkg.bat
-4. Add 2 environment variables to your system:
+4. Add an environment variable to your system:
 - `VCPKG_ROOT`: the location where vcpkg is installed (e.g. "C:\vcpkg")
-- `VCPKG_DEFAULT_TRIPLET`: depending on your operating system (`x64-windows`, `x64-linux`, `x64-osx`)
 5. Open Visual Studio as an **Administrator** and using the open folder button to open the HiveWE folder. (**Administrator required** for creating a symbolic link on Windows)
 6. Dependencies will be automatically compiled, might take about 15-20 minutes (mostly due to Qt)
+7. Before running, copy the `imageformats` and `platforms` folders from `C:\vcpkg\buildtrees\qtbase\x64-windows-rel\Qt6\plugins` to be next to the built .exe
 
 **Done**
 
