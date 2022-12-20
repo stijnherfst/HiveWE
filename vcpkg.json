@@ -2,6 +2,9 @@
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "hivewe",
   "version": "0.7.0",
+  "vcpkg-configuration": {
+    "overlay-ports": [ "overlay-ports" ]
+  },
   "dependencies": [
     "qtbase",
     "glm",

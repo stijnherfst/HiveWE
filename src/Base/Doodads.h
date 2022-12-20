@@ -37,7 +37,6 @@ struct Doodad {
 	int creation_number;
 
 	// Auxiliary data
-	glm::mat4 matrix = glm::mat4(1.f);
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;

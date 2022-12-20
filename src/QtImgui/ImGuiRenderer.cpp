@@ -22,7 +22,7 @@ namespace QtImGui {
 namespace {
 
 // Keyboard mapping. Dear ImGui use those indices to peek into the io.KeysDown[] array.
-const QHash<int, ImGuiKey> keyMap = {
+const QHash<int, int> keyMap = {
     { Qt::Key_Tab, ImGuiKey_Tab },
     { Qt::Key_Left, ImGuiKey_LeftArrow },
     { Qt::Key_Right, ImGuiKey_RightArrow },
@@ -82,7 +82,7 @@ void ImGuiRenderer::initialize(WindowWrapper *window) {
     io.BackendPlatformName = "qtimgui";
     
     // Setup keyboard mapping
-    for (ImGuiKey key : keyMap.values()) {
+    for (auto key : keyMap.values()) {
         io.KeyMap[key] = key;
     }
     
@@ -330,6 +330,7 @@ void ImGuiRenderer::newFrame()
     // Setup time step
     double current_time =  QDateTime::currentMSecsSinceEpoch() / double(1000);
     io.DeltaTime = g_Time > 0.0 ? (float)(current_time - g_Time) : (float)(1.0f/60.0f);
+    if (io.DeltaTime <= 0.0f) io.DeltaTime = 0.00001f;
     g_Time = current_time;
     
     

@@ -2,11 +2,12 @@
 
 import ResourceManager;
 import Timer;
+import MDX;
 
 #include "Camera.h"
 #include "Units.h"
 #include "Globals.h"
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 
 RenderManager::RenderManager() {
 	instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
@@ -130,14 +131,8 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 			continue;
 		} // ToDo handle starting locations
 
-		mdx::Extent extent;
-		if (unit.mesh->model->sequences.empty()) {
-			extent = unit.mesh->model->extent;
-		} else {
-			extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
-		}
-
-		if (camera->inside_frustrum(unit.matrix * glm::vec4(extent.minimum, 1.f), unit.matrix * glm::vec4(extent.maximum, 1.f))) {
+		mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+		if (camera->inside_frustrum(unit.skeleton.matrix * glm::vec4(extent.minimum, 1.f), unit.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			unit.mesh->render_color_coded(unit.skeleton, i + 1);
 		}
 	}
@@ -177,14 +172,8 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 	for (size_t i = 0; i < map->doodads.doodads.size(); i++) {
 		const Doodad& doodad = map->doodads.doodads[i];
 
-		mdx::Extent extent;
-		if (doodad.mesh->model->sequences.empty()) {
-			extent = doodad.mesh->model->extent;
-		} else {
-			extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
-		}
-
-		if (camera->inside_frustrum(doodad.matrix * glm::vec4(extent.minimum, 1.f), doodad.matrix * glm::vec4(extent.maximum, 1.f))) {
+		mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
+		if (camera->inside_frustrum(doodad.skeleton.matrix * glm::vec4(extent.minimum, 1.f), doodad.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
 		}
 	}

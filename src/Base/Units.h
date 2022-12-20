@@ -52,7 +52,6 @@ struct Unit {
 	int waygate = -1;
 	int creation_number;
 
-	glm::mat4 matrix = glm::mat4(1.f);
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	glm::vec3 color;

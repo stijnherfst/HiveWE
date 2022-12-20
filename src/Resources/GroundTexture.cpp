@@ -1,6 +1,6 @@
 #include "GroundTexture.h"
 
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 
 import BLP;
 

@@ -1,6 +1,6 @@
 #include "QIconResource.h"
 
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 #include <QImage>
 #include <QPixmap>
 

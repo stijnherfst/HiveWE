@@ -257,13 +257,7 @@ SkinnedMesh::~SkinnedMesh() {
 }
 
 void SkinnedMesh::render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
-	mdx::Extent extent;
-	if (model->sequences.empty()) {
-		extent = model->extent;
-	} else {
-		extent = model->sequences[skeleton.sequence_index].extent;
-	}
-
+	mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
 	if (!camera->inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 		return;
 	}

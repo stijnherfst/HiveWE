@@ -1,7 +1,7 @@
 #include "GPUTexture.h"
 
 #include <QOpenGLFunctions_4_5_Core>
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 #include <iostream>
 
 import BLP;

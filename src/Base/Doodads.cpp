@@ -29,15 +29,17 @@ void Doodad::update() {
 		max_roll = destructibles_slk.data("maxroll", id);
 	}
 
+	glm::mat4 matrix(1.f);
 	matrix = glm::translate(glm::mat4(1.f), position);
 	matrix = glm::scale(matrix, (base_scale * scale) / 128.f);
 	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
 
-	if (!max_roll.empty() && max_roll != "-") {
-		matrix = glm::rotate(matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
-	}
-
 	skeleton.update_location(position, angle, (base_scale * scale) / 128.f);
+	skeleton.matrix = matrix;
+
+	if (!max_roll.empty() && max_roll != "-") {
+		skeleton.matrix = glm::rotate(skeleton.matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
+	}
 }
 
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
@@ -364,13 +366,12 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
 		// ToDo just use the numvar field from the SLKs
 		for (int i = 0; i < 20; i++) {
-			if (id_to_mesh.contains(id + std::to_string(i))) {
-				id_to_mesh.erase(id_to_mesh.find(id));
-			}
+			id_to_mesh.erase(id + std::to_string(i));
 		}
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.mesh = get_mesh(id, i.variation);
+				i.skeleton = SkeletalModelInstance(i.mesh->model);
 				i.update();
 			}
 		}
@@ -390,13 +391,12 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
 		// ToDo just use the numvar field from the SLKs
 		for (int i = 0; i < 20; i++) {
-			if (id_to_mesh.contains(id + std::to_string(i))) {
-				id_to_mesh.erase(id_to_mesh.find(id + std::to_string(i)));
-			}
+			id_to_mesh.erase(id + std::to_string(i));
 		}
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.mesh = get_mesh(id, i.variation);
+				i.skeleton = SkeletalModelInstance(i.mesh->model);
 				i.update();
 			}
 		}

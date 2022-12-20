@@ -2,7 +2,7 @@ module;
 
 #include <vector>
 #include <filesystem>
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 
 export module Texture;
 

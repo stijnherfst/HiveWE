@@ -2,7 +2,7 @@ module;
 
 #include <vector>
 #include <filesystem>
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS

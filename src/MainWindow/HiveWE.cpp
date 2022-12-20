@@ -11,7 +11,7 @@
 #include <QPushButton>
 #include <QApplication>
 
-#include <SOIL2/SOIL2.h>
+#include <soil2/SOIL2.h>
 
 #define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>

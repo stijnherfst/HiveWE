@@ -1,7 +1,3 @@
-if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
-	set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
-endif ()
-
 cmake_minimum_required(VERSION 3.22)
 project (HiveWE CXX)
 
@@ -53,17 +49,11 @@ target_link_libraries(HiveWE PUBLIC
 	Qt6::OpenGLWidgets
 	glm::glm
 	glad::glad
-	soil2
+	soil2::soil2
 	stormlib::stormlib
 	libjpeg-turbo::jpeg
 	libjpeg-turbo::turbojpeg
 	ads::qtadvanceddocking
-	Bullet3Common
-	BulletDynamics
-	BulletSoftBody
-	BulletInverseDynamics
-	BulletCollision
-	LinearMath
 	absl::flat_hash_map
 	absl::flat_hash_set
 	fmt::fmt
@@ -71,10 +61,11 @@ target_link_libraries(HiveWE PUBLIC
 	TBB::tbb
 	imgui::imgui
 	outcome::hl
+	${BULLET_LIBRARIES}
 )
 
 target_compile_options(HiveWE PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /W4 /sdl>
+	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /sdl>
 	$<$<CXX_COMPILER_ID:Clang>:-Wextra -Wpedantic -Werror -Wno-multichar>
 	$<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror -Wno-multichar>
 )
@@ -102,16 +93,3 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
 	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
 )
-
-#install(TARGETS HiveWE
-#    BUNDLE  DESTINATION .
-#    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#)
-
-#qt_generate_deploy_app_script(
- #   TARGET HiveWE
-#    FILENAME_VARIABLE deploy_script
-#    NO_UNSUPPORTED_PLATFORM_ERROR
-#)
-
-#install(SCRIPT ${deploy_script})

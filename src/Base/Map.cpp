@@ -449,7 +449,7 @@ void Map::update(double delta, int width, int height) {
 		} // ToDo handle starting locations
 
 		mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-		if (!camera->inside_frustrum(i.matrix * glm::vec4(extent.minimum, 1.f), i.matrix * glm::vec4(extent.maximum, 1.f))) {
+		if (!camera->inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
 
@@ -463,11 +463,9 @@ void Map::update(double delta, int width, int height) {
 
 	// Animate doodads
 	std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
-		if (!i.mesh->model->sequences.empty()) {
-			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-			if (!camera->inside_frustrum(i.matrix * glm::vec4(extent.minimum, 1.f), i.matrix * glm::vec4(extent.maximum, 1.f))) {
-				return;
-			}
+		mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
+		if (!camera->inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			return;
 		}
 
 		i.skeleton.update(delta);

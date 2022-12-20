@@ -212,10 +212,6 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 					} else {
 						selections.emplace(&map->doodads.doodads[id.value()]);
 					}
-					//if (auto found = std::find(selections.begin(), selections.end(), &map->doodads.doodads[id.value()]); found != selections.end()) {
-						//selections.erase(found);
-					//} else {
-					//}
 					return;
 				}
 			}
@@ -478,6 +474,11 @@ void DoodadBrush::render_brush() {
 		return;
 	}
 
+	glm::vec3 base_scale = glm::vec3(1.f);
+	if (doodads_slk.row_headers.contains(id)) {
+		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
+	}
+
 	glm::vec3 final_position;
 	if (free_placement) {
 		final_position = input_handler.mouse_world;
@@ -485,8 +486,9 @@ void DoodadBrush::render_brush() {
 		final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
 	}
 
-	skeleton.update_location(final_position, rotation, glm::vec3(1.f / 128.f) * scale);
+	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
 	skeleton.update(0.016f);
+
 	mesh->render_queue(skeleton, glm::vec3(1.f));
 }
 
@@ -497,7 +499,6 @@ void DoodadBrush::render_selection() const {
 	gl->glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		// float selection_scale = std::max(1.f, i->mesh->extent.bounds_radius / 128.f);
 		float selection_scale = 1.f;
 		if (i->mesh->model->sequences.empty()) {
 			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
@@ -527,9 +528,8 @@ void DoodadBrush::render_selection() const {
 }
 
 void DoodadBrush::render_clipboard() {
-	for (const auto& i : clipboard) {
+	for (auto& i : clipboard) {
 		glm::vec3 base_scale = glm::vec3(1.f);
-
 		if (doodads_slk.row_headers.contains(i.id)) {
 			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
 		}
@@ -545,10 +545,8 @@ void DoodadBrush::render_clipboard() {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 		}
 
-		glm::mat4 model(1.f);
-		model = glm::translate(model, final_position);
-		model = glm::scale(model, (base_scale - 1.f + i.scale) / 128.f);
-		model = glm::rotate(model, i.angle, glm::vec3(0, 0, 1));
+		i.skeleton.update_location(final_position, i.angle, (base_scale * i.scale) / 128.f);
+		i.skeleton.update(0.016f);
 
 		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 	}
