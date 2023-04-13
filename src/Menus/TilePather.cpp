@@ -1,9 +1,12 @@
 #include "TilePather.h"
 
-#include "Globals.h"
+//#include "Globals.h"
+#include <MapGlobal.h>
 
-#include <QOpenGLFunctions_4_5_Core>
+#include <glad/glad.h>
 
+import OpenGLUtilities;
+import Texture;
 
 TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
@@ -138,7 +141,7 @@ void TilePather::save_tiles() {
 		}
 	}
 
-	gl->glTextureSubImage2D(map->pathing_map.texture_static, 0, 0, 0, map->pathing_map.width, map->pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data());
+	glTextureSubImage2D(map->pathing_map.texture_static, 0, 0, 0, map->pathing_map.width, map->pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data());
 
 	close();
 }

@@ -10,9 +10,10 @@
 #include "fmt/format.h"
 
 #include "Globals.h"
-#include "Utilities.h"
-import Hierarchy;
+#include <MapGlobal.h>
 
+import Hierarchy;
+import Utilities;
 
 using namespace std::literals::string_literals;
 

@@ -15,13 +15,17 @@
 #include <QTreeView>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QSortFilterProxyModel>
 
 #include "UnitSelector.h"
 #include "GenericSelectorList.h"
 #include "ObjectEditor/IconView.h"
-#include "AbilityTreeModel.h"
+
+import AbilityTreeModel;
 
 #include "fmt/format.h"
+
+#include "Globals.h"
 
 SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyModel(parent) {
 	slk = table->slk;

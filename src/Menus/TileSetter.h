@@ -1,10 +1,13 @@
 #pragma once
 
+#include <vector>
 #include <QDialog>
-
-#include "ui_TileSetter.h"
+#include <Qwidget>
 #include <QButtonGroup>
-#include "FlowLayout.h"
+#include <QDialog>
+#include "ui_TileSetter.h"
+
+import FlowLayout;
 
 class TileSetter : public QDialog {
 	Q_OBJECT

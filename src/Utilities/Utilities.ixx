@@ -5,9 +5,6 @@ module;
 #include <filesystem>
 #include <fstream>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
 export module Utilities;

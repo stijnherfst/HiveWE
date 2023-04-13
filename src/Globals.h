@@ -1,13 +1,19 @@
-#pragma once 
+#pragma once
 
-#include "INI.h"
-#include "SLK.h"
-#include "MainWindow/GLWidget.h"
-#include "Map.h"
 #include "TableModel.h"
-#include "WindowHandler.h"
 
-inline Map* map = nullptr;
+#include <map>
+#include "MainWindow/GLWidget.h"
+#include <QSize>
+#include <QMargins>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+import WindowHandler;
+import INI;
+import SLK;
+
 inline ini::INI world_edit_strings;
 inline ini::INI world_edit_game_strings;
 inline ini::INI world_edit_data;

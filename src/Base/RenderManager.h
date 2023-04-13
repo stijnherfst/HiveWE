@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "SkinnedMesh.h"
+import SkinnedMesh;
 
 class RenderManager {
 public:
@@ -16,6 +16,7 @@ public:
 	std::shared_ptr<Shader> instance_skinned_mesh_shader_hd;
 	std::shared_ptr<Shader> skinned_mesh_shader_sd;
 	std::shared_ptr<Shader> skinned_mesh_shader_hd;
+	std::shared_ptr<Shader> preskin_mesh_shader;
 	std::shared_ptr<Shader> colored_skinned_shader;
 
 	std::vector<SkinnedMesh*> skinned_meshes;

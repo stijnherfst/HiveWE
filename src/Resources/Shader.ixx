@@ -1,0 +1,74 @@
+module;
+
+#include <filesystem>
+#include <glad/glad.h>
+#include <fmt/format.h>
+
+export module Shader;
+
+import ResourceManager;
+import Utilities;
+
+namespace fs = std::filesystem;
+
+export class Shader : public Resource {
+  public:
+	GLuint program;
+
+	static constexpr const char* name = "Shader";
+
+	// vertex: .vs
+	// fragment: .fs
+	// compute: .cs
+	explicit Shader(std::initializer_list<fs::path> paths) {
+		program = glCreateProgram();
+
+		for (const auto& path : paths) {
+			GLuint shader;
+			if (path.extension() == ".vs") {
+				shader = glCreateShader(GL_VERTEX_SHADER);
+			} else if (path.extension() == ".fs") {
+				shader = glCreateShader(GL_FRAGMENT_SHADER);
+			} else if (path.extension() == ".cs") {
+				shader = glCreateShader(GL_COMPUTE_SHADER);
+			}
+
+			static char buffer[512];
+			GLint status;
+			const std::string source = read_text_file(path);
+			const char* source_c_str = source.c_str();
+			glShaderSource(shader, 1, &source_c_str, nullptr);
+			glCompileShader(shader);
+
+			glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+			if (!status) {
+				glGetShaderInfoLog(shader, 512, nullptr, buffer);
+				fmt::print("{}\n{}\n", path.string(), buffer);
+			}
+
+			glAttachShader(program, shader);
+		}
+
+		glLinkProgram(program);
+		static char buffer[512];
+		GLint status;
+		glGetProgramiv(program, GL_LINK_STATUS, &status);
+		if (!status) {
+			glGetProgramInfoLog(program, 512, nullptr, buffer);
+
+			fmt::print("Failed to link\n");
+			for (const auto& path : paths) {
+				fmt::print("{}\n", path.string());
+			}
+			fmt::print("{}\n", buffer);
+		}
+	}
+
+	~Shader() {
+		glDeleteProgram(program);
+	}
+
+	void use() const {
+		glUseProgram(program);
+	}
+};

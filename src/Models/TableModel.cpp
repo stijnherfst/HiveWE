@@ -1,8 +1,11 @@
 #include "TableModel.h"
-#include "QIconResource.h"
 #include "Globals.h"
 
 #include <absl/strings/str_split.h>
+
+#include <MapGlobal.h>
+
+import QIconResource;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 

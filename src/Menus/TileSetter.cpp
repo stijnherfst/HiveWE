@@ -2,7 +2,15 @@
 #include "TilePicker.h"
 
 #include "Globals.h"
+#include <MapGlobal.h>
+
+#include <QPushButton>
+#include <QLabel>
+
+#include <string>
+
 import ResourceManager;
+import OpenGLUtilities;
 
 TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

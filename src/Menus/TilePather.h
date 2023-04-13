@@ -2,10 +2,12 @@
 
 #include "ui_TilePather.h"
 
+#include <QWidget>
 #include <QDialog>
 #include <QButtonGroup>
+#include <QAbstractButton>
 
-#include "FlowLayout.h"
+import FlowLayout;
 
 struct PathingOptions {
 	bool unwalkable = false;

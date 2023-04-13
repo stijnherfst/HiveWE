@@ -5,9 +5,11 @@
 #include <memory>
 
 import BinaryReader;
-#include "SkinnedMesh.h"
+import Utilities;
+import SkinnedMesh;
+import SkeletalModelInstance;
+
 #include "Terrain.h"
-#include <SkeletalModelInstance.h>
 
 struct Unit {
 	static inline int auto_increment;

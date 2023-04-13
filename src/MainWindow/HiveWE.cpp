@@ -18,6 +18,8 @@
 
 import Hierarchy;
 import MPQ;
+import OpenGLUtilities;
+import Camera;
 
 #include "TileSetter.h"
 #include "MapInfoEditor.h"
@@ -31,7 +33,6 @@ import MPQ;
 #include "PathingPalette.h"
 #include "ObjectEditor/ObjectEditor.h"
 #include "ModelEditor/ModelEditor.h"
-#include "Camera.h"
 
 #include "ObjectEditor/IconView.h"
 #include "Globals.h"
@@ -120,7 +121,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		qApp->setStyleSheet(StyleSheet);
 	});
 
-	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera->reset(); });
+	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera.reset(); });
 	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
 	setAutoFillBackground(true);
 
@@ -202,7 +203,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->move(10, 10);
 	minimap->show();
 
-	connect(minimap, &Minimap::clicked, [](QPointF location) { camera->position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera->position.z }; });
+	connect(minimap, &Minimap::clicked, [](QPointF location) { camera.position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z }; });
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
@@ -428,22 +429,22 @@ void HiveWE::switch_warcraft() {
 }
 
 void HiveWE::switch_camera() {
-	if (camera == &ui.widget->tps_camera) {
-		ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
-		ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
+	//if (camera == &ui.widget->tps_camera) {
+	//	ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
+	//	ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
 
-		ui.widget->fps_camera.position = ui.widget->tps_camera.position;
-		camera = &ui.widget->fps_camera;
-		ui.actionDoodads->setEnabled(false);
-	} else {
-		ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
-		ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
+	//	ui.widget->fps_camera.position = ui.widget->tps_camera.position;
+	//	camera = &ui.widget->fps_camera;
+	//	ui.actionDoodads->setEnabled(false);
+	//} else {
+	//	ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
+	//	ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
 
-		ui.widget->tps_camera.position = ui.widget->fps_camera.position;
-		camera = &ui.widget->tps_camera;
-		ui.actionDoodads->setEnabled(true);
-	}
-	camera->update(0);
+	//	ui.widget->tps_camera.position = ui.widget->fps_camera.position;
+	//	camera = &ui.widget->tps_camera;
+	//	ui.actionDoodads->setEnabled(true);
+	//}
+	//camera->update(0);
 }
 
 // ToDo move to terrain class?

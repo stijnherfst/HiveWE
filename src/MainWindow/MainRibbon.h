@@ -1,6 +1,8 @@
 #pragma once
 
-#include "QRibbon.h"
+import QRibbon;
+
+#include <QObject>
 
 class MainRibbon : public QRibbon {
 	Q_OBJECT

@@ -2,7 +2,8 @@
 
 #include <QRect>
 
-#include "Globals.h"
+//#include "Globals.h"
+#include <MapGlobal.h>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -63,5 +64,7 @@ void PathingBrush::apply(double frame_delta) {
 }
 
 void PathingBrush::apply_end() {
-	map->pathing_map.add_undo(applied_area);
+	map->terrain_undo.add_undo_action(map->pathing_map.add_undo(applied_area));
+
+	//map->pathing_map.add_undo(applied_area);
 }

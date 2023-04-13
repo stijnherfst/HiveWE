@@ -1,15 +1,19 @@
+#include <glad/glad.h>
+
 #include "GLWidget.h"
 
 #include "fmt/format.h"
 
 #include <QTimer>
-#include <QOpenGLFunctions_4_5_Core>
 #include <QPainter>
 
-#include "Utilities.h"
-#include "InputHandler.h"
+//#include "Globals.h"
+#include <glad/glad.h>
 
-#include "Globals.h"
+#include <MapGlobal.h>
+
+import OpenGLUtilities;
+import Camera;
 
 void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLuint id, const GLenum severity, const GLsizei, const GLchar *message, void *) {
 	// Skip buffer info messages, framebuffer info messages, texture usage state warning, redundant state change buffer
@@ -63,8 +67,6 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	QTimer::singleShot(16, this, &GLWidget::update_scene);
 
-	camera = &tps_camera;
-
 	setMouseTracking(true);
 	setFocus();
 	setFocusPolicy(Qt::WheelFocus);
@@ -74,30 +76,33 @@ std::chrono::steady_clock::time_point begin;
 
 
 void GLWidget::initializeGL() {
-	gl = new QOpenGLFunctions_4_5_Core;
-	gl->initializeOpenGLFunctions();
+	if (!gladLoadGL()) {
+		printf("Something went wrong!\n");
+		exit(-1);
+	}
+	printf("OpenGL %d.%d\n", GLVersion.major, GLVersion.minor);
 	
-	gl->glEnable(GL_DEBUG_OUTPUT);
-	gl->glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	gl->glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
-	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, false);
-	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, nullptr, true);
-	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, true);
-	gl->glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, nullptr, true);
+	glEnable(GL_DEBUG_OUTPUT);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+	glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, false);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, nullptr, true);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, true);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_HIGH, 0, nullptr, true);
 
-	gl->glEnable(GL_DEPTH_TEST);
-	gl->glEnable(GL_CULL_FACE);
-	gl->glDepthFunc(GL_LEQUAL);
-	gl->glEnable(GL_BLEND);
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	gl->glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 1);
 
-	gl->glGenVertexArrays(1, &vao);
-	gl->glBindVertexArray(vao);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
 	int extension_count;
-	gl->glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
+	glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
 	
 	shapes.init();
 
@@ -105,15 +110,15 @@ void GLWidget::initializeGL() {
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
-	gl->glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
-	camera->aspect_ratio = double(w) / h;
+	camera.aspect_ratio = double(w) / h;
 
 	if (!map || !map->loaded) {
 		return;
 	}
-	camera->update(delta);
+	camera.update(delta);
 	map->render_manager.resize_framebuffers(w, h);
 }
 
@@ -135,17 +140,17 @@ void GLWidget::paintGL() {
 		return;
 	}
 
-	//gl->glEnable(GL_FRAMEBUFFER_SRGB);
-	gl->glEnable(GL_DEPTH_TEST);
-	gl->glDepthMask(true);
-	gl->glClearColor(0.f, 0.f, 0.f, 1.f);
-	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glEnable(GL_FRAMEBUFFER_SRGB);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+	glClearColor(0.f, 0.f, 0.f, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-	gl->glBindVertexArray(vao);
+	glBindVertexArray(vao);
 	map->render();
 
-	gl->glBindVertexArray(0);
+	glBindVertexArray(0);
 
 	if (map->render_debug) {
 		QPainter p(this);
@@ -167,16 +172,16 @@ void GLWidget::paintGL() {
 			p.drawText(300, 35, QString::fromStdString(fmt::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
 		}
 
-		p.drawText(300, 50, QString::fromStdString(fmt::format("Camera Horizontal Angle: {:.4f}", camera->horizontal_angle)));
-		p.drawText(300, 64, QString::fromStdString(fmt::format("Camera Vertical Angle: {:.4f}", camera->vertical_angle)));
+		p.drawText(300, 50, QString::fromStdString(fmt::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
+		p.drawText(300, 64, QString::fromStdString(fmt::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
 
 		p.end();
 
 		// Set changed state back
-		gl->glEnable(GL_DEPTH_TEST);
-		gl->glDepthFunc(GL_LEQUAL);
-		gl->glEnable(GL_BLEND);
-		gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LEQUAL);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 }
 
@@ -210,7 +215,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 	}
 
 	input_handler.mouse_move_event(event);
-	camera->mouse_move_event(event);
+	camera.mouse_move_event(event);
 
 	if (map->brush) {
 		map->brush->mouse_move_event(event, delta);
@@ -224,7 +229,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 		return;
 	}
 
-	camera->mouse_press_event(event);
+	camera.mouse_press_event(event);
 	if (map->brush) {
 		map->brush->mouse_press_event(event, delta);
 	}
@@ -235,7 +240,7 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event) {
 		return;
 
 	}
-	camera->mouse_release_event(event);
+	camera.mouse_release_event(event);
 	if (map->brush) {
 		map->brush->mouse_release_event(event);
 	}
@@ -246,5 +251,5 @@ void GLWidget::wheelEvent(QWheelEvent* event) {
 		return;
 	}
 
-	camera->mouse_scroll_event(event);
+	camera.mouse_scroll_event(event);
 }

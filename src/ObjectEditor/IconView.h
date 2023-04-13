@@ -10,7 +10,7 @@
 #include <QAbstractListModel>
 #include <QSortFilterProxyModel>
 
-#include "QIconResource.h"
+import QIconResource;
 
 class IconModel : public QAbstractListModel {
 	int rowCount(const QModelIndex& parent = QModelIndex()) const override {

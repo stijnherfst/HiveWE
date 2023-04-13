@@ -4,14 +4,15 @@
 
 #include <QMainWindow>
 #include "Palette.h"
-#include "QRibbon.h"
 #include "Minimap.h"
 #include "Map.h"
 #include "TableModel.h"
 #include "SLK.h"
 #include "GLWidget.h"
-#include "INI.h"
 #include "Globals.h"
+
+import QRibbon;
+import INI;
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT

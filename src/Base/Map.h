@@ -1,26 +1,26 @@
 #pragma once
 
-#include "TriggerStrings.h"
 #include "Triggers.h"
 //#include "MapInfo.h"
 #include "Terrain.h"
-#include "TerrainUndo.h"
-#include "PathingMap.h"
 #include "Doodads.h"
-#include "Units.h"
-#include "Regions.h"
-#include "Sounds.h"
-#include "RenderManager.h"
 
 #include "Brush.h"
-#include "Physics.h"
-
+#include "Units.h"
+#include "RenderManager.h"
 #include <filesystem> // Filesystem include at the bottom due to QTBUG-73263
-
+#include <map>
 
 import GameCameras;
 import Imports;
 import MapInfo;
+import Sounds;
+import Regions;
+import TerrainUndo;
+import TriggerStrings;
+import PathingMap;
+import Physics;
+
 namespace fs = std::filesystem;
 
 class Map : public QObject {
@@ -41,6 +41,7 @@ class Map : public QObject {
 	Regions regions;
 	GameCameras cameras;
 	Sounds sounds;
+	//ShadowMap shadow_map;
 
 	Brush* brush = nullptr;
 	Physics physics;

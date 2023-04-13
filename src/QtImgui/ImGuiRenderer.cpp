@@ -68,7 +68,6 @@ QByteArray g_currentClipboardText;
 
 void ImGuiRenderer::initialize(WindowWrapper *window) {
     m_window.reset(window);
-    initializeOpenGLFunctions();
 
     g_ctx = ImGui::CreateContext();
     ImGui::SetCurrentContext(g_ctx);

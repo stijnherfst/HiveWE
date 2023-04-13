@@ -1,9 +1,10 @@
 target_sources(HiveWE PRIVATE
 
 	"main.cpp"
-	"test.cpp"
-	"Utilities.cpp"
+	
 	"Globals.h"
+	"MapGlobal.h"
+	"unordered_dense.h"
 
 	"MainWindow/HiveWE.rc"
 	"MainWindow/HiveWE.cpp"	
@@ -19,23 +20,22 @@ target_sources(HiveWE PRIVATE
 	"Base/Imports.ixx"
 	"Base/Map.cpp"
 	"Base/MapInfo.ixx"
-	"Base/PathingMap.cpp"
-	"Base/Regions.cpp"
-	"Base/Camera.cpp"
-	"Base/InputHandler.cpp"
-	"Base/TerrainUndo.cpp"
-	"Base/WindowHandler.h"
+	"Base/PathingMap.ixx"
+	"Base/Regions.ixx"
+	"Base/Camera.ixx"
+	"Base/TerrainUndo.ixx"
+	"Base/WindowHandler.ixx"
 	"Base/MathOperations.ixx"
 	"Base/ResourceManager.ixx"
 	
 	"Base/RenderManager.cpp"
-	"Base/ShadowMap.cpp"
-	"Base/Sounds.cpp"
+	"Base/ShadowMap.ixx"
+	"Base/Sounds.ixx"
 	"Base/Terrain.cpp"
 	"Base/Triggers.cpp"
-	"Base/TriggerStrings.cpp"
+	"Base/TriggerStrings.ixx"
 	"Base/Units.cpp"
-	"Base/Physics.cpp"
+	"Base/Physics.ixx"
 
 	"Brush/Brush.cpp"
 	"Brush/DoodadBrush.cpp"
@@ -45,7 +45,7 @@ target_sources(HiveWE PRIVATE
 
 	"File Formats/BLP.ixx"
 	"File Formats/CASC.ixx"
-	"File Formats/INI.cpp"
+	"File Formats/INI.ixx"
 	"File Formats/JSON.ixx"
 	"File Formats/MDX/MDX.ixx"
 	"File Formats/MDX/MDLReader.cpp"
@@ -53,20 +53,21 @@ target_sources(HiveWE PRIVATE
 	"File Formats/MDX/MDXReader.cpp"
 	"File Formats/MDX/MDXWriter.cpp"
 	"File Formats/MPQ.ixx"
-	"File Formats/SLK.cpp"
+	"File Formats/SLK.ixx"
+	
 
-	"Resources/CliffMesh.cpp"
-	"Resources/GPUTexture.cpp"
-	"Resources/GroundTexture.cpp"
-	"Resources/Shader.cpp"
-	"Resources/SkinnedMesh.cpp"
+	"Resources/CliffMesh.ixx"
+	"Resources/GPUTexture.ixx"
+	"Resources/GroundTexture.ixx"
+	"Resources/Shader.ixx"
+	
 	"Resources/EditableMesh.cpp"
 	"Resources/Texture.ixx"
 	"Resources/PathingTexture.ixx"
-	"Resources/QIconResource.cpp"
+	"Resources/QIconResource.ixx"
 
 	"Resources/SkinnedMesh/RenderNode.ixx"
-	"Resources/SkinnedMesh/SkeletalModelInstance.cpp"
+	
 
 	"Menus/DoodadPalette.cpp"
 	
@@ -80,29 +81,28 @@ target_sources(HiveWE PRIVATE
 	"Menus/TilePather.cpp"
 	"Menus/TilePicker.cpp"
 	"Menus/TileSetter.cpp"
-	"Menus/Selections.cpp"
 
 	"Models/SingleModel.cpp"
 	"Models/TableModel.cpp"
-	"Models/BaseTreeModel.cpp"
-	"Models/UnitTreeModel.cpp"
-	"Models/DoodadTreeModel.cpp"
-	"Models/ItemTreeModel.cpp"
-	"Models/AbilityTreeModel.cpp"
-	"Models/BuffTreeModel.cpp"
-	"Models/UpgradeTreeModel.cpp"
-	"Models/UnitListModel.cpp"
+	"Models/BaseTreeModel.ixx"
+	"Models/UnitTreeModel.ixx"
+	"Models/DoodadTreeModel.ixx"
+	"Models/ItemTreeModel.ixx"
+	"Models/AbilityTreeModel.ixx"
+	"Models/BuffTreeModel.ixx"
+	"Models/UpgradeTreeModel.ixx"
+	"Models/UnitListModel.ixx"
 	"Models/DoodadListModel.cpp"
-	"Models/DestructableListModel.cpp"
-	"Models/DestructibleTreeModel.cpp"
-	"Models/DestructibleTreeModel.h"
+	
+	"Models/DestructibleTreeModel.ixx"
 
-	"Custom Widgets/AspectRatioPixmapLabel.cpp"
-	"Custom Widgets/ColorButton.cpp"
-	"Custom Widgets/QRibbon.cpp"
-	"Custom Widgets/UnitSelector.cpp"
-	"Custom Widgets/GenericSelectorList.cpp"
-	"Custom Widgets/FlowLayout.cpp"
+	"Custom Widgets/AspectRatioPixmapLabel.h"
+	"Custom Widgets/AspectRatioPixmapLabel.ixx"
+	"Custom Widgets/ColorButton.ixx"
+	"Custom Widgets/ColorButton.h"
+	"Custom Widgets/QRibbon.ixx"
+	"Custom Widgets/UnitSelector.ixx"
+	"Custom Widgets/FlowLayout.ixx"
 	
 
 	"ModelEditor/ModelEditorCamera.cpp"
@@ -116,4 +116,7 @@ target_sources(HiveWE PRIVATE
 	"QtImgui/QtImGui.cpp"
 
 	"Utilities/Timer.ixx"
-)
+	"Utilities/Utilities.ixx"
+	"Utilities/OpenGLUtilities.ixx"
+	
+ "Utilities/ModificationTables.ixx" "Models/DestructableListModel.ixx" "Resources/SkinnedMesh/SkeletalModelInstance.ixx" "Resources/SkinnedMesh.ixx" "test.ixx")

@@ -2,15 +2,15 @@
 
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <QOpenGLFunctions_4_5_Core>
 
+#include <glad/glad.h>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
-#include "Shader.h"
+import Shader;
 
 class Brush : public QObject {
 	Q_OBJECT

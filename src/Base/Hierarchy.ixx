@@ -3,7 +3,6 @@ module;
 #include <vector>
 #include <filesystem>
 #include <map>
-//#include <QSettings>
 #include <iostream>
 #include <fstream>
 

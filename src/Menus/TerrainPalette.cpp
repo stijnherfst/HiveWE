@@ -1,6 +1,9 @@
 #include "TerrainPalette.h"
 
-#include "Globals.h"
+//#include "Globals.h"
+#include <MapGlobal.h>
+
+import OpenGLUtilities;
 
 TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);

@@ -1,7 +1,5 @@
 #include "ModelEditorCamera.h"
 
-#include "InputHandler.h"
-
 void ModelEditorCamera::reset() {
 	distance = 20;
 	horizontal_angle = 0.0f;

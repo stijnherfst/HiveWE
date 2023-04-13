@@ -9,11 +9,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "InputHandler.h"
-#include "TerrainUndo.h"
 #include "Globals.h"
+#include <MapGlobal.h>
+
 import Hierarchy;
 import Texture;
+import TerrainUndo;
+import Camera;
+import OpenGLUtilities;
 
 UnitBrush::UnitBrush() : Brush() {
 }
@@ -246,9 +249,9 @@ void UnitBrush::render_brush() {
 }
 
 void UnitBrush::render_selection() const {
-	gl->glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 	selection_circle_shader->use();
-	gl->glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
 		float selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
@@ -257,18 +260,18 @@ void UnitBrush::render_selection() const {
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
 		model = glm::scale(model, glm::vec3(selection_scale));
 
-		model = camera->projection_view * model;
-		gl->glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
+		model = camera.projection_view * model;
+		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
 
-		gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-		gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+		glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-		gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-		gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 	}
 
-	gl->glDisableVertexAttribArray(0);
-	gl->glEnable(GL_DEPTH_TEST);
+	glDisableVertexAttribArray(0);
+	glEnable(GL_DEPTH_TEST);
 }
 
 void UnitBrush::render_clipboard() {

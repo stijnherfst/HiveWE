@@ -4,11 +4,12 @@
 #include <QLineEdit>
 #include <QListView>
 
-#include "Globals.h"
-#include "Selections.h"
+#include <QAbstractProxyModel>
+#include <QSortFilterProxyModel>
+//#include "Globals.h"
+#include <MapGlobal.h>
 
 #include "TableModel.h"
-#include <QSortFilterProxyModel>
 
 UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -36,6 +37,10 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
+	selector = new UnitSelector(this);
+	selector->setObjectName("selector");
+	ui.verticalLayout->addWidget(selector);
+
 	find_this = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	find_parent = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
@@ -50,18 +55,18 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	connect(find_this, &QShortcut::activated, [&]() {
 		activateWindow();
-		ui.selector->search->setFocus();
-		ui.selector->search->selectAll();
+		selector->search->setFocus();
+		selector->search->selectAll();
 	});
 
 	connect(find_parent, &QShortcut::activated, [&]() {
 		activateWindow();
-		ui.selector->search->setFocus();
-		ui.selector->search->selectAll();
+		selector->search->setFocus();
+		selector->search->selectAll();
 	});
 
 	
-	connect(ui.selector, &UnitSelector::unitSelected, [&](const std::string& id) { 
+	connect(selector, &UnitSelector::unitSelected, [&](const std::string& id) { 
 		brush.set_unit(id); 
 		selection_mode->setChecked(false);
 	});

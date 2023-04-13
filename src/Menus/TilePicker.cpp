@@ -4,8 +4,9 @@
 
 import ResourceManager;
 import Texture;
-#include "Globals.h"
+import OpenGLUtilities;
 
+#include <MapGlobal.h>
 
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);

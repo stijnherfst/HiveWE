@@ -6,12 +6,13 @@
 
 #include "DoodadBrush.h"
 #include "Palette.h"
-#include "QRibbon.h"
-#include "AspectRatioPixmapLabel.h"
 #include "DoodadListModel.h"
 #include "DestructableListModel.h"
 
 #include <QConcatenateTablesProxyModel>
+
+import QRibbon;
+import AspectRatioPixmapLabel;
 
 class DoodadPalette : public Palette {
 	Q_OBJECT

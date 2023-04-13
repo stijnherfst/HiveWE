@@ -2,18 +2,20 @@
 
 #include <execution>
 #include <random>
+#include <map>
 
 #include <QMessageBox>
-#include <QOpenGLFunctions_4_5_Core>
+#include <glad/glad.h>
 
 import Hierarchy;
+import Camera;
+import Timer;
+import Physics;
+
+//import ModificationTables;
+#include <ModificationTables.h>
 
 #include "Globals.h"
-#include "InputHandler.h"
-#include "Physics.h"
-#include "Camera.h"
-
-import Timer;
 
 #include <fstream>
 #include <bullet/btBulletDynamicsCommon.h>
@@ -229,7 +231,7 @@ void Map::load(const fs::path& path) {
 
 	// Pathing Map
 	if (hierarchy.map_file_exists("war3map.wpm")) {
-		pathing_map.load();
+		pathing_map.load(terrain.width, terrain.height);
 	} else {
 		pathing_map.resize(terrain.width * 4, terrain.height * 4);
 	}
@@ -319,7 +321,7 @@ void Map::load(const fs::path& path) {
 
 	// Cameras
 	if (hierarchy.map_file_exists("war3map.w3c")) {
-		cameras.load(map->info.game_version_major, map->info.game_version_minor);
+		cameras.load(info.game_version_major, info.game_version_minor);
 	}
 
 	// Sounds
@@ -331,8 +333,8 @@ void Map::load(const fs::path& path) {
 	timer.reset();
 
 	// Center camera
-	camera->position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
-	camera->position.z = terrain.interpolated_height(camera->position.x, camera->position.y);
+	camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
+	camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y);
 
 	loaded = true;
 
@@ -397,7 +399,7 @@ bool Map::save(const fs::path& path) {
 	triggers.save();
 	triggers.save_jass();
 	triggers.generate_map_script();
-	imports.save(map->filesystem_path);
+	imports.save(filesystem_path);
 
 	return true;
 }
@@ -407,7 +409,7 @@ void Map::update(double delta, int width, int height) {
 		return;
 	}
 
-	camera->update(delta);
+	camera.update(delta);
 
 	// Update current water texture index
 	terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
@@ -422,8 +424,8 @@ void Map::update(double delta, int width, int height) {
 	// Map mouse coordinates to world coordinates
 	if (input_handler.mouse != input_handler.previous_mouse) {
 		glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
-		glm::vec3 pos = glm::unProject(window, camera->view, camera->projection, glm::vec4(0, 0, width, height));
-		glm::vec3 origin = camera->position - camera->direction * camera->distance;
+		glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));
+		glm::vec3 origin = camera.position - camera.direction * camera.distance;
 		glm::vec3 direction = glm::normalize(pos - origin);
 		glm::vec3 toto = origin + direction * 2000.f;
 
@@ -449,7 +451,7 @@ void Map::update(double delta, int width, int height) {
 		} // ToDo handle starting locations
 
 		mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-		if (!camera->inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+		if (!camera.inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
 
@@ -464,7 +466,7 @@ void Map::update(double delta, int width, int height) {
 	// Animate doodads
 	std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
 		mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-		if (!camera->inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+		if (!camera.inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
 
@@ -478,10 +480,10 @@ void Map::render() {
 		return;
 	}
 
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl->glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
-	terrain.render_ground();
+	terrain.render_ground(render_pathing, render_lighting);
 
 	if (render_doodads) {
 		doodads.render();

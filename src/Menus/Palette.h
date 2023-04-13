@@ -2,7 +2,7 @@
 
 #include <QDialog>
 
-#include "QRibbon.h"
+import QRibbon;
 
 /// Palette is the base for all other palette kinds and facilitates things like brush switching and shortcut management
 class Palette : public QDialog {

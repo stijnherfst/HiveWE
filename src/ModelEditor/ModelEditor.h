@@ -4,11 +4,6 @@
 
 #include "ui_ModelEditor.h"
 
-#include "DockManager.h"
-#include "DockAreaWidget.h"
-#include <QTreeView>
-#include <QOpenGLWidget>
-
 class ModelEditor : public QMainWindow {
 	Q_OBJECT
 

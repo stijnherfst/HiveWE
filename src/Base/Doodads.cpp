@@ -10,6 +10,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Globals.h"
+#include <MapGlobal.h>
+
 import BinaryWriter;
 import Hierarchy;
 

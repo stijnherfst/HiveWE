@@ -2,7 +2,8 @@
 
 #include <random>
 
-#include "Globals.h"
+//#include "Globals.h"
+#include <MapGlobal.h>
 #include "Terrain.h"
 
 TerrainBrush::TerrainBrush() : Brush() {

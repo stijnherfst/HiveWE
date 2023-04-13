@@ -3,9 +3,14 @@
 #include "ui_UnitPalette.h"
 #include "UnitBrush.h"
 #include "Palette.h"
-#include "QRibbon.h"
-#include "UnitListModel.h"
 //#include "UnitSelector.h"
+
+#include <QAbstractProxyModel>
+#include <QSortFilterProxyModel>
+
+import UnitListModel;
+import UnitSelector;
+import QRibbon;
 
 class UnitPalette : public Palette {
 	Q_OBJECT
@@ -23,6 +28,8 @@ private:
 
 	QRibbonTab* ribbon_tab = new QRibbonTab;
 	QRibbonButton* selection_mode = new QRibbonButton;
+
+	UnitSelector* selector;
 
 	QShortcut* find_this;
 	QShortcut* find_parent;

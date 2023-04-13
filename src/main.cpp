@@ -1,3 +1,6 @@
+#include <glad/glad.h>
+#define QT_NO_OPENGL
+
 #include <QApplication>
 #include <QCoreApplication>
 #include <QFile>
@@ -10,6 +13,7 @@
 #include "DockManager.h"
 #include "MainWindow/HiveWE.h"
 #include "test.h"
+
 
 import MDX;
 
@@ -34,6 +38,7 @@ int main(int argc, char *argv[]) {
 //)";
 
 	//mdx::MDX::from_mdl(b);
+
 
 
 	QSurfaceFormat format;

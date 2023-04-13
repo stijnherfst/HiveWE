@@ -5,16 +5,19 @@
 #include "ui_ObjectEditor.h"
 
 #include "TableModel.h"
-#include "UnitTreeModel.h"
-#include "DoodadTreeModel.h"
-#include "DestructibleTreeModel.h"
-#include "AbilityTreeModel.h"
-#include "ItemTreeModel.h"
-#include "BuffTreeModel.h"
-#include "UpgradeTreeModel.h"
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include <QTreeView>
+#include <QSortFilterProxyModel>
+
+import BaseTreeModel;
+import AbilityTreeModel;
+import DoodadTreeModel;
+import BuffTreeModel;
+import DestructibleTreeModel;
+import UnitTreeModel;
+import UpgradeTreeModel;
+import ItemTreeModel;
 
 class ObjectEditor : public QMainWindow {
 	Q_OBJECT

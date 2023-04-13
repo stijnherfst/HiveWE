@@ -17,6 +17,8 @@ in vec4 vertexColor;
 out vec4 color;
 
 void main() {
+	// color = vec4(1.f, 1.f, 1.f, 1.f);
+
 	color = texture(diffuse, UV) * vertexColor;
 	
 	if (show_lighting) {

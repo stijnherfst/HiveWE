@@ -1,12 +1,14 @@
 module;
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 export module MathOperations;
+
+export extern const glm::vec3 TRANSLATION_IDENTITY(0);
+export extern const glm::vec3 SCALE_IDENTITY(1);
+export extern const glm::quat ROTATION_IDENTITY(1, 0, 0, 0);
 
 // Equivalent to, but much faster than
 // worldMatrix = glm::translate(glm::mat4(1.f), position);

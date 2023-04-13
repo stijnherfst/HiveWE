@@ -2,10 +2,11 @@
 
 #include <QString>
 #include <unordered_map>
-#include <INI.h>
+#include <map>
 
 import BinaryReader;
 import BinaryWriter;
+import INI;
 
 enum class Classifier
 {

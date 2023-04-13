@@ -3,25 +3,21 @@
 #include <memory>
 
 #include <QObject>
-#include <QOpenGLFunctions_4_5_Core>
+#include <glad/glad.h>
 #include <QRect>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
 #include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include "btBulletDynamicsCommon.h"
 
-#include "GroundTexture.h"
-#include "CliffMesh.h"
+import GroundTexture;
 import Texture;
 import BinaryReader;
-#include "Shader.h"
-#include "SLK.h"
-
-#include "TerrainUndo.h"
+import TerrainUndo;
+import CliffMesh;
+import Shader;
+import SLK;
 
 struct Corner {
 	bool map_edge;
@@ -149,7 +145,7 @@ public:
 	bool load();
 	void create();
 	void save() const;
-	void render_ground() const;
+	void render_ground(bool render_pathing, bool render_lighting) const;
 	void render_water() const;
 
 	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old);

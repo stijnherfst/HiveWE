@@ -1,6 +1,8 @@
 #pragma once
 
-#include <QOpenGLExtraFunctions>
+#include <glad/glad.h>
+#define QT_NO_OPENGL
+
 #include <QObject>
 #include <QPoint>
 #include <imgui.h>
@@ -26,7 +28,7 @@ public:
     virtual void setCursorPos(const QPoint& local_pos) = 0;
 };
 
-class ImGuiRenderer : public QObject, QOpenGLExtraFunctions {
+class ImGuiRenderer : public QObject {
     Q_OBJECT
 public:
     void initialize(WindowWrapper *window);

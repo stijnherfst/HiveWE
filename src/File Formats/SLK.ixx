@@ -1,53 +1,72 @@
 module;
 
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
+#include <string>
+#include <iostream>
+#include <unordered_map>
+#include <filesystem>
+#include <cassert>
+#include "unordered_dense.h"
+#include <random>
+#include <fstream>
+#include <numeric>
+#include <string_view>
+#include <charconv>
 #include <absl/strings/str_split.h>
 #include <absl/strings/str_join.h>
 
 export module SLK;
 
-import<string>;
-import<iostream>;
-import<unordered_map>;
-import<filesystem>;
-import<random>;
-import<fstream>;
-import<numeric>;
-import<string_view>;
-import<charconv>;
-//import<absl/container/flat_hash_map.h>;
-//import<absl/container/flat_hash_set.h>;
-//import<absl/strings/str_split.h>;
-//import<absl/strings/str_join.h>;
-
-import INI;
-import Hierarchy;
-import Utilities;
-
 namespace fs = std::filesystem;
+
+import Hierarchy;
+import no_init_allocator;
+import BinaryReader;
+import Utilities;
+import INI;
+
+#undef mix
+#undef max
+
 using namespace std::string_literals;
 
 namespace slk {
+	// To enable heterogeneous lookup
+	struct string_hash {
+		using is_transparent = void; // enable heterogeneous lookup
+		using is_avalanching = void; // mark class as high quality avalanching hash
+
+		[[nodiscard]] auto operator()(const char* str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+
+		[[nodiscard]] auto operator()(std::string_view str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+
+		[[nodiscard]] auto operator()(std::string const& str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+	};
+
 	export class SLK {
 
 	  public:
-		absl::flat_hash_map<size_t, std::string> index_to_row;
-		absl::flat_hash_map<size_t, std::string> index_to_column;
-		absl::flat_hash_map<std::string, size_t> row_headers;
-		absl::flat_hash_map<std::string, size_t> column_headers;
-		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> base_data;
-		absl::flat_hash_map<std::string, absl::flat_hash_map<std::string, std::string>> shadow_data;
+		ankerl::unordered_dense::map<size_t, std::string> index_to_row;
+		ankerl::unordered_dense::map<size_t, std::string> index_to_column;
+		ankerl::unordered_dense::map<std::string, size_t, string_hash, std::equal_to<>> row_headers;
+		ankerl::unordered_dense::map<std::string, size_t, string_hash, std::equal_to<>> column_headers;
+		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> base_data;
+		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> shadow_data;
 
 		// The following map is only used in meta SLKs and maps the field (+unit/ability ID) to a meta ID
-		absl::flat_hash_map<std::string, std::string> meta_map;
+		ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>> meta_map;
 
 		SLK() = default;
-		explicit SLK(const fs::path& path, const bool local) {
+		explicit SLK(const fs::path& path, const bool local = false) {
 			load(path, local);
 		}
 
-		void load(const fs::path& path, const bool local) {
+		void load(const fs::path& path, const bool local = false) {
 			std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 			if (local) {
 				std::ifstream stream(path, std::ios::binary);
@@ -153,6 +172,7 @@ namespace slk {
 				}
 			}
 		}
+
 		void build_meta_map() {
 			// Check if we are a meta_slk
 			if (!column_headers.contains("field")) {
@@ -186,63 +206,45 @@ namespace slk {
 		T data(std::string_view column_header, std::string_view row_header) const {
 			assert(to_lowercase_copy(column_header) == column_header);
 
-			// Todo, do find() directly as the .contains() and .at().at() do multiple lookups
-			if (shadow_data.contains(row_header) && shadow_data.at(row_header).contains(column_header)) {
-				if constexpr (std::is_same<T, std::string>()) {
-					return shadow_data.at(row_header).at(column_header);
-				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(shadow_data.at(row_header).at(column_header));
-				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(shadow_data.at(row_header).at(column_header));
-				}
-			}
-
-			// if (const auto found = column_headers.find(std::string(column_header) + ":hd"); found) {
-			//	if (!found->first.empty()) {
-			//		if constexpr (std::is_same<T, std::string>()) {
-			//			return found->first;
-			//		} else if constexpr (std::is_same<T, float>()) {
-			//			return std::stof(found->first);
-			//		} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-			//			return std::stoi(found->first);
-			//		}
-			//	}
-			// }
-
-			// Todo, do .find() directly as the .contains() and .at().at() do multiple lookups
-			if (hierarchy.hd && column_headers.contains(std::string(column_header) + ":hd")) {
-				std::string hd_data = data(std::string(column_header) + ":hd", row_header);
-				if (!hd_data.empty()) {
+			// Shadow data
+			if (const auto found_row = shadow_data.find(row_header); found_row != shadow_data.end()) {
+				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
 					if constexpr (std::is_same<T, std::string>()) {
-						return hd_data;
+						return found_column->second;
 					} else if constexpr (std::is_same<T, float>()) {
-						return std::stof(hd_data);
+						return std::stof(found_column->second);
 					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-						return std::stoi(hd_data);
+						return std::stoi(found_column->second);
 					}
 				}
 			}
 
-			/*if (const auto found = base_data.find(row_header); found) {
-				if (const auto found_sub = found->second.find(column_header); found_sub) {
-					if constexpr (std::is_same<T, std::string>()) {
-						return found_sub->second;
-					} else if constexpr (std::is_same<T, float>()) {
-						return std::stof(found_sub->second);
-					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-						return std::stoi(found_sub->second);
+			if (hierarchy.hd) {
+				const auto column_header_hd = std::string(column_header) + ":hd";
+				if (const auto found = column_headers.find(column_header_hd); found != column_headers.end()) {
+					const std::string hd_data = data(column_header_hd, row_header);
+					if (!hd_data.empty()) { // ToDo What if I clear the model field in HD mode. Will it try loading the SD model then because we don't return the blank line?
+						if constexpr (std::is_same<T, std::string>()) {
+							return hd_data;
+						} else if constexpr (std::is_same<T, float>()) {
+							return std::stof(hd_data);
+						} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+							return std::stoi(hd_data);
+						}
 					}
 				}
-			}*/
+			}
 
-			// Todo, do find() directly as the .contains() and .at().at() do multiple lookups
-			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
-				if constexpr (std::is_same<T, std::string>()) {
-					return base_data.at(row_header).at(column_header);
-				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(base_data.at(row_header).at(column_header));
-				} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-					return std::stoi(base_data.at(row_header).at(column_header));
+			// Base data
+			if (const auto found_row = base_data.find(row_header); found_row != base_data.end()) {
+				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
+					if constexpr (std::is_same<T, std::string>()) {
+						return found_column->second;
+					} else if constexpr (std::is_same<T, float>()) {
+						return std::stof(found_column->second);
+					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
+						return std::stoi(found_column->second);
+					}
 				}
 			}
 
@@ -277,10 +279,10 @@ namespace slk {
 			return data<T>(index_to_column.at(column), index_to_row.at(row));
 		}
 
-	// Merges the base data of the files
+		// Merges the base data of the files
 		// Shadow data is not merged
 		// Any unknown columns are appended
-		void merge(const SLK& slk) {
+		void merge(const slk::SLK& slk) {
 			for (const auto& [header, index] : slk.column_headers) {
 				if (!column_headers.contains(header)) {
 					add_column(header);
@@ -431,7 +433,6 @@ namespace slk {
 			index_to_column[index] = column_header;
 		}
 
-		/// If the column does not exist then it will be created
 		// column_header should be lowercase
 		void set_shadow_data(const std::string_view column_header, const std::string_view row_header, std::string data) {
 			assert(to_lowercase_copy(column_header) == column_header);
@@ -459,11 +460,11 @@ namespace slk {
 			set_shadow_data(index_to_column.at(column), index_to_row.at(row), data);
 		}
 
-		size_t rows() {
+		size_t rows() const {
 			return row_headers.size();
 		}
 
-		size_t columns() {
+		size_t columns() const {
 			return column_headers.size();
 		}
 	};

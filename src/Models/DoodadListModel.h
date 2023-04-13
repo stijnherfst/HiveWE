@@ -2,7 +2,12 @@
 
 #include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
-#include <QIconResource.h>
+
+#include <QSize>
+#include <QMargins>
+#include <QIcon>
+
+import QIconResource;
 
 class DoodadListModel : public QIdentityProxyModel {
 	Q_OBJECT

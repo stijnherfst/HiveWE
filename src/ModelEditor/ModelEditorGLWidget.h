@@ -1,9 +1,11 @@
 #pragma once
 
+#include <glad/glad.h>
+#define QT_NO_OPENGL
+
 #include <QObject>
 #include <QOpenGLWidget>
 
-#include "Camera.h"
 #include <QElapsedTimer>
 #include "EditableMesh.h"
 #include <ModelEditor/ModelEditorCamera.h>

@@ -6,6 +6,7 @@
 #include <QToolBar>
 #include <QDialogButtonBox>
 #include <QSortFilterProxyModel>
+#include <QAbstractProxyModel>
 #include <QPushButton>
 #include <QTimer>
 #include <QLabel>
@@ -15,7 +16,10 @@
 #include <QMenu>
 
 #include "SingleModel.h"
-#include "UnitSelector.h"
+#include "Globals.h"
+#include <MapGlobal.h>
+
+import UnitSelector;
 
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);

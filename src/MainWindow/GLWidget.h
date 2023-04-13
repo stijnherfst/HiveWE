@@ -1,9 +1,13 @@
 #pragma once
 
+#define QT_NO_OPENGL
+#include <glad/glad.h>
+
 #include <QObject>
 #include <QOpenGLWidget>
 
-#include "Camera.h"
+import Camera;
+
 #include <QElapsedTimer>
 
 class GLWidget : public QOpenGLWidget {
@@ -12,9 +16,6 @@ class GLWidget : public QOpenGLWidget {
 public:
 	QElapsedTimer elapsed_timer;
 	GLuint vao;
-
-	TPSCamera tps_camera;
-	FPSCamera fps_camera;
 
 	double delta = 0.0;
 

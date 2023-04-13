@@ -3,11 +3,12 @@
 #include "ui_TerrainPalette.h"
 
 #include <QDialog>
-#include "FlowLayout.h"
 
 #include "Palette.h"
 #include "TerrainBrush.h"
-#include "QRibbon.h"
+
+import QRibbon;
+import FlowLayout;
 
 class TerrainPalette : public Palette {
 	Q_OBJECT

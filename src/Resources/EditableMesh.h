@@ -4,13 +4,14 @@
 
 import MDX;
 import ResourceManager;
+import GPUTexture;
+import Shader;
 
 #include <filesystem>
 namespace fs = std::filesystem;
 
-#include "GPUTexture.h"
-#include "Shader.h"
 #include "SkeletalModelInstance.h"
+#include <glad/glad.h>
 
 class EditableMesh : public Resource {
   public:

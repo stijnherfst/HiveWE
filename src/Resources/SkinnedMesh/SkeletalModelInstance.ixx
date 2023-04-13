@@ -3,25 +3,26 @@ module;
 #include <chrono>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 export module SkeletalModelInstance;
 
-import MDX;
-import RenderNode;
+import Camera;
+import Utilities;
 import MathOperations;
+import RenderNode;
+import MDX;
 
 // Ghostwolf mentioned this to me once, so I used it,
 // as 0.75, experimentally determined as a guess at
-// whatever WC3 is doing. Do more reserach if necessary?
+// whatever WC3 is doing. Do more research if necessary?
 #define MAGIC_RENDER_SHOW_CONSTANT 0.75
 
-// To keep track of what
+// Instead of recalculating the extents of the current sequence every frame we can keep track of it
 struct CurrentKeyFrame {
 	int start = -1;
 	int end = 0;
@@ -48,8 +49,7 @@ export class SkeletalModelInstance {
 	std::vector<glm::mat4> world_matrices;
 
 	SkeletalModelInstance() = default;
-	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model)
-		: model(model) {
+	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : model(model) {
 		size_t node_count = model->bones.size() +
 							model->lights.size() +
 							model->help_bones.size() +
@@ -64,7 +64,7 @@ export class SkeletalModelInstance {
 		// ToDo: for each camera: add camera source node to renderNodes
 		render_nodes.resize(node_count);
 		world_matrices.resize(node_count);
-		model->forEachNode([&](mdx::Node& node) {
+		model->for_each_node([&](mdx::Node& node) {
 			// Seen it happen with Emmitter1, is this an error in the model?
 			// ToDo purge (when adding a validation layer or just crashing)
 			if (node.id == -1) {
@@ -91,7 +91,7 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	void updateLocation(glm::vec3 position, float angle, const glm::vec3& scale) {
+	void update_location(glm::vec3 position, float angle, const glm::vec3& scale) {
 		glm::vec3 axis = glm::vec3(0, 0, 1);
 		glm::quat rotation = glm::angleAxis(angle, axis);
 		inverseInstanceRotation.x = -rotation.x;
@@ -100,6 +100,7 @@ export class SkeletalModelInstance {
 		inverseInstanceRotation.w = rotation.w;
 		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
+
 
 	void update(double delta) {
 		if (model->sequences.empty() || sequence_index == -1) {
@@ -135,10 +136,10 @@ export class SkeletalModelInstance {
 			}
 		}
 
-		updateNodes();
+		update_nodes();
 	}
 
-	void updateNodes() {
+	void update_nodes() {
 		assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
 		// update skeleton to position based on animation @ time
@@ -147,9 +148,9 @@ export class SkeletalModelInstance {
 			// node.rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
 			// node.scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
 
-			glm::vec3 position = interpolate_keyframes(node.node->KGTR, glm::vec3(0.f));
-			glm::quat rotation = interpolate_keyframes(node.node->KGRT, glm::quat(1.f, 0.f, 0.f, 0.f));
-			glm::vec3 scale = interpolate_keyframes(node.node->KGSC, glm::vec3(1.f));
+			glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
+			glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
+			glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
 
 			fromRotationTranslationScaleOrigin(rotation, position, scale, world_matrices[node.node->id], node.pivot);
 
@@ -157,18 +158,31 @@ export class SkeletalModelInstance {
 				world_matrices[node.node->id] = world_matrices[node.node->parent_id] * world_matrices[node.node->id];
 			}
 
-			// if (node.billboarded || node.billboardedX) {
-			//	// Cancel the parent's rotation
-			//	if (node.parent) {
-			//		node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
-			//	} else {
-			//		node.localRotation = inverseInstanceRotation;
-			//	}
+			if (node.billboarded || node.billboardedX) {
 
-			//	node.localRotation *= camera->decomposed_rotation;
-			//}
+				world_matrices[node.node->id][1][0] = 0.f;
+				world_matrices[node.node->id][2][0] = 0.f;
+				world_matrices[node.node->id][3][0] = 0.f;
+				world_matrices[node.node->id][2][1] = 0.f;
+				world_matrices[node.node->id][3][1] = 0.f;
+				world_matrices[node.node->id][3][2] = 0.f;
 
-			// node.recalculateTransformation();
+				world_matrices[node.node->id][0][1] = 0.f;
+				world_matrices[node.node->id][0][2] = 0.f;
+				world_matrices[node.node->id][0][3] = 0.f;
+				world_matrices[node.node->id][1][2] = 0.f;
+				world_matrices[node.node->id][1][3] = 0.f;
+				world_matrices[node.node->id][2][3] = 0.f;
+
+				// Cancel the parent's rotation
+				/*if (node.parent) {
+					node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
+				} else {
+					node.localRotation = inverseInstanceRotation;
+				}
+
+				node.localRotation *= camera->decomposed_rotation;*/
+			}
 		}
 	}
 
@@ -195,7 +209,7 @@ export class SkeletalModelInstance {
 			}
 		}
 	}
-
+	
 	template <typename T>
 	void calculate_sequence_extents(const mdx::TrackHeader<T>& header) {
 		if (header.id == -1) {
@@ -242,8 +256,6 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	//template void calculate_sequence_extents(const mdx::TrackHeader<glm::vec3>& header);
-	//template void calculate_sequence_extents(const mdx::TrackHeader<glm::quat>& header);
 
 	template <typename T>
 	void advance_keyframes(const mdx::TrackHeader<T>& header) {
@@ -304,26 +316,25 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	//template void advance_keyframes(const mdx::TrackHeader<glm::vec3>& header);
-	//template void advance_keyframes(const mdx::TrackHeader<glm::quat>& header);
 
-	glm::vec3 get_geoset_animation_color(mdx::GeosetAnimation& animation) const {
+	glm::vec3 get_geoset_animation_color(const mdx::GeosetAnimation& animation) const {
 		return interpolate_keyframes(animation.KGAC, animation.color);
 	}
 
-	float get_geoset_animation_visiblity(mdx::GeosetAnimation& animation) const {
+	float get_geoset_animation_visiblity(const mdx::GeosetAnimation& animation) const {
 		return interpolate_keyframes(animation.KGAO, animation.alpha);
 	}
 
-	float get_layer_visiblity(mdx::Layer& layer) const {
+	float get_layer_visiblity(const mdx::Layer& layer) const {
 		return interpolate_keyframes(layer.KMTA, layer.alpha);
 	}
 
 	template <typename T>
-	T interpolate_keyframes(mdx::TrackHeader<T>& header, const T& defaultValue) const {
+	T interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& default_value) const {
 		if (header.id == -1) {
-			return defaultValue;
+			return default_value;
 		}
+
 		const CurrentKeyFrame& current = current_keyframes[header.id];
 		const mdx::Sequence& sequence = model->sequences[sequence_index];
 
@@ -343,7 +354,7 @@ export class SkeletalModelInstance {
 
 		// If there are no tracks in sequence
 		if (current.start == -1) {
-			return defaultValue;
+			return default_value;
 		}
 
 		// If there is only 1 track
@@ -351,13 +362,13 @@ export class SkeletalModelInstance {
 			return header.tracks[current.left].value;
 		}
 
-		const T ceilInTan = header.tracks[current.right].inTan;
-		const T floorOutTan = header.tracks[current.left].outTan;
+		const T ceil_in_tan = header.tracks[current.right].inTan;
+		const T floor_out_tan = header.tracks[current.left].outTan;
 
 		int floor_time = header.tracks[current.left].frame;
-		int ceil_time = header.tracks[current.right].frame;
-		T floor_value = header.tracks[current.left].value;
-		T ceil_value = header.tracks[current.right].value;
+		const int ceil_time = header.tracks[current.right].frame;
+		const T floor_value = header.tracks[current.left].value;
+		const T ceil_value = header.tracks[current.right].value;
 
 		// This is the implementation that correctly handles missing start/end frames.
 		// The game and WE however have a buggy implementation which is the one we end up using for compatibility
@@ -375,18 +386,15 @@ export class SkeletalModelInstance {
 		//}
 
 		// The (incorrect) implementation both the game and WE use
-		int timeBetweenFrames = ceil_time - floor_time;
-		if (timeBetweenFrames < 0) {
-			timeBetweenFrames += (local_sequence_end - local_sequence_start);
+		int time_between_frames = ceil_time - floor_time;
+		if (time_between_frames < 0) {
+			time_between_frames += (local_sequence_end - local_sequence_start);
 			if (local_current_frame < floor_time) {
 				floor_time = ceil_time;
 			}
 		}
-		float t = timeBetweenFrames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(timeBetweenFrames));
+		const float t = time_between_frames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(time_between_frames));
 
-		return interpolate(floor_value, floorOutTan, ceilInTan, ceil_value, t, header.interpolation_type);
+		return interpolate(floor_value, floor_out_tan, ceil_in_tan, ceil_value, t, header.interpolation_type);
 	}
-
-	//template glm::vec3 interpolate_keyframes(mdx::TrackHeader<glm::vec3>& header, const glm::vec3& defaultValue) const;
-	//template glm::quat interpolate_keyframes(mdx::TrackHeader<glm::quat>& header, const glm::quat& defaultValue) const;
 };

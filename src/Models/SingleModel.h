@@ -8,7 +8,8 @@
 #include <vector>
 
 #include "TableModel.h"
-#include "SLK.h"
+
+import SLK;
 
 class SingleModel : public QAbstractProxyModel {
 	Q_OBJECT

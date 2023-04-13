@@ -2,8 +2,12 @@
 
 #include <QAbstractTableModel>
 
-#include "QIconResource.h"
-#include "SLK.h"
+import QIconResource;
+import SLK;
+
+#include <QSize>
+#include <QMargins>
+#include <QIcon>
 
 class TableModel : public QAbstractTableModel {
 	//std::unordered_map<std::string, std::string> meta_field_to_key;

@@ -5,7 +5,7 @@
 #include <QDialog>
 #include <QButtonGroup>
 
-#include "FlowLayout.h"
+import FlowLayout;
 
 class TilePicker : public QDialog {
 	Q_OBJECT

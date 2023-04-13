@@ -6,12 +6,15 @@
 #include <QDoubleValidator>
 #include <QComboBox>
 #include <QListView>
+#include <QToolButton>
 
 #include "Globals.h"
-#include "Selections.h"
+#include <MapGlobal.h>
 
 #include "TableModel.h"
 #include <ObjectEditor/ObjectEditor.h>
+
+import QRibbon;
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);

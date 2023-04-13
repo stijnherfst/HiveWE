@@ -3,8 +3,6 @@
 #include "fmt/format.h"
 #include <fstream>
 
-//#include <glad/glad.h>
-
 #include <QTimer>
 #include <QPainter>
 #include <QFileDialog>
@@ -12,11 +10,12 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 
-#include "InputHandler.h"
 #include <QtImgui/QtImGui.h>
 #include <imgui.h>
 
-#include "Globals.h"
+//#include "Globals.h"
+
+import OpenGLUtilities;
 
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	makeCurrent();
@@ -27,28 +26,18 @@ ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent
 }
 
 void ModelEditorGLWidget::initializeGL() {
-	//gl = new QOpenGLFunctions_4_5_Core;
-	//if (!gl->initializeOpenGLFunctions()) {
-	//	std::cout << "Error initializing functions";
-	//	throw;
-	//}
-	//
-	//if (!gladLoadGL()) {
-	//	std::cout << "Failed to initialize OpenGL context" << std::endl;
-	//}
-	
 	QtImGui::initialize(this);
 
-	gl->glEnable(GL_DEPTH_TEST);
-	gl->glEnable(GL_CULL_FACE);
-	gl->glDepthFunc(GL_LEQUAL);
-	gl->glEnable(GL_BLEND);
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	gl->glClearColor(0, 0, 0, 1);
+	glClearColor(0, 0, 0, 1);
 	
-	gl->glGenVertexArrays(1, &vao);
-	gl->glBindVertexArray(vao);
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
 
 	mesh = resource_manager.load<EditableMesh>("units/human/footman/footman.mdx", "", std::nullopt);
 	skeleton = SkeletalModelInstance(mesh->mdx);
@@ -64,7 +53,7 @@ void ModelEditorGLWidget::initializeGL() {
 }
 
 void ModelEditorGLWidget::resizeGL(const int w, const int h) {
-	gl->glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 	camera.aspect_ratio = double(w) / h;
 	camera.update(delta);
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
@@ -87,23 +76,23 @@ void ModelEditorGLWidget::update_scene() {
 void ModelEditorGLWidget::paintGL() {
 	makeCurrent();
 
-	gl->glBindVertexArray(vao);
-	gl->glEnable(GL_DEPTH_TEST);
-	gl->glDepthMask(true);
-	gl->glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindVertexArray(vao);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	shader->use();
 	mesh->render(skeleton, camera.projection_view, camera.direction);
 
-	gl->glEnable(GL_BLEND);
+	glEnable(GL_BLEND);
 
-	gl->glBindVertexArray(0);
+	glBindVertexArray(0);
 
-	gl->glEnable(GL_DEPTH_TEST);
-	gl->glDepthFunc(GL_LEQUAL);
-	gl->glEnable(GL_BLEND);
-	gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// ImGui
 	QtImGui::newFrame();

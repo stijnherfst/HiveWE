@@ -8,7 +8,8 @@
 
 #include <QEvent>
 #include <QMouseEvent>
-#include <InputHandler.h>
+
+import Camera;
 
 struct ModelEditorCamera {
 	glm::vec3 position = { 0, 0, 0 };

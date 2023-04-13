@@ -1,15 +1,19 @@
 #include "Brush.h"
 
-#include "Camera.h"
-#include "Globals.h"
-#include "InputHandler.h"
+//#include "Globals.h"
+#include <glad/glad.h>
+
+#include <MapGlobal.h>
+
+import Camera;
+import OpenGLUtilities;
 
 Brush::Brush() {
-	gl->glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	gl->glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	set_size(size);
 
@@ -72,8 +76,8 @@ void Brush::set_shape(const Shape new_shape) {
 		}
 	}
 
-	gl->glBindTexture(GL_TEXTURE_2D, brush_texture);
-	gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+	glBindTexture(GL_TEXTURE_2D, brush_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
@@ -209,49 +213,49 @@ void Brush::render() {
 
 void Brush::render_selector() const {
 	if (selection_started) {
-		gl->glDisable(GL_DEPTH_TEST);
+		glDisable(GL_DEPTH_TEST);
 
 		selection_shader->use();
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, glm::vec3(selection_start, map->terrain.interpolated_height(selection_start.x, selection_start.y)));
 		model = glm::scale(model, glm::vec3(glm::vec2(input_handler.mouse_world), 1.f) - glm::vec3(selection_start, 1.f));
-		model = camera->projection_view * model;
-		gl->glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
+		model = camera.projection_view * model;
+		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
 
-		gl->glEnableVertexAttribArray(0);
-		gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-		gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-		gl->glDrawArrays(GL_LINE_LOOP, 0, 4);
+		glDrawArrays(GL_LINE_LOOP, 0, 4);
 
-		gl->glDisableVertexAttribArray(0);
-		gl->glEnable(GL_DEPTH_TEST);
+		glDisableVertexAttribArray(0);
+		glEnable(GL_DEPTH_TEST);
 	}
 }
 
 void Brush::render_brush() {
-	gl->glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST);
 
 	brush_shader->use();
 
 	const int cells = std::ceil(size / 4.f) + 1;
 
-	gl->glUniformMatrix4fv(1, 1, GL_FALSE, &camera->projection_view[0][0]);
-	gl->glUniform2f(2, position.x, position.y);
-	gl->glUniform2f(3, uv_offset.x, uv_offset.y);
-	gl->glUniform1i(4, cells);
+	glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+	glUniform2f(2, position.x, position.y);
+	glUniform2f(3, uv_offset.x, uv_offset.y);
+	glUniform1i(4, cells);
 
-	gl->glBindTextureUnit(0, map->terrain.ground_corner_height);
-	gl->glBindTextureUnit(1, brush_texture);
+	glBindTextureUnit(0, map->terrain.ground_corner_height);
+	glBindTextureUnit(1, brush_texture);
 
-	gl->glEnableVertexAttribArray(0);
-	gl->glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	gl->glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
 
-	gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	gl->glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
+	glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
 
-	gl->glDisableVertexAttribArray(0);
-	gl->glEnable(GL_DEPTH_TEST);
+	glDisableVertexAttribArray(0);
+	glEnable(GL_DEPTH_TEST);
 }
