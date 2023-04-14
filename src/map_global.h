@@ -1,5 +1,5 @@
 #pragma once
 
-#include "Map.h"
+import Map;
 
 inline Map* map = nullptr;

@@ -16,14 +16,6 @@ import BinaryReader;
 import MDX;
 import no_init_allocator;
 
-export void execute_tests() {
-	fmt::print("[INFO] Parsing all MDX files\n");
-	auto begin = std::chrono::steady_clock::now();
-	parse_all_mdx();
-	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000.f;
-	fmt::print("[INFO] Done parsing in {}ms\n", delta);
-}
-
 void parse_all_mdx() {
 	std::vector<fs::path> paths;
 
@@ -40,4 +32,12 @@ void parse_all_mdx() {
 		BinaryReader reader(buffer);
 		auto mdx = mdx::MDX(reader);
 	});
+}
+
+export void execute_tests() {
+	fmt::print("[INFO] Parsing all MDX files\n");
+	auto begin = std::chrono::steady_clock::now();
+	parse_all_mdx();
+	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000.f;
+	fmt::print("[INFO] Done parsing in {}ms\n", delta);
 }

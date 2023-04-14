@@ -8,8 +8,7 @@ import BinaryReader;
 import BinaryWriter;
 import INI;
 
-enum class Classifier
-{
+enum class Classifier {
 	map = 1,
 	library = 2,
 	category = 4,
@@ -147,7 +146,8 @@ class Triggers {
 	void generate_ally_priorities(BinaryWriter& writer);
 	void generate_main(BinaryWriter& writer);
 	void generate_map_configuration(BinaryWriter& writer);
-public:
+
+  public:
 	ini::INI trigger_strings;
 	ini::INI trigger_data;
 

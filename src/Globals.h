@@ -1,14 +1,7 @@
 #pragma once
 
 #include "TableModel.h"
-
-#include <map>
-#include "MainWindow/GLWidget.h"
-#include <QSize>
-#include <QMargins>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include "main_window/GLWidget.h"
 
 import WindowHandler;
 import INI;

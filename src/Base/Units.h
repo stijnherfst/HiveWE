@@ -8,8 +8,7 @@ import BinaryReader;
 import Utilities;
 import SkinnedMesh;
 import SkeletalModelInstance;
-
-#include "Terrain.h"
+import TerrainUndo;
 
 struct Unit {
 	static inline int auto_increment;

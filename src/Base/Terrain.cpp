@@ -6,6 +6,7 @@
 
 #include "Globals.h"
 #include <MapGlobal.h>
+#include <glad/glad.h>
 
 import Hierarchy;
 import Camera;
@@ -14,8 +15,6 @@ import BinaryWriter;
 import OpenGLUtilities;
 import Physics;
 import SLK;
-
-#include <glad/glad.h>
 
 using namespace std::literals::string_literals;
 

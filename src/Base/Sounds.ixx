@@ -53,9 +53,7 @@ export class Sounds {
 		for (auto& i : sounds) {
 			i.name = reader.read_c_string();
 			i.file = reader.read_c_string();
-			;
 			i.eax_effect = reader.read_c_string();
-			;
 			int flags = reader.read<uint32_t>();
 			i.looping = flags & 0b00000001;
 			i.is_3d = flags & 0b00000010;

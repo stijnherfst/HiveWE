@@ -18,6 +18,7 @@ import TerrainUndo;
 import CliffMesh;
 import Shader;
 import SLK;
+import TerrainUndo;
 
 struct Corner {
 	bool map_edge;

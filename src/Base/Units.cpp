@@ -3,9 +3,6 @@
 #include <iostream>
 using namespace std::literals::string_literals;
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -14,7 +11,6 @@ using namespace std::literals::string_literals;
 
 import BinaryWriter;
 import Hierarchy;
-
 
 void Unit::update() {
 	const float model_scale = units_slk.data<float>("modelscale", id);
