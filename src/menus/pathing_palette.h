@@ -2,10 +2,10 @@
 
 #include <QDialog>
 
-#include "ui_PathingPalette.h"
-#include "PathingBrush.h"
+#include "ui_pathing_palette.h"
+#include "pathing_brush.h"
 
-#include "Palette.h"
+#include "palette.h"
 
 class PathingPalette : public Palette {
 	Q_OBJECT

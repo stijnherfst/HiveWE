@@ -33,7 +33,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="AspectRatioPixmapLabel" name="image">
+    <widget class="aspect_ratio_pixmap_label" name="image">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
        <horstretch>0</horstretch>
@@ -56,9 +56,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>AspectRatioPixmapLabel</class>
+   <class>aspect_ratio_pixmap_label</class>
    <extends>QLabel</extends>
-   <header>AspectRatioPixmapLabel.h</header>
+   <header>aspect_ratio_pixmap_label.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

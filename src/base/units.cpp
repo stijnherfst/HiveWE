@@ -1,4 +1,4 @@
-﻿#include "Units.h"
+﻿#include "units.h"
 
 #include <iostream>
 using namespace std::literals::string_literals;
@@ -6,8 +6,8 @@ using namespace std::literals::string_literals;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 
 import BinaryWriter;
 import Hierarchy;

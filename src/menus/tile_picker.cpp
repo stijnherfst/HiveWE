@@ -1,4 +1,4 @@
-#include "TilePicker.h"
+#include "tile_picker.h"
 
 #include <QPushButton>
 
@@ -6,7 +6,7 @@ import ResourceManager;
 import Texture;
 import OpenGLUtilities;
 
-#include <MapGlobal.h>
+#include <map_global.h>
 
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);

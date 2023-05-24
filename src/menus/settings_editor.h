@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui_SettingsEditor.h"
+#include "ui_settings_editor.h"
 
 class SettingsEditor : public QDialog {
 	Q_OBJECT

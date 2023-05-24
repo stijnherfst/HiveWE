@@ -5,10 +5,9 @@
 
 #include <QObject>
 #include <QOpenGLWidget>
+#include <QElapsedTimer>
 
 import Camera;
-
-#include <QElapsedTimer>
 
 class GLWidget : public QOpenGLWidget {
 	Q_OBJECT

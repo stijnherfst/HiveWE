@@ -1,12 +1,12 @@
-#include "MapInfoEditor.h"
+#include "map_info_editor.h"
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 
 MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

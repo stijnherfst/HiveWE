@@ -6,8 +6,9 @@ module;
 #include <QModelIndex>
 #include <QSize>
 #include <QIcon>
-#include "Globals.h"
 #include "unordered_dense.h"
+
+#include "globals.h"
 
 export module UnitTreeModel;
 
@@ -114,4 +115,4 @@ export class UnitTreeModel : public BaseTreeModel {
 	}
 };
 
-#include "UnitTreeModel.moc"
+#include "unit_tree_model.moc"

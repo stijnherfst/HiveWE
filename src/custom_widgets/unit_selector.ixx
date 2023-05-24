@@ -4,8 +4,9 @@ module;
 #include <QComboBox>
 #include <QLineEdit>
 #include <QVBoxLayout>
-#include "Globals.h"
 #include <QSortFilterProxyModel>
+
+#include "globals.h"
 
 export module UnitSelector;
 
@@ -91,4 +92,4 @@ export class UnitSelector : public QWidget {
 	void unitSelected(std::string id);
 };
 
-#include "UnitSelector.moc"
+#include "unit_selector.moc"

@@ -1,6 +1,6 @@
-#include "QtImGui.h"
+#include "qt_imgui.h"
 
-#include "ImGuiRenderer.h"
+#include "imgui_renderer.h"
 #include <QWindow>
 #ifdef QT_WIDGETS_LIB
 #include <QWidget>

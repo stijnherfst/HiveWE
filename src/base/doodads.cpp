@@ -1,4 +1,4 @@
-#include "Doodads.h"
+#include "doodads.h"
 
 #include <iostream>
 #include <optional>
@@ -9,8 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 
 import BinaryWriter;
 import Hierarchy;

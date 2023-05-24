@@ -2,9 +2,8 @@
 
 #include <string>
 
-#include "Brush.h"
-
-#include "Doodads.h"
+#include "brush.h"
+#include "doodads.h"
 
 class TerrainBrush : public Brush {
 public:

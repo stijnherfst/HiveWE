@@ -3,8 +3,8 @@
 #include <set>
 #include <vector>
 
-#include "Doodads.h"
-#include "Brush.h"
+#include "doodads.h"
+#include "brush.h"
 import PathingTexture;
 
 class DoodadBrush : public Brush {

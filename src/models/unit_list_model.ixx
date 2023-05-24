@@ -2,7 +2,7 @@ module;
 
 #include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
-#include "Globals.h"
+#include "globals.h"
 
 export module UnitListModel;
 
@@ -133,4 +133,4 @@ export class UnitListFilter : public QSortFilterProxyModel {
 	}
 };
 
-#include "UnitListModel.moc"
+#include "unit_list_model.moc"

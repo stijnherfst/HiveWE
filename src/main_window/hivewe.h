@@ -3,16 +3,16 @@
 #include "ui_HiveWE.h"
 
 #include <QMainWindow>
-#include "Palette.h"
-#include "Minimap.h"
-#include "Map.h"
-#include "TableModel.h"
-#include "SLK.h"
-#include "GLWidget.h"
-#include "Globals.h"
+#include "palette.h"
+#include "minimap.h"
+#include "table_model.h"
+#include "glwidget.h"
+#include "globals.h"
 
 import QRibbon;
 import INI;
+import Map;
+import SLK;
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT

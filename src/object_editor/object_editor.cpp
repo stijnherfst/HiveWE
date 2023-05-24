@@ -1,4 +1,4 @@
-#include "ObjectEditor.h"
+#include "object_editor.h"
 
 
 #include <QTableView>
@@ -15,9 +15,9 @@
 #include <QToolButton>
 #include <QMenu>
 
-#include "SingleModel.h"
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "single_model.h"
+#include "globals.h"
+#include <map_global.h>
 
 import UnitSelector;
 

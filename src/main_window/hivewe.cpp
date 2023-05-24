@@ -21,21 +21,21 @@ import MPQ;
 import OpenGLUtilities;
 import Camera;
 
-#include "TileSetter.h"
-#include "MapInfoEditor.h"
-#include "TerrainPalette.h"
-#include "SettingsEditor.h"
-#include "TilePather.h"
-#include "Palette.h"
-#include "TerrainPalette.h"
-#include "DoodadPalette.h"
-#include "UnitPalette.h"
-#include "PathingPalette.h"
-#include "ObjectEditor/ObjectEditor.h"
-#include "ModelEditor/ModelEditor.h"
+#include "tile_setter.h"
+#include "map_info_editor.h"
+#include "terrain_palette.h"
+#include "settings_editor.h"
+#include "tile_pather.h"
+#include "palette.h"
+#include "terrain_palette.h"
+#include "doodad_palette.h"
+#include "unit_palette.h"
+#include "pathing_palette.h"
+#include "object_editor/object_editor.h"
+#include "model_editor/model_editor.h"
 
-#include "ObjectEditor/IconView.h"
-#include "Globals.h"
+#include "object_editor/icon_view.h"
+#include "globals.h"
 
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {

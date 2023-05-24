@@ -1,9 +1,9 @@
-#include "TableModel.h"
-#include "Globals.h"
+#include "table_model.h"
+#include "globals.h"
 
 #include <absl/strings/str_split.h>
 
-#include <MapGlobal.h>
+#include <map_global.h>
 
 import QIconResource;
 

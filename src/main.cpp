@@ -11,11 +11,10 @@
 #include <QStyleFactory>
 
 #include "DockManager.h"
-#include "MainWindow/HiveWE.h"
-#include "test.h"
-
+#include "main_window/hivewe.h"
 
 import MDX;
+import test;
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available

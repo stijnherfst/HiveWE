@@ -1,4 +1,4 @@
-#include "ModelEditorCamera.h"
+#include "model_editor_camera.h"
 
 void ModelEditorCamera::reset() {
 	distance = 20;

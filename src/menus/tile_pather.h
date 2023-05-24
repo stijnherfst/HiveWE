@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui_TilePather.h"
+#include "ui_tile_pather.h"
 
 #include <QWidget>
 #include <QDialog>

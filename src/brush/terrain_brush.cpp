@@ -1,10 +1,10 @@
-#include "TerrainBrush.h"
+#include "terrain_brush.h"
 
 #include <random>
 
 //#include "Globals.h"
-#include <MapGlobal.h>
-#include "Terrain.h"
+#include <map_global.h>
+#include "terrain.h"
 
 TerrainBrush::TerrainBrush() : Brush() {
 	size_granularity = 4;

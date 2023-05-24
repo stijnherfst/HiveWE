@@ -7,9 +7,10 @@ module;
 #include <QModelIndex>
 #include <QSize>
 #include <QIcon>
-#include "Globals.h"
 #include <iostream>
 #include "unordered_dense.h"
+
+#include "globals.h"
 
 export module ItemTreeModel;
 

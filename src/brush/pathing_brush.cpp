@@ -1,9 +1,9 @@
-#include "PathingBrush.h"
+#include "pathing_brush.h"
 
 #include <QRect>
 
 //#include "Globals.h"
-#include <MapGlobal.h>
+#include <map_global.h>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS

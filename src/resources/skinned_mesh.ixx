@@ -3,7 +3,6 @@ module;
 #include <filesystem>
 #include <memory>
 #include <glad/glad.h>
-#include <MapGlobal.h>
 
 export module SkinnedMesh;
 
@@ -332,7 +331,7 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &preskinned_tangent_light_direction_ssbo);
 	}
 
-	void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color) {
+	void render_queue(RenderManager& render_manager, const SkeletalModelInstance& skeleton, glm::vec3 color) {
 		mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
 		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
@@ -344,7 +343,7 @@ export class SkinnedMesh : public Resource {
 
 		// Register for opaque drawing
 		if (render_jobs.size() == 1) {
-			map->render_manager.skinned_meshes.push_back(this);
+			render_manager.skinned_meshes.push_back(this);
 		}
 
 		// Register for transparent drawing
@@ -362,7 +361,7 @@ export class SkinnedMesh : public Resource {
 					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
 				};
 
-				map->render_manager.skinned_transparent_instances.push_back(t);
+				render_manager.skinned_transparent_instances.push_back(t);
 				break;
 			}
 		}

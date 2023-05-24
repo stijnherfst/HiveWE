@@ -1,4 +1,4 @@
-#include "ModelEditorGLWidget.h"
+#include "model_editor_glwidget.h"
 
 #include "fmt/format.h"
 #include <fstream>
@@ -10,7 +10,7 @@
 #include <QStandardPaths>
 #include <QDesktopServices>
 
-#include <QtImgui/QtImGui.h>
+#include <qt_imgui/qt_imGui.h>
 #include <imgui.h>
 
 //#include "Globals.h"

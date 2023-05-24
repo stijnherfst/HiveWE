@@ -3,9 +3,10 @@
 #include <set>
 #include <vector>
 
-#include "Units.h"
-#include "Brush.h"
-#include "SkinnedMesh.h"
+#include "units.h"
+#include "brush.h"
+
+import SkinnedMesh;
 import PathingTexture;
 
 class UnitBrush : public Brush {

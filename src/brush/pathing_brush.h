@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "Brush.h"
+#include "brush.h"
 
 class PathingBrush : public Brush {
 public:

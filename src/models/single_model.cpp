@@ -1,4 +1,4 @@
-#include "SingleModel.h"
+#include "single_model.h"
 
 #include <QPen>
 #include <QPainter>
@@ -17,11 +17,10 @@
 #include <QHBoxLayout>
 #include <QSortFilterProxyModel>
 
-#include "UnitSelector.h"
-#include "GenericSelectorList.h"
-#include "ObjectEditor/IconView.h"
+#include "object_editor/icon_view.h"
 
 import AbilityTreeModel;
+import UnitSelector;
 
 #include "fmt/format.h"
 

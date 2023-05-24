@@ -2,9 +2,9 @@
 
 #include <QMainWindow>
 
-#include "ui_ObjectEditor.h"
+#include "ui_object_editor.h"
 
-#include "TableModel.h"
+#include "table_model.h"
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include <QTreeView>

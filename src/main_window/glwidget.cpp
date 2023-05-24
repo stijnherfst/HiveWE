@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 
-#include "GLWidget.h"
+#include "glwidget.h"
 
 #include "fmt/format.h"
 
@@ -10,7 +10,7 @@
 //#include "Globals.h"
 #include <glad/glad.h>
 
-#include <MapGlobal.h>
+#include <map_global.h>
 
 import OpenGLUtilities;
 import Camera;

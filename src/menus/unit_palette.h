@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ui_UnitPalette.h"
-#include "UnitBrush.h"
-#include "Palette.h"
+#include "ui_unit_palette.h"
+#include "unit_brush.h"
+#include "palette.h"
 //#include "UnitSelector.h"
 
 #include <QAbstractProxyModel>

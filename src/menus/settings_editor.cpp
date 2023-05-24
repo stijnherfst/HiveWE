@@ -1,4 +1,4 @@
-#include "SettingsEditor.h"
+#include "settings_editor.h"
 
 #include <QSettings>
 #include <QFile>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui_Minimap.h"
+#include "ui_minimap.h"
 
 import Texture;
 

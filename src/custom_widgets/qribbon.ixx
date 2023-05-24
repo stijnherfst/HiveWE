@@ -291,4 +291,4 @@ export class QRibbon : public QTabWidget {
 	}
 };
 
-#include "QRibbon.moc"
+#include "qribbon.moc"

@@ -1,4 +1,4 @@
-#include "UnitPalette.h"
+#include "unit_palette.h"
 
 #include <QComboBox>
 #include <QLineEdit>
@@ -7,9 +7,9 @@
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
 //#include "Globals.h"
-#include <MapGlobal.h>
+#include <map_global.h>
 
-#include "TableModel.h"
+#include "table_model.h"
 
 UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);

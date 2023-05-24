@@ -5,7 +5,7 @@
 #include <Qwidget>
 #include <QButtonGroup>
 #include <QDialog>
-#include "ui_TileSetter.h"
+#include "ui_tile_setter.h"
 
 import FlowLayout;
 

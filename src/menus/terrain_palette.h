@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ui_TerrainPalette.h"
+#include "ui_terrain_palette.h"
 
 #include <QDialog>
 
-#include "Palette.h"
-#include "TerrainBrush.h"
+#include "palette.h"
+#include "terrain_brush.h"
 
 import QRibbon;
 import FlowLayout;

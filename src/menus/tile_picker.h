@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ui_TilePicker.h"
+#include "ui_tile_picker.h"
 
 #include <QDialog>
 #include <QButtonGroup>

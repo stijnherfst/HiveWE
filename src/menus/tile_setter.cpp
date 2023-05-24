@@ -1,8 +1,8 @@
-#include "TileSetter.h"
-#include "TilePicker.h"
+#include "tile_setter.h"
+#include "tile_picker.h"
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 
 #include <QPushButton>
 #include <QLabel>

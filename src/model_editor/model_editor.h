@@ -2,7 +2,7 @@
 
 #include <QMainWindow>
 
-#include "ui_ModelEditor.h"
+#include "ui_model_editor.h"
 
 class ModelEditor : public QMainWindow {
 	Q_OBJECT

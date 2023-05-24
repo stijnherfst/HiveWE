@@ -1,6 +1,6 @@
 import Hierarchy;
 
-#include "EditableMesh.h"
+#include "editable_mesh.h"
 #include <unordered_map>
 
 #include <glad/glad.h>

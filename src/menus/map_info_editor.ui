@@ -367,7 +367,7 @@
              </widget>
             </item>
             <item row="4" column="1">
-             <widget class="ColorButton" name="fogColor">
+             <widget class="color_button" name="fogColor">
               <property name="text">
                <string>Choose Color</string>
               </property>
@@ -460,7 +460,7 @@
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="ColorButton" name="waterColor">
+            <widget class="color_button" name="waterColor">
              <property name="enabled">
               <bool>false</bool>
              </property>
@@ -507,9 +507,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>ColorButton</class>
+   <class>color_button</class>
    <extends>QPushButton</extends>
-   <header>ColorButton.h</header>
+   <header>color_button.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

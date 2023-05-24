@@ -7,7 +7,8 @@ module;
 #include <QModelIndex>
 #include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
-#include "Globals.h"
+
+#include "globals.h"
 
 export module DestructableListModel;
 
@@ -127,4 +128,4 @@ class DestructableListFilter : public QSortFilterProxyModel {
 	using QSortFilterProxyModel::QSortFilterProxyModel;
 };
 
-#include "DestructableListModel.moc"
+#include "destructible_list_model.moc"

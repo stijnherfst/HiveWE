@@ -1,9 +1,9 @@
-#include "Brush.h"
+#include "brush.h"
 
 //#include "Globals.h"
 #include <glad/glad.h>
 
-#include <MapGlobal.h>
+#include <map_global.h>
 
 import Camera;
 import OpenGLUtilities;

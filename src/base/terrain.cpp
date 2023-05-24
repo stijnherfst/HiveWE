@@ -4,8 +4,8 @@
 
 #include "Terrain.h"
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 #include <glad/glad.h>
 
 import Hierarchy;

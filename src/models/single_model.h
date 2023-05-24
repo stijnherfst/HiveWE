@@ -7,7 +7,7 @@
 
 #include <vector>
 
-#include "TableModel.h"
+#include "table_model.h"
 
 import SLK;
 

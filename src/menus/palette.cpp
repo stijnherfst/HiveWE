@@ -1,4 +1,4 @@
-#include "Palette.h"
+#include "palette.h"
 
 Palette::Palette(QWidget* parent) : QDialog(parent) {
 }

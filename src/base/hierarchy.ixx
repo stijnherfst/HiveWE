@@ -2,8 +2,8 @@ module;
 
 #include <vector>
 #include <filesystem>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 export module Hierarchy;
 

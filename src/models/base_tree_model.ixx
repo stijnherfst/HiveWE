@@ -319,4 +319,4 @@ export class BaseFilter : public QSortFilterProxyModel {
 	}
 };
 
-#include "BaseTreeModel.moc"
+#include "base_tree_model.moc"

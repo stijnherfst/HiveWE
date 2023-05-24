@@ -1,4 +1,4 @@
-#include "Minimap.h"
+#include "minimap.h"
 
 #include <QMouseEvent>
 

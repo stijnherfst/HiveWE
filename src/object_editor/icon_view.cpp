@@ -1,5 +1,5 @@
-#include "IconView.h"
-#include "Globals.h"
+#include "icon_view.h"
+#include "globals.h"
 
 #include <fstream>
 

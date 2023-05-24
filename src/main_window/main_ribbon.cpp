@@ -1,4 +1,4 @@
-#include "MainRibbon.h"
+#include "main_ribbon.h"
 
 MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Home

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "TableModel.h"
-#include "main_window/GLWidget.h"
+#include "table_model.h"
+#include "main_window/glwidget.h"
 
 import WindowHandler;
 import INI;

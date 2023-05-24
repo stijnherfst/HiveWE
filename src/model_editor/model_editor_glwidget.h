@@ -7,8 +7,8 @@
 #include <QOpenGLWidget>
 
 #include <QElapsedTimer>
-#include "EditableMesh.h"
-#include <ModelEditor/ModelEditorCamera.h>
+#include "editable_mesh.h"
+#include <model_editor/model_editor_camera.h>
 
 class ModelEditorGLWidget : public QOpenGLWidget {
 	Q_OBJECT

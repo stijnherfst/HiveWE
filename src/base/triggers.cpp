@@ -1,4 +1,4 @@
-#include "Triggers.h"
+#include "triggers.h"
 
 #include <functional>
 #include <fstream>
@@ -9,8 +9,8 @@
 
 #include "fmt/format.h"
 
-#include "Globals.h"
-#include <MapGlobal.h>
+#include "globals.h"
+#include <map_global.h>
 
 import Hierarchy;
 import Utilities;

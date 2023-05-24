@@ -1,7 +1,10 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.26)
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API 2182bf5c-ef0d-489a-91da-49dbc3090d2a)
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
+set(CMAKE_CXX_STANDARD 23)
 
 find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
@@ -29,15 +32,18 @@ add_subdirectory(src)
 
 target_include_directories(HiveWE PRIVATE 
 	"src" 
-	"src/Base" 
-	"src/Brush" 
-	"src/Custom Widgets" 
-	"src/File Formats" 
-	"src/Menus" 
-	"src/Models"
-	"src/Resources" 
-	"src/Resources/SkinnedMesh" 
-	"src/Utilities"
+	"src/base" 
+	"src/brush" 
+	"src/custom_Widgets" 
+	"src/file_formats" 
+	"src/main_window" 
+	"src/menus" 
+	"src/models"
+	"src/model_editor"
+	"src/object_editor"
+	"src/resources" 
+	"src/resources/skinned_mesh" 
+	"src/utilities"
 
 	${BULLET_INCLUDE_DIR}
 )

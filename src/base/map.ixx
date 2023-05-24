@@ -1,12 +1,12 @@
 module;
 
-#include "Triggers.h"
-#include "Terrain.h"
-#include "Doodads.h"
-#include "Brush.h"
-#include "Units.h"
-#include "RenderManager.h"
-#include "Globals.h"
+#include "triggers.h"
+#include "terrain.h"
+#include "doodads.h"
+#include "brush.h"
+#include "units.h"
+#include "render_manager.h"
+#include "globals.h"
 
 #include <filesystem>
 #include <map>
@@ -584,4 +584,4 @@ export class Map : public QObject {
 	}
 };
 
-#include "Map.moc"
+#include "map.moc"

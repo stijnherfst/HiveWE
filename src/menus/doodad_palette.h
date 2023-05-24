@@ -1,18 +1,18 @@
 #pragma once
 
-#include "ui_DoodadPalette.h"
+#include "ui_doodad_palette.h"
 
 #include <QLineEdit>
 
-#include "DoodadBrush.h"
-#include "Palette.h"
-#include "DoodadListModel.h"
-#include "DestructableListModel.h"
+#include "doodad_brush.h"
+#include "palette.h"
+#include "doodad_list_model.h"
 
 #include <QConcatenateTablesProxyModel>
 
 import QRibbon;
 import AspectRatioPixmapLabel;
+import DestructibleListModel;
 
 class DoodadPalette : public Palette {
 	Q_OBJECT

@@ -1,13 +1,12 @@
-#include "RenderManager.h"
+#include "render_manager.h"
 
 import ResourceManager;
 import Timer;
 import MDX;
 import Camera;
 
-#include "Units.h"
-//#include "Globals.h"
-#include <MapGlobal.h>
+#include "units.h"
+#include <map_global.h>
 #include <soil2/SOIL2.h>
 
 RenderManager::RenderManager() {

@@ -1,7 +1,7 @@
-#include "TerrainPalette.h"
+#include "terrain_palette.h"
 
 //#include "Globals.h"
-#include <MapGlobal.h>
+#include <map_global.h>
 
 import OpenGLUtilities;
 

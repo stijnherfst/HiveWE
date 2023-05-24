@@ -48,4 +48,4 @@ export class ColorButton : public QPushButton {
 	QColor color;
 };
 
-#include "ColorButton.moc"
+#include "color_button.moc"

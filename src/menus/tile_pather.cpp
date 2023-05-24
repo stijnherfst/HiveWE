@@ -1,7 +1,7 @@
-#include "TilePather.h"
+#include "tile_pather.h"
 
 //#include "Globals.h"
-#include <MapGlobal.h>
+#include <map_global.h>
 
 #include <glad/glad.h>
 

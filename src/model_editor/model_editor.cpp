@@ -1,4 +1,4 @@
-#include "ModelEditor.h"
+#include "model_editor.h"
 
 ModelEditor::ModelEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);

@@ -1,8 +1,8 @@
-#include "PathingPalette.h"
+#include "pathing_palette.h"
 
 #include <QDialog>
 //#include "Globals.h"
-#include <MapGlobal.h>
+#include <map_global.h>
 
 PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);

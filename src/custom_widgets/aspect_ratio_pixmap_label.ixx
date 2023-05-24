@@ -76,4 +76,4 @@ export class AspectRatioPixmapLabel : public QLabel {
 	}
 };
 
-#include "AspectRatioPixmapLabel.moc"
+#include "aspect_ratio_pixmap_label.moc"

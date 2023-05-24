@@ -1,4 +1,4 @@
-#include "ImGuiRenderer.h"
+#include "imgui_renderer.h"
 
 #include <QDateTime>
 #include <QGuiApplication>

@@ -7,8 +7,9 @@ module;
 #include <QModelIndex>
 #include <QSize>
 #include <QIcon>
-#include "Globals.h"
 #include "unordered_dense.h"
+
+#include "globals.h"
 
 export module DoodadTreeModel;
 
