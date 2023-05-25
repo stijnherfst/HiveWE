@@ -2,7 +2,7 @@ module;
 
 #include <filesystem>
 #include <glad/glad.h>
-//#include <fmt/format.h>
+#include <print>
 
 export module Shader;
 
@@ -43,7 +43,7 @@ export class Shader : public Resource {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 			if (!status) {
 				glGetShaderInfoLog(shader, 512, nullptr, buffer);
-				//fmt::print("{}\n{}\n", path.string(), buffer);
+				std::print("{}\n{}\n", path.string(), buffer);
 			}
 
 			glAttachShader(program, shader);
@@ -56,11 +56,11 @@ export class Shader : public Resource {
 		if (!status) {
 			glGetProgramInfoLog(program, 512, nullptr, buffer);
 
-			//fmt::print("Failed to link\n");
+			std::print("Failed to link\n");
 			for (const auto& path : paths) {
-				//fmt::print("{}\n", path.string());
+				std::print("{}\n", path.string());
 			}
-			//fmt::print("{}\n", buffer);
+			std::print("{}\n", buffer);
 		}
 	}
 

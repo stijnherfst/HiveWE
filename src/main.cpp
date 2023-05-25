@@ -38,8 +38,6 @@ int main(int argc, char *argv[]) {
 
 	//mdx::MDX::from_mdl(b);
 
-
-
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);

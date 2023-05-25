@@ -1,9 +1,5 @@
 #include "map_info_editor.h"
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
 #include "globals.h"
 #include <map_global.h>
 

@@ -1,5 +1,8 @@
 #include "single_model.h"
 
+#include <print>
+#include <format>
+
 #include <QPen>
 #include <QPainter>
 #include <QLineEdit>
@@ -23,8 +26,6 @@ import AbilityTreeModel;
 import UnitSelector;
 import Utilities;
 
-#include "fmt/format.h"
-
 #include "Globals.h"
 
 SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyModel(parent) {
@@ -47,18 +48,18 @@ QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 	}
 
 	if (sourceIndex.row() != slk->row_headers.at(id)) {
-		fmt::print("Invalid ID for SLK {}\n", id);
+		std::print("Invalid ID for SLK {}\n", id);
 		return {};
 	}
 
 	const std::string& field = slk->index_to_column.at(sourceIndex.column());
 	for (size_t i = 0; i < id_mapping.size(); i++) {
 		if (id_mapping[i].field == field) {
-			//fmt::print("Found {} at {} {} {}\n", field, i, headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString(), meta_slk->data("displayname", id_mapping[i].key));
+			//std::print("Found {} at {} {} {}\n", field, i, headerData(i, Qt::Vertical, Qt::DisplayRole).toString().toStdString(), meta_slk->data("displayname", id_mapping[i].key));
 			return createIndex(i, 0);
 		}
 	}
-	fmt::print("Not found {}\t{}\n", sourceIndex.row(), sourceIndex.column());
+	std::print("Not found {}\t{}\n", sourceIndex.row(), sourceIndex.column());
 	return {};
 }
 
@@ -93,9 +94,9 @@ QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int r
 			int level = id_mapping[section].level;
 
 			if (id_mapping[section].level > 0) {
-				return QString::fromStdString(fmt::format("{} - {} - Level {} ({})", category, display_name, id_mapping[section].level, id_mapping[section].key));
+				return QString::fromStdString(std::format("{} - {} - Level {} ({})", category, display_name, id_mapping[section].level, id_mapping[section].key));
 			} else {
-				return QString::fromStdString(fmt::format("{} - {} ({})", category, display_name, id_mapping[section].key));
+				return QString::fromStdString(std::format("{} - {} ({})", category, display_name, id_mapping[section].key));
 			}
 		} else {
 			return "UnitID";
@@ -436,7 +437,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 					return;
 				}
 
-				fmt::print("Valid\n");
+				std::print("Valid\n");
 
 				QListWidgetItem* item = new QListWidgetItem;
 				item->setText(QString::fromStdString(abilities_slk.data("name", treeItem->id)));

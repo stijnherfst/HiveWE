@@ -2,7 +2,7 @@ module;
 
 
 #include <cmath>
-#include <fmt/format.h>
+#include <print>
 
 #include <turbojpeg.h>
 
@@ -14,7 +14,7 @@ namespace blp {
 	export uint8_t* load(BinaryReader& reader, int& width, int& height, int& channels) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "BLP1") {
-			fmt::print("Wrong magic number, should be BLP1, is {}\n", magic_number);
+			std::print("Wrong magic number, should be BLP1, is {}\n", magic_number);
 			return nullptr;
 		}
 
@@ -45,7 +45,7 @@ namespace blp {
 			const int success = tjDecompress2(handle, reader.buffer.data() + mipmap_offsets[0] - header_size, header_size + mipmap_sizes[0], data, width, 0, height, TJPF_CMYK, 0); // Actually BGRA
 
 			if (success == -1) {
-				fmt::print("Error loading JPEG data from BLP {}\n", tjGetErrorStr());
+				std::print("Error loading JPEG data from BLP {}\n", tjGetErrorStr());
 			}
 			tjDestroy(handle);
 		} else if (content_type == 1) { // direct

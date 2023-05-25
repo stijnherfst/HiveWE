@@ -1,7 +1,9 @@
+
 #include "icon_view.h"
 #include "globals.h"
 
 #include <fstream>
+#include <print>
 
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -16,8 +18,6 @@
 
 #include <filesystem>
 namespace fs = std::filesystem;
-
-#include "fmt/format.h"
 
 import Hierarchy;
 
@@ -75,7 +75,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 
 	//	QString tags;
 	//	if (!values.contains("bufftip") && !values.contains("editorname")) {
-	//		fmt::print("Missing buff name: {}\n", key);
+	//		std::print("Missing buff name: {}\n", key);
 	//		continue;
 	//	} else if (!values.contains("bufftip")) {
 	//		tags = QString::fromStdString(values.at("editorname"));
@@ -110,7 +110,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	//	} else if (values.contains("tip")) {
 	//		tags = QString::fromStdString(values.at("tip"));
 	//	} else {
-	//		fmt::print("Missing ability name: {}\n", key);
+	//		std::print("Missing ability name: {}\n", key);
 	//		continue;
 	//	}
 	//	std::string art_path = to_lowercase_copy(values.at("art"));
@@ -169,7 +169,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	file.close();
 
 	if (json.isNull()) {
-		fmt::print("Error parsing icon_tags.json: {}", error.errorString().toStdString());
+		std::print("Error parsing icon_tags.json: {}", error.errorString().toStdString());
 	}
 
 	for (const auto& i : json.array()) {

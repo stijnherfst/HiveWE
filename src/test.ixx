@@ -5,8 +5,7 @@ module;
 #include <fstream>
 #include <execution>
 #include <filesystem>
-
-#include "fmt/format.h"
+#include <print>
 
 export module test;
 
@@ -35,9 +34,9 @@ void parse_all_mdx() {
 }
 
 export void execute_tests() {
-	fmt::print("[INFO] Parsing all MDX files\n");
+	std::print("[INFO] Parsing all MDX files\n");
 	auto begin = std::chrono::steady_clock::now();
 	parse_all_mdx();
 	auto delta = (std::chrono::steady_clock::now() - begin).count() / 1'000'000.f;
-	fmt::print("[INFO] Done parsing in {}ms\n", delta);
+	std::print("[INFO] Done parsing in {}ms\n", delta);
 }

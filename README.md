@@ -38,7 +38,7 @@ or [Retera Model Studio](https://github.com/Retera/ReterasModelStudio)
 
 ## Build Instructions
 
-0. Requires Visual Studio 17.5 or higher (C++20 modules)
+0. Requires Visual Studio 17.7 Preview 1.0 or higher (C++20 modules)
 1. Clone HiveWE somewhere 
 `git clone https://github.com/stijnherfst/HiveWE.git`
 2. Clone [vcpkg](https://github.com/microsoft/vcpkg) somewhere central (eg. "C:/")

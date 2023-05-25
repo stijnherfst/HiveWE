@@ -6,8 +6,8 @@ module;
 #include <optional>
 #include <charconv>
 #include <unordered_set>
+#include <format>
 
-#include <fmt/format.h>
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
@@ -45,10 +45,10 @@ namespace mdx {
 
 		std::optional<std::string> consume(std::string_view token) {
 			if (position >= tokens.size()) {
-				[[unlikely]] return fmt::format("Expected: {}, but we reached the end of the file", token);
+				[[unlikely]] return std::format("Expected: {}, but we reached the end of the file", token);
 			}
 			if (tokens[position] != token) {
-				[[unlikely]] return fmt::format("Expected: {}, got: {}", token, tokens[position]);
+				[[unlikely]] return std::format("Expected: {}, got: {}", token, tokens[position]);
 			}
 			position += 1;
 			return std::nullopt;
@@ -57,7 +57,7 @@ namespace mdx {
 		template <typename F>
 		std::optional<std::string> consume_any(F callback) {
 			if (position >= tokens.size()) {
-				[[unlikely]] return fmt::format("Expected a name/value, but we reached the end of the file");
+				[[unlikely]] return std::format("Expected a name/value, but we reached the end of the file");
 			}
 			std::optional<std::string> error = callback(tokens[position]);
 			position += 1;
@@ -71,11 +71,11 @@ namespace mdx {
 		std::optional<std::string> consume_quoted_string(F callback) {
 			auto token = current();
 			if (position >= tokens.size()) {
-				[[unlikely]] return fmt::format("Expected quoted string (e.g. \"SomeName\"), but we reached the end of the file");
+				[[unlikely]] return std::format("Expected quoted string (e.g. \"SomeName\"), but we reached the end of the file");
 			}
 
 			if (token.size() < 3 || token.front() != '\"' || token.back() != '\"') {
-				[[unlikely]] return fmt::format("The name should be surrounded in quotes \"likethis\" and at least one character long, but is: {}", token);
+				[[unlikely]] return std::format("The name should be surrounded in quotes \"likethis\" and at least one character long, but is: {}", token);
 			}
 
 			callback(token.substr(1, token.size() - 2)); // Get rid of quotes
@@ -115,7 +115,7 @@ namespace mdx {
 		TRY_PASS(reader.consume_any([&](std::string_view token) -> std::optional<std::string> {
 			std::from_chars(token.data(), token.data() + token.size(), mdx.version);
 			if (mdx.version != 800 || mdx.version != 900 || mdx.version != 1000) {
-				return fmt::format("Invalid version {}, expected 800, 900, 1000", mdx.version);
+				return std::format("Invalid version {}, expected 800, 900, 1000", mdx.version);
 			}
 			return std::nullopt;
 		}));
@@ -175,7 +175,7 @@ namespace mdx {
 				TRY(parse_model_chunk(reader, mdx));
 			}
 
-			return failure(fmt::format("Error reading token {}, expected a chunk type (Version/Model/Textures/etc). Make sure to match the casing", reader.current()));
+			return failure(std::format("Error reading token {}, expected a chunk type (Version/Model/Textures/etc). Make sure to match the casing", reader.current()));
 		}
 
 		return mdx;

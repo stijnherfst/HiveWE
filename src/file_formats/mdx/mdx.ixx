@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <string_view>
 #include <fstream>
-#include <fmt/format.h>
+#include <print>
 #include <outcome/outcome.hpp>
 
 export module MDX;
@@ -228,7 +228,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KGSC) {
 					KGSC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 		}
@@ -789,7 +789,7 @@ namespace mdx {
 			IDs.reserve(node_count);
 			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
-					fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
+					std::print("Invalid node \"{}\" with ID -1\n", node.name);
 					return;
 				}
 				IDs.push_back(node.id);
@@ -803,7 +803,7 @@ namespace mdx {
 
 			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
-					fmt::print("Invalid node \"{}\" with ID -1\n", node.name);
+					std::print("Invalid node \"{}\" with ID -1\n", node.name);
 					return;
 				}
 				node.id = remapping[node.id];
@@ -866,7 +866,7 @@ namespace mdx {
 				glm::vec3 between = trackA.value + trackC.value * (static_cast<float>(diffAB) / total);
 				glm::vec3 diff = (trackB.value - between) / between * 100.f;
 				if (diff.x < 1.f && diff.y < 1.f && diff.z < 1.f) {
-					fmt::print("yeet");
+					std::print("yeet");
 				}
 			}
 		}

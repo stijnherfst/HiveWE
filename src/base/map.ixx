@@ -14,11 +14,11 @@ module;
 #include <random>
 #include <map>
 #include <fstream>
+#include <print>
 
 #include <QMessageBox>
 #include <glad/glad.h>
 #include <bullet/btBulletDynamicsCommon.h>
-#include <fmt/format.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -262,7 +262,7 @@ export class Map : public QObject {
 		upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
 		buff_table = new TableModel(&buff_slk, &buff_meta_slk);
 
-		fmt::print("\nSLK loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::print("\nSLK loading:\t {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		// Trigger strings
@@ -280,13 +280,13 @@ export class Map : public QObject {
 			}
 		}
 
-		fmt::print("Trigger loading: {:>5}ms\n", timer.elapsed_ms());
+		std::print("Trigger loading: {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		info.load();
 		terrain.load();
 
-		fmt::print("Terrain loading: {:>5}ms\n", timer.elapsed_ms());
+		std::print("Terrain loading: {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		// Pathing Map
@@ -296,7 +296,7 @@ export class Map : public QObject {
 			pathing_map.resize(terrain.width * 4, terrain.height * 4);
 		}
 
-		fmt::print("Pathing loading: {:>5}ms\n", timer.elapsed_ms());
+		std::print("Pathing loading: {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		// Doodads
@@ -319,7 +319,7 @@ export class Map : public QObject {
 		doodads.load();
 		doodads.create();
 
-		fmt::print("Doodad loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::print("Doodad loading:\t {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -344,7 +344,7 @@ export class Map : public QObject {
 			units.create();
 		}
 
-		fmt::print("Unit loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::print("Unit loading:\t {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		// Abilities
@@ -389,7 +389,7 @@ export class Map : public QObject {
 			sounds.load();
 		}
 
-		fmt::print("Misc loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::print("Misc loading:\t {:>5}ms\n", timer.elapsed_ms());
 		timer.reset();
 
 		// Center camera
@@ -579,7 +579,7 @@ export class Map : public QObject {
 
 		if (units_slk.row_headers.contains(id) || items_slk.row_headers.contains(id) || abilities_slk.row_headers.contains(id) || doodads_slk.row_headers.contains(id) || destructibles_slk.row_headers.contains(id) || upgrade_slk.row_headers.contains(id) || buff_slk.row_headers.contains(id)) {
 
-			fmt::print("Generated an existing ID: {} what're the odds\n", id);
+			std::print("Generated an existing ID: {} what're the odds\n", id);
 			goto again;
 		}
 

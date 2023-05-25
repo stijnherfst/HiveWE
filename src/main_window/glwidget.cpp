@@ -1,9 +1,10 @@
 #include <glad/glad.h>
 
 #include <iostream>
+#include <format>
 
 #include "glwidget.h"
-#include "fmt/format.h"
+
 
 #include <QTimer>
 #include <QPainter>
@@ -163,16 +164,16 @@ void GLWidget::paintGL() {
 			frametimes.erase(frametimes.begin());
 		}
 		float average_frametime = std::accumulate(frametimes.begin(), frametimes.end(), 0.f) / frametimes.size();
-		p.drawText(10, 20, QString::fromStdString(fmt::format("Total time: {:.2f}ms", average_frametime * 1000.0)));
+		p.drawText(10, 20, QString::fromStdString(std::format("Total time: {:.2f}ms", average_frametime * 1000.0)));
 
 		// General info
-		p.drawText(300, 20, QString::fromStdString(fmt::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));
+		p.drawText(300, 20, QString::fromStdString(std::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));
 		if (map->brush) {
-			p.drawText(300, 35, QString::fromStdString(fmt::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
+			p.drawText(300, 35, QString::fromStdString(std::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
 		}
 
-		p.drawText(300, 50, QString::fromStdString(fmt::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
-		p.drawText(300, 64, QString::fromStdString(fmt::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
+		p.drawText(300, 50, QString::fromStdString(std::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
+		p.drawText(300, 64, QString::fromStdString(std::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
 
 		p.end();
 

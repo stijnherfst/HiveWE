@@ -1,18 +1,19 @@
 module;
 
 #include <string>
-#include <iostream>
 #include <unordered_map>
 #include <filesystem>
 #include <cassert>
-#include "unordered_dense.h"
-#include <random>
 #include <fstream>
 #include <numeric>
 #include <string_view>
 #include <charconv>
+#include <print>
+
 #include <absl/strings/str_split.h>
 #include <absl/strings/str_join.h>
+
+#include "unordered_dense.h"
 
 export module SLK;
 
@@ -78,7 +79,7 @@ namespace slk {
 			std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
 
 			if (!view.starts_with("ID")) {
-				std::cout << "Invalid SLK file, does not contain \"ID\" as first record" << std::endl;
+				std::print("Invalid SLK file, does not contain \"ID\" as first record\n");
 				return;
 			}
 

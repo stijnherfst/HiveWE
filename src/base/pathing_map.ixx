@@ -1,14 +1,11 @@
 module;
 
 #include <memory>
+#include <print>
 
 #include <glad/glad.h>
 #include <QRect>
-#include <fmt/format.h>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
 export module PathingMap;
@@ -45,13 +42,13 @@ export class PathingMap {
 		BinaryReader reader = hierarchy.map_file_read("war3map.wpm");
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MP3W") {
-			fmt::print("Invalid war3map.wpm magic number, expected MP3W but got {}", magic_number);
+			std::print("Invalid war3map.wpm magic number, expected MP3W but got {}", magic_number);
 			return false;
 		}
 
 		const int version = reader.read<uint32_t>();
 		if (version != 0) {
-			fmt::print("Unknown war3map.wpm version, expected 0 but got {}. Attempting to load, but may crash.\n", version);
+			std::print("Unknown war3map.wpm version, expected 0 but got {}. Attempting to load, but may crash.\n", version);
 		}
 
 		width = reader.read<uint32_t>();

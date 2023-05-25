@@ -1,9 +1,7 @@
 module;
 
 #include <string>
-#include <fmt/format.h>
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
+
 #include <glm/glm.hpp>
 #include <filesystem>
 #include <fstream>

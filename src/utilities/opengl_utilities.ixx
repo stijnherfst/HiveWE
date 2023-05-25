@@ -13,8 +13,6 @@ module;
 #include <QPainter>
 #include <QIcon>
 
-#include <fmt/format.h>
-
 export module OpenGLUtilities;
 
 import BinaryReader;

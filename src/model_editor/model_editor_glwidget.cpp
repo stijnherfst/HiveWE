@@ -1,6 +1,6 @@
 #include "model_editor_glwidget.h"
 
-#include "fmt/format.h"
+#include <format>
 #include <fstream>
 
 #include <QTimer>
@@ -127,7 +127,7 @@ void ModelEditorGLWidget::paintGL() {
 		skeleton = SkeletalModelInstance(mesh->mdx);
 	}
 
-	ImGui::Text(fmt::format("name: {}", mesh->mdx->name).c_str());
+	ImGui::Text(std::format("name: {}", mesh->mdx->name).c_str());
 
 	size_t vertices = 0;
 	size_t triangles = 0;
@@ -136,8 +136,8 @@ void ModelEditorGLWidget::paintGL() {
 		triangles += i.faces.size() / 3;
 	}
 
-	ImGui::Text(fmt::format("Vertices: {}", vertices).c_str());
-	ImGui::Text(fmt::format("Triangles: {}", triangles).c_str());
+	ImGui::Text(std::format("Vertices: {}", vertices).c_str());
+	ImGui::Text(std::format("Triangles: {}", triangles).c_str());
 
 	ImGui::End();
 
@@ -171,10 +171,10 @@ void ModelEditorGLWidget::paintGL() {
 	//	non_looping
 	//};
 
-	ImGui::Text(fmt::format("Start frame: {}", mesh->mdx->sequences[skeleton.sequence_index].start_frame).c_str());
-	ImGui::Text(fmt::format("End frame: {}", mesh->mdx->sequences[skeleton.sequence_index].end_frame).c_str());
-	ImGui::Text(fmt::format("Current frame: {}", skeleton.current_frame).c_str());
-	ImGui::Text(fmt::format("Looping: {}", mesh->mdx->sequences[skeleton.sequence_index].flags == mdx::Sequence::Flags::looping).c_str());
+	ImGui::Text(std::format("Start frame: {}", mesh->mdx->sequences[skeleton.sequence_index].start_frame).c_str());
+	ImGui::Text(std::format("End frame: {}", mesh->mdx->sequences[skeleton.sequence_index].end_frame).c_str());
+	ImGui::Text(std::format("Current frame: {}", skeleton.current_frame).c_str());
+	ImGui::Text(std::format("Looping: {}", mesh->mdx->sequences[skeleton.sequence_index].flags == mdx::Sequence::Flags::looping).c_str());
 
 	ImGui::End();
 

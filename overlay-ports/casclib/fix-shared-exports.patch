@@ -1,0 +1,8 @@
+diff --git a/src/DllMain.def b/src/DllMain.def
+--- a/src/DllMain.def
++++ b/src/DllMain.def
+@@ -36,2 +36,2 @@
+-    GetLastError=Kernel32.GetLastError
++    GetCascError
+-    SetLastError=Kernel32.SetLastError
++    SetCascError

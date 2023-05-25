@@ -1,9 +1,8 @@
 module;
 
 #include <string>
-#include <fmt/format.h>
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
+#include <print>
+
 #include <glm/glm.hpp>
 
 module MDX;
@@ -140,7 +139,7 @@ namespace mdx {
 					} else if (tag == TrackTag::KFTC) {
 						layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 					} else {
-						fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+						std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 					}
 				}
 
@@ -187,7 +186,7 @@ namespace mdx {
 					} else if (tag == TrackTag::KFTC) {
 						layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 					} else {
-						fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+						std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 					}
 				}
 
@@ -244,7 +243,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KFTC) {
 					layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 
@@ -357,7 +356,7 @@ namespace mdx {
 			//		} else if (tag == TrackTag::KFTC) {
 			//			layer.KFTC = TrackHeader<float>(reader, unique_tracks++);
 			//		} else {
-			//			fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+			//			std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 			//		}
 			//	}
 
@@ -424,7 +423,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KGAC) {
 					animation.KGAC = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 
@@ -494,7 +493,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KLAV) {
 					light.KLAV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 			lights.push_back(std::move(light));
@@ -525,7 +524,7 @@ namespace mdx {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				attachment.KATV = TrackHeader<float>(reader, unique_tracks++);
 				if (tag != TrackTag::KATV) {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 			attachments.push_back(std::move(attachment));
@@ -573,7 +572,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KPEV) {
 					emitter.KPEV = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 			emitters1.push_back(std::move(emitter));
@@ -640,7 +639,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KP2V) {
 					emitter2.KP2V = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 			emitters2.push_back(std::move(emitter2));
@@ -682,7 +681,7 @@ namespace mdx {
 				} else if (tag == TrackTag::KRVS) {
 					emitter.KRVS = TrackHeader<float>(reader, unique_tracks++);
 				} else {
-					fmt::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
 			ribbons.push_back(std::move(emitter));
@@ -800,7 +799,7 @@ namespace mdx {
 	void MDX::load(BinaryReader& reader) {
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MDLX") {
-			fmt::print("Incorrect file magic number, expected MDLX but got {}\n", magic_number);
+			std::print("Incorrect file magic number, expected MDLX but got {}\n", magic_number);
 			return;
 		}
 
