@@ -7,6 +7,20 @@
 #include <QComboBox>
 #include <QListView>
 #include <QToolButton>
+#include <QShortcut>
+#include <QFrame>
+#include <QGridLayout>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QMenu>
+#include <QTabWidget>
+#include <QStyle>
+#include <QStyleOption>
+#include <QPainter>
+#include <QMap>
+#include <QScrollArea>
+#include <QPushButton>
+#include <QKeySequence>
 
 #include "globals.h"
 #include <map_global.h>

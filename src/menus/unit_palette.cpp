@@ -1,13 +1,14 @@
 #include "unit_palette.h"
 
+#include <map_global.h>
+#include <globals.h>
+
 #include <QComboBox>
 #include <QLineEdit>
 #include <QListView>
-
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
-//#include "Globals.h"
-#include <map_global.h>
+
 
 #include "table_model.h"
 

@@ -3,6 +3,10 @@ module;
 #include <filesystem>
 #include <memory>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+//#include "render_manager.h"
 
 export module SkinnedMesh;
 
@@ -34,6 +38,7 @@ export class SkinnedMesh : public Resource {
 
 	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
+	bool has_transparent_layers;
 
 	GLuint vao;
 	GLuint vertex_buffer;
@@ -85,6 +90,14 @@ export class SkinnedMesh : public Resource {
 		has_mesh = model->geosets.size();
 		if (!has_mesh) {
 			return;
+		}
+
+		for (const auto& i : geosets) {
+			const auto& layer = model->materials[i.material_id].layers[0];
+			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
+				has_transparent_layers = true;
+				break;
+			}
 		}
 
 		// Calculate required space
@@ -331,41 +344,37 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &preskinned_tangent_light_direction_ssbo);
 	}
 
-	void render_queue(RenderManager& render_manager, const SkeletalModelInstance& skeleton, glm::vec3 color) {
-		mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
-		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
-			return;
-		}
+	//void render_queue(RenderManager& render_manager, const SkeletalModelInstance& skeleton, glm::vec3 color) {
+	//	mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
+	//	if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+	//		return;
+	//	}
 
-		render_jobs.push_back(skeleton.matrix);
-		render_colors.push_back(color);
-		skeletons.push_back(&skeleton);
+	//	render_jobs.push_back(skeleton.matrix);
+	//	render_colors.push_back(color);
+	//	skeletons.push_back(&skeleton);
 
-		// Register for opaque drawing
-		if (render_jobs.size() == 1) {
-			render_manager.skinned_meshes.push_back(this);
-		}
+	//	// Register for opaque drawing
+	//	if (render_jobs.size() == 1) {
+	//		render_manager.skinned_meshes.push_back(this);
+	//	}
 
-		// Register for transparent drawing
-		// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
-		if (!has_mesh) {
-			return;
-		}
+	//	// Register for transparent drawing
+	//	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
+	//	if (!has_mesh) {
+	//		return;
+	//	}
 
-		for (const auto& i : geosets) {
-			const auto& layer = model->materials[i.material_id].layers[0];
-			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
-				RenderManager::SkinnedInstance t{
-					.mesh = this,
-					.instance_id = static_cast<int>(render_jobs.size() - 1),
-					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
-				};
+	//	if (has_transparent_layers) {
+	//		RenderManager::SkinnedInstance t{
+	//			.mesh = this,
+	//			.instance_id = static_cast<int>(render_jobs.size() - 1),
+	//			.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
+	//		};
 
-				render_manager.skinned_transparent_instances.push_back(t);
-				break;
-			}
-		}
-	}
+	//		render_manager.skinned_transparent_instances.push_back(t);
+	//	}
+	//}
 
 	void upload_render_data() {
 		if (!has_mesh) {

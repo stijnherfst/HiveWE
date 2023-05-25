@@ -9,7 +9,7 @@ module;
 #include <CascLib.h>
 
 //#include "no_init_allocator.h"
-#include "fmt/format.h"
+//#include "fmt/format.h"
 
 export module CASC;
 
@@ -51,7 +51,7 @@ namespace casc {
 #endif
 			const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
 			if (!success) {
-				fmt::print("Failed to read file: {}\n", GetCascError());
+				//fmt::print("Failed to read file: {}\n", GetCascError());
 			}
 			return buffer;
 		}
@@ -98,7 +98,7 @@ namespace casc {
 				close();
 			const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
 			if (!opened) {
-				fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
+				//fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
 			}
 			return opened;
 		}
@@ -112,7 +112,7 @@ namespace casc {
 			File file;
 			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 			if (!opened) {
-				fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
+				//fmt::print("Error opening {} with error: {}\n", path.string(), GetCascError());
 			}
 			return file;
 		}

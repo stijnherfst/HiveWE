@@ -1,18 +1,46 @@
 #pragma once
 
-#include "ui_HiveWE.h"
 
 #include <QMainWindow>
+#include <QFileDialog>
+#include <QSettings>
+#include <QObject>
+#include <QMessageBox>
+#include <QTimer>
+#include <QProcess>
+#include <QPushButton>
+#include <QApplication>
+#include <QShortcut>
+#include <QToolButton>
+#include <QFrame>
+#include <QGridLayout>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QMenu>
+#include <QTabWidget>
+#include <QStyle>
+#include <QStyleOption>
+#include <QPainter>
+#include <QMap>
+#include <QScrollArea>
+#include <QPushButton>
+#include <QKeySequence>
+
+#include "ui_HiveWE.h"
+
 #include "palette.h"
 #include "minimap.h"
-#include "table_model.h"
-#include "glwidget.h"
 #include "globals.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 import QRibbon;
 import INI;
 import Map;
 import SLK;
+import WindowHandler;
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT

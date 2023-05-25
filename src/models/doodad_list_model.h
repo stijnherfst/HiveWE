@@ -7,6 +7,11 @@
 #include <QMargins>
 #include <QIcon>
 
+#include <unordered_map>
+
+
+#include "unordered_dense.h"
+
 import QIconResource;
 
 class DoodadListModel : public QIdentityProxyModel {

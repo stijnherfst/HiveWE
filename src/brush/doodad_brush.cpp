@@ -492,7 +492,8 @@ void DoodadBrush::render_brush() {
 	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
 	skeleton.update(0.016f);
 
-	mesh->render_queue(skeleton, glm::vec3(1.f));
+	//mesh->render_queue(skeleton, glm::vec3(1.f));
+	map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle
@@ -551,7 +552,8 @@ void DoodadBrush::render_clipboard() {
 		i.skeleton.update_location(final_position, i.angle, (base_scale * i.scale) / 128.f);
 		i.skeleton.update(0.016f);
 
-		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 }
 

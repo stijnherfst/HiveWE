@@ -12,6 +12,7 @@
 #include "globals.h"
 #include <map_global.h>
 
+
 import BinaryWriter;
 import Hierarchy;
 
@@ -224,10 +225,12 @@ void Doodads::create() {
 
 void Doodads::render() {
 	for (auto&& i : doodads) {
-		i.mesh->render_queue(i.skeleton, i.color);
+		//i.mesh->render_queue(i.skeleton, i.color);
+		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
 	}
 	for (auto&& i : special_doodads) {
-		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 }
 

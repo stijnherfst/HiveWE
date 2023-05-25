@@ -1,13 +1,12 @@
 #include <glad/glad.h>
 
-#include "glwidget.h"
+#include <iostream>
 
+#include "glwidget.h"
 #include "fmt/format.h"
 
 #include <QTimer>
 #include <QPainter>
-
-//#include "Globals.h"
 #include <glad/glad.h>
 
 #include <map_global.h>

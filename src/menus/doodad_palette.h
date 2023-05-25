@@ -3,6 +3,27 @@
 #include "ui_doodad_palette.h"
 
 #include <QLineEdit>
+#include <QRadioButton>
+#include <QCheckBox>
+#include <QFormLayout>
+#include <QDoubleValidator>
+#include <QComboBox>
+#include <QListView>
+#include <QToolButton>
+#include <QShortcut>
+#include <QFrame>
+#include <QGridLayout>
+#include <QBoxLayout>
+#include <QLabel>
+#include <QMenu>
+#include <QTabWidget>
+#include <QStyle>
+#include <QStyleOption>
+#include <QPainter>
+#include <QMap>
+#include <QScrollArea>
+#include <QPushButton>
+#include <QKeySequence>
 
 #include "doodad_brush.h"
 #include "palette.h"
@@ -12,7 +33,7 @@
 
 import QRibbon;
 import AspectRatioPixmapLabel;
-import DestructibleListModel;
+import DestructableListModel;
 
 class DoodadPalette : public Palette {
 	Q_OBJECT

@@ -5,6 +5,7 @@
 import ResourceManager;
 import Texture;
 import OpenGLUtilities;
+import SLK;
 
 #include <map_global.h>
 

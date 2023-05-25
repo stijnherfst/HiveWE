@@ -10,6 +10,7 @@ import PathingTexture;
 import Utilities;
 import TerrainUndo;
 
+#include "unordered_dense.h"
 #include "Terrain.h"
 
 struct Doodad {

@@ -3,6 +3,12 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <string>
+#include <filesystem>
+
+#include <QObject>
+
+#include <glm/glm.hpp>
 
 import BinaryReader;
 import Utilities;

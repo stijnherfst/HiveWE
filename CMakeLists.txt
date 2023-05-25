@@ -34,7 +34,7 @@ target_include_directories(HiveWE PRIVATE
 	"src" 
 	"src/base" 
 	"src/brush" 
-	"src/custom_Widgets" 
+	"src/custom_widgets" 
 	"src/file_formats" 
 	"src/main_window" 
 	"src/menus" 

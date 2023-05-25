@@ -21,6 +21,7 @@
 
 import AbilityTreeModel;
 import UnitSelector;
+import Utilities;
 
 #include "fmt/format.h"
 

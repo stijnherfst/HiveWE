@@ -1,25 +1,8 @@
 #include "HiveWE.h"
 
 #include <fstream>
-
-#include <QFileDialog>
-#include <QSettings>
-#include <QObject>
-#include <QMessageBox>
-#include <QTimer>
-#include <QProcess>
-#include <QPushButton>
-#include <QApplication>
-
-#include <soil2/SOIL2.h>
-
-#define STORMLIB_NO_AUTO_LINK
-#include <StormLib.h>
-
-import Hierarchy;
-import MPQ;
-import OpenGLUtilities;
-import Camera;
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include "tile_setter.h"
 #include "map_info_editor.h"
@@ -36,6 +19,18 @@ import Camera;
 
 #include "object_editor/icon_view.h"
 #include "globals.h"
+#include "map_global.h"
+
+#include <soil2/SOIL2.h>
+
+#define STORMLIB_NO_AUTO_LINK
+#include <StormLib.h>
+
+import Hierarchy;
+import MPQ;
+import OpenGLUtilities;
+import Camera;
+
 
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {

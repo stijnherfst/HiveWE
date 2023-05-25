@@ -1,7 +1,10 @@
 ﻿#include "units.h"
 
+
+#include <filesystem>
 #include <iostream>
 using namespace std::literals::string_literals;
+namespace fs = std::filesystem;
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -247,10 +250,12 @@ void Units::render() {
 			continue;
 		} // ToDo handle starting locations
 
-		i.mesh->render_queue(i.skeleton, i.color);
+		//i.mesh->render_queue(i.skeleton, i.color);
+		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 	for (auto& i : items) {
-		i.mesh->render_queue(i.skeleton, i.color);
+		//i.mesh->render_queue(i.skeleton, i.color);
+		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
 	}
 }
 

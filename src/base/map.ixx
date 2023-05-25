@@ -1,12 +1,12 @@
 module;
 
+#include "globals.h"
 #include "triggers.h"
 #include "terrain.h"
 #include "doodads.h"
 #include "brush.h"
 #include "units.h"
 #include "render_manager.h"
-#include "globals.h"
 
 #include <filesystem>
 #include <map>
@@ -19,6 +19,9 @@ module;
 #include <glad/glad.h>
 #include <bullet/btBulletDynamicsCommon.h>
 #include <fmt/format.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 export module Map;
 

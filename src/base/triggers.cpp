@@ -2,6 +2,8 @@
 
 #include <functional>
 #include <fstream>
+#include <filesystem>
+namespace fs = std::filesystem;
 
 #include <QProcess>
 #include <QMessageBox>
@@ -11,6 +13,9 @@
 
 #include "globals.h"
 #include <map_global.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 import Hierarchy;
 import Utilities;

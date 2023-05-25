@@ -31,10 +31,10 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="main_ribbon" name="ribbon"/>
+     <widget class="MainRibbon" name="ribbon"/>
     </item>
     <item>
-     <widget class="glwidget" name="widget" native="true">
+     <widget class="GLWidget" name="widget" native="true">
       <property name="minimumSize">
        <size>
         <width>200</width>
@@ -307,13 +307,13 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>glwidget</class>
+   <class>GLWidget</class>
    <extends>QWidget</extends>
    <header>glwidget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>main_ribbon</class>
+   <class>MainRibbon</class>
    <extends>QTabWidget</extends>
    <header>main_ribbon.h</header>
    <container>1</container>

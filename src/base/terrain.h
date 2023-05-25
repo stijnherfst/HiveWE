@@ -1,5 +1,6 @@
 #pragma once
 
+#include "unordered_dense.h"
 #include <memory>
 
 #include <QObject>
@@ -7,9 +8,13 @@
 #include <QRect>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include "btBulletDynamicsCommon.h"
+
+#include <filesystem>
 
 import GroundTexture;
 import Texture;

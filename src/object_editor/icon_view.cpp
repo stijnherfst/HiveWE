@@ -14,7 +14,12 @@
 #include <QJsonObject>
 #include <QLabel>
 
+#include <filesystem>
+namespace fs = std::filesystem;
+
 #include "fmt/format.h"
+
+import Hierarchy;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> icon_cache;
 

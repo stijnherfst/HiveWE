@@ -5,6 +5,8 @@ import Timer;
 import MDX;
 import Camera;
 
+#include <iostream>
+
 #include "units.h"
 #include <map_global.h>
 #include <soil2/SOIL2.h>
@@ -36,6 +38,38 @@ RenderManager::~RenderManager() {
 	glDeleteRenderbuffers(1, &color_buffer);
 	glDeleteRenderbuffers(1, &depth_buffer);
 	glDeleteFramebuffers(1, &color_picking_framebuffer);
+}
+
+void RenderManager::render_queue(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, glm::vec3 color) {
+	mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
+	if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+		return;
+	}
+
+	skinned_mesh.render_jobs.push_back(skeleton.matrix);
+	skinned_mesh.render_colors.push_back(color);
+	skinned_mesh.skeletons.push_back(&skeleton);
+
+	// Register for opaque drawing
+	if (skinned_mesh.render_jobs.size() == 1) {
+		skinned_meshes.push_back(&skinned_mesh);
+	}
+
+	// Register for transparent drawing
+	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
+	if (!skinned_mesh.has_mesh) {
+		return;
+	}
+
+	if (skinned_mesh.has_transparent_layers) {
+		RenderManager::SkinnedInstance t{
+			.mesh = &skinned_mesh,
+			.instance_id = static_cast<int>(skinned_mesh.render_jobs.size() - 1),
+			.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
+		};
+
+		skinned_transparent_instances.push_back(t);
+	}
 }
 
 void RenderManager::render(bool render_lighting, glm::vec3 light_direction) {

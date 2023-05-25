@@ -6,6 +6,7 @@
 #include <map_global.h>
 
 import QIconResource;
+import Hierarchy;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 

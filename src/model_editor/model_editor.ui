@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="model_editor_glwidget" name="openGLWidget">
+     <widget class="ModelEditorGLWidget" name="openGLWidget">
       <property name="minimumSize">
        <size>
         <width>0</width>
@@ -30,7 +30,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>model_editor_glwidget</class>
+   <class>ModelEditorGLWidget</class>
    <extends>QOpenGLWidget</extends>
    <header>model_editor_glwidget.h</header>
   </customwidget>

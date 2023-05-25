@@ -1,4 +1,5 @@
 #include "unit_brush.h"
+#include "render_manager.h"
 
 #include <random>
 #include <memory>
@@ -244,7 +245,8 @@ void UnitBrush::render_brush() {
 	if (mesh) {
 		skeleton.update_location(final_position, rotation, final_scale);
 		skeleton.update(0.016f);
-		mesh->render_queue(skeleton, glm::vec3(1.f));
+		//mesh->render_queue(skeleton, glm::vec3(1.f));
+		map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
 	}
 }
 
@@ -286,7 +288,8 @@ void UnitBrush::render_clipboard() {
 
 		i.skeleton.update_location(final_position, i.angle, final_scale);
 		i.skeleton.update(0.016f);
-		i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 }
 

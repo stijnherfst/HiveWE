@@ -1,8 +1,14 @@
 #pragma once
 
 #include <vector>
+#include <glad/glad.h>
+#include <memory>
+#include <optional>
+#include <glm/glm.hpp>
 
 import SkinnedMesh;
+import Shader;
+import SkeletalModelInstance;
 
 class RenderManager {
 public:
@@ -31,6 +37,8 @@ public:
 
 	RenderManager();
 	~RenderManager();
+
+	void render_queue(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, glm::vec3 color);
 
 	void render(bool render_lighting, glm::vec3 light_direction);
 

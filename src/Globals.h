@@ -1,5 +1,9 @@
 #pragma once
 
+#include <filesystem>
+
+#include "unordered_dense.h"
+
 #include "table_model.h"
 #include "main_window/glwidget.h"
 

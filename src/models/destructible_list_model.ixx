@@ -82,11 +82,11 @@ export class DestructableListModel : public QIdentityProxyModel {
 		return 1;
 	}
 
-	QModelIndex DestructableListModel::index(int row, int column, const QModelIndex& parent = QModelIndex()) const override {
+	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override {
 		return createIndex(row, column);
 	}
 
-	QModelIndex DestructableListModel::parent(const QModelIndex& child) const override {
+	QModelIndex parent(const QModelIndex& child) const override {
 		return QModelIndex();
 	}
 
@@ -94,7 +94,7 @@ export class DestructableListModel : public QIdentityProxyModel {
 	std::unordered_map<char, std::shared_ptr<QIconResource>> icons;
 };
 
-class DestructableListFilter : public QSortFilterProxyModel {
+export class DestructableListFilter : public QSortFilterProxyModel {
 	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override {
 		QModelIndex index0 = sourceModel()->index(sourceRow, 0);
 
@@ -107,7 +107,7 @@ class DestructableListFilter : public QSortFilterProxyModel {
 		}
 	}
 
-	bool DestructableListFilter::lessThan(const QModelIndex& left, const QModelIndex& right) const override {
+	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
 		return destructibles_slk.data("name", left.row()) < destructibles_slk.data("name", right.row());
 	} 
 

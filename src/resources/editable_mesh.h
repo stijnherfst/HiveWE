@@ -1,17 +1,20 @@
 #pragma once
 
 #include <memory>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#include <filesystem>
+namespace fs = std::filesystem;
+
+#include <glad/glad.h>
 
 import MDX;
 import ResourceManager;
 import GPUTexture;
 import Shader;
 import SkeletalModelInstance;
-
-#include <filesystem>
-namespace fs = std::filesystem;
-
-#include <glad/glad.h>
 
 class EditableMesh : public Resource {
   public:
