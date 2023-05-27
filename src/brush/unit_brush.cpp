@@ -1,14 +1,14 @@
 #include "unit_brush.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 #include "render_manager.h"
 
 #include <random>
 #include <memory>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "globals.h"
 #include <map_global.h>
@@ -88,7 +88,7 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 
 void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
-		auto id = map->render_manager.pick_unit_id_under_mouse(input_handler.mouse);
+		auto id = map->render_manager.pick_unit_id_under_mouse(map->units, input_handler.mouse);
 		if (id) {
 			Unit& unit = map->units.units[id.value()];
 			selections = { &unit };

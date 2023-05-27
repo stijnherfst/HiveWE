@@ -208,7 +208,7 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	if (event->button() == Qt::LeftButton && input_handler.mouse.y > 0.f) {
 		if (mode == Mode::selection) {
 			if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
-				auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
+				auto id = map->render_manager.pick_doodad_id_under_mouse(map->doodads, input_handler.mouse);
 				if (id) {
 					if (selections.contains(&map->doodads.doodads[id.value()])) {
 						selections.erase(&map->doodads.doodads[id.value()]);
@@ -220,7 +220,7 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			}
 
 			if (!event->modifiers()) {
-				auto id = map->render_manager.pick_doodad_id_under_mouse(input_handler.mouse);
+				auto id = map->render_manager.pick_doodad_id_under_mouse(map->doodads, input_handler.mouse);
 				if (id) {
 					Doodad& doodad = map->doodads.doodads[id.value()];
 

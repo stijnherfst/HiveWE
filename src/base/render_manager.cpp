@@ -1,15 +1,14 @@
 #include "render_manager.h"
 
+#include <print>
+
 import ResourceManager;
 import Timer;
 import MDX;
 import Camera;
 
-#include <iostream>
-
 #include "units.h"
-#include <map_global.h>
-#include <soil2/SOIL2.h>
+#include "doodads.h"
 
 RenderManager::RenderManager() {
 	instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
@@ -30,7 +29,7 @@ RenderManager::RenderManager() {
 	glNamedFramebufferRenderbuffer(color_picking_framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 
 	if (glCheckNamedFramebufferStatus(color_picking_framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		std::print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n");
 	}
 }
 
@@ -148,7 +147,7 @@ void RenderManager::resize_framebuffers(int width, int height) {
 	window_height = height;
 }
 
-std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_position) {
+std::optional<size_t> RenderManager::pick_unit_id_under_mouse(Units& units, glm::vec2 mouse_position) {
 	GLint old_fbo;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 	GLint old_vao;
@@ -164,8 +163,8 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 	glDisable(GL_BLEND);
 
 	colored_skinned_shader->use();
-	for (size_t i = 0; i < map->units.units.size(); i++) {
-		const Unit& unit = map->units.units[i];
+	for (size_t i = 0; i < units.units.size(); i++) {
+		const Unit& unit = units.units[i];
 		if (unit.id == "sloc") {
 			continue;
 		} // ToDo handle starting locations
@@ -192,7 +191,7 @@ std::optional<size_t> RenderManager::pick_unit_id_under_mouse(glm::vec2 mouse_po
 }
 
 // Requires the OpenGL context to be active/current
-std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_position) {
+std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(Doodads& doodads, glm::vec2 mouse_position) {
 	GLint old_fbo;
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 	GLint old_vao;
@@ -208,8 +207,8 @@ std::optional<size_t> RenderManager::pick_doodad_id_under_mouse(glm::vec2 mouse_
 	glDisable(GL_BLEND);
 
 	colored_skinned_shader->use();
-	for (size_t i = 0; i < map->doodads.doodads.size(); i++) {
-		const Doodad& doodad = map->doodads.doodads[i];
+	for (size_t i = 0; i < doodads.doodads.size(); i++) {
+		const Doodad& doodad = doodads.doodads[i];
 
 		mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
 		if (camera.inside_frustrum(doodad.skeleton.matrix * glm::vec4(extent.minimum, 1.f), doodad.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {

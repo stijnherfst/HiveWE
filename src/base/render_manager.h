@@ -5,6 +5,11 @@
 #include <memory>
 #include <optional>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#include "units.h"
+#include "doodads.h"
 
 import SkinnedMesh;
 import Shader;
@@ -46,9 +51,9 @@ public:
 	
 	/// Returns the unit ID of the unit that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	std::optional<size_t> pick_unit_id_under_mouse(glm::vec2 mouse_position);
+	std::optional<size_t> pick_unit_id_under_mouse(Units& units, glm::vec2 mouse_position);
 
 	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	std::optional<size_t> pick_doodad_id_under_mouse(glm::vec2 mouse_position);
+	std::optional<size_t> pick_doodad_id_under_mouse(Doodads& doodads, glm::vec2 mouse_position);
 };
