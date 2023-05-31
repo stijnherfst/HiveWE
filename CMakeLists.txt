@@ -71,7 +71,7 @@ target_link_libraries(HiveWE PUBLIC
 )
 
 target_compile_options(HiveWE PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /sdl>
+	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /sdl /diagnostics:caret>
 	$<$<CXX_COMPILER_ID:Clang>:-Wextra -Wpedantic -Werror -Wno-multichar>
 	$<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic -Werror -Wno-multichar>
 )
@@ -90,12 +90,21 @@ endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_23)
 
-
-message("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND}
 	-E
-	create_symlink "${PROJECT_SOURCE_DIR}/Data"
-	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
-	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Data"
+	create_symlink "${PROJECT_SOURCE_DIR}/data"
+	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data"
+	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data"
 )
+
+message(${CMAKE_BUILD_TYPE})
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	file(COPY "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug/Qt6/plugins/platforms/"
+			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms/"
+	)
+else()
+	file(COPY "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins/platforms/"
+			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms/"
+	)
+endif()

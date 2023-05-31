@@ -4,8 +4,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "render_manager.h"
-
 #include <random>
 #include <memory>
 
@@ -18,6 +16,7 @@ import Texture;
 import TerrainUndo;
 import Camera;
 import OpenGLUtilities;
+import RenderManager;
 
 UnitBrush::UnitBrush() : Brush() {
 }

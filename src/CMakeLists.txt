@@ -5,6 +5,7 @@ target_sources(HiveWE PRIVATE
 	"base/binary_reader.ixx"
 	"base/binary_writer.ixx"
 	"base/hierarchy.ixx"
+	"base/render_manager.ixx"
 	"base/game_cameras.ixx"
 	"base/imports.ixx"
 
@@ -83,7 +84,7 @@ target_sources(HiveWE PRIVATE
 	"main_window/main_ribbon.cpp"
 
 	"base/doodads.cpp"
-	"base/render_manager.cpp"
+	
 	"base/terrain.cpp"
 	"base/triggers.cpp"
 	"base/units.cpp"

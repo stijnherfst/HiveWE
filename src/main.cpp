@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
 //	MaximumExtent { 154.078, 213.709, 284.64 },
 //}
 //)";
-
+	
 	//mdx::MDX::from_mdl(b);
 
 	QSurfaceFormat format;

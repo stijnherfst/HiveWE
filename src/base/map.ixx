@@ -6,7 +6,6 @@ module;
 #include "doodads.h"
 #include "brush.h"
 #include "units.h"
-#include "render_manager.h"
 
 #include <filesystem>
 #include <map>
@@ -39,6 +38,7 @@ import Camera;
 import Timer;
 import Physics;
 import ModificationTables;
+import RenderManager;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
