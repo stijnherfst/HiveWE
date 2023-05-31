@@ -163,7 +163,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 									suffix = "_orm";
 									break;
 								case 3:
-									suffix = "_emmisive";
+									suffix = "_emissive";
 									break;
 							}
 						}

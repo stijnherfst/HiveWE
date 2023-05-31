@@ -112,27 +112,21 @@ export class SkinnedMesh : public Resource {
 
 		// Allocate space
 		glCreateBuffers(1, &vertex_buffer);
-		//glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &uv_buffer);
-		//glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &normal_buffer);
-		//glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &tangent_buffer);
-		//glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &weight_buffer);
-		//glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &index_buffer);
-		//glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferStorage(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &instance_ssbo);
@@ -264,7 +258,7 @@ export class SkinnedMesh : public Resource {
 										suffix = "_orm";
 										break;
 									case 3:
-										suffix = "_emmisive";
+										suffix = "_emissive";
 										break;
 								}
 							}
