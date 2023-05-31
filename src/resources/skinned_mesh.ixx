@@ -112,22 +112,28 @@ export class SkinnedMesh : public Resource {
 
 		// Allocate space
 		glCreateBuffers(1, &vertex_buffer);
-		glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &uv_buffer);
-		glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &normal_buffer);
-		glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &tangent_buffer);
-		glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &weight_buffer);
-		glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &index_buffer);
-		glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+		//glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferStorage(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &instance_ssbo);
 		glCreateBuffers(1, &layer_colors_ssbo);
@@ -285,45 +291,6 @@ export class SkinnedMesh : public Resource {
 			glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
 
-		// glVertexArrayAttribFormat(vao, 0, 3, GL_FLOAT, GL_FALSE, 0);
-		// glVertexArrayAttribFormat(vao, 1, 2, GL_FLOAT, GL_FALSE, 0);
-		// glVertexArrayAttribFormat(vao, 2, 3, GL_FLOAT, GL_FALSE, 0);
-		// glVertexArrayAttribFormat(vao, 3, 4, GL_FLOAT, GL_FALSE, 0);
-		// glVertexArrayAttribIFormat(vao, 4, 2, GL_UNSIGNED_INT, 0);
-
-		// glVertexArrayAttribBinding(vao, 0, 0);
-		// glVertexArrayAttribBinding(vao, 1, 1);
-		// glVertexArrayAttribBinding(vao, 2, 2);
-		// glVertexArrayAttribBinding(vao, 3, 3);
-		// glVertexArrayAttribBinding(vao, 4, 4);
-		//
-		// glVertexArrayVertexBuffer(vao, 0, vertex_buffer, 0, 0);
-		// glVertexArrayVertexBuffer(vao, 1, uv_buffer, 0, 0);
-		// glVertexArrayVertexBuffer(vao, 2, normal_buffer, 0, 0);
-		// glVertexArrayVertexBuffer(vao, 3, tangent_buffer, 0, 0);
-		// glVertexArrayVertexBuffer(vao, 4, weight_buffer, 0, 0);
-
-		glEnableVertexArrayAttrib(vao, 0);
-		glEnableVertexArrayAttrib(vao, 1);
-		glEnableVertexArrayAttrib(vao, 2);
-		glEnableVertexArrayAttrib(vao, 3);
-		glEnableVertexArrayAttrib(vao, 4);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, tangent_buffer);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
-		glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
-
 		glVertexArrayElementBuffer(vao, index_buffer);
 	}
 
@@ -343,38 +310,6 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &preskinned_vertex_ssbo);
 		glDeleteBuffers(1, &preskinned_tangent_light_direction_ssbo);
 	}
-
-	//void render_queue(RenderManager& render_manager, const SkeletalModelInstance& skeleton, glm::vec3 color) {
-	//	mdx::Extent& extent = model->sequences[skeleton.sequence_index].extent;
-	//	if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
-	//		return;
-	//	}
-
-	//	render_jobs.push_back(skeleton.matrix);
-	//	render_colors.push_back(color);
-	//	skeletons.push_back(&skeleton);
-
-	//	// Register for opaque drawing
-	//	if (render_jobs.size() == 1) {
-	//		render_manager.skinned_meshes.push_back(this);
-	//	}
-
-	//	// Register for transparent drawing
-	//	// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
-	//	if (!has_mesh) {
-	//		return;
-	//	}
-
-	//	if (has_transparent_layers) {
-	//		RenderManager::SkinnedInstance t{
-	//			.mesh = this,
-	//			.instance_id = static_cast<int>(render_jobs.size() - 1),
-	//			.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
-	//		};
-
-	//		render_manager.skinned_transparent_instances.push_back(t);
-	//	}
-	//}
 
 	void upload_render_data() {
 		if (!has_mesh) {
@@ -449,15 +384,6 @@ export class SkinnedMesh : public Resource {
 
 		glDispatchCompute(((instance_vertex_count + 63) / 64) * render_jobs.size(), 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-		// std::vector<glm::vec4> ssbo;
-		// ssbo.resize(instance_vertex_count);
-		// glGetNamedBufferSubData(preskinned_vertex_ssbo, 0, instance_vertex_count * sizeof(glm::vec4), ssbo.data());
-
-		// for (const auto& i : ssbo) {
-		//	std::cout << i.x << " " << i.y << " " << i.z << "\n";
-		// }
-		// std::cout << "\n";
 	}
 
 	void render_opaque(bool render_hd) {
@@ -476,6 +402,7 @@ export class SkinnedMesh : public Resource {
 		glUniform1ui(6, instance_vertex_count);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
 
