@@ -70,7 +70,7 @@ target_sources(HiveWE PRIVATE
 	"utilities/math_operations.ixx"
 	
 	"test.ixx"
-)
+ "object_editor/ability_list_editor.ixx")
 target_sources(HiveWE PRIVATE
 
 	"main.cpp"

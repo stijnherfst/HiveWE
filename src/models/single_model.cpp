@@ -23,6 +23,7 @@
 #include "object_editor/icon_view.h"
 
 import AbilityTreeModel;
+import UnitTreeModel;
 import UnitSelector;
 import Utilities;
 
@@ -277,228 +278,13 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 //		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
 	} else if (type == "targetList") {
-		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-		QVBoxLayout* layout = new QVBoxLayout(dialog);
-		QGridLayout* flow = new QGridLayout;
-
-		for (const auto& [key, value] : unit_editor_data.section(type)) {
-			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
-				continue;
-			}
-
-			QString displayText = QString::fromStdString(value[1]);
-			displayText.replace('&', "");
-
-			QCheckBox* flag = new QCheckBox(displayText);
-			flag->setObjectName(QString::fromStdString(value[0]));
-
-			flow->addWidget(flag);
-		}
-
-		QDialogButtonBox* buttonBox = new QDialogButtonBox;
-		buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-
-		layout->addLayout(flow);
-		layout->addWidget(buttonBox);
-
-		dialog->show();
-
-		return dialog;
+		return create_target_list_editor(parent);
 	} else if (type == "unitList") {
-		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->resize(256, 360);
-		dialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-		QVBoxLayout* layout = new QVBoxLayout(dialog);
-
-		QListWidget* list = new QListWidget;
-		list->setObjectName("unitList");
-		list->setIconSize(QSize(32, 32));
-		list->setDragDropMode(QAbstractItemView::DragDropMode::InternalMove);
-		layout->addWidget(list);
-
-		QHBoxLayout* hbox = new QHBoxLayout;
-
-		QPushButton* add = new QPushButton("Add");
-		QPushButton* remove = new QPushButton("Remove");
-		remove->setDisabled(true);
-		hbox->addWidget(add);
-		hbox->addWidget(remove);
-		layout->addLayout(hbox);
-		connect(add, &QPushButton::clicked, [=]() {
-			QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-			selectdialog->resize(300, 560);
-			selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
-
-			UnitSelector* selector = new UnitSelector(selectdialog);
-			selectlayout->addWidget(selector);
-
-			QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-			connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
-			connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
-			selectlayout->addWidget(buttonBox2);
-
-			connect(selector, &UnitSelector::unitSelected, [selectdialog, list](const std::string& id) {
-				QListWidgetItem* item = new QListWidgetItem;
-				item->setText(QString::fromStdString(units_slk.data("name", id)));
-				item->setData(Qt::StatusTipRole, QString::fromStdString(id));
-				auto one = units_slk.row_headers.at(id);
-				auto two = units_slk.column_headers.at("art");
-				item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
-				list->addItem(item);
-				selectdialog->close();
-			});
-
-			connect(selectdialog, &QDialog::accepted, selector, &UnitSelector::forceSelection);
-
-			selectdialog->show();
-			selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));
-		});
-		connect(remove, &QPushButton::clicked, [=]() {
-			for (auto i : list->selectedItems()) {
-				delete i;
-			}
-		});
-		connect(list, &QListWidget::itemSelectionChanged, [=]() {
-			remove->setEnabled(list->selectedItems().size() > 0);
-		});
-
-		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-		layout->addWidget(buttonBox);
-
-		dialog->show();
-
-		return dialog;
+		return create_unit_list_editor(parent);
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
-		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->resize(256, 360);
-		dialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-		QVBoxLayout* layout = new QVBoxLayout(dialog);
-
-		QListWidget* list = new QListWidget;
-		list->setObjectName("abilityList");
-		list->setIconSize(QSize(32, 32));
-		list->setDragDropMode(QAbstractItemView::DragDropMode::InternalMove);
-		layout->addWidget(list);
-
-		QHBoxLayout* hbox = new QHBoxLayout;
-
-		QPushButton* add = new QPushButton("Add");
-		QPushButton* remove = new QPushButton("Remove");
-		remove->setDisabled(true);
-		hbox->addWidget(add);
-		hbox->addWidget(remove);
-		layout->addLayout(hbox);
-		connect(add, &QPushButton::clicked, [=]() {
-			QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-			selectdialog->resize(300, 560);
-			selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
-
-			AbilityTreeModel* abilityTreeModel = new AbilityTreeModel(dialog);
-			abilityTreeModel->setSourceModel(abilities_table);
-			QSortFilterProxyModel* filter = new QSortFilterProxyModel;
-			filter->setSourceModel(abilityTreeModel);
-			filter->setRecursiveFilteringEnabled(true);
-			filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
-
-			QLineEdit* search = new QLineEdit;
-			search->setPlaceholderText("Search Abilities");
-			QTreeView* view = new QTreeView;
-			view->setModel(filter);
-			view->header()->hide();
-			view->expandAll();
-
-			connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
-
-			selectlayout->addWidget(search);
-			selectlayout->addWidget(view);
-
-			QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-			connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
-			connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
-			selectlayout->addWidget(buttonBox2);
-
-
-			auto add = [filter, list, selectdialog](const QModelIndex& index) {
-				QModelIndex sourceIndex = filter->mapToSource(index);
-				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
-				if (treeItem->baseCategory || treeItem->subCategory) {
-					return;
-				}
-
-				std::print("Valid\n");
-
-				QListWidgetItem* item = new QListWidgetItem;
-				item->setText(QString::fromStdString(abilities_slk.data("name", treeItem->id)));
-				item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-				auto one = abilities_slk.row_headers.at(treeItem->id);
-				auto two = abilities_slk.column_headers.at("art");
-				item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
-				list->addItem(item);
-				selectdialog->close();
-			};
-
-			connect(view, &QTreeView::activated, [=](const QModelIndex& index) {
-				add(index);
-			});
-			
-			connect(selectdialog, &QDialog::accepted, [=]() {
-				auto indices = view->selectionModel()->selectedIndexes();
-				if (indices.size()) {
-					add(indices.front());
-				}
-			});
-
-			selectdialog->show();
-			selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));
-		});
-		connect(remove, &QPushButton::clicked, [=]() {
-			for (auto i : list->selectedItems()) {
-				delete i;
-			}
-		});
-		connect(list, &QListWidget::itemSelectionChanged, [=]() {
-			remove->setEnabled(list->selectedItems().size() > 0);
-		});
-
-		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-		layout->addWidget(buttonBox);
-
-		dialog->show();
-
-		return dialog;
+		return create_ability_list_editor(parent);
 	} else if (type.ends_with("List")) {
-		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->setWindowModality(Qt::WindowModality::WindowModal);
-		
-		QVBoxLayout* layout = new QVBoxLayout(dialog);
-
-		QPlainTextEdit* editor = new QPlainTextEdit;
-		editor->setObjectName("editor");
-
-		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-
-		layout->addWidget(editor);
-		layout->addWidget(buttonBox);
-
-		dialog->show();
-
-		return dialog;
+		return create_list_editor(parent);
 	} else if (unit_editor_data.section_exists(type)) {
 		QComboBox* editor = new QComboBox(parent);
 		for (const auto& [key, value] : unit_editor_data.section(type)) {
@@ -513,23 +299,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		}
 		return editor;
 	} else if (type == "icon") {
-		QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		dialog->resize(530, 512);
-		dialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-		IconView* view = new IconView;
-		view->setObjectName("iconView");
-
-		QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-		connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-
-		QVBoxLayout* layout = new QVBoxLayout(dialog);
-		layout->addWidget(view);
-		layout->addWidget(buttonBox);
-
-		dialog->show();
-		return dialog;
+		return create_icon_editor(parent);
 	} else if (type == "doodadCategory") {
 		QComboBox* editor = new QComboBox(parent);
 		for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {
@@ -638,10 +408,6 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	} else if (type == "string") {
 		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
 	} else if (type == "unitList") {
-		auto fd = dynamic_cast<QDialog*>(editor);
-		if (!fd || fd->result() == QDialog::Rejected) {
-			return;
-		}
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
 		QString result;
@@ -654,12 +420,8 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		}
 		model->setData(index, result, Qt::EditRole);
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
-		auto fd = dynamic_cast<QDialog*>(editor);
-		if (!fd || fd->result() == QDialog::Rejected) {
-			return;
-		}
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
-
+		
 		QString result;
 		for (int i = 0; i < list->count(); i++) {
 			QListWidgetItem* item = list->item(i);
@@ -670,10 +432,6 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		}
 		model->setData(index, result, Qt::EditRole);
 	} else if (type == "targetList") {
-		auto fd = dynamic_cast<QDialog*>(editor);
-		if (!fd || fd->result() == QDialog::Rejected) {
-			return;
-		}
 		QString result;
 		for (const auto& [key, value] : unit_editor_data.section(type)) {
 			if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
@@ -689,24 +447,13 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			}
 		}
 		model->setData(index, result, Qt::EditRole);
-
 	}  else if (type.ends_with("List")) {
-		auto fd = dynamic_cast<QDialog*>(editor);
-		if (!fd || fd->result() == QDialog::Rejected) {
-			return;
-		}
 		singlemodel->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
 	} else if (unit_editor_data.section_exists(type)) {
 		auto combo = static_cast<QComboBox*>(editor);
 		singlemodel->setData(index, combo->currentData());
 	} else if (type == "icon") {
-		auto fd = dynamic_cast<QDialog*>(editor);
-		if (!fd || fd->result() == QDialog::Rejected) {
-			return;
-		}
-
 		IconView* list = editor->findChild<IconView*>("iconView");
-		
 		singlemodel->setData(index, list->currentIconPath());
 	} else if (type == "doodadCategory") {
 		auto combo = static_cast<QComboBox*>(editor);
@@ -725,4 +472,392 @@ void TableDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionView
 	} else {
 		editor->setGeometry(option.rect);
 	}
+}
+
+QWidget* TableDelegate::create_list_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+
+	QPlainTextEdit* text_edit = new QPlainTextEdit;
+	text_edit->setObjectName("editor");
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+	layout->addWidget(text_edit);
+	layout->addWidget(buttonBox);
+
+	connect(dialog, &QDialog::accepted, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	dialog->show();
+
+	return editor;
+
+}
+QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	QGridLayout* flow = new QGridLayout;
+
+	for (const auto& [key, value] : unit_editor_data.section("targetList")) {
+		if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
+			continue;
+		}
+
+		QString displayText = QString::fromStdString(value[1]);
+		displayText.replace('&', "");
+
+		QCheckBox* flag = new QCheckBox(displayText);
+		flag->setObjectName(QString::fromStdString(value[0]));
+
+		flow->addWidget(flag);
+	}
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox;
+	buttonBox->setStandardButtons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+	layout->addLayout(flow);
+	layout->addWidget(buttonBox);
+
+	connect(dialog, &QDialog::accepted, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	dialog->show();
+
+	return editor;
+}
+
+QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->resize(256, 360);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+
+	QListWidget* list = new QListWidget;
+	list->setObjectName("unitList");
+	list->setIconSize(QSize(32, 32));
+	list->setDragDropMode(QAbstractItemView::DragDropMode::InternalMove);
+	layout->addWidget(list);
+
+	QHBoxLayout* hbox = new QHBoxLayout;
+
+	QPushButton* add = new QPushButton("Add");
+	QPushButton* remove = new QPushButton("Remove");
+	remove->setDisabled(true);
+	hbox->addWidget(add);
+	hbox->addWidget(remove);
+	layout->addLayout(hbox);
+	connect(add, &QPushButton::clicked, [=]() {
+		/*QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		selectdialog->resize(300, 560);
+		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
+
+		UnitSelector* selector = new UnitSelector(selectdialog);
+		selectlayout->addWidget(selector);
+
+		QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
+		connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
+		selectlayout->addWidget(buttonBox2);
+
+		connect(selector, &UnitSelector::unitSelected, [selectdialog, list](const std::string& id) {
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(QString::fromStdString(units_slk.data("name", id)));
+			item->setData(Qt::StatusTipRole, QString::fromStdString(id));
+			auto one = units_slk.row_headers.at(id);
+			auto two = units_slk.column_headers.at("art");
+			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			list->addItem(item);
+			selectdialog->close();
+		});
+
+		connect(selectdialog, &QDialog::accepted, selector, &UnitSelector::forceSelection);
+
+		selectdialog->show();
+		selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));*/
+
+		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		selectdialog->resize(300, 560);
+		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
+
+		UnitTreeModel* unitTreeModel = new UnitTreeModel(dialog);
+		unitTreeModel->setSourceModel(units_table);
+		QSortFilterProxyModel* filter = new QSortFilterProxyModel;
+		filter->setSourceModel(unitTreeModel);
+		filter->setRecursiveFilteringEnabled(true);
+		filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+
+		QLineEdit* search = new QLineEdit;
+		search->setPlaceholderText("Search Units");
+		QTreeView* view = new QTreeView;
+		view->setModel(filter);
+		view->header()->hide();
+		view->setSelectionBehavior(QAbstractItemView::SelectRows);
+		view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		view->expandAll();
+
+		connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+
+		selectlayout->addWidget(search);
+		selectlayout->addWidget(view);
+
+		QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
+		connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
+		selectlayout->addWidget(buttonBox2);
+
+		auto add = [filter, list, selectdialog](const QModelIndex& index) {
+			QModelIndex sourceIndex = filter->mapToSource(index);
+			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+			if (treeItem->baseCategory || treeItem->subCategory) {
+				return;
+			}
+
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(QString::fromStdString(units_slk.data("name", treeItem->id)));
+			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
+			auto one = units_slk.row_headers.at(treeItem->id);
+			auto two = units_slk.column_headers.at("art");
+			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			list->addItem(item);
+		};
+
+		connect(view, &QTreeView::activated, [=](const QModelIndex& index) {
+			add(index);
+			selectdialog->close();
+		});
+
+		connect(selectdialog, &QDialog::accepted, [=]() {
+			for (const auto& i : view->selectionModel()->selectedIndexes()) {
+				add(i);
+			}
+			selectdialog->close();
+		});
+
+		selectdialog->show();
+		selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));
+	});
+
+	connect(remove, &QPushButton::clicked, [=]() {
+		for (auto i : list->selectedItems()) {
+			delete i;
+		}
+	});
+	connect(list, &QListWidget::itemSelectionChanged, [=]() {
+		remove->setEnabled(list->selectedItems().size() > 0);
+	});
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+	layout->addWidget(buttonBox);
+
+	connect(dialog, &QDialog::accepted, [=](){
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	dialog->show();
+
+	return editor;
+}
+
+QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::Window | Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->resize(256, 360);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+
+	QListWidget* list = new QListWidget;
+	list->setObjectName("abilityList");
+	list->setIconSize(QSize(32, 32));
+	list->setDragDropMode(QAbstractItemView::DragDropMode::InternalMove);
+	list->setSelectionBehavior(QAbstractItemView::SelectRows);
+	list->setSelectionMode(QAbstractItemView::ExtendedSelection);
+
+	layout->addWidget(list);
+
+	QHBoxLayout* hbox = new QHBoxLayout;
+
+	QPushButton* add = new QPushButton("Add");
+	QPushButton* remove = new QPushButton("Remove");
+	remove->setDisabled(true);
+	hbox->addWidget(add);
+	hbox->addWidget(remove);
+	layout->addLayout(hbox);
+	connect(add, &QPushButton::clicked, [=]() {
+		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		selectdialog->resize(300, 560);
+		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
+
+		AbilityTreeModel* abilityTreeModel = new AbilityTreeModel(dialog);
+		abilityTreeModel->setSourceModel(abilities_table);
+		QSortFilterProxyModel* filter = new QSortFilterProxyModel;
+		filter->setSourceModel(abilityTreeModel);
+		filter->setRecursiveFilteringEnabled(true);
+		filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+
+		QLineEdit* search = new QLineEdit;
+		search->setPlaceholderText("Search Abilities");
+		QTreeView* view = new QTreeView;
+		view->setModel(filter);
+		view->header()->hide();
+		view->setSelectionBehavior(QAbstractItemView::SelectRows);
+		view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		view->expandAll();
+
+		connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+
+		selectlayout->addWidget(search);
+		selectlayout->addWidget(view);
+
+		QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
+		connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
+		selectlayout->addWidget(buttonBox2);
+
+		auto add = [filter, list, selectdialog](const QModelIndex& index) {
+			QModelIndex sourceIndex = filter->mapToSource(index);
+			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+			if (treeItem->baseCategory || treeItem->subCategory) {
+				return;
+			}
+
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(QString::fromStdString(abilities_slk.data("name", treeItem->id)));
+			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
+			auto one = abilities_slk.row_headers.at(treeItem->id);
+			auto two = abilities_slk.column_headers.at("art");
+			item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			list->addItem(item);
+		};
+
+		connect(view, &QTreeView::activated, [=](const QModelIndex& index) {
+			add(index);
+			selectdialog->close();
+		});
+
+		connect(selectdialog, &QDialog::accepted, [=]() {
+			for (const auto& i : view->selectionModel()->selectedIndexes()) {
+				add(i);
+			}
+			selectdialog->close();
+		});
+
+		selectdialog->show();
+		selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));
+	});
+	connect(remove, &QPushButton::clicked, [=]() {
+		for (auto i : list->selectedItems()) {
+			delete i;
+		}
+	});
+	connect(list, &QListWidget::itemSelectionChanged, [=]() {
+		remove->setEnabled(list->selectedItems().size() > 0);
+	});
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+	layout->addWidget(buttonBox);
+
+	connect(dialog, &QDialog::accepted, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	dialog->show();
+
+	return editor;
+}
+
+QWidget* TableDelegate::create_icon_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->resize(530, 512);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	IconView* view = new IconView;
+	view->setObjectName("iconView");
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+	connect(dialog, &QDialog::accepted, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	layout->addWidget(view);
+	layout->addWidget(buttonBox);
+
+	dialog->show();
+
+	return editor;
 }
