@@ -26,7 +26,7 @@ export class RenderManager {
   public:
 	struct SkinnedInstance {
 		SkinnedMesh* mesh;
-		int instance_id;
+		uint32_t instance_id;
 		float distance;
 	};
 
@@ -98,13 +98,11 @@ export class RenderManager {
 		}
 
 		if (skinned_mesh.has_transparent_layers) {
-			RenderManager::SkinnedInstance t{
+			skinned_transparent_instances.push_back(RenderManager::SkinnedInstance{
 				.mesh = &skinned_mesh,
-				.instance_id = static_cast<int>(skinned_mesh.render_jobs.size() - 1),
-				.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3]))
-			};
-
-			skinned_transparent_instances.push_back(t);
+				.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
+				.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
+			});
 		}
 	}
 
@@ -124,15 +122,14 @@ export class RenderManager {
 		}
 		// Render opaque meshes
 		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
-		// instance_skinned_mesh_shader_sd->use();
-		// glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		// glUniform1i(2, render_lighting);
-		// glUniform3fv(6, 1, &light_direction.x);
-		// glBlendFunc(GL_ONE, GL_ZERO);
+		instance_skinned_mesh_shader_sd->use();
+		glUniform1i(2, render_lighting);
+		glUniform3fv(3, 1, &light_direction.x);
+		glBlendFunc(GL_ONE, GL_ZERO);
 
-		// for (const auto& i : skinned_meshes) {
-		//	i->render_opaque(false);
-		// }
+		for (const auto& i : skinned_meshes) {
+			i->render_opaque(false);
+		}
 
 		instance_skinned_mesh_shader_hd->use();
 		glUniform1i(2, render_lighting);
@@ -142,7 +139,7 @@ export class RenderManager {
 		}
 
 		// Render transparent meshes
-		/*std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
+		std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
 		glEnable(GL_BLEND);
 		glDepthMask(false);
 
@@ -156,11 +153,10 @@ export class RenderManager {
 
 		skinned_mesh_shader_hd->use();
 		glUniform1i(2, render_lighting);
-		glUniform3fv(8, 1, &light_direction.x);
 
 		for (const auto& i : skinned_transparent_instances) {
 			i.mesh->render_transparent(i.instance_id, true);
-		}*/
+		}
 
 		glBindVertexArray(old_vao);
 

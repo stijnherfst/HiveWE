@@ -223,7 +223,6 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void GLWidget::mousePressEvent(QMouseEvent* event) {
-	makeCurrent();
 
 	if (!map) {
 		return;
@@ -231,6 +230,7 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 
 	camera.mouse_press_event(event);
 	if (map->brush) {
+		makeCurrent();
 		map->brush->mouse_press_event(event, delta);
 	}
 }

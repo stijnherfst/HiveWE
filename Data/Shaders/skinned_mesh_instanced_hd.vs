@@ -20,7 +20,6 @@ layout(std430, binding = 3) buffer layoutName3 {
     vec4 tangent_light_directions[];
 };
 
-
 out vec2 UV;
 out vec3 tangent_light_direction;
 out vec4 vertexColor;

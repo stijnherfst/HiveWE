@@ -6,7 +6,6 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
-//#include "render_manager.h"
 
 export module SkinnedMesh;
 
@@ -38,7 +37,9 @@ export class SkinnedMesh : public Resource {
 
 	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
-	bool has_transparent_layers;
+	bool has_transparent_layers = false;
+
+	uint32_t instance_vertex_count = 0;
 
 	GLuint vao;
 	GLuint vertex_buffer;
@@ -60,7 +61,6 @@ export class SkinnedMesh : public Resource {
 	int skip_count = 0;
 
 	fs::path path;
-	//	int mesh_id;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
@@ -92,7 +92,7 @@ export class SkinnedMesh : public Resource {
 			return;
 		}
 
-		for (const auto& i : geosets) {
+		for (const auto& i : model->geosets) {
 			const auto& layer = model->materials[i.material_id].layers[0];
 			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
 				has_transparent_layers = true;
@@ -210,7 +210,13 @@ export class SkinnedMesh : public Resource {
 			glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), vertices_vec4.data());
 			glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
 			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
-			glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+			//glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+			if (!i.tangents.empty()) {
+				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+			} else {
+				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
+			}
+
 			glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
 			base_vertex += entry.vertices;
@@ -219,6 +225,10 @@ export class SkinnedMesh : public Resource {
 
 		for (auto& i : geosets) {
 			skip_count += model->materials[i.material_id].layers.size();
+		}
+
+		for (const auto& i : geosets) {
+			instance_vertex_count += i.indices;
 		}
 
 		// animations geoset ids > geosets
@@ -230,7 +240,7 @@ export class SkinnedMesh : public Resource {
 
 		for (size_t i = 0; i < model->textures.size(); i++) {
 			const mdx::Texture& texture = model->textures[i];
-
+			
 			if (texture.replaceable_id != 0) {
 				// Figure out if this is an HD texture
 				// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
@@ -356,11 +366,6 @@ export class SkinnedMesh : public Resource {
 			return;
 		}
 
-		size_t instance_vertex_count = 0;
-		for (const auto& i : geosets) {
-			instance_vertex_count += i.indices;
-		}
-
 		glBindVertexArray(vao);
 
 		glUniform1ui(1, render_jobs.size());
@@ -387,11 +392,6 @@ export class SkinnedMesh : public Resource {
 
 		glBindVertexArray(vao);
 
-		size_t instance_vertex_count = 0;
-		for (const auto& i : geosets) {
-			instance_vertex_count += i.indices;
-		}
-
 		glUniform1i(4, skip_count);
 		glUniform1ui(6, instance_vertex_count);
 
@@ -399,6 +399,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {
@@ -475,18 +476,16 @@ export class SkinnedMesh : public Resource {
 
 		glBindVertexArray(vao);
 
-		glm::mat4 MVP = camera.projection_view * render_jobs[instance_id];
-		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-		if (render_hd) {
-			glUniformMatrix4fv(5, 1, false, &render_jobs[instance_id][0][0]);
-		}
-
-		glUniform1i(3, model->bones.size());
 		glUniform1i(4, instance_id);
 		glUniform1i(6, skip_count);
 
+		glUniform1ui(9, instance_vertex_count);
+
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bones_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {
@@ -497,7 +496,7 @@ export class SkinnedMesh : public Resource {
 				continue;
 			}
 
-			for (auto& j : layers) {
+			for (const auto& j : layers) {
 				// We don't have to render fully transparent meshes
 				if (layer_colors[instance_id * skip_count + lay_index].a <= 0.01f) {
 					lay_index += 1;
@@ -561,21 +560,21 @@ export class SkinnedMesh : public Resource {
 		glm::mat4 MVP = camera.projection_view * skeleton.matrix;
 		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
 
-		glUniform1i(3, model->bones.size());
 		glUniform1i(7, id);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bones_ssbo_colored);
 		glNamedBufferData(bones_ssbo_colored, model->bones.size() * sizeof(glm::mat4), &skeleton.world_matrices[0][0][0], GL_DYNAMIC_DRAW);
 
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertex_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, weight_buffer);
+
 		for (const auto& i : geosets) {
-			glm::vec3 geoset_color(1.0f);
 			float geoset_anim_visibility = 1.0f;
 			if (i.geoset_anim && skeleton.sequence_index >= 0) {
-				geoset_color = skeleton.get_geoset_animation_color(*i.geoset_anim);
 				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
 			}
 
-			for (auto& j : model->materials[i.material_id].layers) {
+			for (const auto& j : model->materials[i.material_id].layers) {
 				float layer_visibility = 1.0f;
 				if (skeleton.sequence_index >= 0) {
 					layer_visibility = skeleton.get_layer_visiblity(j);
@@ -585,15 +584,6 @@ export class SkinnedMesh : public Resource {
 				if (final_visibility <= 0.001f) {
 					continue;
 				}
-
-				glUniform3f(4, geoset_color.x, geoset_color.y, geoset_color.z);
-				glUniform1f(5, final_visibility);
-
-				// if (j.blend_mode == 0) {
-				//	glUniform1f(1, -1.f);
-				// } else if (j.blend_mode == 1) {
-				//	glUniform1f(1, 0.75f);
-				// }
 
 				if (j.shading_flags & 0x40) {
 					glDisable(GL_DEPTH_TEST);

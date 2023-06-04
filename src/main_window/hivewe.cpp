@@ -31,8 +31,6 @@ import MPQ;
 import OpenGLUtilities;
 import Camera;
 
-
-
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
@@ -199,6 +197,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->show();
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera.position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z }; });
+	ui.widget->makeCurrent();
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 

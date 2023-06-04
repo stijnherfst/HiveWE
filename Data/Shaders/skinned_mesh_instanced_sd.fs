@@ -4,7 +4,7 @@ layout (binding = 0) uniform sampler2D image;
 
 layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
-layout (location = 6) uniform vec3 light_direction;
+layout (location = 3) uniform vec3 light_direction;
 
 in vec2 UV;
 in vec3 Normal;
