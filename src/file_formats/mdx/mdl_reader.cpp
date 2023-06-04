@@ -8,8 +8,6 @@ module;
 #include <unordered_set>
 #include <format>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
 #include <outcome/outcome.hpp>

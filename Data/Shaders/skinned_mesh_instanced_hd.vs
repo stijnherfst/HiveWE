@@ -1,5 +1,6 @@
 #version 450 core
 
+layout (location = 0) uniform mat4 VP;
 layout (location = 4) uniform int layer_skip_count;
 layout (location = 5) uniform int layer_index;
 layout (location = 6) uniform uint instance_vertex_count;
@@ -13,11 +14,15 @@ layout(std430, binding = 1) buffer layoutName1 {
 };
 
 layout(std430, binding = 2) buffer layoutName2 {
-    vec4 vertices[];
+    uvec2 vertices[];
 };
 
 layout(std430, binding = 3) buffer layoutName3 {
     vec4 tangent_light_directions[];
+};
+
+layout(std430, binding = 5) buffer layoutName4 {
+    mat4 instance_matrices[];
 };
 
 out vec2 UV;
@@ -26,7 +31,12 @@ out vec4 vertexColor;
 
 void main() {
 	const uint vertex_index = gl_InstanceID * instance_vertex_count + gl_VertexID;
-	gl_Position = vertices[vertex_index];
+	// gl_Position = vertices[vertex_index];
+
+	vec2 xy = unpackSnorm2x16(vertices[vertex_index].x) * 1024.f;
+	vec2 zw = unpackSnorm2x16(vertices[vertex_index].y) * 1024.f;
+
+	gl_Position = VP * instance_matrices[gl_InstanceID] * vec4(xy, zw.x, 1.f);
 
 	UV = uvs[gl_VertexID];
 	tangent_light_direction = vec3(tangent_light_directions[vertex_index]);

@@ -28,6 +28,14 @@ add_executable(HiveWE
 	${QT_RESOURCES}
 )
 
+file(COPY
+  # you don't want to hardcode the path here in a real-world project,
+  # but you get the idea
+  "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.35.32215/modules/std.ixx"
+  DESTINATION
+  ${PROJECT_SOURCE_DIR}/src/
+)
+
 add_subdirectory(src)
 
 target_include_directories(HiveWE PRIVATE 

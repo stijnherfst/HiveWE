@@ -4,6 +4,7 @@ module;
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <print>
 
 #include <glm/glm.hpp>
 
@@ -84,3 +85,20 @@ export std::string read_text_file(const fs::path& path) {
 export struct ItemSet {
 	std::vector<std::pair<std::string, int>> items;
 };
+
+
+export inline int16_t floatToSnorm16_64(float v) {
+	// According to D3D10 rules, the value "-1.0f" has two representations: 0x1000 and 0x10001
+	// This allows everyone to convert by just multiplying by 32767 instead
+	// of multiplying the negative values by 32768 and 32767 for positive.
+	//std::println("{}", static_cast<int16_t>(std::clamp(v >= 0.0f ? (v * 32767.0f + 0.5f) : (v * 32767.0f - 0.5f), -32768.0f, 32767.0f)));
+	return static_cast<int16_t>(std::clamp(v >= 0.0f ? (v * (32767.0f / 64.f) + 0.5f) : (v * (32767.0f / 64.f) - 0.5f), (32768.0f / 64.f), (32767.0f / 64.f)));
+}
+
+export inline int16_t floatToSnorm16(float v) {
+	// According to D3D10 rules, the value "-1.0f" has two representations: 0x1000 and 0x10001
+	// This allows everyone to convert by just multiplying by 32767 instead
+	// of multiplying the negative values by 32768 and 32767 for positive.
+	//std::println("{}", static_cast<int16_t>(std::clamp(v >= 0.0f ? (v * 32767.0f + 0.5f) : (v * 32767.0f - 0.5f), -32768.0f, 32767.0f)));
+	return static_cast<int16_t>(std::clamp(v >= 0.0f ? (v * 32767.0f + 0.5f) : (v * 32767.0f - 0.5f), -32768.0f, 32767.0f));
+}

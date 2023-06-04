@@ -7,7 +7,7 @@ layout(std430, binding = 0) buffer layoutName {
 };
 
 layout(std430, binding = 1) buffer layoutName1 {
-    vec4 vertices[];
+    uvec2 vertices[];
 };
 
 layout(std430, binding = 2) buffer layoutName6 {

@@ -1,4 +1,6 @@
-#version 450 core
+#version 460 core
+// #extension GL_EXT_shader_16bit_storage : enable
+// GL_EXT_shader_16bit_storage
 
 layout (location = 0) uniform mat4 VP;
 layout (location = 1) uniform uint instance_count;
@@ -31,11 +33,15 @@ layout(std430, binding = 6) restrict readonly buffer layoutName6 {
 };
 
 layout(std430, binding = 7) restrict writeonly buffer layoutName7 {
-    vec4 output_vertices[];
+    uvec2 output_vertices[];
 };
 
 layout(std430, binding = 8) restrict writeonly buffer layoutName8 {
     vec4 output_tangent_light_directions[];
+};
+
+layout(std430, binding = 9) restrict readonly buffer layoutName9 {
+    uvec2 vertices_snorm[];
 };
 
 mat4 fetchMatrix(uint instance_number, uint bone_index) {
@@ -56,11 +62,17 @@ void main() {
 	const float w1 = ((skins[input_index].y & 0x0000FF00) >> 8) / 255.f;
 	const float w2 = ((skins[input_index].y & 0x00FF0000) >> 16) / 255.f;
 	const float w3 = ((skins[input_index].y & 0xFF000000) >> 24) / 255.f;
-	mat4 skinMatrix = instance_matrices[instance_number] * (b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3);
+	mat4 skinMatrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 	
-	output_vertices[output_index] = VP * skinMatrix * positions[input_index];
+	// output_vertices[output_index] = VP * skinMatrix * positions[input_index];
 
-	mat3 model = mat3(skinMatrix);
+	vec2 xy = unpackSnorm2x16(vertices_snorm[input_index].x) * 1024.f;
+	vec2 zw = unpackSnorm2x16(vertices_snorm[input_index].y) * 1024.f;
+
+	vec4 vertex = skinMatrix * vec4(xy, zw.x, 1.f);
+	output_vertices[output_index] = uvec2(packSnorm2x16(vertex.xy / 1024.f), packSnorm2x16(vertex.zw / 1024.f));
+
+	mat3 model = mat3(instance_matrices[instance_number] * skinMatrix);
 	vec3 T = normalize(model * tangents[input_index].xyz);
 	vec3 N = normalize(model * vec3(normals[input_index]));
 	vec3 B = cross(N, T) * tangents[input_index].w; // to fix handedness

@@ -7,7 +7,7 @@ module;
 
 module MDX;
 
-//import BinaryReader;
+import BinaryReader;
 
 namespace mdx {
 	void MDX::read_GEOS_chunk(BinaryReader& reader) {

@@ -6,6 +6,7 @@ module;
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/packing.hpp>
 
 export module SkinnedMesh;
 
@@ -16,6 +17,7 @@ import Shader;
 import Hierarchy;
 import Camera;
 import SkeletalModelInstance;
+import Utilities;
 
 namespace fs = std::filesystem;
 
@@ -43,6 +45,7 @@ export class SkinnedMesh : public Resource {
 
 	GLuint vao;
 	GLuint vertex_buffer;
+	GLuint vertex_snorm_buffer;
 	GLuint uv_buffer;
 	GLuint normal_buffer;
 	GLuint tangent_buffer;
@@ -112,7 +115,10 @@ export class SkinnedMesh : public Resource {
 
 		// Allocate space
 		glCreateBuffers(1, &vertex_buffer);
-		glNamedBufferStorage(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		//glNamedBufferStorage(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+
+		glCreateBuffers(1, &vertex_snorm_buffer);
+		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::i16vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &uv_buffer);
 		glNamedBufferStorage(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
@@ -197,6 +203,15 @@ export class SkinnedMesh : public Resource {
 				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
 			}
 
+
+			std::vector<glm::uvec2> vertices_uvec2_snorm;
+			for (const auto& j : i.vertices) {
+				uint32_t xy = glm::packSnorm2x16(glm::vec2(j.x / 1024.f, j.y / 1024.f));
+				uint32_t zw = glm::packSnorm2x16(glm::vec2(j.z / 1024.f, 0.0));
+
+				vertices_uvec2_snorm.push_back(glm::uvec2(xy, zw));
+			}
+
 			std::vector<glm::vec4> vertices_vec4;
 			for (const auto& j : i.vertices) {
 				vertices_vec4.push_back(glm::vec4(j, 1.f));
@@ -207,10 +222,10 @@ export class SkinnedMesh : public Resource {
 				normals_vec4.push_back(glm::vec4(j, 1.f));
 			}
 
-			glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), vertices_vec4.data());
+			glNamedBufferSubData(vertex_snorm_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::uvec2), vertices_uvec2_snorm.data());
+			//glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), vertices_vec4.data());
 			glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
 			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
-			//glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 			if (!i.tangents.empty()) {
 				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 			} else {
@@ -356,7 +371,7 @@ export class SkinnedMesh : public Resource {
 		for (const auto& i : geosets) {
 			total_indices += i.indices;
 		}
-		glNamedBufferData(preskinned_vertex_ssbo, total_indices * sizeof(glm::vec4) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferData(preskinned_vertex_ssbo, total_indices * sizeof(glm::uvec2) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferData(preskinned_tangent_light_direction_ssbo, total_indices * sizeof(glm::vec4) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
 	}
 
@@ -380,6 +395,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, weight_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, preskinned_tangent_light_direction_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, vertex_snorm_buffer);
 
 		glDispatchCompute(((instance_vertex_count + 63) / 64) * render_jobs.size(), 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -400,6 +416,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, instance_ssbo);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {

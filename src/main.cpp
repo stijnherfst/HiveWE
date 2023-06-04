@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
 //)";
 	
 	//mdx::MDX::from_mdl(b);
+	//execute_tests();
 
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);

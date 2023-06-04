@@ -3,8 +3,7 @@ module;
 #include <string>
 #include <print>
 #include <format>
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_SILENT_WARNINGS
+
 #include <glm/glm.hpp>
 
 module MDX;

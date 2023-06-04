@@ -132,6 +132,7 @@ export class RenderManager {
 		}
 
 		instance_skinned_mesh_shader_hd->use();
+		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform1i(2, render_lighting);
 
 		for (const auto& i : skinned_meshes) {

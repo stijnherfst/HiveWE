@@ -5,10 +5,13 @@ module;
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <functional>
 
 export module JSON;
 
 import BinaryReader;
+import Utilities;
+
 namespace fs = std::filesystem;
 
 namespace json {

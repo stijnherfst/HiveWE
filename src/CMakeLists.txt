@@ -1,6 +1,8 @@
 target_sources(HiveWE PRIVATE
 	FILE_SET cxx_modules TYPE CXX_MODULES FILES
 
+	${PROJECT_SOURCE_DIR}/src/std.ixx
+
 	"base/map.ixx"
 	"base/binary_reader.ixx"
 	"base/binary_writer.ixx"
