@@ -21,7 +21,7 @@ layout(std430, binding = 3) buffer layoutName3 {
     vec4 tangent_light_directions[];
 };
 
-layout(std430, binding = 5) buffer layoutName4 {
+layout(std430, binding = 5) buffer layoutName5 {
     mat4 instance_matrices[];
 };
 

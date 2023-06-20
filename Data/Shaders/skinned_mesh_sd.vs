@@ -1,6 +1,7 @@
 #version 450 core
 
 // Should match the uniform locations in skinned_mesh_hd.vs
+layout (location = 0) uniform mat4 VP;
 layout (location = 4) uniform int instanceID;
 layout (location = 6) uniform int layer_skip_count;
 layout (location = 7) uniform int layer_index;
@@ -22,6 +23,10 @@ layout(std430, binding = 4) buffer layoutName4 {
     uint normals[];
 };
 
+layout(std430, binding = 5) buffer layoutName5 {
+    mat4 instance_matrices[];
+};
+
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
@@ -40,11 +45,9 @@ vec3 oct_to_float32x3(vec2 e) {
 
 void main() {
 	const uint vertex_index = instanceID * instance_vertex_count + gl_VertexID;
-
 	vec2 xy = unpackSnorm2x16(vertices[vertex_index].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices[vertex_index].y) * 1024.f;
-
-	gl_Position = vec4(xy, zw.x, 1.f);
+	gl_Position = VP * instance_matrices[instanceID] * vec4(xy, zw.x, 1.f);
 
 	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 4.f - 1.f;
 	Normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));

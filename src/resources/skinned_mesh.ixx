@@ -22,6 +22,8 @@ import Utilities;
 
 namespace fs = std::filesystem;
 
+uint64_t space_saved = 0;
+
 export class SkinnedMesh : public Resource {
   public:
 	struct MeshEntry {
@@ -116,15 +118,22 @@ export class SkinnedMesh : public Resource {
 		// Allocate space
 		glCreateBuffers(1, &vertex_snorm_buffer);
 		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		space_saved += vertices * 8;
 
 		glCreateBuffers(1, &uv_snorm_buffer);
 		glNamedBufferStorage(uv_snorm_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		space_saved += vertices * 4;
 
 		glCreateBuffers(1, &normal_buffer);
 		glNamedBufferStorage(normal_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		space_saved += vertices * 12;
+
 
 		glCreateBuffers(1, &tangent_buffer);
 		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		space_saved += vertices * 12;
+		
+		//std::println("{}", space_saved);
 
 		glCreateBuffers(1, &weight_buffer);
 		glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
@@ -325,7 +334,7 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &preskinned_tangent_light_direction_ssbo);
 	}
 
-	void upload_render_data() {
+	void upload_render_data(uint64_t& size) {
 		if (!has_mesh) {
 			return;
 		}
@@ -368,6 +377,8 @@ export class SkinnedMesh : public Resource {
 		}
 		glNamedBufferData(preskinned_vertex_ssbo, total_indices * sizeof(glm::uvec2) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
 		glNamedBufferData(preskinned_tangent_light_direction_ssbo, total_indices * sizeof(glm::vec4) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
+		size += total_indices * sizeof(glm::vec4) * 2 * render_jobs.size();
+		//size += total_indices * sizeof(glm::vec4) * 2;
 	}
 
 	// Render all geometry and save the resulting vertices in a buffer
@@ -497,6 +508,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, instance_ssbo);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {

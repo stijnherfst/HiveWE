@@ -770,7 +770,7 @@ namespace mdx {
 			//⠀⠀⠀⠀⠁⠇⠡⠩⡫⢿⣝⡻⡮⣒⢽⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 			//————————————————————————————————————
 			if (sequences.empty()) {
-				sequences.push_back( Sequence {
+				sequences.push_back(Sequence {
 					.start_frame = 0,
 					.end_frame = 0,
 					.movespeed = 0.f,
@@ -814,6 +814,10 @@ namespace mdx {
 
 			// Fix vertex groups that reference non existent matrix groups
 			for (auto& i : geosets) {
+				// RMS seems to output -1 here sometimes ;(
+				if (i.lod == std::numeric_limits<uint32_t>::max()) {
+					i.lod = 0;
+				}
 				for (auto& j : i.vertex_groups) {
 					// If no matrix groups exist we insert one
 					if (i.matrix_groups.empty()) {

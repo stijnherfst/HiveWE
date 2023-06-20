@@ -110,9 +110,12 @@ export class RenderManager {
 		GLint old_vao;
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
+		uint64_t size = 0;
 		for (const auto& i : skinned_meshes) {
-			i->upload_render_data();
+			i->upload_render_data(size);
 		}
+
+		//std::println("{}", size);
 
 		preskin_mesh_shader->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
@@ -123,6 +126,7 @@ export class RenderManager {
 		// Render opaque meshes
 		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
 		instance_skinned_mesh_shader_sd->use();
+		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform1i(2, render_lighting);
 		glUniform3fv(3, 1, &light_direction.x);
 		glBlendFunc(GL_ONE, GL_ZERO);
@@ -145,6 +149,7 @@ export class RenderManager {
 		glDepthMask(false);
 
 		skinned_mesh_shader_sd->use();
+		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform1i(2, render_lighting);
 		glUniform3fv(8, 1, &light_direction.x);
 
@@ -153,6 +158,7 @@ export class RenderManager {
 		}
 
 		skinned_mesh_shader_hd->use();
+		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform1i(2, render_lighting);
 
 		for (const auto& i : skinned_transparent_instances) {
