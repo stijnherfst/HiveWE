@@ -11,7 +11,7 @@ layout(std430, binding = 0) buffer layoutName {
 };
 
 layout(std430, binding = 1) buffer layoutName1 {
-    vec2 uvs[];
+    uint uvs[];
 };
 
 layout(std430, binding = 2) buffer layoutName2 {
@@ -35,7 +35,7 @@ void main() {
 
 	gl_Position = vec4(xy, zw.x, 1.f);
 
-	UV = uvs[gl_VertexID];
+	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 4.f - 1.f;
 	tangent_light_direction = vec3(tangent_light_directions[vertex_index]);
 	vertexColor = layer_colors[gl_InstanceID * layer_skip_count + layer_index];
 }

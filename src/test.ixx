@@ -41,10 +41,10 @@ void parse_all_mdx() {
 
 		//std::println("x: {} y: {} z: {}", (max - min).x, (max - min).y, (max - min).z);
 
-		min = mdx.extent.minimum / 128.f;
-		max = mdx.extent.maximum / 128.f;
+		//min = mdx.extent.minimum / 128.f;
+		//max = mdx.extent.maximum / 128.f;
 
-		std::println("x: {} y: {} z: {} path: {}", (max - min).x, (max - min).y, (max - min).z, path.string());
+		//std::println("x: {} y: {} z: {} path: {}", (max - min).x, (max - min).y, (max - min).z, path.string());
 	});
 }
 

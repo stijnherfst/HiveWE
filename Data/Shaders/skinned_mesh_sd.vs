@@ -11,7 +11,7 @@ layout(std430, binding = 0) buffer layoutName {
 };
 
 layout(std430, binding = 1) buffer layoutName1 {
-    vec2 uvs[];
+    uint uvs[];
 };
 
 layout(std430, binding = 2) buffer layoutName2 {
@@ -19,23 +19,34 @@ layout(std430, binding = 2) buffer layoutName2 {
 };
 
 layout(std430, binding = 4) buffer layoutName4 {
-    vec4 normals[];
+    uint normals[];
 };
 
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
 
+vec2 sign_not_zero(vec2 v) {
+	return vec2((v.x >= 0.f) ? +1.f : -1.f, (v.y >= 0.f) ? +1.f : -1.f);
+}
+
+vec3 oct_to_float32x3(vec2 e) {
+	vec3 v = vec3(e.xy, 1.f - abs(e.x) - abs(e.y));
+	if (v.z < 0.f) {
+		v.xy = (1.f - abs(v.yx)) * sign_not_zero(v.xy);
+	}
+	return normalize(v);
+}
+
 void main() {
 	const uint vertex_index = instanceID * instance_vertex_count + gl_VertexID;
-	// gl_Position = vertices[vertex_index];
 
 	vec2 xy = unpackSnorm2x16(vertices[vertex_index].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices[vertex_index].y) * 1024.f;
 
 	gl_Position = vec4(xy, zw.x, 1.f);
 
-	UV = uvs[gl_VertexID];
-	Normal = normals[vertex_index].xyz;
+	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 4.f - 1.f;
+	Normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));
 	vertexColor = layer_colors[instanceID * layer_skip_count + layer_index];
 }

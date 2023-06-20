@@ -1,5 +1,6 @@
 module;
 
+#include <print>
 #include <filesystem>
 #include <memory>
 #include <glad/glad.h>
@@ -44,9 +45,8 @@ export class SkinnedMesh : public Resource {
 	uint32_t instance_vertex_count = 0;
 
 	GLuint vao;
-	GLuint vertex_buffer;
 	GLuint vertex_snorm_buffer;
-	GLuint uv_buffer;
+	GLuint uv_snorm_buffer;
 	GLuint normal_buffer;
 	GLuint tangent_buffer;
 	GLuint weight_buffer;
@@ -114,17 +114,14 @@ export class SkinnedMesh : public Resource {
 		}
 
 		// Allocate space
-		glCreateBuffers(1, &vertex_buffer);
-		//glNamedBufferStorage(vertex_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
-
 		glCreateBuffers(1, &vertex_snorm_buffer);
-		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::i16vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &uv_buffer);
-		glNamedBufferStorage(uv_buffer, vertices * sizeof(glm::vec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		glCreateBuffers(1, &uv_snorm_buffer);
+		glNamedBufferStorage(uv_snorm_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &normal_buffer);
-		glNamedBufferStorage(normal_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		glNamedBufferStorage(normal_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &tangent_buffer);
 		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
@@ -166,7 +163,7 @@ export class SkinnedMesh : public Resource {
 
 			// If the skin vector is empty then the model has SD bone weights and we convert them to the HD skin weights.
 			// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
-			// This could cause graphical inconsistensies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
+			// This could cause graphical inconsistencies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
 			if (i.skin.empty()) {
 				std::vector<glm::u8vec4> groups;
 				std::vector<glm::u8vec4> weights;
@@ -203,33 +200,31 @@ export class SkinnedMesh : public Resource {
 				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
 			}
 
-
-			std::vector<glm::uvec2> vertices_uvec2_snorm;
+			std::vector<glm::uvec2> vertices_snorm;
 			for (const auto& j : i.vertices) {
 				uint32_t xy = glm::packSnorm2x16(glm::vec2(j.x / 1024.f, j.y / 1024.f));
 				uint32_t zw = glm::packSnorm2x16(glm::vec2(j.z / 1024.f, 0.0));
 
-				vertices_uvec2_snorm.push_back(glm::uvec2(xy, zw));
+				vertices_snorm.push_back(glm::uvec2(xy, zw));
 			}
+			glNamedBufferSubData(vertex_snorm_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::uvec2), vertices_snorm.data());
 
-			std::vector<glm::vec4> vertices_vec4;
-			for (const auto& j : i.vertices) {
-				vertices_vec4.push_back(glm::vec4(j, 1.f));
+			std::vector<uint32_t> uvs_snorm;
+			for (const auto& j : i.texture_coordinate_sets.front()) {
+				uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 4.f));
 			}
+			glNamedBufferSubData(uv_snorm_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), uvs_snorm.data());
 
-			std::vector<glm::vec4> normals_vec4;
-			for (const auto& j : i.normals) {
-				normals_vec4.push_back(glm::vec4(j, 1.f));
+			std::vector<uint32_t> normals_oct_snorm;
+			for (const auto& normal : i.normals) {
+				normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
 			}
+			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), normals_oct_snorm.data());
 
-			glNamedBufferSubData(vertex_snorm_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::uvec2), vertices_uvec2_snorm.data());
-			//glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), vertices_vec4.data());
-			glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
-			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
 			if (!i.tangents.empty()) {
 				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 			} else {
-				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
+				//glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
 			}
 
 			glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
@@ -314,8 +309,8 @@ export class SkinnedMesh : public Resource {
 	}
 
 	~SkinnedMesh() {
-		glDeleteBuffers(1, &vertex_buffer);
-		glDeleteBuffers(1, &uv_buffer);
+		glDeleteBuffers(1, &vertex_snorm_buffer);
+		glDeleteBuffers(1, &uv_snorm_buffer);
 		glDeleteBuffers(1, &normal_buffer);
 		glDeleteBuffers(1, &tangent_buffer);
 		glDeleteBuffers(1, &weight_buffer);
@@ -389,13 +384,12 @@ export class SkinnedMesh : public Resource {
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, instance_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, bones_ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, vertex_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, vertex_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, tangent_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, weight_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, preskinned_tangent_light_direction_ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, vertex_snorm_buffer);
 
 		glDispatchCompute(((instance_vertex_count + 63) / 64) * render_jobs.size(), 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -412,7 +406,7 @@ export class SkinnedMesh : public Resource {
 		glUniform1ui(6, instance_vertex_count);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
@@ -499,7 +493,7 @@ export class SkinnedMesh : public Resource {
 		glUniform1ui(9, instance_vertex_count);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, preskinned_tangent_light_direction_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, normal_buffer);
@@ -582,7 +576,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bones_ssbo_colored);
 		glNamedBufferData(bones_ssbo_colored, model->bones.size() * sizeof(glm::mat4), &skeleton.world_matrices[0][0][0], GL_DYNAMIC_DRAW);
 
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertex_buffer);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertex_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, weight_buffer);
 
 		for (const auto& i : geosets) {

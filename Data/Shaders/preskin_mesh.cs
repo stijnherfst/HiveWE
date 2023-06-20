@@ -16,12 +16,12 @@ layout(std430, binding = 2) restrict readonly buffer layoutName2 {
     mat4 bone_matrices[];
 };
 
-layout(std430, binding = 3) restrict readonly buffer layoutName3 {
-    vec4 positions[];
+layout(std430, binding = 3) restrict readonly buffer layoutName9 {
+    uvec2 vertices_snorm[];
 };
 
 layout(std430, binding = 4) restrict readonly buffer layoutName4 {
-    vec4 normals[];
+    uint normals[];
 };
 
 layout(std430, binding = 5) restrict readonly buffer layoutName5 {
@@ -40,9 +40,17 @@ layout(std430, binding = 8) restrict writeonly buffer layoutName8 {
     vec4 output_tangent_light_directions[];
 };
 
-layout(std430, binding = 9) restrict readonly buffer layoutName9 {
-    uvec2 vertices_snorm[];
-};
+vec2 sign_not_zero(vec2 v) {
+	return vec2((v.x >= 0.f) ? +1.f : -1.f, (v.y >= 0.f) ? +1.f : -1.f);
+}
+
+vec3 oct_to_float32x3(vec2 e) {
+	vec3 v = vec3(e.xy, 1.f - abs(e.x) - abs(e.y));
+	if (v.z < 0.f) {
+		v.xy = (1.f - abs(v.yx)) * sign_not_zero(v.xy);
+	}
+	return normalize(v);
+}
 
 mat4 fetchMatrix(uint instance_number, uint bone_index) {
 	return bone_matrices[instance_number * bone_count + bone_index];
@@ -72,9 +80,11 @@ void main() {
 	vec4 vertex = skinMatrix * vec4(xy, zw.x, 1.f);
 	output_vertices[output_index] = uvec2(packSnorm2x16(vertex.xy / 1024.f), packSnorm2x16(vertex.zw / 1024.f));
 
+	vec3 normal = oct_to_float32x3(unpackSnorm2x16(normals[input_index]));
+
 	mat3 model = mat3(instance_matrices[instance_number] * skinMatrix);
 	vec3 T = normalize(model * tangents[input_index].xyz);
-	vec3 N = normalize(model * vec3(normals[input_index]));
+	vec3 N = normalize(model * normal);
 	vec3 B = cross(N, T) * tangents[input_index].w; // to fix handedness
 	mat3 TBN = transpose(mat3(T, B, N));
 

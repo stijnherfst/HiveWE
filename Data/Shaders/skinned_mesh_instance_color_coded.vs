@@ -24,7 +24,10 @@ void main() {
 	const float w2 = ((skins[gl_VertexID].y & 0x00FF0000) >> 16) / 255.f;
 	const float w3 = ((skins[gl_VertexID].y & 0xFF000000) >> 24) / 255.f;
 	
-	vec4 position = vertices[gl_VertexID];
+	vec2 xy = unpackSnorm2x16(vertices[gl_VertexID].x) * 1024.f;
+	vec2 zw = unpackSnorm2x16(vertices[gl_VertexID].y) * 1024.f;
+
+	vec4 position = vec4(xy, zw);
 	position = b0 * position * w0 + b1 * position * w1 + b2 * position * w2 + b3 * position * w3;
 	position.w = 1.f;
 
