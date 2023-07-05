@@ -52,8 +52,7 @@ target_sources(HiveWE PRIVATE
 	"models/buff_tree_model.ixx"
 	"models/upgrade_tree_model.ixx"
 	"models/unit_list_model.ixx"
-
-	"models/destructible_list_model.ixx" 
+	 
 	"models/destructible_tree_model.ixx"
 
 	"custom_widgets/aspect_ratio_pixmap_label.ixx"
@@ -72,7 +71,9 @@ target_sources(HiveWE PRIVATE
 	"utilities/math_operations.ixx"
 	
 	"test.ixx"
- "object_editor/ability_list_editor.ixx")
+	"object_editor/ability_list_editor.ixx"
+)
+
 target_sources(HiveWE PRIVATE
 
 	"main.cpp"
@@ -102,11 +103,8 @@ target_sources(HiveWE PRIVATE
 	"file_formats/mdx/mdl_writer.cpp"
 	"file_formats/mdx/mdx_reader.cpp"
 	"file_formats/mdx/mdx_writer.cpp"
-
-	
 	
 	"resources/editable_mesh.cpp"
-	
 	
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"
@@ -123,14 +121,14 @@ target_sources(HiveWE PRIVATE
 	"models/single_model.cpp"
 	"models/table_model.cpp"
 	
-	"models/doodad_list_model.cpp"
-
 	"custom_widgets/aspect_ratio_pixmap_label.h"
 	"custom_widgets/color_button.h"
 	
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
 	"model_editor/model_editor_glwidget.cpp"
+	"models/doodad_list_model.cpp"
+	"models/destructible_list_model.cpp"
 
 	"object_editor/icon_view.cpp"
 	"object_editor/object_editor.cpp"

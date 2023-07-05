@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <filesystem>
+#include <print>
 namespace fs = std::filesystem;
 
 #include "tile_setter.h"
@@ -229,12 +230,12 @@ void HiveWE::load_folder() {
 	QMessageBox* loading_box = new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
 	loading_box->show();
 
+	ui.widget->makeCurrent();
 	delete map;
 	map = new Map();
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
-	ui.widget->makeCurrent();
 	map->load(directory);
 
 	loading_box->close();
@@ -265,7 +266,7 @@ void HiveWE::load_mpq() {
 	bool opened = mpq.open(mpq_path);
 	if (!opened) {
 		QMessageBox::critical(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
-		std::cout << GetLastError() << "\n";
+		std::println("{}", GetLastError());
 		return;
 	}
 
@@ -290,7 +291,7 @@ void HiveWE::load_mpq() {
 	bool unpacked = mpq.unpack(final_directory);
 	if (!unpacked) {
 		QMessageBox::critical(this, "Unpacking failed", "There was an error unpacking the archive.");
-		std::cout << GetLastError() << "\n";
+		std::println("{}", GetLastError());
 		return;
 	}
 
@@ -356,7 +357,7 @@ void HiveWE::export_mpq() {
 	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
 	if (!open) {
 		QMessageBox::critical(this, "Exporting failed", "There was an error creating the archive.");
-		std::cout << GetLastError() << "\n";
+		std::println("{}", GetLastError());
 		return;
 	}
 

@@ -28,12 +28,12 @@
 #include "doodad_brush.h"
 #include "palette.h"
 #include "doodad_list_model.h"
+#include "destructible_list_model.h"
 
 #include <QConcatenateTablesProxyModel>
 
 import QRibbon;
 import AspectRatioPixmapLabel;
-import DestructableListModel;
 
 class DoodadPalette : public Palette {
 	Q_OBJECT
@@ -46,6 +46,7 @@ private:
 	bool event(QEvent *e) override;
 
 	void selection_changed(const QModelIndex& index);
+	void select_id_in_palette(std::string id);
 
 	Ui::DoodadPalette ui;
 
@@ -79,6 +80,8 @@ private:
 
 	QShortcut* find_this;
 	QShortcut* find_parent;
+	QShortcut* change_mode_this;
+	QShortcut* change_mode_parent;
 
 
 public slots:

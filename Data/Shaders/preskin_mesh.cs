@@ -37,7 +37,7 @@ layout(std430, binding = 7) restrict writeonly buffer layoutName7 {
 };
 
 layout(std430, binding = 8) restrict writeonly buffer layoutName8 {
-    vec4 output_tangent_light_directions[];
+    uint output_tangent_light_directions[];
 };
 
 vec2 sign_not_zero(vec2 v) {
@@ -50,6 +50,13 @@ vec3 oct_to_float32x3(vec2 e) {
 		v.xy = (1.f - abs(v.yx)) * sign_not_zero(v.xy);
 	}
 	return normalize(v);
+}
+
+vec2 float32x3_to_oct(in vec3 v) {
+	// Project the sphere onto the octahedron, and then onto the xy plane
+	vec2 p = v.xy * (1.0 / (abs(v.x) + abs(v.y) + abs(v.z)));
+	// Reflect the folds of the lower hemisphere over the diagonals
+	return (v.z <= 0.0) ? ((1.0 - abs(p.yx)) * sign_not_zero(p)) : p;
 }
 
 mat4 fetchMatrix(uint instance_number, uint bone_index) {
@@ -71,8 +78,6 @@ void main() {
 	const float w2 = ((skins[input_index].y & 0x00FF0000) >> 16) / 255.f;
 	const float w3 = ((skins[input_index].y & 0xFF000000) >> 24) / 255.f;
 	mat4 skinMatrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
-	
-	// output_vertices[output_index] = VP * skinMatrix * positions[input_index];
 
 	vec2 xy = unpackSnorm2x16(vertices_snorm[input_index].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices_snorm[input_index].y) * 1024.f;
@@ -88,5 +93,5 @@ void main() {
 	vec3 B = cross(N, T) * tangents[input_index].w; // to fix handedness
 	mat3 TBN = transpose(mat3(T, B, N));
 
-	output_tangent_light_directions[output_index] = vec4(normalize(TBN * light_direction), 1.f);
+	output_tangent_light_directions[output_index] = packSnorm2x16(float32x3_to_oct(normalize(TBN * light_direction)));
 }

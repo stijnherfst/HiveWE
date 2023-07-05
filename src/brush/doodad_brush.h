@@ -114,4 +114,5 @@ signals:
 	void angle_changed();
 	void scale_changed();
 	void position_changed();
+	void request_doodad_select(std::string id);
 };

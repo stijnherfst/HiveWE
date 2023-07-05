@@ -1,5 +1,7 @@
 ﻿#include "doodad_palette.h"
 
+#include <print>
+
 #include <QRadioButton>
 #include <QCheckBox>
 #include <QFormLayout>
@@ -21,6 +23,7 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QKeySequence>
+#include <QTimer>
 
 #include "globals.h"
 #include <map_global.h>
@@ -47,14 +50,13 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	}
 
 	for (auto&&[key, value] : world_edit_data.section("DestructibleCategories")) {
-		const std::string text = value.front();
-		ui.type->addItem(QString::fromStdString(text), QString::fromStdString(key));
+		ui.type->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
 	}
 
-	doodad_list_model = new DoodadListModel;
+	doodad_list_model = new DoodadListModel(this);
 	doodad_list_model->setSourceModel(doodads_table);
 
-	destructable_list_model = new DestructableListModel;
+	destructable_list_model = new DestructableListModel(this);
 	destructable_list_model->setSourceModel(destructibles_table);
 
 	doodad_filter_model = new DoodadListFilter(this);
@@ -67,9 +69,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	destructable_filter_model->setSourceModel(destructable_list_model);
 	destructable_filter_model->sort(0, Qt::AscendingOrder);
 
-	concat_table = new QConcatenateTablesProxyModel;
-	concat_table->addSourceModel(doodad_filter_model);
+	concat_table = new QConcatenateTablesProxyModel(this);
 	concat_table->addSourceModel(destructable_filter_model);
+	concat_table->addSourceModel(doodad_filter_model);
 
 	ui.doodads->setModel(concat_table);
 
@@ -98,7 +100,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	find_this = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	find_parent = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
-	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
+
+	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 
 	QRibbonSection* placement_section = new QRibbonSection;
 	placement_section->setText("Placement");
@@ -269,7 +273,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
 		// Possible Qt bug. Try swapping the two lines below and see if it crashes when selecting a tree and then swapping to a doodad category
-		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());
+		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());	
 		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
 	});
 
@@ -290,6 +294,14 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		ui.search->selectAll();
 	});
 
+	connect(change_mode_this, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
+
+	connect(change_mode_parent, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
+
 	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::returnPressed, [&]() {
@@ -305,6 +317,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(&brush, &DoodadBrush::angle_changed, this, &DoodadPalette::update_selection_info);
 	connect(&brush, &DoodadBrush::scale_changed, this, &DoodadPalette::update_selection_info);
 	connect(&brush, &DoodadBrush::position_changed, this, &DoodadPalette::update_selection_info);
+	connect(&brush, &DoodadBrush::request_doodad_select, this, &DoodadPalette::select_id_in_palette);
 
 	connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(0, text); });
 	connect(y_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(1, text); });
@@ -339,25 +352,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
 		const Doodad* doodad = *brush.selections.begin();
-		ui.search->clear();
-
-		if (destructibles_slk.row_headers.contains(doodad->id)) {
-			const auto category = destructibles_slk.data("category", doodad->id);
-			ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
-
-			const auto index = destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(doodad->id)));
-			const auto finally = concat_table->mapFromSource(index);
-			ui.doodads->setCurrentIndex(finally);
-			selection_changed(finally);
-		} else {
-			const auto category = doodads_slk.data("category", doodad->id);
-			ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
-
-			const auto index = doodad_filter_model->mapFromSource(doodad_list_model->mapFromSource(doodads_table->rowIDToIndex(doodad->id)));
-			const auto finally = concat_table->mapFromSource(index);
-			ui.doodads->setCurrentIndex(finally);
-			selection_changed(finally);
-		}
+		select_id_in_palette(doodad->id);
 	});
 
 	// Default to Trees/Destructibles
@@ -377,13 +372,15 @@ bool DoodadPalette::event(QEvent *e) {
 		// Remove shortcut from parent
 		find_this->setEnabled(false);
 		find_parent->setEnabled(false);
-		selection_mode->disconnectShortcuts();
+		change_mode_this->setEnabled(false);
+		change_mode_parent->setEnabled(false);
 		ribbon_tab->setParent(nullptr);
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
 		find_this->setEnabled(true);
 		find_parent->setEnabled(true);
-		selection_mode->enableShortcuts();
+		change_mode_this->setEnabled(true);
+		change_mode_parent->setEnabled(true);
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
 	}
@@ -428,12 +425,34 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 	}
 }
 
+void DoodadPalette::select_id_in_palette(std::string id) {
+	ui.search->clear();
+	
+	if (destructibles_slk.row_headers.contains(id)) {
+		const auto category = destructibles_slk.data("category", id);
+		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+		const auto index = destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(id)));
+		const auto finally = concat_table->mapFromSource(index);
+		ui.doodads->setCurrentIndex(finally);
+		selection_changed(finally);
+	} else {
+		const auto category = doodads_slk.data("category", id);
+		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+		const auto index = doodad_filter_model->mapFromSource(doodad_list_model->mapFromSource(doodads_table->rowIDToIndex(id)));
+		const auto finally = concat_table->mapFromSource(index);
+		ui.doodads->setCurrentIndex(finally);
+		selection_changed(finally);
+	}
+}
+
 void DoodadPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {
 		brush.clear_selection();
 		selection_mode->disableShortcuts();
 		find_this->setEnabled(false);
 		find_parent->setEnabled(false);
+		change_mode_this->setEnabled(false);
+		change_mode_parent->setEnabled(false);
 	}
 }
 

@@ -20,7 +20,7 @@ void main() {
 		color.rgb *= clamp(contribution, 0.f, 1.f);
 	}
 
-	if (color.a < alpha_test) {
+	if (vertexColor.a == 0.0 || color.a < alpha_test) {
 		discard;
 	}
 }

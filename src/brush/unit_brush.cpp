@@ -244,7 +244,6 @@ void UnitBrush::render_brush() {
 	if (mesh) {
 		skeleton.update_location(final_position, rotation, final_scale);
 		skeleton.update(0.016f);
-		//mesh->render_queue(skeleton, glm::vec3(1.f));
 		map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
 	}
 }

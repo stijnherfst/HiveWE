@@ -28,7 +28,8 @@ namespace json {
 		void load(const BinaryReader& reader) {
 			json_data.clear();
 			std::stringstream file;
-			file << reader.buffer.data();
+			file.write(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+
 			size_t end1;
 			std::string line;
 			if (std::getline(file, line)) {

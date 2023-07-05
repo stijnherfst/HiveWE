@@ -3,19 +3,15 @@
 #include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
 
-#include <QSize>
-#include <QMargins>
-#include <QIcon>
-
 #include <unordered_map>
 
 import QIconResource;
 
-class DoodadListModel : public QIdentityProxyModel {
+class DestructableListModel : public QIdentityProxyModel {
 	Q_OBJECT
 
-public:
-	explicit DoodadListModel(QObject* parent = nullptr);
+  public:
+	explicit DestructableListModel(QObject* parent = nullptr);
 
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override;
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override;
@@ -29,17 +25,17 @@ public:
 	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
 	QModelIndex parent(const QModelIndex& child) const override;
 
-private:
+  private:
 	std::unordered_map<char, std::shared_ptr<QIconResource>> icons;
 };
 
-class DoodadListFilter : public QSortFilterProxyModel {
-	bool filterAcceptsRow(int sourceRow,const QModelIndex& sourceParent) const override;
-	bool lessThan(const QModelIndex& left,const QModelIndex& right) const override;
+class DestructableListFilter : public QSortFilterProxyModel {
+	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const override;
+	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override;
 	QString filterCategory = "";
 	char filterTileset = '*';
 
-public:
+  public:
 	void setFilterCategory(QString category);
 	void setFilterTileset(char tileset);
 	using QSortFilterProxyModel::QSortFilterProxyModel;

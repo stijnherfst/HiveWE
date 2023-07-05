@@ -79,7 +79,7 @@ private:
 		bool created = false;
 		auto palette = window_handler.create_or_raise<T>(this, created);
 		if (created) {
-			palette->move(width() - palette->width() - 10, ui.widget->y() + 29);
+			palette->move(this->x() + this->width() - palette->width() - 10, this->y() + 160);
 			connect(palette, &T::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);
 			connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 			connect(palette, &T::finished, [&]() {

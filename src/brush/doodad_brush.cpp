@@ -2,6 +2,7 @@
 
 #include <random>
 #include <memory>
+#include <print>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -241,6 +242,14 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 					return;
 				}
 			}
+		}
+	}
+	if (event->button() == Qt::MiddleButton && input_handler.mouse.y > 0.f) {
+		auto id = map->render_manager.pick_doodad_id_under_mouse(map->doodads, input_handler.mouse);
+
+		if (id) {
+			Doodad& doodad = map->doodads.doodads[id.value()];
+			emit request_doodad_select(doodad.id);
 		}
 	}
 	Brush::mouse_press_event(event, frame_delta);
@@ -491,8 +500,6 @@ void DoodadBrush::render_brush() {
 
 	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
 	skeleton.update(0.016f);
-
-	//mesh->render_queue(skeleton, glm::vec3(1.f));
 	map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
 }
 

@@ -1,6 +1,6 @@
 #include "doodads.h"
 
-#include <iostream>
+#include <print>
 #include <optional>
 
 #include <glm/glm.hpp>
@@ -70,12 +70,12 @@ bool Doodads::load() {
 
 	const std::string magic_number = reader.read_string(4);
 	if (magic_number != "W3do") {
-		std::cout << "Invalid war3map.doo file: Magic number is not W3do\n";
+		std::println("Invalid war3map.doo file: Magic number is not W3do");
 		return false;
 	}
 	const uint32_t version = reader.read<uint32_t>();
 	if (version != 7 && version != 8) {
-		std::cout << "Unknown war3map.doo version: " << version << " Attempting to load but may crash\nPlease send this map to eejin\n";
+		std::println("Unknown war3map.doo version: {} Attempting to load but may crash\nPlease send this map to eejin\n", version);
 	}
 
 	// Subversion
@@ -379,11 +379,26 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 		}
 	}
 
-	if (field == "maxroll" || field == "vertr" || field == "vertg" || field == "vertb") {
+	if (field == "maxroll" || field.starts_with("vert")) {
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.update();
 			}
+		}
+	}
+
+	if (field == "pathTex") {
+		const std::string pathing_texture_path = doodads_slk.data("pathtex", id);
+
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
+			for (auto& i : doodads) {
+				if (i.id == id) {
+					i.pathing = new_pathing_texture;
+				}
+			}
+		} else {
+			return;
 		}
 	}
 }
@@ -411,6 +426,21 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 			}
 		}
 	}
+
+	if (field == "pathTex") {
+		const std::string pathing_texture_path = destructibles_slk.data("pathtex", id);
+
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
+			for (auto& i : doodads) {
+				if (i.id == id) {
+					i.pathing = new_pathing_texture;
+				}
+			}
+		} else {
+			return;
+		}
+	}
 }
 
 std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
@@ -436,8 +466,6 @@ std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
 		texture_name = destructibles_slk.data("texfile", id);
 		texture_name.replace_extension("");
 	}
-	//std::cout << variations << " vars\n";
-	//std::cout << (variations == "1" ? "" : std::to_string(variation)) << " string\n";
 
 	const std::string stem = mesh_path.stem().string();
 	mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));
@@ -452,7 +480,7 @@ std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	// Mesh doesnt exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
-		std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
+		std::println("Invalid model file for {} with file path: {}", id, mesh_path.string());
 		id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
 		return id_to_mesh[full_id];
 	}

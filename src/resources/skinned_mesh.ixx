@@ -22,8 +22,6 @@ import Utilities;
 
 namespace fs = std::filesystem;
 
-uint64_t space_saved = 0;
-
 export class SkinnedMesh : public Resource {
   public:
 	struct MeshEntry {
@@ -57,6 +55,7 @@ export class SkinnedMesh : public Resource {
 
 	GLuint instance_ssbo;
 	GLuint layer_colors_ssbo;
+	GLuint layer_texture_ssbo;
 	GLuint bones_ssbo;
 	GLuint bones_ssbo_colored;
 
@@ -118,22 +117,15 @@ export class SkinnedMesh : public Resource {
 		// Allocate space
 		glCreateBuffers(1, &vertex_snorm_buffer);
 		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
-		space_saved += vertices * 8;
 
 		glCreateBuffers(1, &uv_snorm_buffer);
 		glNamedBufferStorage(uv_snorm_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
-		space_saved += vertices * 4;
 
 		glCreateBuffers(1, &normal_buffer);
 		glNamedBufferStorage(normal_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
-		space_saved += vertices * 12;
-
 
 		glCreateBuffers(1, &tangent_buffer);
 		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
-		space_saved += vertices * 12;
-		
-		//std::println("{}", space_saved);
 
 		glCreateBuffers(1, &weight_buffer);
 		glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
@@ -143,6 +135,7 @@ export class SkinnedMesh : public Resource {
 
 		glCreateBuffers(1, &instance_ssbo);
 		glCreateBuffers(1, &layer_colors_ssbo);
+		glCreateBuffers(1, &layer_texture_ssbo);
 		glCreateBuffers(1, &bones_ssbo);
 		glCreateBuffers(1, &bones_ssbo_colored);
 
@@ -242,11 +235,8 @@ export class SkinnedMesh : public Resource {
 			base_index += entry.indices;
 		}
 
-		for (auto& i : geosets) {
-			skip_count += model->materials[i.material_id].layers.size();
-		}
-
 		for (const auto& i : geosets) {
+			skip_count += model->materials[i.material_id].layers.size();
 			instance_vertex_count += i.indices;
 		}
 
@@ -310,8 +300,36 @@ export class SkinnedMesh : public Resource {
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
 			}
-			glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, texture.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			//glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, texture.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			//glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		}
+
+		// Reclaim some space
+		for (auto& i : model->geosets) {
+			i.vertices.shrink_to_fit();
+			i.vertices.clear();
+			i.normals.clear();
+			i.normals.shrink_to_fit();
+			i.face_type_groups.clear();
+			i.face_type_groups.shrink_to_fit();
+			i.face_groups.clear();
+			i.face_groups.shrink_to_fit();
+			i.faces.clear();
+			i.faces.shrink_to_fit();
+			i.vertex_groups.clear();
+			i.vertex_groups.shrink_to_fit();
+			i.matrix_groups.clear();
+			i.matrix_groups.shrink_to_fit();
+			i.matrix_indices.clear();
+			i.matrix_indices.shrink_to_fit();
+			i.extents.clear();
+			i.extents.shrink_to_fit();
+			i.tangents.clear();
+			i.tangents.shrink_to_fit();
+			i.skin.clear();
+			i.skin.shrink_to_fit();
+			i.texture_coordinate_sets.clear();
+			i.texture_coordinate_sets.shrink_to_fit();
 		}
 
 		glVertexArrayElementBuffer(vao, index_buffer);
@@ -326,6 +344,7 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &index_buffer);
 		glDeleteBuffers(1, &layer_alpha);
 		glDeleteBuffers(1, &layer_colors_ssbo);
+		glDeleteBuffers(1, &layer_texture_ssbo);
 		glDeleteBuffers(1, &instance_ssbo);
 		glDeleteBuffers(1, &bones_ssbo);
 		glDeleteBuffers(1, &bones_ssbo_colored);
@@ -371,14 +390,8 @@ export class SkinnedMesh : public Resource {
 
 		glNamedBufferData(layer_colors_ssbo, layer_colors.size() * sizeof(glm::vec4), layer_colors.data(), GL_DYNAMIC_DRAW);
 
-		size_t total_indices = 0;
-		for (const auto& i : geosets) {
-			total_indices += i.indices;
-		}
-		glNamedBufferData(preskinned_vertex_ssbo, total_indices * sizeof(glm::uvec2) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
-		glNamedBufferData(preskinned_tangent_light_direction_ssbo, total_indices * sizeof(glm::vec4) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
-		size += total_indices * sizeof(glm::vec4) * 2 * render_jobs.size();
-		//size += total_indices * sizeof(glm::vec4) * 2;
+		glNamedBufferData(preskinned_vertex_ssbo, instance_vertex_count * sizeof(glm::uvec2) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferData(preskinned_tangent_light_direction_ssbo, instance_vertex_count * sizeof(uint32_t) * render_jobs.size(), nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	// Render all geometry and save the resulting vertices in a buffer
@@ -402,7 +415,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, preskinned_vertex_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, preskinned_tangent_light_direction_ssbo);
 
-		glDispatchCompute(((instance_vertex_count + 63) / 64) * render_jobs.size(), 1, 1);
+		glDispatchCompute(((instance_vertex_count * render_jobs.size()) + 63) / 64, 1, 1);
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
@@ -438,7 +451,7 @@ export class SkinnedMesh : public Resource {
 					continue;
 				}
 
-				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
+				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
 				glUniform1i(5, lay_index);
 
 				switch (j.blend_mode) {
@@ -586,7 +599,7 @@ export class SkinnedMesh : public Resource {
 		glUniform1i(7, id);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bones_ssbo_colored);
-		glNamedBufferData(bones_ssbo_colored, model->bones.size() * sizeof(glm::mat4), &skeleton.world_matrices[0][0][0], GL_DYNAMIC_DRAW);
+		glNamedBufferData(bones_ssbo_colored, model->bones.size() * sizeof(glm::mat4), skeleton.world_matrices.data(), GL_DYNAMIC_DRAW);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertex_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, weight_buffer);

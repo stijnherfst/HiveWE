@@ -21,7 +21,7 @@ export class TriggerStrings {
 		BinaryReader reader = hierarchy.map_file_read("war3map.wts");
 
 		std::stringstream file;
-		file << reader.buffer.data();
+		file.write(reinterpret_cast<char*>(reader.buffer.data()), reader.buffer.size());
 
 		std::string key;
 		std::string line;
