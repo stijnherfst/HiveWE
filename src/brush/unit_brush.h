@@ -2,6 +2,7 @@
 
 #include <set>
 #include <vector>
+#include <unordered_set>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -29,15 +30,15 @@ class UnitBrush : public Brush {
 	std::unique_ptr<UnitAddAction> unit_undo;
 	std::unique_ptr<UnitStateAction> unit_state_undo;
 
-	std::vector<Unit*> selections;
+	std::unordered_set<Unit*> selections;
 	glm::vec2 clipboard_mouse_offset;
 	bool clipboard_free_placement = false;
 	std::vector<Unit> clipboard;
 
 	bool dragging = false;
 	bool dragged = false;
-	float drag_x_offset;
-	float drag_y_offset;
+	glm::vec3 drag_start;
+	std::vector<glm::vec2> drag_offsets;
 
 	UnitBrush();
 

@@ -13,6 +13,73 @@ TerrainBrush::TerrainBrush() : Brush() {
 	set_size(size);
 }
 
+void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+	//if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
+		/*auto id = map->render_manager.pick_unit_id_under_mouse(map->units, input_handler.mouse);
+		if (id) {
+			Unit& unit = map->units.units[id.value()];
+			selections = { &unit };
+			dragging = true;
+			drag_x_offset = input_handler.mouse_world.x - unit.position.x;
+			drag_y_offset = input_handler.mouse_world.y - unit.position.y;
+			return;
+		}*/
+	//}
+
+	Brush::mouse_press_event(event, frame_delta);
+}
+
+void TerrainBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(event, frame_delta);
+
+	/*if (event->buttons() == Qt::LeftButton) {
+		if (mode == Mode::selection) {
+			if (dragging) {
+				if (!dragged) {
+					dragged = true;
+					map->terrain_undo.new_undo_group();
+					unit_state_undo = std::make_unique<UnitStateAction>();
+					for (const auto& i : selections) {
+						unit_state_undo->old_units.push_back(*i);
+					}
+				}
+				for (auto& i : selections) {
+					i->position.x = input_handler.mouse_world.x - drag_x_offset;
+					i->position.y = input_handler.mouse_world.y - drag_y_offset;
+					i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+					i->update();
+				}
+			} else if (event->modifiers() & Qt::ControlModifier) {
+				for (auto&& i : selections) {
+					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					if (target_rotation < 0) {
+						target_rotation = (glm::pi<float>() + target_rotation) + glm::pi<float>();
+					}
+
+					i->angle = target_rotation;
+					i->update();
+				}
+			} else if (selection_started) {
+				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
+				selections = map->units.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+			}
+		}
+	}*/
+}
+
+void TerrainBrush::mouse_release_event(QMouseEvent* event) {
+	//dragging = false;
+	//if (dragged) {
+	//	dragged = false;
+	//	for (const auto& i : selections) {
+	//		unit_state_undo->new_units.push_back(*i);
+	//	}
+	//	map->terrain_undo.add_undo_action(std::move(unit_state_undo));
+	//}
+
+	Brush::mouse_release_event(event);
+}
+
 // Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
 	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });

@@ -61,11 +61,13 @@ void APIENTRY gl_debug_output(const GLenum source, const GLenum type, const GLui
 }
 
 GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
-	QTimer::singleShot(16, this, &GLWidget::update_scene);
-
 	setMouseTracking(true);
 	setFocus();
 	setFocusPolicy(Qt::WheelFocus);
+
+	QTimer::singleShot(0.0, [this]() {
+		this->update_scene();
+	});
 }
 
 std::chrono::steady_clock::time_point begin;
@@ -128,7 +130,9 @@ void GLWidget::update_scene() {
 		map->update(delta, width(), height());
 	}
 
-	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), this, &GLWidget::update_scene);
+	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), [this]() {
+		this->update_scene();	
+	});
 }
 
 void GLWidget::paintGL() {

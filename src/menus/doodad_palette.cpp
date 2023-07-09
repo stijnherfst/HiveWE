@@ -467,6 +467,7 @@ void DoodadPalette::update_selection_info() {
 		if (current_selection_section->isEnabled()) {
 			current_selection_section->setEnabled(false);
 		}
+		selection_name->setText("");
 	} else {
 		if (!current_selection_section->isEnabled()) {
 			current_selection_section->setEnabled(true);

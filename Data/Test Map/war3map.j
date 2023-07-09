@@ -62,7 +62,6 @@ function CreateUnits takes nothing returns nothing
  local integer unitID
  local trigger t
  local real life
-	set u=BlzCreateUnitWithSkin(Player(0), 'nhea', - 906.2883, - 432.4324, 262.5669, 'nhea')
 endfunction
 //===========================================================================
 //*

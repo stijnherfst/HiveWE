@@ -228,7 +228,15 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
 	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
 
-	emit dataChanged(mapFromSource(topLeft), mapFromSource(bottomRight), roles);
+	for (size_t i = topLeft.row(); i < bottomRight.row(); i++) {
+		if (i == slk->row_headers.at(id)) {
+			
+			auto a = mapFromSource(createIndex(i, topLeft.column()));
+			auto b = mapFromSource(createIndex(i, bottomRight.column()));
+			emit dataChanged(a, b, roles);
+			return;
+		}
+	}
 }
 
 void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {

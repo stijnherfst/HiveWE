@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <string>
 #include <filesystem>
@@ -95,7 +96,7 @@ public:
 	void remove_unit(Unit* unit);
 
 	std::vector<Unit*> query_area(const QRectF& area);
-	void remove_units(const std::vector<Unit*>& list);
+	void remove_units(const std::unordered_set<Unit*>& list);
 
 	void process_field_change(const std::string& id, const std::string& field);
 

@@ -92,4 +92,7 @@ protected:
 	std::shared_ptr<Shader> selection_shader;
 	std::shared_ptr<Shader> selection_circle_shader;
 	std::shared_ptr<Shader> brush_shader;
+
+signals:
+	void selection_changed();
 };

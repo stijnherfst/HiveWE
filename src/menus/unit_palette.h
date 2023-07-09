@@ -52,10 +52,14 @@ private:
 	QRibbonButton* selection_mode = new QRibbonButton;
 
 	UnitSelector* selector;
+	
+	QRibbonSection* current_selection_section = new QRibbonSection;
+	QLabel* selection_name = new QLabel;
 
 	QShortcut* find_this;
 	QShortcut* find_parent;
 
 public slots:
 	void deactivate(QRibbonTab* tab) override;
+	void update_selection_info();
 };

@@ -14,6 +14,9 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	brush.tile_id = map->terrain.tileset_ids.front();
 	map->brush = &brush;
 
+	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+
 	ui.flowLayout_placeholder->addLayout(textures_layout);
 	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
 
@@ -66,6 +69,14 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	textures_group->addButton(ui.blight);
 
 	// Ribbon
+	QRibbonSection* selection_section = new QRibbonSection;
+	selection_section->setText("Selection");
+
+	selection_mode->setText("Selection\nMode");
+	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
+	selection_mode->setCheckable(true);
+	selection_section->addWidget(selection_mode);
+
 	QRibbonSection* general_section = new QRibbonSection;
 	general_section->setText("General");
 
@@ -118,9 +129,19 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	apply_water_pathing->setChecked(true);
 	pathing_section->addWidget(apply_water_pathing);
 
+	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(general_section);
 	ribbon_tab->addSection(cliff_section);
 	ribbon_tab->addSection(pathing_section);
+
+	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
+	connect(change_mode_this, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
+
+	connect(change_mode_parent, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
 
 	connect(enforce_water_height_limit, &QRibbonButton::toggled, [&](bool checked) { brush.enforce_water_height_limits = checked; });
 	connect(change_doodad_heights, &QRibbonButton::toggled, [&](bool checked) { brush.change_doodad_heights = checked; });

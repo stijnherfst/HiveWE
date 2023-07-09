@@ -221,12 +221,10 @@ void Doodads::create() {
 }
 
 void Doodads::render() {
-	for (auto&& i : doodads) {
-		//i.mesh->render_queue(i.skeleton, i.color);
+	for (const auto& i : doodads) {
 		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
 	}
-	for (auto&& i : special_doodads) {
-		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
+	for (const auto& i : special_doodads) {
 		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 }
@@ -364,6 +362,8 @@ void Doodads::update_special_doodad_pathing(const QRectF& area) {
 }
 
 void Doodads::process_doodad_field_change(const std::string& id, const std::string& field) {
+	context->makeCurrent();
+
 	if (field == "file" || field == "numvar") {
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
 		// ToDo just use the numvar field from the SLKs
@@ -387,7 +387,7 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 		}
 	}
 
-	if (field == "pathTex") {
+	if (field == "pathtex") {
 		const std::string pathing_texture_path = doodads_slk.data("pathtex", id);
 
 		if (hierarchy.file_exists(pathing_texture_path)) {
@@ -404,6 +404,8 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 }
 
 void Doodads::process_destructible_field_change(const std::string& id, const std::string& field) {
+	context->makeCurrent();
+
 	if (field == "file" || field == "numvar") {
 		// id_to_mesh requires a variation too so we will just have to check a bunch of them
 		// ToDo just use the numvar field from the SLKs
@@ -415,6 +417,7 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 				i.mesh = get_mesh(id, i.variation);
 				i.skeleton = SkeletalModelInstance(i.mesh->model);
 				i.update();
+				i.skeleton.update(0.016f);
 			}
 		}
 	}
