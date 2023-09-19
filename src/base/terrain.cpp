@@ -275,9 +275,9 @@ void Terrain::create() {
 	update_ground_textures({ 0, 0, width - 1, height - 1 });
 	update_ground_heights({ 0, 0, width - 1, height - 1 });
 
-	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vs", "Data/Shaders/terrain.fs" });
-	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vs", "Data/Shaders/cliff.fs" });
-	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vs", "Data/Shaders/water.fs" });
+	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vert", "Data/Shaders/terrain.frag" });
+	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vert", "Data/Shaders/cliff.frag" });
+	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vert", "Data/Shaders/water.frag" });
 
 	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {
@@ -348,6 +348,7 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glUniform1i(2, render_pathing);
 	glUniform1i(3, render_lighting);
 	glUniform3fv(4, 1, &map->light_direction.x);
+	glUniform3fv(5, 1, &input_handler.mouse_world[0]);
 
 	glBindTextureUnit(0, ground_height);
 	glBindTextureUnit(1, ground_corner_height);
@@ -360,14 +361,13 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glBindTextureUnit(20, map->pathing_map.texture_static);
 	glBindTextureUnit(21, map->pathing_map.texture_dynamic);
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+	glUniform1i(6, map->brush != nullptr);
+	if (map->brush) {
+		glBindTextureUnit(23, map->brush->brush_texture);
+	}
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
-
-	glDisableVertexAttribArray(0);
+	// Use gl_VertexID in the shader to determine square position
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
 
 	glEnable(GL_BLEND);
 
@@ -378,12 +378,13 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 		const Corner& top_left = corners[i.x][i.y + 1];
 		const Corner& top_right = corners[i.x + 1][i.y + 1];
 
-		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
-									top_left.layer_height - 2,		top_right.layer_height - 2 });
-
 		if (bottom_left.special_doodad) {
 			continue;
 		}
+
+		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
+									top_left.layer_height - 2,		top_right.layer_height - 2 });
+
 
 		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottom_left.cliff_texture });
 	}
@@ -424,14 +425,9 @@ void Terrain::render_water() const {
 	glBindTextureUnit(2, water_exists);
 	glBindTextureUnit(3, water_texture_array);
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+	// Use gl_VertexID in the shader to determine square position
+	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, (width - 1) * (height - 1));
-
-	glDisableVertexAttribArray(0);
 	glDepthMask(true);
 }
 
@@ -894,8 +890,6 @@ void Terrain::resize(size_t new_width, size_t new_height) {
 
 	width = new_width;
 	height = new_height;
-
-	//offset = 
 
 	auto t = corners[0][0];
 	corners.clear();

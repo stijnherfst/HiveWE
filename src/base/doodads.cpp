@@ -42,6 +42,35 @@ void Doodad::update() {
 	}
 }
 
+glm::vec2 Doodad::acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned) {
+	if (!pathing) {
+		if (force_grid_aligned) {
+			return glm::round(position * 2.f) * 0.5f;
+		} else {
+			return position;
+		}
+	}
+
+	auto rotated_pathing_width = pathing->width;
+	auto rotated_pathing_height = pathing->height;
+
+	if (static_cast<uint32_t>(glm::round(glm::degrees(rotation))) % 180 == 0) {
+		rotated_pathing_width = pathing->height;
+		rotated_pathing_height = pathing->width;
+	}
+
+	glm::vec2 extra_offset(0.0f);
+	if (rotated_pathing_width % 4 != 0) {
+		extra_offset.x = 0.25f;
+	}
+
+	if (rotated_pathing_height % 4 != 0) {
+		extra_offset.y = 0.25f;
+	}
+
+	return glm::round((position + extra_offset) * 2.f) * 0.5f - extra_offset;
+}
+
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
 	bool fixed_rotation = false;
 	if (doodads_slk.row_headers.contains(id)) {

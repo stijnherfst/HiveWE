@@ -4,9 +4,6 @@
 #include <memory>
 #include <print>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -41,17 +38,21 @@ int DoodadBrush::get_random_variation() {
 }
 
 void DoodadBrush::set_shape(const Shape new_shape) {
+	context->makeCurrent();
 	shape = new_shape;
+
+	glDeleteTextures(1, &brush_texture);
+	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	if (pathing_texture) {
 		const int div_w = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->width : pathing_texture->height;
-
-		for (int i = 0; i < size; i++) {
-			for (int j = 0; j < size; j++) {
-				brush[j * size + i] = { 0, 0, 0, 0 };
-			}
-		}
+		
+		std::vector<glm::u8vec4> brush(div_w * div_h, { 0, 0, 0, 0 });
 
 		for (int i = 0; i < pathing_texture->width; i++) {
 			for (int j = 0; j < pathing_texture->height; j++) {
@@ -74,23 +75,27 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 				}
 
 				const int in = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
-				const int index = (y + std::max(0, div_w - div_h) / 2) * size + x + std::max(0, div_h - div_w) / 2;
 
 				// Have to check for > 250 because sometimes the pathing textures are not properly thresholded
-				glm::vec4 color = { pathing_texture->data[in + 2] > 250 ? 255 : 0,
-									pathing_texture->data[in + 1] > 250 ? 255 : 0,
-									pathing_texture->data[in] > 250 ? 255 : 0,
-									128 };
+				glm::u8vec4 color = { 
+					pathing_texture->data[in] > 250 ? 255 : 0,
+					pathing_texture->data[in + 1] > 250 ? 255 : 0,
+					pathing_texture->data[in + 2] > 250 ? 255 : 0,
+					128 
+				};
 
 				if (color.r || color.g || color.b) {
-					brush[index] = color;
+					brush[y * div_w + x] = color;
 				}
 			}
 		}
+		glTextureStorage2D(brush_texture, 1, GL_RGBA8, div_w, div_h);
+		glTextureSubImage2D(brush_texture, 0, 0, 0, div_w, div_h, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+	} else {
+		std::vector<glm::u8vec4> brush(size * size, { 0, 0, 0, 0 });
+		glTextureStorage2D(brush_texture, 1, GL_RGBA8, size, size);
+		glTextureSubImage2D(brush_texture, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
 	}
-
-	glBindTexture(GL_TEXTURE_2D, brush_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 void DoodadBrush::key_press_event(QKeyEvent* event) {
@@ -401,12 +406,8 @@ void DoodadBrush::place_clipboard() {
 	for (const auto& i : clipboard) {
 		Doodad& new_doodad = map->doodads.add_doodad(i);
 		new_doodad.creation_number = ++Doodad::auto_increment;
-		glm::vec3 final_position;
-		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, i.position.z);
-		} else {
-			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
-		}
+
+		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation), i.position.z);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 		}
@@ -416,7 +417,7 @@ void DoodadBrush::place_clipboard() {
 		doodad_undo->doodads.push_back(new_doodad);
 
 		if (new_doodad.pathing) {
-			map->pathing_map.blit_pathing_texture(new_doodad.position, glm::degrees(rotation) + 90, new_doodad.pathing);
+			map->pathing_map.blit_pathing_texture(new_doodad.position, glm::degrees(new_doodad.angle) + 90, new_doodad.pathing);
 		}
 	}
 	map->pathing_map.upload_dynamic_pathing();
@@ -432,12 +433,8 @@ void DoodadBrush::apply(double frame_delta) {
 		return;
 	}
 
-	glm::vec3 doodad_position;
-	if (free_placement) {
-		doodad_position = input_handler.mouse_world;
-	} else {
-		doodad_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
-	}
+	glm::vec3 doodad_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
+	doodad_position.z = input_handler.mouse_world.z;
 
 	Doodad& doodad = map->doodads.add_doodad(id, variation, doodad_position);
 	doodad.scale = glm::vec3(scale);
@@ -491,12 +488,8 @@ void DoodadBrush::render_brush() {
 		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
 	}
 
-	glm::vec3 final_position;
-	if (free_placement) {
-		final_position = input_handler.mouse_world;
-	} else {
-		final_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
-	}
+	glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
+	final_position.z = input_handler.mouse_world.z;
 
 	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
 	skeleton.update(0.016f);
@@ -516,7 +509,7 @@ void DoodadBrush::render_selection() const {
 		} else {
 			selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 		}
-		if (selection_scale < 0.1f) { // hack, what is the correct approach?
+		if (selection_scale < 0.1f) { // Todo hack, what is the correct approach?
 			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
 		}
 
@@ -545,13 +538,7 @@ void DoodadBrush::render_clipboard() {
 			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
 		}
 
-		glm::vec3 final_position;
-		if (clipboard_free_placement) {
-			final_position = glm::vec3(glm::vec2(input_handler.mouse_world + i.position) - clipboard_mouse_offset, i.position.z);
-		} else {
-			final_position = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f + i.position - (glm::round((glm::vec3(clipboard_mouse_offset, 0)) * 2.f + 0.5f) / 2.f - 0.25f);
-		}
-
+		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 		}
@@ -559,7 +546,6 @@ void DoodadBrush::render_clipboard() {
 		i.skeleton.update_location(final_position, i.angle, (base_scale * i.scale) / 128.f);
 		i.skeleton.update(0.016f);
 
-		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
 }

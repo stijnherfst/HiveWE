@@ -1,28 +1,24 @@
 #include "brush.h"
 
-//#include "Globals.h"
+#include <print>
+
 #include <glad/glad.h>
 
 #include <map_global.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "globals.h"
 
 import Camera;
 import OpenGLUtilities;
 
 Brush::Brush() {
-	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 	set_size(size);
 
-	selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vs", "Data/Shaders/selection.fs" });
-	selection_circle_shader = resource_manager.load<Shader>({ "Data/Shaders/selection_circle.vs", "Data/Shaders/selection_circle.fs" });
-	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vs", "Data/Shaders/brush.fs" });
+	selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vert", "Data/Shaders/selection.frag" });
+	selection_circle_shader = resource_manager.load<Shader>({ "Data/Shaders/selection_circle.vert", "Data/Shaders/selection_circle.frag" });
+	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vert", "Data/Shaders/brush.frag" });
 }
 
 void Brush::set_position(const glm::vec2& new_position) {
@@ -58,15 +54,15 @@ void Brush::set_size(const int new_size) {
 
 	size = std::clamp(new_size * size_granularity, 1, 999);
 
-	brush.clear();
-	brush.resize(size * size, { 0, 0, 0, 0 });
-
 	set_shape(shape);
 
 	set_position(center);
 }
 
 void Brush::set_shape(const Shape new_shape) {
+	context->makeCurrent();
+	std::vector<glm::u8vec4> brush(size * size, { 0, 0, 0, 0 });
+
 	shape = new_shape;
 
 	for (int i = 0; i < size; i++) {
@@ -79,8 +75,20 @@ void Brush::set_shape(const Shape new_shape) {
 		}
 	}
 
-	glBindTexture(GL_TEXTURE_2D, brush_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_BGRA, GL_UNSIGNED_BYTE, brush.data());
+	std::println("am I getting called");
+
+	glDeleteTextures(1, &brush_texture);
+	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	glTextureStorage2D(brush_texture, 1, GL_RGBA8, size, size);
+	glTextureSubImage2D(brush_texture, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+
+	//glBindTexture(GL_TEXTURE_2D, brush_texture);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size, size, 0, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
@@ -177,7 +185,7 @@ void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			selection_start = input_handler.mouse_world;
 		}
 	} else if (mode == Mode::placement) {
-		// Check if ellegible for placement
+		// Check if eligible for placement
 		if (event->button() == Qt::LeftButton) {
 			apply_begin();
 			if (can_place() || event->modifiers() & Qt::ShiftModifier) {
@@ -238,27 +246,81 @@ void Brush::render_selector() const {
 }
 
 void Brush::render_brush() {
-	glDisable(GL_DEPTH_TEST);
+	//if (input_handler.previous_mouse_world == input_handler.mouse_world) {
+	//	return;
+	//}
 
-	brush_shader->use();
+	//{
+	//	auto final_position = glm::floor(input_handler.previous_mouse_world * 4.f);
+	//	const int x = final_position.x;
+	//	const int y = final_position.y;
 
-	const int cells = std::ceil(size / 4.f) + 1;
+	//	for (int i = 0; i < size; i++) {
+	//		for (int j = 0; j < size; j++) {
+	//			if (!contains(i, j)) {
+	//				continue;
+	//			}
 
-	glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-	glUniform2f(2, position.x, position.y);
-	glUniform2f(3, uv_offset.x, uv_offset.y);
-	glUniform1i(4, cells);
+	//			int half_size = (size / 2) / size_granularity;
+	//			const int pathing_x = x + i - half_size;
+	//			const int pathing_y = y + j - half_size;
 
-	glBindTextureUnit(0, map->terrain.ground_corner_height);
-	glBindTextureUnit(1, brush_texture);
+	//			if (pathing_x < 0 || pathing_y < 0 || pathing_x >= map->pathing_map.width || pathing_y >= map->pathing_map.height) {
+	//				continue;
+	//			}
 
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+	//			const int index = pathing_y * map->pathing_map.width + pathing_x;
+	//			map->pathing_map.pathing_cells_static[index] &= ~0b1;
+	//		}
+	//	}
+	//}
+	//{
+	//	auto final_position = glm::floor(input_handler.mouse_world * 4.f);
+	//	const int x = final_position.x;
+	//	const int y = final_position.y;
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-	glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
+	//	for (int i = 0; i < size; i++) {
+	//		for (int j = 0; j < size; j++) {
+	//			if (!contains(i, j)) {
+	//				continue;
+	//			}
 
-	glDisableVertexAttribArray(0);
-	glEnable(GL_DEPTH_TEST);
+	//			int half_size = (size / 2) / size_granularity;
+	//			const int pathing_x = x + i - half_size;
+	//			const int pathing_y = y + j - half_size;
+
+	//			if (pathing_x < 0 || pathing_y < 0 || pathing_x >= map->pathing_map.width || pathing_y >= map->pathing_map.height) {
+	//				continue;
+	//			}
+
+	//			const int index = pathing_y * map->pathing_map.width + pathing_x;
+	//			map->pathing_map.pathing_cells_static[index] |= 0b1;
+	//		}
+	//	}
+	//}
+
+	//map->pathing_map.upload_static_pathing();
+	//glDisable(GL_DEPTH_TEST);
+
+	//brush_shader->use();
+
+	//const int cells = std::ceil(size / 4.f) + 1;
+
+	//glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+	//glUniform2f(2, position.x, position.y);
+	//glUniform2f(3, uv_offset.x, uv_offset.y);
+	//glUniform1i(4, cells);
+
+	//glBindTextureUnit(0, map->terrain.ground_corner_height);
+	//glBindTextureUnit(1, brush_texture);
+
+	//glEnableVertexAttribArray(0);
+	//glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
+	//glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
+	//glDrawElementsInstanced(GL_TRIANGLES, shapes.quad_indices.size() * 3, GL_UNSIGNED_INT, nullptr, cells * cells);
+
+	//glDisableVertexAttribArray(0);
+	//glEnable(GL_DEPTH_TEST);
 }

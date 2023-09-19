@@ -4,10 +4,6 @@
 #include <QKeyEvent>
 
 #include <glad/glad.h>
-
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 
 import Shader;
@@ -35,7 +31,10 @@ public:
 
 	glm::vec2 brush_offset = { 0, 0 };
 
-	glm::vec4 brush_color = { 0, 255, 0, 128 };
+	glm::u8vec4 brush_color = { 0, 255, 0, 128 };
+
+	GLuint brush_texture;
+
 
 	Brush();
 
@@ -75,6 +74,7 @@ public:
 	virtual void apply_begin() {};
 	virtual void apply(double frame_delta) = 0;
 	virtual void apply_end() {};
+
 protected:
 	Shape shape = Shape::circle;
 	Mode mode = Mode::placement;
@@ -85,9 +85,6 @@ protected:
 
 	bool selection_started = false;
 	glm::vec2 selection_start;
-
-	std::vector<glm::u8vec4> brush;
-	GLuint brush_texture;
 
 	std::shared_ptr<Shader> selection_shader;
 	std::shared_ptr<Shader> selection_circle_shader;

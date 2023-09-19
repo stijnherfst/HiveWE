@@ -3,6 +3,8 @@
 layout (location = 2) uniform bool show_pathing_map;
 layout (location = 3) uniform bool show_lighting;
 layout (location = 4) uniform vec3 light_direction;
+layout (location = 5) uniform vec3 brush_position;
+layout (location = 6) uniform bool render_brush;
 
 layout (binding = 3) uniform sampler2DArray sample0;
 layout (binding = 4) uniform sampler2DArray sample1;
@@ -24,14 +26,15 @@ layout (binding = 19) uniform sampler2DArray sample16;
 
 layout (binding = 20) uniform usampler2D pathing_map_static;
 layout (binding = 21) uniform usampler2D pathing_map_dynamic;
+layout (binding = 23) uniform sampler2D brush;
 
 layout (location = 0) in vec2 UV;
 layout (location = 1) in flat uvec4 texture_indices;
 layout (location = 2) in vec2 pathing_map_uv;
 layout (location = 3) in vec3 normal;
+layout (location = 4) in vec2 world_position;
 
 layout (location = 0) out vec4 color;
-layout (location = 1) out vec4 position;
 
 vec4 get_fragment(uint id, vec3 uv) {
 	vec2 dx = dFdx(uv.xy);
@@ -85,9 +88,6 @@ void main() {
 	color = mix(get_fragment(texture_indices.r & 31, vec3(UV, texture_indices.r >> 5)), color, color.a);
 
 	if (show_lighting) {
-		// vec3 light_direction = vec3(-1.f, -1.f, -2.f);
-		// light_direction = normalize(light_direction);
-
 		float contribution = (dot(-light_direction, normal) + 1.f) * 0.5f;
 
 		color.rgb *= clamp(contribution, 0.f, 1.f);
@@ -98,8 +98,28 @@ void main() {
 	if (show_pathing_map) {
 		uint final = byte_static.r | byte_dynamic.r;
 
-		vec4 pathing_static_color = vec4((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3, 0.25f);
-
-		color = length(pathing_static_color.rgb) > 0 ? color * 0.75f + pathing_static_color * 0.5f : color;
+		vec3 pathing_color = vec3((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3);
+		color.rgb = (final & 0xE) > 0 ? mix(color.rgb, pathing_color, 0.50) : color.rgb;
 	}
+
+	if (render_brush) {
+		ivec2 brush_texture_size = textureSize(brush, 0);
+
+		vec2 extra_offset = vec2(0.0f);
+		if (brush_texture_size.x % 4 != 0) {
+			extra_offset.x = 0.25f;
+		}
+		if (brush_texture_size.y % 4 != 0) {
+			extra_offset.y = 0.25f;
+		}
+
+		vec2 final_brush_position = round((brush_position.xy + extra_offset) * 2.f) * 0.5f - extra_offset;
+		vec2 brush_uv = ((final_brush_position - world_position.xy) * 4.f) / vec2(brush_texture_size) + 0.5;
+
+		vec4 brush_color = texture(brush, brush_uv);
+
+		if (brush_uv.x >= 0.f && brush_uv.y >= 0.f && brush_uv.x <= 1.f && brush_uv.y <= 1.f) {
+			color.rgb = mix(color.rgb, brush_color.rgb, 0.5);
+		}
+	} 
 }

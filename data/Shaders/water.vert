@@ -1,7 +1,5 @@
 #version 450 core
 
-layout (location = 0) in vec2 vPosition;
-
 layout (binding = 0) uniform sampler2D water_height_texture;
 layout (binding = 1) uniform sampler2D ground_height_texture;
 layout (binding = 2) uniform sampler2D water_exists_texture;
@@ -20,7 +18,18 @@ const float min_depth = 10.f / 128;
 const float deeplevel = 64.f / 128;
 const float maxdepth = 72.f / 128;
 
+const vec2[6] position = vec2[6](
+	vec2(1, 1),
+	vec2(0, 1),
+	vec2(0, 0),
+	vec2(0, 0),
+	vec2(1, 0),
+	vec2(1, 1)
+);
+
 void main() { 
+	vec2 vPosition = position[gl_VertexID];
+
 	ivec2 size = textureSize(water_height_texture, 0) - 1;
 	ivec2 pos = ivec2(gl_InstanceID % size.x, gl_InstanceID / size.x);
 	ivec2 height_pos = ivec2(vPosition + pos);

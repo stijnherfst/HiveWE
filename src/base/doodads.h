@@ -43,6 +43,7 @@ struct Doodad {
 	glm::vec3 color;
 
 	void update();
+	static glm::vec2 acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned = false);
 	static float acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle);
 };
 

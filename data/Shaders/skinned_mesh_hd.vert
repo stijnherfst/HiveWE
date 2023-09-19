@@ -1,6 +1,6 @@
 #version 450 core
 
-// Should match the uniform locations in skinned_mesh_sd.vs
+// Should match the uniform locations in skinned_mesh_sd.vert
 layout (location = 0) uniform mat4 VP;
 layout (location = 4) uniform int instanceID;
 layout (location = 6) uniform int layer_skip_count;

@@ -22,7 +22,12 @@ void main() {
 
 	uvec4 byte = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0);
 	if (show_pathing_map_static) {
-		vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
-		color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
+		// vec4 pathing_color = vec4(min(byte.r & 2, 1), min(byte.r & 4, 1), min(byte.r & 8, 1), 0.25);
+		// color = length(pathing_color.rgb) > 0 ? color * 0.75 + pathing_color * 0.5 : color;
+
+		uint final = byte.r;
+
+		vec3 pathing_static_color = vec3((final & 2) >> 1, (final & 4) >> 2, (final & 8) >> 3);
+		color.rgb = (final & 0xE) > 0 ? color.rgb * 0.75f + pathing_static_color * 0.5f : color.rgb;
 	}
 }

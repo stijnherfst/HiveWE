@@ -1,6 +1,5 @@
 #version 450 core
 
-layout (location = 0) in vec2 vPosition;
 layout (location = 1) uniform mat4 MVP;
 
 layout (binding = 0) uniform sampler2D height_texture;
@@ -12,11 +11,22 @@ layout (location = 0) out vec2 UV;
 layout (location = 1) out flat uvec4 texture_indices;
 layout (location = 2) out vec2 pathing_map_uv;
 layout (location = 3) out vec3 normal;
+layout (location = 4) out vec2 world_position;
+
+const vec2[6] position = vec2[6](
+	vec2(1, 1),
+	vec2(0, 1),
+	vec2(0, 0),
+	vec2(0, 0),
+	vec2(1, 0),
+	vec2(1, 1)
+);
 
 void main() { 
 	const ivec2 size = textureSize(terrain_texture_list, 0);
 	const ivec2 pos = ivec2(gl_InstanceID % size.x, gl_InstanceID / size.x);
 
+	vec2 vPosition = position[gl_VertexID];
 	const ivec2 height_pos = ivec2(vPosition + pos);
 	const vec4 height = texelFetch(height_cliff_texture, height_pos, 0);
 
@@ -35,4 +45,5 @@ void main() {
 	const bool is_ground = texelFetch(terrain_exists_texture, pos2, 0).r > 0;
 
 	gl_Position = is_ground ? MVP * vec4(vPosition + pos, height.r, 1) : vec4(2.0, 0.0, 0.0, 1.0);
+	world_position = vPosition + pos;
 }

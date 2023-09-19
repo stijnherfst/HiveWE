@@ -17,19 +17,19 @@ export class Shader : public Resource {
 
 	static constexpr const char* name = "Shader";
 
-	// vertex: .vs
-	// fragment: .fs
-	// compute: .cs
+	// vertex: .vert
+	// fragment: .frag
+	// compute: .comp
 	explicit Shader(std::initializer_list<fs::path> paths) {
 		program = glCreateProgram();
 
 		for (const auto& path : paths) {
 			GLuint shader;
-			if (path.extension() == ".vs") {
+			if (path.extension() == ".vert") {
 				shader = glCreateShader(GL_VERTEX_SHADER);
-			} else if (path.extension() == ".fs") {
+			} else if (path.extension() == ".frag") {
 				shader = glCreateShader(GL_FRAGMENT_SHADER);
-			} else if (path.extension() == ".cs") {
+			} else if (path.extension() == ".comp") {
 				shader = glCreateShader(GL_COMPUTE_SHADER);
 			}
 

@@ -48,12 +48,12 @@ export class RenderManager {
 	int window_height;
 
 	RenderManager() {
-		instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_sd.vs", "Data/Shaders/skinned_mesh_instanced_sd.fs" });
-		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instanced_hd.vs", "Data/Shaders/skinned_mesh_instanced_hd.fs" });
-		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_sd.vs", "Data/Shaders/skinned_mesh_sd.fs" });
-		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_hd.vs", "Data/Shaders/skinned_mesh_hd.fs" });
-		preskin_mesh_shader = resource_manager.load<Shader>({ "Data/Shaders/preskin_mesh.cs" });
-		colored_skinned_shader = resource_manager.load<Shader>({ "Data/Shaders/skinned_mesh_instance_color_coded.vs", "Data/Shaders/skinned_mesh_instance_color_coded.fs" });
+		instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instanced_sd.vert", "data/Shaders/skinned_mesh_instanced_sd.frag" });
+		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instanced_hd.vert", "data/Shaders/skinned_mesh_instanced_hd.frag" });
+		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_sd.vert", "data/Shaders/skinned_mesh_sd.frag" });
+		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_hd.vert", "data/Shaders/skinned_mesh_hd.frag" });
+		preskin_mesh_shader = resource_manager.load<Shader>({ "data/Shaders/preskin_mesh.comp" });
+		colored_skinned_shader = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instance_color_coded.vert", "data/Shaders/skinned_mesh_instance_color_coded.frag" });
 
 		glCreateFramebuffers(1, &color_picking_framebuffer);
 
