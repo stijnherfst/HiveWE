@@ -3,7 +3,7 @@
 layout (location = 2) uniform bool show_pathing_map;
 layout (location = 3) uniform bool show_lighting;
 layout (location = 4) uniform vec3 light_direction;
-layout (location = 5) uniform vec3 brush_position;
+layout (location = 5) uniform vec2 brush_position;
 layout (location = 6) uniform bool render_brush;
 
 layout (binding = 3) uniform sampler2DArray sample0;
@@ -105,21 +105,12 @@ void main() {
 	if (render_brush) {
 		ivec2 brush_texture_size = textureSize(brush, 0);
 
-		vec2 extra_offset = vec2(0.0f);
-		if (brush_texture_size.x % 4 != 0) {
-			extra_offset.x = 0.25f;
-		}
-		if (brush_texture_size.y % 4 != 0) {
-			extra_offset.y = 0.25f;
-		}
-
-		vec2 final_brush_position = round((brush_position.xy + extra_offset) * 2.f) * 0.5f - extra_offset;
-		vec2 brush_uv = ((final_brush_position - world_position.xy) * 4.f) / vec2(brush_texture_size) + 0.5;
+		vec2 brush_uv = ((brush_position - world_position) * 4.f) / vec2(brush_texture_size) + 0.5;
 
 		vec4 brush_color = texture(brush, brush_uv);
 
 		if (brush_uv.x >= 0.f && brush_uv.y >= 0.f && brush_uv.x <= 1.f && brush_uv.y <= 1.f) {
-			color.rgb = mix(color.rgb, brush_color.rgb, 0.5);
+			color.rgb = mix(color.rgb, brush_color.rgb, brush_color.a);
 		}
 	} 
 }

@@ -5,13 +5,14 @@ layout (location = 1) in vec2 vUV;
 layout (location = 2) in vec3 vNormal;
 layout (location = 3) in vec4 vOffset;
 
-layout (location = 0) uniform mat4 MVP;
+layout (location = 0) uniform mat4 VP;
 
 layout (binding = 1) uniform sampler2D height_texture;
 
 layout (location = 0) out vec3 UV;
 layout (location = 1) out vec3 Normal;
 layout (location = 2) out vec2 pathing_map_uv;
+layout (location = 3) out vec2 world_position;
 
 void main() {
 	// WC3 cliff meshes seem to be rotated by 90 degrees so we unrotate
@@ -28,11 +29,12 @@ void main() {
 	const float hU = texelFetch(height_texture, height_pos + off.zy, 0).r;
 	const vec3 terrain_normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
-	gl_Position = MVP * vec4(rotated_world_position.xy, rotated_world_position.z + height, 1);
+	gl_Position = VP * vec4(rotated_world_position.xy, rotated_world_position.z + height, 1);
 
 	pathing_map_uv = rotated_world_position.xy * 4;
 	UV = vec3(vUV, vOffset.a);
 
 	const vec3 rotated_normal = vec3(vNormal.y, -vNormal.x, vNormal.z);
 	Normal = normalize(vec3(rotated_normal.xy + terrain_normal.xy, rotated_normal.z * terrain_normal.z));
+	world_position = rotated_world_position.xy;
 }

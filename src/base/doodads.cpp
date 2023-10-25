@@ -72,15 +72,16 @@ glm::vec2 Doodad::acceptable_position(glm::vec2 position, std::shared_ptr<Pathin
 }
 
 float Doodad::acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle) {
-	bool fixed_rotation = false;
+	float fixed_rotation = 0.0;
 	if (doodads_slk.row_headers.contains(id)) {
-		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
+		fixed_rotation = doodads_slk.data<float>("fixedrot", id);
 	} else {
-		fixed_rotation = destructibles_slk.data<int>("fixedrot", id) > 0;
+		fixed_rotation = destructibles_slk.data<float>("fixedrot", id);
 	}
 
-	if (fixed_rotation) {
-		return current_angle;
+	// Negative values indicate free rotation, positive is a fixed angle
+	if (fixed_rotation >= 0.0) {
+		return glm::radians(fixed_rotation);
 	}
 
 	if (pathing) {

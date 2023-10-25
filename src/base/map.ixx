@@ -183,7 +183,6 @@ export class Map : public QObject {
 		doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 		doodads_meta_slk.build_meta_map();
 
-		doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
 		doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 		doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
@@ -191,12 +190,11 @@ export class Map : public QObject {
 		destructibles_slk = slk::SLK("Units/DestructableData.slk");
 		destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 
+		doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
+
 		destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 		destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 		destructibles_meta_slk.build_meta_map();
-
-		// Fix Scorched tree
-		destructibles_slk.merge(ini::INI("Data/Warcraft/DestructableSkin.txt", true), destructibles_meta_slk);
 
 		destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"), destructibles_meta_slk);
 		destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");

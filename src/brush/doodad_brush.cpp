@@ -18,8 +18,9 @@ import OpenGLUtilities;
 
 DoodadBrush::DoodadBrush()
 	: Brush() {
+	granularity = 2.f;
 	uv_offset_granularity = 2;
-	brush_offset = { 0.25f, 0.25f };
+	brush_offset = { 0.0f, 0.0f };
 }
 
 /// Gets a random variation from the possible_variation list
@@ -538,7 +539,14 @@ void DoodadBrush::render_clipboard() {
 			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
 		}
 
-		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
+		glm::vec3 final_position;
+		if (i.pathing) {
+			final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
+		} else {
+			final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
+		}
+		//glm::vec3 final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
+		//glm::vec3 final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
 		}
@@ -576,23 +584,21 @@ void DoodadBrush::set_random_rotation() {
 	std::random_device rd;
 	std::mt19937 gen(rd());
 
-	bool fixed_rotation = false;
-	if (doodads_slk.row_headers.contains(id)) {
-		fixed_rotation = doodads_slk.data<int>("fixedrot", id) > 0;
-	} else {
-		fixed_rotation = destructibles_slk.data<int>("fixedrot", id) > 0;
-	}
-
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
 	float target_rotation = dist(gen);
-	if (pathing_texture && pathing_texture->width == pathing_texture->height) {
-		if (pathing_texture->homogeneous) {
-			rotation = target_rotation;
-		} else {
-			rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
+	rotation = Doodad::acceptable_angle(id, pathing_texture, target_rotation, target_rotation);
+
+	if (pathing_texture) {
+		auto rotated_pathing_width = pathing_texture->width;
+		auto rotated_pathing_height = pathing_texture->height;
+
+		if (static_cast<uint32_t>(glm::round(glm::degrees(rotation))) % 180 == 0) {
+			rotated_pathing_width = pathing_texture->height;
+			rotated_pathing_height = pathing_texture->width;
 		}
-	} else {
-		rotation = (static_cast<int>((target_rotation + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
+
+		brush_offset.x = (rotated_pathing_width % 4 != 0) ? 0.25f : 0.f;
+		brush_offset.y = (rotated_pathing_height % 4 != 0) ? 0.25f : 0.f;
 	}
 }
 
@@ -627,12 +633,6 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		scale = slk.data<float>("defscale", id);
 	}
 
-	if (slk.data<int>("fixedrot", id) < 0) {
-		rotation = glm::pi<float>() * 1.5f;
-	} else {
-		rotation = glm::radians(slk.data<float>("fixedrot", id));
-	}
-
 	pathing_texture.reset();
 	std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
@@ -655,6 +655,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		possible_variations.insert(i);
 	}
 	set_random_variation();
+	set_random_rotation();
+	set_shape(shape);
 }
 
 void DoodadBrush::start_action(Action new_action) {

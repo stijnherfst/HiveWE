@@ -12,6 +12,7 @@
 
 PathingBrush::PathingBrush() : Brush() {
 	brush_offset = {0.125f, 0.125f};
+	granularity = 4.f;
 }
 
 void PathingBrush::apply_begin() {

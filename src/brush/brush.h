@@ -28,12 +28,15 @@ public:
 	glm::ivec2 uv_offset = { 0, 0 };
 	int size_granularity = 1;
 	int uv_offset_granularity = 4;
+	float granularity = 1.f;
 
 	glm::vec2 brush_offset = { 0, 0 };
 
 	glm::u8vec4 brush_color = { 0, 255, 0, 128 };
 
 	GLuint brush_texture;
+
+	glm::vec2 position_new;
 
 
 	Brush();

@@ -348,7 +348,9 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glUniform1i(2, render_pathing);
 	glUniform1i(3, render_lighting);
 	glUniform3fv(4, 1, &map->light_direction.x);
-	glUniform3fv(5, 1, &input_handler.mouse_world[0]);
+	if (map->brush) {
+		glUniform2fv(5, 1, &map->brush->position_new[0]);
+	}
 
 	glBindTextureUnit(0, ground_height);
 	glBindTextureUnit(1, ground_corner_height);
@@ -391,15 +393,21 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 
 	cliff_shader->use();
 
-	// WC3 models are 128x too large
 	glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
 	glUniform1i(1, render_pathing);
 	glUniform1i(2, render_lighting);
 	glUniform3fv(3, 1, &map->light_direction.x);
+	if (map->brush) {
+		glUniform2fv(4, 1, &map->brush->position_new[0]);
+	}
+	glUniform1i(5, map->brush != nullptr);
 
 	glBindTextureUnit(0, cliff_texture_array);
 	glBindTextureUnit(1, ground_height);
 	glBindTextureUnit(2, map->pathing_map.texture_static);
+	if (map->brush) {
+		glBindTextureUnit(3, map->brush->brush_texture);
+	}
 	for (const auto& i : cliff_meshes) {
 		i->render();
 	}
