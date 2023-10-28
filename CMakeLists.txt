@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.26)
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API 2182bf5c-ef0d-489a-91da-49dbc3090d2a)
+set(CMAKE_EXPERIMENTAL_CXX_MODULE_CMAKE_API aa1f7df0-828a-4fcd-9afc-2dc80491aca7)
 set(CMAKE_EXPERIMENTAL_CXX_MODULE_DYNDEP 1)
 set(CMAKE_CXX_STANDARD 23)
 
@@ -26,14 +26,6 @@ qt_standard_project_setup()
 
 add_executable(HiveWE 
 	${QT_RESOURCES}
-)
-
-file(COPY
-  # you don't want to hardcode the path here in a real-world project,
-  # but you get the idea
-  "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.35.32215/modules/std.ixx"
-  DESTINATION
-  ${PROJECT_SOURCE_DIR}/src/
 )
 
 add_subdirectory(src)

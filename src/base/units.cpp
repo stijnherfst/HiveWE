@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <iostream>
+#include <print>
+
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 
@@ -16,11 +18,17 @@ import BinaryWriter;
 import Hierarchy;
 
 void Unit::update() {
-	const float model_scale = units_slk.data<float>("modelscale", id);
-	const float move_height = units_slk.data<float>("moveheight", id);
+	float model_scale = 0.f;
+	float move_height = 0.f;
+	if (items_slk.row_headers.contains(id)) {
+		model_scale = items_slk.data<float>("scale", id) / 128.f;
+	} else {
+		model_scale = units_slk.data<float>("modelscale", id) / 128.f;
+		move_height = units_slk.data<float>("moveheight", id) / 128.f;
+	}
 
-	const glm::vec3 final_position = position + glm::vec3(0.f, 0.f, move_height / 128.f);
-	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
+	const glm::vec3 final_position = position + glm::vec3(0.f, 0.f, move_height);
+	const glm::vec3 final_scale = glm::vec3(model_scale);
 
 	skeleton.update_location(final_position, angle, final_scale);
 
@@ -236,8 +244,6 @@ void Units::create() {
 	}	
 
 	for (auto& i : items) {
-		i.scale = glm::vec3(std::stof(items_slk.data("scale", i.id)));
-
 		i.mesh = get_mesh(i.id);
 		i.skeleton = SkeletalModelInstance(i.mesh->model);
 		i.update();
@@ -250,7 +256,7 @@ void Units::render() {
 			continue;
 		} // ToDo handle starting locations
 
-		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
+		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
 	}
 	for (auto& i : items) {
 		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);

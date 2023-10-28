@@ -1,5 +1,5 @@
 target_sources(HiveWE PRIVATE
-	FILE_SET cxx_modules TYPE CXX_MODULES FILES
+	FILE_SET CXX_MODULES FILES
 
 	${PROJECT_SOURCE_DIR}/src/std.ixx
 

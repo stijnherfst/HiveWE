@@ -217,6 +217,8 @@ export class BaseTreeModel : public QAbstractProxyModel {
 				} else {
 					return {};
 				}
+			case Qt::ToolTipRole:
+				return "ID: " + QString::fromStdString(item->id);
 			default:
 				return {};
 		}

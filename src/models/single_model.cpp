@@ -159,7 +159,11 @@ void SingleModel::buildMapping() {
 
 	for (const auto& [key, index] : meta_slk->row_headers) {
 		if (meta_slk->column_headers.contains("usespecific")) {
-			if (!meta_slk->data("usespecific", key).empty() && meta_slk->data("usespecific", key).find(id) == std::string::npos) {
+			std::string id_to_check = id;
+			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
+				id_to_check = slk->shadow_data.at(id).at("oldid");
+			}
+			if (!meta_slk->data("usespecific", key).empty() && meta_slk->data("usespecific", key).find(id_to_check) == std::string::npos) {
 				continue;
 			}
 		}
@@ -180,7 +184,6 @@ void SingleModel::buildMapping() {
 			}
 
 			for (int i = 0; i < iterations; i++) {
-
 				std::string new_field_name;
 				if (meta_slk->column_headers.contains("appendindex") && meta_slk->data<int>("appendindex", key) > 0) {
 					if (i == 0) {
@@ -191,7 +194,6 @@ void SingleModel::buildMapping() {
 				} else {
 					new_field_name = field_name + std::to_string(i + 1);
 				}
-
 
 				// We add a virtual column if it does not exist in the base table
 				if (!slk->column_headers.contains(new_field_name)) {
