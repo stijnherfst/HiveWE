@@ -781,8 +781,8 @@ void Triggers::generate_destructables(BinaryWriter& writer, std::unordered_map<s
 			std::to_string(i.position.z * 128.f) + ", " +
 			std::to_string(glm::degrees(i.angle)) + ", " +
 			std::to_string(i.scale.x) + ", " +
-			std::to_string(i.variation) + ", " +
-			i.skin_id + ")\n");
+			std::to_string(i.variation) + ", '" +
+			i.skin_id + "')\n");
 
 		if (i.life != 100) {
 			writer.write_string("\tset life = GetDestructableLife(" + id + ")\n");
@@ -800,7 +800,6 @@ void Triggers::generate_destructables(BinaryWriter& writer, std::unordered_map<s
 			writer.write_string("\tcall TriggerAddAction(t, function SaveDyingWidget)\n");
 			writer.write_string("\tcall TriggerAddAction(t, function ItemTable_" + std::to_string(i.item_table_pointer) + ")\n");
 		}
-
 	}
 
 	writer.write_string("endfunction\n");
@@ -828,7 +827,6 @@ void Triggers::generate_regions(BinaryWriter& writer) {
 			writer.write_string("\tcall EnableWeatherEffect(we, true)\n");
 		}
 	}
-
 
 	writer.write_string("endfunction\n");
 }
@@ -880,15 +878,6 @@ void Triggers::generate_sounds(BinaryWriter& writer) {
 		std::string sound_name = i.name;
 		trim(sound_name);
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
-		//writer.write_string("\tset " + sound_name + " = CreateSound(\"" +
-		//	string_replaced(i.file, "\\", "\\\\") + "\", " +
-		//	(i.looping ? "true" : "false") + ", " +
-		//	(i.is_3d ? "true" : "false") + ", " +
-		//	(i.stop_out_of_range ? "true" : "false") + ", " +
-		//	std::to_string(i.fade_in_rate) + ", " +
-		//	std::to_string(i.fade_out_rate) + ", " +
-		//	"\"" + string_replaced(i.eax_effect, "\\", "\\\\") + "\"" +
-		//	")\n");
 
 		writer.write_string(std::format("\tset {} = CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")\n", 
 			sound_name, 
@@ -1224,19 +1213,15 @@ void Triggers::generate_custom_teams(BinaryWriter& writer) {
 				for (const auto& k : map->info.players) {
 					if (i.player_masks & (1 << k.internal_number) && j.internal_number != k.internal_number) {
 						if (i.allied) {
-							//post_state += "\tcall SetPlayerAllianceStateAllyBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
 							post_state += std::format("\tcall SetPlayerAllianceStateAllyBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_vision) {
-							//post_state += "\tcall SetPlayerAllianceStateVisionBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
 							post_state += std::format("\tcall SetPlayerAllianceStateVisionBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_unit_control) {
-							//post_state += "\tcall SetPlayerAllianceStateControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
 							post_state += std::format("\tcall SetPlayerAllianceStateControlBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 						if (i.share_advanced_unit_control) {
-							//post_state += "\tcall SetPlayerAllianceStateFullControlBJ(Player(" + std::to_string(j.internal_number) + "), Player(" + std::to_string(k.internal_number) + "), true)\n";
 							post_state += std::format("\tcall SetPlayerAllianceStateFullControlBJ(Player({}), Player({}), true)\n", j.internal_number, k.internal_number);
 						}
 					}
@@ -1273,17 +1258,14 @@ void Triggers::generate_ally_priorities(BinaryWriter& writer) {
 		int current_index = 0;
 		for (const auto& j : map->info.players) {
 			if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-				//player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_LOW)\n";
 				player_text += std::format("\tcall SetStartLocPrio({}, {}, {}, MAP_LOC_PRIO_LOW)\n", current_player, current_index, player_to_startloc[j.internal_number]);
 				current_index++;
 			} else if (i.ally_high_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-				//player_text += "\tcall SetStartLocPrio(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ", " + std::to_string(player_to_startloc[j.internal_number]) + ", MAP_LOC_PRIO_HIGH)\n";
 				player_text += std::format("\tcall SetStartLocPrio({}, {}, {}, MAP_LOC_PRIO_HIGH)\n", current_player, current_index, player_to_startloc[j.internal_number]);
 				current_index++;
 			}
 		}
 
-		//player_text = "\tcall SetStartLocPrioCount(" + std::to_string(current_player) + ", " + std::to_string(current_index) + ")\n" + player_text;
 		player_text = std::format("\tcall SetStartLocPrioCount({}, {})\n", current_player, current_index) + player_text;
 		writer.write_string(player_text);
 		current_player++;
@@ -1473,10 +1455,10 @@ QString Triggers::generate_map_script() {
 	QString result = proc->readAllStandardOutput();
 
 	if (result.contains("Compile error")) {
-		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information\n" + result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
 		return result.mid(result.indexOf("Compile error"));
 	} else if (result.contains("compile errors")) {
-		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information", QMessageBox::StandardButton::Ok);
+		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information" + result.mid(result.indexOf("compile errors")), QMessageBox::StandardButton::Ok);
 		return result.mid(result.indexOf("compile errors."));
 	} else {
 		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
@@ -1558,51 +1540,17 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tendif";
 	}
 
-	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple") {
-		const std::string function_name = generate_function_name(trigger_name);
-
-		// Remove multiple
-		output += "call " + eca.name.substr(0, 8) + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
-
-		std::string toto;
-		for (const auto& i : eca.ecas) {
-			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
-		}
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		pre_actions += toto;
-		pre_actions += "\nendfunction\n";
-
-		return output;
-	}
-
-	// This one and ForForceMultiple look very much the same
-	if (eca.name == "EnumDestructablesInRectAllMultiple") {
+	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple" || eca.name == "EnumDestructablesInCircleBJMultiple") {
 		std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
 
 		const std::string function_name = generate_function_name(trigger_name);
 
-		// Remove multiple
-		output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
-
-		std::string toto;
-		for (const auto& i : eca.ecas) {
-			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+		if (eca.name == "EnumDestructablesInCircleBJMultiple") {
+			output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", " +
+					  resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + ", function " + function_name + ")\n";
+		} else {
+			output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
 		}
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		pre_actions += toto;
-		pre_actions += "\nendfunction\n";
-
-		return output;
-	}
-	// And this one too
-	if (eca.name == "EnumDestructablesInCircleBJMultiple") {
-		std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
-
-		const std::string function_name = generate_function_name(trigger_name);
-
-		// Remove multiple
-		output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", " +
-			resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + ", function " + function_name + ")\n";
 
 		std::string toto;
 		for (const auto& i : eca.ecas) {

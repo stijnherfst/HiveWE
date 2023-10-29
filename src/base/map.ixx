@@ -399,7 +399,13 @@ export class Map : public QObject {
 		connect(units_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
 			const std::string& id = units_slk.index_to_row.at(top_left.row());
 			const std::string& field = units_slk.index_to_column.at(top_left.column());
-			units.process_field_change(id, field);
+			units.process_unit_field_change(id, field);
+		});
+
+		connect(items_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+			const std::string& id = items_slk.index_to_row.at(top_left.row());
+			const std::string& field = items_slk.index_to_column.at(top_left.column());
+			units.process_item_field_change(id, field);
 		});
 
 		connect(doodads_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {

@@ -22,19 +22,21 @@ void Unit::update() {
 	float move_height = 0.f;
 	if (items_slk.row_headers.contains(id)) {
 		model_scale = items_slk.data<float>("scale", id) / 128.f;
+		color.r = items_slk.data<float>("colorr", id) / 255.f;
+		color.g = items_slk.data<float>("colorg", id) / 255.f;
+		color.b = items_slk.data<float>("colorb", id) / 255.f;
 	} else {
 		model_scale = units_slk.data<float>("modelscale", id) / 128.f;
 		move_height = units_slk.data<float>("moveheight", id) / 128.f;
+		color.r = units_slk.data<float>("red", id) / 255.f;
+		color.g = units_slk.data<float>("green", id) / 255.f;
+		color.b = units_slk.data<float>("blue", id) / 255.f;
 	}
 
 	const glm::vec3 final_position = position + glm::vec3(0.f, 0.f, move_height);
 	const glm::vec3 final_scale = glm::vec3(model_scale);
 
 	skeleton.update_location(final_position, angle, final_scale);
-
-	color.r = units_slk.data<float>("red", id) / 255.f;
-	color.g = units_slk.data<float>("green", id) / 255.f;
-	color.b = units_slk.data<float>("blue", id) / 255.f;
 }
 
 void Units::load() {
@@ -310,7 +312,7 @@ void Units::remove_units(const std::unordered_set<Unit*>& list) {
 	});
 }
 
-void Units::process_field_change(const std::string& id, const std::string& field) {
+void Units::process_unit_field_change(const std::string& id, const std::string& field) {
 	if (field == "file") {
 		id_to_mesh.erase(id);
 		for (auto& i : units) {
@@ -323,6 +325,24 @@ void Units::process_field_change(const std::string& id, const std::string& field
 	}
 	if (field == "modelscale" || field == "moveheight" || field == "red" || field == "green" || field == "blue") {
 		for (auto& i : units) {
+			if (i.id == id) {
+				i.update();
+			}
+		}
+	}
+
+	if (field == "colorr" || field == "colorg" || field == "colorb" || field == "scale") {
+		for (auto& i : items) {
+			if (i.id == id) {
+				i.update();
+			}
+		}
+	}
+}
+
+void Units::process_item_field_change(const std::string& id, const std::string& field) {
+	if (field == "colorr" || field == "colorg" || field == "colorb" || field == "scale") {
+		for (auto& i : items) {
 			if (i.id == id) {
 				i.update();
 			}

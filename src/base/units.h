@@ -98,7 +98,8 @@ public:
 	std::vector<Unit*> query_area(const QRectF& area);
 	void remove_units(const std::unordered_set<Unit*>& list);
 
-	void process_field_change(const std::string& id, const std::string& field);
+	void process_unit_field_change(const std::string& id, const std::string& field);
+	void process_item_field_change(const std::string& id, const std::string& field);
 
 	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id);
 };

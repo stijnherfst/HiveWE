@@ -9,8 +9,13 @@
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
 
+//#include "globals.h"
+//#include <map_global.h>
+#include <object_editor.h>
 
 #include "table_model.h"
+
+import WindowHandler;
 
 UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -48,17 +53,16 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	current_selection_section = new QRibbonSection;
 	current_selection_section->setText("Current Selection");
+	current_selection_section->setEnabled(false);
 
 	QSmallRibbonButton* edit_in_oe = new QSmallRibbonButton;
 	edit_in_oe->setText("Edit in OE");
 	edit_in_oe->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
-	edit_in_oe->setEnabled(false);
 
 	QSmallRibbonButton* select_in_palette = new QSmallRibbonButton;
 	select_in_palette->setText("Select in Palette");
-	select_in_palette->setToolTip("Or click the doodad with middle mouse button");
-	select_in_palette->setIcon(QIcon("Data/Icons/Ribbon/doodads32x32.png"));
-	select_in_palette->setEnabled(false);
+	select_in_palette->setToolTip("Or click the unit with middle mouse button");
+	select_in_palette->setIcon(QIcon("Data/Icons/Ribbon/units32x32.png"));
 
 	QVBoxLayout* info_layout = new QVBoxLayout;
 	info_layout->addWidget(selection_name);
@@ -93,6 +97,22 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 		brush.set_unit(id); 
 		selection_mode->setChecked(false);
 	});
+
+	connect(edit_in_oe, &QSmallRibbonButton::clicked, [&]() {
+		bool created;
+		auto editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
+		const Unit* unit = *brush.selections.begin();
+		if (items_slk.row_headers.contains(unit->id)) {
+			editor->select_id(ObjectEditor::Category::item, unit->id);
+		} else {
+			editor->select_id(ObjectEditor::Category::unit, unit->id);
+		}
+	});
+
+	//connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
+	//	const Doodad* doodad = *brush.selections.begin();
+	//	select_id_in_palette(doodad->id);
+	//});
 
 	connect(&brush, &UnitBrush::selection_changed, this, &UnitPalette::update_selection_info);
 }

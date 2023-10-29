@@ -169,6 +169,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	current_selection_section = new QRibbonSection;
 	current_selection_section->setText("Current Selection");
+	current_selection_section->setEnabled(false);
 
 	QFormLayout* scaling_layout = new QFormLayout;
 	scaling_layout->setSpacing(1);
