@@ -3,6 +3,7 @@
 #include <QString>
 #include <unordered_map>
 #include <map>
+#include <format>
 
 import BinaryReader;
 import BinaryWriter;
@@ -103,6 +104,99 @@ struct TriggerVariable {
 	int parent_id;
 };
 
+/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces
+struct MapScriptWriter {
+	std::string script;
+	size_t current_indentation = 0;
+
+	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
+		std::vformat_to(std::back_inserter(script), users_fmt, args);
+	}
+
+	template <typename... Args>
+	constexpr void function_call(std::string_view name, Args&&... args) {
+		std::string work = "{}(";
+
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+			if (i < sizeof...(args) - 1) {
+				work += ", ";
+			}
+		}
+		work += ")\n";
+
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(name, args...));
+	}
+
+	void write(std::string_view string) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		script += string;
+	}
+
+	template <typename... Args>
+	constexpr void write_ln(Args&&... args) {
+		std::string work = "";
+		for (size_t i = 0; i < current_indentation; i++) {
+			work += '\t';
+		}
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+		}
+		work.push_back('\n');
+
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(args...));
+	}
+
+	template <typename T>
+	constexpr void forloop(size_t start, size_t end, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		script += "end\n";
+	}
+
+	 template <typename T>
+	 void function(std::string_view name, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		std::format_to(std::back_inserter(script), "function {}()\n", name);
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		script += "end\n";
+	 }
+
+	 template <typename T>
+	 void global_variable(std::string_view name, T value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		std::format_to(std::back_inserter(script), "udg_{} = {}", name, value);
+	 }
+};
+
+
 class Triggers {
 	std::unordered_map<std::string, int> argument_counts;
 	const std::string separator = "//===========================================================================\n";
@@ -129,23 +223,23 @@ class Triggers {
 	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
 
-	void generate_global_variables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables);
-	void generate_init_global_variables(BinaryWriter& writer);
-	void generate_units(BinaryWriter& writer, std::unordered_map<std::string, std::string>& unit_variables);
-	void generate_items(BinaryWriter& writer);
-	void generate_destructables(BinaryWriter& writer, std::unordered_map<std::string, std::string>& destructable_variables);
-	void generate_regions(BinaryWriter& writer);
-	void generate_cameras(BinaryWriter& writer);
-	void generate_sounds(BinaryWriter& writer);
-	void write_item_table_entry(BinaryWriter& writer, int chance, const std::string& id);
-	void generate_item_tables(BinaryWriter& writer);
-	void generate_unit_item_tables(BinaryWriter& writer);
-	void generate_trigger_initialization(BinaryWriter& writer, std::vector<std::string> initialization_triggers);
-	void generate_players(BinaryWriter& writer);
-	void generate_custom_teams(BinaryWriter& writer);
-	void generate_ally_priorities(BinaryWriter& writer);
-	void generate_main(BinaryWriter& writer);
-	void generate_map_configuration(BinaryWriter& writer);
+	void generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables);
+	void generate_init_global_variables(MapScriptWriter& script);
+	void generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables);
+	void generate_items(MapScriptWriter& script);
+	void generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables);
+	void generate_regions(MapScriptWriter& script);
+	void generate_cameras(MapScriptWriter& script);
+	void generate_sounds(MapScriptWriter& script);
+	void write_item_table_entry(MapScriptWriter& script, int chance, const std::string& id);
+	void generate_item_tables(MapScriptWriter& script);
+	void generate_unit_item_tables(MapScriptWriter& script);
+	void generate_trigger_initialization(MapScriptWriter& script, std::vector<std::string> initialization_triggers);
+	void generate_players(MapScriptWriter& script);
+	void generate_custom_teams(MapScriptWriter& script);
+	void generate_ally_priorities(MapScriptWriter& script);
+	void generate_main(MapScriptWriter& script);
+	void generate_map_configuration(MapScriptWriter& script);
 
   public:
 	ini::INI trigger_strings;
