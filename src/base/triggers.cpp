@@ -1059,13 +1059,13 @@ void Triggers::generate_trigger_initialization(MapScriptWriter& script, std::vec
 			trim(trigger_name);
 			std::replace(trigger_name.begin(), trigger_name.end(), ' ', '_');
 
-			script.write("InitTrig_" + trigger_name + "()\n");
+			script.function_call("InitTrig_" + trigger_name);
 		}
 	});
 
 	script.function("RunInitializationTriggers", [&]() {
 		for (const auto& i : initialization_triggers) {
-			script.write("ConditionalTriggerExecute(" + i + ")\n");
+			script.function_call("ConditionalTriggerExecute", i);
 		}
 	});
 }
@@ -1308,23 +1308,24 @@ QString Triggers::generate_map_script() {
 	generate_regions(script_writer);
 	generate_cameras(script_writer);
 
-	writer.write_string(separator);
-	writer.write_string("//*\n");
-	writer.write_string("//*  Custom Script Code\n");
-	writer.write_string("//*\n");
-	writer.write_string(separator);
+	//writer.write_string(separator);
+	//writer.write_string("//*\n");
+	//writer.write_string("//*  Custom Script Code\n");
+	//writer.write_string("//*\n");
+	//writer.write_string(separator);
 
 	writer.write_string(global_jass);
 
-	writer.write_string(separator);
-	writer.write_string("//*\n");
-	writer.write_string("//*  Triggers\n");
-	writer.write_string("//*\n");
-	writer.write_string(separator);
+	//writer.write_string(separator);
+	//writer.write_string("//*\n");
+	//writer.write_string("//*  Triggers\n");
+	//writer.write_string("//*\n");
+	//writer.write_string(separator);
 
-	writer.write_string(trigger_script);
+	script_writer.write(trigger_script);
+	//writer.write_string(trigger_script);
 
-	writer.write_string(separator);
+	//writer.write_string(separator);
 
 	generate_trigger_initialization(script_writer, initialization_triggers);
 	generate_players(script_writer);
@@ -1366,10 +1367,16 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	}
 
 	if (eca.name == "WaitForCondition") {
-		output += "loop\n";
-		output += "exitwhen (" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ")\n";
-		output += "call TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
-		output += "endloop";
+		//output += "loop\n";
+		//output += "exitwhen (" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ")\n";
+		//output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
+		//output += "endloop";
+
+		output += "while (true) do\n";
+		output += std::format("if (({})) then break end\n", resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)));
+		output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
+		output += "end\n";
+
 		return output;
 	}
 
@@ -1377,30 +1384,53 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		std::string loop_index = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
-		output += "set " + loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
-		output += "set " + loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
-		output += "loop\n";
-		output += "\texitwhen " + loop_index + " > " + loop_index_end + "\n";
+		//output += loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
+		//output += loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
+		//output += "loop\n";
+		//output += "\texitwhen " + loop_index + " > " + loop_index_end + "\n";
+		//for (const auto& i : eca.ecas) {
+		//	output += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+		//}
+		//output += loop_index + " = " + loop_index + " + 1\n";
+		//output += "endloop\n";
+
+
+		output += loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
+		output += loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
+		output += "while (true) do\n";
+		output += std::format("if (({} > {})) then break end\n", loop_index, loop_index_end);
 		for (const auto& i : eca.ecas) {
 			output += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
-		output += "\tset " + loop_index + " = " + loop_index + " + 1\n";
-		output += "endloop\n";
+		output += loop_index + " = " + loop_index + " + 1\n";
+		output += "end\n";
+
 		return output;
 	}
 
 	if (eca.name == "ForLoopVarMultiple") {
 		std::string variable = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer");
 
-		output += "set " + variable + " = ";
-		output += resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
-		output += "loop\n";
-		output += "exitwhen " + variable + " > " + resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2)) + "\n";
+		//output += "set " + variable + " = ";
+		//output += resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
+		//output += "loop\n";
+		//output += "exitwhen " + variable + " > " + resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2)) + "\n";
+		//for (const auto& i : eca.ecas) {
+		//	output += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+		//}
+		//output += variable + " = " + variable + " + 1\n";
+		//output += "endloop\n";
+
+
+		output += variable + " = " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
+		output += "while (true) do\n";
+		output += std::format("if (({} > {})) then break end\n", variable, resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2)));
 		for (const auto& i : eca.ecas) {
 			output += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
-		output += "set " + variable + " = " + variable + " + 1\n";
-		output += "endloop\n";
+		output += variable + " = " + variable + " + 1\n";
+		output += "end\n";
+
 		return output;
 	}
 
@@ -1410,13 +1440,13 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		std::string elsetext;
 
 		std::string function_name = generate_function_name(trigger_name);
-		iftext += "function " + function_name + " takes nothing returns boolean\n";
+		iftext += "function " + function_name + "()\n"; // returns boolean
 
 		for (const auto& i : eca.ecas) {
 			if (i.type == ECA::Type::condition) {
 				iftext += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
 				iftext += "\t\treturn false\n";
-				iftext += "\tendif\n";
+				iftext += "\tend\n";
 			} else if (i.type == ECA::Type::action) {
 				if (i.group == 1) {
 					thentext += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
@@ -1426,10 +1456,10 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 			}
 		}
 		iftext += "\treturn true\n";
-		iftext += "endfunction\n";
+		iftext += "end\n";
 		pre_actions += iftext;
 
-		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tendif";
+		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tend";
 	}
 
 	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple" || eca.name == "EnumDestructablesInCircleBJMultiple") {
@@ -1438,19 +1468,19 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		const std::string function_name = generate_function_name(trigger_name);
 
 		if (eca.name == "EnumDestructablesInCircleBJMultiple") {
-			output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", " +
+			output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", " +
 					  resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + ", function " + function_name + ")\n";
 		} else {
-			output += "call " + script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
+			output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
 		}
 
 		std::string toto;
 		for (const auto& i : eca.ecas) {
 			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
+		pre_actions += "function " + function_name + "()\n"; // returns nothing
 		pre_actions += toto;
-		pre_actions += "\nendfunction\n";
+		pre_actions += "\nend\n";
 
 		return output;
 	}
@@ -1458,14 +1488,14 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	if (eca.name == "AndMultiple") {
 		const std::string function_name = generate_function_name(trigger_name);
 
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext = "function " + function_name + "()\n"; // returns boolean
 		for (const auto& i : eca.ecas) {
 			iftext += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
 			iftext += "\t\treturn false\n";
-			iftext += "\tendif\n";
+			iftext += "\tend\n";
 		}
 		iftext += "\treturn true\n";
-		iftext += "endfunction\n";
+		iftext += "end\n";
 		pre_actions += iftext;
 
 		return function_name + "()";
@@ -1474,14 +1504,14 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	if (eca.name == "OrMultiple") {
 		const std::string function_name = generate_function_name(trigger_name);
 
-		std::string iftext = "function " + function_name + " takes nothing returns boolean\n";
+		std::string iftext = "function " + function_name + "()\n"; // returns boolean
 		for (const auto& i : eca.ecas) {
 			iftext += "\tif (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ") then\n";
 			iftext += "\t\treturn true\n";
-			iftext += "\tendif\n";
+			iftext += "\tend\n";
 		}
 		iftext += "\treturn false\n";
-		iftext += "endfunction\n";
+		iftext += "end\n";
 		pre_actions += iftext;
 
 		return function_name + "()";
@@ -1505,7 +1535,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, type);
 
-		return "set " + first + " = " + second;
+		return first + " = " + second;
 	}
 
 	if (parent_name == "CommentString") {
@@ -1525,7 +1555,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 	if (parent_name == "OperatorString") {
 		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
-		output += " + ";
+		output += " .. ";
 		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + ")";
 		return output;
 	}
@@ -1533,13 +1563,21 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 	if (parent_name == "ForLoopVar") {
 		std::string variable = resolve_parameter(parameters[0], trigger_name, pre_actions, "integer");
 
-		output += "set " + variable + " = ";
+		output += variable + " = ";
 		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + "\n";
-		output += "loop\n";
-		output += "\texitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + "\n";
+		
+		output += "while (true) do\n";
+		output += std::format("if (({} > {})) then break end\n", variable, resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)));
 		output += "\t" + resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
-		output += "\tset " + variable + " = " + variable + " + 1\n";
-		output += "endloop\n";
+		output += variable + " = " + variable + " + 1\n";
+		output += "end\n";
+
+		//output += "loop\n";
+		//output += "\texitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + "\n";
+		//output += "\t" + resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
+		//output += variable + " = " + variable + " + 1\n";
+		//output += "endloop\n";
+		
 		return output;
 	}
 
@@ -1550,15 +1588,15 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string function_name = generate_function_name(trigger_name);
 		std::string tttt = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
 
-		output += "if (" + function_name + "()) then\n";
+		output += "if (" + function_name + "())\n";
 		output += "\t" + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1), true) + "\n";
 		output += "else\n";
 		output += "\t" + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2), true) + "\n";
-		output += "endif";
+		output += "end";
 
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+		pre_actions += "function " + function_name + "()\n"; // returns boolean
 		pre_actions += "return " + tttt + "\n";
-		pre_actions += "endfunction\n";
+		pre_actions += "end\n";
 		return output;
 	}
 
@@ -1572,10 +1610,10 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		output += ", function " + function_name;
 		output += ")";
 
-		pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-		pre_actions += "\tcall " + tttt + "\n";
-		pre_actions += "endfunction\n\n";
-		return (add_call ? "call " : "") + output;
+		pre_actions += "function " + function_name + "()\n"; // returns nothing
+		pre_actions += tttt + "\n";
+		pre_actions += "end\n\n";
+		return /*(add_call ? "call " : "") +*/ output;
 	}
 
 	if (parent_name == "GetBooleanAnd") {
@@ -1584,17 +1622,17 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanAnd(" + function_name + "(), ";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+		pre_actions += "function " + function_name + "()\n"; // returns boolean
 		pre_actions += "\t return ( " + first_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
+		pre_actions += "end\n\n";
 
 		function_name = generate_function_name(trigger_name);
 		output += function_name + "())";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+		pre_actions += "function " + function_name + "()\n"; // returns boolean
 		pre_actions += "\t return ( " + second_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
+		pre_actions += "end\n\n";
 
-		return (add_call ? "call " : "") + output;
+		return /*(add_call ? "call " : "") +*/ output;
 	}
 
 	if (parent_name == "GetBooleanOr") {
@@ -1603,17 +1641,17 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanOr(" + function_name + "(), ";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+		pre_actions += "function " + function_name + "()\n"; // returns boolean
 		pre_actions += "\t return ( " + first_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
+		pre_actions += "end\n\n";
 
 		function_name = generate_function_name(trigger_name);
 		output += function_name + "())";
-		pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+		pre_actions += "function " + function_name + "()\n"; // returns boolean
 		pre_actions += "\t return ( " + second_parameter + ")\n";
-		pre_actions += "endfunction\n\n";
+		pre_actions += "end\n\n";
 
-		return (add_call ? "call " : "") + output;
+		return /*(add_call ? "call " : "") +*/ output;
 	}
 
 	if (parent_name == "OperatorInt" || parent_name == "OperatorReal") {
@@ -1627,7 +1665,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string first_parameter = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
 		std::string second_parameter = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
 		output += second_parameter.insert(second_parameter.find_first_of('(') + 1, first_parameter + ", ");
-		return (add_call ? "call " : "") + output;
+		return /*(add_call ? "call " : "") + */output;
 	}
 
 	for (size_t k = 0; k < parameters.size(); k++) {
@@ -1640,9 +1678,9 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 			std::string tttt = resolve_parameter(parameters[k], trigger_name, pre_actions, type);
 
-			pre_actions += "function " + function_name + " takes nothing returns boolean\n";
+			pre_actions += "function " + function_name + "()\n"; // returns boolean
 			pre_actions += "\treturn " + tttt + "\n";
-			pre_actions += "endfunction\n\n";
+			pre_actions += "end\n\n";
 
 			output += "function " + function_name;
 		} else if (type == "code") {
@@ -1650,9 +1688,9 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 			std::string tttt = resolve_parameter(parameters[k], trigger_name, pre_actions, type);
 
-			pre_actions += "function " + function_name + " takes nothing returns nothing\n";
-			pre_actions += "\tcall " + tttt + "\n";
-			pre_actions += "endfunction\n\n";
+			pre_actions += "function " + function_name + "()\n"; // returns nothing
+			pre_actions += tttt + "\n";
+			pre_actions += "end\n\n";
 
 			output += "function " + function_name;
 		} else {
@@ -1664,7 +1702,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		}
 	}
 
-	return (add_call ? "call " : "") + (script_name.empty() ? parent_name : script_name) + "(" + output + ")";
+	return /*(add_call ? "call " : "") + */(script_name.empty() ? parent_name : script_name) + "(" + output + ")";
 }
 
 std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call) const {
@@ -1769,10 +1807,10 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 	std::string pre_actions;
 	std::string actions;
 
-	events += "function InitTrig_" + trigger_name + " takes nothing returns nothing\n";
-	events += "\tset " + trigger_variable_name + " = CreateTrigger()\n";
+	events += "function InitTrig_" + trigger_name + "()\n";
+	events += trigger_variable_name + " = CreateTrigger()\n";
 
-	actions += "function " + trigger_action_name + " takes nothing returns nothing\n";
+	actions += "function " + trigger_action_name + "()\n";
 
 	for (const auto& i : trigger.ecas) {
 		if (!i.enabled) {
@@ -1785,7 +1823,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 					map_initializations.push_back(trigger_variable_name);
 					continue;
 				}
-				events += "\tcall " + i.name + "(" + trigger_variable_name + ", ";
+				events += i.name + "(" + trigger_variable_name + ", ";
 				for (size_t k = 0; k < i.parameters.size(); k++) {
 					const auto& p = i.parameters[k];
 
@@ -1805,29 +1843,30 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 			case ECA::Type::condition:
 				conditions += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
 				conditions += "\treturn false\n";
-				conditions += "\tendif\n";
+				conditions += "\tend\n";
 				break;
 			case ECA::Type::action:
-				actions += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+				actions += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 				break;
 		}
 	}
 
-	actions += "endfunction\n\n";
+	actions += "end\n\n";
 
 	if (!conditions.empty()) {
-		conditions = "function Trig_" + trigger_name + "_Conditions takes nothing returns boolean\n" + conditions;
+		conditions = "function Trig_" + trigger_name + "()\n" + conditions;
 		conditions += "\treturn true\n";
-		conditions += "endfunction\n\n";
+		conditions += "end\n\n";
 
-		events += "\tcall TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
+		events += "TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
 	}
 
 	if (!trigger.initially_on) {
-		events += "\tcall DisableTrigger(" + trigger_variable_name + ")\n";
+		events += "DisableTrigger(" + trigger_variable_name + ")\n";
 	}
-	events += "\tcall TriggerAddAction(" + trigger_variable_name + ", function " + trigger_action_name + ")\n";
-	events += "endfunction\n\n";
+	events += "TriggerAddAction(" + trigger_variable_name + ", " + trigger_action_name + ")\n";
+	events += "end\n\n";
 
-	return separator + "// Trigger: " + trigger_name + "\n" + separator + pre_actions + conditions + actions + separator + events;
+	//return separator + "// Trigger: " + trigger_name + "\n" + separator + pre_actions + conditions + actions + separator + events;
+	return pre_actions + conditions + actions + events;
 }
