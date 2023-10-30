@@ -624,7 +624,6 @@ void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::s
 			}
 
 			std::string unit_reference = "u";
-			std::println("Checked {:0>4}", i.creation_number);
 			if (unit_variables.contains(std::format("{:0>4}", i.creation_number))) {
 				unit_reference = std::format("gg_unit_{}_{:0>4}", i.id, i.creation_number);
 			}
@@ -962,7 +961,7 @@ void Triggers::generate_unit_item_tables(MapScriptWriter& script) {
 //			writer.write_string("\n");
 //
 //			for (const auto& j : i.item_sets) {
-//				writer.write_string("\t\tcall RandomDistReset()\n");
+//				writer.write_string("call RandomDistReset()\n");
 //				for (const auto& [id, chance] : j.items) {
 //					write_item_table_entry(writer, chance, id);
 //				}
@@ -1020,7 +1019,7 @@ void Triggers::generate_unit_item_tables(MapScriptWriter& script) {
 //			writer.write_string("\n");
 //
 //			for (const auto& j : i.item_sets) {
-//				writer.write_string("\t\tcall RandomDistReset()\n");
+//				writer.write_string("call RandomDistReset()\n");
 //				for (const auto& [id, chance] : j.items) {
 //					write_item_table_entry(writer, chance, id);
 //				}
@@ -1278,7 +1277,6 @@ QString Triggers::generate_map_script() {
 	while (pos != std::string::npos) {
 		std::string type = trigger_script.substr(pos + 8, 4);
 		std::string creation_number = trigger_script.substr(pos + 13, 4);
-		std::println("Found {} {}", creation_number, type);
 		unit_variables[creation_number] = type;
 		pos = trigger_script.find("gg_unit", pos + 17);
 	}
@@ -1308,24 +1306,9 @@ QString Triggers::generate_map_script() {
 	generate_regions(script_writer);
 	generate_cameras(script_writer);
 
-	//writer.write_string(separator);
-	//writer.write_string("//*\n");
-	//writer.write_string("//*  Custom Script Code\n");
-	//writer.write_string("//*\n");
-	//writer.write_string(separator);
-
 	writer.write_string(global_jass);
 
-	//writer.write_string(separator);
-	//writer.write_string("//*\n");
-	//writer.write_string("//*  Triggers\n");
-	//writer.write_string("//*\n");
-	//writer.write_string(separator);
-
 	script_writer.write(trigger_script);
-	//writer.write_string(trigger_script);
-
-	//writer.write_string(separator);
 
 	generate_trigger_initialization(script_writer, initialization_triggers);
 	generate_players(script_writer);
@@ -1334,12 +1317,12 @@ QString Triggers::generate_map_script() {
 	generate_main(script_writer);
 	generate_map_configuration(script_writer);
 
-	fs::path path = QDir::tempPath().toStdString() + "/input.j";
+	fs::path path = QDir::tempPath().toStdString() + "/input.lua";
 	std::ofstream output(path, std::ios::binary);
 	output.write((char*)script_writer.script.data(), script_writer.script.size());
 	output.close();
 
-	hierarchy.map_file_add(path, "war3map.j");
+	hierarchy.map_file_add(path, "war3map.lua");
 
 	/*QProcess* proc = new QProcess();
 	proc->setWorkingDirectory("Data/Tools");
@@ -1387,9 +1370,9 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		//output += loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
 		//output += loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
 		//output += "loop\n";
-		//output += "\texitwhen " + loop_index + " > " + loop_index_end + "\n";
+		//output += "exitwhen " + loop_index + " > " + loop_index_end + "\n";
 		//for (const auto& i : eca.ecas) {
-		//	output += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+		//	output += "" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		//}
 		//output += loop_index + " = " + loop_index + " + 1\n";
 		//output += "endloop\n";
@@ -1400,7 +1383,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 		output += "while (true) do\n";
 		output += std::format("if (({} > {})) then break end\n", loop_index, loop_index_end);
 		for (const auto& i : eca.ecas) {
-			output += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+			output += "" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
 		output += loop_index + " = " + loop_index + " + 1\n";
 		output += "end\n";
@@ -1444,9 +1427,9 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		for (const auto& i : eca.ecas) {
 			if (i.type == ECA::Type::condition) {
-				iftext += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
-				iftext += "\t\treturn false\n";
-				iftext += "\tend\n";
+				iftext += "if (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
+				iftext += "return false\n";
+				iftext += "end\n";
 			} else if (i.type == ECA::Type::action) {
 				if (i.group == 1) {
 					thentext += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
@@ -1455,11 +1438,11 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 				}
 			}
 		}
-		iftext += "\treturn true\n";
+		iftext += "return true\n";
 		iftext += "end\n";
 		pre_actions += iftext;
 
-		return "if (" + function_name + "()) then\n" + thentext + "\telse\n" + elsetext + "\tend";
+		return "if (" + function_name + "()) then\n" + thentext + "else\n" + elsetext + "end";
 	}
 
 	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple" || eca.name == "EnumDestructablesInCircleBJMultiple") {
@@ -1476,7 +1459,7 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		std::string toto;
 		for (const auto& i : eca.ecas) {
-			toto += "\t" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+			toto += "" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 		}
 		pre_actions += "function " + function_name + "()\n"; // returns nothing
 		pre_actions += toto;
@@ -1490,11 +1473,11 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		std::string iftext = "function " + function_name + "()\n"; // returns boolean
 		for (const auto& i : eca.ecas) {
-			iftext += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
-			iftext += "\t\treturn false\n";
-			iftext += "\tend\n";
+			iftext += "if (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
+			iftext += "return false\n";
+			iftext += "end\n";
 		}
-		iftext += "\treturn true\n";
+		iftext += "return true\n";
 		iftext += "end\n";
 		pre_actions += iftext;
 
@@ -1506,11 +1489,11 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 		std::string iftext = "function " + function_name + "()\n"; // returns boolean
 		for (const auto& i : eca.ecas) {
-			iftext += "\tif (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ") then\n";
-			iftext += "\t\treturn true\n";
-			iftext += "\tend\n";
+			iftext += "if (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ") then\n";
+			iftext += "return true\n";
+			iftext += "end\n";
 		}
-		iftext += "\treturn false\n";
+		iftext += "return false\n";
 		iftext += "end\n";
 		pre_actions += iftext;
 
@@ -1548,7 +1531,13 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 	if (parent_name.substr(0, 15) == "OperatorCompare") {
 		output += resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
-		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + " ";
+
+		auto result_operator = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
+		if (result_operator == "!=") {
+			result_operator = "~=";
+		}
+
+		output += " " + result_operator + " ";
 		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2));
 		return output;
 	}
@@ -1568,15 +1557,9 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		
 		output += "while (true) do\n";
 		output += std::format("if (({} > {})) then break end\n", variable, resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)));
-		output += "\t" + resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
+		output += resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
 		output += variable + " = " + variable + " + 1\n";
 		output += "end\n";
-
-		//output += "loop\n";
-		//output += "\texitwhen " + variable + " > " + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + "\n";
-		//output += "\t" + resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
-		//output += variable + " = " + variable + " + 1\n";
-		//output += "endloop\n";
 		
 		return output;
 	}
@@ -1589,9 +1572,9 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string tttt = resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
 
 		output += "if (" + function_name + "())\n";
-		output += "\t" + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1), true) + "\n";
+		output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1), true) + "\n";
 		output += "else\n";
-		output += "\t" + resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2), true) + "\n";
+		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2), true) + "\n";
 		output += "end";
 
 		pre_actions += "function " + function_name + "()\n"; // returns boolean
@@ -1607,7 +1590,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 		output += parent_name + "(";
 		output += resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
-		output += ", function " + function_name;
+		output += ", " + function_name;
 		output += ")";
 
 		pre_actions += "function " + function_name + "()\n"; // returns nothing
@@ -1623,13 +1606,13 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanAnd(" + function_name + "(), ";
 		pre_actions += "function " + function_name + "()\n"; // returns boolean
-		pre_actions += "\t return ( " + first_parameter + ")\n";
+		pre_actions += "return ( " + first_parameter + ")\n";
 		pre_actions += "end\n\n";
 
 		function_name = generate_function_name(trigger_name);
 		output += function_name + "())";
 		pre_actions += "function " + function_name + "()\n"; // returns boolean
-		pre_actions += "\t return ( " + second_parameter + ")\n";
+		pre_actions += "return ( " + second_parameter + ")\n";
 		pre_actions += "end\n\n";
 
 		return /*(add_call ? "call " : "") +*/ output;
@@ -1642,13 +1625,13 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		std::string function_name = generate_function_name(trigger_name);
 		output += "GetBooleanOr(" + function_name + "(), ";
 		pre_actions += "function " + function_name + "()\n"; // returns boolean
-		pre_actions += "\t return ( " + first_parameter + ")\n";
+		pre_actions += "return ( " + first_parameter + ")\n";
 		pre_actions += "end\n\n";
 
 		function_name = generate_function_name(trigger_name);
 		output += function_name + "())";
 		pre_actions += "function " + function_name + "()\n"; // returns boolean
-		pre_actions += "\t return ( " + second_parameter + ")\n";
+		pre_actions += "return ( " + second_parameter + ")\n";
 		pre_actions += "end\n\n";
 
 		return /*(add_call ? "call " : "") +*/ output;
@@ -1656,7 +1639,13 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 	if (parent_name == "OperatorInt" || parent_name == "OperatorReal") {
 		output += "(" + resolve_parameter(parameters[0], trigger_name, pre_actions, get_type(parent_name, 0));
-		output += " " + resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + " ";
+
+		auto result_operator = resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1));
+		if (result_operator == "!=") {
+			result_operator = "~=";
+		}
+
+		output += " " + result_operator + " ";
 		output += resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)) + ")";
 		return output;
 	}
@@ -1673,16 +1662,20 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 
 		const std::string type = get_type(parent_name, k);
 
+		if (parent_name == "UnitApplyTimedLifeBJ" && type == "timedlifebuffcode") {
+			std::println("Parent {} Type {}", parent_name, type);
+		}
+
 		if (type == "boolexpr") {
 			const std::string function_name = generate_function_name(trigger_name);
 
 			std::string tttt = resolve_parameter(parameters[k], trigger_name, pre_actions, type);
 
 			pre_actions += "function " + function_name + "()\n"; // returns boolean
-			pre_actions += "\treturn " + tttt + "\n";
+			pre_actions += "return " + tttt + "\n";
 			pre_actions += "end\n\n";
 
-			output += "function " + function_name;
+			output += function_name;
 		} else if (type == "code") {
 			const std::string function_name = generate_function_name(trigger_name);
 
@@ -1692,7 +1685,7 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 			pre_actions += tttt + "\n";
 			pre_actions += "end\n\n";
 
-			output += "function " + function_name;
+			output += function_name;
 		} else {
 			output += resolve_parameter(i, trigger_name, pre_actions, type);
 		}
@@ -1720,6 +1713,24 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 					return string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "`", "\"");
 				}
 
+				if (preset_type == "timedlifebuffcode" // ToDo this seems like a hack?
+					|| type == "abilcode" 
+					|| type == "buffcode" 
+					|| type == "destructablecode" 
+					|| type == "itemcode" 
+					|| type == "ordercode" 
+					|| type == "techcode" 
+					|| type == "unitcode" 
+					|| type == "heroskillcode" 
+					|| type == "weathereffectcode" 
+					|| type == "timedlifebuffcode" 
+					|| type == "doodadcode" 
+					|| type == "timedlifebuffcode" 
+					|| type == "terraintype")
+				{
+					return "FourCC(" + trigger_data.data("TriggerParams", parameter.value, 2) + ")";
+				}
+
 				return trigger_data.data("TriggerParams", parameter.value, 2);
 			}
 			case TriggerParameter::Type::function:
@@ -1743,18 +1754,20 @@ std::string Triggers::resolve_parameter(const TriggerParameter& parameter, const
 					return "\"" + string_replaced(parameter.value, "\\", "\\\\") + "\"";
 				} else if (get_base_type(type) == "string") {
 					return "\"" + parameter.value + "\"";
-				} else if (type == "abilcode" || // ToDo this seems like a hack?
-					type == "buffcode" ||
-					type == "destructablecode" ||
-					type == "itemcode" ||
-					type == "ordercode" ||
-					type == "techcode" ||
-					type == "unitcode" ||
-					type == "heroskillcode" ||
-					type == "weathereffectcode" || 
-					type == "timedlifebuffcode" ||
-					type == "doodadcode") {
-					return "'" + parameter.value + "'";
+				} else if (type == "abilcode" // ToDo this seems like a hack?
+					|| type == "buffcode"
+					|| type == "destructablecode"
+					|| type == "itemcode"
+					|| type == "ordercode"
+					|| type == "techcode"
+					|| type == "unitcode"
+					|| type == "heroskillcode"
+					|| type == "weathereffectcode" 
+					|| type == "timedlifebuffcode"
+					|| type == "doodadcode"
+					|| type == "timedlifebuffcode"
+					|| type == "terraintype") {
+					return "FourCC('" + parameter.value + "')";
 				} else {
 					return parameter.value;
 				}
@@ -1841,9 +1854,9 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 
 				break;
 			case ECA::Type::condition:
-				conditions += "\tif (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
-				conditions += "\treturn false\n";
-				conditions += "\tend\n";
+				conditions += "if (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
+				conditions += "return false\n";
+				conditions += "end\n";
 				break;
 			case ECA::Type::action:
 				actions += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
@@ -1854,11 +1867,11 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 	actions += "end\n\n";
 
 	if (!conditions.empty()) {
-		conditions = "function Trig_" + trigger_name + "()\n" + conditions;
-		conditions += "\treturn true\n";
+		conditions = "function Trig_" + trigger_name + "_Conditions()\n" + conditions;
+		conditions += "return true\n";
 		conditions += "end\n\n";
 
-		events += "TriggerAddCondition(" + trigger_variable_name + ", Condition(function Trig_" + trigger_name + "_Conditions))\n";
+		events += "TriggerAddCondition(" + trigger_variable_name + ", Condition(Trig_" + trigger_name + "_Conditions))\n";
 	}
 
 	if (!trigger.initially_on) {
