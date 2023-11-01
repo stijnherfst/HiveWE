@@ -38,7 +38,6 @@ public:
 
 	glm::vec2 position_new;
 
-
 	Brush();
 
 	virtual void set_position(const glm::vec2& position);

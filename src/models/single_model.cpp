@@ -350,27 +350,23 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
-		auto parts = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
-		for (const auto& i : parts) {
+		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(units_slk.data("name", i.toStdString())));
-			item->setData(Qt::StatusTipRole, i);
-			auto one = units_slk.row_headers.at(i.toStdString());
-			auto two = units_slk.column_headers.at("art");
-			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			item->setText(units_table->data(id.toStdString(), "name").toString());
+			item->setIcon(items_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
+			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
 		}
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 
-		auto parts = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
-		for (const auto& i : parts) {
+		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(abilities_slk.data("name", i.toStdString())));
-			item->setData(Qt::StatusTipRole, i);
-			auto one = abilities_slk.row_headers.at(i.toStdString());
-			auto two = abilities_slk.column_headers.at("art");
-			item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			item->setText(abilities_table->data(id.toStdString(), "name").toString());
+			item->setIcon(abilities_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
+			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
 		}
 	} else if (type.ends_with("List")) {
@@ -592,36 +588,6 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 	hbox->addWidget(remove);
 	layout->addLayout(hbox);
 	connect(add, &QPushButton::clicked, [=]() {
-		/*QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
-		selectdialog->resize(300, 560);
-		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
-
-		QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
-
-		UnitSelector* selector = new UnitSelector(selectdialog);
-		selectlayout->addWidget(selector);
-
-		QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
-		connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
-		connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
-		selectlayout->addWidget(buttonBox2);
-
-		connect(selector, &UnitSelector::unitSelected, [selectdialog, list](const std::string& id) {
-			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(units_slk.data("name", id)));
-			item->setData(Qt::StatusTipRole, QString::fromStdString(id));
-			auto one = units_slk.row_headers.at(id);
-			auto two = units_slk.column_headers.at("art");
-			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
-			list->addItem(item);
-			selectdialog->close();
-		});
-
-		connect(selectdialog, &QDialog::accepted, selector, &UnitSelector::forceSelection);
-
-		selectdialog->show();
-		selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));*/
-
 		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		selectdialog->resize(300, 560);
 		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -662,11 +628,9 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 			}
 
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(units_slk.data("name", treeItem->id)));
 			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-			auto one = units_slk.row_headers.at(treeItem->id);
-			auto two = units_slk.column_headers.at("art");
-			item->setIcon(units_table->data(units_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			item->setText(units_table->data(treeItem->id, "name").toString());
+			item->setIcon(units_table->data(treeItem->id, "art", Qt::DecorationRole).value<QIcon>());
 			list->addItem(item);
 		};
 
@@ -784,11 +748,10 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 			}
 
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(QString::fromStdString(abilities_slk.data("name", treeItem->id)));
 			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-			auto one = abilities_slk.row_headers.at(treeItem->id);
-			auto two = abilities_slk.column_headers.at("art");
-			item->setIcon(abilities_table->data(abilities_table->index(one, two), Qt::DecorationRole).value<QIcon>());
+			item->setText(abilities_table->data(treeItem->id, "name").toString());
+			item->setIcon(abilities_table->data(treeItem->id, "art", Qt::DecorationRole).value<QIcon>());
+
 			list->addItem(item);
 		};
 

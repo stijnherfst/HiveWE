@@ -4,8 +4,6 @@ module;
 #include <vector>
 #include <iostream>
 
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 
 export module MapInfo;
@@ -13,6 +11,7 @@ export module MapInfo;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
+import Utilities;
 
 export enum class PlayerType {
 	human,
@@ -70,20 +69,16 @@ struct RandomUnitLine {
 };
 
 struct RandomUnitTable {
-	int number;
+	int creation_number;
 	std::string name;
 	std::vector<int> positions;
 	std::vector<RandomUnitLine> lines;
 };
 
-struct RandomItemSets {
-	std::vector<std::tuple<int, std::string>> items;
-};
-
 struct RandomItemTable {
-	int number;
+	int creation_number;
 	std::string name;
-	std::vector<RandomItemSets> item_sets;
+	std::vector<ItemSet> item_sets;
 };
 
 export class MapInfo {
@@ -341,7 +336,7 @@ export class MapInfo {
 
 		random_unit_tables.resize(reader.read<uint32_t>());
 		for (auto&& i : random_unit_tables) {
-			i.number = reader.read<uint32_t>();
+			i.creation_number = reader.read<uint32_t>();
 			i.name = reader.read_c_string();
 			i.positions = reader.read_vector<int>(reader.read<uint32_t>());
 
@@ -361,7 +356,7 @@ export class MapInfo {
 		if (version >= 25) {
 			random_item_tables.resize(reader.read<uint32_t>());
 			for (auto&& i : random_item_tables) {
-				i.number = reader.read<uint32_t>();
+				i.creation_number = reader.read<uint32_t>();
 				i.name = reader.read_c_string();
 				i.item_sets.resize(reader.read<uint32_t>());
 				for (auto&& j : i.item_sets) {
@@ -474,7 +469,7 @@ export class MapInfo {
 
 		writer.write<uint32_t>(random_unit_tables.size());
 		for (const auto& i : random_unit_tables) {
-			writer.write(i.number);
+			writer.write(i.creation_number);
 			writer.write_c_string(i.name);
 			writer.write_vector(i.positions);
 
@@ -487,7 +482,7 @@ export class MapInfo {
 
 		writer.write<uint32_t>(random_item_tables.size());
 		for (const auto& i : random_item_tables) {
-			writer.write(i.number);
+			writer.write(i.creation_number);
 			writer.write_c_string(i.name);
 
 			writer.write<uint32_t>(i.item_sets.size());

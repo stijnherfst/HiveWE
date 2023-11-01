@@ -387,7 +387,7 @@ export class Map : public QObject {
 			sounds.load();
 		}
 
-		std::print("Misc loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::println("Misc loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		// Center camera
@@ -402,10 +402,24 @@ export class Map : public QObject {
 			units.process_unit_field_change(id, field);
 		});
 
+		connect(units_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
+			for (size_t i = first; i <= last; i++) {
+				const std::string& id = units_slk.index_to_row.at(i);
+				std::erase_if(units.units, [&](Unit& unit) { return unit.id == id; });
+			}
+		});
+
 		connect(items_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
 			const std::string& id = items_slk.index_to_row.at(top_left.row());
 			const std::string& field = items_slk.index_to_column.at(top_left.column());
 			units.process_item_field_change(id, field);
+		});
+
+		connect(items_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
+			for (size_t i = first; i <= last; i++) {
+				const std::string& id = items_slk.index_to_row.at(i);
+				std::erase_if(units.items, [&](Unit& item) { return item.id == id; });
+			}
 		});
 
 		connect(doodads_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
@@ -414,14 +428,29 @@ export class Map : public QObject {
 			doodads.process_doodad_field_change(id, field);
 		});
 
+		connect(doodads_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
+			for (size_t i = first; i <= last; i++) {
+				const std::string& id = doodads_slk.index_to_row.at(i);
+				std::erase_if(doodads.doodads, [&](Doodad& doodad) { return doodad.id == id; });
+			}
+		});
+
 		connect(destructibles_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
 			const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
 			const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
 			doodads.process_destructible_field_change(id, field);
 		});
+
+		connect(destructibles_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
+			for (size_t i = first; i <= last; i++) {
+				const std::string& id = destructibles_slk.index_to_row.at(i);
+				std::erase_if(doodads.doodads, [&](Doodad& destructable) { return destructable.id == id; });
+			}
+		});
 	}
 
 	bool save(const fs::path& path) {
+		Timer timer;
 		if (!fs::equivalent(path, filesystem_path)) {
 			try {
 				fs::copy(filesystem_path, fs::absolute(path), fs::copy_options::recursive);
@@ -464,6 +493,8 @@ export class Map : public QObject {
 		triggers.save_jass();
 		triggers.generate_map_script();
 		imports.save(filesystem_path);
+
+		std::println("Saving took: {:>5}ms", timer.elapsed_ms());
 
 		return true;
 	}

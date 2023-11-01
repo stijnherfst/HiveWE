@@ -92,7 +92,7 @@ void Units::load() {
 		i.item_sets.resize(reader.read<uint32_t>());
 		for (auto&& j : i.item_sets) {
 			j.items.resize(reader.read<uint32_t>());
-			for (auto&&[id, chance] : j.items) {
+			for (auto&&[chance, id] : j.items) {
 				id = reader.read_string(4);
 				chance = reader.read<uint32_t>();
 			}
@@ -184,7 +184,7 @@ void Units::save() const {
 			writer.write<uint32_t>(i.item_sets.size());
 			for (auto&& j : i.item_sets) {
 				writer.write<uint32_t>(j.items.size());
-				for (auto&&[id, chance] : j.items) {
+				for (auto&&[chance, id] : j.items) {
 					writer.write_string(id);
 					writer.write<uint32_t>(chance);
 				}

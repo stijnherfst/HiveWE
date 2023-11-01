@@ -231,9 +231,6 @@ class Triggers {
 	void generate_regions(MapScriptWriter& script);
 	void generate_cameras(MapScriptWriter& script);
 	void generate_sounds(MapScriptWriter& script);
-	void write_item_table_entry(MapScriptWriter& script, int chance, const std::string& id);
-	void generate_item_tables(MapScriptWriter& script);
-	void generate_unit_item_tables(MapScriptWriter& script);
 	void generate_trigger_initialization(MapScriptWriter& script, std::vector<std::string> initialization_triggers);
 	void generate_players(MapScriptWriter& script);
 	void generate_custom_teams(MapScriptWriter& script);
@@ -258,6 +255,7 @@ class Triggers {
 	void load_jass();
 	void save() const;
 	void save_jass() const;
+	static void write_item_table_entry(MapScriptWriter& script, int chance, const std::string& id);
 
 	// Returns compile output which could contain errors or general information
 	QString generate_map_script();

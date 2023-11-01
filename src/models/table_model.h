@@ -10,7 +10,6 @@ import SLK;
 #include <QIcon>
 
 class TableModel : public QAbstractTableModel {
-	//std::unordered_map<std::string, std::string> meta_field_to_key;
 	std::shared_ptr<QIconResource> invalid_icon;
 
 public: 
@@ -33,4 +32,5 @@ public:
 
 	std::string fieldToMetaID(const std::string& id, const std::string& field) const;
 	QModelIndex rowIDToIndex(const std::string& id) const;
+	QVariant data(const std::string_view id, const std::string_view field, int role = Qt::DisplayRole) const;
 };

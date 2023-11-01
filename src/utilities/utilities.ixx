@@ -83,7 +83,7 @@ export std::string read_text_file(const fs::path& path) {
 }
 
 export struct ItemSet {
-	std::vector<std::pair<std::string, int>> items;
+	std::vector<std::pair<int, std::string>> items;
 };
 
 // Returns ±1

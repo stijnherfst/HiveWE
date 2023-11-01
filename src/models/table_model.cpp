@@ -291,8 +291,7 @@ void TableModel::copyRow(std::string_view row_header, std::string_view new_row_h
 
 void TableModel::deleteRow(const std::string_view row_header) {
 	const int row = slk->row_headers.at(row_header);
-	beginRemoveRows(QModelIndex(), row , row);
-
+	beginRemoveRows(QModelIndex(), row ,row);
 	slk->remove_row(row_header);
 	endRemoveRows();
 }
@@ -315,4 +314,8 @@ std::string TableModel::fieldToMetaID(const std::string& id, const std::string& 
 // Returns the model index belonging to the row with the given id
 QModelIndex TableModel::rowIDToIndex(const std::string& id) const {
 	return createIndex(slk->row_headers.at(id), 0);
+}
+
+QVariant TableModel::data(const std::string_view id, const std::string_view field, int role) const {
+	return data(index(slk->row_headers.at(id), slk->column_headers.at(field)), role);
 }

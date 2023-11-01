@@ -749,7 +749,7 @@ void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_ma
 				script.write("t = CreateTrigger()\n");
 				script.write("TriggerRegisterDeathEvent(t, " + id + ")\n");
 				script.write("TriggerAddAction(t, SaveDyingWidget)\n");
-				script.write("TriggerAddAction(t, UnitItemDrops_" + std::to_string(i.creation_number) + ")\n");
+				script.write("TriggerAddAction(t, DoodadItemDrops_" + std::to_string(i.creation_number) + ")\n");
 			} else if (i.item_table_pointer != -1) {
 				script.write("t = CreateTrigger()\n");
 				script.write("TriggerRegisterDeathEvent(t, " + id + ")\n");
@@ -872,180 +872,50 @@ void Triggers::write_item_table_entry(MapScriptWriter& script, int chance, const
 	}
 }
 
-void Triggers::generate_item_tables(MapScriptWriter& script) {
-	//for (const auto& i : map->info.random_item_tables) {
-	//	script.function("ItemTable_" + std::to_string(i.number), []() {
-	//		script.write("local trigWidget= null");
-	//		script.write("local trigUnit= null");
-	//		script.write("local itemID= 0");
-	//		script.write("local canDrop= true");
-	//		script.write("trigWidget = bj_lastDyingWidget");
-	//		script.write("");
-	//		script.write("");
+template<typename T>
+void generate_item_tables(MapScriptWriter& script, std::string table_name_prefix, std::vector<T> table_holders) {
+	for (const auto& i : table_holders) {
+		if (i.item_sets.size()) {
+			continue;
+		}
 
-	//		script.write(R"(
-	//	if ( trigWidget == null ) then
-	//		trigUnit=GetTriggerUnit()
-	//	endif
+		script.function(table_name_prefix + std::to_string(i.creation_number), [&]() {
+			script.write("local trigWidget = nil\n");
+			script.write("local trigUnit = nil\n");
+			script.write("local itemID = 0\n");
+			script.write("local canDrop = true\n");
+			script.write("trigWidget = bj_lastDyingWidget\n");
 
-	//	if ( trigUnit != null ) then
-	//		canDrop=not IsUnitHidden(trigUnit)
-	//		if ( canDrop and GetChangingUnit() != null ) then
-	//			canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
-	//		endif
-	//	endif
+			script.write("if (trigWidget == nil) then\n");
+			script.write("trigUnit=GetTriggerUnit()\n");
+			script.write("end\n");
+			script.write("if (trigUnit ~= nil) then\n");
+			script.write("canDrop = not IsUnitHidden(trigUnit)\n");
+			script.write("if (canDrop and GetChangingUnit() ~= nil) then\n");
+			script.write("canDrop = (GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE))\n");
+			script.write("end\n");
+			script.write("end\n");
+			script.write("if (canDrop) then\n");
 
-	//	if ( canDrop ) then
-	//		)");
+			for (const auto& j : i.item_sets) {
+				script.function_call("RandomDistReset");
+				for (const auto& [chance, id] : j.items) {
+					Triggers::write_item_table_entry(script, chance, id);
+				}
 
-	//		script.write("\n");
+				script.write("itemID = RandomDistChoose()\n");
+				script.write("if (trigUnit ~= nil) then\n");
+				script.write("UnitDropItem(trigUnit, itemID)\n");
+				script.write("else\n");
+				script.write("WidgetDropItem(trigWidget, itemID)\n");
+				script.write("end\n");
+			}
 
-	//		for (const auto& j : i.item_sets) {
-	//			script.function_call("RandomDistReset");
-	//			for (const auto& [chance, id] : j.items) {
-	//				write_item_table_entry(writer, chance, id);
-	//			}
-
-	//			script.write(R"(
-	//		set itemID=RandomDistChoose()
-	//		if ( trigUnit != null ) then
-	//			call UnitDropItem(trigUnit, itemID)
-	//		else
-	//			call WidgetDropItem(trigWidget, itemID)
-	//		endif
-	//		)");
-
-	//		}
-
-	//		script.write(R"(
-	//	endif
-
-	//	set bj_lastDyingWidget=null
-	//	call DestroyTrigger(GetTriggeringTrigger())
-	//		)");
-
-	//	});
-
-	//	script.write("\n");
-	//}
-}
-
-void Triggers::generate_unit_item_tables(MapScriptWriter& script) {
-//	for (const auto& i : map->units.units) {
-//		if (i.item_sets.size()) {
-//
-//
-//			writer.write_string("function UnitItemDrops_" + std::to_string(i.creation_number) + " takes nothing returns nothing\n");
-//
-//			writer.write_string(R"(
-//	local widget trigWidget= null
-//	local unit trigUnit= null
-//	local integer itemID= 0
-//	local boolean canDrop= true
-//
-//	set trigWidget=bj_lastDyingWidget
-//	if ( trigWidget == null ) then
-//		set trigUnit=GetTriggerUnit()
-//	endif
-//
-//	if ( trigUnit != null ) then
-//		set canDrop=not IsUnitHidden(trigUnit)
-//		if ( canDrop and GetChangingUnit() != null ) then
-//			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
-//		endif
-//	endif
-//
-//	if ( canDrop ) then
-//		)");
-//
-//			writer.write_string("\n");
-//
-//			for (const auto& j : i.item_sets) {
-//				writer.write_string("call RandomDistReset()\n");
-//				for (const auto& [id, chance] : j.items) {
-//					write_item_table_entry(writer, chance, id);
-//				}
-//
-//				writer.write_string(R"(
-//		set itemID=RandomDistChoose()
-//		if ( trigUnit != null ) then
-//			call UnitDropItem(trigUnit, itemID)
-//		else
-//			call WidgetDropItem(trigWidget, itemID)
-//		endif
-//		)");
-//
-//			}
-//
-//			writer.write_string(R"(
-//	endif
-//
-//	set bj_lastDyingWidget=null
-//	call DestroyTrigger(GetTriggeringTrigger())
-//endfunction
-//		)");
-//
-//			writer.write_string("\n");
-//		}
-//	}
-//
-//	for (const auto& i : map->doodads.doodads) {
-//		if (i.item_sets.size()) {
-//
-//
-//			writer.write_string("function UnitItemDrops_" + std::to_string(i.creation_number) + " takes nothing returns nothing\n");
-//
-//			writer.write_string(R"(
-//	local widget trigWidget= null
-//	local unit trigUnit= null
-//	local integer itemID= 0
-//	local boolean canDrop= true
-//
-//	set trigWidget=bj_lastDyingWidget
-//	if ( trigWidget == null ) then
-//		set trigUnit=GetTriggerUnit()
-//	endif
-//
-//	if ( trigUnit != null ) then
-//		set canDrop=not IsUnitHidden(trigUnit)
-//		if ( canDrop and GetChangingUnit() != null ) then
-//			set canDrop=( GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE) )
-//		endif
-//	endif
-//
-//	if ( canDrop ) then
-//		)");
-//
-//			writer.write_string("\n");
-//
-//			for (const auto& j : i.item_sets) {
-//				writer.write_string("call RandomDistReset()\n");
-//				for (const auto& [id, chance] : j.items) {
-//					write_item_table_entry(writer, chance, id);
-//				}
-//
-//				writer.write_string(R"(
-//		set itemID=RandomDistChoose()
-//		if ( trigUnit != null ) then
-//			call UnitDropItem(trigUnit, itemID)
-//		else
-//			call WidgetDropItem(trigWidget, itemID)
-//		endif
-//		)");
-//
-//			}
-//
-//			writer.write_string(R"(
-//	endif
-//
-//	set bj_lastDyingWidget=null
-//	call DestroyTrigger(GetTriggeringTrigger())
-//endfunction
-//		)");
-//
-//			writer.write_string("\n");
-//		}
-//	}
+			script.write("end\n");
+			script.write("bj_lastDyingWidget = nil\n");
+			script.write("DestroyTrigger(GetTriggeringTrigger())\n");
+		});
+	}
 }
 
 void Triggers::generate_trigger_initialization(MapScriptWriter& script, std::vector<std::string> initialization_triggers) {
@@ -1296,8 +1166,9 @@ QString Triggers::generate_map_script() {
 
 	generate_global_variables(script_writer, unit_variables, destructable_variables);
 	generate_init_global_variables(script_writer);
-	generate_item_tables(script_writer);
-	generate_unit_item_tables(script_writer);
+	generate_item_tables(script_writer, "ItemTable_", map->info.random_item_tables);
+	generate_item_tables(script_writer, "UnitItemDrops_", map->units.units);
+	generate_item_tables(script_writer, "DoodadItemDrops_", map->doodads.doodads);
 	generate_sounds(script_writer);
 
 	generate_destructables(script_writer, destructable_variables);
@@ -1340,6 +1211,7 @@ QString Triggers::generate_map_script() {
 		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
 		return "Compilation successful";
 	}*/
+	return "Compilation successful";
 }
 
 std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const {
@@ -1350,11 +1222,6 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	}
 
 	if (eca.name == "WaitForCondition") {
-		//output += "loop\n";
-		//output += "exitwhen (" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ")\n";
-		//output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
-		//output += "endloop";
-
 		output += "while (true) do\n";
 		output += std::format("if (({})) then break end\n", resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)));
 		output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
@@ -1366,17 +1233,6 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 	if (eca.name == "ForLoopAMultiple" || eca.name == "ForLoopBMultiple") {
 		std::string loop_index = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
 		std::string loop_index_end = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
-
-		//output += loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
-		//output += loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
-		//output += "loop\n";
-		//output += "exitwhen " + loop_index + " > " + loop_index_end + "\n";
-		//for (const auto& i : eca.ecas) {
-		//	output += "" + convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
-		//}
-		//output += loop_index + " = " + loop_index + " + 1\n";
-		//output += "endloop\n";
-
 
 		output += loop_index + "=" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + "\n";
 		output += loop_index_end + "=" + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
@@ -1393,17 +1249,6 @@ std::string Triggers::convert_eca_to_jass(const ECA& eca, std::string& pre_actio
 
 	if (eca.name == "ForLoopVarMultiple") {
 		std::string variable = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer");
-
-		//output += "set " + variable + " = ";
-		//output += resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
-		//output += "loop\n";
-		//output += "exitwhen " + variable + " > " + resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2)) + "\n";
-		//for (const auto& i : eca.ecas) {
-		//	output += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
-		//}
-		//output += variable + " = " + variable + " + 1\n";
-		//output += "endloop\n";
-
 
 		output += variable + " = " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
 		output += "while (true) do\n";
@@ -1509,7 +1354,6 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 	std::string script_name = trigger_data.data("TriggerActions", "_" + parent_name + "_ScriptName");
  
 	if (parent_name == "SetVariable") {
-		//const auto& type = variables.at(parameters[0].value).type;
 		const std::string &type = (*find_if(variables.begin(), variables.end(),
 			[parameters](const TriggerVariable& var) {
 				return var.name == parameters[0].value;
@@ -1661,10 +1505,6 @@ std::string Triggers::testt(const std::string& trigger_name, const std::string& 
 		const auto& i = parameters[k];
 
 		const std::string type = get_type(parent_name, k);
-
-		if (parent_name == "UnitApplyTimedLifeBJ" && type == "timedlifebuffcode") {
-			std::println("Parent {} Type {}", parent_name, type);
-		}
 
 		if (type == "boolexpr") {
 			const std::string function_name = generate_function_name(trigger_name);

@@ -2,6 +2,11 @@
 
 #include "globals.h"
 #include <map_global.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
+import Utilities;
 
 MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);
@@ -24,9 +29,14 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		ui.campaignLoadingScreen->addItem(QString::fromStdString(value[1]));
 	}
 
-	//for (auto&& i : map->imports.find([](const ImportItem& item) { return item.full_path.extension() == ".mdx"; })) {
-	//	ui.importedLoadingScreen->addItem(QString::fromStdString(i.get().full_path.string()));
-	//}
+	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
+		if (entry.is_directory()) {
+			continue;
+		}
+		if (to_lowercase_copy(entry.path().extension().string()) == ".mdx") {
+			ui.importedLoadingScreen->addItem(QString::fromStdString(entry.path().lexically_relative(map->filesystem_path).string()));
+		}
+	}
 
 	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {
