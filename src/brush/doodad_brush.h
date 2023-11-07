@@ -108,6 +108,8 @@ public slots:
 	void set_selection_relative_height(float height);
 	void set_selection_scale_component(int component, float scale);
 
+	void unselect_id(std::string_view id) override;
+
 signals:
 	void angle_changed();
 	void scale_changed();

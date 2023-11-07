@@ -65,4 +65,6 @@ class UnitBrush : public Brush {
 
 	void set_random_rotation();
 	void set_unit(const std::string& id);
+
+	void unselect_id(std::string_view id) override;
 };

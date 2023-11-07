@@ -183,14 +183,13 @@ export class Map : public QObject {
 		doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 		doodads_meta_slk.build_meta_map();
 
+		doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
 		doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 		doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
 		// Destructables
 		destructibles_slk = slk::SLK("Units/DestructableData.slk");
 		destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
-
-		doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
 
 		destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
 		destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
@@ -406,6 +405,10 @@ export class Map : public QObject {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = units_slk.index_to_row.at(i);
 				std::erase_if(units.units, [&](Unit& unit) { return unit.id == id; });
+
+				if (brush) {
+					brush->unselect_id(id);
+				}
 			}
 		});
 
@@ -432,6 +435,10 @@ export class Map : public QObject {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = doodads_slk.index_to_row.at(i);
 				std::erase_if(doodads.doodads, [&](Doodad& doodad) { return doodad.id == id; });
+
+				if (brush) {
+					brush->unselect_id(id);
+				}
 			}
 		});
 
@@ -445,6 +452,10 @@ export class Map : public QObject {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = destructibles_slk.index_to_row.at(i);
 				std::erase_if(doodads.doodads, [&](Doodad& destructable) { return destructable.id == id; });
+
+				if (brush) {
+					brush->unselect_id(id);
+				}
 			}
 		});
 	}

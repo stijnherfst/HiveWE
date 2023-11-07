@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 	darkPalette.setColor(QPalette::Disabled, QPalette::WindowText, QColor(127, 127, 127));
 	darkPalette.setColor(QPalette::Base, QColor(42, 42, 42));
 	darkPalette.setColor(QPalette::AlternateBase, QColor(66, 66, 66));
-	darkPalette.setColor(QPalette::ToolTipBase, QColor(255, 254, 255));
+	darkPalette.setColor(QPalette::ToolTipBase, QColor(66, 66, 66));
 	darkPalette.setColor(QPalette::ToolTipText, QColor(255, 254, 255));
 	darkPalette.setColor(QPalette::Text, QColor(255, 254, 255));
 	darkPalette.setColor(QPalette::PlaceholderText, Qt::gray);

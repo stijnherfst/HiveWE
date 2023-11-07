@@ -6,6 +6,7 @@
 
 #include <random>
 #include <memory>
+#include <print>
 
 
 #include "globals.h"
@@ -348,4 +349,10 @@ void UnitBrush::set_unit(const std::string& id) {
 	this->id = id;
 	mesh = map->units.get_mesh(id);
 	skeleton = SkeletalModelInstance(mesh->model);
+}
+
+void UnitBrush::unselect_id(std::string_view id) {
+	if (this->id == id) {
+		set_unit("hfoo");
+	}
 }

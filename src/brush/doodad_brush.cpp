@@ -721,3 +721,9 @@ void DoodadBrush::set_selection_scale_component(int component, float scale) {
 	}
 	end_action();
 }
+
+void DoodadBrush::unselect_id(std::string_view id) {
+	if (this->id == id) {
+		set_doodad("ATtr");
+	}
+}

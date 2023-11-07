@@ -6,6 +6,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include <string_view>
+
 import Shader;
 
 class Brush : public QObject {
@@ -91,6 +93,10 @@ protected:
 	std::shared_ptr<Shader> selection_shader;
 	std::shared_ptr<Shader> selection_circle_shader;
 	std::shared_ptr<Shader> brush_shader;
+
+public slots:
+	virtual void unselect_id(std::string_view id) {
+	}
 
 signals:
 	void selection_changed();

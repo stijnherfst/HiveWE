@@ -96,7 +96,7 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 		found->raise();
 		return;
 	}
-
+	
 	QTableView* view = new QTableView;
 	TableDelegate* delegate = new TableDelegate;
 	view->setItemDelegate(delegate);
