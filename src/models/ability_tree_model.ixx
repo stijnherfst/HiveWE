@@ -1,6 +1,7 @@
 module;
 
 #include <array>
+#include <print>
 #include <QMap>
 #include <QMargins>
 #include <QObject>
@@ -34,12 +35,13 @@ export class AbilityTreeModel : public BaseTreeModel {
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
 		std::string race = abilities_slk.data("race", id);
-		if (race.empty()) {
-			std::cout << "Empty race for " << id << " in abilities\n";
+		auto found_race = categories.find(race);
+		if (found_race == categories.end()) {
+			std::println("Empty or invalid race for ability ID {}, race {}", id, race);
 			return nullptr;
 		}
-		bool isHero = abilities_slk.data("hero", id) == "1";
-		bool isItem = abilities_slk.data("item", id) == "1";
+		bool isHero = abilities_slk.data<bool>("hero", id);
+		bool isItem = abilities_slk.data<bool>("item", id);
 
 		int subIndex = 0;
 		if (isHero) {
@@ -48,7 +50,7 @@ export class AbilityTreeModel : public BaseTreeModel {
 			subIndex = 2;
 		}
 
-		return categories.at(race).item->children[subIndex];
+		return found_race->second.item->children[subIndex];
 	}
 
   public:

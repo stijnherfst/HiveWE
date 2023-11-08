@@ -48,13 +48,10 @@ export class GroundTexture : public Resource {
 		int channels;
 		uint8_t* data;
 
-		int upload_format = GL_RGBA;
 		if (new_path.extension() == ".blp" || new_path.extension() == ".BLP") {
 			data = blp::load(reader, width, height, channels);
-			upload_format = GL_BGRA;
 		} else {
 			data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
-			upload_format = GL_RGBA;
 		}
 
 		tile_size = height * 0.25;
@@ -70,10 +67,10 @@ export class GroundTexture : public Resource {
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 		for (int y = 0; y < 4; y++) {
 			for (int x = 0; x < 4; x++) {
-				glTextureSubImage3D(id, 0, 0, 0, y * 4 + x, tile_size, tile_size, 1, upload_format, GL_UNSIGNED_BYTE, data + (y * tile_size * width + x * tile_size) * 4);
+				glTextureSubImage3D(id, 0, 0, 0, y * 4 + x, tile_size, tile_size, 1, GL_RGBA, GL_UNSIGNED_BYTE, data + (y * tile_size * width + x * tile_size) * 4);
 
 				if (extended) {
-					glTextureSubImage3D(id, 0, 0, 0, y * 4 + x + 16, tile_size, tile_size, 1, upload_format, GL_UNSIGNED_BYTE, data + (y * tile_size * width + (x + 4) * tile_size) * 4);
+					glTextureSubImage3D(id, 0, 0, 0, y * 4 + x + 16, tile_size, tile_size, 1, GL_RGBA, GL_UNSIGNED_BYTE, data + (y * tile_size * width + (x + 4) * tile_size) * 4);
 				}
 			}
 		}
