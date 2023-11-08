@@ -44,6 +44,8 @@ public:
 private:
 	bool event(QEvent* e) override;
 
+	void select_id_in_palette(std::string id);
+
 	Ui::UnitPalette ui;
 
 	UnitBrush brush;

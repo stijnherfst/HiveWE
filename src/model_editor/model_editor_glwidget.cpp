@@ -45,7 +45,7 @@ void ModelEditorGLWidget::initializeGL() {
 	auto& extent = mesh->mdx->sequences[skeleton.sequence_index].extent;
 	camera.position.z = (extent.maximum.z - extent.minimum.z) / 2.f;
 
-	shader = resource_manager.load<Shader>({ "Data/Shaders/editable_mesh_hd.vert", "Data/Shaders/editable_mesh_hd.frag" });
+	shader = resource_manager.load<Shader>({ "Data/Shaders/editable_mesh_sd.vert", "Data/Shaders/editable_mesh_sd.frag" });
 
 	begin = std::chrono::steady_clock::now();
 

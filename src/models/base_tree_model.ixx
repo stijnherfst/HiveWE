@@ -218,6 +218,10 @@ export class BaseTreeModel : public QAbstractProxyModel {
 					return {};
 				}
 			case Qt::ToolTipRole:
+				if (item->baseCategory || item->subCategory) {
+					return {};
+				}
+
 				return "ID: " + QString::fromStdString(item->id);
 			default:
 				return {};

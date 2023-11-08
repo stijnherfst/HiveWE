@@ -109,10 +109,10 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 		}
 	});
 
-	//connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
-	//	const Doodad* doodad = *brush.selections.begin();
-	//	select_id_in_palette(doodad->id);
-	//});
+	connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
+		const Unit* unit= *brush.selections.begin();
+		select_id_in_palette(unit->id);
+	});
 
 	connect(&brush, &UnitBrush::selection_changed, this, &UnitPalette::update_selection_info);
 }
@@ -137,6 +137,14 @@ bool UnitPalette::event(QEvent* e) {
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
 	}
 	return QWidget::event(e);
+}
+
+void UnitPalette::select_id_in_palette(std::string id) {
+	selector->search->clear();
+
+	const auto index = selector->filter_model->mapFromSource(selector->list_model->mapFromSource(units_table->rowIDToIndex(id)));
+	selector->units->setCurrentIndex(index);
+	emit selector->unitSelected(id);
 }
 
 void UnitPalette::deactivate(QRibbonTab* tab) {

@@ -38,7 +38,7 @@ or [Retera Model Studio](https://github.com/Retera/ReterasModelStudio)
 
 ## Build Instructions
 
-0. Requires Visual Studio 17.7 Preview 1.0 or higher (C++20 modules)
+0. Requires Visual Studio 17.7 or higher (C++20 modules)
 1. Clone HiveWE somewhere 
 `git clone https://github.com/stijnherfst/HiveWE.git`
 2. Clone [vcpkg](https://github.com/microsoft/vcpkg) somewhere central (eg. "C:/")
@@ -48,7 +48,6 @@ or [Retera Model Studio](https://github.com/Retera/ReterasModelStudio)
 - `VCPKG_ROOT`: the location where vcpkg is installed (e.g. "C:\vcpkg")
 5. Open Visual Studio as an **Administrator** and using the open folder button to open the HiveWE folder. (**Administrator required** for creating a symbolic link on Windows)
 6. Dependencies will be automatically compiled, might take about 15-20 minutes (mostly due to Qt)
-7. Before running, copy the `imageformats` and `platforms` folders from `C:\vcpkg\buildtrees\qtbase\x64-windows-rel\Qt6\plugins` to be next to the built .exe
 
 **Done**
 
@@ -67,4 +66,4 @@ Want to help with the development of HiveWE? Below is a list of features that yo
 - Advanced terrain editing tools (e.g. flood fill, magic wand selection)
 - Or any other functionality you think would be cool
 
-If you have any questions then don't be afraid to message me here, on the HiveWorkshop (eejin) or on Discord eejin#4240
+If you have any questions then don't be afraid to message me here, on the HiveWorkshop (eejin) or on Discord (eejin)
