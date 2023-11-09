@@ -39,9 +39,9 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	QSettings settings;
 
 	//TODO: these are out of hierarchy while QSettings have ICE in modules
-	hierarchy.ptr = settings.value("flavour", "Retail").toString() != "Retail";
-	hierarchy.hd = settings.value("hd", "True").toString() != "False";
-	hierarchy.teen = settings.value("teen", "False").toString() != "False";
+	hierarchy.ptr = settings.value("flavour", "Retail").toString() == "PTR";
+	hierarchy.hd = settings.value("hd", "False").toString() == "True";
+	hierarchy.teen = settings.value("teen", "False").toString() == "True";
 	QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
 	hierarchy.local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
 	while (!hierarchy.open_casc(directory)) {
@@ -392,6 +392,7 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 	int choice = QMessageBox::question(this, "Do you want to quit?", "Are you sure you want to quit?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
 
 	if (choice == QMessageBox::Yes) {
+		QApplication::closeAllWindows();
 		event->accept();
 	} else {
 		event->ignore();
