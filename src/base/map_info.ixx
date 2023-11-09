@@ -161,11 +161,11 @@ export class MapInfo {
 	std::vector<RandomItemTable> random_item_tables;
 
 	static constexpr int write_version = 31;
-	static constexpr int write_editor_version = 6105;
+	static constexpr int write_editor_version = 6115;
 	static constexpr int write_game_version_major = 1;
-	static constexpr int write_game_version_minor = 32;
-	static constexpr int write_game_version_patch = 1;
-	static constexpr int write_game_version_build = 14604;
+	static constexpr int write_game_version_minor = 36;
+	static constexpr int write_game_version_patch = 0;
+	static constexpr int write_game_version_build = 20257;
 
 	void load() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");

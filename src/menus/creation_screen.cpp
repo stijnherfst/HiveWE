@@ -39,6 +39,7 @@ void CreationScreen::create(const fs::path path) const {
 	int mapsize16 = height * width * 16;
 
 	char tileset = 'X';								// maybe implement tileset choice panel?
+													// would require changes to the w3e code
 
 	BinaryWriter w3i;
 	w3i.write(MapInfo::write_version);
@@ -130,17 +131,6 @@ void CreationScreen::create(const fs::path path) const {
 		w3e.write<uint8_t>(0xF2);
 	}
 
-	//BinaryWriter wpm;
-	//wpm.write_string("MP3W");
-	//wpm.write(0);
-	//wpm.write(width * 4);
-	//wpm.write(height * 4);
-
-	//for (int i = 0; i < mapsize16; i++) //4x4 pixels per tile
-	//{
-	//	wpm.write<char>(0x40);
-	//}
-
 	BinaryWriter doo;
 	doo.write_string("W3do");
 	doo.write(8);
@@ -162,9 +152,9 @@ void CreationScreen::create(const fs::path path) const {
 	udoo.write(64.f);
 	udoo.write(270.f);
 	for (int i = 0; i < 3; i++)
-		//udoo.write(128.f); //scale,WC3?
-		udoo.write(1.f); //scale,WE?
-	udoo.write_string("sloc"); //skin
+		//udoo.write(128.f);	// scale,WC3?
+		udoo.write(1.f);		// scale,WE?
+	udoo.write_string("sloc");	// skin
 	udoo.write<char>(2);
 	udoo.write(0);
 	udoo.write<char>(0);
@@ -183,7 +173,7 @@ void CreationScreen::create(const fs::path path) const {
 	udoo.write(0);
 
 	BinaryWriter shd;
-	for (int i = 0; i < mapsize16; i++) //4x4 pixels per tile
+	for (int i = 0; i < mapsize16; i++)	//4x4 pixels per tile
 		shd.write<char>(0);
 
 	BinaryWriter mmp;
@@ -260,9 +250,7 @@ void CreationScreen::create(const fs::path path) const {
 	w3e_file.write(reinterpret_cast<char const*>(w3e.buffer.data()), w3e.buffer.size());
 	w3e_file.close();
 
-	//std::ofstream wpm_file(path / "war3map.wpm", std::ios::binary);
-	//wpm_file.write(reinterpret_cast<char const*>(wpm.buffer.data()), wpm.buffer.size());
-	//wpm_file.close();
+	// it makes no sense to create a wpm file here, any world editor will do it on save
 
 	std::ofstream doo_file(path / "war3map.doo", std::ios::binary);
 	doo_file.write(reinterpret_cast<char const*>(doo.buffer.data()), doo.buffer.size());
@@ -280,10 +268,6 @@ void CreationScreen::create(const fs::path path) const {
 	mmp_file.write(reinterpret_cast<char const*>(mmp.buffer.data()), mmp.buffer.size());
 	mmp_file.close();
 
-	/*std::ofstream mapj_file(path / "war3map.j", std::ios::binary);
-	mapj_file.write(reinterpret_cast<char const*>(mapj.buffer.data()), mapj.buffer.size());
-	mapj_file.close();*/
-
 	std::ofstream wct_file(path / "war3map.wct", std::ios::binary);
 	wct_file.write(reinterpret_cast<char const*>(wct.buffer.data()), wct.buffer.size());
 	wct_file.close();
@@ -296,30 +280,34 @@ void CreationScreen::create(const fs::path path) const {
 	w3r_file.write(reinterpret_cast<char const*>(w3r.buffer.data()), w3r.buffer.size());
 	w3r_file.close();
 
-	//W3S gets deleted when empty
-	/*std::ofstream w3s_file(path / "war3map.w3s", std::ios::binary);
-	w3s_file.write(reinterpret_cast<char const*>(w3s.buffer.data()), w3s.buffer.size());
-	w3s_file.close();*/
+	// The w3s gets deleted when empty
 
 	std::ofstream wtg_file(path / "war3map.wtg", std::ios::binary);
 	wtg_file.write(reinterpret_cast<char const*>(wtg.buffer.data()), wtg.buffer.size());
 	wtg_file.close();
 
-	//QDir locales(QString::fromStdString(path.string() + "/_Locales"));
-	//locales.mkpath("./deDE.w3mod");
-	//locales.mkpath("./enUS.w3mod");
-	//locales.mkpath("./esES.w3mod");
-	//locales.mkpath("./esMX.w3mod");
-	//locales.mkpath("./frFR.w3mod");
-	//locales.mkpath("./itIT.w3mod");
-	//locales.mkpath("./koKR.w3mod");
-	//locales.mkpath("./plPL.w3mod");
-	//locales.mkpath("./ptBR.w3mod");
-	//locales.mkpath("./ruRU.w3mod");
-	//locales.mkpath("./zhCN.w3mod");
-	//locales.mkpath("./zhTW.w3mod");
-	//std::ofstream wts_file(path / "_Locales" / "enUS.w3mod" / "war3map.wts", std::ios::binary);
+
+	// Create all locales' folders for easier localization
+	QDir locales(QString::fromStdString(path.string() + "/_Locales"));
+	locales.mkpath("./deDE.w3mod");
+	locales.mkpath("./enUS.w3mod");
+	locales.mkpath("./esES.w3mod");
+	locales.mkpath("./esMX.w3mod");
+	locales.mkpath("./frFR.w3mod");
+	locales.mkpath("./itIT.w3mod");
+	locales.mkpath("./koKR.w3mod");
+	locales.mkpath("./plPL.w3mod");
+	locales.mkpath("./ptBR.w3mod");
+	locales.mkpath("./ruRU.w3mod");
+	locales.mkpath("./zhCN.w3mod");
+	locales.mkpath("./zhTW.w3mod");
+
 	std::ofstream wts_file(path / "war3map.wts", std::ios::binary);
 	wts_file.write(reinterpret_cast<char const*>(wts.buffer.data()), wts.buffer.size());
 	wts_file.close();
+
+	// Copy the wts file to english locale?
+	// wts_file.open(path / "_Locales" / "enUS.w3mod" / "war3map.wts", std::ios::binary);
+	// wts_file.write(reinterpret_cast<char const*>(wts.buffer.data()), wts.buffer.size());
+	// wts_file.close();
 }
