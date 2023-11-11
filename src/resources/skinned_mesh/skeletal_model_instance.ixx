@@ -84,7 +84,7 @@ export class SkeletalModelInstance {
 		current_keyframes.resize(model->unique_tracks);
 
 		for (size_t i = 0; i < model->sequences.size(); i++) {
-			if (model->sequences[i].name.find("Stand") != std::string::npos) {
+			if (model->sequences[i].name.find("Stand") != std::string::npos || model->sequences[i].name.find("stand") != std::string::npos) {
 				set_sequence(static_cast<int>(i));
 				break;
 			}

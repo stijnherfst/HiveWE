@@ -556,13 +556,19 @@ glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
-float Terrain::interpolated_height(float x, float y) const {
+float Terrain::interpolated_height(float x, float y, bool water_too) const {
 	x = std::clamp(x, 0.f, width - 1.01f);
 	y = std::clamp(y, 0.f, height - 1.01f);
 
 	// Biliniear interpolation
 	float xx = glm::mix(corners[x][y].final_ground_height(), corners[std::ceil(x)][y].final_ground_height(), x - floor(x));
 	float yy = glm::mix(corners[x][std::ceil(y)].final_ground_height(), corners[std::ceil(x)][std::ceil(y)].final_ground_height(), x - floor(x));
+
+	if (water_too) {
+		xx = std::max(xx, glm::mix(corners[x][y].final_water_height(), corners[std::ceil(x)][y].final_water_height(), x - floor(x)));
+		yy = std::max(yy, glm::mix(corners[x][std::ceil(y)].final_water_height(), corners[std::ceil(x)][std::ceil(y)].final_water_height(), x - floor(x)));
+	}
+
 	return glm::mix(xx, yy, y - floor(y));
 }
 

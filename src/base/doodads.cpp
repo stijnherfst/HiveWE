@@ -228,7 +228,7 @@ void Doodads::create() {
 			i.position += glm::vec3(glm::vec2(i.pathing->width / 8.f, i.pathing->height / 8.f), 0.f);
 		}
 
-		i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y);
+		i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y, true);
 
 		float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
 		i.matrix = glm::translate(i.matrix, i.position);

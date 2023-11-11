@@ -228,7 +228,7 @@ void Units::save() const {
 
 void Units::update_area(const QRect& area) {
 	for (auto&& i : query_area(area)) {
-		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true);
 		i->update();
 	}
 }

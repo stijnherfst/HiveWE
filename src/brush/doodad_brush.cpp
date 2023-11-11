@@ -129,7 +129,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			i->position.x += x_displacement;
 			i->position.y += y_displacement;
 			if (!lock_doodad_z) {
-				i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y);
+				i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true);
 			}
 			i->update();
 		}
@@ -293,7 +293,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				for (const auto& doodad : selections) {
 					doodad->position += offset;
 					if (!lock_doodad_z) {
-						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y);
+						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y, true);
 					}
 					doodad->update();
 				}
@@ -410,7 +410,7 @@ void DoodadBrush::place_clipboard() {
 
 		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation), i.position.z);
 		if (!lock_doodad_z) {
-			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
 		}
 
 		new_doodad.position = final_position;
@@ -548,7 +548,7 @@ void DoodadBrush::render_clipboard() {
 		//glm::vec3 final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
 		//glm::vec3 final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
 		if (!lock_doodad_z) {
-			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y);
+			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
 		}
 
 		i.skeleton.update_location(final_position, i.angle, (base_scale * i.scale) / 128.f);
@@ -697,7 +697,7 @@ void DoodadBrush::set_selection_absolute_height(float height) {
 void DoodadBrush::set_selection_relative_height(float height) {
 	start_action(Action::move);
 	for (auto& i : selections) {
-		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y) + height;
+		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true) + height;
 		i->update();
 	}
 	end_action();

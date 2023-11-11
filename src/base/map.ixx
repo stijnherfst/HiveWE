@@ -391,7 +391,7 @@ export class Map : public QObject {
 
 		// Center camera
 		camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
-		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y);
+		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y, true);
 
 		loaded = true;
 
@@ -603,11 +603,11 @@ export class Map : public QObject {
 			brush->render();
 		}
 
-		terrain.render_water();
 		render_manager.render(render_lighting, light_direction);
+		terrain.render_water();
 
-		// physics.dynamicsWorld->debugDrawWorld();
-		// physics.draw->render();
+		 // physics.dynamicsWorld->debugDrawWorld();
+		 // physics.draw->render();
 	}
 
 	void resize(size_t width, size_t height) {
