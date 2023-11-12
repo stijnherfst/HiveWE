@@ -781,6 +781,13 @@ namespace mdx {
 				});
 			}
 
+			// Sometimes (for doodads mostly) the sequence extents are empty (0.0) which messes with culling
+			for (auto& i : sequences) {
+				if (i.extent.minimum == glm::vec3(0.f) && i.extent.maximum == glm::vec3(0.f)) {
+					i.extent = extent;
+				}
+			}
+
 			// Ensure that pivots is big enough
 			pivots.resize(node_count, {});
 

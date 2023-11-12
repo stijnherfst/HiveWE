@@ -20,15 +20,12 @@ public:
 	//mdx::MDX model;
 
 	double delta = 0.0;
-	std::chrono::steady_clock::time_point begin;
-
 
 	explicit ModelEditorGLWidget(QWidget* parent);
 	~ModelEditorGLWidget() = default;
 
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
-	void update_scene();
 	void paintGL() override;
 
 	void keyPressEvent(QKeyEvent* event) override;

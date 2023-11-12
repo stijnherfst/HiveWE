@@ -252,19 +252,6 @@ void Units::create() {
 	}
 }
 
-void Units::render() {
-	for (auto& i : units) {
-		if (i.id == "sloc") {
-			continue;
-		} // ToDo handle starting locations
-
-		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
-	}
-	for (auto& i : items) {
-		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
-	}
-}
-
 // Will assign a unique creation number
 Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	// ToDo change this once SkeletalModelInstance doesn't use pointers anymore

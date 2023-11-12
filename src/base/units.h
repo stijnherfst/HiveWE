@@ -88,7 +88,6 @@ public:
 	void save() const;
 	void update_area(const QRect& area);
 	void create();
-	void render();
 
 	Unit& add_unit(std::string id, glm::vec3 position);
 	Unit& add_unit(Unit unit);

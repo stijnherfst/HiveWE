@@ -54,7 +54,7 @@ export class Sounds {
 			i.name = reader.read_c_string();
 			i.file = reader.read_c_string();
 			i.eax_effect = reader.read_c_string();
-			int flags = reader.read<uint32_t>();
+			uint32_t flags = reader.read<uint32_t>();
 			i.looping = flags & 0b00000001;
 			i.is_3d = flags & 0b00000010;
 			i.stop_out_of_range = flags & 0b00000100;
@@ -91,8 +91,9 @@ export class Sounds {
 				reader.advance_c_string();
 				reader.advance_c_string();
 				reader.advance_c_string();
-				if (version >= 3)
+				if (version >= 3) {
 					reader.advance(4); // int
+				}
 			}
 		}
 	}

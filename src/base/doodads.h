@@ -74,7 +74,6 @@ public:
 	bool load();
 	void save() const;
 	void create();
-	void render();
 
 	Doodad& add_doodad(std::string id, int variation, glm::vec3 position);
 	Doodad& add_doodad(Doodad doodad);

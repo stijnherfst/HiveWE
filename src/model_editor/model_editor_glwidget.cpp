@@ -23,6 +23,8 @@ ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent
 	setMouseTracking(true);
 	setFocus();
 	setFocusPolicy(Qt::WheelFocus);
+
+	connect(this, &QOpenGLWidget::frameSwapped, [&]() { update(); });
 }
 
 void ModelEditorGLWidget::initializeGL() {
@@ -46,10 +48,6 @@ void ModelEditorGLWidget::initializeGL() {
 	camera.position.z = (extent.maximum.z - extent.minimum.z) / 2.f;
 
 	shader = resource_manager.load<Shader>({ "Data/Shaders/editable_mesh_sd.vert", "Data/Shaders/editable_mesh_sd.frag" });
-
-	begin = std::chrono::steady_clock::now();
-
-	QTimer::singleShot(16.67, this, &ModelEditorGLWidget::update_scene);
 }
 
 void ModelEditorGLWidget::resizeGL(const int w, const int h) {
@@ -59,7 +57,9 @@ void ModelEditorGLWidget::resizeGL(const int w, const int h) {
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 }
 
-void ModelEditorGLWidget::update_scene() {
+void ModelEditorGLWidget::paintGL() {
+	makeCurrent();
+	
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
@@ -67,14 +67,6 @@ void ModelEditorGLWidget::update_scene() {
 	skeleton.update(delta);
 
 	camera.update(16.666);
-
-	update();
-
-	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), this, &ModelEditorGLWidget::update_scene);
-}
-
-void ModelEditorGLWidget::paintGL() {
-	makeCurrent();
 
 	glBindVertexArray(vao);
 	glEnable(GL_DEPTH_TEST);

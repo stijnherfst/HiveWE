@@ -65,13 +65,8 @@ GLWidget::GLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	setFocus();
 	setFocusPolicy(Qt::WheelFocus);
 
-	QTimer::singleShot(0.0, [this]() {
-		this->update_scene();
-	});
+	connect(this, &QOpenGLWidget::frameSwapped, [&]() { update(); });
 }
-
-std::chrono::steady_clock::time_point begin;
-
 
 void GLWidget::initializeGL() {
 	if (!gladLoadGL()) {
@@ -103,8 +98,6 @@ void GLWidget::initializeGL() {
 	glGetIntegerv(GL_NUM_EXTENSIONS, &extension_count);
 	
 	shapes.init();
-
-	begin = std::chrono::steady_clock::now();
 }
 
 void GLWidget::resizeGL(const int w, const int h) {
@@ -120,25 +113,15 @@ void GLWidget::resizeGL(const int w, const int h) {
 	map->render_manager.resize_framebuffers(w, h);
 }
 
-
-void GLWidget::update_scene() {
+void GLWidget::paintGL() {
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	update();
-	if (map) {
-		map->update(delta, width(), height());
-	}
-
-	QTimer::singleShot(16.67 - std::clamp(delta, 0.001, 16.60), [this]() {
-		this->update_scene();	
-	});
-}
-
-void GLWidget::paintGL() {
 	if (!map) {
 		return;
 	}
+
+	map->update(delta, width(), height());
 
 	//glEnable(GL_FRAMEBUFFER_SRGB);
 	glEnable(GL_DEPTH_TEST);

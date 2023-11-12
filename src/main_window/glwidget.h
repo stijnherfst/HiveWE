@@ -21,7 +21,6 @@ public:
 
 	void initializeGL() override;
 	void resizeGL(int w, int h) override;
-	void update_scene();
 	void paintGL() override;
 
 	void keyPressEvent(QKeyEvent* event) override;

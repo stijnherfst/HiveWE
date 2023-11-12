@@ -250,15 +250,6 @@ void Doodads::create() {
 	update_special_doodad_pathing(QRect(0, 0, map->terrain.width, map->terrain.height));
 }
 
-void Doodads::render() {
-	for (const auto& i : doodads) {
-		map->render_manager.render_queue(*i.mesh, i.skeleton, i.color);
-	}
-	for (const auto& i : special_doodads) {
-		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
-	}
-}
-
 // Will assign a creation number
 Doodad& Doodads::add_doodad(std::string id, int variation, glm::vec3 position) {
 	Doodad doodad;

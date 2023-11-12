@@ -592,11 +592,25 @@ export class Map : public QObject {
 		terrain.render_ground(render_pathing, render_lighting);
 
 		if (render_doodads) {
-			doodads.render();
+			for (const auto& i : doodads.doodads) {
+				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+			}
+			for (const auto& i : doodads.special_doodads) {
+				render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
+			}
 		}
 
 		if (render_units) {
-			units.render();
+			for (auto& i : units.units) {
+				if (i.id == "sloc") {
+					continue;
+				} // ToDo handle starting locations
+
+				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+			}
+			for (auto& i : units.items) {
+				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+			}
 		}
 
 		if (render_brush && brush) {
