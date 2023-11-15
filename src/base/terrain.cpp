@@ -1,6 +1,7 @@
 #include <set>
 #include <bitset>
 #include <iostream>
+#include <print>
 
 #include "Terrain.h"
 
@@ -560,7 +561,7 @@ float Terrain::interpolated_height(float x, float y, bool water_too) const {
 	x = std::clamp(x, 0.f, width - 1.01f);
 	y = std::clamp(y, 0.f, height - 1.01f);
 
-	// Biliniear interpolation
+	// Bilinear interpolation
 	float xx = glm::mix(corners[x][y].final_ground_height(), corners[std::ceil(x)][y].final_ground_height(), x - floor(x));
 	float yy = glm::mix(corners[x][std::ceil(y)].final_ground_height(), corners[std::ceil(x)][std::ceil(y)].final_ground_height(), x - floor(x));
 
@@ -570,6 +571,22 @@ float Terrain::interpolated_height(float x, float y, bool water_too) const {
 	}
 
 	return glm::mix(xx, yy, y - floor(y));
+}
+
+// Returns the y gradient in radians
+float Terrain::gradient_y(float x, float y) const {
+	x = std::clamp(x, 0.f, width - 1.01f);
+	y = std::clamp(y, 0.f, height - 1.01f);
+
+	float bottom_left = corners[x][y].final_ground_height(); // Is it bottom left?
+	float bottom_right = corners[x + 1.f][y].final_ground_height();
+	float top_left = corners[x][y + 1.f].final_ground_height();
+	float top_right = corners[x + 1.f][y + 1.f].final_ground_height();
+
+	float bottom = glm::mix(bottom_left, bottom_right, x - glm::floor(x));
+	float top = glm::mix(top_left, top_right, x - glm::floor(x));
+
+	return std::atan(bottom - top);
 }
 
 bool Terrain::is_corner_ramp_entrance(int x, int y) {

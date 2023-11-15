@@ -10,6 +10,7 @@
 #include "globals.h"
 #include <map_global.h>
 
+
 import Hierarchy;
 import Texture;
 import TerrainUndo;
@@ -495,6 +496,71 @@ void DoodadBrush::render_brush() {
 	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
 	skeleton.update(0.016f);
 	map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
+
+
+
+
+
+	//glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
+	//final_position.z = input_handler.mouse_world.z;
+
+
+	//glm::vec3 base_scale = glm::vec3(1.f);
+	//std::string max_roll;
+	//std::string max_pitch;
+	//glm::vec3 color;
+	//if (doodads_slk.row_headers.contains(id)) {
+	//	color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
+	//	color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
+	//	color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
+	//	max_roll = doodads_slk.data("maxroll", id);
+	//	max_pitch = doodads_slk.data("maxpitch", id);
+	//	base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
+	//} else {
+	//	color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
+	//	color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
+	//	color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
+	//	max_roll = destructibles_slk.data("maxroll", id);
+	//	max_pitch = destructibles_slk.data("maxpitch", id);
+	//}
+
+	//glm::quat rotation = glm::angleAxis(rotation, glm::vec3(0, 0, 1));
+
+	//constexpr float SAMPLE_RADIUS = 32.f / 128.f;
+	//if (!max_pitch.empty() && max_pitch != "-") {
+	//	float pitch = std::stof(max_pitch);
+
+	//	float forward_x = final_position.x + (SAMPLE_RADIUS * std::cos(rotation));
+	//	float forward_y = final_position.y + (SAMPLE_RADIUS * std::sin(rotation));
+	//	float backward_x = final_position.x - (SAMPLE_RADIUS * std::cos(rotation));
+	//	float backward_y = final_position.y - (SAMPLE_RADIUS * std::sin(rotation));
+
+	//	float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
+	//	float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
+
+	//	pitch = std::clamp(std::atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -pitch, pitch);
+	//	rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
+	//}
+
+	//if (!max_roll.empty() && max_roll != "-") {
+	//	float roll = std::stof(max_roll);
+
+	//	float left_of_angle = rotation + (3.1415926535 / 2.0);
+	//	float forward_x = final_position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
+	//	float forward_y = final_position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
+	//	float backward_x = final_position.x - (SAMPLE_RADIUS * std::cos(left_of_angle));
+	//	float backward_y = final_position.y - (SAMPLE_RADIUS * std::sin(left_of_angle));
+
+	//	float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
+	//	float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
+
+	//	roll = std::clamp(atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -roll, roll);
+	//	rotation *= glm::angleAxis(roll, glm::vec3(1, 0, 0));
+	//}
+
+	//skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
+	//skeleton.update(0.016f);
+	//map->render_manager.render_queue(*mesh, skeleton, color);
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle

@@ -161,6 +161,7 @@ public:
 	glm::u16vec4 get_texture_variations(int x, int y) const;
 
 	float interpolated_height(float x, float y, bool water_too) const;
+	float gradient_y(float x, float y) const;
 
 	//bool is_corner_ramp_mesh(int x, int y);
 	bool is_corner_ramp_entrance(int x, int y);

@@ -16,30 +16,57 @@ import Hierarchy;
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 	std::string max_roll;
+	std::string max_pitch;
 	if (doodads_slk.row_headers.contains(id)) {
 		color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
 		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
 		max_roll = doodads_slk.data("maxroll", id);
+		max_pitch = doodads_slk.data("maxpitch", id);
 		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
 		color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
 		max_roll = destructibles_slk.data("maxroll", id);
+		max_pitch = destructibles_slk.data("maxpitch", id);
 	}
 
-	glm::mat4 matrix(1.f);
-	matrix = glm::translate(glm::mat4(1.f), position);
-	matrix = glm::scale(matrix, (base_scale * scale) / 128.f);
-	matrix = glm::rotate(matrix, angle, glm::vec3(0, 0, 1));
+	glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
 
-	skeleton.update_location(position, angle, (base_scale * scale) / 128.f);
-	skeleton.matrix = matrix;
+	constexpr float SAMPLE_RADIUS = 32.f / 128.f;
+	if (!max_pitch.empty() && max_pitch != "-") {
+		float pitch = std::stof(max_pitch);
+
+		float forward_x = position.x + (SAMPLE_RADIUS * std::cos(angle));
+		float forward_y = position.y + (SAMPLE_RADIUS * std::sin(angle));
+		float backward_x = position.x - (SAMPLE_RADIUS * std::cos(angle));
+		float backward_y = position.y - (SAMPLE_RADIUS * std::sin(angle));
+
+		float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
+		float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
+
+		pitch = std::clamp(std::atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -pitch, pitch);
+		rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
+	}
 
 	if (!max_roll.empty() && max_roll != "-") {
-		skeleton.matrix = glm::rotate(skeleton.matrix, -std::stof(max_roll), glm::vec3(1, 0, 0));
+		float roll = std::stof(max_roll);
+
+		float left_of_angle = angle + (3.1415926535 / 2.0);
+		float forward_x = position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
+		float forward_y = position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
+		float backward_x = position.x - (SAMPLE_RADIUS * std::cos(left_of_angle));
+		float backward_y = position.y - (SAMPLE_RADIUS * std::sin(left_of_angle));
+
+		float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
+		float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
+
+		roll = std::clamp(atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -roll, roll);
+		rotation *= glm::angleAxis(roll, glm::vec3(1, 0, 0));
 	}
+
+	skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
 }
 
 glm::vec2 Doodad::acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned) {

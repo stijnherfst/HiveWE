@@ -42,7 +42,6 @@ export class SkeletalModelInstance {
 	glm::quat inverseCameraRotationZSpin;
 
 	glm::mat4 matrix = glm::mat4(1.f);
-	glm::quat inverseInstanceRotation;
 
 	std::vector<CurrentKeyFrame> current_keyframes;
 	std::vector<RenderNode> render_nodes;
@@ -91,16 +90,14 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	void update_location(glm::vec3 position, float angle, const glm::vec3& scale) {
-		glm::vec3 axis = glm::vec3(0, 0, 1);
-		glm::quat rotation = glm::angleAxis(angle, axis);
-		inverseInstanceRotation.x = -rotation.x;
-		inverseInstanceRotation.y = -rotation.y;
-		inverseInstanceRotation.z = -rotation.z;
-		inverseInstanceRotation.w = rotation.w;
+	void update_location(glm::vec3 position, glm::quat rotation, const glm::vec3& scale) {
 		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
 
+	void update_location(glm::vec3 position, float angle, const glm::vec3& scale) {
+		glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
+		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
+	}
 
 	void update(double delta) {
 		if (model->sequences.empty() || sequence_index == -1) {

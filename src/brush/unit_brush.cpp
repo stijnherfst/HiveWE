@@ -288,7 +288,7 @@ void UnitBrush::render_brush() {
 	const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
 
 	if (mesh) {
-		skeleton.update_location(final_position, rotation, final_scale);
+		skeleton.update_location(final_position, glm::angleAxis(rotation, glm::vec3(0, 0, 1)), final_scale);
 		skeleton.update(0.016f);
 		map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
 	}
@@ -330,7 +330,7 @@ void UnitBrush::render_clipboard() {
 
 		const glm::vec3 final_scale = glm::vec3(model_scale / 128.f);
 
-		i.skeleton.update_location(final_position, i.angle, final_scale);
+		i.skeleton.update_location(final_position, glm::angleAxis(i.angle, glm::vec3(0, 0, 1)), final_scale);
 		i.skeleton.update(0.016f);
 		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 		map->render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));

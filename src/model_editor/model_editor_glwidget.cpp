@@ -63,7 +63,7 @@ void ModelEditorGLWidget::paintGL() {
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
-	skeleton.update_location(glm::vec3(0.f), 0.f, glm::vec3(1.f));
+	skeleton.update_location(glm::vec3(0.f), glm::quat(), glm::vec3(1.f));
 	skeleton.update(delta);
 
 	camera.update(16.666);
