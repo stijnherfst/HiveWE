@@ -4,7 +4,6 @@
 
 #include "ui_object_editor.h"
 
-#include "table_model.h"
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include <QTreeView>
@@ -18,6 +17,8 @@ import DestructibleTreeModel;
 import UnitTreeModel;
 import UpgradeTreeModel;
 import ItemTreeModel;
+import TableModel;
+import QIconResource;
 
 class ObjectEditor : public QMainWindow {
 	Q_OBJECT

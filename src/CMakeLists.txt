@@ -52,6 +52,7 @@ target_sources(HiveWE PRIVATE
 	"models/buff_tree_model.ixx"
 	"models/upgrade_tree_model.ixx"
 	"models/unit_list_model.ixx"
+	"models/table_model.ixx"
 	 
 	"models/destructible_tree_model.ixx"
 
@@ -66,7 +67,7 @@ target_sources(HiveWE PRIVATE
 	"utilities/utilities.ixx"
 	"utilities/opengl_utilities.ixx"
 	"utilities/modification_tables.ixx" 
-
+	 
 	"utilities/no_init_allocator.ixx"
 	"utilities/math_operations.ixx"
 	
@@ -119,7 +120,6 @@ target_sources(HiveWE PRIVATE
 	"menus/tile_setter.cpp"
 
 	"models/single_model.cpp"
-	"models/table_model.cpp"
 	
 	"custom_widgets/aspect_ratio_pixmap_label.h"
 	"custom_widgets/color_button.h"
@@ -136,5 +136,5 @@ target_sources(HiveWE PRIVATE
 	"qt_imgui/imgui_renderer.cpp"
 	"qt_imgui/qt_imgui.cpp"
 	
-	"utilities/unordered_dense.h"
+	
 )

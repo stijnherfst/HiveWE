@@ -5,7 +5,7 @@ module;
 #include <QFileIconProvider>
 #include <QSortFilterProxyModel>
 #include <QIdentityProxyModel>
-#include "unordered_dense.h"
+#include "ankerl/unordered_dense.h"
 
 #include <array>
 #include <vector>

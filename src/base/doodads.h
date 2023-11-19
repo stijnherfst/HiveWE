@@ -10,7 +10,7 @@ import PathingTexture;
 import Utilities;
 import TerrainUndo;
 
-#include "unordered_dense.h"
+#include "ankerl/unordered_dense.h"
 #include "Terrain.h"
 
 struct Doodad {
@@ -41,6 +41,22 @@ struct Doodad {
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color;
+
+	void init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
+		this->id = id;
+		this->mesh = mesh;
+
+		skeleton = SkeletalModelInstance(mesh->model);
+		// Get pathing map
+		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		const std::string pathing_texture_path = slk.data("pathtex", id);
+		if (hierarchy.file_exists(pathing_texture_path)) {
+			pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+		}
+		update();
+	}
 
 	void update();
 	static glm::vec2 acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned = false);

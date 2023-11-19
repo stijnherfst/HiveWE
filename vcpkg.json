@@ -25,7 +25,8 @@
     },
     "fmt",
     "tbb",
-    "outcome"
+    "outcome",
+    "unordered-dense"
   ]
 }
 

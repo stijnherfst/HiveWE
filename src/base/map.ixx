@@ -1,5 +1,6 @@
 module;
 
+#include <ankerl/unordered_dense.h>
 #include "globals.h"
 #include "triggers.h"
 #include "terrain.h"
@@ -14,13 +15,15 @@ module;
 #include <map>
 #include <fstream>
 #include <print>
-
 #include <QMessageBox>
+
+
 #include <glad/glad.h>
 #include <bullet/btBulletDynamicsCommon.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 
 export module Map;
 
@@ -39,6 +42,7 @@ import Timer;
 import Physics;
 import ModificationTables;
 import RenderManager;
+import TableModel;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
@@ -251,15 +255,15 @@ export class Map : public QObject {
 		buff_slk.merge(ini::INI("Units/CommonAbilityStrings.txt"), buff_meta_slk);
 		buff_slk.merge(ini::INI("Units/CampaignAbilityStrings.txt"), buff_meta_slk);
 
-		units_table = new TableModel(&units_slk, &units_meta_slk);
-		items_table = new TableModel(&items_slk, &items_meta_slk);
-		abilities_table = new TableModel(&abilities_slk, &abilities_meta_slk);
-		doodads_table = new TableModel(&doodads_slk, &doodads_meta_slk);
-		destructibles_table = new TableModel(&destructibles_slk, &destructibles_meta_slk);
-		upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk);
-		buff_table = new TableModel(&buff_slk, &buff_meta_slk);
+		units_table = new TableModel(&units_slk, &units_meta_slk, &trigger_strings);
+		items_table = new TableModel(&items_slk, &items_meta_slk, &trigger_strings);
+		abilities_table = new TableModel(&abilities_slk, &abilities_meta_slk, &trigger_strings);
+		doodads_table = new TableModel(&doodads_slk, &doodads_meta_slk, &trigger_strings);
+		destructibles_table = new TableModel(&destructibles_slk, &destructibles_meta_slk, &trigger_strings);
+		upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk, &trigger_strings);
+		buff_table = new TableModel(&buff_slk, &buff_meta_slk, &trigger_strings);
 
-		std::print("\nSLK loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::println("\nSLK loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		// Trigger strings
@@ -277,13 +281,13 @@ export class Map : public QObject {
 			}
 		}
 
-		std::print("Trigger loading: {:>5}ms\n", timer.elapsed_ms());
+		std::println("Trigger loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		info.load();
 		terrain.load();
 
-		std::print("Terrain loading: {:>5}ms\n", timer.elapsed_ms());
+		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		// Pathing Map
@@ -293,7 +297,7 @@ export class Map : public QObject {
 			pathing_map.resize(terrain.width * 4, terrain.height * 4);
 		}
 
-		std::print("Pathing loading: {:>5}ms\n", timer.elapsed_ms());
+		std::println("Pathing loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		// Doodads
@@ -316,7 +320,7 @@ export class Map : public QObject {
 		doodads.load();
 		doodads.create();
 
-		std::print("Doodad loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -341,7 +345,7 @@ export class Map : public QObject {
 			units.create();
 		}
 
-		std::print("Unit loading:\t {:>5}ms\n", timer.elapsed_ms());
+		std::println("Unit loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		// Abilities

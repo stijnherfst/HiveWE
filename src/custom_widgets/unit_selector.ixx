@@ -11,6 +11,7 @@ module;
 export module UnitSelector;
 
 import UnitListModel;
+import TableModel;
 
 export class UnitSelector : public QWidget {
 	Q_OBJECT

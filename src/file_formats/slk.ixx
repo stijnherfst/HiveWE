@@ -13,7 +13,7 @@ module;
 #include <absl/strings/str_split.h>
 #include <absl/strings/str_join.h>
 
-#include "unordered_dense.h"
+#include "ankerl/unordered_dense.h"
 
 export module SLK;
 
@@ -205,6 +205,7 @@ namespace slk {
 		// column_header should be lowercase
 		template <typename T = std::string>
 		T data(std::string_view column_header, std::string_view row_header) const {
+			static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, bool>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
 			assert(to_lowercase_copy(column_header) == column_header);
 
 			// Shadow data
@@ -249,7 +250,6 @@ namespace slk {
 				}
 			}
 
-			static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
 			return T();
 		}
 

@@ -13,8 +13,7 @@
 //#include <map_global.h>
 #include <object_editor.h>
 
-#include "table_model.h"
-
+import TableModel;
 import WindowHandler;
 
 UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {

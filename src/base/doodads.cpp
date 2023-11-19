@@ -361,7 +361,7 @@ void Doodads::update_doodad_pathing(const QRectF& area) {
 
 	new_area.adjust(-6, -6, 6, 6);
 
-	const auto doodads_to_blit = map->doodads.query_area(new_area);
+	const auto doodads_to_blit = query_area(new_area);
 	for (const auto& i : doodads_to_blit) {
 		if (!i->pathing) {
 			continue;

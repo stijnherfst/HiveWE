@@ -5,6 +5,7 @@
 #include <print>
 namespace fs = std::filesystem;
 
+#include <ankerl/unordered_dense.h>
 #include "tile_setter.h"
 #include "map_info_editor.h"
 #include "terrain_palette.h"
@@ -19,6 +20,7 @@ namespace fs = std::filesystem;
 #include "model_editor/model_editor.h"
 
 #include "object_editor/icon_view.h"
+
 #include "globals.h"
 #include "map_global.h"
 

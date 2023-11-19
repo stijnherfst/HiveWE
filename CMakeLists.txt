@@ -21,6 +21,7 @@ find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(outcome CONFIG REQUIRED)
+find_package(unordered_dense CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -67,6 +68,7 @@ target_link_libraries(HiveWE PUBLIC
 	TBB::tbb
 	imgui::imgui
 	outcome::hl
+	unordered_dense::unordered_dense
 	${BULLET_LIBRARIES}
 )
 

@@ -8,7 +8,7 @@ module;
 #define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
 #include <absl/container/flat_hash_map.h>
-#include "unordered_dense.h"
+#include "ankerl/unordered_dense.h"
 
 export module ModificationTables;
 

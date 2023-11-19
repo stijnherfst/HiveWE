@@ -1,5 +1,6 @@
 #include "doodad_list_model.h"
 
+#include <ankerl/unordered_dense.h>
 #include "globals.h"
 
 DoodadListModel::DoodadListModel(QObject* parent) : QIdentityProxyModel(parent) {

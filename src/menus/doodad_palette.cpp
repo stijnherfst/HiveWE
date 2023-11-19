@@ -28,9 +28,10 @@
 #include "globals.h"
 #include <map_global.h>
 
-#include "table_model.h"
 #include <object_editor/object_editor.h>
 
+
+import TableModel;
 import QRibbon;
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
