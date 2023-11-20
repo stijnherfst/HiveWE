@@ -19,8 +19,8 @@ struct Doodad {
 	std::string id;
 	std::string skin_id;
 	int variation = 0;
-	glm::vec3 position = {0, 0, 0};
-	glm::vec3 scale = {0, 0, 0};
+	glm::vec3 position = glm::vec3(0.f);
+	glm::vec3 scale = glm::vec3(1.f);
 	float angle = 0.f;
 
 	enum class State {
@@ -42,23 +42,9 @@ struct Doodad {
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color;
 
-	void init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
-		this->id = id;
-		this->mesh = mesh;
-
-		skeleton = SkeletalModelInstance(mesh->model);
-		// Get pathing map
-		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-		const std::string pathing_texture_path = slk.data("pathtex", id);
-		if (hierarchy.file_exists(pathing_texture_path)) {
-			pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
-		}
-		update();
-	}
-
+	void init(std::string id, std::shared_ptr<SkinnedMesh> mesh);
 	void update();
+
 	static glm::vec2 acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned = false);
 	static float acceptable_angle(std::string_view id, std::shared_ptr<PathingTexture> pathing, float current_angle, float target_angle);
 };

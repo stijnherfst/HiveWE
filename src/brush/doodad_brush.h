@@ -13,15 +13,11 @@ class DoodadBrush : public Brush {
 	std::set<int> possible_variations = { 0 };
 	int get_random_variation();
 
-	std::string id;
 	int variation = 0;
 
-	std::shared_ptr<SkinnedMesh> mesh;
-	SkeletalModelInstance skeleton;
-
+	Doodad doodad;
 public:
 	Doodad::State state = Doodad::State::visible_solid;
-	std::shared_ptr<PathingTexture> pathing_texture;
 
 	bool free_placement = false;
 	bool free_rotation = false;
@@ -35,12 +31,8 @@ public:
 
 	bool lock_doodad_z = false;
 
-	float scale = 1.f;
 	float min_scale = 1.f;
 	float max_scale = 1.f;
-
-	float rotation = 0.f;
-	float roll = 0.f;
 
 	std::unique_ptr<DoodadAddAction> doodad_undo;
 	std::unique_ptr<DoodadStateAction> doodad_state_undo;

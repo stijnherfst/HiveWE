@@ -13,6 +13,23 @@
 import BinaryWriter;
 import Hierarchy;
 
+void Doodad::init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
+	this->id = id;
+	this->skin_id = id;
+	this->mesh = mesh;
+
+	skeleton = SkeletalModelInstance(mesh->model);
+	// Get pathing map
+	const bool is_doodad = doodads_slk.row_headers.contains(id);
+	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+	const std::string pathing_texture_path = slk.data("pathtex", id);
+	if (hierarchy.file_exists(pathing_texture_path)) {
+		pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+	}
+	update();
+}
+
 void Doodad::update() {
 	glm::vec3 base_scale = glm::vec3(1.f);
 	std::string max_roll;
@@ -233,17 +250,18 @@ void Doodads::save() const {
 
 void Doodads::create() {
 	for (auto&& i : doodads) {
-		i.mesh = get_mesh(i.id, i.variation);
-		i.skeleton = SkeletalModelInstance(i.mesh->model);
-		// Get pathing map
-		const bool is_doodad = doodads_slk.row_headers.contains(i.id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		i.init(i.id, get_mesh(i.id, i.variation));
+		//i.mesh = get_mesh(i.id, i.variation);
+		//i.skeleton = SkeletalModelInstance(i.mesh->model);
+		//// Get pathing map
+		//const bool is_doodad = doodads_slk.row_headers.contains(i.id);
+		//const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-		const std::string pathing_texture_path = slk.data("pathtex", i.id);
-		if (hierarchy.file_exists(pathing_texture_path)) {
-			i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
-		}
-		i.update();
+		//const std::string pathing_texture_path = slk.data("pathtex", i.id);
+		//if (hierarchy.file_exists(pathing_texture_path)) {
+		//	i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+		//}
+		//i.update();
 	}
 
 	for (auto&& i : special_doodads) {

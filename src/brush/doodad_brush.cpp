@@ -6,10 +6,10 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "globals.h"
 #include <map_global.h>
-
 
 import Hierarchy;
 import Texture;
@@ -50,39 +50,39 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (pathing_texture) {
-		const int div_w = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->height : pathing_texture->width;
-		const int div_h = (((int)glm::degrees(rotation) + 90) % 180) ? pathing_texture->width : pathing_texture->height;
+	if (doodad.pathing) {
+		const int div_w = (((int)glm::degrees(doodad.angle) + 90) % 180) ? doodad.pathing->height : doodad.pathing->width;
+		const int div_h = (((int)glm::degrees(doodad.angle) + 90) % 180) ? doodad.pathing->width : doodad.pathing->height;
 		
 		std::vector<glm::u8vec4> brush(div_w * div_h, { 0, 0, 0, 0 });
 
-		for (int i = 0; i < pathing_texture->width; i++) {
-			for (int j = 0; j < pathing_texture->height; j++) {
+		for (int i = 0; i < doodad.pathing->width; i++) {
+			for (int j = 0; j < doodad.pathing->height; j++) {
 				int x = i;
 				int y = j;
 
-				switch (((int)glm::degrees(rotation) + 90) % 360) {
+				switch (((int)glm::degrees(doodad.angle) + 90) % 360) {
 					case 90:
-						x = pathing_texture->height - 1 - j;
+						x = doodad.pathing->height - 1 - j;
 						y = i;
 						break;
 					case 180:
-						x = pathing_texture->width - 1 - i;
-						y = pathing_texture->height - 1 - j;
+						x = doodad.pathing->width - 1 - i;
+						y = doodad.pathing->height - 1 - j;
 						break;
 					case 270:
 						x = j;
-						y = pathing_texture->width - 1 - i;
+						y = doodad.pathing->width - 1 - i;
 						break;
 				}
 
-				const int in = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
+				const int in = ((doodad.pathing->height - 1 - j) * doodad.pathing->width + i) * doodad.pathing->channels;
 
 				// Have to check for > 250 because sometimes the pathing textures are not properly thresholded
 				glm::u8vec4 color = { 
-					pathing_texture->data[in] > 250 ? 255 : 0,
-					pathing_texture->data[in + 1] > 250 ? 255 : 0,
-					pathing_texture->data[in + 2] > 250 ? 255 : 0,
+					doodad.pathing->data[in] > 250 ? 255 : 0,
+					doodad.pathing->data[in + 1] > 250 ? 255 : 0,
+					doodad.pathing->data[in + 2] > 250 ? 255 : 0,
 					128 
 				};
 
@@ -409,7 +409,7 @@ void DoodadBrush::place_clipboard() {
 		Doodad& new_doodad = map->doodads.add_doodad(i);
 		new_doodad.creation_number = ++Doodad::auto_increment;
 
-		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation), i.position.z);
+		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle), i.position.z);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
 		}
@@ -431,23 +431,20 @@ void DoodadBrush::apply_begin() {
 }
 
 void DoodadBrush::apply(double frame_delta) {
-	if (id == "") {
+	if (doodad.id == "") {
 		return;
 	}
 
-	glm::vec3 doodad_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
-	doodad_position.z = input_handler.mouse_world.z;
+	glm::vec3 doodad_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, doodad.pathing, doodad.angle), 0.f);
+	doodad_position.z = map->terrain.interpolated_height(position.x, position.y, false);
 
-	Doodad& doodad = map->doodads.add_doodad(id, variation, doodad_position);
-	doodad.scale = glm::vec3(scale);
-	doodad.angle = rotation;
-	doodad.state = state;
-	doodad.update();
+	doodad.creation_number = ++Doodad::auto_increment;
+	map->doodads.add_doodad(doodad);
 
 	doodad_undo->doodads.push_back(doodad);
 
-	if (pathing_texture) {
-		map->pathing_map.blit_pathing_texture(doodad_position, glm::degrees(rotation) + 90, pathing_texture);
+	if (doodad.pathing) {
+		map->pathing_map.blit_pathing_texture(doodad.position, glm::degrees(doodad.angle) + 90, doodad.pathing);
 		map->pathing_map.upload_dynamic_pathing();
 	}
 
@@ -464,7 +461,7 @@ void DoodadBrush::apply(double frame_delta) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
 		std::uniform_real_distribution dist(min_scale, max_scale);
-		scale = dist(gen);
+		doodad.scale = glm::vec3(dist(gen));
 	}
 }
 
@@ -477,90 +474,21 @@ void DoodadBrush::apply_end() {
 }
 
 void DoodadBrush::render_brush() {
-	if (pathing_texture) {
+	if (doodad.pathing) {
 		Brush::render_brush();
 	}
 
-	if (!mesh) {
+	if (!doodad.mesh) {
 		return;
 	}
 
-	glm::vec3 base_scale = glm::vec3(1.f);
-	if (doodads_slk.row_headers.contains(id)) {
-		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
-	}
+	glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, doodad.pathing, doodad.angle), 0.f);
+	final_position.z = map->terrain.interpolated_height(doodad.position.x, doodad.position.y, false);
 
-	glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
-	final_position.z = input_handler.mouse_world.z;
-
-	skeleton.update_location(final_position, rotation, (base_scale * scale) / 128.f);
-	skeleton.update(0.016f);
-	map->render_manager.render_queue(*mesh, skeleton, glm::vec3(1.f));
-
-
-
-
-
-	//glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, pathing_texture, rotation), 0.f);
-	//final_position.z = input_handler.mouse_world.z;
-
-
-	//glm::vec3 base_scale = glm::vec3(1.f);
-	//std::string max_roll;
-	//std::string max_pitch;
-	//glm::vec3 color;
-	//if (doodads_slk.row_headers.contains(id)) {
-	//	color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
-	//	color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
-	//	color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
-	//	max_roll = doodads_slk.data("maxroll", id);
-	//	max_pitch = doodads_slk.data("maxpitch", id);
-	//	base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
-	//} else {
-	//	color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
-	//	color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
-	//	color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
-	//	max_roll = destructibles_slk.data("maxroll", id);
-	//	max_pitch = destructibles_slk.data("maxpitch", id);
-	//}
-
-	//glm::quat rotation = glm::angleAxis(rotation, glm::vec3(0, 0, 1));
-
-	//constexpr float SAMPLE_RADIUS = 32.f / 128.f;
-	//if (!max_pitch.empty() && max_pitch != "-") {
-	//	float pitch = std::stof(max_pitch);
-
-	//	float forward_x = final_position.x + (SAMPLE_RADIUS * std::cos(rotation));
-	//	float forward_y = final_position.y + (SAMPLE_RADIUS * std::sin(rotation));
-	//	float backward_x = final_position.x - (SAMPLE_RADIUS * std::cos(rotation));
-	//	float backward_y = final_position.y - (SAMPLE_RADIUS * std::sin(rotation));
-
-	//	float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
-	//	float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
-
-	//	pitch = std::clamp(std::atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -pitch, pitch);
-	//	rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
-	//}
-
-	//if (!max_roll.empty() && max_roll != "-") {
-	//	float roll = std::stof(max_roll);
-
-	//	float left_of_angle = rotation + (3.1415926535 / 2.0);
-	//	float forward_x = final_position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
-	//	float forward_y = final_position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
-	//	float backward_x = final_position.x - (SAMPLE_RADIUS * std::cos(left_of_angle));
-	//	float backward_y = final_position.y - (SAMPLE_RADIUS * std::sin(left_of_angle));
-
-	//	float height1 = map->terrain.interpolated_height(backward_x, backward_y, false);
-	//	float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
-
-	//	roll = std::clamp(atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -roll, roll);
-	//	rotation *= glm::angleAxis(roll, glm::vec3(1, 0, 0));
-	//}
-
-	//skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
-	//skeleton.update(0.016f);
-	//map->render_manager.render_queue(*mesh, skeleton, color);
+	doodad.position = final_position;
+	doodad.update();
+	doodad.skeleton.update(0.016f);
+	map->render_manager.render_queue(*doodad.mesh, doodad.skeleton, doodad.color);
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle
@@ -607,7 +535,7 @@ void DoodadBrush::render_clipboard() {
 
 		glm::vec3 final_position;
 		if (i.pathing) {
-			final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
+			final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle, true), i.position.z);
 		} else {
 			final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
 		}
@@ -625,25 +553,17 @@ void DoodadBrush::render_clipboard() {
 }
 
 bool DoodadBrush::can_place() {
-	if (!pathing_texture) {
+	if (!doodad.pathing) {
 		return true;
 	}
 
-	glm::vec3 doodad_position;
-	if (free_placement) {
-		doodad_position = input_handler.mouse_world;
-	} else {
-		doodad_position = glm::vec3(glm::vec2(position) + glm::vec2(uv_offset) * 0.25f + size * 0.125f, input_handler.mouse_world.z);
-	}
-
-	return map->pathing_map.is_area_free(doodad_position, glm::degrees(rotation) + 90, pathing_texture, PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
+	return map->pathing_map.is_area_free(doodad.position, glm::degrees(doodad.angle) + 90, doodad.pathing, PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
 }
 
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
 	context->makeCurrent();
-	mesh = map->doodads.get_mesh(id, variation);
-	skeleton = SkeletalModelInstance(mesh->model);
+	doodad.init(doodad.id, map->doodads.get_mesh(doodad.id, variation));
 }
 
 void DoodadBrush::set_random_rotation() {
@@ -652,20 +572,22 @@ void DoodadBrush::set_random_rotation() {
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
 	float target_rotation = dist(gen);
-	rotation = Doodad::acceptable_angle(id, pathing_texture, target_rotation, target_rotation);
+	doodad.angle = Doodad::acceptable_angle(doodad.id, doodad.pathing, target_rotation, target_rotation);
 
-	if (pathing_texture) {
-		auto rotated_pathing_width = pathing_texture->width;
-		auto rotated_pathing_height = pathing_texture->height;
+	if (doodad.pathing) {
+		auto rotated_pathing_width = doodad.pathing->width;
+		auto rotated_pathing_height = doodad.pathing->height;
 
-		if (static_cast<uint32_t>(glm::round(glm::degrees(rotation))) % 180 == 0) {
-			rotated_pathing_width = pathing_texture->height;
-			rotated_pathing_height = pathing_texture->width;
+		if (static_cast<uint32_t>(glm::round(glm::degrees(doodad.angle))) % 180 == 0) {
+			rotated_pathing_width = doodad.pathing->height;
+			rotated_pathing_height = doodad.pathing->width;
 		}
 
 		brush_offset.x = (rotated_pathing_width % 4 != 0) ? 0.25f : 0.f;
 		brush_offset.y = (rotated_pathing_height % 4 != 0) ? 0.25f : 0.f;
 	}
+
+	doodad.update();
 }
 
 void DoodadBrush::add_variation(int variation) {
@@ -680,47 +602,35 @@ void DoodadBrush::erase_variation(int variation) {
 }
 
 void DoodadBrush::set_doodad(const std::string& id) {
-	this->id = id;
+	context->makeCurrent();
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-	min_scale = slk.data<float>("minscale", id);
-	max_scale = slk.data<float>("maxscale", id);
-
-	std::string maxRoll = doodads_slk.data("maxroll", id);
-	if (!maxRoll.empty()) {
-		roll = -std::stof(maxRoll);
-	} else {
-		roll = 0;
-	}
-
-	if (is_doodad) {
-		scale = slk.data<float>("defscale", id);
-	}
-
-	pathing_texture.reset();
-	std::string pathing_texture_path = slk.data("pathtex", id);
-	if (hierarchy.file_exists(pathing_texture_path)) {
-		free_placement = false;
-		pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
-
-		set_size(std::max(pathing_texture->width, pathing_texture->height));
-
-		free_rotation = pathing_texture->width == pathing_texture->height;
-		free_rotation = free_rotation && pathing_texture->homogeneous;
-		free_rotation = free_rotation && slk.data<float>("fixedrot", id) < 0.f;
-	} else {
-		free_placement = true;
-		free_rotation = true;
-	}
 
 	possible_variations.clear();
 	int variation_count = slk.data<int>("numvar", id);
 	for (int i = 0; i < variation_count; i++) {
 		possible_variations.insert(i);
 	}
-	set_random_variation();
+	variation = get_random_variation();
+
+	doodad.init(id, map->doodads.get_mesh(id, variation));
+
+	min_scale = slk.data<float>("minscale", doodad.id);
+	max_scale = slk.data<float>("maxscale", doodad.id);
+
+	if (doodad.pathing) {
+		free_placement = false;
+		set_size(std::max(doodad.pathing->width, doodad.pathing->height));
+
+		free_rotation = doodad.pathing->width == doodad.pathing->height;
+		free_rotation = free_rotation && doodad.pathing->homogeneous;
+		free_rotation = free_rotation && slk.data<float>("fixedrot", doodad.id) < 0.f;
+	} else {
+		free_placement = true;
+		free_rotation = true;
+	}
+
 	set_random_rotation();
 	set_shape(shape);
 }
@@ -789,7 +699,7 @@ void DoodadBrush::set_selection_scale_component(int component, float scale) {
 }
 
 void DoodadBrush::unselect_id(std::string_view id) {
-	if (this->id == id) {
+	if (doodad.id == id) {
 		set_doodad("ATtr");
 	}
 }
