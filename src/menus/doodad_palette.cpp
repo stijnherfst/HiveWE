@@ -363,6 +363,9 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	ui.search->setFocus();
 	ui.search->selectAll();
+
+	ui.doodads->setCurrentIndex(ui.doodads->model()->index(0, 0));
+	selection_changed(ui.doodads->model()->index(0, 0));
 }
 
 DoodadPalette::~DoodadPalette() {

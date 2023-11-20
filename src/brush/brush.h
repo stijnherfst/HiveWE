@@ -51,6 +51,9 @@ public:
 	virtual bool contains(int x, int y) const;
 
 	virtual void switch_mode();
+	Mode get_mode() {
+		return mode;
+	}
 
 	virtual void key_press_event(QKeyEvent* event);
 	virtual void key_release_event(QKeyEvent* event) {}

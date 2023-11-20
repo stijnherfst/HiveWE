@@ -350,7 +350,7 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glUniform1i(3, render_lighting);
 	glUniform3fv(4, 1, &map->light_direction.x);
 	if (map->brush) {
-		glUniform2fv(5, 1, &map->brush->position_new[0]);
+		glUniform2fv(5, 1, &map->brush->get_position()[0]);
 	}
 
 	glBindTextureUnit(0, ground_height);
@@ -364,7 +364,7 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glBindTextureUnit(20, map->pathing_map.texture_static);
 	glBindTextureUnit(21, map->pathing_map.texture_dynamic);
 
-	glUniform1i(6, map->brush != nullptr);
+	glUniform1i(6, map->brush && map->brush->get_mode() != Brush::Mode::selection);
 	if (map->brush) {
 		glBindTextureUnit(23, map->brush->brush_texture);
 	}
@@ -385,11 +385,10 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 			continue;
 		}
 
-		const float min = std::min({ bottom_left.layer_height - 2,	bottom_right.layer_height - 2,
-									top_left.layer_height - 2,		top_right.layer_height - 2 });
+		const float min = std::min({ bottom_left.layer_height,	bottom_right.layer_height,
+									top_left.layer_height,		top_right.layer_height });
 
-
-		cliff_meshes[i.z]->render_queue({ i.x, i.y, min, bottom_left.cliff_texture });
+		cliff_meshes[i.z]->render_queue({ i.x, i.y, min - 2, bottom_left.cliff_texture });
 	}
 
 	cliff_shader->use();
@@ -399,9 +398,9 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glUniform1i(2, render_lighting);
 	glUniform3fv(3, 1, &map->light_direction.x);
 	if (map->brush) {
-		glUniform2fv(4, 1, &map->brush->position_new[0]);
+		glUniform2fv(4, 1, &map->brush->get_position()[0]);
 	}
-	glUniform1i(5, map->brush != nullptr);
+	glUniform1i(5, map->brush && map->brush->get_mode() != Brush::Mode::selection);
 
 	glBindTextureUnit(0, cliff_texture_array);
 	glBindTextureUnit(1, ground_height);

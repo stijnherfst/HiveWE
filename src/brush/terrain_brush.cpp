@@ -8,8 +8,6 @@
 
 TerrainBrush::TerrainBrush() : Brush() {
 	size_granularity = 4;
-	uv_offset_locked = true;
-	uv_offset = { 2, 2 };
 	set_size(size);
 }
 
@@ -191,10 +189,10 @@ void TerrainBrush::apply(double frame_delta) {
 				}
 
 				bool cliff_near = false;
-				for (int k = -1; k < 1 && !cliff_near; k++) {
-					for (int l = -1; l < 1 && !cliff_near; l++) {
+				for (int k = -1; k < 1; k++) {
+					for (int l = -1; l < 1; l++) {
 						if (i + k >= 0 && i + k <= width && j + l >= 0 && j + l <= height) {
-							cliff_near = corners[i + k][j + l].cliff;
+							cliff_near = cliff_near || corners[i + k][j + l].cliff;
 						}
 					}
 				}

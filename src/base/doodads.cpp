@@ -23,6 +23,7 @@ void Doodad::init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
+	pathing.reset();
 	const std::string pathing_texture_path = slk.data("pathtex", id);
 	if (hierarchy.file_exists(pathing_texture_path)) {
 		pathing = resource_manager.load<PathingTexture>(pathing_texture_path);

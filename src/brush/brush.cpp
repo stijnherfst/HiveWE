@@ -24,11 +24,11 @@ Brush::Brush() {
 void Brush::set_position(const glm::vec2& new_position) {
 	position_new = glm::round((new_position - brush_offset) * granularity) / granularity + brush_offset;
 
-	const glm::vec2 center_position = new_position - size / 2.f * 0.25f + brush_offset;
+	const glm::vec2 bottom_left_position = new_position - size / 2.f * 0.25f + brush_offset;
+	position = glm::floor(bottom_left_position);
 
-	position = glm::floor(center_position);
 	if (!uv_offset_locked) {
-		glm::vec2 decimals = center_position - glm::vec2(position);
+		glm::vec2 decimals = bottom_left_position - glm::vec2(position);
 
 		switch (uv_offset_granularity) {
 			case 1:
@@ -48,17 +48,12 @@ void Brush::set_position(const glm::vec2& new_position) {
 }
 
 glm::vec2 Brush::get_position() const {
-	return glm::vec2(position);
+	return glm::round((glm::vec2(input_handler.mouse_world) - brush_offset) * granularity) / granularity + brush_offset;
 }
 
 void Brush::set_size(const int new_size) {
-	glm::vec2 center = glm::vec2(position) + size / 8.f + glm::vec2(uv_offset) * 0.25f;
-
 	size = std::clamp(new_size * size_granularity, 1, 999);
-
 	set_shape(shape);
-
-	set_position(center);
 }
 
 void Brush::set_shape(const Shape new_shape) {

@@ -633,6 +633,18 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	set_random_rotation();
 	set_shape(shape);
+
+	if (random_rotation) {
+		set_random_rotation();
+	}
+
+	doodad.scale = glm::clamp(doodad.scale, min_scale, max_scale);
+	if (random_scale) {
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_real_distribution dist(min_scale, max_scale);
+		doodad.scale = glm::vec3(dist(gen));
+	}
 }
 
 void DoodadBrush::start_action(Action new_action) {
