@@ -103,10 +103,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	camera_section->setText("Camera");
 	view_tab->addSection(camera_section);
 
-	switch_camera->setIcon(QIcon("Data/Icons/Ribbon/switch32x32.png"));
-	switch_camera->setText("Switch");
-	camera_section->addWidget(switch_camera);
-
 	reset_camera->setIcon(QIcon("Data/Icons/Ribbon/reset32x32.png"));
 	reset_camera->setText("Reset");
 	camera_section->addWidget(reset_camera);

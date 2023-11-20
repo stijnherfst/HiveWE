@@ -25,7 +25,6 @@ public:
 	QRibbonButton* debug_visible = new QRibbonButton;
 	QRibbonButton* minimap_visible = new QRibbonButton;
 
-	QRibbonButton* switch_camera = new QRibbonButton;
 	QRibbonButton* reset_camera = new QRibbonButton;
 
 	QRibbonButton* map_description = new QRibbonButton;

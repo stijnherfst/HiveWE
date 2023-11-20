@@ -34,13 +34,14 @@ import MPQ;
 import OpenGLUtilities;
 import Camera;
 
-HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
+HiveWE::HiveWE(QWidget* parent)
+	: QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
 	QSettings settings;
 
-	//TODO: these are out of hierarchy while QSettings have ICE in modules
+	// TODO: these are out of hierarchy while QSettings have ICE in modules
 	hierarchy.ptr = settings.value("flavour", "Retail").toString() == "PTR";
 	hierarchy.hd = settings.value("hd", "False").toString() == "True";
 	hierarchy.teen = settings.value("teen", "False").toString() == "True";
@@ -73,19 +74,19 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 	world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
 
-	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() { 
+	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() {
 		// ToDo: temporary, undoing should still allow a selection to persist
 		if (map->brush) {
 			map->brush->clear_selection();
 		}
-		map->terrain_undo.undo(); 
+		map->terrain_undo.undo();
 	});
-	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() { 
+	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {
 		// ToDo: temporary, undoing should still allow a selection to persist
 		if (map->brush) {
 			map->brush->clear_selection();
 		}
-		map->terrain_undo.redo(); 
+		map->terrain_undo.redo();
 	});
 
 	connect(new QShortcut(Qt::CTRL | Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
@@ -118,10 +119,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 
 	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera.reset(); });
-	connect(ui.ribbon->switch_camera, &QPushButton::clicked, this, &HiveWE::switch_camera);
-	setAutoFillBackground(true);
-
-	connect(new QShortcut(Qt::Key_F1, this), &QShortcut::activated, ui.ribbon->switch_camera, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
@@ -131,7 +128,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
 
-	//connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
+	// connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
 	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
@@ -148,7 +145,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
 	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
-	//connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
+	// connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
 	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
 		open_palette<TerrainPalette>();
@@ -272,9 +269,10 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	fs::path unpack_location = QFileDialog::getExistingDirectory(this, "Choose Unpacking Location",
-																 settings.value("openDirectory", QDir::current().path()).toString(),
-																 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+	fs::path unpack_location = QFileDialog::getExistingDirectory(
+								   this, "Choose Unpacking Location",
+								   settings.value("openDirectory", QDir::current().path()).toString(),
+								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
 								   .toStdString();
 
 	if (unpack_location.empty()) {
@@ -320,7 +318,8 @@ void HiveWE::save_as() {
 
 	fs::path file_name = QFileDialog::getExistingDirectory(this, "Choose Save Location",
 														   settings.value("openDirectory", QDir::current().path()).toString(),
-														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdString();
+														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+							 .toStdString();
 
 	if (file_name.empty()) {
 		return;
@@ -424,25 +423,6 @@ void HiveWE::switch_warcraft() {
 	if (directory != hierarchy.warcraft_directory) {
 		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 	}
-}
-
-void HiveWE::switch_camera() {
-	//if (camera == &ui.widget->tps_camera) {
-	//	ui.widget->fps_camera.horizontal_angle = ui.widget->tps_camera.horizontal_angle;
-	//	ui.widget->fps_camera.vertical_angle = ui.widget->tps_camera.vertical_angle;
-
-	//	ui.widget->fps_camera.position = ui.widget->tps_camera.position;
-	//	camera = &ui.widget->fps_camera;
-	//	ui.actionDoodads->setEnabled(false);
-	//} else {
-	//	ui.widget->tps_camera.horizontal_angle = ui.widget->fps_camera.horizontal_angle;
-	//	ui.widget->tps_camera.vertical_angle = ui.widget->fps_camera.vertical_angle;
-
-	//	ui.widget->tps_camera.position = ui.widget->fps_camera.position;
-	//	camera = &ui.widget->tps_camera;
-	//	ui.actionDoodads->setEnabled(true);
-	//}
-	//camera->update(0);
 }
 
 // ToDo move to terrain class?

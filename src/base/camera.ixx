@@ -60,12 +60,6 @@ export struct Camera {
 
 	glm::vec4 frustum_planes[6];
 
-	// Used for decomposing camera information to get rotation, for camera-centric Billboarded model elements
-	glm::vec3 decomposed_scale;
-	glm::vec3 decomposed_translation;
-	glm::vec3 decomposed_skew;
-	glm::vec4 decomposed_perspective;
-
 	float horizontal_angle = 0.f;
 	float vertical_angle = -0.977f;
 
@@ -191,8 +185,6 @@ export struct Camera {
 		return v0 && v1 && v2 && v3 && v4;
 	}
 
-	bool rolling = false;
-
 	void update(double delta) {
 		direction = glm::vec3(
 			std::cos(vertical_angle) * std::sin(horizontal_angle),
@@ -212,7 +204,7 @@ export struct Camera {
 		// The vector that is perpendicular to the up vector, thus points forward
 		forward = glm::cross(X, up);
 
-		if (input_handler.key_pressed(Qt::Key_Left)) { // glm::vec3(-40, 0, 0)
+		if (input_handler.key_pressed(Qt::Key_Left)) {
 			position += -X * 40.f * static_cast<float>(delta) * (distance / 30.f);
 		} else if (input_handler.key_pressed(Qt::Key_Right)) {
 			position += X * 40.f * static_cast<float>(delta) * (distance / 30.f);
@@ -223,23 +215,10 @@ export struct Camera {
 		} else if (input_handler.key_pressed(Qt::Key_Down)) {
 			position += forward * 40.f * static_cast<float>(delta) * (distance / 30.f);
 		}
-		//position.z = map.terrain.interpolated_height(position.x, position.y);
 
 		projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 		view = glm::lookAt(position - direction * distance, position, up);
 		projection_view = projection * view;
-
-		// for billboarded animated mesh
-		glm::vec3 opDirection = -direction; // camera->position - this->position;
-
-		glm::vec3 opDirectionZ = glm::normalize(glm::vec3(opDirection.x, opDirection.y, 0));
-		float angleZ = glm::atan(opDirectionZ.y, opDirectionZ.x);
-		glm::vec3 axisZ = glm::vec3(0, 0, 1);
-
-		glm::vec3 opDirectionY = glm::normalize(opDirection);
-		glm::vec3 axisY = glm::vec3(0, -1, 0);
-
-		//decomposed_rotation = glm::angleAxis(angleZ, axisZ) * glm::angleAxis(glm::asin(opDirectionY.z), axisY);
 
 		extract_frustrum_planes(projection, view);
 	}
@@ -247,49 +226,34 @@ export struct Camera {
 	void mouse_move_event(QMouseEvent* event) {
 		glm::vec2 diff = input_handler.mouse - input_handler.previous_mouse;
 
-		if (rolling || (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier)) {
+		if (event->buttons() == Qt::RightButton && event->modifiers() & Qt::ControlModifier) {
 			horizontal_angle += diff.x * 0.0025f;
 			vertical_angle -= diff.y * 0.0025f;
 			vertical_angle = std::max(-glm::pi<float>() / 2.f + 0.001f, std::min(vertical_angle, glm::pi<float>() / 2.f - 0.001f));
-			update(0);
+			update(0.0);
 		} else if (event->buttons() == Qt::RightButton) {
 			position += X * (-diff.x * 0.025f * (distance / 30.f));
 			position += forward * (-diff.y * 0.025f * (distance / 30.f));
-			//position.z = map.terrain.interpolated_height(position.x, position.y);
-			update(0);
+			update(0.0);
 		}
 	}
 
 	void mouse_scroll_event(QWheelEvent* event) {
 		distance = std::clamp(distance * std::pow(0.999f, static_cast<float>(event->angleDelta().y())), 0.001f, 1000.f);
-		update(0);
+		update(0.0);
 	}
 
-	void mouse_press_event(QMouseEvent* event) {
-		switch (event->button()) {
-			case Qt::MiddleButton:
-				rolling = true;
-				break;
-			default:
-				break;
-		}
+	void mouse_press_event(QMouseEvent* event) {	
 	}
 
 	void mouse_release_event(QMouseEvent* event) {
-		switch (event->button()) {
-			case Qt::MiddleButton:
-				rolling = false;
-				break;
-			default:
-				break;
-		}
 	}
 
 	void reset() {
-		distance = 20;
+		distance = 20.f;
 		horizontal_angle = 0.0f;
 		vertical_angle = -0.977f;
-		update(0);
+		update(0.0);
 	}
 };
 

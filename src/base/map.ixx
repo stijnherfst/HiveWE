@@ -519,6 +519,7 @@ export class Map : public QObject {
 			return;
 		}
 
+		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y, true);
 		camera.update(delta);
 
 		// Update current water texture index

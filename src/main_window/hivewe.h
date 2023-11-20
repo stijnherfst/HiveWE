@@ -64,7 +64,6 @@ private:
 	void resizeEvent(QResizeEvent* event) override;
 	void moveEvent(QMoveEvent* event) override;
 
-	void switch_camera();
 	void switch_warcraft();
 	void import_heightmap();
 	void save_window_state();

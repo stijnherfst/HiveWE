@@ -129,7 +129,6 @@ void GLWidget::paintGL() {
 	glClearColor(0.f, 0.f, 0.f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
 	glBindVertexArray(vao);
 	map->render();
 
@@ -150,13 +149,14 @@ void GLWidget::paintGL() {
 		p.drawText(10, 20, QString::fromStdString(std::format("Total time: {:.2f}ms", average_frametime * 1000.0)));
 
 		// General info
-		p.drawText(300, 20, QString::fromStdString(std::format("Mouse Grid Position X:{:.4f} Y:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y)));
+		p.drawText(300, 20, QString::fromStdString(std::format("Mouse World Position X:{:.4f} Y:{:.4f} Z:{:.4f}", input_handler.mouse_world.x, input_handler.mouse_world.y, input_handler.mouse_world.z)));
+		p.drawText(300, 35, QString::fromStdString(std::format("Camera Position X:{:.4f} Y:{:.4f} Z:{:.4f}", camera.position.x, camera.position.y, camera.position.z)));
 		if (map->brush) {
-			p.drawText(300, 35, QString::fromStdString(std::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
+			p.drawText(300, 50, QString::fromStdString(std::format("Brush Grid Position X:{:.4f} Y:{:.4f}", map->brush->get_position().x, map->brush->get_position().y)));
 		}
 
-		p.drawText(300, 50, QString::fromStdString(std::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
-		p.drawText(300, 64, QString::fromStdString(std::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
+		p.drawText(300, 65, QString::fromStdString(std::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
+		p.drawText(300, 80, QString::fromStdString(std::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
 
 		p.end();
 

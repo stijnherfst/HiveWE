@@ -796,7 +796,7 @@ namespace mdx {
 			IDs.reserve(node_count);
 			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
-					std::print("Invalid node \"{}\" with ID -1\n", node.name);
+					std::println("Invalid node \"{}\" with ID -1", node.name);
 					return;
 				}
 				IDs.push_back(node.id);
@@ -810,7 +810,7 @@ namespace mdx {
 
 			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
-					std::print("Invalid node \"{}\" with ID -1\n", node.name);
+					std::println("Invalid node \"{}\" with ID -1", node.name);
 					return;
 				}
 				node.id = remapping[node.id];
