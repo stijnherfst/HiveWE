@@ -460,6 +460,12 @@ void DoodadBrush::apply(double frame_delta) {
 	if (random_scale) {
 		std::random_device rd;
 		std::mt19937 gen(rd());
+
+		const bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+
+		float min_scale = slk.data<float>("minscale", doodad.id);
+		float max_scale = slk.data<float>("maxscale", doodad.id);
 		std::uniform_real_distribution dist(min_scale, max_scale);
 		doodad.scale = glm::vec3(dist(gen));
 	}
@@ -616,28 +622,15 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 	doodad.init(id, map->doodads.get_mesh(id, variation));
 
-	min_scale = slk.data<float>("minscale", doodad.id);
-	max_scale = slk.data<float>("maxscale", doodad.id);
-
-	if (doodad.pathing) {
-		free_placement = false;
-		set_size(std::max(doodad.pathing->width, doodad.pathing->height));
-
-		free_rotation = doodad.pathing->width == doodad.pathing->height;
-		free_rotation = free_rotation && doodad.pathing->homogeneous;
-		free_rotation = free_rotation && slk.data<float>("fixedrot", doodad.id) < 0.f;
-	} else {
-		free_placement = true;
-		free_rotation = true;
-	}
-
-	set_random_rotation();
-	set_shape(shape);
-
+	// It might be initially incorrect because another doodad.angle is not reset in init()
+	doodad.angle = Doodad::acceptable_angle(doodad.id, doodad.pathing, doodad.angle, doodad.angle);
 	if (random_rotation) {
 		set_random_rotation();
 	}
 
+	// Same as above for the scale
+	float min_scale = slk.data<float>("minscale", doodad.id);
+	float max_scale = slk.data<float>("maxscale", doodad.id);
 	doodad.scale = glm::clamp(doodad.scale, min_scale, max_scale);
 	if (random_scale) {
 		std::random_device rd;
@@ -645,6 +638,11 @@ void DoodadBrush::set_doodad(const std::string& id) {
 		std::uniform_real_distribution dist(min_scale, max_scale);
 		doodad.scale = glm::vec3(dist(gen));
 	}
+
+	if (doodad.pathing) {
+		set_size(std::max(doodad.pathing->width, doodad.pathing->height));
+	}
+	set_shape(shape);
 }
 
 void DoodadBrush::start_action(Action new_action) {

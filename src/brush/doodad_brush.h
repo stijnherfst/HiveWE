@@ -19,9 +19,6 @@ class DoodadBrush : public Brush {
 public:
 	Doodad::State state = Doodad::State::visible_solid;
 
-	bool free_placement = false;
-	bool free_rotation = false;
-
 	bool random_variation = true;
 	bool random_scale = true;
 	bool random_rotation = true;
@@ -30,9 +27,6 @@ public:
 	bool select_destructibles = true;
 
 	bool lock_doodad_z = false;
-
-	float min_scale = 1.f;
-	float max_scale = 1.f;
 
 	std::unique_ptr<DoodadAddAction> doodad_undo;
 	std::unique_ptr<DoodadStateAction> doodad_state_undo;

@@ -252,17 +252,6 @@ void Doodads::save() const {
 void Doodads::create() {
 	for (auto&& i : doodads) {
 		i.init(i.id, get_mesh(i.id, i.variation));
-		//i.mesh = get_mesh(i.id, i.variation);
-		//i.skeleton = SkeletalModelInstance(i.mesh->model);
-		//// Get pathing map
-		//const bool is_doodad = doodads_slk.row_headers.contains(i.id);
-		//const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-		//const std::string pathing_texture_path = slk.data("pathtex", i.id);
-		//if (hierarchy.file_exists(pathing_texture_path)) {
-		//	i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
-		//}
-		//i.update();
 	}
 
 	for (auto&& i : special_doodads) {
