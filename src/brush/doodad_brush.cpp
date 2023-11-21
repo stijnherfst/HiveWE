@@ -436,7 +436,7 @@ void DoodadBrush::apply(double frame_delta) {
 	}
 
 	glm::vec3 doodad_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, doodad.pathing, doodad.angle), 0.f);
-	doodad_position.z = map->terrain.interpolated_height(position.x, position.y, false);
+	doodad_position.z = map->terrain.interpolated_height(doodad_position.x, doodad_position.y, false);
 
 	doodad.creation_number = ++Doodad::auto_increment;
 	map->doodads.add_doodad(doodad);
@@ -483,7 +483,7 @@ void DoodadBrush::render_brush() {
 	}
 
 	glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, doodad.pathing, doodad.angle), 0.f);
-	final_position.z = map->terrain.interpolated_height(doodad.position.x, doodad.position.y, false);
+	final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, false);
 
 	doodad.position = final_position;
 	doodad.update();
