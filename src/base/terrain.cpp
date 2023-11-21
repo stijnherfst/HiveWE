@@ -268,7 +268,7 @@ void Terrain::create() {
 		if (texture->width != 128 || texture->height != 128) {
 			std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
 		}
-		glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, GL_RGB, GL_UNSIGNED_BYTE, texture->data.data());
+		glTextureSubImage3D(water_texture_array, 0, 0, 0, i, texture->width, texture->height, 1, texture->channels == 4 ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE, texture->data.data());
 	}
 	glGenerateTextureMipmap(water_texture_array);
 
