@@ -6,9 +6,9 @@ export module WindowHandler;
 
 export class WindowHandler : public QObject {
 	Q_OBJECT
+	std::vector<std::pair<std::string, QWidget*>> windows;
 
   public:
-	std::vector<std::pair<std::string, QWidget*>> windows;
 
 	/// Creates a window of type T if one doesn't exist yet. Otherwise it raises to the foreground and activates the window.
 	template <typename T>
@@ -31,6 +31,12 @@ export class WindowHandler : public QObject {
 			return window;
 		}
 		return nullptr;
+	}
+
+	void close_all() {
+		for (const auto& [name, window] : windows) {
+			window->close();
+		}
 	}
 };
 

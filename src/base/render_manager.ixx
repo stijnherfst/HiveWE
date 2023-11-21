@@ -125,20 +125,18 @@ export class RenderManager {
 		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
 		instance_skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform1i(2, render_lighting);
 		glUniform3fv(3, 1, &light_direction.x);
 		glBlendFunc(GL_ONE, GL_ZERO);
 
 		for (const auto& i : skinned_meshes) {
-			i->render_opaque(false);
+			i->render_opaque(false, render_lighting);
 		}
 
 		instance_skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform1i(2, render_lighting);
 
 		for (const auto& i : skinned_meshes) {
-			i->render_opaque(true);
+			i->render_opaque(true, render_lighting);
 		}
 
 		// Render transparent meshes
@@ -148,19 +146,17 @@ export class RenderManager {
 
 		skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform1i(2, render_lighting);
 		glUniform3fv(8, 1, &light_direction.x);
 
 		for (const auto& i : skinned_transparent_instances) {
-			i.mesh->render_transparent(i.instance_id, false);
+			i.mesh->render_transparent(i.instance_id, false, render_lighting);
 		}
 
 		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform1i(2, render_lighting);
 
 		for (const auto& i : skinned_transparent_instances) {
-			i.mesh->render_transparent(i.instance_id, true);
+			i.mesh->render_transparent(i.instance_id, true, render_lighting);
 		}
 
 		glBindVertexArray(old_vao);

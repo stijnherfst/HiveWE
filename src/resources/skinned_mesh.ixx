@@ -419,7 +419,7 @@ export class SkinnedMesh : public Resource {
 		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	}
 
-	void render_opaque(bool render_hd) {
+	void render_opaque(bool render_hd, bool render_lighting) {
 		if (!has_mesh) {
 			return;
 		}
@@ -476,6 +476,8 @@ export class SkinnedMesh : public Resource {
 						break;
 				}
 
+				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
+
 				if (j.shading_flags & 0x10) {
 					glDisable(GL_CULL_FACE);
 				} else {
@@ -504,7 +506,7 @@ export class SkinnedMesh : public Resource {
 		}
 	}
 
-	void render_transparent(int instance_id, bool render_hd) {
+	void render_transparent(int instance_id, bool render_hd, bool render_lighting) {
 		if (!has_mesh) {
 			return;
 		}
@@ -563,6 +565,8 @@ export class SkinnedMesh : public Resource {
 						glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
 						break;
 				}
+
+				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 
 				if (j.shading_flags & 0x10) {
 					glDisable(GL_CULL_FACE);

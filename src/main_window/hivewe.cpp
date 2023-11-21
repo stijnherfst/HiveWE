@@ -229,6 +229,7 @@ void HiveWE::load_folder() {
 	QMessageBox* loading_box = new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
 	loading_box->show();
 
+	window_handler.close_all();
 	ui.widget->makeCurrent();
 	delete map;
 	map = new Map();
@@ -296,6 +297,7 @@ void HiveWE::load_mpq() {
 	}
 
 	// Load map
+	window_handler.close_all();
 	delete map;
 	map = new Map();
 

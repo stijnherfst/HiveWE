@@ -4,6 +4,7 @@ module;
 #include <vector>
 #include <memory>
 #include <unordered_map>
+#include <print>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -106,14 +107,14 @@ export class SkeletalModelInstance {
 
 		// Advance current frame
 		const mdx::Sequence& sequence = model->sequences[sequence_index];
-		if (sequence.flags & mdx::Sequence::non_looping) {
-			current_frame = std::min<int>(current_frame + delta * 1000.0, sequence.end_frame);
-		} else {
+		//if (sequence.flags & mdx::Sequence::non_looping) {
+		//	current_frame = std::min<int>(current_frame + delta * 1000.0, sequence.end_frame);
+		//} else {
 			current_frame += delta * 1000.0;
 			if (current_frame > sequence.end_frame) {
 				current_frame = sequence.start_frame;
 			}
-		}
+		//}
 
 		for (const auto& i : render_nodes) {
 			advance_keyframes(i.node->KGTR);
