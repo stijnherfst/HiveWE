@@ -40,7 +40,7 @@ struct Doodad {
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
-	glm::vec3 color;
+	glm::vec3 color = glm::vec3(1.f);
 
 	void init(std::string id, std::shared_ptr<SkinnedMesh> mesh);
 	void update();

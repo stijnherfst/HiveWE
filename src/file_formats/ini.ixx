@@ -96,7 +96,6 @@ namespace ini {
 
 					// Sometimes there are duplicate keys and only the first seen value has to be retained
 					// E.g. the destructable LTt0 in destructableskin.txt has multiple minScale/maxScale
-
 					auto current_section_string = std::string(current_section);
 					auto key_string = std::string(key);
 					if (auto found = ini_data.find(current_section_string); found != ini_data.end()) {

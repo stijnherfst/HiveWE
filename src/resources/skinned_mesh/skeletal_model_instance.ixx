@@ -6,6 +6,7 @@ module;
 #include <unordered_map>
 #include <print>
 
+#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -314,9 +315,9 @@ export class SkeletalModelInstance {
 		}
 	}
 
-
+	// Returns RGB instead of BGR as Blizzard used internally
 	glm::vec3 get_geoset_animation_color(const mdx::GeosetAnimation& animation) const {
-		return interpolate_keyframes(animation.KGAC, animation.color);
+		return interpolate_keyframes(animation.KGAC, animation.color).bgr;
 	}
 
 	float get_geoset_animation_visiblity(const mdx::GeosetAnimation& animation) const {

@@ -351,7 +351,7 @@ namespace mdx {
 	export struct GeosetAnimation {
 		float alpha;
 		uint32_t flags;
-		glm::vec3 color;
+		glm::vec3 color; // BGR, not RGB
 		uint32_t geoset_id;
 
 		TrackHeader<float> KGAO;
