@@ -11,6 +11,7 @@ module;
 
 #include "units.h"
 #include "doodads.h"
+#include "globals.h"
 
 export module RenderManager;
 
@@ -21,6 +22,7 @@ import ResourceManager;
 import Timer;
 import MDX;
 import Camera;
+import Utilities;
 
 export class RenderManager {
   public:
@@ -40,6 +42,9 @@ export class RenderManager {
 	std::vector<SkinnedMesh*> skinned_meshes;
 	std::vector<SkinnedInstance> skinned_transparent_instances;
 
+	std::shared_ptr<SkinnedMesh> click_helper;
+	std::vector<SkeletalModelInstance> click_helper_instances;
+
 	GLuint color_buffer;
 	GLuint depth_buffer;
 	GLuint color_picking_framebuffer;
@@ -48,12 +53,14 @@ export class RenderManager {
 	int window_height;
 
 	RenderManager() {
-		instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instanced_sd.vert", "data/Shaders/skinned_mesh_instanced_sd.frag" });
-		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instanced_hd.vert", "data/Shaders/skinned_mesh_instanced_hd.frag" });
-		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_sd.vert", "data/Shaders/skinned_mesh_sd.frag" });
-		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_hd.vert", "data/Shaders/skinned_mesh_hd.frag" });
-		preskin_mesh_shader = resource_manager.load<Shader>({ "data/Shaders/preskin_mesh.comp" });
-		colored_skinned_shader = resource_manager.load<Shader>({ "data/Shaders/skinned_mesh_instance_color_coded.vert", "data/Shaders/skinned_mesh_instance_color_coded.frag" });
+		instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instanced_sd.vert", "data/shaders/skinned_mesh_instanced_sd.frag" });
+		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instanced_hd.vert", "data/shaders/skinned_mesh_instanced_hd.frag" });
+		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag" });
+		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag" });
+		preskin_mesh_shader = resource_manager.load<Shader>({ "data/shaders/preskin_mesh.comp" });
+		colored_skinned_shader = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag" });
+		
+		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
 
 		glCreateFramebuffers(1, &color_picking_framebuffer);
 
@@ -66,7 +73,7 @@ export class RenderManager {
 		glNamedFramebufferRenderbuffer(color_picking_framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
 
 		if (glCheckNamedFramebufferStatus(color_picking_framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			std::print("ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n");
+			std::println("ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n");
 		}
 	}
 
@@ -76,7 +83,7 @@ export class RenderManager {
 		glDeleteFramebuffers(1, &color_picking_framebuffer);
 	}
 
-	void render_queue(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, glm::vec3 color) {
+	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, glm::vec3 color) {
 		mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
 		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
@@ -106,9 +113,21 @@ export class RenderManager {
 		}
 	}
 
+	// Renders a click helper (little purple checkered box), kinda inefficient but couldn't be bothered writing a whole new rendering path
+	void queue_click_helper(glm::mat4 model) {
+		auto a = SkeletalModelInstance(click_helper->model);
+		a.matrix = model;
+		a.update(0.016f);
+		click_helper_instances.push_back(a);
+	}
+
 	void render(bool render_lighting, glm::vec3 light_direction) {
 		GLint old_vao;
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
+
+		for (const auto& i : click_helper_instances) {
+			queue_render(*click_helper, i, glm::vec3(1.f));
+		}
 
 		uint64_t size = 0;
 		for (const auto& i : skinned_meshes) {
@@ -245,13 +264,41 @@ export class RenderManager {
 		glDepthMask(true);
 		glDisable(GL_BLEND);
 
+		glm::vec3 window = { input_handler.mouse.x, window_height - input_handler.mouse.y, 1.f };
+		glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, window_width, window_height));
+		glm::vec3 ray_origin = camera.position - camera.direction * camera.distance;
+		glm::vec3 ray_direction = glm::normalize(pos - ray_origin);
+
 		colored_skinned_shader->use();
 		for (size_t i = 0; i < doodads.doodads.size(); i++) {
 			const Doodad& doodad = doodads.doodads[i];
 
-			mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
-			if (camera.inside_frustrum(doodad.skeleton.matrix * glm::vec4(extent.minimum, 1.f), doodad.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			const mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
+			glm::vec3 local_min = extent.minimum;
+			glm::vec3 local_max = extent.maximum;
+
+			bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
+			slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+			bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
+			if (use_click_helper) {
+				local_min = glm::min(local_min, click_helper->model->extent.minimum);
+				local_max = glm::max(local_max, click_helper->model->extent.maximum);
+			}
+
+			glm::vec3 min;
+			glm::vec3 max;
+			// From local space to world space
+			transform_aabb_non_uniform(local_min, local_max, min, max, doodad.skeleton.matrix);
+
+			if (intersect_aabb(min, max, ray_origin, ray_direction)) {
 				doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
+
+				if (use_click_helper) {
+					auto a = SkeletalModelInstance(click_helper->model);
+					a.matrix = doodad.skeleton.matrix;
+					a.update(0.016f);
+					click_helper->render_color_coded(a, i + 1);
+				}
 			}
 		}
 

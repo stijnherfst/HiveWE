@@ -324,22 +324,38 @@ namespace slk {
 					}
 
 					const std::string key_lower_stripped = key_lower.substr(0, key_lower.find_first_of(':'));
-
+					
 					std::string id;
-					if (meta_slk.meta_map.contains(key_lower_stripped)) {
-						id = meta_slk.meta_map.at(key_lower_stripped);
-					} else if (meta_slk.meta_map.contains(key_lower_stripped + section_key)) {
-						id = meta_slk.meta_map.at(key_lower_stripped + section_key);
+					if (auto found = meta_slk.meta_map.find(key_lower_stripped); found != meta_slk.meta_map.end()) {
+						id = found->second;
+					} else if (auto found = meta_slk.meta_map.find(key_lower_stripped + section_key); found != meta_slk.meta_map.end()) {
+						id = found->second;
 					} else {
 						size_t nr_position = key_lower_stripped.find_first_of("0123456789");
 						std::string without_numbers = key_lower_stripped.substr(0, nr_position);
 
-						if (meta_slk.meta_map.contains(without_numbers)) {
-							id = meta_slk.meta_map.at(without_numbers);
+						if (auto found = meta_slk.meta_map.find(without_numbers); found != meta_slk.meta_map.end()) {
+							id = found->second;
 						} else {
 							continue;
 						}
 					}
+
+					//std::string id;
+					//if (meta_slk.meta_map.contains(key_lower_stripped)) {
+					//	id = meta_slk.meta_map.at(key_lower_stripped);
+					//} else if (meta_slk.meta_map.contains(key_lower_stripped + section_key)) {
+					//	id = meta_slk.meta_map.at(key_lower_stripped + section_key);
+					//} else {
+					//	size_t nr_position = key_lower_stripped.find_first_of("0123456789");
+					//	std::string without_numbers = key_lower_stripped.substr(0, nr_position);
+
+					//	if (meta_slk.meta_map.contains(without_numbers)) {
+					//		id = meta_slk.meta_map.at(without_numbers);
+					//	} else {
+					//		continue;
+					//	}
+					//}
 
 					const int repeat = meta_slk.data<int>("repeat", id);
 					if (repeat > 0 && !(meta_slk.column_headers.contains("appendindex") && meta_slk.data<int>("appendindex", id) > 0)) {

@@ -112,7 +112,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>Data/Icons/Terrain/boundary_place.png</normaloff>Data/Icons/Terrain/boundary_place.png</iconset>
+           <normaloff>data/icons/terrain/boundary_place.png</normaloff>data/icons/terrain/boundary_place.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -159,7 +159,7 @@
          </property>
          <property name="icon">
           <iconset>
-           <normaloff>Data/Icons/Terrain/boundary_remove.png</normaloff>Data/Icons/Terrain/boundary_remove.png</iconset>
+           <normaloff>data/icons/terrain/boundary_remove.png</normaloff>data/icons/terrain/boundary_remove.png</iconset>
          </property>
          <property name="iconSize">
           <size>
@@ -235,7 +235,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/lower2.png</normaloff>Data/Icons/Terrain/lower2.png</iconset>
+         <normaloff>data/icons/terrain/lower2.png</normaloff>data/icons/terrain/lower2.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -285,7 +285,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/lower1.png</normaloff>Data/Icons/Terrain/lower1.png</iconset>
+         <normaloff>data/icons/terrain/lower1.png</normaloff>data/icons/terrain/lower1.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -335,7 +335,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/level.png</normaloff>Data/Icons/Terrain/level.png</iconset>
+         <normaloff>data/icons/terrain/level.png</normaloff>data/icons/terrain/level.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -388,7 +388,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/raise1.png</normaloff>Data/Icons/Terrain/raise1.png</iconset>
+         <normaloff>data/icons/terrain/raise1.png</normaloff>data/icons/terrain/raise1.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -438,7 +438,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/raise2.png</normaloff>Data/Icons/Terrain/raise2.png</iconset>
+         <normaloff>data/icons/terrain/raise2.png</normaloff>data/icons/terrain/raise2.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -508,7 +508,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/deep_water.png</normaloff>Data/Icons/Terrain/deep_water.png</iconset>
+         <normaloff>data/icons/terrain/deep_water.png</normaloff>data/icons/terrain/deep_water.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -561,7 +561,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/shallow_water.png</normaloff>Data/Icons/Terrain/shallow_water.png</iconset>
+         <normaloff>data/icons/terrain/shallow_water.png</normaloff>data/icons/terrain/shallow_water.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -614,7 +614,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/ramp.png</normaloff>Data/Icons/Terrain/ramp.png</iconset>
+         <normaloff>data/icons/terrain/ramp.png</normaloff>data/icons/terrain/ramp.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -694,7 +694,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/brush_lower.png</normaloff>Data/Icons/Terrain/brush_lower.png</iconset>
+         <normaloff>data/icons/terrain/brush_lower.png</normaloff>data/icons/terrain/brush_lower.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -747,7 +747,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/brush_raise.png</normaloff>Data/Icons/Terrain/brush_raise.png</iconset>
+         <normaloff>data/icons/terrain/brush_raise.png</normaloff>data/icons/terrain/brush_raise.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -800,7 +800,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/brush_ripple.png</normaloff>Data/Icons/Terrain/brush_ripple.png</iconset>
+         <normaloff>data/icons/terrain/brush_ripple.png</normaloff>data/icons/terrain/brush_ripple.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -850,7 +850,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/brush_plateau.png</normaloff>Data/Icons/Terrain/brush_plateau.png</iconset>
+         <normaloff>data/icons/terrain/brush_plateau.png</normaloff>data/icons/terrain/brush_plateau.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -903,7 +903,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Terrain/brush_smooth.png</normaloff>Data/Icons/Terrain/brush_smooth.png</iconset>
+         <normaloff>data/icons/terrain/brush_smooth.png</normaloff>data/icons/terrain/brush_smooth.png</iconset>
        </property>
        <property name="iconSize">
         <size>

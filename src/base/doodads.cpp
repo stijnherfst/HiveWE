@@ -32,7 +32,7 @@ void Doodad::init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
 }
 
 void Doodad::update() {
-	glm::vec3 base_scale = glm::vec3(1.f);
+	float base_scale = 1.f;
 	std::string max_roll;
 	std::string max_pitch;
 	if (doodads_slk.row_headers.contains(id)) {
@@ -41,7 +41,7 @@ void Doodad::update() {
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
 		max_roll = doodads_slk.data("maxroll", id);
 		max_pitch = doodads_slk.data("maxpitch", id);
-		base_scale = glm::vec3(doodads_slk.data<float>("defscale", id));
+		base_scale = doodads_slk.data<float>("defscale", id);
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;

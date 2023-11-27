@@ -39,10 +39,6 @@ export class SkeletalModelInstance {
 	int sequence_index = 0; // can be -1 if not animating
 	int current_frame = 0;
 
-	glm::quat inverseCameraRotationXSpin;
-	glm::quat inverseCameraRotationYSpin;
-	glm::quat inverseCameraRotationZSpin;
-
 	glm::mat4 matrix = glm::mat4(1.f);
 
 	std::vector<CurrentKeyFrame> current_keyframes;
@@ -317,7 +313,7 @@ export class SkeletalModelInstance {
 
 	// Returns RGB instead of BGR as Blizzard used internally
 	glm::vec3 get_geoset_animation_color(const mdx::GeosetAnimation& animation) const {
-		return interpolate_keyframes(animation.KGAC, animation.color).bgr;
+		return interpolate_keyframes<glm::vec3>(animation.KGAC, animation.color.bgr).bgr;
 	}
 
 	float get_geoset_animation_visiblity(const mdx::GeosetAnimation& animation) const {

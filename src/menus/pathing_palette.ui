@@ -98,7 +98,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/walkable.png</normaloff>Data/Icons/walkable.png</iconset>
+         <normaloff>data/icons/walkable.png</normaloff>Data/Icons/walkable.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -124,7 +124,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/flyable.png</normaloff>Data/Icons/flyable.png</iconset>
+         <normaloff>data/icons/flyable.png</normaloff>Data/Icons/flyable.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -150,7 +150,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/buildable.png</normaloff>Data/Icons/buildable.png</iconset>
+         <normaloff>data/icons/buildable.png</normaloff>Data/Icons/buildable.png</iconset>
        </property>
        <property name="iconSize">
         <size>

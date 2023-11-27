@@ -106,7 +106,7 @@ export class Map : public QObject {
 		units_slk.add_column("missilespeed2");
 		units_slk.add_column("buttonpos2");
 
-		units_meta_slk = slk::SLK("Data/Warcraft/UnitMetaData.slk", true);
+		units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
 		units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 		units_meta_slk.build_meta_map();
 
@@ -173,7 +173,7 @@ export class Map : public QObject {
 
 		// Items
 		items_slk = slk::SLK("Units/ItemData.slk");
-		items_meta_slk = slk::SLK("Data/Warcraft/ItemMetaData.slk", true);
+		items_meta_slk = slk::SLK("Units/ItemMetaData.slk");
 		items_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 		items_meta_slk.build_meta_map();
 
@@ -598,10 +598,15 @@ export class Map : public QObject {
 
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
-				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
+				bool is_doodad = doodads_slk.row_headers.contains(i.id);
+				slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+				if (slk.data<bool>("useclickhelper", i.id)) {
+					render_manager.queue_click_helper(i.skeleton.matrix);
+				}
 			}
 			for (const auto& i : doodads.special_doodads) {
-				render_manager.render_queue(*i.mesh, i.skeleton, glm::vec3(1.f));
+				render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f));
 			}
 		}
 
@@ -611,10 +616,10 @@ export class Map : public QObject {
 					continue;
 				} // ToDo handle starting locations
 
-				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
 			}
 			for (auto& i : units.items) {
-				render_manager.render_queue(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
 			}
 		}
 

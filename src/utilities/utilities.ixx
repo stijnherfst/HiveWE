@@ -97,3 +97,54 @@ export glm::vec2 float32x3_to_oct(glm::vec3 v) {
 	// Reflect the folds of the lower hemisphere over the diagonals
 	return (v.z <= 0.f) ? ((1.f - glm::abs(glm::vec2(p.y, p.x))) * sign_not_zero(p)) : p;
 }
+
+// From http://www.jcgt.org/published/0006/02/01/
+export bool intersect_aabb(const glm::vec3& aabb_min, const glm::vec3& aabb_max, const glm::vec3& origin, const glm::vec3& direction) {
+	const glm::vec3 t1 = (aabb_min - origin) / direction;
+	const glm::vec3 t2 = (aabb_max - origin) / direction;
+	const glm::vec3 tmin = glm::min(t1, t2);
+	const glm::vec3 tmax = glm::max(t1, t2);
+	
+	return glm::min(tmax.x, glm::min(tmax.y, tmax.z)) > glm::max(glm::max(tmin.x, 0.f), glm::max(tmin.y, tmin.z));
+}
+
+export bool intersect_sphere(const glm::vec3& origin, const glm::vec3& direction, glm::vec3 position, float radius) {
+	glm::vec3 op = position - origin;
+	float b = glm::dot(op, direction);
+	float disc = b * b - dot(op, op) + radius * radius;
+	return disc >= 0.0f;
+}
+
+// Only works with uniform scaling
+export void transform_aabb_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
+	new_min = transform[3];
+	new_max = transform[3];
+	for (size_t i = 0; i < 3; i++) {
+		for (size_t j = 0; j < 3; j++) {
+			float e = transform[i][j] * min[j];
+			float f = transform[i][j] * max[j];
+			if (e < f) {
+				new_min[i] += e;
+				new_max[i] += f;
+			} else {
+				new_min[i] += f;
+				new_max[i] += e;
+			}
+		}
+	}
+}
+
+// Works with non uniform scaling. For uniform scaling use the faster transform_aabb_uniform()
+export void transform_aabb_non_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
+	glm::vec4 p1 = transform * glm::vec4(min, 1.f);
+	glm::vec4 p2 = transform * glm::vec4(max.x, min.y, min.z, 1.f);
+	glm::vec4 p3 = transform * glm::vec4(max.x, max.y, min.z, 1.f);
+	glm::vec4 p4 = transform * glm::vec4(min.x, max.y, min.z, 1.f);
+	glm::vec4 p5 = transform * glm::vec4(min.x, min.y, max.z, 1.f);
+	glm::vec4 p6 = transform * glm::vec4(max.x, min.y, max.z, 1.f);
+	glm::vec4 p7 = transform * glm::vec4(max, 1.f);
+	glm::vec4 p8 = transform * glm::vec4(min.x, max.y, max.z, 1.f);
+
+	new_min = glm::min(p1, glm::min(p2, glm::min(p3, glm::min(p4, glm::min(p5, glm::min(p6, glm::min(p7, p8)))))));
+	new_max = glm::max(p1, glm::max(p2, glm::max(p3, glm::max(p4, glm::max(p5, glm::max(p6, glm::max(p7, p8)))))));
+}

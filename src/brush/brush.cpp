@@ -16,9 +16,9 @@ import OpenGLUtilities;
 Brush::Brush() {
 	set_size(size);
 
-	selection_shader = resource_manager.load<Shader>({ "Data/Shaders/selection.vert", "Data/Shaders/selection.frag" });
-	selection_circle_shader = resource_manager.load<Shader>({ "Data/Shaders/selection_circle.vert", "Data/Shaders/selection_circle.frag" });
-	brush_shader = resource_manager.load<Shader>({ "Data/Shaders/brush.vert", "Data/Shaders/brush.frag" });
+	selection_shader = resource_manager.load<Shader>({ "data/shaders/selection.vert", "data/shaders/selection.frag" });
+	selection_circle_shader = resource_manager.load<Shader>({ "data/shaders/selection_circle.vert", "data/shaders/selection_circle.frag" });
+	brush_shader = resource_manager.load<Shader>({ "data/shaders/brush.vert", "data/shaders/brush.frag" });
 }
 
 void Brush::set_position(const glm::vec2& new_position) {

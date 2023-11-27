@@ -38,7 +38,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	setCentralWidget(dock_manager);
 
 	QLabel* image = new QLabel();
-	image->setPixmap(QPixmap("Data/Icons/ObjectEditor/background.png"));
+	image->setPixmap(QPixmap("data/icons/object_editor/background.png"));
 	image->setAlignment(Qt::AlignCenter);
 
 	auto centraldock_widget = new ads::CDockWidget("CentralWidget");

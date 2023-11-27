@@ -73,7 +73,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	selection_section->setText("Selection");
 
 	selection_mode->setText("Selection\nMode");
-	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
+	selection_mode->setIcon(QIcon("data/icons/ribbon/select32x32.png"));
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
@@ -82,14 +82,14 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	QRibbonButton* enforce_water_height_limit = new QRibbonButton;
 	enforce_water_height_limit->setText("Enforce Water\nHeight Limit");
-	enforce_water_height_limit->setIcon(QIcon("Data/Icons/Ribbon/variation32x32.png"));
+	enforce_water_height_limit->setIcon(QIcon("data/icons/ribbon/variation32x32.png"));
 	enforce_water_height_limit->setCheckable(true);
 	enforce_water_height_limit->setChecked(true);
 	general_section->addWidget(enforce_water_height_limit);
 
 	QRibbonButton* change_doodad_heights = new QRibbonButton;
 	change_doodad_heights->setText("Update\nDoodad Z");
-	change_doodad_heights->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	change_doodad_heights->setIcon(QIcon("data/icons/ribbon/changeheight32x32.png"));
 	change_doodad_heights->setCheckable(true);
 	change_doodad_heights->setChecked(true);
 	general_section->addWidget(change_doodad_heights);
@@ -99,7 +99,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	QRibbonButton* relative_cliff_heights = new QRibbonButton;
 	relative_cliff_heights->setText("Relative\nHeight");
-	relative_cliff_heights->setIcon(QIcon("Data/Icons/Ribbon/changeheight32x32.png"));
+	relative_cliff_heights->setIcon(QIcon("data/icons/ribbon/changeheight32x32.png"));
 	relative_cliff_heights->setCheckable(true);
 	relative_cliff_heights->setChecked(false);
 	relative_cliff_heights->setEnabled(false);
@@ -110,21 +110,21 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	QRibbonButton* apply_cliff_pathing = new QRibbonButton;
 	apply_cliff_pathing->setText("Cliff\nPathing");
-	apply_cliff_pathing->setIcon(QIcon("Data/Icons/Ribbon/rock32x32.png"));
+	apply_cliff_pathing->setIcon(QIcon("data/icons/ribbon/rock32x32.png"));
 	apply_cliff_pathing->setCheckable(true);
 	apply_cliff_pathing->setChecked(true);
 	pathing_section->addWidget(apply_cliff_pathing);
 
 	QRibbonButton* apply_tile_pathing = new QRibbonButton;
 	apply_tile_pathing->setText("Tile\nPathing");
-	apply_tile_pathing->setIcon(QIcon("Data/Icons/Ribbon/tileset32x32.png"));
+	apply_tile_pathing->setIcon(QIcon("data/icons/ribbon/tileset32x32.png"));
 	apply_tile_pathing->setCheckable(true);
 	apply_tile_pathing->setChecked(true);
 	pathing_section->addWidget(apply_tile_pathing);
 
 	QRibbonButton* apply_water_pathing = new QRibbonButton;
 	apply_water_pathing->setText("Water\nPathing");
-	apply_water_pathing->setIcon(QIcon("Data/Icons/Ribbon/water32x32.png"));
+	apply_water_pathing->setIcon(QIcon("data/icons/ribbon/water32x32.png"));
 	apply_water_pathing->setCheckable(true);
 	apply_water_pathing->setChecked(true);
 	pathing_section->addWidget(apply_water_pathing);
