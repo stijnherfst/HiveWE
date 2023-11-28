@@ -33,29 +33,31 @@ void Doodad::init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
 
 void Doodad::update() {
 	float base_scale = 1.f;
-	std::string max_roll;
-	std::string max_pitch;
+	float max_roll;
+	float max_pitch;
 	if (doodads_slk.row_headers.contains(id)) {
 		color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
 		color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 		color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;
-		max_roll = doodads_slk.data("maxroll", id);
-		max_pitch = doodads_slk.data("maxpitch", id);
+		max_roll = doodads_slk.data<float>("maxroll", id);
+		max_pitch = doodads_slk.data<float>("maxpitch", id);
 		base_scale = doodads_slk.data<float>("defscale", id);
 	} else {
 		color.r = destructibles_slk.data<float>("colorr", id) / 255.f;
 		color.g = destructibles_slk.data<float>("colorg", id) / 255.f;
 		color.b = destructibles_slk.data<float>("colorb", id) / 255.f;
-		max_roll = destructibles_slk.data("maxroll", id);
-		max_pitch = destructibles_slk.data("maxpitch", id);
+		max_roll = destructibles_slk.data<float>("maxroll", id);
+		max_pitch = destructibles_slk.data<float>("maxpitch", id);
 	}
 
 	glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
 
 	constexpr float SAMPLE_RADIUS = 32.f / 128.f;
-	if (!max_pitch.empty() && max_pitch != "-") {
-		float pitch = std::stof(max_pitch);
 
+	float pitch = 0.f;
+	if (max_pitch < 0.f) {
+		pitch = max_pitch;
+	} else if (max_pitch > 0.f) {
 		float forward_x = position.x + (SAMPLE_RADIUS * std::cos(angle));
 		float forward_y = position.y + (SAMPLE_RADIUS * std::sin(angle));
 		float backward_x = position.x - (SAMPLE_RADIUS * std::cos(angle));
@@ -65,12 +67,13 @@ void Doodad::update() {
 		float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
 
 		pitch = std::clamp(std::atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -pitch, pitch);
-		rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
 	}
+	rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
 
-	if (!max_roll.empty() && max_roll != "-") {
-		float roll = std::stof(max_roll);
-
+	float roll = 0.f;
+	if (max_roll < 0.f) {
+		roll = max_roll;
+	} else if (max_roll > 0.f) {
 		float left_of_angle = angle + (3.1415926535 / 2.0);
 		float forward_x = position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
 		float forward_y = position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
@@ -81,8 +84,8 @@ void Doodad::update() {
 		float height2 = map->terrain.interpolated_height(forward_x, forward_y, false);
 
 		roll = std::clamp(atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -roll, roll);
-		rotation *= glm::angleAxis(roll, glm::vec3(1, 0, 0));
 	}
+	rotation *= glm::angleAxis(roll, glm::vec3(1, 0, 0));
 
 	skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
 }
@@ -435,7 +438,7 @@ void Doodads::process_doodad_field_change(const std::string& id, const std::stri
 		}
 	}
 
-	if (field == "maxroll" || field.starts_with("vert")) {
+	if (field == "maxroll" || field == "maxpitch" || field.starts_with("vert")) {
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.update();
@@ -478,7 +481,7 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 		}
 	}
 
-	if (field == "maxroll" || field == "colorr" || field == "colorg" || field == "colorb") {
+	if (field == "maxroll" || field == "maxpitch" || field.starts_with("color")) {
 		for (auto& i : doodads) {
 			if (i.id == id) {
 				i.update();
@@ -486,7 +489,7 @@ void Doodads::process_destructible_field_change(const std::string& id, const std
 		}
 	}
 
-	if (field == "pathTex") {
+	if (field == "pathtex") {
 		const std::string pathing_texture_path = destructibles_slk.data("pathtex", id);
 
 		if (hierarchy.file_exists(pathing_texture_path)) {

@@ -191,6 +191,24 @@ export class Map : public QObject {
 		doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 		doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
 
+		// Sometimes fields are empty or "-" which denotes empty aka the value 0.0
+		for (auto& [key, fields] : doodads_slk.base_data) {
+			if (auto found = fields.find("maxpitch"); found != fields.end()) {
+				if (found->second.empty() || found->second == "-") {
+					found->second = "0";
+				}
+			} else {
+				fields["maxpitch"] = "0";
+			}
+			if (auto found = fields.find("maxroll"); found != fields.end()) {
+				if (found->second.empty() || found->second == "-") {
+					found->second = "0";
+				}
+			} else {
+				fields["maxroll"] = "0";
+			}
+		}
+
 		// Destructables
 		destructibles_slk = slk::SLK("Units/DestructableData.slk");
 		destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
@@ -202,6 +220,24 @@ export class Map : public QObject {
 		destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"), destructibles_meta_slk);
 		destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 		destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
+
+		// Sometimes fields are empty or "-" which denotes empty aka the value 0.0
+		for (auto& [key, fields] : destructibles_slk.base_data) {
+			if (auto found = fields.find("maxpitch"); found != fields.end()) {
+				if (found->second.empty() || found->second == "-") {
+					found->second = "0";
+				}
+			} else {
+				fields["maxpitch"] = "0";
+			}
+			if (auto found = fields.find("maxroll"); found != fields.end()) {
+				if (found->second.empty() || found->second == "-") {
+					found->second = "0";
+				}
+			} else {
+				fields["maxroll"] = "0";
+			}
+		}
 
 		upgrade_slk = slk::SLK("Units/UpgradeData.slk");
 		upgrade_meta_slk = slk::SLK("Units/UpgradeMetaData.slk");
