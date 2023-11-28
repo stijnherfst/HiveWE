@@ -54,6 +54,9 @@ void UnitBrush::key_press_event(QKeyEvent* event) {
 				selections.clear();
 				selections.reserve(map->units.units.size());
 				for (auto& i : map->units.units) {
+					if (i.id == "sloc") {
+						continue;
+					}
 					selections.emplace(&i);
 				}
 				emit selection_changed();
