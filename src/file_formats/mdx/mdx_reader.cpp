@@ -101,8 +101,7 @@ namespace mdx {
 
 				// Only the first layer's properties matter
 				if (i > 0) {
-					reader.read<uint32_t>();
-					reader.read<uint32_t>();
+					reader.advance(8);
 					LayerTexture layer_texture;
 					layer_texture.id = reader.read<uint32_t>();
 					layer.texturess.push_back(layer_texture);

@@ -86,7 +86,7 @@ export struct ItemSet {
 	std::vector<std::pair<int, std::string>> items;
 };
 
-// Returns ±1
+// Returns 1 or -1
 export glm::vec2 sign_not_zero(glm::vec2 v) {
 	return glm::vec2((v.x >= 0.f) ? +1.f : -1.f, (v.y >= 0.f) ? +1.f : -1.f);
 }

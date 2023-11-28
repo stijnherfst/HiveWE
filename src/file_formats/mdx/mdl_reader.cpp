@@ -42,11 +42,11 @@ namespace mdx {
 		}
 
 		std::optional<std::string> consume(std::string_view token) {
-			if (position >= tokens.size()) {
-				[[unlikely]] return std::format("Expected: {}, but we reached the end of the file", token);
+			if (position >= tokens.size()) [[unlikely]] {
+				return std::format("Expected: {}, but we reached the end of the file", token);
 			}
-			if (tokens[position] != token) {
-				[[unlikely]] return std::format("Expected: {}, got: {}", token, tokens[position]);
+			if (tokens[position] != token) [[unlikely]] {
+				return std::format("Expected: {}, got: {}", token, tokens[position]);
 			}
 			position += 1;
 			return std::nullopt;
@@ -54,13 +54,13 @@ namespace mdx {
 
 		template <typename F>
 		std::optional<std::string> consume_any(F callback) {
-			if (position >= tokens.size()) {
-				[[unlikely]] return std::format("Expected a name/value, but we reached the end of the file");
+			if (position >= tokens.size()) [[unlikely]] {
+				 return std::format("Expected a name/value, but we reached the end of the file");
 			}
 			std::optional<std::string> error = callback(tokens[position]);
 			position += 1;
-			if (error) {
-				[[unlikely]] return error;
+			if (error) [[unlikely]] {
+				return error;
 			}
 			return std::nullopt;
 		}
@@ -68,12 +68,12 @@ namespace mdx {
 		template <typename F>
 		std::optional<std::string> consume_quoted_string(F callback) {
 			auto token = current();
-			if (position >= tokens.size()) {
-				[[unlikely]] return std::format("Expected quoted string (e.g. \"SomeName\"), but we reached the end of the file");
+			if (position >= tokens.size()) [[unlikely]] {
+				return std::format("Expected quoted string (e.g. \"SomeName\"), but we reached the end of the file");
 			}
 
-			if (token.size() < 3 || token.front() != '\"' || token.back() != '\"') {
-				[[unlikely]] return std::format("The name should be surrounded in quotes \"likethis\" and at least one character long, but is: {}", token);
+			if (token.size() < 3 || token.front() != '\"' || token.back() != '\"') [[unlikely]] {
+				return std::format("The name should be surrounded in quotes \"likethis\" and at least one character long, but is: {}", token);
 			}
 
 			callback(token.substr(1, token.size() - 2)); // Get rid of quotes
@@ -112,13 +112,14 @@ namespace mdx {
 
 		TRY_PASS(reader.consume_any([&](std::string_view token) -> std::optional<std::string> {
 			std::from_chars(token.data(), token.data() + token.size(), mdx.version);
-			if (mdx.version != 800 || mdx.version != 900 || mdx.version != 1000) {
+			if (mdx.version != 800 || mdx.version != 900 || mdx.version != 1000) [[unlikely]] {
 				return std::format("Invalid version {}, expected 800, 900, 1000", mdx.version);
 			}
 			return std::nullopt;
 		}));
 
 		TRY_PASS(reader.consume("}"));
+		return std::nullopt;
 	}
 
 	std::optional<std::string> parse_model_chunk(MDLReader& reader, MDX& mdx) {
@@ -143,6 +144,7 @@ namespace mdx {
 		}
 
 		TRY_PASS(reader.consume("}"));
+		return std::nullopt;
 	}
 
 	result<MDX, std::string> MDX::from_mdl(std::string_view mdl) {
