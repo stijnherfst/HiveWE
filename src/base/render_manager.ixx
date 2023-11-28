@@ -187,6 +187,8 @@ export class RenderManager {
 			i->instance_bone_matrices.clear();
 		}
 
+		click_helper_instances.clear();
+
 		glDepthMask(true);
 
 		skinned_meshes.clear();

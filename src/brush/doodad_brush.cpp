@@ -22,6 +22,9 @@ DoodadBrush::DoodadBrush()
 	granularity = 2.f;
 	uv_offset_granularity = 2;
 	brush_offset = { 0.0f, 0.0f };
+
+	click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
+	click_helper_skeleton = SkeletalModelInstance(click_helper->model);
 }
 
 /// Gets a random variation from the possible_variation list
@@ -495,6 +498,15 @@ void DoodadBrush::render_brush() {
 	doodad.update();
 	doodad.skeleton.update(0.016f);
 	map->render_manager.queue_render(*doodad.mesh, doodad.skeleton, doodad.color);
+
+	bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
+	slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+	bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
+	if (use_click_helper) {
+		click_helper_skeleton.matrix = doodad.skeleton.matrix;
+		click_helper_skeleton.update(0.016f);
+		map->render_manager.queue_render(*click_helper, click_helper_skeleton, glm::vec3(1.f));
+	}
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle
@@ -509,6 +521,14 @@ void DoodadBrush::render_selection() const {
 			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
 		} else {
 			selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
+		}
+		
+		bool is_doodad = doodads_slk.row_headers.contains(i->id);
+		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		bool use_click_helper = slk.data<bool>("useclickhelper", i->id);
+
+		if (use_click_helper) {
+			selection_scale = std::max(selection_scale, click_helper->model->extent.bounds_radius / 128.f);
 		}
 		if (selection_scale < 0.1f) { // Todo hack, what is the correct approach?
 			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;

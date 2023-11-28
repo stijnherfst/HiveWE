@@ -16,7 +16,10 @@ class DoodadBrush : public Brush {
 	int variation = 0;
 
 	Doodad doodad;
-public:
+	std::shared_ptr<SkinnedMesh> click_helper;
+	SkeletalModelInstance click_helper_skeleton;
+
+  public:
 	Doodad::State state = Doodad::State::visible_solid;
 
 	bool random_variation = true;
