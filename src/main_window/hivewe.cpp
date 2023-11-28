@@ -354,7 +354,7 @@ void HiveWE::export_mpq() {
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 
-	unsigned long file_count = std::distance(fs::directory_iterator{ map->filesystem_path }, {});
+	uint64_t file_count = std::distance(fs::recursive_directory_iterator{ map->filesystem_path }, {});
 
 	HANDLE handle;
 	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
@@ -366,7 +366,10 @@ void HiveWE::export_mpq() {
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {
-			SFileAddFileEx(handle, entry.path().c_str(), entry.path().lexically_relative(map->filesystem_path).string().c_str(), MPQ_FILE_COMPRESS, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+			bool success = SFileAddFileEx(handle, entry.path().c_str(), entry.path().lexically_relative(map->filesystem_path).string().c_str(), MPQ_FILE_COMPRESS, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+			if (!success) {
+				std::println("Error {} adding file {}", GetLastError(), entry.path().string());
+			}
 		}
 	}
 	SFileCompactArchive(handle, nullptr, false);
