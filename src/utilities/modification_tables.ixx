@@ -2,6 +2,7 @@ module;
 
 #include <vector>
 #include <filesystem>
+#include <print>
 
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
@@ -29,7 +30,11 @@ void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& s
 		const std::string modified_id = reader.read_string(4);
 
 		if (version >= 3) {
-			reader.advance(4 * reader.read<uint32_t>());
+			uint32_t set_count = reader.read<uint32_t>();
+			if (set_count > 1) {
+				std::println("Set count of {} detected", set_count);
+			}
+			uint32_t set_flag = reader.read<uint32_t>();
 		}
 		if (modification && !slk.base_data.contains(modified_id)) {
 			slk.copy_row(original_id, modified_id, false);
@@ -71,12 +76,12 @@ void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& s
 					data = reader.read_c_string();
 					break;
 				default:
-					std::cout << "Unknown data type " << type << " while loading modification table.";
+					std::println("Unknown data type {} while loading modification table.", type);
 			}
 			reader.advance(4);
 
 			if (column_header == "") {
-				std::cout << "Unknown mod id: " << modification_id << "\n";
+				std::println("Unknown mod id: {}", modification_id);
 				continue;
 			}
 
@@ -132,8 +137,8 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 		}
 
 		// 1.33 fields not yet researched
-		sub_writer.write<uint32_t>(1);
-		sub_writer.write<uint32_t>(0);
+		sub_writer.write<uint32_t>(1); // sets count
+		sub_writer.write<uint32_t>(0); // set flags
 
 		// Split properties, or another way to save war3mapSkin.w3* files correctly?
 		// netsafe slk field is probably what vanilla uses (if anyone wants to try this)
@@ -211,22 +216,25 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				}
 
 				if (meta_data_key.empty()) {
-					puts("Empty meta data key");
+					std::println("Empty meta data key");
 					exit(0);
 				}
 			}
 
 			if (meta_data_key.empty()) {
-				puts("Empty meta data key");
+				std::println("Empty meta data key");
 				exit(0);
 			}
 
 			sub_writer.write_string(meta_data_key);
+			// There's an error in AbilityMetaData.slk where Crs1 instead uses Crs so we need to pad till 4 characters
+			for (size_t i = 0; i < 4 - meta_data_key.size(); i++) {
+				sub_writer.write<uint8_t>('\0');
+			}
 
 			int write_type = -1;
 			const std::string type = meta_slk.data("type", meta_data_key);
 			if (type == "int" || type == "bool" || type.ends_with("Flags") || type == "attackBits" || type == "channelType" || type == "deathType" || type == "defenseTypeInt" || type == "detectionType" || type == "spellDetail" || type == "teamColor" || type == "techAvail") {
-
 				write_type = 0;
 			} else if (type == "real") {
 				write_type = 1;
