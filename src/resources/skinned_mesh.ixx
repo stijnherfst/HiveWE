@@ -463,7 +463,7 @@ export class SkinnedMesh : public Resource {
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 						break;
 					case 3:
-						glBlendFunc(GL_ONE, GL_ONE);
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 						break;
 					case 4:
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -553,7 +553,7 @@ export class SkinnedMesh : public Resource {
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 						break;
 					case 3:
-						glBlendFunc(GL_ONE, GL_ONE);
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 						break;
 					case 4:
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
