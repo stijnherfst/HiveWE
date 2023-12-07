@@ -2,16 +2,15 @@
 
 layout (location = 1) uniform mat4 MVP;
 
-layout (binding = 0) uniform sampler2D height_texture;
 layout (binding = 1) uniform sampler2D height_cliff_texture;
-layout (binding = 2) uniform usampler2D terrain_texture_list;
-layout (binding = 22) uniform sampler2D terrain_exists_texture;
 
 layout (location = 0) out vec2 UV;
 layout (location = 1) out flat uvec4 texture_indices;
 layout (location = 2) out vec2 pathing_map_uv;
 layout (location = 3) out vec3 normal;
 layout (location = 4) out vec2 world_position;
+
+layout (location = 7) uniform ivec2 map_size;
 
 const vec2[6] position = vec2[6](
 	vec2(1, 1),
@@ -22,28 +21,44 @@ const vec2[6] position = vec2[6](
 	vec2(1, 1)
 );
 
+layout(std430, binding = 0) buffer layoutName {
+    float clif_levels[];
+};
+
+layout(std430, binding = 1) buffer layoutName1 {
+    float ground_heights[];
+};
+
+layout(std430, binding = 2) buffer layoutName2 {
+    uvec4 terrain_texture_list[];
+};
+
+layout(std430, binding = 3) buffer layoutName3 {
+    unsigned char terrain_exists[];
+};
+
+
 void main() { 
-	const ivec2 size = textureSize(terrain_texture_list, 0);
-	const ivec2 pos = ivec2(gl_InstanceID % size.x, gl_InstanceID / size.x);
+	const ivec2 pos = ivec2(gl_InstanceID % (map_size.x - 1), gl_InstanceID / (map_size.x - 1));
 
 	vec2 vPosition = position[gl_VertexID];
 	const ivec2 height_pos = ivec2(vPosition + pos);
-	const vec4 height = texelFetch(height_cliff_texture, height_pos, 0);
+	const float height = clif_levels[height_pos.y * map_size.x + height_pos.x];
 
 	const ivec3 offset = ivec3(1, 1, 0);
-	const float hL = texelFetch(height_texture, height_pos - offset.xz, 0).r;
-	const float hR = texelFetch(height_texture, height_pos + offset.xz, 0).r;
-	const float hD = texelFetch(height_texture, height_pos - offset.zy, 0).r;
-	const float hU = texelFetch(height_texture, height_pos + offset.zy, 0).r;
+	const float hL = ground_heights[height_pos.y * map_size.x + max(height_pos.x - 1, 0)];
+	const float hR = ground_heights[height_pos.y * map_size.x + min(height_pos.x + 1, map_size.x)];
+	const float hD = ground_heights[max(height_pos.y - 1, 0) * map_size.x + height_pos.x];
+	const float hU = ground_heights[min(height_pos.y + 1, map_size.y) * map_size.x + height_pos.x];
 	normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
 	UV = vec2(vPosition.x, 1 - vPosition.y);
-	texture_indices = texelFetch(terrain_texture_list, pos, 0);
+	texture_indices = terrain_texture_list[pos.y * (map_size.x - 1) + pos.x];
 	pathing_map_uv = (vPosition + pos) * 4;	
 
-	const ivec2 pos2 = ivec2(gl_InstanceID % (size.x + 1), gl_InstanceID / (size.x + 1));
-	const bool is_ground = texelFetch(terrain_exists_texture, pos2, 0).r > 0;
+	const ivec2 pos2 = ivec2(gl_InstanceID % map_size.x, gl_InstanceID / map_size.x);
+	const bool is_ground = terrain_exists[pos2.y * map_size.x + pos2.x] > 0u;
 
-	gl_Position = is_ground ? MVP * vec4(vPosition + pos, height.r, 1) : vec4(2.0, 0.0, 0.0, 1.0);
+	gl_Position = is_ground ? MVP * vec4(vPosition + pos, height, 1) : vec4(2.0, 0.0, 0.0, 1.0);
 	world_position = vPosition + pos;
 }

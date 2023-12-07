@@ -71,12 +71,12 @@ class Terrain : public QObject {
 
 	// Sequential versions for GPU uploading
 	std::vector<float> ground_heights;
-	std::vector<float> ground_corner_heights;
-	std::vector<glm::u16vec4> ground_texture_list;
-	std::vector<unsigned char> ground_exists_data;
+	std::vector<float> final_ground_heights;
+	std::vector<glm::uvec4> ground_texture_list;
+	std::vector<uint8_t> ground_exists_data;
 
 	std::vector<float> water_heights;
-	std::vector<unsigned char> water_exists_data;
+	std::vector<uint8_t> water_exists_data;
 	
 	btHeightfieldTerrainShape* collision_shape;
 	btRigidBody* collision_body;
@@ -95,13 +95,13 @@ public:
 	std::vector<std::shared_ptr<GroundTexture>> ground_textures;
 	std::unordered_map<std::string, TilePathingg> pathing_options;
 
-	// GPU textures
-	GLuint ground_height;
-	GLuint ground_corner_height;
-	GLuint ground_texture_data;
-	GLuint ground_exists;
-	GLuint water_height;
-	GLuint water_exists;
+	// GPU buffers
+	GLuint ground_height_buffer;
+	GLuint cliff_level_buffer;
+	GLuint water_height_buffer;
+	GLuint ground_texture_data_buffer;
+	GLuint ground_exists_buffer;
+	GLuint water_exists_buffer;
 
 	std::vector<std::vector<Corner>> corners;
 	// For undo/redo operations
@@ -158,7 +158,7 @@ public:
 
 	int real_tile_texture(int x, int y) const;
 	int get_tile_variation(int ground_texture, int variation) const;
-	glm::u16vec4 get_texture_variations(int x, int y) const;
+	glm::uvec4 get_texture_variations(int x, int y) const;
 
 	float interpolated_height(float x, float y, bool water_too) const;
 	float gradient_y(float x, float y) const;

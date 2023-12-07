@@ -665,7 +665,6 @@ namespace mdx {
 		std::vector<CollisionShape> collision_shapes;
 		std::vector<CornEmitter> corn_emitters;
 		std::vector<FaceFX> facefxes;
-
 		std::vector<Camera> cameras;
 		std::vector<float> bind_poses;
 		std::vector<TextureAnimation> texture_animations;
@@ -795,8 +794,8 @@ namespace mdx {
 			std::vector<int> IDs;
 			IDs.reserve(node_count);
 			for_each_node([&](mdx::Node& node) {
-				if (node.id == -1) {
-					std::println("Invalid node \"{}\" with ID -1", node.name);
+				if (node.id < 0) {
+					std::println("MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id);
 					return;
 				}
 				IDs.push_back(node.id);

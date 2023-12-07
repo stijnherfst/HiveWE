@@ -1,8 +1,6 @@
 #version 450 core
 
-layout (binding = 3) uniform sampler2DArray water_textures;
-layout (binding = 2) uniform sampler2D water_exists_texture;
-
+layout (binding = 0) uniform sampler2DArray water_textures;
 
 layout (location = 6) uniform int current_texture;
 

@@ -28,15 +28,15 @@ float Corner::final_water_height() const {
 }
 
 Terrain::~Terrain() {
-	glDeleteTextures(1, &ground_height);
-	glDeleteTextures(1, &ground_corner_height);
-	glDeleteTextures(1, &ground_texture_data);
-	glDeleteTextures(1, &ground_exists);
 	glDeleteTextures(1, &cliff_texture_array);
-
 	glDeleteTextures(1, &water_texture_array);
-	glDeleteTextures(1, &water_exists);
-	glDeleteTextures(1, &water_height);
+
+	glDeleteBuffers(1, &ground_height_buffer);
+	glDeleteBuffers(1, &cliff_level_buffer);
+	glDeleteBuffers(1, &water_height_buffer);
+	glDeleteBuffers(1, &ground_texture_data_buffer);
+	glDeleteBuffers(1, &ground_exists_buffer);
+	glDeleteBuffers(1, &water_exists_buffer);
 
 	//map->physics.dynamicsWorld->removeRigidBody(collision_body);
 	//delete collision_body;
@@ -194,36 +194,23 @@ void Terrain::create() {
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
 	}
 
-	// prepare GPU data
+	// prepare GPU buffers
 	ground_heights.resize(width * height);
-	ground_corner_heights.resize(width * height);
+	final_ground_heights.resize(width * height);
 	ground_texture_list.resize((width - 1) * (height - 1));
 	ground_exists_data.resize(width * height);
-
 	water_heights.resize(width * height);
 	water_exists_data.resize(width * height);
 
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
-			water_exists_data[j * width + i] = corners[i][j].water;
-			ground_heights[j * width + i] = corners[i][j].height;
-			water_heights[j * width + i] = corners[i][j].water_height;
-		}
-	}
-
 	// Ground
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
-	glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
-	glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
-	glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
-	glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glCreateBuffers(1, &ground_height_buffer);
+	glNamedBufferStorage(ground_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &cliff_level_buffer);
+	glNamedBufferStorage(cliff_level_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &ground_texture_data_buffer);
+	glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &ground_exists_buffer);
+	glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint8_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	// Cliff
 	glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
@@ -236,24 +223,11 @@ void Terrain::create() {
 	}
 	glGenerateTextureMipmap(cliff_texture_array);
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-	glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
-	glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
-	glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
-
 	// Water
-	glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
-	glTextureStorage2D(water_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
-
-	glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
-	glTextureStorage2D(water_exists, 1, GL_R8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glCreateBuffers(1, &water_height_buffer);
+	glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	glCreateBuffers(1, &water_exists_buffer);
+	glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint8_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 	// Water textures
 	glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -272,23 +246,24 @@ void Terrain::create() {
 	}
 	glGenerateTextureMipmap(water_texture_array);
 
-	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
-	update_ground_textures({ 0, 0, width - 1, height - 1 });
-	update_ground_heights({ 0, 0, width - 1, height - 1 });
-
 	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vert", "Data/Shaders/terrain.frag" });
 	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vert", "Data/Shaders/cliff.frag" });
 	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vert", "Data/Shaders/water.frag" });
 
-	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	collision_shape = new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {
 		std::cout << "Error creating Bullet collision shape\n";
 	}
 
 	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it
 	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
 	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
+
+	update_ground_textures({ 0, 0, width - 1, height - 1 });
+	update_ground_heights({ 0, 0, width - 1, height - 1 });
+	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+	update_water({ 0, 0, width - 1, height - 1 });
 	
 	emit minimap_changed(minimap_image());
 }
@@ -349,25 +324,27 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	glUniform1i(2, render_pathing);
 	glUniform1i(3, render_lighting);
 	glUniform3fv(4, 1, &map->light_direction.x);
+	glUniform2i(7, width, height);
+
 	if (map->brush) {
 		glUniform2fv(5, 1, &map->brush->get_position()[0]);
 	}
 
-	glBindTextureUnit(0, ground_height);
-	glBindTextureUnit(1, ground_corner_height);
-	glBindTextureUnit(2, ground_texture_data);
-	glBindTextureUnit(22, ground_exists);
-
 	for (size_t i = 0; i < ground_textures.size(); i++) {
-		glBindTextureUnit(3 + i, ground_textures[i]->id);
+		glBindTextureUnit(i, ground_textures[i]->id);
 	}
-	glBindTextureUnit(20, map->pathing_map.texture_static);
-	glBindTextureUnit(21, map->pathing_map.texture_dynamic);
+	glBindTextureUnit(17, map->pathing_map.texture_static);
+	glBindTextureUnit(18, map->pathing_map.texture_dynamic);
 
 	glUniform1i(6, map->brush && map->brush->get_mode() != Brush::Mode::selection);
 	if (map->brush) {
-		glBindTextureUnit(23, map->brush->brush_texture);
+		glBindTextureUnit(19, map->brush->brush_texture);
 	}
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cliff_level_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ground_height_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ground_texture_data_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ground_exists_buffer);
 
 	// Use gl_VertexID in the shader to determine square position
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
@@ -402,9 +379,13 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 	}
 	glUniform1i(5, map->brush && map->brush->get_mode() != Brush::Mode::selection);
 
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ground_height_buffer);
+
 	glBindTextureUnit(0, cliff_texture_array);
-	glBindTextureUnit(1, ground_height);
 	glBindTextureUnit(2, map->pathing_map.texture_static);
+
+	glUniform2i(7, width, height);
+
 	if (map->brush) {
 		glBindTextureUnit(3, map->brush->brush_texture);
 	}
@@ -427,11 +408,13 @@ void Terrain::render_water() const {
 	glUniform4fv(4, 1, &deep_color_max[0]);
 	glUniform1f(5, water_offset);
 	glUniform1i(6, current_texture);
+	glUniform2i(7, width, height);
 
-	glBindTextureUnit(0, water_height);
-	glBindTextureUnit(1, ground_corner_height);
-	glBindTextureUnit(2, water_exists);
-	glBindTextureUnit(3, water_texture_array);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cliff_level_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, water_height_buffer);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, water_exists_buffer);
+	
+	glBindTextureUnit(0, water_texture_array);
 
 	// Use gl_VertexID in the shader to determine square position
 	glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
@@ -531,14 +514,14 @@ int Terrain::get_tile_variation(const int ground_texture, const int variation) c
 }
 
 /// The 4 ground textures of the tilepoint. First 5 bits are which texture array to use and the next 5 bits are which subtexture to use
-glm::u16vec4 Terrain::get_texture_variations(const int x, const int y) const {
+glm::uvec4 Terrain::get_texture_variations(const int x, const int y) const {
 	const int bottom_left = real_tile_texture(x, y);
 	const int bottom_right = real_tile_texture(x + 1, y);
 	const int top_left = real_tile_texture(x, y + 1);
 	const int top_right = real_tile_texture(x + 1, y + 1);
 
 	std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
-	glm::u16vec4 tiles(17); // 17 is a black transparent texture
+	glm::uvec4 tiles(17); // 17 is a black transparent texture
 	int component = 1;
 
 	tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 5);
@@ -674,31 +657,27 @@ void Terrain::add_undo(const QRect& area, undo_type type) {
 }
 
 void Terrain::upload_ground_heights() const {
-	glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	glNamedBufferSubData(ground_height_buffer, 0, ground_heights.size() * sizeof(float), ground_heights.data());
 }
 
 void Terrain::upload_corner_heights() const {
-	glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+	glNamedBufferSubData(cliff_level_buffer, 0, final_ground_heights.size() * sizeof(float), final_ground_heights.data());
 }
 
 void Terrain::upload_ground_texture() const {
-	glTextureSubImage2D(ground_texture_data, 0, 0, 0, width - 1, height - 1, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, ground_texture_list.data());
+	glNamedBufferSubData(ground_texture_data_buffer, 0, ground_texture_list.size() * sizeof(glm::uvec4), ground_texture_list.data());
 }
 
 void Terrain::upload_ground_exists() const {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTextureSubImage2D(ground_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, ground_exists_data.data());
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glNamedBufferSubData(ground_exists_buffer, 0, ground_exists_data.size() * sizeof(uint8_t), ground_exists_data.data());
 }
 
 void Terrain::upload_water_exists() const {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	glNamedBufferSubData(water_exists_buffer, 0, water_exists_data.size() * sizeof(uint8_t), water_exists_data.data());
 }
 
 void Terrain::upload_water_heights() const {
-	glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
+	glNamedBufferSubData(water_height_buffer, 0, water_heights.size() * sizeof(float), water_heights.data());
 }
 
 void Terrain::update_ground_heights(const QRect& area) {
@@ -730,7 +709,7 @@ void Terrain::update_ground_heights(const QRect& area) {
 			}
 		exit_loop:
 
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height() + ramp_height;
+			final_ground_heights[j * width + i] = corners[i][j].final_ground_height() + ramp_height;
 		}
 	}
 
@@ -890,7 +869,8 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 			const int base = std::min({bottom_left.layer_height, bottom_right.layer_height, top_left.layer_height, top_right.layer_height});
 
 			// Cliff model path
-			std::string file_name = ""s + char('A' + top_left.layer_height - base)
+			std::string file_name = ""s 
+				+ char('A' + top_left.layer_height - base)
 				+ char('A' + top_right.layer_height - base)
 				+ char('A' + bottom_right.layer_height - base)
 				+ char('A' + bottom_left.layer_height - base);
@@ -910,96 +890,95 @@ void Terrain::update_cliff_meshes(const QRect& area) {
 }
 
 void Terrain::resize(size_t new_width, size_t new_height) {
-	glDeleteTextures(1, &ground_height);
-	glDeleteTextures(1, &ground_corner_height);
-	glDeleteTextures(1, &ground_texture_data);
-	glDeleteTextures(1, &ground_exists);
+	//glDeleteTextures(1, &ground_height);
+	//glDeleteTextures(1, &ground_texture_data);
+	//glDeleteTextures(1, &ground_exists);
 
-	glDeleteTextures(1, &water_exists);
-	glDeleteTextures(1, &water_height);
+	//glDeleteTextures(1, &water_exists);
+	//glDeleteTextures(1, &water_height);
 
-	width = new_width;
-	height = new_height;
+	//width = new_width;
+	//height = new_height;
 
-	auto t = corners[0][0];
-	corners.clear();
-	corners.resize(width, std::vector<Corner>(height, t));
+	//auto t = corners[0][0];
+	//corners.clear();
+	//corners.resize(width, std::vector<Corner>(height, t));
 
-	ground_heights.resize(width * height);
-	ground_corner_heights.resize(width * height);
-	ground_texture_list.resize((width - 1) * (height - 1));
-	ground_exists_data.resize(width * height);
+	//ground_heights.resize(width * height);
+	//ground_corner_heights.resize(width * height);
+	//ground_texture_list.resize((width - 1) * (height - 1));
+	//ground_exists_data.resize(width * height);
 
-	water_heights.resize(width * height);
-	water_exists_data.resize(width * height);
+	//water_heights.resize(width * height);
+	//water_exists_data.resize(width * height);
 
-	for (int i = 0; i < width; i++) {
-		for (int j = 0; j < height; j++) {
-			ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
-			water_exists_data[j * width + i] = corners[i][j].water;
-			ground_heights[j * width + i] = corners[i][j].height;
-			water_heights[j * width + i] = corners[i][j].water_height;
-		}
-	}
+	//for (int i = 0; i < width; i++) {
+	//	for (int j = 0; j < height; j++) {
+	//		ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
+	//		water_exists_data[j * width + i] = corners[i][j].water;
+	//		ground_heights[j * width + i] = corners[i][j].height;
+	//		water_heights[j * width + i] = corners[i][j].water_height;
+	//	}
+	//}
 
-	for (int i = 0; i < width - 1; i++) {
-		for (int j = 0; j < height - 1; j++) {
-			Corner& bottom_left = corners[i][j];
-			Corner& bottom_right = corners[i + 1][j];
-			Corner& top_left = corners[i][j + 1];
-			Corner& top_right = corners[i + 1][j + 1];
+	//for (int i = 0; i < width - 1; i++) {
+	//	for (int j = 0; j < height - 1; j++) {
+	//		Corner& bottom_left = corners[i][j];
+	//		Corner& bottom_right = corners[i + 1][j];
+	//		Corner& top_left = corners[i][j + 1];
+	//		Corner& top_right = corners[i + 1][j + 1];
 
-			bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height || bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
-		}
-	}
+	//		bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height || bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
+	//	}
+	//}
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
-	glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
-	glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
+	//glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
+	//glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
+	//glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
-	glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
-	glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	//glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
+	//glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
+	//glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
+	//glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	//glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-	glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
-	glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	//glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
+	//glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
+	//glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	//glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
-	glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
+	//glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
+	//glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
 
-	// Water
-	glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
-	glTextureStorage2D(water_height, 1, GL_R16F, width, height);
-	glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
+	//// Water
+	//glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
+	//glTextureStorage2D(water_height, 1, GL_R16F, width, height);
+	//glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
 
-	glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
-	glTextureStorage2D(water_exists, 1, GL_R8, width, height);
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	//glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
+	//glTextureStorage2D(water_exists, 1, GL_R8, width, height);
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	//glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-	update_cliff_meshes({ 0, 0, width - 1, height - 1 });
-	update_ground_textures({ 0, 0, width - 1, height - 1 });
-	update_ground_heights({ 0, 0, width - 1, height - 1 });
+	//update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+	//update_ground_textures({ 0, 0, width - 1, height - 1 });
+	//update_ground_heights({ 0, 0, width - 1, height - 1 });
 
-	map->physics.dynamicsWorld->removeRigidBody(collision_body);
-	delete collision_body;
-	delete collision_shape;
+	//map->physics.dynamicsWorld->removeRigidBody(collision_body);
+	//delete collision_body;
+	//delete collision_shape;
 
-	collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
-	if (collision_shape == nullptr) {
-		std::cout << "Error creating Bullet collision shape\n";
-	}
-	collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-	collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
-	collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
-	map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
+	//collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	//if (collision_shape == nullptr) {
+	//	std::cout << "Error creating Bullet collision shape\n";
+	//}
+	//collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+	//collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
+	//collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+	//map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 }
 
 void Terrain::update_minimap() {

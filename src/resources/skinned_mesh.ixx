@@ -446,6 +446,13 @@ export class SkinnedMesh : public Resource {
 			}
 
 			for (const auto& j : layers) {
+				// We don't have to render fully transparent meshes
+				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
+				if (layer_colors[lay_index].a <= 0.01f) {
+					lay_index += 1;
+					continue;
+				}
+
 				if (j.hd != render_hd) {
 					lay_index += 1;
 					continue;

@@ -540,7 +540,7 @@ std::shared_ptr<SkinnedMesh> Doodads::get_mesh(std::string id, int variation) {
 
 	mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
 
-	// Mesh doesnt exist at all
+	// Mesh doesn't exist at all
 	if (!hierarchy.file_exists(mesh_path)) {
 		std::println("Invalid model file for {} with file path: {}", id, mesh_path.string());
 		id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
