@@ -7,9 +7,9 @@
 #include <string>
 #include <filesystem>
 
-#include <QObject>
-
 #include <glm/glm.hpp>
+
+#include <QRect>
 
 import BinaryReader;
 import Utilities;
@@ -71,9 +71,7 @@ struct Unit {
 	void update();
 };
 
-class Units : public QObject {
-	Q_OBJECT
-
+class Units {
 	std::unordered_map<std::string, std::shared_ptr<SkinnedMesh>> id_to_mesh;
 
 	static constexpr int write_version = 8;

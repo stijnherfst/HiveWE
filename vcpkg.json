@@ -23,7 +23,6 @@
       "name": "abseil",
       "features": [ "cxx17" ]
     },
-    "fmt",
     "tbb",
     "outcome",
     "unordered-dense"

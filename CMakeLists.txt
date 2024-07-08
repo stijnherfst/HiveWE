@@ -16,7 +16,6 @@ find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
@@ -63,8 +62,6 @@ target_link_libraries(HiveWE PUBLIC
 	ads::qtadvanceddocking
 	absl::flat_hash_map
 	absl::flat_hash_set
-	fmt::fmt
-	fmt::fmt-header-only
 	TBB::tbb
 	imgui::imgui
 	outcome::hl

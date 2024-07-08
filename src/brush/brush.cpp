@@ -12,6 +12,7 @@
 
 import Camera;
 import OpenGLUtilities;
+import ResourceManager;
 
 Brush::Brush() {
 	set_size(size);

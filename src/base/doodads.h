@@ -4,14 +4,17 @@
 #include <memory>
 #include <unordered_set>
 
+#include <QRectF>
+
+#include <glm/glm.hpp>
+
+#include "ankerl/unordered_dense.h"
+
 import SkeletalModelInstance;
 import SkinnedMesh;
 import PathingTexture;
 import Utilities;
 import TerrainUndo;
-
-#include "ankerl/unordered_dense.h"
-#include "Terrain.h"
 
 struct Doodad {
 	static inline int auto_increment;

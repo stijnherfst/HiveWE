@@ -23,7 +23,7 @@ import BinaryWriter;
 import Timer;
 
 namespace mdx {
-	export extern const std::unordered_map<int, std::string> replacable_id_to_texture{
+	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture{
 		{ 1, "ReplaceableTextures/TeamColor/TeamColor00" },
 		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00" },
 		{ 11, "ReplaceableTextures/Cliff/Cliff0" },
@@ -343,9 +343,7 @@ namespace mdx {
 
 		std::vector<glm::vec4> tangents;
 		std::vector<uint8_t> skin;
-
-		using TextureCoordinateSet = std::vector<glm::vec2>;
-		std::vector<TextureCoordinateSet> texture_coordinate_sets;
+		std::vector<std::vector<glm::vec2>> uv_sets;
 	};
 
 	export struct GeosetAnimation {
@@ -670,53 +668,7 @@ namespace mdx {
 		std::vector<TextureAnimation> texture_animations;
 
 	  private:
-
-		void read_GEOS_chunk(BinaryReader& reader);
-		void read_MTLS_chunk(BinaryReader& reader);
-		void read_SEQS_chunk(BinaryReader& reader);
-		void read_GEOA_chunk(BinaryReader& reader);
-		void read_BONE_chunk(BinaryReader& reader);
-		void read_TEXS_chunk(BinaryReader& reader);
-		void read_GLBS_chunk(BinaryReader& reader);
-		void read_LITE_chunk(BinaryReader& reader);
-		void read_HELP_chunk(BinaryReader& reader);
-		void read_ATCH_chunk(BinaryReader& reader);
-		void read_PIVT_chunk(BinaryReader& reader);
-		void read_PREM_chunk(BinaryReader& reader);
-		void read_PRE2_chunk(BinaryReader& reader);
-		void read_RIBB_chunk(BinaryReader& reader);
-		void read_EVTS_chunk(BinaryReader& reader);
-		void read_CLID_chunk(BinaryReader& reader);
-		void read_CORN_chunk(BinaryReader& reader);
-		void read_CAMS_chunk(BinaryReader& reader);
-		void read_BPOS_chunk(BinaryReader& reader);
-		void read_TXAN_chunk(BinaryReader& reader);
-		void read_FAFX_chunk(BinaryReader& reader);
-
-		void write_GEOS_chunk(BinaryWriter& writer) const;
-		void write_MTLS_chunk(BinaryWriter& writer) const;
-		void write_SEQS_chunk(BinaryWriter& writer) const;
-		void write_GLBS_chunk(BinaryWriter& writer) const;
-		void write_GEOA_chunk(BinaryWriter& writer) const;
-		void write_BONE_chunk(BinaryWriter& writer) const;
-		void write_TEXS_chunk(BinaryWriter& writer) const;
-		void write_LITE_chunk(BinaryWriter& writer) const;
-		void write_HELP_chunk(BinaryWriter& writer) const;
-		void write_ATCH_chunk(BinaryWriter& writer) const;
-		void write_PIVT_chunk(BinaryWriter& writer) const;
-		void write_PREM_chunk(BinaryWriter& writer) const;
-		void write_PRE2_chunk(BinaryWriter& writer) const;
-		void write_RIBB_chunk(BinaryWriter& writer) const;
-		void write_EVTS_chunk(BinaryWriter& writer) const;
-		void write_CLID_chunk(BinaryWriter& writer) const;
-		void write_CORN_chunk(BinaryWriter& writer) const;
-		void write_CAMS_chunk(BinaryWriter& writer) const;
-		void write_BPOS_chunk(BinaryWriter& writer) const;
-		void write_TXAN_chunk(BinaryWriter& writer) const;
-		void write_FAFX_chunk(BinaryWriter& writer) const;
-
 		void load(BinaryReader& reader);
-
 		MDX() = default;
 
 	  public:
@@ -724,7 +676,10 @@ namespace mdx {
 			load(reader);
 		}
 
-		void save(const fs::path& path);
+		void save(const fs::path& path) const;
+
+		std::string to_mdl();
+		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		void validate() {
 			// Remove geoset animations that reference non existing geosets
@@ -795,7 +750,7 @@ namespace mdx {
 			IDs.reserve(node_count);
 			for_each_node([&](mdx::Node& node) {
 				if (node.id < 0) {
-					std::println("MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id);
+					std::println("Error: MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id);
 					return;
 				}
 				IDs.push_back(node.id);
@@ -809,7 +764,7 @@ namespace mdx {
 
 			for_each_node([&](mdx::Node& node) {
 				if (node.id == -1) {
-					std::println("Invalid node \"{}\" with ID -1", node.name);
+					std::println("Error: Invalid node \"{}\" with ID -1", node.name);
 					return;
 				}
 				node.id = remapping[node.id];
@@ -880,9 +835,6 @@ namespace mdx {
 				}
 			}
 		}
-
-		std::string to_mdl();
-		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		void for_each_node(const std::function<void(Node&)>& F) {
 			for (auto& i : bones) {

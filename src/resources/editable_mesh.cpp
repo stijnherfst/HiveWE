@@ -117,7 +117,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 		}
 
 		glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
-		glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.texture_coordinate_sets.front().data());
+		glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.uv_sets.front().data());
 		glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
 		glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
 		glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
@@ -181,7 +181,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 			if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
 				textures.push_back(resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags)));
 			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
+				textures.push_back(resource_manager.load<GPUTexture>(mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
 			}
 		} else {
 			textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));

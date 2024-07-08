@@ -16,38 +16,27 @@ namespace mdx {
 		std::string mdl;
 		size_t current_indentation = 0;
 
-		/// Writes a line and automatically handles indentation and the newline character
-		void write_line(std::string_view line) {
+		template <typename... Args>
+		void write_line(std::format_string<Args...> fmt, Args&&... args) {
 			for (size_t i = 0; i < current_indentation; i++) {
 				mdl += '\t';
 			}
-			mdl += line;
+			mdl += std::vformat(fmt.get(), std::make_format_args(args...));
 			mdl += '\n';
 		}
-
-		// template <typename... T>
-		// void write_line(std::format_string<T...> std, T&&... args) {
-		//	for (size_t i = 0; i < current_indentation; i++) {
-		//		mdl += '\t';
-		//	}
-		//	std::format_to(std::back_inserter(mdl), std, args...);
-		//	mdl += '\n';
-		// }
 
 		template <typename T>
 		void write_track(const TrackHeader<T>& track_header, std::string name, T static_value) {
 			if (track_header.tracks.empty()) {
 				if constexpr (std::is_same_v<T, glm::vec2>) {
-					write_line(std::format("static {} {{ {}, {} }},", name, static_value.x, static_value.y));
+					write_line("static {} {{ {}, {} }},", name, static_value.x, static_value.y);
 				} else if constexpr (std::is_same_v<T, glm::vec3>) {
-					write_line(std::format("static {} {{ {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z));
+					write_line("static {} {{ {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z);
 				} else if constexpr (std::is_same_v<T, glm::quat>) {
-					write_line(std::format("static {} {{ {}, {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z, static_value.w));
+					write_line("static {} {{ {}, {}, {}, {} }},", name, static_value.x, static_value.y, static_value.z, static_value.w);
 				} else {
-					write_line(std::format("static {} {},", name, static_value));
+					write_line("static {} {},", name, static_value);
 				}
-
-				// write_line(std::format("static {} {},", name, static_value));
 			} else {
 				start_group(name, [&]() {
 					switch (track_header.interpolation_type) {
@@ -65,32 +54,32 @@ namespace mdx {
 							break;
 					}
 
-					write_line(std::format("GlobalSeqId {},", track_header.global_sequence_ID));
+					write_line("GlobalSeqId {},", track_header.global_sequence_ID);
 
 					for (const auto& track : track_header.tracks) {
 						if constexpr (std::is_same_v<T, glm::vec2>) {
-							write_line(std::format("{}: {{ {}, {} }},", track.frame, track.value.x, track.value.y));
+							write_line("{}: {{ {}, {} }},", track.frame, track.value.x, track.value.y);
 						} else if constexpr (std::is_same_v<T, glm::vec3>) {
-							write_line(std::format("{}: {{ {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z));
+							write_line("{}: {{ {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z);
 						} else if constexpr (std::is_same_v<T, glm::quat>) {
-							write_line(std::format("{}: {{ {}, {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z, track.value.w));
+							write_line("{}: {{ {}, {}, {}, {} }},", track.frame, track.value.x, track.value.y, track.value.z, track.value.w);
 						} else {
-							write_line(std::format("{}: {},", track.frame, track.value));
+							write_line("{}: {},", track.frame, track.value);
 						}
 
 						if (track_header.interpolation_type == 2 || track_header.interpolation_type == 3) {
 							if constexpr (std::is_same_v<T, glm::vec2>) {
-								write_line(std::format("InTan {{ {}, {} }},", track.inTan.x, track.inTan.y));
-								write_line(std::format("OutTan {{ {}, {} }},", track.outTan.x, track.outTan.y));
+								write_line("InTan {{ {}, {} }},", track.inTan.x, track.inTan.y);
+								write_line("OutTan {{ {}, {} }},", track.outTan.x, track.outTan.y);
 							} else if constexpr (std::is_same_v<T, glm::vec3>) {
-								write_line(std::format("InTan {{ {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z));
-								write_line(std::format("OutTan {{ {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z));
+								write_line("InTan {{ {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z);
+								write_line("OutTan {{ {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z);
 							} else if constexpr (std::is_same_v<T, glm::quat>) {
-								write_line(std::format("InTan {{ {}, {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z, track.inTan.w));
-								write_line(std::format("OutTan {{ {}, {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z, track.outTan.w));
+								write_line("InTan {{ {}, {}, {}, {} }},", track.inTan.x, track.inTan.y, track.inTan.z, track.inTan.w);
+								write_line("OutTan {{ {}, {}, {}, {} }},", track.outTan.x, track.outTan.y, track.outTan.z, track.outTan.w);
 							} else {
-								write_line(std::format("InTan {},", track.inTan));
-								write_line(std::format("OutTan {},", track.outTan));
+								write_line("InTan {},", track.inTan);
+								write_line("OutTan {},", track.outTan);
 							}
 						}
 					}
@@ -99,8 +88,8 @@ namespace mdx {
 		}
 
 		void write_node(const Node& node) {
-			write_line(std::format("ObjectId {},", node.id));
-			write_line(std::format("Parent {},", node.parent_id));
+			write_line("ObjectId {},", node.id);
+			write_line("Parent {},", node.parent_id);
 
 			if (node.flags & Node::Flags::billboarded) {
 				write_line("Billboarded,");
@@ -152,41 +141,41 @@ namespace mdx {
 		});
 
 		mdl.start_group(std::format("Model \"{}\"", name), [&]() {
-			mdl.write_line(std::format("BlendTime {},", blend_time));
-			mdl.write_line(std::format("MinimumExtent {{ {}, {}, {} }},", extent.minimum.x, extent.minimum.y, extent.minimum.z));
-			mdl.write_line(std::format("MaximumExtent {{ {}, {}, {} }},", extent.maximum.x, extent.maximum.y, extent.maximum.z));
+			mdl.write_line("BlendTime {},", blend_time);
+			mdl.write_line("MinimumExtent {{ {}, {}, {} }},", extent.minimum.x, extent.minimum.y, extent.minimum.z);
+			mdl.write_line("MaximumExtent {{ {}, {}, {} }},", extent.maximum.x, extent.maximum.y, extent.maximum.z);
 		});
 
 		mdl.start_group(std::format("Sequences {}", sequences.size()), [&]() {
 			for (const auto& i : sequences) {
 				mdl.start_group(std::format("Anim \"{}\"", i.name), [&]() {
-					mdl.write_line(std::format("Interval {{ {}, {} }},", i.start_frame, i.end_frame));
-					mdl.write_line(std::format("Movespeed {},", i.movespeed));
-					mdl.write_line(std::format("SyncPoint {},", i.sync_point));
+					mdl.write_line("Interval {{ {}, {} }},", i.start_frame, i.end_frame);
+					mdl.write_line("Movespeed {},", i.movespeed);
+					mdl.write_line("SyncPoint {},", i.sync_point);
 
 					if (i.flags & Sequence::Flags::non_looping) {
 						mdl.write_line("NonLooping,");
 					}
 
-					mdl.write_line(std::format("Rarity {},", i.rarity));
-					mdl.write_line(std::format("MinimumExtent {{ {}, {}, {}, }},", i.extent.minimum.x, i.extent.minimum.y, i.extent.minimum.z));
-					mdl.write_line(std::format("MinimumExtent {{ {}, {}, {}, }},", i.extent.maximum.x, i.extent.maximum.y, i.extent.maximum.z));
-					mdl.write_line(std::format("BoundRadius {},", i.extent.bounds_radius));
+					mdl.write_line("Rarity {},", i.rarity);
+					mdl.write_line("MinimumExtent {{ {}, {}, {}, }},", i.extent.minimum.x, i.extent.minimum.y, i.extent.minimum.z);
+					mdl.write_line("MinimumExtent {{ {}, {}, {}, }},", i.extent.maximum.x, i.extent.maximum.y, i.extent.maximum.z);
+					mdl.write_line("BoundRadius {},", i.extent.bounds_radius);
 				});
 			}
 		});
 
 		mdl.start_group(std::format("GlobalSequences {}", global_sequences.size()), [&]() {
 			for (const auto& i : global_sequences) {
-				mdl.write_line(std::format("Duration {},", i));
+				mdl.write_line("Duration {},", i);
 			}
 		});
 
 		mdl.start_group(std::format("Textures {}", textures.size()), [&]() {
 			for (const auto& i : textures) {
 				mdl.start_group("Bitmap", [&]() {
-					mdl.write_line(std::format("Image \"{}\",", i.file_name.string()));
-					mdl.write_line(std::format("ReplaceableId {},", i.replaceable_id));
+					mdl.write_line("Image \"{}\",", i.file_name.string());
+					mdl.write_line("ReplaceableId {},", i.replaceable_id);
 					if (i.flags & Texture::Flags::wrap_width) {
 						mdl.write_line("WrapWidth");
 					}
@@ -313,33 +302,33 @@ namespace mdx {
 			mdl.start_group("Geoset", [&]() {
 				mdl.start_group(std::format("Vertices {}", geoset.vertices.size()), [&]() {
 					for (const auto& vertex : geoset.vertices) {
-						mdl.write_line(std::format("{{ {}, {}, {} }},", vertex.x, vertex.y, vertex.z));
+						mdl.write_line("{{ {}, {}, {} }},", vertex.x, vertex.y, vertex.z);
 					}
 				});
 
 				mdl.start_group(std::format("Normals {}", geoset.normals.size()), [&]() {
 					for (const auto& normal : geoset.normals) {
-						mdl.write_line(std::format("{{ {}, {}, {} }},", normal.x, normal.y, normal.z));
+						mdl.write_line("{{ {}, {}, {} }},", normal.x, normal.y, normal.z);
 					}
 				});
 
-				for (const auto& i : geoset.texture_coordinate_sets) {
+				for (const auto& i : geoset.uv_sets) {
 					mdl.start_group(std::format("TVertices {}", i.size()), [&]() {
 						for (const auto& uv : i) {
-							mdl.write_line(std::format("{{ {}, {} }},", uv.x, uv.y));
+							mdl.write_line("{{ {}, {} }},", uv.x, uv.y);
 						}
 					});
 				}
 
 				mdl.start_group(std::format("Tangents {}", geoset.tangents.size()), [&]() {
 					for (const auto& tangent : geoset.tangents) {
-						mdl.write_line(std::format("{{ {}, {}, {}, {} }},", tangent.x, tangent.y, tangent.z, tangent.w));
+						mdl.write_line("{{ {}, {}, {}, {} }},", tangent.x, tangent.y, tangent.z, tangent.w);
 					}
 				});
 
 				mdl.start_group(std::format("SkinWeights {}", geoset.skin.size() / 8), [&]() {
 					for (size_t i = 0; i < geoset.skin.size() / 8; i++) {
-						mdl.write_line(std::format("{}, {}, {}, {}, {}, {}, {}, {},",
+						mdl.write_line("{}, {}, {}, {}, {}, {}, {}, {},",
 												   geoset.skin[i * 8],
 												   geoset.skin[i * 8 + 1],
 												   geoset.skin[i * 8 + 2],
@@ -347,43 +336,37 @@ namespace mdx {
 												   geoset.skin[i * 8 + 4],
 												   geoset.skin[i * 8 + 5],
 												   geoset.skin[i * 8 + 6],
-												   geoset.skin[i * 8 + 7]));
+												   geoset.skin[i * 8 + 7]);
 					}
 				});
 
 				mdl.start_group(std::format("Faces {}", geoset.faces.size()), [&]() {
-					mdl.start_group("Triangles", [&]() { // Yall mfs gonna be having triangles, I ain't in the quad business
+					mdl.start_group("Triangles", [&]() { // Y'all mfs gonna be having triangles, I ain't in the quad business
 						std::string triangles;
 						for (const auto& face : geoset.faces) {
 							triangles += std::format("{}, ", face);
 						}
 
-						mdl.write_line(std::format("{{ {} }}", triangles));
+						mdl.write_line("{{ {} }}", triangles);
 					});
 				});
 
-				mdl.write_line(std::format("MinimumExtent {{ {}, {}, {} }},", geoset.extent.minimum.x, geoset.extent.minimum.z, geoset.extent.minimum.z));
-				mdl.write_line(std::format("MaximumExtent {{ {}, {}, {} }},", geoset.extent.maximum.x, geoset.extent.maximum.z, geoset.extent.maximum.z));
-				mdl.write_line(std::format("BoundsRadius {},", geoset.extent.bounds_radius));
+				mdl.write_line("MinimumExtent {{ {}, {}, {} }},", geoset.extent.minimum.x, geoset.extent.minimum.z, geoset.extent.minimum.z);
+				mdl.write_line("MaximumExtent {{ {}, {}, {} }},", geoset.extent.maximum.x, geoset.extent.maximum.z, geoset.extent.maximum.z);
+				mdl.write_line("BoundsRadius {},", geoset.extent.bounds_radius);
 
 				for (const auto& i : geoset.extents) {
 					mdl.start_group("Anim", [&]() {
-						mdl.write_line(std::format("MinimumExtent {{ {}, {}, {} }},", i.minimum.x, i.minimum.z, i.minimum.z));
-						mdl.write_line(std::format("MaximumExtent {{ {}, {}, {} }},", i.maximum.x, i.maximum.z, i.maximum.z));
-						mdl.write_line(std::format("BoundsRadius {},", i.bounds_radius));
+						mdl.write_line("MinimumExtent {{ {}, {}, {} }},", i.minimum.x, i.minimum.z, i.minimum.z);
+						mdl.write_line("MaximumExtent {{ {}, {}, {} }},", i.maximum.x, i.maximum.z, i.maximum.z);
+						mdl.write_line("BoundsRadius {},", i.bounds_radius);
 					});
 				}
 
-				// mdl.start_group(std::format("Group {} {}", geoset.matrix_groups), [&]() {
-				//	for (const auto& face : geoset.matrix_groups) {
-				//		mdl.write_line(std::format("Matrices {{ {} }}", ));
-				//	}
-				// });
-
-				mdl.write_line(std::format("MaterialID {},", geoset.material_id));
-				mdl.write_line(std::format("SelectionGroup {},", geoset.selection_group));
+				mdl.write_line("MaterialID {},", geoset.material_id);
+				mdl.write_line("SelectionGroup {},", geoset.selection_group);
 				mdl.write_line("LevelOfDetail 0,");
-				mdl.write_line(std::format("Name {},", geoset.lod_name));
+				mdl.write_line("Name {},", geoset.lod_name);
 			});
 		}
 
@@ -391,14 +374,14 @@ namespace mdx {
 			mdl.start_group("GeosetAnim", [&]() {
 				mdl.write_track(geoset_anim.KGAO, "Alpha", geoset_anim.alpha);
 				mdl.write_track(geoset_anim.KGAC, "Color", geoset_anim.color);
-				mdl.write_line(std::format("GeosetId {}", geoset_anim.geoset_id));
+				mdl.write_line("GeosetId {}", geoset_anim.geoset_id);
 			});
 		}
 
 		for (const auto& bone : bones) {
 			mdl.start_group(std::format("Bone \"{}\"", bone.node.name), [&]() {
-				mdl.write_line(std::format("GeosetId {},", bone.geoset_id));			   // The MDL has "Multiple" as value for some reason
-				mdl.write_line(std::format("GeosetAnimId {},", bone.geoset_animation_id)); // And this one has "None"
+				mdl.write_line("GeosetId {},", bone.geoset_id); // The MDL has "Multiple" as value for some reason
+				mdl.write_line("GeosetAnimId {},", bone.geoset_animation_id); // And this one has "None"
 
 				mdl.write_node(bone.node);
 			});
@@ -413,14 +396,14 @@ namespace mdx {
 		for (const auto& attachment : attachments) {
 			mdl.start_group(std::format("Helper \"{}\"", attachment.node.name), [&]() {
 				mdl.write_node(attachment.node);
-				mdl.write_line(std::format("AttachmentID {},", attachment.attachment_id));
+				mdl.write_line("AttachmentID {},", attachment.attachment_id);
 				mdl.write_track(attachment.KATV, "Visibility", 0.f); // dunno
 			});
 		}
 
 		mdl.start_group(std::format("PivotPoints \"{}\"", pivots.size()), [&]() {
 			for (const auto& pivot : pivots) {
-				mdl.write_line(std::format("{{ {}, {}, {} }},", pivot.x, pivot.y, pivot.z));
+				mdl.write_line("{{ {}, {}, {} }},", pivot.x, pivot.y, pivot.z);
 			}
 		});
 
@@ -436,7 +419,7 @@ namespace mdx {
 					mdl.write_line("Squirt,");
 				}
 				mdl.write_track(emitter.KP2V, "Visibility", 0.f); // ToDo static value
-				mdl.write_line(std::format("Lifespan {},", emitter.life_span));
+				mdl.write_line("Lifespan {},", emitter.life_span);
 				mdl.write_track(emitter.KP2E, "EmissionRate", emitter.emission_rate);
 				mdl.write_track(emitter.KP2W, "Width", emitter.width);
 				mdl.write_track(emitter.KP2N, "Length", emitter.length);
@@ -459,8 +442,8 @@ namespace mdx {
 						break;
 				}
 
-				mdl.write_line(std::format("Rows {},", emitter.rows));
-				mdl.write_line(std::format("Columns {},", emitter.columns));
+				mdl.write_line("Rows {},", emitter.rows);
+				mdl.write_line("Columns {},", emitter.columns);
 
 				if (emitter.head_or_tail == 0) {
 					mdl.write_line("Head,");
@@ -470,24 +453,24 @@ namespace mdx {
 					mdl.write_line("Both,");
 				}
 
-				mdl.write_line(std::format("TailLength {},", emitter.tail_length));
-				mdl.write_line(std::format("Time {},", emitter.time_middle));
+				mdl.write_line("TailLength {},", emitter.tail_length);
+				mdl.write_line("Time {},", emitter.time_middle);
 
 				mdl.start_group("SegmentColor", [&]() {
-					mdl.write_line(std::format("Color {{ {}, {}, {}  }},", emitter.start_segment_color.x, emitter.start_segment_color.y, emitter.start_segment_color.z));
-					mdl.write_line(std::format("Color {{ {}, {}, {}  }},", emitter.middle_segment_color.x, emitter.middle_segment_color.y, emitter.middle_segment_color.z));
-					mdl.write_line(std::format("Color {{ {}, {}, {}  }},", emitter.end_segment_color.x, emitter.end_segment_color.y, emitter.end_segment_color.z));
+					mdl.write_line("Color {{ {}, {}, {}  }},", emitter.start_segment_color.x, emitter.start_segment_color.y, emitter.start_segment_color.z);
+					mdl.write_line("Color {{ {}, {}, {}  }},", emitter.middle_segment_color.x, emitter.middle_segment_color.y, emitter.middle_segment_color.z);
+					mdl.write_line("Color {{ {}, {}, {}  }},", emitter.end_segment_color.x, emitter.end_segment_color.y, emitter.end_segment_color.z);
 				});
 
-				mdl.write_line(std::format("Alpha {{ {}, {}, {}  }},", emitter.segment_alphas.x, emitter.segment_alphas.y, emitter.segment_alphas.z));
-				mdl.write_line(std::format("ParticleScaling {{ {}, {}, {}  }},", emitter.segment_scaling.x, emitter.segment_scaling.y, emitter.segment_scaling.z));
-				mdl.write_line(std::format("LifeSpanUVAnim {{ {}, {}, {}  }},", emitter.head_intervals.x, emitter.head_intervals.y, emitter.head_intervals.z));
-				mdl.write_line(std::format("DecayUVAnim {{ {}, {}, {}  }},", emitter.head_decay_intervals.x, emitter.head_decay_intervals.y, emitter.head_decay_intervals.z));
-				mdl.write_line(std::format("TailUVAnim {{ {}, {}, {}  }},", emitter.tail_intervals.x, emitter.tail_intervals.y, emitter.tail_intervals.z));
-				mdl.write_line(std::format("TailDecayUVAnim {{ {}, {}, {}  }},", emitter.tail_decay_intervals.x, emitter.tail_decay_intervals.y, emitter.tail_decay_intervals.z));
+				mdl.write_line("Alpha {{ {}, {}, {}  }},", emitter.segment_alphas.x, emitter.segment_alphas.y, emitter.segment_alphas.z);
+				mdl.write_line("ParticleScaling {{ {}, {}, {}  }},", emitter.segment_scaling.x, emitter.segment_scaling.y, emitter.segment_scaling.z);
+				mdl.write_line("LifeSpanUVAnim {{ {}, {}, {}  }},", emitter.head_intervals.x, emitter.head_intervals.y, emitter.head_intervals.z);
+				mdl.write_line("DecayUVAnim {{ {}, {}, {}  }},", emitter.head_decay_intervals.x, emitter.head_decay_intervals.y, emitter.head_decay_intervals.z);
+				mdl.write_line("TailUVAnim {{ {}, {}, {}  }},", emitter.tail_intervals.x, emitter.tail_intervals.y, emitter.tail_intervals.z);
+				mdl.write_line("TailDecayUVAnim {{ {}, {}, {}  }},", emitter.tail_decay_intervals.x, emitter.tail_decay_intervals.y, emitter.tail_decay_intervals.z);
 
-				mdl.write_line(std::format("TextureID {},", emitter.texture_id));
-				mdl.write_line(std::format("PriorityPlane {},", emitter.priority_plane));
+				mdl.write_line("TextureID {},", emitter.texture_id);
+				mdl.write_line("PriorityPlane {},", emitter.priority_plane);
 			});
 		}
 
@@ -497,7 +480,7 @@ namespace mdx {
 
 				mdl.start_group(std::format("EventTrack {}", event_object.times.size()), [&]() {
 					for (const auto& track : event_object.times) {
-						mdl.write_line(std::format("{},", track));
+						mdl.write_line("{},", track);
 					}
 				});
 			});
@@ -511,31 +494,31 @@ namespace mdx {
 					case CollisionShape::Shape::Box:
 						mdl.write_line("Cube,");
 						mdl.start_group("Vertices 2", [&]() {
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z));
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z));
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z);
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z);
 						});
 						break;
 					case CollisionShape::Shape::Plane:
 						mdl.write_line("Plane,");
 						mdl.start_group("Vertices 2", [&]() {
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z));
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z));
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z);
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z);
 						});
 						break;
 					case CollisionShape::Shape::Sphere:
 						mdl.write_line("Sphere,");
 						mdl.start_group("Vertices 1", [&]() {
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z));
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z);
 						});
-						mdl.write_line(std::format("BoundsRadius {},", collision_shape.radius));
+						mdl.write_line("BoundsRadius {},", collision_shape.radius);
 						break;
 					case CollisionShape::Shape::Cylinder:
 						mdl.write_line("Cylinder,");
 						mdl.start_group("Vertices 2", [&]() {
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z));
-							mdl.write_line(std::format("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z));
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[0].x, collision_shape.vertices[0].y, collision_shape.vertices[0].z);
+							mdl.write_line("{{ {}, {}, {}  }},", collision_shape.vertices[1].x, collision_shape.vertices[1].y, collision_shape.vertices[1].z);
 						});
-						mdl.write_line(std::format("BoundsRadius {},", collision_shape.radius));
+						mdl.write_line("BoundsRadius {},", collision_shape.radius);
 						break;
 				}
 			});

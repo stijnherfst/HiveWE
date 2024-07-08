@@ -11,8 +11,8 @@ module MDX;
 namespace fs = std::filesystem;
 
 namespace mdx {
-	void MDX::write_GEOS_chunk(BinaryWriter& writer) const {
-		if (geosets.empty()) {
+	void write_GEOS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.geosets.empty()) {
 			return;
 		}
 
@@ -21,7 +21,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& geoset : geosets) {
+		for (const auto& geoset : mdx.geosets) {
 			// Write temporary zero, remember location
 			const size_t geoset_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -83,8 +83,8 @@ namespace mdx {
 			}
 
 			writer.write_string("UVAS");
-			writer.write<uint32_t>(geoset.texture_coordinate_sets.size());
-			for (const auto& set : geoset.texture_coordinate_sets) {
+			writer.write<uint32_t>(geoset.uv_sets.size());
+			for (const auto& set : geoset.uv_sets) {
 				writer.write_string("UVBS");
 				writer.write<uint32_t>(set.size());
 				writer.write_vector(set);
@@ -96,8 +96,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_MTLS_chunk(BinaryWriter& writer) const {
-		if (materials.empty()) {
+	void write_MTLS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.materials.empty()) {
 			return;
 		}
 
@@ -106,7 +106,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& material : materials) {
+		for (const auto& material : mdx.materials) {
 			// Write temporary zero, remember location
 			const size_t material_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -159,14 +159,14 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_SEQS_chunk(BinaryWriter& writer) const {
-		if (sequences.empty()) {
+	void write_SEQS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.sequences.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::SEQS);
-		writer.write<uint32_t>(sequences.size() * 132);
-		for (const auto& i : sequences) {
+		writer.write<uint32_t>(mdx.sequences.size() * 132);
+		for (const auto& i : mdx.sequences) {
 			writer.write_c_string_padded(i.name, 80);
 			writer.write<uint32_t>(i.start_frame);
 			writer.write<uint32_t>(i.end_frame);
@@ -178,18 +178,18 @@ namespace mdx {
 		}
 	}
 
-	void MDX::write_GLBS_chunk(BinaryWriter& writer) const {
-		if (global_sequences.empty()) {
+	void write_GLBS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.global_sequences.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::GLBS);
-		writer.write<uint32_t>(global_sequences.size() * 4);
-		writer.write_vector(global_sequences);
+		writer.write<uint32_t>(mdx.global_sequences.size() * 4);
+		writer.write_vector(mdx.global_sequences);
 	}
 
-	void MDX::write_GEOA_chunk(BinaryWriter& writer) const {
-		if (animations.empty()) {
+	void write_GEOA(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.animations.empty()) {
 			return;
 		}
 
@@ -198,7 +198,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& geoset_animation : animations) {
+		for (const auto& geoset_animation : mdx.animations) {
 			// Write temporary zero, remember location
 			const size_t geoset_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -218,8 +218,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_BONE_chunk(BinaryWriter& writer) const {
-		if (bones.empty()) {
+	void write_BONE(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.bones.empty()) {
 			return;
 		}
 
@@ -228,7 +228,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& bone : bones) {
+		for (const auto& bone : mdx.bones) {
 			bone.node.save(writer);
 			writer.write<int32_t>(bone.geoset_id);
 			writer.write<int32_t>(bone.geoset_animation_id);
@@ -237,22 +237,22 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_TEXS_chunk(BinaryWriter& writer) const {
-		if (textures.empty()) {
+	void write_TEXS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.textures.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::TEXS);
-		writer.write<uint32_t>(textures.size() * 268);
-		for (const auto& texture : textures) {
+		writer.write<uint32_t>(mdx.textures.size() * 268);
+		for (const auto& texture : mdx.textures) {
 			writer.write<uint32_t>(texture.replaceable_id);
 			writer.write_c_string_padded(texture.file_name.string(), 260);
 			writer.write<uint32_t>(texture.flags);
 		}
 	}
 
-	void MDX::write_LITE_chunk(BinaryWriter& writer) const {
-		if (lights.empty()) {
+	void write_LITE(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.lights.empty()) {
 			return;
 		}
 
@@ -261,7 +261,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& light : lights) {
+		for (const auto& light : mdx.lights) {
 			// Write temporary zero, remember location
 			const size_t light_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -290,8 +290,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_HELP_chunk(BinaryWriter& writer) const {
-		if (help_bones.empty()) {
+	void write_HELP(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.help_bones.empty()) {
 			return;
 		}
 
@@ -300,15 +300,15 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& help_bone : help_bones) {
+		for (const auto& help_bone : mdx.help_bones) {
 			help_bone.save(writer);
 		}
 		const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - inclusive_index - 4);
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_ATCH_chunk(BinaryWriter& writer) const {
-		if (attachments.empty()) {
+	void write_ATCH(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.attachments.empty()) {
 			return;
 		}
 
@@ -317,7 +317,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& attachment : attachments) {
+		for (const auto& attachment : mdx.attachments) {
 			// Write temporary zero, remember location
 			const size_t attachment_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -336,20 +336,20 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_PIVT_chunk(BinaryWriter& writer) const {
-		if (pivots.empty()) {
+	void write_PIVT(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.pivots.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::PIVT);
-		writer.write<uint32_t>(pivots.size() * 12);
-		for (const auto& pivot : pivots) {
+		writer.write<uint32_t>(mdx.pivots.size() * 12);
+		for (const auto& pivot : mdx.pivots) {
 			writer.write<glm::vec3>(pivot);
 		}
 	}
 
-	void MDX::write_PREM_chunk(BinaryWriter& writer) const {
-		if (emitters1.empty()) {
+	void write_PREM(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.emitters1.empty()) {
 			return;
 		}
 
@@ -358,7 +358,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& emitter : emitters1) {
+		for (const auto& emitter : mdx.emitters1) {
 			// Write temporary zero, remember location
 			const size_t emitter_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -388,8 +388,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_PRE2_chunk(BinaryWriter& writer) const {
-		if (emitters2.empty()) {
+	void write_PRE2(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.emitters2.empty()) {
 			return;
 		}
 
@@ -398,7 +398,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& emitter : emitters2) {
+		for (const auto& emitter : mdx.emitters2) {
 			// Write temporary zero, remember location
 			const size_t emitter_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -450,8 +450,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_RIBB_chunk(BinaryWriter& writer) const {
-		if (ribbons.empty()) {
+	void write_RIBB(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.ribbons.empty()) {
 			return;
 		}
 
@@ -460,7 +460,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& ribbon : ribbons) {
+		for (const auto& ribbon : mdx.ribbons) {
 			// Write temporary zero, remember location
 			const size_t ribbon_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -492,8 +492,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_EVTS_chunk(BinaryWriter& writer) const {
-		if (event_objects.empty()) {
+	void write_EVTS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.event_objects.empty()) {
 			return;
 		}
 
@@ -502,7 +502,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& event_object : event_objects) {
+		for (const auto& event_object : mdx.event_objects) {
 			event_object.node.save(writer);
 			writer.write_string("KEVT");
 			writer.write<uint32_t>(event_object.times.size());
@@ -513,8 +513,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_CLID_chunk(BinaryWriter& writer) const {
-		if (collision_shapes.empty()) {
+	void write_CLID(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.collision_shapes.empty()) {
 			return;
 		}
 
@@ -523,7 +523,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& shape : collision_shapes) {
+		for (const auto& shape : mdx.collision_shapes) {
 			shape.node.save(writer);
 			writer.write<uint32_t>(static_cast<uint32_t>(shape.type));
 
@@ -541,8 +541,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_CORN_chunk(BinaryWriter& writer) const {
-		if (corn_emitters.empty()) {
+	void write_CORN(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.corn_emitters.empty()) {
 			return;
 		}
 
@@ -551,7 +551,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& corn : corn_emitters) {
+		for (const auto& corn : mdx.corn_emitters) {
 			// Write temporary zero, remember location
 			const size_t corn_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -566,8 +566,8 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_CAMS_chunk(BinaryWriter& writer) const {
-		if (cameras.empty()) {
+	void write_CAMS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.cameras.empty()) {
 			return;
 		}
 
@@ -576,7 +576,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& camera : cameras) {
+		for (const auto& camera : mdx.cameras) {
 			// Write temporary zero, remember location
 			const size_t camera_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -590,19 +590,19 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_BPOS_chunk(BinaryWriter& writer) const {
-		if (bind_poses.empty()) {
+	void write_BPOS(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.bind_poses.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::BPOS);
-		writer.write<uint32_t>(4 + bind_poses.size() * 4);
-		writer.write<uint32_t>(bind_poses.size() / 12);
-		writer.write_vector(bind_poses);
+		writer.write<uint32_t>(4 + mdx.bind_poses.size() * 4);
+		writer.write<uint32_t>(mdx.bind_poses.size() / 12);
+		writer.write_vector(mdx.bind_poses);
 	}
 
-	void MDX::write_TXAN_chunk(BinaryWriter& writer) const {
-		if (texture_animations.empty()) {
+	void write_TXAN(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.texture_animations.empty()) {
 			return;
 		}
 
@@ -611,7 +611,7 @@ namespace mdx {
 		const size_t inclusive_index = writer.buffer.size();
 		writer.write<uint32_t>(0);
 
-		for (const auto& texture_animation : texture_animations) {
+		for (const auto& texture_animation : mdx.texture_animations) {
 			// Write temporary zero, remember location
 			const size_t texture_animation_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
@@ -625,20 +625,20 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void MDX::write_FAFX_chunk(BinaryWriter& writer) const {
-		if (facefxes.empty()) {
+	void write_FAFX(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.facefxes.empty()) {
 			return;
 		}
 
 		writer.write(ChunkTag::FAFX);
-		writer.write<uint32_t>(facefxes.size() * 340);
-		for (const auto& facefx : facefxes) {
+		writer.write<uint32_t>(mdx.facefxes.size() * 340);
+		for (const auto& facefx : mdx.facefxes) {
 			writer.write_c_string_padded(facefx.name, 80);
 			writer.write_c_string_padded(facefx.path.string(), 260);
 		}
 	}
 
-	void MDX::save(const fs::path& path) {
+	void MDX::save(const fs::path& path) const {
 		BinaryWriter writer;
 
 		writer.write_string("MDLX");
@@ -653,27 +653,27 @@ namespace mdx {
 		extent.save(writer);
 		writer.write<uint32_t>(blend_time);
 
-		write_SEQS_chunk(writer);
-		write_MTLS_chunk(writer);
-		write_TEXS_chunk(writer);
-		write_GEOS_chunk(writer);
-		write_GEOA_chunk(writer);
-		write_BONE_chunk(writer);
-		write_GLBS_chunk(writer);
-		write_LITE_chunk(writer);
-		write_HELP_chunk(writer);
-		write_ATCH_chunk(writer);
-		write_PIVT_chunk(writer);
-		write_PREM_chunk(writer);
-		write_PRE2_chunk(writer);
-		write_RIBB_chunk(writer);
-		write_CAMS_chunk(writer);
-		write_EVTS_chunk(writer);
-		write_CLID_chunk(writer);
-		write_CORN_chunk(writer);
-		write_FAFX_chunk(writer);
-		write_BPOS_chunk(writer);
-		write_TXAN_chunk(writer);
+		write_SEQS(writer, *this);
+		write_MTLS(writer, *this);
+		write_TEXS(writer, *this);
+		write_GEOS(writer, *this);
+		write_GEOA(writer, *this);
+		write_BONE(writer, *this);
+		write_GLBS(writer, *this);
+		write_LITE(writer, *this);
+		write_HELP(writer, *this);
+		write_ATCH(writer, *this);
+		write_PIVT(writer, *this);
+		write_PREM(writer, *this);
+		write_PRE2(writer, *this);
+		write_RIBB(writer, *this);
+		write_CAMS(writer, *this);
+		write_EVTS(writer, *this);
+		write_CLID(writer, *this);
+		write_CORN(writer, *this);
+		write_FAFX(writer, *this);
+		write_BPOS(writer, *this);
+		write_TXAN(writer, *this);
 
 		std::ofstream file(path, std::ios::binary | std::ios::out);
 		file.write(reinterpret_cast<char*>(writer.buffer.data()), writer.buffer.size());

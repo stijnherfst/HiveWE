@@ -3,6 +3,7 @@ module;
 #include <stdexcept>
 #include <vector>
 #include <string>
+#include <bit>
 
 export module BinaryReader;
 
@@ -19,12 +20,14 @@ export class BinaryReader {
 
 	template <typename T>
 	[[nodiscard]] T read() {
-		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
+		static_assert(std::is_trivial<T>::value, "T must be of trivial type.");
 
 		if (position + sizeof(T) > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
-		T result = *reinterpret_cast<T*>(&buffer[position]);
+
+		T result;
+		std::memcpy(&result, &buffer[position], sizeof(T));
 
 		position += sizeof(T);
 		return result;
@@ -34,7 +37,10 @@ export class BinaryReader {
 		if (position + size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
-		std::string result = { reinterpret_cast<char*>(&buffer[position]), static_cast<size_t>(size) };
+
+		std::string result;
+		result.reserve(size);
+		std::memcpy(result.data(), &buffer[position], size);
 
 		if (const size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
 			result.resize(pos);
@@ -57,7 +63,7 @@ export class BinaryReader {
 
 	template <typename T>
 	[[nodiscard]] std::vector<T> read_vector(const size_t size) {
-		static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
+		static_assert(std::is_trivial<T>::value, "T must be of trivial type.");
 
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");

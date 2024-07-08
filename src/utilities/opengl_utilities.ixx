@@ -12,8 +12,6 @@ module;
 
 export module OpenGLUtilities;
 
-import BinaryReader;
-import BinaryWriter;
 import ResourceManager;
 import Texture;
 

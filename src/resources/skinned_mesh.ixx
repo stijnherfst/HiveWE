@@ -212,7 +212,7 @@ export class SkinnedMesh : public Resource {
 			glNamedBufferSubData(vertex_snorm_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::uvec2), vertices_snorm.data());
 
 			std::vector<uint32_t> uvs_snorm;
-			for (const auto& j : i.texture_coordinate_sets.front()) {
+			for (const auto& j : i.uv_sets.front()) {
 				uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 4.f));
 			}
 			glNamedBufferSubData(uv_snorm_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), uvs_snorm.data());
@@ -295,7 +295,7 @@ export class SkinnedMesh : public Resource {
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
 					textures.push_back(resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags)));
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(mdx::replacable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
+					textures.push_back(resource_manager.load<GPUTexture>(mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
 				}
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
@@ -328,8 +328,8 @@ export class SkinnedMesh : public Resource {
 			i.tangents.shrink_to_fit();
 			i.skin.clear();
 			i.skin.shrink_to_fit();
-			i.texture_coordinate_sets.clear();
-			i.texture_coordinate_sets.shrink_to_fit();
+			i.uv_sets.clear();
+			i.uv_sets.shrink_to_fit();
 		}
 
 		glVertexArrayElementBuffer(vao, index_buffer);

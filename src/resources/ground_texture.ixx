@@ -2,11 +2,7 @@ module;
 
 #include <soil2/SOIL2.h>
 #include <filesystem>
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
 #include <glm/glm.hpp>
-
 #include <glad/glad.h>
 
 export module GroundTexture;

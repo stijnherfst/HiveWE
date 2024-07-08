@@ -41,7 +41,7 @@ export class CliffMesh : public Resource {
 			glNamedBufferData(vertex_buffer, static_cast<int>(set.vertices.size() * sizeof(glm::vec3)), set.vertices.data(), GL_STATIC_DRAW);
 
 			glCreateBuffers(1, &uv_buffer);
-			glNamedBufferData(uv_buffer, static_cast<int>(set.texture_coordinate_sets.front().size() * sizeof(glm::vec2)), set.texture_coordinate_sets.front().data(), GL_STATIC_DRAW);
+			glNamedBufferData(uv_buffer, static_cast<int>(set.uv_sets.front().size() * sizeof(glm::vec2)), set.uv_sets.front().data(), GL_STATIC_DRAW);
 
 			glCreateBuffers(1, &normal_buffer);
 			glNamedBufferData(normal_buffer, static_cast<int>(set.normals.size() * sizeof(glm::vec3)), set.normals.data(), GL_STATIC_DRAW);

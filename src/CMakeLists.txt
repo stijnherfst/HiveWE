@@ -1,8 +1,4 @@
-target_sources(HiveWE PRIVATE
-	FILE_SET CXX_MODULES FILES
-
-	${PROJECT_SOURCE_DIR}/src/std.ixx
-
+target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/map.ixx"
 	"base/binary_reader.ixx"
 	"base/binary_writer.ixx"
@@ -87,11 +83,6 @@ target_sources(HiveWE PRIVATE
 	"main_window/glwidget.cpp"
 	"main_window/main_ribbon.cpp"
 
-	"base/doodads.cpp"
-	
-	"base/terrain.cpp"
-	"base/triggers.cpp"
-	"base/units.cpp"
 
 	"brush/brush.cpp"
 	"brush/doodad_brush.cpp"
@@ -118,6 +109,11 @@ target_sources(HiveWE PRIVATE
 	"menus/tile_pather.cpp"
 	"menus/tile_picker.cpp"
 	"menus/tile_setter.cpp"
+
+	"base/doodads.cpp"
+	"base/terrain.cpp"
+	"base/triggers.cpp"
+	"base/units.cpp"
 
 	"models/single_model.cpp"
 	
