@@ -39,7 +39,7 @@ export class BinaryReader {
 		}
 
 		std::string result;
-		result.reserve(size);
+		result.resize(size);
 		std::memcpy(result.data(), &buffer[position], size);
 
 		if (const size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
