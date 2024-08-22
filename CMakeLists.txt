@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.25)
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -12,6 +12,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
+find_package(BZip2 REQUIRED)
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking CONFIG REQUIRED)
@@ -21,6 +22,7 @@ find_package(libjpeg-turbo CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(outcome CONFIG REQUIRED)
 find_package(unordered_dense CONFIG REQUIRED)
+find_package(nlohmann_json CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -56,7 +58,8 @@ target_link_libraries(HiveWE PUBLIC
 	glm::glm
 	glad::glad
 	soil2::soil2
-	stormlib::stormlib
+	StormLib::storm
+	BZip2::BZip2
 	libjpeg-turbo::jpeg
 	libjpeg-turbo::turbojpeg
 	ads::qtadvanceddocking
@@ -66,6 +69,7 @@ target_link_libraries(HiveWE PUBLIC
 	imgui::imgui
 	outcome::hl
 	unordered_dense::unordered_dense
+	nlohmann_json::nlohmann_json
 	${BULLET_LIBRARIES}
 )
 
@@ -97,13 +101,13 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data"
 )
 
-message(${CMAKE_BUILD_TYPE})
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	file(COPY "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug/Qt6/plugins/platforms/"
-			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms/"
-	)
+	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
 else()
-	file(COPY "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/Qt6/plugins/platforms/"
-			DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms/"
-	)
+	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
 endif()
+
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/styles")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/imageformats")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/sqldrivers/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/sqldrivers")
