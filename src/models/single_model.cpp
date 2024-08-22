@@ -111,7 +111,13 @@ QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int r
 			}
 		}
 	}
-	return {};
+	return QAbstractProxyModel::headerData(section, orientation, role);
+}
+
+bool SingleModel::setData(const QModelIndex& index, const QVariant& value, int role) {
+	// Force a header redraw because the header text should change color depending on whether the data field is a custom value or not
+	emit headerDataChanged(Qt::Orientation::Vertical, index.row(), index.row());
+	return QAbstractProxyModel::setData(index, value, role);
 }
 
 int SingleModel::rowCount(const QModelIndex& parent) const {
@@ -241,6 +247,7 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 	}
 }
 
+/// Manually color the headers because the default QHeaderView will only alternatively color the items
 void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {
 	Qt::Alignment align = (Qt::AlignLeft | Qt::AlignVCenter);
 
@@ -249,7 +256,6 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	} else {
 		painter->fillRect(rect, palette().color(QPalette::Base));
 	}
-
 
 	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::ForegroundRole).value<QColor>()));
 	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, 0, this), 0, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
