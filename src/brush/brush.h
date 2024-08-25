@@ -5,6 +5,7 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <terrain.h>
 
 #include <string_view>
 
@@ -69,8 +70,8 @@ public:
 
 	virtual void clear_clipboard() {};
 	
-	void render();
-	virtual void render_selector() const;
+	void render(const Terrain& terrain);
+	virtual void render_selector(const Terrain& terrain) const;
 	virtual void render_selection() const {};
 	virtual void render_clipboard() {}
 	virtual void render_brush();

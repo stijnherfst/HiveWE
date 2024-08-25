@@ -26,7 +26,6 @@ namespace fs = std::filesystem;
 
 #include <soil2/SOIL2.h>
 
-#define STORMLIB_NO_AUTO_LINK
 #include <StormLib.h>
 
 import Hierarchy;

@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 #include "globals.h"
 #include <map_global.h>
 
+import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
 

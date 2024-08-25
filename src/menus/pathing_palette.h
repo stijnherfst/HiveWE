@@ -3,9 +3,9 @@
 #include <QDialog>
 
 #include "ui_pathing_palette.h"
-#include "pathing_brush.h"
 
 #include "palette.h"
+#include "pathing_brush.h"
 
 class PathingPalette : public Palette {
 	Q_OBJECT

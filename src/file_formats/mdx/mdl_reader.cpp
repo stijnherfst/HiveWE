@@ -144,7 +144,6 @@ namespace mdx {
 	};
 
 	outcome::result<void, std::string> parse_version_chunk(MDLReader& reader, MDX& mdx) {
-	//std::optional<std::string> parse_version_chunk(MDLReader& reader, MDX& mdx) {
 		TRY(reader.consume("Version"));
 		TRY(reader.consume("{"));
 		TRY(reader.consume("FormatVersion"));

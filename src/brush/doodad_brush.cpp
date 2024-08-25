@@ -4,6 +4,7 @@
 #include <memory>
 #include <print>
 
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -11,11 +12,20 @@
 #include "globals.h"
 #include <map_global.h>
 
+#include <QObject>
+#include <QHash>
+#include <QKeyEvent>
+#include <QKeySequence>
+
 import Hierarchy;
+import SLK;
 import Texture;
 import TerrainUndo;
 import Camera;
 import OpenGLUtilities;
+import ResourceManager;
+import SkinnedMesh;
+import SkeletalModelInstance;
 
 DoodadBrush::DoodadBrush()
 	: Brush() {

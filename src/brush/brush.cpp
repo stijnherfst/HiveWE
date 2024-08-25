@@ -4,8 +4,6 @@
 
 #include <glad/glad.h>
 
-#include <map_global.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "globals.h"
@@ -202,9 +200,9 @@ void Brush::mouse_release_event(QMouseEvent* event) {
 	}
 }
 
-void Brush::render() {
+void Brush::render(const Terrain& terrain) {
 	if (mode == Mode::selection) {
-		render_selector();
+		render_selector(terrain);
 	} 
 	if (mode == Mode::placement) {
 		render_brush();
@@ -215,14 +213,14 @@ void Brush::render() {
 	render_selection();
 }
 
-void Brush::render_selector() const {
+void Brush::render_selector(const Terrain& terrain) const {
 	if (selection_started) {
 		glDisable(GL_DEPTH_TEST);
 
 		selection_shader->use();
 
 		glm::mat4 model(1.f);
-		model = glm::translate(model, glm::vec3(selection_start, map->terrain.interpolated_height(selection_start.x, selection_start.y, true)));
+		model = glm::translate(model, glm::vec3(selection_start, terrain.interpolated_height(selection_start.x, selection_start.y, true)));
 		model = glm::scale(model, glm::vec3(glm::vec2(input_handler.mouse_world), 1.f) - glm::vec3(selection_start, 1.f));
 		model = camera.projection_view * model;
 		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);

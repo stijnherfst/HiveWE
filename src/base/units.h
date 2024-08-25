@@ -11,7 +11,6 @@
 
 #include <QRect>
 
-import BinaryReader;
 import Utilities;
 import SkinnedMesh;
 import SkeletalModelInstance;

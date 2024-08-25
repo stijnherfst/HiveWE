@@ -5,8 +5,8 @@ module;
 #include "triggers.h"
 #include "terrain.h"
 #include "doodads.h"
-#include "brush.h"
 #include "units.h"
+#include "brush.h"
 
 #include <filesystem>
 #include <map>
@@ -660,7 +660,7 @@ export class Map : public QObject {
 		}
 
 		if (render_brush && brush) {
-			brush->render();
+			brush->render(terrain);
 		}
 
 		render_manager.render(render_lighting, light_direction);

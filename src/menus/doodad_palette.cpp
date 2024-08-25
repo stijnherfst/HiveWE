@@ -27,6 +27,7 @@
 
 #include "globals.h"
 #include <map_global.h>
+#include "brush.h"
 
 #include <object_editor/object_editor.h>
 

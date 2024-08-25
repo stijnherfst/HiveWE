@@ -1,10 +1,18 @@
 #pragma once
 
+#include <QObject>
+
 #include <set>
+#include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "doodads.h"
 #include "brush.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 import PathingTexture;
 
 class DoodadBrush : public Brush {
