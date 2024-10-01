@@ -236,7 +236,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 
 	model_editor->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
 	model_editor->setText("Model\nEditor");
-	model_editor->setEnabled(false);
+	//model_editor->setEnabled(false);
 	editor_section->addWidget(model_editor);
 
 	QRibbonSection* palette_section = new QRibbonSection;

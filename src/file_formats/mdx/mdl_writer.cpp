@@ -1,9 +1,11 @@
 module;
 
 #include <string>
+#include <fstream>
 #include <print>
 #include <format>
-
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 #include <glm/glm.hpp>
 
 module MDX;
@@ -133,6 +135,47 @@ namespace mdx {
 	};
 
 	std::string MDX::to_mdl() {
+		json j;
+		j["Version"]["FormatVersion"] = 1000;
+		
+		j["Model"]["BlendTime"] = blend_time;
+		j["Model"]["MinimumExtent"] = {
+			extent.minimum.x,
+			extent.minimum.y,
+			extent.minimum.z,
+		};
+		j["Model"]["MaximumExtent"] = {
+			extent.maximum.x,
+			extent.maximum.y,
+			extent.maximum.z,
+		};
+
+		j["Sequences"] = json::array();
+		for (const auto& i : sequences) {
+			json sequence;
+			sequence["Interval"] = { i.start_frame, i.end_frame };
+			sequence["Movespeed"] = i.movespeed;
+			sequence["SyncPoint"] = i.sync_point;
+			sequence["NonLooping"] = i.flags & Sequence::Flags::non_looping;
+			sequence["Rarity"] = i.rarity;
+			sequence["MinimumExtent"] = {
+				i.extent.minimum.x,
+				i.extent.minimum.y,
+				i.extent.minimum.z,
+			};
+			sequence["MaximumExtent"] = {
+				i.extent.maximum.x,
+				i.extent.maximum.y,
+				i.extent.maximum.z,
+			};
+			sequence["BoundRadius"] = i.extent.bounds_radius;
+			j["Sequences"].push_back(sequence);
+		}
+
+		std::ofstream file("C:/Users/User/Desktop/MDX.json");
+		file << j;
+		file.close();
+
 		Timer timer;
 		MDLWriter mdl;
 

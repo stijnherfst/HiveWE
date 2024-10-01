@@ -72,7 +72,6 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 )
 
 target_sources(HiveWE PRIVATE
-
 	"main.cpp"
 	
 	"globals.h"
@@ -89,7 +88,6 @@ target_sources(HiveWE PRIVATE
 	"brush/pathing_brush.cpp"
 	"brush/terrain_brush.cpp"
 	"brush/unit_brush.cpp"
-
 	
 	"file_formats/mdx/mdl_reader.cpp"
 	"file_formats/mdx/mdl_writer.cpp"

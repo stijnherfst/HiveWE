@@ -109,13 +109,76 @@ struct MapScriptWriter {
 	std::string script;
 	size_t current_indentation = 0;
 
+	enum class Mode {
+		lua,
+		jass
+	};
+	Mode mode = Mode::lua;
+
 	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
 		std::vformat_to(std::back_inserter(script), users_fmt, args);
 	}
 
+	constexpr void local(std::string_view type, std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == Mode::lua) {
+			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "local {} {} = {}\n", type, name, value);
+		}
+	}
+
+	constexpr void global(std::string_view type, std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == Mode::lua) {
+			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "{} {} = {}\n", type, name, value);
+		}
+	}
+
+	constexpr void set_variable(std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == Mode::lua) {
+			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "set {} = {}\n", name, value);
+		}
+	}
+
 	template <typename... Args>
-	constexpr void function_call(std::string_view name, Args&&... args) {
+	constexpr void inline_call(std::string_view name, Args&&... args) {
 		std::string work = "{}(";
+
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+			if (i < sizeof...(args) - 1) {
+				work += ", ";
+			}
+		}
+		work += ")";
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(name, args...));
+	}
+
+	template <typename... Args>
+	constexpr void call(std::string_view name, Args&&... args) {
+		std::string work;
+
+		if (mode == Mode::jass) {
+			work = "call {}(";
+		} else {
+			work = "{}(";
+		}
 
 		for (size_t i = 0; i < sizeof...(args); i++) {
 			work += "{}";
@@ -142,10 +205,7 @@ struct MapScriptWriter {
 
 	template <typename... Args>
 	constexpr void write_ln(Args&&... args) {
-		std::string work = "";
-		for (size_t i = 0; i < current_indentation; i++) {
-			work += '\t';
-		}
+		std::string work = std::string(current_indentation, '\t');
 		for (size_t i = 0; i < sizeof...(args); i++) {
 			work += "{}";
 		}
@@ -171,21 +231,53 @@ struct MapScriptWriter {
 		script += "end\n";
 	}
 
-	 template <typename T>
-	 void function(std::string_view name, T callback) {
+	template <typename T>
+	void function(std::string_view name, T callback) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
 		}
 
-		std::format_to(std::back_inserter(script), "function {}()\n", name);
+		if (mode == Mode::lua) {
+			std::format_to(std::back_inserter(script), "function {}()\n", name);
+		} else {
+			std::format_to(std::back_inserter(script), "function {} takes nothing returns nothing\n", name);
+		}
+
 		current_indentation += 1;
 		callback();
 		current_indentation -= 1;
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
 		}
-		script += "end\n";
-	 }
+		
+		if (mode == Mode::lua) {
+			script += "end\n";
+		} else {
+			script += "endfunction\n";
+		}
+	}
+
+	template <typename T>
+	void if_statement(std::string_view condition, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		std::format_to(std::back_inserter(script), "if ({})\n", condition);
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == Mode::lua) {
+			script += "end\n";
+		} else {
+			script += "endif\n";
+		}
+	}
 
 	 template <typename T>
 	 void global_variable(std::string_view name, T value) {
@@ -193,6 +285,23 @@ struct MapScriptWriter {
 			script += '\t';
 		}
 		std::format_to(std::back_inserter(script), "udg_{} = {}", name, value);
+	 }
+
+	 /// The ID should not be quoted
+	 std::string four_cc(std::string_view id) {
+		if (mode == Mode::lua) {
+			return std::format("FourCC(\"{}\")", id);
+		} else {
+			return std::format("\"{}\"", id);;
+		}
+	 }
+
+	 std::string null() {
+		if (mode == Mode::lua) {
+			return "nil";
+		} else {
+			return "null";
+		}
 	 }
 };
 
