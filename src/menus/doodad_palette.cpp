@@ -86,7 +86,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	selection_section->addWidget(selection_mode);
 
 	//selections_button->setText("View\nSelections");
-	//selections_button->setIcon(QIcon("Data/Icons/Ribbon/description32x32.png.png"));
+	//selections_button->setIcon(QIcon("data/icons/ribbon/description32x32.png.png"));
 	//selection_section->addWidget(selections_button);
 
 	//QVBoxLayout* selection_choices_layout = new QVBoxLayout;

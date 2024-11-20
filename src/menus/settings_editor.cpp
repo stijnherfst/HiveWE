@@ -48,7 +48,7 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		save();
 		QSettings settings;
-		QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
+		QFile file("data/themes/" + settings.value("theme").toString() + ".qss");
 		file.open(QFile::ReadOnly);
 		QString StyleSheet = QLatin1String(file.readAll());
 

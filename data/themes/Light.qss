@@ -1,0 +1,341 @@
+/* http://doc.qt.io/qt-5/stylesheet-syntax.html */
+/* http://doc.qt.io/qt-5/stylesheet-customizing.html */
+
+/******************************************************/
+/* QRibbon */
+
+QRibbon {
+	max-height: 121px;
+}
+
+QRibbon QWidget {
+	font: 8pt "Segoe UI";
+	color: black;
+}
+
+QWidget#centralWidget {
+	background-color: white;
+}
+
+QRibbon::pane {
+	border-top: 1px solid rgb(218, 219, 220);
+	border-bottom: 1px solid rgb(218, 219, 220);
+	margin-top: -1;
+	margin-bottom: -0;
+}
+
+QRibbon QTabBar::tab { 
+	height: 22px;
+	background-color: rgb(255, 255, 255);
+	border: 1px solid white;
+	border-bottom-width: 0px;
+
+	padding-top: -1px;
+	padding-left: 14px;
+	padding-right: 14px;
+	margin-right: 1px;
+}
+
+QRibbon QTabBar::tab::hover {
+	background-color: rgb(253, 253, 255);
+	border-color: rgb(235, 236, 236);
+	height: 23px;
+}
+
+QRibbon QTabBar::tab::selected {
+	background-color: rgb(245, 246, 247);
+	border-color: rgb(218, 219, 220);
+	padding-bottom: 2px;
+}
+
+/******************************************************/
+.QRibbonFileButton {
+	border: 1px solid transparent;
+	background-color: rgb(25, 121, 202);
+	height: 23px;
+	color: white;
+	padding-left: 14px;
+	padding-right: 13px;
+	qproperty-popupMode: InstantPopup;
+}
+
+QRibbonFileButton::hover {
+	background-color: rgb(41, 140, 225);
+}
+
+QRibbonFileButton::pressed {
+	background-color: rgb(18, 104, 179);
+}
+
+QRibbonFileButton::menu-indicator { 
+	image: none; 
+} 
+
+/******************************************************/
+/* QRibbonMenu */
+QRibbonMenu {
+	color: black;
+	background-color: rgb(251, 252, 253);
+	border: 1px solid rgb(132, 146, 166);
+}
+
+QRibbonMenu QToolButton {
+	border: 1px solid transparent;
+	background-color: rgb(251, 252, 253);
+	height: 44px;
+	width: 216px;
+	color: black;
+}
+
+QRibbonMenu QToolButton::hover {
+	border-color: rgb(168, 210, 253);
+	background-color: rgb(237, 244, 252);
+}
+
+QRibbonMenu QFrame#verticalSeperator {
+	border: none;
+	max-width: 0px;
+	background-color: gray;
+	border-left: 1px solid rgb(220, 221, 222);
+	border-right: 1px solid rgb(254, 254, 255);
+	qproperty-frameShape: VLine;
+}
+
+QRibbonMenu QFrame#horizontalSeperator {
+	border: none;
+	background-color: rgb(220, 221, 222);
+	max-height: 1px;
+	margin-left: 44px;
+	qproperty-frameShape: HLine;
+}
+
+/******************************************************/
+/* QRibbonTab */
+QRibbonTab {
+	background-color: rgb(245, 246, 247);
+}
+
+QRibbonTab QFrame#seperator {
+	border: none;
+	max-width: 1px;
+	background-color: rgb(226, 227, 228);
+	qproperty-frameShape: VLine;
+}
+
+/******************************************************/
+/* QRibbonContainer */
+QRibbonContainer {
+	border: 1px solid rgb(219, 220, 221);
+	background-color: rgb(250, 251, 252);
+}
+
+/******************************************************/
+/* QRibbonButton */
+QRibbonButton {
+	border: 1px solid transparent;
+	padding-left: 3px;
+	padding-right: 2px;
+	qproperty-iconSize: 30px 30px;
+	qproperty-toolButtonStyle: ToolButtonTextUnderIcon;
+}
+
+QRibbonButton::hover {
+	background-color: rgb(232, 239, 247);
+}
+
+QRibbonButton::pressed {
+	background-color: rgb(201, 224, 247);
+}
+
+QRibbonButton::checked {
+	background-color: rgb(201, 224, 247);
+}
+
+QRibbonButton::checked:hover {
+	border: 1px solid rgb(120, 120, 120);
+}
+
+QRibbon QLineEdit {
+	height: 21px;
+	max-width: 50px;
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(255, 255, 255);
+	color: rgb(0, 0, 0);
+}
+
+QRibbon QLineEdit::hover {
+	/*background-color: rgb(75, 75, 75);*/
+}
+
+QRibbon QLineEdit::focus {
+	/*border: 1px solid rgb(100, 150, 255);*/
+}
+
+QRibbon QLineEdit::disabled {
+	/*background-color: rgb(67, 67, 67);*/
+}
+
+QRibbonButton::menu-indicator {
+    top: -3;
+}
+
+QRibbonButton QMenu {
+	/*border: 1px solid rgb(100, 100, 100);*/
+}
+
+QRibbonButton QMenu::item {
+	height: 28px;
+	padding-left: 30px;
+    padding-right: 30px;
+    margin: 1px;
+}
+
+QRibbonButton QMenu::item:selected {
+	background-color: rgb(85, 85, 85);
+}
+
+QSmallRibbonButton {
+	height: 23;
+	max-height: 23;
+	qproperty-iconSize: 16px 16px;
+	qproperty-toolButtonStyle: ToolButtonTextBesideIcon;
+}
+
+/******************************************************/
+/* Docking */
+
+ads--CDockWidgetTab {
+    background: palette(window);
+    border-style: solid;
+    border-width: 0px 0 0;
+    padding: 0 0px;
+
+}
+
+ads--CDockWidgetTab[activeTab="true"] {
+    background: palette(highlight);
+    border-color: palette(highlight);
+}
+
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:hover {
+	background: rgba(255, 255, 255, 48);
+}
+
+ads--CDockWidgetTab[focused="true"]>#tabCloseButton:pressed {
+	background: rgba(255, 255, 255, 92);
+}
+
+ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid transparent;
+	padding-bottom: 0px;
+}
+
+ads--CDockAreaWidget[focused="true"] ads--CDockAreaTitleBar {
+	background: transparent;
+	border-bottom: 2px solid palette(highlight);
+	padding-bottom: 0px;
+}
+
+QScrollArea#dockWidgetScrollArea {
+    padding: 0px;
+    border: none;
+}
+
+#tabCloseButton {
+	margin-top: 2px;
+	background: none;
+	border: none;
+	padding: 0px -2px;
+}
+
+#tabCloseButton:hover {
+	border: 1px solid rgb(164, 206, 249);
+	background-color: rgb(232, 239, 247);
+}
+
+#tabCloseButton:pressed {
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
+}
+
+
+/******************************************************/
+/* General */
+
+QPushButton {
+	border: 1px solid transparent;
+}
+
+QPushButton::hover {
+	border: 1px solid rgb(164, 206, 249);
+	background-color: rgb(232, 239, 247);
+}
+
+QPushButton::pressed {
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
+}
+
+QPushButton::checked {
+	border: 1px solid rgb(98, 162, 228);
+	background-color: rgb(201, 224, 247);
+}
+
+QDialogButtonBox QPushButton {
+	border: 1px solid rgb(100, 100, 100);
+	padding: 5;
+}
+
+JassEditor QFrame {
+	background-color: palette(window);
+}
+
+QTableView::indicator {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(60, 60, 60);
+}
+
+QTableView::indicator:hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+QTableView::indicator:pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+QTableView::indicator:checked{
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+	image: url("data/icons/check.png");
+}
+
+/******************************************************/
+/* Object Editor */
+
+ObjectEditor QLineEdit {
+	background-color: rgb(66, 66, 66);
+}
+
+IconButton {
+	border: 1px solid transparent;
+	padding-left: 3px;
+	padding-right: 2px;
+}
+
+IconButton::hover {
+	border: 1px solid rgb(100, 100, 100);
+	background-color: rgb(85, 85, 85);
+}
+
+IconButton::pressed {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}
+
+IconButton::checked {
+	border: 1px solid rgb(120, 120, 120);
+	background-color: rgb(100, 100, 100);
+}

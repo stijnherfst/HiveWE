@@ -98,7 +98,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>data/icons/walkable.png</normaloff>Data/Icons/walkable.png</iconset>
+         <normaloff>data/icons/walkable.png</normaloff>data/icons/walkable.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -124,7 +124,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>data/icons/flyable.png</normaloff>Data/Icons/flyable.png</iconset>
+         <normaloff>data/icons/flyable.png</normaloff>data/icons/flyable.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -150,7 +150,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>data/icons/buildable.png</normaloff>Data/Icons/buildable.png</iconset>
+         <normaloff>data/icons/buildable.png</normaloff>data/icons/buildable.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -404,7 +404,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/circle.png</normaloff>Data/Icons/Brush/circle.png</iconset>
+         <normaloff>data/icons/brush/circle.png</normaloff>data/icons/brush/circle.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -436,7 +436,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/square.png</normaloff>Data/Icons/Brush/square.png</iconset>
+         <normaloff>data/icons/brush/square.png</normaloff>data/icons/brush/square.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -465,7 +465,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/diamond.png</normaloff>Data/Icons/Brush/diamond.png</iconset>
+         <normaloff>data/icons/brush/diamond.png</normaloff>data/icons/brush/diamond.png</iconset>
        </property>
        <property name="iconSize">
         <size>

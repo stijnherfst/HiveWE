@@ -156,12 +156,12 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	//	array.append(object);
 	//}
 	//json.setArray(array);
-	//std::ofstream file("C:/Users/User/stack/Projects/HiveWE/HiveWE/Data/Warcraft/icon_tags.json");
+	//std::ofstream file("C:/Users/User/stack/Projects/HiveWE/HiveWE/data/warcraft/icon_tags.json");
 	//std::string output = json.toJson().toStdString();
 	//file.write(output.data(), output.size());
 	//file.close();
 
-	QFile file(fs::path("Data/Warcraft/icon_tags.json"));
+	QFile file(fs::path("data/warcraft/icon_tags.json"));
 	file.open(QIODevice::ReadOnly);
 
 	QJsonParseError error;

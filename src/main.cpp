@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
 	ads::CDockManager::setConfigFlag(ads::CDockManager::MiddleMouseButtonClosesTab);
 
 	QSettings settings;
-	QFile file("Data/Themes/" + settings.value("theme", "Dark").toString() + ".qss");
+	QFile file("data/themes/" + settings.value("theme", "Dark").toString() + ".qss");
 	file.open(QFile::ReadOnly);
 	a.setStyleSheet(QLatin1String(file.readAll()));
 

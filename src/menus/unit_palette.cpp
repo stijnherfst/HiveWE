@@ -38,7 +38,7 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	selection_section->setText("Selection");
 
 	selection_mode->setText("Selection\nMode");
-	selection_mode->setIcon(QIcon("Data/Icons/Ribbon/select32x32.png"));
+	selection_mode->setIcon(QIcon("data/icons/Ribbon/select32x32.png"));
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
@@ -56,12 +56,12 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 
 	QSmallRibbonButton* edit_in_oe = new QSmallRibbonButton;
 	edit_in_oe->setText("Edit in OE");
-	edit_in_oe->setIcon(QIcon("Data/Icons/Ribbon/objecteditor32x32.png"));
+	edit_in_oe->setIcon(QIcon("data/icons/Ribbon/objecteditor32x32.png"));
 
 	QSmallRibbonButton* select_in_palette = new QSmallRibbonButton;
 	select_in_palette->setText("Select in Palette");
 	select_in_palette->setToolTip("Or click the unit with middle mouse button");
-	select_in_palette->setIcon(QIcon("Data/Icons/Ribbon/units32x32.png"));
+	select_in_palette->setIcon(QIcon("data/icons/Ribbon/units32x32.png"));
 
 	QVBoxLayout* info_layout = new QVBoxLayout;
 	info_layout->addWidget(selection_name);

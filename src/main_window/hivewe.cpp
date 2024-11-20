@@ -56,10 +56,10 @@ HiveWE::HiveWE(QWidget* parent)
 
 	// Place common.j and blizzard.j in the data folder. Required by JassHelper
 	BinaryReader common = hierarchy.open_file("scripts/common.j");
-	std::ofstream output("Data/Tools/common.j");
+	std::ofstream output("data/tools/common.j");
 	output.write((char*)common.buffer.data(), common.buffer.size());
 	BinaryReader blizzard = hierarchy.open_file("scripts/blizzard.j");
-	std::ofstream output2("Data/Tools/blizzard.j");
+	std::ofstream output2("data/tools/blizzard.j");
 	output2.write((char*)blizzard.buffer.data(), blizzard.buffer.size());
 
 	ui.setupUi(this);
@@ -110,7 +110,7 @@ HiveWE::HiveWE(QWidget* parent)
 	// Reload theme
 	connect(new QShortcut(Qt::Key_F5, this), &QShortcut::activated, [&]() {
 		QSettings settings;
-		QFile file("Data/Themes/" + settings.value("theme").toString() + ".qss");
+		QFile file("data/themes/" + settings.value("theme").toString() + ".qss");
 		file.open(QFile::ReadOnly);
 		QString StyleSheet = QLatin1String(file.readAll());
 
@@ -201,7 +201,7 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 
 	ui.widget->makeCurrent();
-	map->load("Data/Test Map/");
+	map->load("data/test map/");
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 }
 

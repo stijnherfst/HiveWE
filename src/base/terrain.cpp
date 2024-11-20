@@ -168,7 +168,7 @@ void Terrain::create() {
 	deep_color_max /= 255.f;
 
 	// Cliff Meshes
-	slk::SLK cliffs_variation_slk("Data/Warcraft/Cliffs.slk", true);
+	slk::SLK cliffs_variation_slk("data/warcraft/Cliffs.slk", true);
 	for (size_t i = 0; i < cliffs_variation_slk.rows(); i++) {
 		for (int j = 0; j < cliffs_variation_slk.data<int>("variations", i) + 1; j++) {
 			std::string file_name = "Doodads/Terrain/Cliffs/Cliffs" + cliffs_variation_slk.index_to_row.at(i) + std::to_string(j) + ".mdx";
@@ -246,9 +246,9 @@ void Terrain::create() {
 	}
 	glGenerateTextureMipmap(water_texture_array);
 
-	ground_shader = resource_manager.load<Shader>({ "Data/Shaders/terrain.vert", "Data/Shaders/terrain.frag" });
-	cliff_shader = resource_manager.load<Shader>({ "Data/Shaders/cliff.vert", "Data/Shaders/cliff.frag" });
-	water_shader = resource_manager.load<Shader>({ "Data/Shaders/water.vert", "Data/Shaders/water.frag" });
+	ground_shader = resource_manager.load<Shader>({ "data/shaders/terrain.vert", "data/shaders/terrain.frag" });
+	cliff_shader = resource_manager.load<Shader>({ "data/shaders/cliff.vert", "data/shaders/cliff.frag" });
+	water_shader = resource_manager.load<Shader>({ "data/shaders/water.vert", "data/shaders/water.frag" });
 
 	collision_shape = new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
 	if (collision_shape == nullptr) {

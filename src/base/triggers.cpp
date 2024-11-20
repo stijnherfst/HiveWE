@@ -1217,8 +1217,8 @@ QString Triggers::generate_map_script() {
 	hierarchy.map_file_add(path, "war3map.lua");
 
 	/*QProcess* proc = new QProcess();
-	proc->setWorkingDirectory("Data/Tools");
-	proc->start("Data/Tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
+	proc->setWorkingDirectory("data/tools");
+	proc->start("data/tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
 	proc->waitForFinished();
 	QString result = proc->readAllStandardOutput();
 
@@ -1229,7 +1229,7 @@ QString Triggers::generate_map_script() {
 		QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information" + result.mid(result.indexOf("compile errors")), QMessageBox::StandardButton::Ok);
 		return result.mid(result.indexOf("compile errors."));
 	} else {
-		hierarchy.map_file_add("Data/Tools/war3map.j", "war3map.j");
+		hierarchy.map_file_add("data/tools/war3map.j", "war3map.j");
 		return "Compilation successful";
 	}*/
 	return "Compilation successful";

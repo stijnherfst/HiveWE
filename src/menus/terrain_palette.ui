@@ -1164,7 +1164,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/circle.png</normaloff>Data/Icons/Brush/circle.png</iconset>
+         <normaloff>data/icons/brush/circle.png</normaloff>data/icons/brush/circle.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -1199,7 +1199,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/square.png</normaloff>Data/Icons/Brush/square.png</iconset>
+         <normaloff>data/icons/brush/square.png</normaloff>data/icons/brush/square.png</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -1231,7 +1231,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>Data/Icons/Brush/diamond.png</normaloff>Data/Icons/Brush/diamond.png</iconset>
+         <normaloff>data/icons/brush/diamond.png</normaloff>data/icons/brush/diamond.png</iconset>
        </property>
        <property name="iconSize">
         <size>

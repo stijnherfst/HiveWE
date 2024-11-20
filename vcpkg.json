@@ -3,15 +3,24 @@
   "name": "hivewe",
   "version": "0.7.0",
   "vcpkg-configuration": {
-    "overlay-ports": [
-      "overlay-ports"
-    ]
+    "overlay-ports": [ "overlay-ports" ]
   },
   "dependencies": [
-    "qtbase",
+    {
+      "name": "qtbase",
+      "default-features": false,
+      "features": [
+        "gui",
+        "widgets",
+        "opengl",
+        "png",
+        "jpeg"
+      ]
+    },
     "glm",
     {
       "name": "glad",
+      "default-features": false,
       "features": [
         "loader",
         "extensions",

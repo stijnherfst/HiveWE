@@ -1,4 +1,11 @@
 cmake_minimum_required(VERSION 3.29)
+
+# Hack because vcpkg doesn't allow you to just declare that you want to be static on all platforms
+# Linux and MacOS are static by default
+# if(WIN32)
+#    SET(VCPKG_TARGET_TRIPLET "x64-windows-static")
+# endif()
+
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -13,7 +20,7 @@ find_package(stormlib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
-find_package(qtadvanceddocking CONFIG REQUIRED)
+find_package(qt6advanceddocking CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
@@ -60,7 +67,7 @@ target_link_libraries(HiveWE PUBLIC
 	BZip2::BZip2
 	libjpeg-turbo::jpeg
 	libjpeg-turbo::turbojpeg
-	ads::qtadvanceddocking
+	ads::qt6advanceddocking
 	absl::flat_hash_map
 	absl::flat_hash_set
 	TBB::tbb
@@ -91,12 +98,15 @@ endif()
 
 target_compile_features(HiveWE PUBLIC cxx_std_23)
 
+message(${CMAKE_CURRENT_BINARY_DIR})
+message(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+message($<TARGET_FILE_DIR:HiveWE>)
+
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND}
-	-E
-	create_symlink "${PROJECT_SOURCE_DIR}/data"
-	"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data"
-	DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/data"
+	-E create_symlink 
+	"${PROJECT_SOURCE_DIR}/data"
+	"$<TARGET_FILE_DIR:HiveWE>/data"
 )
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -105,6 +115,6 @@ else()
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
 endif()
 
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/platforms")
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/styles")
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/imageformats")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/debug/platforms")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/debug/styles")
+file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/debug/imageformats")
