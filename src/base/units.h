@@ -98,6 +98,7 @@ public:
 	void process_item_field_change(const std::string& id, const std::string& field);
 
 	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id);
+	static std::vector<std::string> get_required_animation_names(const std::string& id);
 };
 
 // Undo/redo structures

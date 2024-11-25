@@ -242,7 +242,7 @@ void Units::create() {
 		}
 
 		i.mesh = get_mesh(i.id);
-		i.skeleton = SkeletalModelInstance(i.mesh->model);
+		i.skeleton = SkeletalModelInstance(i.mesh->model, get_required_animation_names(i.id));
 		i.update();
 	}	
 
@@ -266,7 +266,7 @@ Unit& Units::add_unit(std::string id, glm::vec3 position) {
 	unit.angle = 0.f;
 	unit.random = { 1, 0, 0, 0 };
 	unit.creation_number = ++Unit::auto_increment;
-	unit.skeleton = SkeletalModelInstance(unit.mesh->model);
+	unit.skeleton = SkeletalModelInstance(unit.mesh->model, get_required_animation_names(id));
 	unit.update();
 
 	return units.back();
@@ -301,12 +301,12 @@ void Units::remove_units(const std::unordered_set<Unit*>& list) {
 }
 
 void Units::process_unit_field_change(const std::string& id, const std::string& field) {
-	if (field == "file") {
+	if (field == "file" || field == " attachmentlinkprops") {
 		id_to_mesh.erase(id);
 		for (auto& i : units) {
 			if (i.id == id) {
 				i.mesh = get_mesh(id);
-				i.skeleton = SkeletalModelInstance(i.mesh->model);
+				i.skeleton = SkeletalModelInstance(i.mesh->model, get_required_animation_names(id));
 				i.update();
 			}
 		}
@@ -361,6 +361,17 @@ std::shared_ptr<SkinnedMesh> Units::get_mesh(const std::string& id) {
 	id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt));
 
 	return id_to_mesh[id];
+}
+
+std::vector<std::string> Units::get_required_animation_names(const std::string& id) {
+	std::vector<std::string> required_animation_names;
+	std::string animation_names = units_slk.data("attachmentlinkprops", id);
+ 	std::stringstream names_stream(animation_names);
+	std::string animation_name;
+	while (std::getline(names_stream, animation_name, ',')) {
+		required_animation_names.push_back(animation_name);
+	}
+	return required_animation_names;
 }
 
 void UnitAddAction::undo() {
