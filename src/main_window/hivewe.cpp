@@ -253,7 +253,7 @@ void HiveWE::load_mpq() {
 													 settings.value("openDirectory", QDir::current().path()).toString(),
 													 "Warcraft III Scenario (*.w3m *.w3x)");
 
-	if (file_name == "") {
+	if (file_name.isEmpty()) {
 		return;
 	}
 
@@ -264,8 +264,8 @@ void HiveWE::load_mpq() {
 	mpq::MPQ mpq;
 	bool opened = mpq.open(mpq_path);
 	if (!opened) {
-		QMessageBox::critical(this, "Opening map failed", "Opening the map archive failed. It might be opened in another program.");
-		std::println("{}", GetLastError());
+		const auto message = std::format("Opening the map archive failed. It might be opened in another program.\nError Code {}", GetLastError());
+		QMessageBox::critical(this, "Opening map failed", QString::fromStdString(message));
 		return;
 	}
 
@@ -453,7 +453,7 @@ void HiveWE::import_heightmap() {
 
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
-			map->terrain.corners[i][j].height = (image_data[((height - 1 - j) * width + i) * channels] - 128) / 16.f;
+			map->terrain.corners[i][j].height = (image_data[((height - 1 - j) * width + i) * channels] - 128.f) / 8.f;
 		}
 	}
 
