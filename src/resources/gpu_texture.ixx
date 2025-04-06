@@ -3,7 +3,7 @@ module;
 #include <soil2/SOIL2.h>
 #include <filesystem>
 #include <glad/glad.h>
-#include <iostream>
+#include <print>
 
 export module GPUTexture;
 
@@ -27,13 +27,15 @@ export class GPUTexture : public Resource {
 		if (hierarchy.hd) {
 			new_path.replace_filename(path.stem().string() + "_diffuse.dds");
 		}
+
+		new_path = path;
+		new_path.replace_extension(".tga");
 		if (!hierarchy.file_exists(new_path)) {
-			new_path = path;
 			new_path.replace_extension(".blp");
 			if (!hierarchy.file_exists(new_path)) {
 				new_path.replace_extension(".dds");
 				if (!hierarchy.file_exists(new_path)) {
-					std::cout << "Error loading texture " << new_path << "\n";
+					std::println("Error loading texture {}", new_path.string());
 					new_path = "Textures/btntempw.dds";
 				}
 			}
@@ -56,7 +58,7 @@ export class GPUTexture : public Resource {
 			id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE);
 			if (id == 0) {
 				glCreateTextures(GL_TEXTURE_2D, 1, &id);
-				std::cout << "Error loading texture: " << path << "\n";
+				std::println("Error loading texture: {}", path.string());
 			}
 		}
 
