@@ -50,6 +50,28 @@ namespace slk {
 	};
 
 	export class SLK {
+		// column_header should be lowercase
+
+		std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
+			assert(to_lowercase_copy(column_header) == column_header);
+
+			// Shadow data
+			if (const auto found_row = shadow_data.find(row_header); found_row != shadow_data.end()) {
+				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
+					return found_column->second;
+				}
+			}
+
+			// Base data
+			if (const auto found_row = base_data.find(row_header); found_row != base_data.end()) {
+				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
+					return found_column->second;
+				}
+			}
+
+			return {};
+		}
+
 
 	  public:
 		ankerl::unordered_dense::map<size_t, std::string> index_to_row;
@@ -205,56 +227,42 @@ namespace slk {
 		// column_header should be lowercase
 		template <typename T = std::string>
 		T data(std::string_view column_header, std::string_view row_header) const {
-			static_assert(std::is_same_v<T, std::string> || std::is_same_v<T, float> || std::is_same_v<T, int> || std::is_same_v<T, bool>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
+			static_assert(std::is_same_v<T, std::string> || std::is_floating_point_v<T> || std::is_integral_v<T>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
 			assert(to_lowercase_copy(column_header) == column_header);
 
-			// Shadow data
-			if (const auto found_row = shadow_data.find(row_header); found_row != shadow_data.end()) {
-				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
-					if constexpr (std::is_same<T, std::string>()) {
-						return found_column->second;
-					} else if constexpr (std::is_same<T, float>()) {
-						return std::stof(found_column->second);
-					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-						return std::stoi(found_column->second);
-					}
+
+			auto data = data_single_asset_type(column_header, row_header);
+			if (!data) {
+				if (hierarchy.hd) {
+					data = data_single_asset_type(std::string(column_header) + ":hd", row_header);
+				} else {
+					data = data_single_asset_type(std::string(column_header) + ":sd", row_header);
 				}
 			}
 
-			if (hierarchy.hd) {
-				const auto column_header_hd = std::string(column_header) + ":hd";
-				if (const auto found = column_headers.find(column_header_hd); found != column_headers.end()) {
-					const std::string hd_data = data(column_header_hd, row_header);
-					if (!hd_data.empty()) { // ToDo What if I clear the model field in HD mode. Will it try loading the SD model then because we don't return the blank line?
-						if constexpr (std::is_same<T, std::string>()) {
-							return hd_data;
-						} else if constexpr (std::is_same<T, float>()) {
-							return std::stof(hd_data);
-						} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-							return std::stoi(hd_data);
-						}
-					}
-				}
+			if (!data) {
+				return T();	
 			}
 
-			// Base data
-			if (const auto found_row = base_data.find(row_header); found_row != base_data.end()) {
-				if (const auto found_column = found_row->second.find(column_header); found_column != found_row->second.end()) {
-					if constexpr (std::is_same<T, std::string>()) {
-						return found_column->second;
-					} else if constexpr (std::is_same<T, float>()) {
-						return std::stof(found_column->second);
-					} else if constexpr (std::is_same<T, int>() || std::is_same<T, bool>()) {
-						return std::stoi(found_column->second);
-					}
-				}
+
+
+			if constexpr (std::is_same<T, std::string>()) {
+				return std::string(*data);
+			} else if constexpr (std::is_same<T, bool>()) {
+				int output;
+				std::from_chars(data->data(), data->data() + data->size(), output);
+				return output != 0;
+			} else if constexpr (std::is_floating_point_v<T> || std::is_integral_v<T>) {
+				T output;
+				std::from_chars(data->data(), data->data() + data->size(), output);
+				return output;
 			}
 
-			return T();
+			throw;
 		}
 
 		// Gets the data by first checking the shadow table and then checking the base table
-		// Also does :hd tag resolution
+		// Does :sd and :hd tag resolution too
 		// column_header should be lowercase
 		// If you have both an integer row index and the string row name then use the overload that takes string_view as it will do a index->name conversion internally
 		template <typename T = std::string>
