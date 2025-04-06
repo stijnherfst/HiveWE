@@ -539,19 +539,37 @@ glm::uvec4 Terrain::get_texture_variations(const int x, const int y) const {
 	return tiles;
 }
 
+/// Returns the height at x,y by bilinear interpolation
+/// Set water_too to true to also take the water height into account
 float Terrain::interpolated_height(float x, float y, bool water_too) const {
 	x = std::clamp(x, 0.f, width - 1.01f);
 	y = std::clamp(y, 0.f, height - 1.01f);
 
-	// Bilinear interpolation
-	float xx = glm::mix(corners[x][y].final_ground_height(), corners[std::ceil(x)][y].final_ground_height(), x - floor(x));
-	float yy = glm::mix(corners[x][std::ceil(y)].final_ground_height(), corners[std::ceil(x)][std::ceil(y)].final_ground_height(), x - floor(x));
 
-	if (water_too) {
-		xx = std::max(xx, glm::mix(corners[x][y].final_water_height(), corners[std::ceil(x)][y].final_water_height(), x - floor(x)));
-		yy = std::max(yy, glm::mix(corners[x][std::ceil(y)].final_water_height(), corners[std::ceil(x)][std::ceil(y)].final_water_height(), x - floor(x)));
+	float p1 = corners[x][y].final_ground_height();
+	float p2 = corners[std::ceil(x)][y].final_ground_height();
+
+	float p3 = corners[x][std::ceil(y)].final_ground_height();
+	float p4 = corners[std::ceil(x)][std::ceil(y)].final_ground_height();
+
+	if (water_too && corners[x][y].water) {
+		p1 = std::max(p1, corners[x][y].final_water_height());
 	}
 
+	if (water_too && corners[std::ceil(x)][y].water) {
+		p2 = std::max(p2, corners[std::ceil(x)][y].final_water_height());
+	}
+
+	if (water_too && corners[x][std::ceil(y)].water) {
+		p3 = std::max(p3, corners[x][std::ceil(y)].final_water_height());
+	}
+
+	if (water_too && corners[std::ceil(x)][std::ceil(y)].water) {
+		p4 = std::max(p4, corners[std::ceil(x)][std::ceil(y)].final_water_height());
+	}
+
+	float xx = glm::mix(p1, p2, x - floor(x));
+	float yy = glm::mix(p3, p4, x - floor(x));
 	return glm::mix(xx, yy, y - floor(y));
 }
 

@@ -220,7 +220,7 @@ void Brush::render_selector(const Terrain& terrain) const {
 		selection_shader->use();
 
 		glm::mat4 model(1.f);
-		model = glm::translate(model, glm::vec3(selection_start, terrain.interpolated_height(selection_start.x, selection_start.y, true)));
+		model = glm::translate(model, glm::vec3(selection_start, terrain.interpolated_height(selection_start.x, selection_start.y, false)));
 		model = glm::scale(model, glm::vec3(glm::vec2(input_handler.mouse_world), 1.f) - glm::vec3(selection_start, 1.f));
 		model = camera.projection_view * model;
 		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
