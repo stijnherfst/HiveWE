@@ -50,8 +50,19 @@
   ],
   "buildPresets": [
     {
+      "name": "Debug",
+      "configurePreset": "debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "RelWithDebInfo",
+      "configurePreset": "relwithdebinfo",
+      "configuration": "RelWithDebInfo"
+    },
+    {
       "name": "Release",
-      "configurePreset": "release"
+      "configurePreset": "release",
+      "configuration": "Release"
     }
   ]
 }
