@@ -1,5 +1,6 @@
 module;
 
+#include <algorithm>
 #include <chrono>
 #include <vector>
 #include <memory>
@@ -45,8 +46,11 @@ export class SkeletalModelInstance {
 	std::vector<RenderNode> render_nodes;
 	std::vector<glm::mat4> world_matrices;
 
+	std::vector<std::string> required_animation_names; // for support for setting an animation by name later
+
 	SkeletalModelInstance() = default;
-	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : model(model) {
+	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model, std::vector<std::string> required_animation_names = {})
+		: model(model), required_animation_names(required_animation_names) {
 		size_t node_count = model->bones.size() +
 							model->lights.size() +
 							model->help_bones.size() +
@@ -81,10 +85,21 @@ export class SkeletalModelInstance {
 		current_keyframes.resize(model->unique_tracks);
 
 		for (size_t i = 0; i < model->sequences.size(); i++) {
-			if (model->sequences[i].name.find("Stand") != std::string::npos || model->sequences[i].name.find("stand") != std::string::npos) {
-				set_sequence(static_cast<int>(i));
-				break;
+			std::string anim_name = model->sequences[i].name;
+			std::transform(anim_name.begin(), anim_name.end(), anim_name.begin(),
+						   [](unsigned char c) { return std::tolower(c); });
+			if (anim_name.find("stand") == std::string::npos)
+				continue;
+			
+			bool good = true;
+			for (auto& req_anim_name : required_animation_names) {
+				if (anim_name.find(req_anim_name) == std::string::npos)
+					good = false;
 			}
+			if (!good)
+				continue;
+ 			set_sequence(static_cast<int>(i));
+			break;
 		}
 	}
 
