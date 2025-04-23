@@ -34,7 +34,7 @@ layout(std430, binding = 2) buffer layoutName2 {
 };
 
 layout(std430, binding = 3) buffer layoutName3 {
-    unsigned char terrain_exists[];
+    uint terrain_exists[];
 };
 
 

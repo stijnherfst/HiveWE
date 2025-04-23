@@ -135,7 +135,6 @@ export class RenderManager {
 		}
 
 		preskin_mesh_shader->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(6, 1, &light_direction.x);
 		for (const auto& i : skinned_meshes) {
 			i->preskin_geometry();
