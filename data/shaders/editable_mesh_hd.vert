@@ -18,24 +18,23 @@ out vec3 tangent_light_direction;
 out vec4 vertexColor;
 
 void main() {
-	const mat4 b0 = bones[int(vSkin.x & 0x000000FF)];
-	const mat4 b1 = bones[int(vSkin.x & 0x0000FF00) >> 8];
-	const mat4 b2 = bones[int(vSkin.x & 0x00FF0000) >> 16];
-	const mat4 b3 = bones[int(vSkin.x & 0xFF000000) >> 24];
-	const float w0 = (vSkin.y & 0x000000FF) / 255.f;
-	const float w1 = ((vSkin.y & 0x0000FF00) >> 8) / 255.f;
-	const float w2 = ((vSkin.y & 0x00FF0000) >> 16) / 255.f;
-	const float w3 = ((vSkin.y & 0xFF000000) >> 24) / 255.f;
-	mat4 skinMatrix = model * (b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3);
+	const mat4 b0 = bones[int(vSkin.x & 0x000000FFu)];
+	const mat4 b1 = bones[int(vSkin.x & 0x0000FF00u) >> 8];
+	const mat4 b2 = bones[int(vSkin.x & 0x00FF0000u) >> 16];
+	const mat4 b3 = bones[int(vSkin.x & 0xFF000000u) >> 24];
+	const float w0 = (vSkin.y & 0x000000FFu) / 255.f;
+	const float w1 = ((vSkin.y & 0x0000FF00u) >> 8) / 255.f;
+	const float w2 = ((vSkin.y & 0x00FF0000u) >> 16) / 255.f;
+	const float w3 = ((vSkin.y & 0xFF000000u) >> 24) / 255.f;
+	const mat4 skinMatrix = model * (b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3);
 	
 	gl_Position = MVP * skinMatrix * vec4(vPosition, 1.f);
-	// gl_Position = MVP * vec4(vPosition, 1.f);
 
-	mat3 model = mat3(skinMatrix);
-	vec3 T = normalize(model * vTangent.xyz);
-	vec3 N = normalize(model * vNormal);
-	vec3 B = cross(N, T) * vTangent.w; // to fix handedness
-	mat3 TBN = transpose(mat3(T, B, N));
+	const mat3 model = mat3(skinMatrix);
+	const vec3 T = normalize(model * vTangent.xyz);
+	const vec3 N = normalize(model * vNormal);
+	const vec3 B = cross(N, T) * vTangent.w; // to fix handedness
+	const mat3 TBN = transpose(mat3(T, B, N));
 
 	UV = vUV;
 	tangent_light_direction = normalize(TBN * light_direction);
