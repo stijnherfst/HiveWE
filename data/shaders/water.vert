@@ -33,7 +33,7 @@ layout(std430, binding = 1) buffer layoutName2 {
 };
 
 layout(std430, binding = 2) buffer layoutName3 {
-    unsigned char water_exists[];
+    uint water_exists[];
 };
 
 void main() { 

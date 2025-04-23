@@ -370,7 +370,6 @@ void Terrain::render_ground(bool render_pathing, bool render_lighting) const {
 
 	cliff_shader->use();
 
-	glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
 	glUniform1i(1, render_pathing);
 	glUniform1i(2, render_lighting);
 	glUniform3fv(3, 1, &map->light_direction.x);

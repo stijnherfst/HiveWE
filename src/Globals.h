@@ -1,4 +1,5 @@
 #pragma once
+#include <print>
 
 #include "main_window/glwidget.h"
 
