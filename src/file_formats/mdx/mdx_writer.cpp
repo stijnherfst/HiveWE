@@ -638,9 +638,8 @@ namespace mdx {
 		}
 	}
 
-	void MDX::save(const fs::path& path) const {
+	BinaryWriter MDX::save() const {
 		BinaryWriter writer;
-
 		writer.write_string("MDLX");
 		writer.write(ChunkTag::VERS);
 		writer.write<uint32_t>(4);
@@ -675,7 +674,6 @@ namespace mdx {
 		write_BPOS(writer, *this);
 		write_TXAN(writer, *this);
 
-		std::ofstream file(path, std::ios::binary | std::ios::out);
-		file.write(reinterpret_cast<char*>(writer.buffer.data()), writer.buffer.size());
+		return writer;
 	}
 }

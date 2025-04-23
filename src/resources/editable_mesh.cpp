@@ -1,23 +1,19 @@
-import Hierarchy;
-
 #include "editable_mesh.h"
 #include <unordered_map>
 
 #include <glad/glad.h>
 
-EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
-	if (path.extension() != ".mdx" && path.extension() != ".MDX") {
-		throw;
-	}
+import std;
+import Hierarchy;
+import BinaryReader;
+import MDX;
 
-	BinaryReader reader = hierarchy.open_file(path);
-	this->path = path;
+EditableMesh::EditableMesh(std::shared_ptr<mdx::MDX> mdx, std::optional<std::pair<int, std::string>> replaceable_id_override) {
+	this->mdx = mdx;
 
 	size_t vertices = 0;
 	size_t indices = 0;
 	size_t matrices = 0;
-
-	mdx = std::make_shared<mdx::MDX>(reader);
 
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
@@ -128,7 +124,7 @@ EditableMesh::EditableMesh(const fs::path& path, std::optional<std::pair<int, st
 
 	// animations geoset ids > geosets
 	for (auto& i : mdx->animations) {
-		if (i.geoset_id >= 0 && i.geoset_id < geosets.size()) {
+		if (i.geoset_id < geosets.size()) {
 			geosets[i.geoset_id].geoset_anim = &i;
 		}
 	}
@@ -225,12 +221,12 @@ EditableMesh::~EditableMesh() {
 	glDeleteBuffers(1, &geoset_color);
 }
 
-void EditableMesh::render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction) {
+void EditableMesh::render(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction) {
 	render_opaque_hd(skeleton, projection_view, light_direction);
 }
 
 // Opaque rendering doesn't have to be sorted and can thus be instanced
-void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction) {
+void EditableMesh::render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction) {
 	if (!has_mesh) {
 		return;
 	}

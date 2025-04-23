@@ -93,6 +93,7 @@ target_sources(HiveWE PRIVATE
 	"file_formats/mdx/mdl_writer.cpp"
 	"file_formats/mdx/mdx_reader.cpp"
 	"file_formats/mdx/mdx_writer.cpp"
+	"file_formats/mdx/optimizer.cpp"
 	
 	"resources/editable_mesh.cpp"
 	

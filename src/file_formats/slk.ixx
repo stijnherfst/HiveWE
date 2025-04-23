@@ -244,8 +244,6 @@ namespace slk {
 				return T();	
 			}
 
-
-
 			if constexpr (std::is_same<T, std::string>()) {
 				return std::string(*data);
 			} else if constexpr (std::is_same<T, bool>()) {

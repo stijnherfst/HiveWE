@@ -94,7 +94,7 @@ void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& s
 	}
 }
 
-export void load_modification_file(const std::string file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints) {
+export void load_modification_file(const std::string& file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints) {
 	BinaryReader reader = hierarchy.map_file_read(file_name);
 
 	const int version = reader.read<uint32_t>();
@@ -267,7 +267,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 	writer.write_vector(sub_writer.buffer);
 }
 
-export void save_modification_file(const std::string file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints, bool skin) {
+export void save_modification_file(const std::string& file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints, bool skin) {
 	BinaryWriter writer;
 	writer.write<uint32_t>(mod_table_write_version);
 

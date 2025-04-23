@@ -17,8 +17,6 @@ public:
 	QElapsedTimer elapsed_timer;
 	GLuint vao;
 
-	//mdx::MDX model;
-
 	double delta = 0.0;
 
 	explicit ModelEditorGLWidget(QWidget* parent);
@@ -37,6 +35,10 @@ public:
 
 	std::shared_ptr<EditableMesh> mesh;
 	SkeletalModelInstance skeleton;
+
+	int64_t optimization_file_size_reduction = 0;
+	float optimization_file_size_reduction_percent = 0.f;
+	mdx::MDX::OptimizationStats stats;
 
 	std::shared_ptr<Shader> shader;
 

@@ -390,6 +390,6 @@ export class SkeletalModelInstance {
 		}
 		const float t = time_between_frames == 0 ? 0.f : ((local_current_frame - floor_time) / static_cast<float>(time_between_frames));
 
-		return interpolate(floor_value, floor_out_tan, ceil_in_tan, ceil_value, t, header.interpolation_type);
+		return interpolate(floor_value, floor_out_tan, ceil_in_tan, ceil_value, t, static_cast<int>(header.interpolation_type));
 	}
 };

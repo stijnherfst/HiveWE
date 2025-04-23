@@ -23,7 +23,7 @@ export class Texture : public Resource {
 	static constexpr const char* name = "Texture";
 
 	explicit Texture() = default;
-	Texture(const fs::path& path) {
+	explicit Texture(const fs::path& path) {
 		fs::path new_path = path;
 
 		if (hierarchy.hd) {

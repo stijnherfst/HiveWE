@@ -2,8 +2,6 @@
 
 #include <memory>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -46,22 +44,21 @@ class EditableMesh : public Resource {
 	GLuint layer_alpha;
 	GLuint geoset_color;
 
-	fs::path path;
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 
 	static constexpr const char* name = "EditableMesh";
 
-	explicit EditableMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override);
+	explicit EditableMesh(std::shared_ptr<mdx::MDX> mdx, std::optional<std::pair<int, std::string>> replaceable_id_override);
 	virtual ~EditableMesh();
 
-	void render(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction);
+	void render(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction);
 
 private:
 	//void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);
 	//void render_color_coded(const SkeletalModelInstance& skeleton, int id);
 
 	//void render_opaque_sd();
-  void render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4 projection_view, glm::vec3 light_direction);
+  void render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction);
 
 	//void render_transparent_sd(int instance_id);
 	//void render_transparent_hd(int instance_id);

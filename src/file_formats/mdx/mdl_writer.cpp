@@ -42,16 +42,16 @@ namespace mdx {
 			} else {
 				start_group(name, [&]() {
 					switch (track_header.interpolation_type) {
-						case 0:
+						case InterpolationType::none:
 							write_line("DontInterp,");
 							break;
-						case 1:
+						case InterpolationType::linear:
 							write_line("Linear,");
 							break;
-						case 2:
+						case InterpolationType::hermite:
 							write_line("Hermite,");
 							break;
-						case 3:
+						case InterpolationType::bezier:
 							write_line("Bezier,");
 							break;
 					}
@@ -69,7 +69,7 @@ namespace mdx {
 							write_line("{}: {},", track.frame, track.value);
 						}
 
-						if (track_header.interpolation_type == 2 || track_header.interpolation_type == 3) {
+						if (track_header.interpolation_type == InterpolationType::hermite || track_header.interpolation_type == InterpolationType::bezier) {
 							if constexpr (std::is_same_v<T, glm::vec2>) {
 								write_line("InTan {{ {}, {} }},", track.inTan.x, track.inTan.y);
 								write_line("OutTan {{ {}, {} }},", track.outTan.x, track.outTan.y);

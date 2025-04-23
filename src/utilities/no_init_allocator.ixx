@@ -17,7 +17,7 @@ class default_init_allocator : public A {
 	};
 
 	template <typename U>
-	void construct(U* ptr) noexcept(std::is_nothrow_default_constructible<U>::value) {
+	void construct(U* ptr) noexcept(std::is_nothrow_default_constructible_v<U>) {
 		::new (static_cast<void*>(ptr)) U;
 	}
 

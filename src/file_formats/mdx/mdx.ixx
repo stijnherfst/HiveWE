@@ -120,9 +120,16 @@ namespace mdx {
 		T outTan;
 	};
 
+	export enum class InterpolationType {
+		none = 0,
+		linear = 1,
+		hermite = 2,
+		bezier = 3,
+	};
+
 	export template <typename T>
 	struct TrackHeader {
-		int32_t interpolation_type = 0;
+		InterpolationType interpolation_type = InterpolationType::none;
 		int32_t global_sequence_ID = -1;
 		std::vector<Track<T>> tracks;
 
@@ -131,7 +138,7 @@ namespace mdx {
 		TrackHeader() = default;
 		explicit TrackHeader(BinaryReader& reader, int track_id) {
 			const uint32_t tracks_count = reader.read<uint32_t>();
-			interpolation_type = reader.read<int32_t>();
+			interpolation_type = static_cast<InterpolationType>(reader.read<int32_t>());
 			global_sequence_ID = reader.read<int32_t>();
 			id = track_id;
 
@@ -140,7 +147,7 @@ namespace mdx {
 				Track<T> track;
 				track.frame = reader.read<int32_t>();
 				track.value = reader.read<T>();
-				if (interpolation_type > 1) {
+				if (interpolation_type == InterpolationType::bezier || interpolation_type == InterpolationType::hermite) {
 					track.inTan = reader.read<T>();
 					track.outTan = reader.read<T>();
 				}
@@ -161,7 +168,7 @@ namespace mdx {
 			for (const auto& i : tracks) {
 				writer.write<uint32_t>(i.frame);
 				writer.write<T>(i.value);
-				if (interpolation_type > 1) {
+				if (interpolation_type == InterpolationType::bezier || interpolation_type == InterpolationType::hermite) {
 					writer.write<T>(i.inTan);
 					writer.write<T>(i.outTan);
 				}
@@ -190,7 +197,6 @@ namespace mdx {
 
 		std::vector<LayerTexture> texturess;
 
-		TrackHeader<uint32_t> KMTFTemp;
 		TrackHeader<float> KMTA;
 		TrackHeader<float> KMTE;
 		TrackHeader<glm::vec3> KFC3;
@@ -200,7 +206,7 @@ namespace mdx {
 		enum ShadingFlags {
 			unshaded = 1,
 			sphere_environment_map = 2,
-			uknown1 = 4,
+			unknown1 = 4,
 			unknown2 = 8,
 			two_sided = 16,
 			unfogged = 32,
@@ -633,7 +639,7 @@ namespace mdx {
 	};
 
 	export class MDX {
-	  public:
+	public:
 		int unique_tracks = 0;
 
 		int version;
@@ -667,22 +673,22 @@ namespace mdx {
 		std::vector<float> bind_poses;
 		std::vector<TextureAnimation> texture_animations;
 
-	  private:
+	private:
 		void load(BinaryReader& reader);
 		MDX() = default;
 
-	  public:
+	public:
 		explicit MDX(BinaryReader& reader) {
 			load(reader);
 		}
 
-		void save(const fs::path& path) const;
+		BinaryWriter save() const;
 
 		std::string to_mdl();
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		void validate() {
-			// Remove geoset animations that reference non existing geosets
+			// Remove geoset animations that reference non-existing geosets
 			for (size_t i = animations.size(); i-- > 0;) {
 				if (animations[i].geoset_id >= geosets.size()) {
 					animations.erase(animations.begin() + i);
@@ -742,7 +748,12 @@ namespace mdx {
 				}
 			}
 
-			// Ensure that pivots is big enough
+			// We rely on sortedness for MDX optimization
+			std::ranges::sort(sequences, [](const auto& a, const auto& b) {
+				return a.start_frame < b.start_frame;
+			});
+
+			// Ensure that the pivot buffer is big enough
 			pivots.resize(node_count, {});
 
 			// Compact node IDs
@@ -793,50 +804,22 @@ namespace mdx {
 			}
 		}
 
-		void optimize() {
-			Bone& bone = bones.front();
-			auto& header = bone.node.KGTR;
-			const auto& new_tracks = header.tracks;
+		struct OptimizationStats {
+			size_t constant_tracks = 0;
+			size_t constant_tracks_removed = 0;
+			size_t linear_tracks = 0;
+			size_t linear_tracks_removed = 0;
+			size_t hermite_tracks = 0;
+			size_t hermite_tracks_removed = 0;
+			size_t bezier_tracks = 0;
+			size_t bezier_tracks_removed = 0;
+		};
 
-			Sequence& current_sequence = sequences.front();
-			// for (const auto& track : header.tracks) {
-			for (size_t i = 0; i < new_tracks.size(); i++) {
-				auto& track = new_tracks[i];
+		// template <typename T>
+		OptimizationStats optimize(float max_error);
 
-				if (track.frame > current_sequence.end_frame) {
-					for (const auto& i : sequences) {
-						if (i.start_frame <= track.frame && i.end_frame >= track.frame) {
-							current_sequence = i;
-							break;
-						}
-					}
-					// If we find a track that lies outside any sequence we skip it
-					if (track.frame > current_sequence.end_frame) {
-						continue;
-					}
-				}
-			}
-
-			if (header.interpolation_type == 1) {
-				for (const auto& i : sequences) {
-				}
-				const auto& trackA = header.tracks[0];
-				const auto& trackB = header.tracks[1];
-				const auto& trackC = header.tracks[2];
-
-				int32_t diffAB = trackB.frame - trackA.frame;
-				int32_t diffBC = trackC.frame - trackB.frame;
-				int32_t total = trackC.frame - trackA.frame;
-
-				glm::vec3 between = trackA.value + trackC.value * (static_cast<float>(diffAB) / total);
-				glm::vec3 diff = (trackB.value - between) / between * 100.f;
-				if (diff.x < 1.f && diff.y < 1.f && diff.z < 1.f) {
-					std::print("yeet");
-				}
-			}
-		}
-
-		void for_each_node(const std::function<void(Node&)>& F) {
+		template<std::invocable<Node&> Func>
+		void for_each_node(const Func F) {
 			for (auto& i : bones) {
 				F(i.node);
 			}
@@ -875,6 +858,73 @@ namespace mdx {
 
 			for (auto& i : corn_emitters) {
 				F(i.node);
+			}
+		}
+
+		template<typename Func>
+		requires std::invocable<Func, TrackHeader<float>&>
+		and std::invocable<Func, TrackHeader<uint32_t>&>
+		and std::invocable<Func, TrackHeader<glm::vec3>&>
+		and std::invocable<Func, TrackHeader<glm::quat>&>
+		void for_each_track(const Func F) {
+			for_each_node([&](Node& node) {
+				F(node.KGRT);
+				F(node.KGTR);
+				F(node.KGSC);
+			});
+
+			for (auto& i : animations) {
+				F(i.KGAC);
+				F(i.KGAO);
+			}
+
+			for (auto& i : attachments) {
+				F(i.KATV);
+			}
+
+			for (auto& i : emitters1) {
+				F(i.KPEE);
+				F(i.KPEG);
+			}
+
+			for (auto& i : emitters2) {
+				F(i.KP2E);
+				F(i.KP2G);
+				F(i.KP2R);
+				F(i.KP2W);
+				F(i.KP2N);
+			}
+
+			for (auto& i : materials) {
+				for (auto& j : i.layers) {
+					F(j.KMTA);
+					F(j.KMTE);
+					F(j.KFC3);
+					F(j.KFCA);
+					F(j.KFTC);
+					for (auto& k : j.texturess) {
+						F(k.KMTF);
+					}
+				}
+			}
+
+			for (auto& i : lights) {
+				F(i.KLAS);
+				F(i.KLAE);
+				F(i.KLAC);
+				F(i.KLAI);
+				F(i.KLBI);
+				F(i.KLBC);
+				F(i.KLAV);
+			}
+
+			for (auto& i : ribbons) {
+				F(i.KRHA);
+				F(i.KRHB);
+				F(i.KRAL);
+				F(i.KRCO);
+				F(i.KRTX);
+				F(i.KRVS);
 			}
 		}
 	};
