@@ -1,23 +1,18 @@
 module;
 
 #include <chrono>
-#include <vector>
-#include <memory>
-#include <unordered_map>
-#include <print>
-
-#define GLM_SWIZZLE
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 export module SkeletalModelInstance;
 
+import std;
 import Camera;
 import Utilities;
 import MathOperations;
 import RenderNode;
 import MDX;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
 
 // Ghostwolf mentioned this to me once, so I used it,
 // as 0.75, experimentally determined as a guess at
@@ -313,7 +308,11 @@ export class SkeletalModelInstance {
 
 	// Returns RGB instead of BGR as Blizzard used internally
 	glm::vec3 get_geoset_animation_color(const mdx::GeosetAnimation& animation) const {
-		return interpolate_keyframes<glm::vec3>(animation.KGAC, animation.color.bgr).bgr;
+		// bgr to rgb
+		const auto animation_color = glm::vec3(animation.color.b, animation.color.g, animation.color.r);
+		const auto interpolated_color = interpolate_keyframes<glm::vec3>(animation.KGAC, animation_color);
+		// rgb to bgr
+		return glm::vec3(interpolated_color.b, interpolated_color.g, interpolated_color.r);
 	}
 
 	float get_geoset_animation_visiblity(const mdx::GeosetAnimation& animation) const {

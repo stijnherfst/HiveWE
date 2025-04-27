@@ -1,19 +1,21 @@
 module;
 
-#include <QSize>
-#include <QMargins>
-#include <QIcon>
 #include <QAbstractTableModel>
-#include "globals.h"
-#include <absl/strings/str_split.h>
 
 export module TableModel;
 
+import <absl/strings/str_split.h>;
+
+import std;
+import Globals;
 import QIconResource;
 import SLK;
 import TriggerStrings;
 import QIconResource;
 import Hierarchy;
+import ResourceManager;
+
+namespace fs = std::filesystem;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 

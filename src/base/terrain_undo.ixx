@@ -1,9 +1,6 @@
-module;
-
-#include <vector>
-#include <memory>
-
 export module TerrainUndo;
+
+import std;
 
 export class TerrainUndoAction {
   public:

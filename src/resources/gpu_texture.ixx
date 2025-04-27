@@ -1,18 +1,16 @@
-module;
-
-#include <soil2/SOIL2.h>
-#include <filesystem>
-#include <glad/glad.h>
-#include <print>
-
 export module GPUTexture;
 
-namespace fs = std::filesystem;
-
+import std;
+import types;
 import BinaryReader;
 import ResourceManager;
 import Hierarchy;
 import BLP;
+import <soil2/SOIL2.h>;
+import <glad/glad.h>;
+
+namespace fs = std::filesystem;
+
 
 export class GPUTexture : public Resource {
   public:
@@ -47,10 +45,10 @@ export class GPUTexture : public Resource {
 			int width;
 			int height;
 			int channels;
-			uint8_t* data = blp::load(reader, width, height, channels);
+			u8* data = blp::load(reader, width, height, channels);
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &id);
-			glTextureStorage2D(id, log2(std::max(width, height)) + 1, GL_RGBA8, width, height);
+			glTextureStorage2D(id, std::log2(std::max(width, height)) + 1, GL_RGBA8, width, height);
 			glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 			glGenerateTextureMipmap(id);
 			delete data;

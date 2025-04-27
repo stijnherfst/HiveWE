@@ -1,20 +1,11 @@
 module;
 
-#include <vector>
-#include <glad/glad.h>
-#include <memory>
-#include <optional>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <print>
-
 #include "units.h"
-#include "doodads.h"
-#include "globals.h"
 
 export module RenderManager;
 
+import std;
+import types;
 import SkinnedMesh;
 import Shader;
 import SkeletalModelInstance;
@@ -23,6 +14,13 @@ import Timer;
 import MDX;
 import Camera;
 import Utilities;
+import Globals;
+import <glad/glad.h>;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+// import "units.h";
+import "doodads.h";
 
 export class RenderManager {
   public:

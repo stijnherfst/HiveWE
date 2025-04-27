@@ -1,37 +1,30 @@
 #include "HiveWE.h"
 
-#include <fstream>
-#include <filesystem>
-#include <print>
-namespace fs = std::filesystem;
-
-#include <ankerl/unordered_dense.h>
-#include "tile_setter.h"
-#include "map_info_editor.h"
-#include "terrain_palette.h"
-#include "settings_editor.h"
-#include "tile_pather.h"
-#include "palette.h"
-#include "terrain_palette.h"
-#include "doodad_palette.h"
-#include "unit_palette.h"
-#include "pathing_palette.h"
-#include "object_editor/object_editor.h"
-#include "model_editor/model_editor.h"
-
-#include "object_editor/icon_view.h"
-
-#include "globals.h"
-#include "map_global.h"
-
-#include <soil2/SOIL2.h>
-
-#include <StormLib.h>
-
+import std;
 import Hierarchy;
 import MPQ;
 import OpenGLUtilities;
 import Camera;
+import Globals;
+import <soil2/SOIL2.h>;
+import <StormLib.h>;
+import MapGlobal;
+import "pathing_palette.h";
+import "object_editor/object_editor.h";
+import "model_editor/model_editor.h";
+import <ankerl/unordered_dense.h>;
+import "tile_setter.h";
+import "map_info_editor.h";
+import "terrain_palette.h";
+import "settings_editor.h";
+import "tile_pather.h";
+import "palette.h";
+import "terrain_palette.h";
+import "doodad_palette.h";
+import "unit_palette.h";
+import "object_editor/icon_view.h";
+
+namespace fs = std::filesystem;
 
 HiveWE::HiveWE(QWidget* parent)
 	: QMainWindow(parent) {

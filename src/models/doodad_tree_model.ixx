@@ -9,13 +9,13 @@ module;
 #include <QIcon>
 #include "ankerl/unordered_dense.h"
 
-#include "globals.h"
 
 export module DoodadTreeModel;
 
 import BaseTreeModel;
 import QIconResource;
 import SLK;
+import Globals;
 
 export class DoodadTreeModel : public BaseTreeModel {
 	struct Category {

@@ -1,21 +1,18 @@
-#include <set>
-#include <bitset>
-#include <iostream>
-#include <print>
-
 #include "Terrain.h"
 
-#include "globals.h"
-#include <map_global.h>
-#include <glad/glad.h>
-
+import std;
 import Hierarchy;
 import Camera;
 import BinaryReader;
 import BinaryWriter;
+import ResourceManager;
 import OpenGLUtilities;
 import Physics;
 import SLK;
+import Globals;
+import MapGlobal;
+import <glad/glad.h>;
+import "brush.h";
 
 using namespace std::literals::string_literals;
 

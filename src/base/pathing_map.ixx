@@ -1,21 +1,18 @@
 module;
 
-#include <memory>
-#include <print>
-
-#include <glad/glad.h>
 #include <QRect>
-
-#include <glm/glm.hpp>
 
 export module PathingMap;
 
+import std;
 import BinaryReader;
 import BinaryWriter;
 import PathingTexture;
 import TerrainUndo;
 import OpenGLUtilities;
 import Hierarchy;
+import <glm/glm.hpp>;
+import <glad/glad.h>;
 
 export class PathingMap {
 	static constexpr int write_version = 0;

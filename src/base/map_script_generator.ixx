@@ -1,8 +1,6 @@
-module;
-
-#include <string>
-
 export module MapScriptGenerator;
+
+import std;
 
 export class MapScriptGenerator {
 	std::string get_base_type(const std::string& type) const {

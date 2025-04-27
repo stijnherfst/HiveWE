@@ -1,12 +1,7 @@
-module;
-
-#include <map>
-#include <string>
-#include <sstream>
-#include <iostream>
-
 export module TriggerStrings;
 
+import std;
+import types;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
@@ -62,9 +57,9 @@ export class TriggerStrings {
 	void save() const {
 		BinaryWriter writer;
 
-		writer.write<uint8_t>(0xEF);
-		writer.write<uint8_t>(0xBB);
-		writer.write<uint8_t>(0xBF);
+		writer.write<u8>(0xEF);
+		writer.write<u8>(0xBB);
+		writer.write<u8>(0xBF);
 
 		std::stringstream file;
 		for (auto&& [key, value] : strings) {

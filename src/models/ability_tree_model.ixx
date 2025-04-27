@@ -1,22 +1,15 @@
 module;
 
-#include <array>
-#include <print>
 #include <QMap>
-#include <QMargins>
-#include <QObject>
 #include <QModelIndex>
-#include <QSize>
-#include <QIcon>
-#include <iostream>
-#include "ankerl/unordered_dense.h"
-
-#include "globals.h"
 
 export module AbilityTreeModel;
 
+import std;
 import BaseTreeModel;
 import SLK;
+import Globals;
+import "ankerl/unordered_dense.h";
 
 export class AbilityTreeModel : public BaseTreeModel {
 	struct Category {

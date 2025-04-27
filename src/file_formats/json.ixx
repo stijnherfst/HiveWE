@@ -1,14 +1,7 @@
-module;
-
-#include <map>
-#include <string>
-#include <filesystem>
-#include <iostream>
-#include <sstream>
-#include <functional>
-
 export module JSON;
 
+import std;
+import types;
 import BinaryReader;
 import Utilities;
 
@@ -47,7 +40,7 @@ namespace json {
 						if (line.substr(0, 12) == "    {\"src\":\"") {
 							end1 = line.find('\"', 13);
 							std::string key = line.substr(12, end1 - 12);
-							std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+							std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
 							// If the segment already exists
 							if (json_data.contains(key)) {
 								continue;
@@ -72,7 +65,7 @@ namespace json {
 
 		bool exists(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
 			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
 							[](char c) {if (c == '/')return '\\'; return c; });
 			if (json_data.contains(file_lower_case)) {
@@ -83,7 +76,7 @@ namespace json {
 
 		std::string alias(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), ::tolower);
+			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
 			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
 							[](char c) {if (c == '/')return '\\'; return c; });
 			return json_data.at(file_lower_case);

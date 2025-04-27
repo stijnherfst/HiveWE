@@ -1,26 +1,21 @@
-module;
-
-#include <stdexcept>
-#include <vector>
-#include <string>
-#include <bit>
-
 export module BinaryReader;
 
+import std;
+import types;
 import no_init_allocator;
 
 export class BinaryReader {
   public:
-	std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
+	std::vector<u8, default_init_allocator<u8>> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>> buffer)
+	explicit BinaryReader(std::vector<u8, default_init_allocator<u8>> buffer)
 		: buffer(std::move(buffer)) {
 	}
 
 	template <typename T>
 	[[nodiscard]] T read() {
-		static_assert(std::is_trivial<T>::value, "T must be of trivial type.");
+		static_assert(std::is_trivial_v<T>, "T must be of trivial type.");
 
 		if (position + sizeof(T) > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
@@ -63,7 +58,7 @@ export class BinaryReader {
 
 	template <typename T>
 	[[nodiscard]] std::vector<T> read_vector(const size_t size) {
-		static_assert(std::is_trivial<T>::value, "T must be of trivial type.");
+		static_assert(std::is_trivial_v<T>, "T must be of trivial type.");
 
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");

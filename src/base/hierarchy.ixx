@@ -1,18 +1,14 @@
-module;
-
-#include <vector>
-#include <filesystem>
-#include <fstream>
-
 export module Hierarchy;
 
-namespace fs = std::filesystem;
-using namespace std::literals::string_literals;
-
+import std;
+import types;
 import JSON;
 import BinaryReader;
 import CASC;
 import no_init_allocator;
+
+using namespace std::literals::string_literals;
+namespace fs = std::filesystem;
 
 export class Hierarchy {
   public:
@@ -46,10 +42,10 @@ export class Hierarchy {
 		
 		if (fs::exists("data/overrides" / path)) {
 			std::ifstream stream("data/overrides" / path, std::ios::binary);
-			return BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+			return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 		} else if (local_files && fs::exists(root_directory / path)) {
 			std::ifstream stream(root_directory / path, std::ios::binary);
-			return BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+			return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 		} else if (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path.string())) {
 			return map_file_read("_hd.w3mod:_teen.w3mod:" + path.string());
 		} else if (hd && map_file_exists("_hd.w3mod:" + path.string())) {
@@ -91,7 +87,7 @@ export class Hierarchy {
 
 	BinaryReader map_file_read(const fs::path& path) const {
 		std::ifstream stream(map_directory / path, std::ios::binary);
-		return BinaryReader(std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+		return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
 	}
 
 	/// source somewhere on disk, destination relative to the map
@@ -99,7 +95,7 @@ export class Hierarchy {
 		fs::copy_file(source, map_directory / destination, fs::copy_options::overwrite_existing);
 	}
 
-	void map_file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
+	void map_file_write(const fs::path& path, const std::vector<u8>& data) const {
 		std::ofstream outfile(map_directory / path, std::ios::binary);
 
 		if (!outfile) {

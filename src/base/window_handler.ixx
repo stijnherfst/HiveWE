@@ -4,6 +4,8 @@ module;
 
 export module WindowHandler;
 
+import std;
+
 export class WindowHandler : public QObject {
 	Q_OBJECT
 	std::vector<std::pair<std::string, QWidget*>> windows;

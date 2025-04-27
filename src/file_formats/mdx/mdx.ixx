@@ -1,26 +1,21 @@
 ﻿module;
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#include <functional>
 #include <filesystem>
-#include <unordered_map>
-#include <string_view>
-#include <fstream>
-#include <print>
-#include <outcome/outcome.hpp>
 
 export module MDX;
+
+import std;
+import BinaryReader;
+import BinaryWriter;
+import Timer;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+import <outcome/outcome.hpp>;
 
 namespace fs = std::filesystem;
 using OUTCOME_V2_NAMESPACE::failure;
 using OUTCOME_V2_NAMESPACE::result;
-
-import BinaryReader;
-import BinaryWriter;
-import Timer;
 
 namespace mdx {
 	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture{

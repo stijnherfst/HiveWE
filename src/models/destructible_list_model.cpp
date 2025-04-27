@@ -1,6 +1,8 @@
 #include "destructible_list_model.h"
 
-#include "Globals.h"
+import std;
+import ResourceManager;
+import Globals;
 
 DestructableListModel::DestructableListModel(QObject* parent)
 	: QIdentityProxyModel(parent) {

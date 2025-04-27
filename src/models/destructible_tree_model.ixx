@@ -9,13 +9,12 @@ module;
 #include <QIcon>
 #include "ankerl/unordered_dense.h"
 
-#include "globals.h"
-
 export module DestructibleTreeModel;
 
 import BaseTreeModel;
 import QIconResource;
 import SLK;
+import Globals;
 
 export class DestructibleTreeModel : public BaseTreeModel {
 	struct Category {

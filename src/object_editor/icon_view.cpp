@@ -1,14 +1,7 @@
-
 #include "icon_view.h"
-#include "globals.h"
-
-#include <fstream>
-#include <print>
 
 #include <QVBoxLayout>
-#include <QGridLayout>
 #include <QPushButton>
-#include <QScrollArea>
 #include <QListView>
 #include <QFile>
 #include <QJsonDocument>
@@ -16,10 +9,11 @@
 #include <QJsonObject>
 #include <QLabel>
 
-#include <filesystem>
-namespace fs = std::filesystem;
-
+import std;
 import Hierarchy;
+import Globals;
+
+namespace fs = std::filesystem;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> icon_cache;
 

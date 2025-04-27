@@ -6,10 +6,11 @@ module;
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
 
-#include "globals.h"
 
 export module UnitSelector;
 
+import std;
+import Globals;
 import UnitListModel;
 import TableModel;
 

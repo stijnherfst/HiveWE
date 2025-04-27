@@ -2,16 +2,16 @@ module;
 
 #include <vector>
 #include <filesystem>
-#include <soil2/SOIL2.h>
 
 export module Texture;
-
-namespace fs = std::filesystem;
 
 import Hierarchy;
 import BLP;
 import BinaryReader;
 import ResourceManager;
+import <soil2/SOIL2.h>;
+
+namespace fs = std::filesystem;
 
 export class Texture : public Resource {
   public:

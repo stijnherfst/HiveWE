@@ -1,9 +1,7 @@
 #pragma once
 
 #define QT_NO_OPENGL
-#include <glad/glad.h>
-
-#include <QObject>
+import <glad/glad.h>;
 #include <QOpenGLWidget>
 #include <QElapsedTimer>
 

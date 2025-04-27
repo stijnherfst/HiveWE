@@ -1,32 +1,12 @@
 module;
 
-#include <ankerl/unordered_dense.h>
-#include "globals.h"
-#include "triggers.h"
-#include "terrain.h"
-#include "doodads.h"
-#include "units.h"
-#include "brush.h"
-
-#include <filesystem>
-#include <map>
-#include <execution>
-#include <random>
-#include <map>
-#include <fstream>
-#include <print>
 #include <QMessageBox>
-
-
-#include <glad/glad.h>
-#include <bullet/btBulletDynamicsCommon.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
 
 export module Map;
 
+import std;
+import types;
+import MDX;
 import GameCameras;
 import Imports;
 import MapInfo;
@@ -43,6 +23,17 @@ import Physics;
 import ModificationTables;
 import RenderManager;
 import TableModel;
+import Globals;
+import <units.h>;
+import <doodads.h>;
+import <ankerl/unordered_dense.h>;
+import "triggers.h";
+import "terrain.h";
+import "brush.h";
+import <glad/glad.h>;
+import <bullet/btBulletDynamicsCommon.h>;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;

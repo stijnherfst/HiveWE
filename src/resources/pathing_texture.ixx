@@ -1,28 +1,22 @@
-module;
-
-#include <vector>
-#include <filesystem>
-#include <soil2/SOIL2.h>
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-
 export module PathingTexture;
 
-namespace fs = std::filesystem;
-
+import std;
+import types;
 import ResourceManager;
 import Hierarchy;
 import BLP;
 import BinaryReader;
+import <soil2/SOIL2.h>;
+import <glm/glm.hpp>;
+
+namespace fs = std::filesystem;
 
 export class PathingTexture : public Resource {
   public:
 	int width;
 	int height;
 	int channels;
-	std::vector<uint8_t> data;
+	std::vector<u8> data;
 
 	bool homogeneous;
 
@@ -37,7 +31,7 @@ export class PathingTexture : public Resource {
 		} else {
 			image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
 		}
-		data = std::vector<uint8_t>(image_data, image_data + width * height * channels);
+		data = std::vector<u8>(image_data, image_data + width * height * channels);
 		delete image_data;
 
 		homogeneous = true;

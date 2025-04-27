@@ -1,4 +1,8 @@
 target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
+	"types.ixx"
+	"map_global.ixx"
+	"globals.ixx"
+
 	"base/map.ixx"
 	"base/binary_reader.ixx"
 	"base/binary_writer.ixx"
@@ -36,6 +40,7 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"resources/texture.ixx"
 	"resources/pathing_texture.ixx"
 	"resources/qicon_resource.ixx"
+	"resources/editable_mesh.ixx"
 	"resources/skinned_mesh/render_node.ixx"
 	"resources/skinned_mesh/skeletal_model_instance.ixx" 
 	"resources/skinned_mesh.ixx" 
@@ -73,9 +78,6 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 
 target_sources(HiveWE PRIVATE
 	"main.cpp"
-	
-	"globals.h"
-	"map_global.h"
 
 	"main_window/hivewe.rc"
 	"main_window/hivewe.cpp"	
@@ -94,8 +96,6 @@ target_sources(HiveWE PRIVATE
 	"file_formats/mdx/mdx_reader.cpp"
 	"file_formats/mdx/mdx_writer.cpp"
 	"file_formats/mdx/optimizer.cpp"
-	
-	"resources/editable_mesh.cpp"
 	
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"

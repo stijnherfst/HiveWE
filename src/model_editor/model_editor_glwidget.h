@@ -3,11 +3,16 @@
 #include <glad/glad.h>
 #define QT_NO_OPENGL
 
+#include <memory>
+
 #include <QObject>
 #include <QOpenGLWidget>
 
-#include <QElapsedTimer>
-#include "editable_mesh.h"
+import EditableMesh;
+import SkeletalModelInstance;
+import MDX;
+import Shader;
+
 #include <model_editor/model_editor_camera.h>
 
 class ModelEditorGLWidget : public QOpenGLWidget {

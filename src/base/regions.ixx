@@ -1,14 +1,13 @@
 module;
 
-#include <vector>
-#include <string>
 #include <glm/glm.hpp>
-#include <iostream>
 
 export module Regions;
 
+import std;
 import BinaryReader;
 import Hierarchy;
+import <glm/glm.hpp>;
 
 struct Region {
 	float left;

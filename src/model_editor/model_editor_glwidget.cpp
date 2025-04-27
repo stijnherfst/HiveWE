@@ -1,8 +1,5 @@
 #include "model_editor_glwidget.h"
 
-#include <format>
-#include <fstream>
-
 #include <QTimer>
 #include <QPainter>
 #include <QFileDialog>
@@ -11,14 +8,16 @@
 #include <QDesktopServices>
 
 #include <qt_imgui/qt_imGui.h>
-#include <imgui.h>
 
-//#include "Globals.h"
-
+import std;
 import OpenGLUtilities;
 import BinaryReader;
 import Hierarchy;
 import MDX;
+import ResourceManager;
+import <imgui.h>;
+
+namespace fs = std::filesystem;
 
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	makeCurrent();

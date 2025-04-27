@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QSettings>
@@ -28,19 +27,17 @@
 
 #include "ui_HiveWE.h"
 
-#include "palette.h"
-#include "minimap.h"
-#include "globals.h"
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
 import QRibbon;
 import INI;
 import Map;
 import SLK;
 import WindowHandler;
+import Globals;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+import "palette.h";
+import "minimap.h";
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT

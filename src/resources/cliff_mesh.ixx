@@ -1,19 +1,12 @@
-module;
-
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
-#include <glad/glad.h>
-
-#include <filesystem>
-
 export module CliffMesh;
 
+import std;
 import BinaryReader;
 import ResourceManager;
 import Hierarchy;
 import MDX;
+import <glm/glm.hpp>;
+import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

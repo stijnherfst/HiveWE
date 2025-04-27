@@ -1,11 +1,6 @@
-module;
-
-#include <unordered_map>
-#include <string>
-#include <memory>
-#include <filesystem>
-
 export module ResourceManager;
+
+import std;
 
 namespace fs = std::filesystem;
 

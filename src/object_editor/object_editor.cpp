@@ -1,6 +1,5 @@
 #include "object_editor.h"
 
-
 #include <QTableView>
 #include <QLineEdit>
 #include <QToolBar>
@@ -15,11 +14,11 @@
 #include <QToolButton>
 #include <QMenu>
 
-#include "single_model.h"
-#include "globals.h"
-#include <map_global.h>
-
+import std;
 import UnitSelector;
+import MapGlobal;
+import Globals;
+import "single_model.h";
 
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);

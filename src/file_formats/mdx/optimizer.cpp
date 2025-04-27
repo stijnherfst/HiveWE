@@ -1,15 +1,14 @@
 module;
 
 #define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/norm.hpp>
-
-#include <vector>
 
 module MDX;
 
+import std;
 import MathOperations;
+import <glm/glm.hpp>;
+import <glm/gtc/quaternion.hpp>;
 
 namespace mdx {
 	/// Reduces the number of keyframes in a track by decimating the curve

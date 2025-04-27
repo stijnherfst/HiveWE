@@ -1,8 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <QDialog>
-#include <Qwidget>
 #include <QButtonGroup>
 #include <QDialog>
 #include "ui_tile_setter.h"

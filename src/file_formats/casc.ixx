@@ -1,16 +1,13 @@
 module;
 
-#include <filesystem>
-#include <vector>
-#include <span>
-#include <print>
-
 #define __CASCLIB_SELF__
 #define WIN32_LEAN_AND_MEAN
 #include <CascLib.h>
 
 export module CASC;
 
+import std;
+import types;
 import no_init_allocator;
 
 namespace fs = std::filesystem;
@@ -38,9 +35,9 @@ namespace casc {
 		}
 
 		// std::span<uint8_t> read() const;
-		std::vector<uint8_t, default_init_allocator<uint8_t>> read() const {
-			const uint32_t size = CascGetFileSize(handle, 0);
-			std::vector<uint8_t, default_init_allocator<uint8_t>> buffer(size);
+		std::vector<u8, default_init_allocator<u8>> read() const {
+			const u32 size = CascGetFileSize(handle, 0);
+			std::vector<u8, default_init_allocator<u8>> buffer(size);
 
 #ifdef _MSC_VER
 			unsigned long bytes_read;

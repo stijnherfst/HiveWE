@@ -1,26 +1,23 @@
-module;
-
-#include <glad/glad.h>
-#include <vector>
-//#include "Globals.h"
-
 export module ShadowMap;
 
+import std;
+import types;
 import Hierarchy;
 import BinaryReader;
+import <glad/glad.h>;
 
 export class ShadowMap {
 	size_t width;
 	size_t height;
 
 	GLuint texture;
-	std::vector<uint8_t> cells;
+	std::vector<u8> cells;
 
 	bool load(BinaryReader& reader, size_t terrain_width, size_t terrain_height) {
 		width = terrain_width * 4;
 		height = terrain_height * 4;
 
-		cells = reader.read_vector<uint8_t>(width * height);
+		cells = reader.read_vector<u8>(width * height);
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 		glTextureStorage2D(texture, 1, GL_R8UI, width, height);

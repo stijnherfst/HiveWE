@@ -1,16 +1,14 @@
 module;
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#include <QEvent>
-#include <QMouseEvent>
 #include <QWheelEvent>
 
-#include <unordered_set>
-
 export module Camera;
+
+import std;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+import <unordered_set>;
 
 export class InputHandler {
   public:

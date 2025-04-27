@@ -1,21 +1,15 @@
 module;
 
-#include <array>
 #include <QMap>
-#include <QMargins>
-#include <QObject>
 #include <QModelIndex>
-#include <QSize>
-#include <QIcon>
-#include <iostream>
 #include "ankerl/unordered_dense.h"
-
-#include "globals.h"
 
 export module BuffTreeModel;
 
+import std;
 import BaseTreeModel;
 import SLK;
+import Globals;
 
 export class BuffTreeModel : public BaseTreeModel {
 	struct Category {

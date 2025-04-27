@@ -104,7 +104,7 @@ struct TriggerVariable {
 	int parent_id;
 };
 
-/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces
+/// A minimal utility wrapper around a std::string that manages newlines, indentation and closing braces
 struct MapScriptWriter {
 	std::string script;
 	size_t current_indentation = 0;
@@ -114,6 +114,14 @@ struct MapScriptWriter {
 		jass
 	};
 	Mode mode = Mode::lua;
+
+	bool is_empty() {
+		return script.empty();
+	}
+
+	void merge(const MapScriptWriter& writer) {
+		script += writer.script;
+	}
 
 	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
 		std::vformat_to(std::back_inserter(script), users_fmt, args);
@@ -263,7 +271,7 @@ struct MapScriptWriter {
 			script += '\t';
 		}
 
-		std::format_to(std::back_inserter(script), "if ({})\n", condition);
+		std::format_to(std::back_inserter(script), "if ({}) then\n", condition);
 
 		current_indentation += 1;
 		callback();

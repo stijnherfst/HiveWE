@@ -2,9 +2,10 @@ module;
 
 #include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
-#include "globals.h"
 
 export module UnitListModel;
+
+import Globals;
 
 export class UnitListModel : public QIdentityProxyModel {
 	Q_OBJECT

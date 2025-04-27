@@ -1,13 +1,10 @@
-module;
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
 export module RenderNode;
 
 import MDX;
 import MathOperations;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
 
 export struct RenderNode {
 	mdx::Node* node;

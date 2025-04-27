@@ -1,19 +1,23 @@
 #include "doodads.h"
 
-#include <print>
-#include <optional>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include "globals.h"
-#include <map_global.h>
-
-
+import std;
+import std.compat;
+import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
+import ResourceManager;
+import SkinnedMesh;
+import SkeletalModelInstance;
+import PathingTexture;
+import Utilities;
+import Globals;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+
+import MapGlobal;
+
+namespace fs = std::filesystem;
 
 void Doodad::init(std::string id, std::shared_ptr<SkinnedMesh> mesh) {
 	this->id = id;

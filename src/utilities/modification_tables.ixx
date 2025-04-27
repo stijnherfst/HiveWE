@@ -1,13 +1,8 @@
 module;
 
-#include <vector>
-#include <filesystem>
-#include <print>
-
 #define GLM_FORCE_CXX17
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_SILENT_WARNINGS
-#include <glm/glm.hpp>
 #include <absl/container/flat_hash_map.h>
 #include "ankerl/unordered_dense.h"
 
@@ -15,11 +10,13 @@ export module ModificationTables;
 
 namespace fs = std::filesystem;
 
+import std;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
 import SLK;
 import Utilities;
+import <glm/glm.hpp>;
 
 constexpr int mod_table_write_version = 3;
 

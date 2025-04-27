@@ -10,12 +10,11 @@ module;
 #include <iostream>
 #include "ankerl/unordered_dense.h"
 
-#include "globals.h"
-
 export module ItemTreeModel;
 
 import BaseTreeModel;
 import SLK;
+import Globals;
 
 export class ItemTreeModel : public BaseTreeModel {
 	struct Category {

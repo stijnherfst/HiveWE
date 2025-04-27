@@ -1,19 +1,13 @@
 module;
 
-#include <string>
-#include <vector>
-#include <optional>
-#include <charconv>
-#include <unordered_set>
-#include <format>
-#include <print>
-
 #include <glm/glm.hpp>
 
 #include <outcome/outcome.hpp>
 #include <outcome/try.hpp>
 
 module MDX;
+
+import std;
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 using OUTCOME_V2_NAMESPACE::failure;

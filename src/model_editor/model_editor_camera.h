@@ -1,15 +1,10 @@
 #pragma once
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#include <QEvent>
 #include <QMouseEvent>
 
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
 import Camera;
 
 struct ModelEditorCamera {

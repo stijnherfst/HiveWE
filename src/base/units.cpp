@@ -1,22 +1,17 @@
 ﻿#include "units.h"
 
-
-#include <filesystem>
-#include <iostream>
-#include <print>
+import std;
+import BinaryReader;
+import BinaryWriter;
+import ResourceManager;
+import Hierarchy;
+import MapGlobal;
+import Globals;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
 
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include "globals.h"
-#include <map_global.h>
-
-import BinaryReader;
-import BinaryWriter;
-import Hierarchy;
 
 void Unit::update() {
 	float model_scale = 0.f;

@@ -4,15 +4,12 @@ module;
 #include <QPainter>
 #include <QFileIconProvider>
 #include <QSortFilterProxyModel>
-#include <QIdentityProxyModel>
-#include "ankerl/unordered_dense.h"
-
-#include <array>
-#include <vector>
 
 export module BaseTreeModel;
 
+import std;
 import SLK;
+import "ankerl/unordered_dense.h";
 
 export class BaseTreeItem {
   public:

@@ -1,16 +1,11 @@
-module;
-
-#include "bullet/btBulletDynamicsCommon.h"
-#include <vector>
-#include <memory>
-
-#include <glad/glad.h>
-
 export module Physics;
 
+import std;
 import Shader;
 import Camera;
 import ResourceManager;
+import <glad/glad.h>;
+import <bullet/btBulletDynamicsCommon.h>;
 
 class PhysicsDebugDraw : public btIDebugDraw {
 	std::shared_ptr<Shader> shader;

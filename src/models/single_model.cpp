@@ -26,8 +26,7 @@ import AbilityTreeModel;
 import UnitTreeModel;
 import UnitSelector;
 import Utilities;
-
-#include "Globals.h"
+import Globals;
 
 SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyModel(parent) {
 	slk = table->slk;

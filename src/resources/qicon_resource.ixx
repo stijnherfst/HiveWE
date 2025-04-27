@@ -1,13 +1,12 @@
 module;
 
-#include <filesystem>
-#include <vector>
 #include <QIcon>
 #include <QImage>
 #include <QPixMap>
 
 export module QIconResource;
 
+import std;
 import ResourceManager;
 import Texture;
 

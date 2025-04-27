@@ -1,25 +1,16 @@
 #include "triggers.h"
 
-#include <functional>
-#include <fstream>
-#include <filesystem>
-namespace fs = std::filesystem;
-
 #include <QProcess>
-#include <QMessageBox>
 #include <QDir>
 
-#include <format>
-#include <print>
-
-#include "globals.h"
-#include <map_global.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
+import std;
 import Hierarchy;
 import Utilities;
+import MapGlobal;
+import Globals;
+import <glm/glm.hpp>;
+
+namespace fs = std::filesystem;
 
 using namespace std::literals::string_literals;
 
@@ -894,7 +885,7 @@ void Triggers::write_item_table_entry(MapScriptWriter& script, int chance, const
 }
 
 template <typename T>
-void generate_item_tables(MapScriptWriter& script, std::string table_name_prefix, std::vector<T> table_holders) {
+void generate_item_tables(MapScriptWriter& script, const std::string& table_name_prefix, std::vector<T> table_holders) {
 	for (const auto& i : table_holders) {
 		if (i.item_sets.empty()) {
 			continue;
@@ -1649,18 +1640,15 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 	trim(trigger_name);
 	std::replace(trigger_name.begin(), trigger_name.end(), ' ', '_');
 
-	std::string trigger_variable_name = "gg_trg_" + trigger_name;
-	std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
+	const std::string trigger_variable_name = "gg_trg_" + trigger_name;
+	const std::string trigger_action_name = "Trig_" + trigger_name + "_Actions";
+	const std::string trigger_conditions_name = "Trig_" + trigger_name + "_Conditions";
 
-	std::string events;
-	std::string conditions;
+	MapScriptWriter events;
+	MapScriptWriter conditions;
+
 	std::string pre_actions;
-	std::string actions;
-
-	events += "function InitTrig_" + trigger_name + "()\n";
-	events += trigger_variable_name + " = CreateTrigger()\n";
-
-	actions += "function " + trigger_action_name + "()\n";
+	MapScriptWriter actions;
 
 	for (const auto& i : trigger.ecas) {
 		if (!i.enabled) {
@@ -1668,55 +1656,70 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		}
 
 		switch (i.type) {
-			case ECA::Type::event:
+			case ECA::Type::event: {
 				if (i.name == "MapInitializationEvent") {
 					map_initializations.push_back(trigger_variable_name);
 					continue;
 				}
-				events += i.name + "(" + trigger_variable_name + ", ";
+
+				std::string arguments;
+
 				for (size_t k = 0; k < i.parameters.size(); k++) {
 					const auto& p = i.parameters[k];
 
 					if (get_type(i.name, k) == "VarAsString_Real") {
-						events += "\"" + resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k)) + "\"";
+						arguments += "\"" + resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k)) + "\"";
 					} else {
-						events += resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k));
+						arguments += resolve_parameter(p, trigger_name, pre_actions, get_type(i.name, k));
 					}
 
 					if (k < i.parameters.size() - 1) {
-						events += ", ";
+						arguments += ", ";
 					}
 				}
-				events += ")\n";
+
+				events.call(i.name, trigger_variable_name, arguments);
 
 				break;
+			}
 			case ECA::Type::condition:
-				conditions += "if (not (" + convert_eca_to_jass(i, pre_actions, trigger_name, true) + ")) then\n";
-				conditions += "return false\n";
-				conditions += "end\n";
+				conditions.if_statement(std::format("not ({})", convert_eca_to_jass(i, pre_actions, trigger_name, true)), [&] {
+					conditions.write_ln("return false");
+				});
 				break;
 			case ECA::Type::action:
-				actions += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
+				actions.write_ln(convert_eca_to_jass(i, pre_actions, trigger_name, false));
 				break;
 		}
 	}
 
-	actions += "end\n\n";
+	MapScriptWriter final_trigger;
 
-	if (!conditions.empty()) {
-		conditions = "function Trig_" + trigger_name + "_Conditions()\n" + conditions;
-		conditions += "return true\n";
-		conditions += "end\n\n";
-
-		events += "TriggerAddCondition(" + trigger_variable_name + ", Condition(Trig_" + trigger_name + "_Conditions))\n";
+	if (!conditions.is_empty()) {
+		final_trigger.function(trigger_conditions_name, [&] {
+		    final_trigger.merge(conditions);
+			final_trigger.write_ln("return true");
+		});
 	}
 
-	if (!trigger.initially_on) {
-		events += "DisableTrigger(" + trigger_variable_name + ")\n";
-	}
-	events += "TriggerAddAction(" + trigger_variable_name + ", " + trigger_action_name + ")\n";
-	events += "end\n\n";
+	final_trigger.function(trigger_action_name, [&] {
+		final_trigger.merge(actions);
+	});
 
-	// return separator + "// Trigger: " + trigger_name + "\n" + separator + pre_actions + conditions + actions + separator + events;
-	return pre_actions + conditions + actions + events;
+	final_trigger.function("InitTrig_" + trigger_name, [&] {
+		final_trigger.set_variable(trigger_variable_name, "CreateTrigger()");
+		final_trigger.merge(events);
+
+		if (!conditions.is_empty()) {
+			final_trigger.call("TriggerAddCondition", trigger_variable_name, trigger_conditions_name);
+		}
+		if (!trigger.initially_on) {
+			final_trigger.call("DisableTrigger", trigger_variable_name);
+		}
+		final_trigger.call("TriggerAddAction", trigger_variable_name, trigger_action_name);
+	});
+
+	return final_trigger.script;
+
+	// return pre_actions + conditions + actions + events;
 }

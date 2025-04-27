@@ -1,22 +1,8 @@
 #include "doodad_brush.h"
 
-#include <random>
-#include <memory>
-#include <print>
-
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#include "globals.h"
-#include <map_global.h>
-
-#include <QObject>
-#include <QHash>
 #include <QKeyEvent>
-#include <QKeySequence>
 
+import std;
 import Hierarchy;
 import SLK;
 import Texture;
@@ -24,8 +10,15 @@ import TerrainUndo;
 import Camera;
 import OpenGLUtilities;
 import ResourceManager;
+import PathingMap;
 import SkinnedMesh;
 import SkeletalModelInstance;
+import Globals;
+import MapGlobal;
+import <glad/glad.h>;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
 
 DoodadBrush::DoodadBrush()
 	: Brush() {

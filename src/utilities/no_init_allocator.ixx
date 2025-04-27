@@ -1,8 +1,6 @@
-module;
-
-#include <memory>
-
 export module no_init_allocator;
+
+import std;
 
 export template <typename T, typename A = std::allocator<T>>
 class default_init_allocator : public A {

@@ -3,12 +3,13 @@
 #include "ankerl/unordered_dense.h"
 #include <QPushButton>
 
+import std;
 import ResourceManager;
 import Texture;
 import OpenGLUtilities;
 import SLK;
 
-#include <map_global.h>
+import MapGlobal;
 
 TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);

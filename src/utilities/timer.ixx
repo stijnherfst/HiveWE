@@ -1,8 +1,6 @@
-module;
-
-#include <chrono>
-
 export module Timer;
+
+import <chrono>;
 
 export class Timer {
 	std::chrono::steady_clock::time_point start_time;

@@ -1,10 +1,7 @@
-module;
-
-#include <filesystem>
-#include <unordered_set>
-
 export module Imports;
 
+import std;
+import types;
 import BinaryWriter;
 import Hierarchy;
 namespace fs = std::filesystem;
@@ -48,7 +45,7 @@ export class Imports {
 	void save(fs::path filesystem_path) const {
 		BinaryWriter writer;
 
-		writer.write<uint32_t>(1);
+		writer.write<u32>(1);
 
 		int count = 0;
 		for (const auto& i : fs::recursive_directory_iterator(filesystem_path)) {
@@ -60,7 +57,7 @@ export class Imports {
 				count++;
 			}
 		}
-		writer.write<uint32_t>(count);
+		writer.write<u32>(count);
 
 		for (const auto& i : fs::recursive_directory_iterator(filesystem_path)) {
 			if (i.is_regular_file()) {
@@ -70,7 +67,7 @@ export class Imports {
 					continue;
 				}
 
-				writer.write<uint8_t>(13);
+				writer.write<u8>(13);
 				writer.write_c_string(path);
 			}
 		}

@@ -2,22 +2,19 @@
 
 #include <QKeyEvent>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-#include <random>
-#include <memory>
-
-#include "globals.h"
-#include <map_global.h>
-
+import std;
 import Hierarchy;
 import Texture;
 import TerrainUndo;
 import Camera;
 import OpenGLUtilities;
 import RenderManager;
+import Globals;
+import <glm/glm.hpp>;
+import <glm/gtc/matrix_transform.hpp>;
+import <glm/gtc/quaternion.hpp>;
+
+import MapGlobal;
 
 UnitBrush::UnitBrush() : Brush() {
 }

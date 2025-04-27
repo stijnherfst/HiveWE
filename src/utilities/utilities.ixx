@@ -1,14 +1,7 @@
-module;
-
-#include <vector>
-#include <string>
-#include <filesystem>
-#include <fstream>
-#include <print>
-
-#include <glm/glm.hpp>
-
 export module Utilities;
+
+import std;
+import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 

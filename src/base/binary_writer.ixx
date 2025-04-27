@@ -1,21 +1,18 @@
-module;
-
-#include <cstring>
-#include <string>
-#include <vector>
-
 export module BinaryWriter;
+
+import std;
+import types;
 
 export class BinaryWriter {
   public:
-	std::vector<uint8_t> buffer;
+	std::vector<u8> buffer;
 
 	template <typename T = void, typename U>
 	void write(U value) {
-		static_assert(std::is_standard_layout<U>::value, "U must be of standard layout.");
+		static_assert(std::is_standard_layout_v<U>, "U must be of standard layout.");
 
 		if constexpr (not std::is_void_v<T>) {
-			static_assert(std::is_standard_layout<T>::value, "T must be of standard layout.");
+			static_assert(std::is_standard_layout_v<T>, "T must be of standard layout.");
 
 			T temp = static_cast<T>(value);
 			buffer.resize(buffer.size() + sizeof(T));

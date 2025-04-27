@@ -25,15 +25,14 @@
 #include <QKeySequence>
 #include <QTimer>
 
-#include "globals.h"
-#include <map_global.h>
 #include "brush.h"
 
 #include <object_editor/object_editor.h>
 
-
 import TableModel;
 import QRibbon;
+import MapGlobal;
+import Globals;
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);

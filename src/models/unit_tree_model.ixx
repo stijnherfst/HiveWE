@@ -1,19 +1,16 @@
 module;
 
-#include <array>
 #include <QMargins>
 #include <QObject>
 #include <QModelIndex>
-#include <QSize>
-#include <QIcon>
-#include "ankerl/unordered_dense.h"
-
-#include "globals.h"
 
 export module UnitTreeModel;
 
+import std;
 import BaseTreeModel;
 import SLK;
+import Globals;
+import "ankerl/unordered_dense.h";
 
 export class UnitTreeModel : public BaseTreeModel {
 	Q_OBJECT

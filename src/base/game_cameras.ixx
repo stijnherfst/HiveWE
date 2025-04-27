@@ -1,11 +1,7 @@
-module;
-
-#include <vector>
-#include <string>
-#include <iostream>
-
 export module GameCameras;
 
+import std;
+import types;
 import BinaryReader;
 import Hierarchy;
 
@@ -33,12 +29,12 @@ export class GameCameras {
 	void load(int game_version_major, int game_version_minor) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3c");
 
-		int version = reader.read<uint32_t>();
+		int version = reader.read<u32>();
 		if (version != 0) {
 			std::cout << "Unknown war3map.w3c version: " << version << " Attempting to load but may crash\n";
 		}
 
-		cameras.resize(reader.read<uint32_t>());
+		cameras.resize(reader.read<u32>());
 		for (auto& i : cameras) {
 			i.target_x = reader.read<float>();
 			i.target_y = reader.read<float>();

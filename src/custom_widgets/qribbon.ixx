@@ -1,24 +1,19 @@
 module;
 
-#include <vector>
-
 #include <QShortcut>
 #include <QToolButton>
-#include <QFrame>
 #include <QGridLayout>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QMenu>
-#include <QTabWidget>
-#include <QStyle>
 #include <QStyleOption>
 #include <QPainter>
-#include <QMap>
-#include <QScrollArea>
 #include <QPushButton>
 #include <QKeySequence>
 
 export module QRibbon;
+
+import std;
 
 export class QRibbonButton : public QToolButton {
 	Q_OBJECT

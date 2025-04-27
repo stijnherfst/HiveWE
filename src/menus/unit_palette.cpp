@@ -1,8 +1,5 @@
 #include "unit_palette.h"
 
-#include <map_global.h>
-#include <globals.h>
-
 #include <QComboBox>
 #include <QLineEdit>
 #include <QListView>
@@ -15,6 +12,8 @@
 
 import TableModel;
 import WindowHandler;
+import MapGlobal;
+import Globals;
 
 UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
