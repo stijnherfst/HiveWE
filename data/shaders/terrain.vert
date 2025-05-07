@@ -1,5 +1,8 @@
 #version 450 core
 
+#extension GL_EXT_shader_8bit_storage : enable
+#extension GL_NV_gpu_shader5 : enable
+
 layout (location = 1) uniform mat4 MVP;
 
 layout (binding = 1) uniform sampler2D height_cliff_texture;
@@ -34,7 +37,7 @@ layout(std430, binding = 2) buffer layoutName2 {
 };
 
 layout(std430, binding = 3) buffer layoutName3 {
-    unsigned char terrain_exists[];
+    uint8_t terrain_exists[];
 };
 
 

@@ -2,8 +2,6 @@
 // #extension GL_EXT_shader_16bit_storage : enable
 // GL_EXT_shader_16bit_storage
 
-layout (location = 0) uniform mat4 VP;
-layout (location = 1) uniform uint instance_count;
 layout (location = 2) uniform uint instance_vertex_count;
 layout (location = 3) uniform uint bone_count;
 layout (location = 6) uniform vec3 light_direction;

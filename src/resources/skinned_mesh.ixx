@@ -398,7 +398,6 @@ export class SkinnedMesh : public Resource {
 
 		glBindVertexArray(vao);
 
-		glUniform1ui(1, render_jobs.size());
 		glUniform1ui(2, instance_vertex_count);
 		glUniform1ui(3, model->bones.size());
 
