@@ -6,16 +6,117 @@ module;
 module MDX;
 
 import std;
+import types;
 import MathOperations;
 import <glm/glm.hpp>;
 import <glm/gtc/quaternion.hpp>;
 
 namespace mdx {
+	void remove_unused_materials(MDX& mdx) {
+		if (mdx.geosets.empty()) {
+			return;
+		}
+
+		std::set<u32> used_materials;
+		for (const auto& geoset : mdx.geosets) {
+			used_materials.emplace(geoset.material_id);
+		}
+
+		std::vector<u32> mapping(mdx.materials.size(), 0);
+		size_t current_slot = 0;
+		for (const auto& i : used_materials) {
+			mapping[i] = current_slot++;
+		}
+
+		for (auto& geoset : mdx.geosets) {
+			geoset.material_id = mapping[geoset.material_id];
+		}
+
+		size_t write = 0;
+		for (size_t read = 0; read < mdx.materials.size(); ++read) {
+			if (used_materials.contains(read)) {
+				mdx.materials[write++] = mdx.materials[read];
+			}
+		}
+		mdx.materials.resize(write);
+	}
+
+	/// Removes textures that aren't referenced by any MDX materials
+	/// ToDo also check if textures are used by other MDX chunks
+	void remove_unused_textures(MDX& mdx) {
+		if (mdx.textures.empty()) {
+			return;
+		}
+
+		std::set<u32> used_textures;
+		for (const auto& material : mdx.materials) {
+			for (const auto& layer : material.layers) {
+				for (const auto& texture : layer.texturess) {
+					used_textures.emplace(texture.id);
+				}
+			}
+		}
+
+		std::vector<u32> mapping(mdx.textures.size(), 0);
+		size_t current_slot = 0;
+		for (const auto& i : used_textures) {
+			mapping[i] = current_slot++;
+		}
+
+		for (auto& material : mdx.materials) {
+			for (auto& layer : material.layers) {
+				for (auto& texture : layer.texturess) {
+					texture.id = mapping[texture.id];
+				}
+			}
+		}
+
+		size_t write = 0;
+		for (size_t read = 0; read < mdx.textures.size(); ++read) {
+			if (used_textures.contains(read)) {
+				mdx.textures[write++] = mdx.textures[read];
+			}
+		}
+		mdx.textures.resize(write);
+	}
+
+	/// Removes tracks that are not inside a sequence start<->end frame
+	template <typename T>
+	void remove_tracks_outside_sequences(TrackHeader<T>& header, std::vector<Sequence>& sequences) {
+		if (sequences.empty()) {
+			return;
+		}
+
+		size_t write_index = 0;
+		size_t current_sequence = 0;
+
+		for (size_t i = 0; i < header.tracks.size(); i++) {
+			const auto& current = header.tracks[i];
+
+			if (current.frame > sequences[current_sequence].end_frame) {
+				current_sequence += 1;
+				if (current_sequence >= sequences.size()) {
+					return;
+				}
+			}
+
+			if (current.frame < sequences[current_sequence].start_frame) {
+				continue;
+			}
+
+			header.tracks[write_index++] = current;
+		}
+	}
+
 	/// Reduces the number of keyframes in a track by decimating the curve
 	/// Uses the Douglas–Peucker algorithm
 	/// Assumes all tracks are contained in a sequence
 	template <typename T>
 	void reduce_track(TrackHeader<T>& header, std::vector<Sequence>& sequences, float max_error_sq) {
+		if (sequences.empty()) {
+			return;
+		}
+
 		if (header.tracks.size() <= 2) {
 			return;
 		}
@@ -51,9 +152,9 @@ namespace mdx {
 
 			float error_sq;
 			if constexpr (std::is_same_v<T, uint32_t>) {
-				error_sq = (current.value - interpolated) * (current.value - interpolated);
+				error_sq = current.value - interpolated;
 			} else {
-				error_sq = glm::length2(current.value - interpolated);
+				error_sq = glm::length(current.value - interpolated);
 			}
 
 			if (error_sq > max_error_sq) {
@@ -67,12 +168,18 @@ namespace mdx {
 		header.tracks.resize(write_index);
 	}
 
-	// ToDo! Make them sequence aware as now it will optimize all the frames of all sequences as if it was one sequence
 	// ToDo! be aware of global sequences
 
-	// ToDo! remove tracks outside of a sequence
 	MDX::OptimizationStats MDX::optimize(float max_error) {
 		OptimizationStats stats;
+
+		const size_t material_count = materials.size();
+		remove_unused_materials(*this);
+		stats.materials_removed += material_count - materials.size();
+
+		const size_t texture_count = textures.size();
+		remove_unused_textures(*this);
+		stats.textures_removed += texture_count - textures.size();
 
 		if (sequences.empty()) {
 			return stats;
@@ -80,6 +187,8 @@ namespace mdx {
 
 		for_each_track([&, max_error]<typename T>(TrackHeader<T>& header) {
 			const auto track_size = header.tracks.size();
+
+			remove_tracks_outside_sequences(header, sequences);
 			reduce_track(header, sequences, max_error);
 
 			if (header.interpolation_type == InterpolationType::none) {

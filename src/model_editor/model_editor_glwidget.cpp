@@ -172,7 +172,7 @@ void ModelEditorGLWidget::paintGL() {
 
 	ImGui::Begin("Optimizer");
 		static float max_error = 0.0001f;
-		if (ImGui::SliderFloat("Max error", &max_error, 0.00001f, 0.01f, "%.5f")) {
+		if (ImGui::SliderFloat("Max error", &max_error, 0.0f, 0.01f, "%.5f")) {
 			BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx");
 			auto mdx = std::make_shared<mdx::MDX>(reader);
 			stats = mdx->optimize(max_error);
@@ -193,6 +193,9 @@ void ModelEditorGLWidget::paintGL() {
 		} else {
 			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Size change: %i KiB (%.2f%%) more", optimization_file_size_reduction / 1024, optimization_file_size_reduction_percent);
 		}
+
+		ImGui::Text("Materials removed %i", stats.materials_removed);
+		ImGui::Text("Textures removed %i", stats.textures_removed);
 
 		if (ImGui::BeginTable("Optimization Stats", 3)) {
 			ImGui::TableSetupColumn("Type");

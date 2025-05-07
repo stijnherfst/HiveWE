@@ -800,6 +800,9 @@ namespace mdx {
 		}
 
 		struct OptimizationStats {
+			size_t materials_removed = 0;
+			size_t textures_removed = 0;
+
 			size_t constant_tracks = 0;
 			size_t constant_tracks_removed = 0;
 			size_t linear_tracks = 0;

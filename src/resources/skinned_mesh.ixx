@@ -2,6 +2,7 @@ export module SkinnedMesh;
 
 import std;
 import MDX;
+import BinaryReader;
 import ResourceManager;
 import GPUTexture;
 import Shader;
