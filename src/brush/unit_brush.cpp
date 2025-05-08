@@ -351,7 +351,7 @@ void UnitBrush::set_unit(const std::string& id) {
 	context->makeCurrent();
 	this->id = id;
 	mesh = map->units.get_mesh(id);
-	skeleton = SkeletalModelInstance(mesh->model);
+	skeleton = SkeletalModelInstance(mesh->model, Units::get_required_animation_names(id));
 }
 
 void UnitBrush::unselect_id(std::string_view id) {
