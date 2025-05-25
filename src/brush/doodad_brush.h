@@ -46,7 +46,7 @@ class DoodadBrush : public Brush {
 
 	glm::vec2 clipboard_mouse_offset;
 	std::vector<Doodad> clipboard;
-	bool clipboard_free_placement = false;
+	bool clipboard_force_grid_aligned = false;
 
 	bool dragging = false;
 	bool dragged = false;

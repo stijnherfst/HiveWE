@@ -185,7 +185,7 @@ void Terrain::create() {
 	ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1)));
 
 	// Cliff Textures
-	for (auto&& cliff_id : cliffset_ids) {
+	for (const auto& cliff_id : cliffset_ids) {
 		cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id)));
 		cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);

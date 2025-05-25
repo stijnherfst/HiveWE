@@ -5,6 +5,7 @@ import MapGlobal;
 
 import std;
 import OpenGLUtilities;
+import ResourceManager;
 
 TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -17,12 +18,13 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
+	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	ui.flowLayout_placeholder->addLayout(textures_layout);
 	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
 
 	// Ground Tiles
-	slk::SLK& slk = map->terrain.terrain_slk;
+	const slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "/" + slk.data("file", i));
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
@@ -39,7 +41,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 		textures_group->addButton(button);
 
 		auto& cliff_tiles = map->terrain.cliff_to_ground_texture;
-		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map->terrain.ground_texture_to_id[i]);
+		const auto is_cliff_tile = std::ranges::find(cliff_tiles, map->terrain.ground_texture_to_id[i]);
 
 		if (is_cliff_tile != cliff_tiles.end()) {
 			const int index = std::distance(cliff_tiles.begin(), is_cliff_tile);
@@ -235,6 +237,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 TerrainPalette::~TerrainPalette() {
 	map->brush = nullptr;
+	delete change_mode_parent;
 }
 
 bool TerrainPalette::event(QEvent *e) {

@@ -57,8 +57,11 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	if (doodad.pathing) {
-		const int div_w = (((int)glm::degrees(doodad.angle) + 90) % 180) ? doodad.pathing->height : doodad.pathing->width;
-		const int div_h = (((int)glm::degrees(doodad.angle) + 90) % 180) ? doodad.pathing->width : doodad.pathing->height;
+		// 270 instead of 90 because OpenGL upside down shenanigans
+		const int32_t rotation = ((int)glm::degrees(doodad.angle) + 270);
+
+		const int div_w = (rotation % 180) ? doodad.pathing->height : doodad.pathing->width;
+		const int div_h = (rotation % 180) ? doodad.pathing->width : doodad.pathing->height;
 		
 		std::vector<glm::u8vec4> brush(div_w * div_h, { 0, 0, 0, 0 });
 
@@ -67,7 +70,7 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 				int x = i;
 				int y = j;
 
-				switch (((int)glm::degrees(doodad.angle) + 90) % 360) {
+				switch (rotation % 360) {
 					case 90:
 						x = doodad.pathing->height - 1 - j;
 						y = i;
@@ -242,7 +245,7 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 					dragging = true;
 
 					// If the current index is already in a selection then we want to drag the entire group
-					if (std::find(selections.begin(), selections.end(), &doodad) != selections.end()) {
+					if (std::ranges::find(selections, &doodad) != selections.end()) {
 						drag_offsets.clear();
 						for (const auto& i : selections) {
 							drag_offsets.push_back(input_handler.mouse_world - i->position);
@@ -318,6 +321,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					}
 
 					i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, target_rotation);
+					i->position = glm::vec3(Doodad::acceptable_position(i->position, i->pathing, i->angle), i->position.z);
 					i->update();
 				}
 				emit angle_changed();
@@ -386,11 +390,11 @@ void DoodadBrush::copy_selection() {
 	clipboard.clear();
 
 	// Mouse position is average location
-	clipboard_free_placement = true;
+	clipboard_force_grid_aligned = false;
 	glm::vec3 average_position = {};
 	for (const auto& i : selections) {
 		if (i->pathing) {
-			clipboard_free_placement = false;
+			clipboard_force_grid_aligned = true;
 		}
 		clipboard.push_back(*i);
 		average_position += i->position;
@@ -440,9 +444,6 @@ void DoodadBrush::apply(double frame_delta) {
 	if (doodad.id == "") {
 		return;
 	}
-
-	glm::vec3 doodad_position = glm::vec3(Doodad::acceptable_position(input_handler.mouse_world, doodad.pathing, doodad.angle), 0.f);
-	doodad_position.z = map->terrain.interpolated_height(doodad_position.x, doodad_position.y, false);
 
 	doodad.creation_number = ++Doodad::auto_increment;
 	map->doodads.add_doodad(doodad);
@@ -557,25 +558,17 @@ void DoodadBrush::render_selection() const {
 
 void DoodadBrush::render_clipboard() {
 	for (auto& i : clipboard) {
-		glm::vec3 base_scale = glm::vec3(1.f);
-		if (doodads_slk.row_headers.contains(i.id)) {
-			base_scale = glm::vec3(doodads_slk.data<float>("defscale", i.id));
-		}
+		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle, clipboard_force_grid_aligned), i.position.z);
 
-		glm::vec3 final_position;
-		if (i.pathing) {
-			final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle, true), i.position.z);
-		} else {
-			final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
-		}
-		//glm::vec3 final_position = glm::vec3(position_new + Doodad::acceptable_position(glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, rotation, true), i.position.z);
-		//glm::vec3 final_position = glm::vec3(position_new + glm::vec2(i.position) - clipboard_mouse_offset, i.position.z);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
 		}
 
-		i.skeleton.update_location(final_position, i.angle, (base_scale * i.scale) / 128.f);
+		const auto previous_position = i.position;
+		i.position = final_position;
+		i.update();
 		i.skeleton.update(0.016f);
+		i.position = previous_position;
 
 		map->render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f));
 	}
@@ -689,8 +682,10 @@ void DoodadBrush::set_selection_angle(float angle) {
 	start_action(Action::rotate);
 	for (auto& i : selections) {
 		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, angle);
+		i->position = glm::vec3(Doodad::acceptable_position(i->position, i->pathing, i->angle), i->position.z);
 		i->update();
 	}
+	map->doodads.update_doodad_pathing(selections);
 	end_action();
 }
 
