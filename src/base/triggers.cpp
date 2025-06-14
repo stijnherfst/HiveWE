@@ -629,7 +629,7 @@ void Triggers::generate_init_global_variables(MapScriptWriter& script) {
 }
 
 void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables) {
-	script.function("CreateUnits", [&]() {
+	script.function("CreateAllUnits", [&]() {
 		script.local("unit", "u", script.null());
 		script.local("integer", "unitID", "0");
 		script.local("trigger", "t", script.null());
@@ -722,7 +722,7 @@ void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::s
 }
 
 void Triggers::generate_items(MapScriptWriter& script) {
-	script.function("CreateItems", [&]() {
+	script.function("CreateAllItems", [&]() {
 		for (const auto& i : map->units.items) {
 			script.call("BlzCreateItemWithSkin", script.four_cc(i.id), i.position.x * 128.f + map->terrain.offset.x, i.position.y * 128.f + map->terrain.offset.y, script.four_cc(i.id));
 		}
@@ -730,7 +730,7 @@ void Triggers::generate_items(MapScriptWriter& script) {
 }
 
 void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables) {
-	script.function("CreateDestructables", [&]() {
+	script.function("CreateAllDestructables", [&]() {
 		script.local("destructable", "d", script.null());
 		script.local("trigger", "t", script.null());
 		script.local("real", "life", "0");
@@ -903,9 +903,9 @@ void generate_item_tables(MapScriptWriter& script, const std::string& table_name
 				script.set_variable("trigUnit", "GetTriggerUnit()");
 			});
 
-			script.if_statement("not trigUnit == " + script.null(), [&]() {
+			script.if_statement("trigUnit ~= " + script.null(), [&]() {
 				script.set_variable("canDrop", "not IsUnitHidden(trigUnit)");
-				script.if_statement("canDrop and not GetChangingUnit() == " + script.null(), [&]() {
+				script.if_statement("canDrop and GetChangingUnit() ~= " + script.null(), [&]() {
 					script.set_variable("canDrop", "(GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE))");
 				});
 			});
@@ -917,7 +917,7 @@ void generate_item_tables(MapScriptWriter& script, const std::string& table_name
 						Triggers::write_item_table_entry(script, chance, id);
 					}
 					script.set_variable("itemID", "RandomDistChoose()");
-					script.if_statement("not trigUnit == " + script.null(), [&]() {
+					script.if_statement("trigUnit ~= " + script.null(), [&]() {
 						script.call("UnitDropitem", "trigUnit", "itemID"); // Todo fourcc?
 					});
 					script.if_statement("trigUnit == " + script.null(), [&]() {

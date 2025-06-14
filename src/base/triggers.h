@@ -133,7 +133,7 @@ struct MapScriptWriter {
 		}
 
 		if (mode == Mode::lua) {
-			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+			std::format_to(std::back_inserter(script), "local {} = {}\n", name, value);
 		} else {
 			std::format_to(std::back_inserter(script), "local {} {} = {}\n", type, name, value);
 		}
