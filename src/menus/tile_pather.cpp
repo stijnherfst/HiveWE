@@ -11,6 +11,8 @@ import std;
 import OpenGLUtilities;
 import Texture;
 import MapGlobal;
+import SLK;
+import ResourceManager;
 
 TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

@@ -3,6 +3,7 @@
 import QRibbon;
 
 #include <QObject>
+#include <QToolButton>
 
 class MainRibbon : public QRibbon {
 	Q_OBJECT

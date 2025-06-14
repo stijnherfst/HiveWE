@@ -4,6 +4,7 @@
 
 import std;
 import Globals;
+import ResourceManager;
 
 DoodadListModel::DoodadListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {

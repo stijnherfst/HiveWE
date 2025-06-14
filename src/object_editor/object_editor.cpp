@@ -18,6 +18,8 @@ import std;
 import UnitSelector;
 import MapGlobal;
 import Globals;
+import ResourceManager;
+import SlkConversions;
 import "single_model.h";
 
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
