@@ -78,5 +78,5 @@ private:
 	std::shared_ptr<QIconResource> custom_upgrade_icon;
 
 	void itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
-	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name);
+	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category);
 };

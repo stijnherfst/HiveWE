@@ -55,13 +55,13 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	upgradeTreeModel = new UpgradeTreeModel(this);
 	buffTreeModel = new BuffTreeModel(this);
 
-	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units");
-	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items");
-	addTypeTreeView(doodadTreeModel, doodadTreeFilter, doodads_table, doodad_explorer, custom_doodad_icon->icon, "Doodads");
-	addTypeTreeView(destructibleTreeModel, destructibleTreeFilter, destructibles_table, destructible_explorer, custom_destructible_icon->icon, "Destructibles");
-	addTypeTreeView(abilityTreeModel, abilityTreeFilter, abilities_table, ability_explorer, custom_ability_icon->icon, "Abilities");
-	addTypeTreeView(upgradeTreeModel, upgradeTreeFilter, upgrade_table, upgrade_explorer, custom_upgrade_icon->icon, "Upgrades");
-	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs");
+	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units", Category::unit);
+	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items", Category::item);
+	addTypeTreeView(doodadTreeModel, doodadTreeFilter, doodads_table, doodad_explorer, custom_doodad_icon->icon, "Doodads", Category::doodad);
+	addTypeTreeView(destructibleTreeModel, destructibleTreeFilter, destructibles_table, destructible_explorer, custom_destructible_icon->icon, "Destructibles", Category::destructible);
+	addTypeTreeView(abilityTreeModel, abilityTreeFilter, abilities_table, ability_explorer, custom_ability_icon->icon, "Abilities", Category::ability);
+	addTypeTreeView(upgradeTreeModel, upgradeTreeFilter, upgrade_table, upgrade_explorer, custom_upgrade_icon->icon, "Upgrades", Category::upgrade);
+	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs", Category::buff);
 
 	explorer_area->setCurrentIndex(0);
 	// Set initial sizes, the second size doesn't really matter with only 2 dock areas
@@ -122,7 +122,7 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 }
 
-void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name) {
+void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category) {
 	treeModel->setSourceModel(table);
 	filter = new BaseFilter;
 	filter->slk = table->slk;
@@ -141,6 +141,43 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 		QMenu menu;
 		QAction* addAction = menu.addAction("Add " + name);
 		QAction* removeAction = menu.addAction("Remove " + name);
+
+		if (category == Category::doodad) {
+			QAction* convert_to_destructible = menu.addAction("Convert to destructible");
+
+			{
+				const auto selection = view->selectionModel()->selectedIndexes();
+				if (selection.isEmpty()) {
+					convert_to_destructible->setDisabled(true);
+				} else {
+					const auto treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(selection.front()).internalPointer());
+					if (treeItem->id.empty()) {
+						convert_to_destructible->setDisabled(true);
+					}
+				}
+			}
+
+			connect(convert_to_destructible, &QAction::triggered, [=, this]() {
+				QModelIndexList selection = view->selectionModel()->selectedIndexes();
+
+				for (const auto& i : selection) {
+					BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(i).internalPointer());
+					if (treeItem->id.empty()) {
+						continue;
+					}
+					std::string new_id;
+					destructibles_table->addRow([&] {
+						// We pick a barrel (LTbr) for no good reason
+						new_id = convert_doodad_to_destructible(treeItem->id, "LTbr");
+					});
+
+					const auto index = destructibles_table->rowIDToIndex(new_id);
+					const auto index2 = destructibleTreeModel->mapFromSource(index);
+					const auto index3 = destructibleTreeFilter->mapFromSource(index2);
+					itemClicked(destructibleTreeFilter, destructibles_table, index3, Category::destructible);
+				}
+			});
+		}
 
 		QModelIndexList selection = view->selectionModel()->selectedIndexes();
 		if (selection.empty()) {
@@ -216,7 +253,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4);
 			});
 
-			auto select = [view, table, sub_filter, filter, selectdialog, id, nameEdit, treeModel](const QModelIndex& index) {
+			auto select = [view, table, sub_filter, filter, selectdialog, id, treeModel](const QModelIndex& index) {
 				if (id->text().size() != 4) {
 					return;
 				}

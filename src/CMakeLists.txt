@@ -54,8 +54,9 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"models/upgrade_tree_model.ixx"
 	"models/unit_list_model.ixx"
 	"models/table_model.ixx"
-	 
 	"models/destructible_tree_model.ixx"
+
+	"object_editor/slk_conversions.ixx"
 
 	"custom_widgets/aspect_ratio_pixmap_label.ixx"
 	"custom_widgets/color_button.ixx"

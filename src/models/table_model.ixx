@@ -311,6 +311,13 @@ export class TableModel : public QAbstractTableModel {
 		return flags;
 	}
 
+	template<typename F>
+	void addRow(F f) {
+		beginInsertRows(QModelIndex(), rowCount(), rowCount());
+		f();
+		endInsertRows();
+	}
+
 	void copyRow(std::string_view row_header, std::string_view new_row_header) {
 		beginInsertRows(QModelIndex(), rowCount(), rowCount());
 
