@@ -1,6 +1,7 @@
 module;
 
 #include <QAbstractTableModel>
+#include <absl/strings/str_join.h>
 
 export module TableModel;
 
@@ -65,12 +66,18 @@ export class TableModel : public QAbstractTableModel {
 			case Qt::DisplayRole: {
 				const std::string field_data = slk->data(index.column(), index.row());
 
-				if (field_data.starts_with("TRIGSTR")) {
-					return QString::fromStdString(trigger_strings->string(field_data));
-				}
-
 				const std::string type = meta_slk->data("type", meta_id);
-				if (type == "bool") {
+				if (type == "string") {
+					QString qt_string;
+					if (field_data.starts_with("TRIGSTR")) {
+						qt_string = QString::fromStdString(trigger_strings->string(field_data));
+					} else {
+						qt_string = QString::fromStdString(field_data);
+					}
+
+					qt_string.replace("|n", "\n");
+					return qt_string;
+				} else if (type == "bool") {
 					return field_data == "1" ? "true" : "false";
 				} else if (type == "unitList") {
 					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
@@ -81,7 +88,7 @@ export class TableModel : public QAbstractTableModel {
 						}
 						result += units_table->data(parts[i], "name", role).toString();
 						if (i < parts.size() - 1) {
-							result += ", ";
+							result += '\n';
 						}
 					}
 					return result;
@@ -94,7 +101,7 @@ export class TableModel : public QAbstractTableModel {
 						}
 						result += abilities_table->data(parts[i], "name", role).toString();
 						if (i < parts.size() - 1) {
-							result += ", ";
+							result += '\n';
 						}
 					}
 					return result;
@@ -107,7 +114,7 @@ export class TableModel : public QAbstractTableModel {
 						}
 						result += upgrade_table->data(parts[i], "name1", role).toString();
 						if (i < parts.size() - 1) {
-							result += ", ";
+							result += '\n';
 						}
 					}
 					return result;
@@ -126,7 +133,7 @@ export class TableModel : public QAbstractTableModel {
 						}
 
 						if (i < parts.size() - 1) {
-							result += ", ";
+							result += '\n';
 						}
 					}
 					return result;
@@ -200,7 +207,7 @@ export class TableModel : public QAbstractTableModel {
 							result += QString::fromStdString(std::string(parts[i]));
 						}
 						if (i < parts.size() - 1) {
-							result += ", ";
+							result += '\n';
 						}
 					}
 

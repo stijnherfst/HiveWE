@@ -22,7 +22,9 @@
 
 #include "object_editor/icon_view.h"
 
+import BaseTreeModel;
 import AbilityTreeModel;
+import UpgradeTreeModel;
 import UnitTreeModel;
 import UnitSelector;
 import Utilities;
@@ -217,7 +219,7 @@ void SingleModel::buildMapping() {
 		}
 	}
 
-	std::sort(id_mapping.begin(), id_mapping.end(), [&](const auto& left, const auto& right) {
+	std::ranges::sort(id_mapping, [&](const auto& left, const auto& right) {
 		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left.key));
 		//category = string_replaced(category, "&", "");
 		const std::string left_string = category + " - " + meta_slk->data("displayname", left.key) + left.field;
@@ -248,7 +250,7 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 
 /// Manually color the headers because the default QHeaderView will only alternatively color the items
 void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {
-	Qt::Alignment align = (Qt::AlignLeft | Qt::AlignVCenter);
+	Qt::Alignment align = (Qt::AlignLeft | Qt::AlignTop);
 
 	if (logicalIndex % 2 > 0) {
 		painter->fillRect(rect, palette().color(QPalette::AlternateBase));
@@ -257,7 +259,7 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	}
 
 	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::ForegroundRole).value<QColor>()));
-	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, 0, this), 0, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
+	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, nullptr, this), 5, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
 	painter->setPen(QPen(palette().color(QPalette::Base)));
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
 }

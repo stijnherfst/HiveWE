@@ -104,9 +104,11 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	view->horizontalHeader()->hide();
 	view->setAlternatingRowColors(true);
 	view->setVerticalHeader(new AlterHeader(Qt::Vertical, view));
-	view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Fixed);
+	view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::ResizeToContents);
+	view->verticalHeader()->setMinimumSectionSize(28);
 	view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 	view->setIconSize({ 24, 24 });
+	view->setWordWrap(true);
 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);

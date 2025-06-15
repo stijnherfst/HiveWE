@@ -87,4 +87,18 @@ public:
 	QWidget* create_unit_list_editor(QWidget* parent) const;
 	QWidget* create_ability_list_editor(QWidget* parent) const;
 	QWidget* create_icon_editor(QWidget* parent) const;
+
+	[[nodiscard]] QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override {
+		QSize size = QStyledItemDelegate::sizeHint(option, index);
+
+		QVariant decoration = index.data(Qt::DecorationRole);
+		bool hasIcon = decoration.canConvert<QIcon>();
+
+		if (!hasIcon) {
+			size.rheight() += 8; // Add vertical padding (4px top + 4px bottom)
+		}
+
+
+		return size;
+	}
 };

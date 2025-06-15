@@ -6,7 +6,7 @@ import <glm/glm.hpp>;
 namespace fs = std::filesystem;
 
 // String functions
-export std::string string_replaced(const std::string& source, const std::string& from, const std::string& to) {
+export std::string string_replaced(const std::string& source, const std::string_view from, const std::string_view to) {
 	std::string new_string;
 	new_string.reserve(source.length()); // avoids a few memory allocations
 
