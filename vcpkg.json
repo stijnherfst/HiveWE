@@ -44,7 +44,13 @@
     "outcome",
     "unordered-dense",
     "bzip2",
-    "nlohmann-json"
+    "nlohmann-json",
+    {
+      "name": "mimalloc",
+      "features": [
+        "override"
+      ]
+    }
   ],
   "builtin-baseline": "73e9c8e73fbebbfecea912efbda2ec6475134dd1"
 }

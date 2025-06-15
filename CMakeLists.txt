@@ -28,6 +28,7 @@ find_package(imgui CONFIG REQUIRED)
 find_package(outcome CONFIG REQUIRED)
 find_package(unordered_dense CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
+find_package(mimalloc CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -56,6 +57,7 @@ target_include_directories(HiveWE PRIVATE
 )
 
 target_link_libraries(HiveWE PUBLIC
+	mimalloc
 	Qt6::Gui
 	Qt6::Widgets
 	Qt6::OpenGL

@@ -1,4 +1,6 @@
-#include <glad/glad.h>
+#define MI_MALLOC_OVERRIDE
+#include <mimalloc.h>
+
 #define QT_NO_OPENGL
 
 #include <QApplication>
@@ -9,9 +11,6 @@
 #include <QSurfaceFormat>
 #include <QSettings>
 #include <QStyleFactory>
-
-//import MDX;
-import test;
 
 #include "main_window/hivewe.h"
 #include "DockManager.h"
@@ -25,20 +24,6 @@ extern "C" {
 #endif
 
 int main(int argc, char *argv[]) {
-//	std::string b = R"(
-//Version {
-//	FormatVersion 1000,
-//}
-//Model "Wi sp" {
-//	BlendTime 150,
-//	MinimumExtent { -134.261, -213.936, -143.006 },
-//	MaximumExtent { 154.078, 213.709, 284.64 },
-//}
-//)";
-	
-	//mdx::MDX::from_mdl(b);
-	//execute_tests();
-
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
