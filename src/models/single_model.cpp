@@ -343,7 +343,8 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "real" || type == "unreal") {
 		static_cast<QDoubleSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toDouble());
 	} else if (type == "string") {
-		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
+		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
+		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::DisplayRole).toString());
 	} else if (type == "targetList") {
 		auto parts = model->data(index, Qt::EditRole).toString().split(',');
 		for (const auto& i : parts) {
