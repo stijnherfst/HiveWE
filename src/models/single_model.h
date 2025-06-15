@@ -84,6 +84,7 @@ public:
 
 	QWidget* create_list_editor(QWidget* parent) const;
 	QWidget* create_target_list_editor(QWidget* parent) const;
+	QWidget* create_upgrade_list_editor(QWidget* parent) const;
 	QWidget* create_unit_list_editor(QWidget* parent) const;
 	QWidget* create_ability_list_editor(QWidget* parent) const;
 	QWidget* create_icon_editor(QWidget* parent) const;

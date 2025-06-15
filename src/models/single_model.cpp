@@ -298,7 +298,9 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return create_target_list_editor(parent);
 	} else if (type == "unitList") {
 		return create_unit_list_editor(parent);
-	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
+	} else if (type == "upgradeList") {
+		return create_upgrade_list_editor(parent);
+	}else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		return create_ability_list_editor(parent);
 	} else if (type.ends_with("List")) {
 		return create_list_editor(parent);
@@ -362,7 +364,18 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(units_table->data(id.toStdString(), "name").toString());
-			item->setIcon(items_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
+			item->setIcon(units_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
+			item->setData(Qt::StatusTipRole, id);
+			list->addItem(item);
+		}
+	} else if (type == "upgradeList") {
+		QListWidget* list = editor->findChild<QListWidget*>("upgradeList");
+
+		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		for (const auto& id : ids) {
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setText(upgrade_table->data(id.toStdString(), "name1").toString());
+			item->setIcon(upgrade_table->data(id.toStdString(), "art1", Qt::DecorationRole).value<QIcon>());
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
 		}
@@ -436,6 +449,18 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 		
+		QString result;
+		for (int i = 0; i < list->count(); i++) {
+			QListWidgetItem* item = list->item(i);
+			if (!result.isEmpty()) {
+				result += ',';
+			}
+			result += item->data(Qt::StatusTipRole).toString();
+		}
+		model->setData(index, result, Qt::EditRole);
+	} else if (type == "upgradeList") {
+		QListWidget* list = editor->findChild<QListWidget*>("upgradeList");
+
 		QString result;
 		for (int i = 0; i < list->count(); i++) {
 			QListWidgetItem* item = list->item(i);
@@ -556,6 +581,123 @@ QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->commitData(editor);
+		emit yeet->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		auto yeet = const_cast<TableDelegate*>(this);
+		emit yeet->closeEditor(editor);
+	});
+
+	dialog->show();
+
+	return editor;
+}
+
+QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->resize(256, 360);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+
+	QListWidget* list = new QListWidget;
+	list->setObjectName("upgradeList");
+	list->setIconSize(QSize(32, 32));
+	list->setDragDropMode(QAbstractItemView::DragDropMode::InternalMove);
+	layout->addWidget(list);
+
+	QHBoxLayout* hbox = new QHBoxLayout;
+
+	QPushButton* add = new QPushButton("Add");
+	QPushButton* remove = new QPushButton("Remove");
+	remove->setDisabled(true);
+	hbox->addWidget(add);
+	hbox->addWidget(remove);
+	layout->addLayout(hbox);
+	connect(add, &QPushButton::clicked, [=]() {
+		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+		selectdialog->resize(300, 560);
+		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+		QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
+
+		UpgradeTreeModel* uupgradeTreeModel = new UpgradeTreeModel(dialog);
+		uupgradeTreeModel->setSourceModel(upgrade_table);
+		QSortFilterProxyModel* filter = new QSortFilterProxyModel;
+		filter->setSourceModel(uupgradeTreeModel);
+		filter->setRecursiveFilteringEnabled(true);
+		filter->setFilterCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
+
+		QLineEdit* search = new QLineEdit;
+		search->setPlaceholderText("Search Upgrades");
+		QTreeView* view = new QTreeView;
+		view->setModel(filter);
+		view->header()->hide();
+		view->setSelectionBehavior(QAbstractItemView::SelectRows);
+		view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+		view->expandAll();
+
+		connect(search, &QLineEdit::textChanged, filter, QOverload<const QString&>::of(&QSortFilterProxyModel::setFilterFixedString));
+
+		selectlayout->addWidget(search);
+		selectlayout->addWidget(view);
+
+		QDialogButtonBox* buttonBox2 = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+		connect(buttonBox2, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
+		connect(buttonBox2, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
+		selectlayout->addWidget(buttonBox2);
+
+		auto add = [filter, list, selectdialog](const QModelIndex& index) {
+			QModelIndex sourceIndex = filter->mapToSource(index);
+			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sourceIndex.internalPointer());
+			if (treeItem->baseCategory || treeItem->subCategory) {
+				return;
+			}
+
+			QListWidgetItem* item = new QListWidgetItem;
+			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
+			item->setText(upgrade_table->data(treeItem->id, "name1").toString());
+			item->setIcon(upgrade_table->data(treeItem->id, "art1", Qt::DecorationRole).value<QIcon>());
+			list->addItem(item);
+		};
+
+		connect(view, &QTreeView::activated, [=](const QModelIndex& index) {
+			add(index);
+			selectdialog->close();
+		});
+
+		connect(selectdialog, &QDialog::accepted, [=]() {
+			for (const auto& i : view->selectionModel()->selectedIndexes()) {
+				add(i);
+			}
+			selectdialog->close();
+		});
+
+		selectdialog->show();
+		selectdialog->move(dialog->geometry().topRight() + QPoint(10, dialog->geometry().height() - selectdialog->geometry().height()));
+	});
+
+	connect(remove, &QPushButton::clicked, [=]() {
+		for (auto i : list->selectedItems()) {
+			delete i;
+		}
+	});
+	connect(list, &QListWidget::itemSelectionChanged, [=]() {
+		remove->setEnabled(list->selectedItems().size() > 0);
+	});
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+	layout->addWidget(buttonBox);
+
+	connect(dialog, &QDialog::accepted, [=](){
 		auto yeet = const_cast<TableDelegate*>(this);
 		emit yeet->commitData(editor);
 		emit yeet->closeEditor(editor);
