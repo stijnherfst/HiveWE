@@ -291,7 +291,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		editor->setSingleStep(std::clamp((std::stod(maxVal) - std::stod(minVal)) / 10.0, 0.1, 10.0));
 		return editor;
 	} else if (type == "string") {
-		QLineEdit* editor = new QLineEdit(parent);
+		QTextEdit* editor = new QTextEdit(parent);
 //		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
 	} else if (type == "targetList") {
@@ -348,7 +348,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		static_cast<QDoubleSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toDouble());
 	} else if (type == "string") {
 		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
-		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::DisplayRole).toString());
+		static_cast<QTextEdit*>(editor)->setText(model->data(index, Qt::DisplayRole).toString());
 	} else if (type == "targetList") {
 		auto parts = model->data(index, Qt::EditRole).toString().split(',');
 		for (const auto& i : parts) {
@@ -433,7 +433,9 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	} else if (type == "real" || type == "unreal") {
 		singlemodel->setData(index, static_cast<QDoubleSpinBox*>(editor)->value());
 	} else if (type == "string") {
-		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
+		auto text = static_cast<QTextEdit*>(editor)->toPlainText();
+		text.replace('\n', "|n");
+		singlemodel->setData(index, text);
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
