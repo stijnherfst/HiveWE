@@ -1,13 +1,6 @@
 module;
 
-#include <string>
 #include <filesystem>
-#include <cassert>
-#include <fstream>
-#include <numeric>
-#include <string_view>
-#include <charconv>
-#include <print>
 
 #include <absl/strings/str_split.h>
 #include <absl/strings/str_join.h>
@@ -16,13 +9,14 @@ module;
 
 export module SLK;
 
-namespace fs = std::filesystem;
-
+import std;
 import Hierarchy;
 import no_init_allocator;
 import BinaryReader;
 import Utilities;
 import INI;
+
+namespace fs = std::filesystem;
 
 #undef mix
 #undef max

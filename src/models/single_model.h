@@ -8,7 +8,6 @@
 #include <vector>
 
 import TableModel;
-
 import SLK;
 
 class SingleModel : public QAbstractProxyModel {

@@ -4,35 +4,16 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QObject>
-#include <QMessageBox>
 #include <QTimer>
-#include <QProcess>
-#include <QPushButton>
-#include <QApplication>
-#include <QShortcut>
-#include <QToolButton>
-#include <QFrame>
 #include <QGridLayout>
-#include <QBoxLayout>
 #include <QLabel>
 #include <QMenu>
-#include <QTabWidget>
-#include <QStyle>
-#include <QStyleOption>
 #include <QPainter>
-#include <QMap>
-#include <QScrollArea>
-#include <QPushButton>
-#include <QKeySequence>
 
 #include "ui_HiveWE.h"
 
 import QRibbon;
-import INI;
-import Map;
-import SLK;
 import WindowHandler;
-import Globals;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;

@@ -32,7 +32,6 @@ export class WindowHandler : public QObject {
 			created = true;
 			return window;
 		}
-		return nullptr;
 	}
 
 	void close_all() {
@@ -41,5 +40,7 @@ export class WindowHandler : public QObject {
 		}
 	}
 };
+
+export inline WindowHandler window_handler;
 
 #include "window_handler.moc"

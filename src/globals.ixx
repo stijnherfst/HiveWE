@@ -4,7 +4,6 @@ module;
 
 export module Globals;
 
-import WindowHandler;
 import INI;
 import SLK;
 
@@ -35,5 +34,3 @@ export inline slk::SLK buff_slk;
 export inline slk::SLK buff_meta_slk;
 
 export inline GLWidget* context;
-
-export inline WindowHandler window_handler;

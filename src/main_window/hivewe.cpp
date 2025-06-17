@@ -23,6 +23,8 @@ import "terrain_palette.h";
 import "doodad_palette.h";
 import "unit_palette.h";
 import "object_editor/icon_view.h";
+#include "QMessageBox"
+#include "QProcess"
 
 namespace fs = std::filesystem;
 

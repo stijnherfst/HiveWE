@@ -33,6 +33,7 @@ import TableModel;
 import QRibbon;
 import MapGlobal;
 import Globals;
+import WindowHandler;
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);

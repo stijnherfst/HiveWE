@@ -2,7 +2,6 @@ module;
 
 #include <map>
 #include <string>
-#include <vector>
 #include <filesystem>
 #include <fstream>
 
