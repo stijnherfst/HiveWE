@@ -203,7 +203,7 @@ namespace slk {
 					field += 'a' + (repeat - 1);
 				}
 				if (column_headers.contains("usespecific")) {
-					std::vector<std::string> parts = absl::StrSplit(data("usespecific", header), ",");
+					std::vector<std::string> parts = absl::StrSplit(data("usespecific", header), ",", absl::SkipEmpty());
 					if (!parts.empty()) {
 						for (const auto& i : parts) {
 							meta_map.emplace(field, header + i);
@@ -219,10 +219,9 @@ namespace slk {
 
 		// column_header should be lowercase
 		template <typename T = std::string>
-		T data(std::string_view column_header, std::string_view row_header) const {
-			static_assert(std::is_same_v<T, std::string> || std::is_floating_point_v<T> || std::is_integral_v<T>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
+		T data(const std::string_view column_header, const std::string_view row_header) const {
+			static_assert(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::string> || std::is_floating_point_v<T> || std::is_integral_v<T>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
 			assert(to_lowercase_copy(column_header) == column_header);
-
 
 			auto data = data_single_asset_type(column_header, row_header);
 			if (!data) {
@@ -237,7 +236,9 @@ namespace slk {
 				return T();	
 			}
 
-			if constexpr (std::is_same<T, std::string>()) {
+			if constexpr (std::is_same<T, std::string_view>()) {
+				return *data;
+			} else if constexpr (std::is_same<T, std::string>()) {
 				return std::string(*data);
 			} else if constexpr (std::is_same<T, bool>()) {
 				int output;
@@ -379,14 +380,14 @@ namespace slk {
 
 		/// Substitutes the data of the slk with data from the INI based on a certain section key.
 		/// The keys of the section are matched with all the cells in the table and if they match will replace the value
-		void substitute(const ini::INI& ini, const std::string& section) {
+		void substitute(const ini::INI& ini, const std::string_view section) {
 			assert(ini.section_exists(section));
 
 			for (auto& [id, properties] : base_data) {
 				for (auto& [prop_id, prop_value] : properties) {
-					std::string data = ini.data(section, prop_value);
+					std::string_view data = ini.data<std::string_view>(section, prop_value);
 					if (!data.empty()) {
-						prop_value = data;
+						prop_value = std::string(data);
 					}
 				}
 			}

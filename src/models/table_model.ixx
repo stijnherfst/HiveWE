@@ -64,82 +64,76 @@ export class TableModel : public QAbstractTableModel {
 
 		switch (role) {
 			case Qt::DisplayRole: {
-				const std::string field_data = slk->data(index.column(), index.row());
+				const std::string_view field_data = slk->data<std::string_view>(index.column(), index.row());
 
-				const std::string type = meta_slk->data("type", meta_id);
+				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type == "string") {
 					QString qt_string;
 					if (field_data.starts_with("TRIGSTR")) {
-						qt_string = QString::fromStdString(trigger_strings->string(field_data));
+						const auto data = trigger_strings->string(field_data);
+						qt_string = QString::fromUtf8(data);
 					} else {
-						qt_string = QString::fromStdString(field_data);
+						qt_string = QString::fromUtf8(field_data);
 					}
 
 					qt_string.replace("|n", "\n");
 					return qt_string;
 				} else if (type == "bool") {
-					return field_data == "1" ? "true" : "false";
+					return field_data == "1";
 				} else if (type == "unitList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (!units_slk.row_headers.contains(parts[i])) {
-							continue;
-						}
-						result += units_table->data(parts[i], "name", role).toString();
-						if (i < parts.size() - 1) {
-							result += '\n';
-						}
-					}
-					return result;
-				} else if (type == "abilityList" || type == "abilitySkinList" || type == "heroAbilityList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (!abilities_slk.row_headers.contains(parts[i])) {
-							continue;
-						}
-						result += abilities_table->data(parts[i], "name", role).toString();
-						if (i < parts.size() - 1) {
-							result += '\n';
-						}
-					}
-					return result;
-				} else if (type == "upgradeList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (!upgrade_slk.row_headers.contains(parts[i])) {
-							continue;
-						}
-						result += upgrade_table->data(parts[i], "name1", role).toString();
-						if (i < parts.size() - 1) {
-							result += '\n';
-						}
-					}
-					return result;
-				} else if (type == "buffList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (!buff_slk.row_headers.contains(parts[i])) {
-							continue;
-						}
-						QString editorname = buff_table->data(parts[i], "editorname", role).toString();
-						if (editorname.isEmpty()) {
-							result += buff_table->data(parts[i], "bufftip", role).toString();
-						} else {
-							result += editorname;
-						}
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
 
-						if (i < parts.size() - 1) {
-							result += '\n';
+					QStringList result;
+					for (const auto& part : parts) {
+						result.append(units_table->data(part, "name", role).toString());
+					}
+					return result.join('\n');
+				} else if (type == "abilityList" || type == "abilitySkinList" || type == "heroAbilityList") {
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+
+					QStringList result;
+					for (const auto& part : parts) {
+						result.append(abilities_table->data(part, "name", role).toString());
+					}
+					return result.join('\n');
+				} else if (type == "upgradeList") {
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+
+					QStringList result;
+					for (const auto& part : parts) {
+						result.append(upgrade_table->data(part, "name1", role).toString());
+					}
+					return result.join('\n');
+				} else if (type == "buffList") {
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+
+					QStringList result;
+					for (const auto& part : parts) {
+						QString editor_name = buff_table->data(part, "editorname", role).toString();
+						if (editor_name.isEmpty()) {
+							result += buff_table->data(part, "bufftip", role).toString();
+						} else {
+							result += editor_name;
 						}
 					}
-					return result;
+					return result.join('\n');
+				} else if (type == "techList") {
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+
+					QStringList result;
+					for (const auto& part : parts) {
+						if (units_slk.row_headers.contains(part)) {
+							result += units_table->data(part, "name", role).toString();
+						} else if (upgrade_slk.row_headers.contains(part)) {
+							result += upgrade_table->data(part, "name1", role).toString();
+						} else {
+							result += QString::fromStdString(std::string(part));
+						}
+					}
+					return result.join('\n');
 				} else if (type == "targetList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					std::string result;
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+					QStringList result;
 					for (size_t i = 0; i < parts.size(); i++) {
 						for (const auto& [key, value] : unit_editor_data.section(type)) {
 							if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
@@ -147,37 +141,31 @@ export class TableModel : public QAbstractTableModel {
 							}
 
 							if (value[0] == parts[i]) {
-								result += value[1];
-								if (i < parts.size() - 1) {
-									result += ", ";
-								}
+								result += QString::fromStdString(value[1]);
 							}
 						}
 					}
-					QString result_qstring = QString::fromStdString(result);
+					QString result_qstring = result.join(", ");
 					result_qstring.replace('&', "");
 					return result_qstring;
 				} else if (type == "tilesetList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (parts[i] == "*") {
+					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',', absl::SkipEmpty());
+					QStringList result;
+					for (const auto& part : parts) {
+						if (part == "*") {
 							result += "All";
 						} else {
-							result += QString::fromStdString(world_edit_data.data("TileSets", std::string(parts[i])));
-						}
-						if (i < parts.size() - 1) {
-							result += ", ";
+							result += QString::fromStdString(world_edit_data.data<std::string>("TileSets", part));
 						}
 					}
-					return result;
+					return result.join(", ");
 				} else if (unit_editor_data.section_exists(type)) {
 					for (const auto& [key, value] : unit_editor_data.section(type)) {
 						if (key == "NumValues" || key == "Sort" || key.ends_with("_Alt")) {
 							continue;
 						}
 
-						if (slk->data(index.column(), index.row()) == value[0]) {
+						if (slk->data<std::string_view>(index.column(), index.row()) == value[0]) {
 							QString displayText = QString::fromStdString(value[1]);
 							displayText.replace('&', "");
 							return displayText;
@@ -195,44 +183,27 @@ export class TableModel : public QAbstractTableModel {
 							return QString::fromStdString(value[0]);
 						}
 					}
-				} else if (type == "techList") {
-					std::vector<std::string_view> parts = absl::StrSplit(field_data, ',');
-					QString result;
-					for (size_t i = 0; i < parts.size(); i++) {
-						if (units_slk.row_headers.contains(parts[i])) {
-							result += units_table->data(parts[i], "name", role).toString();
-						} else if (upgrade_slk.row_headers.contains(parts[i])) {
-							result += upgrade_table->data(parts[i], "name1", role).toString();
-						} else {
-							result += QString::fromStdString(std::string(parts[i]));
-						}
-						if (i < parts.size() - 1) {
-							result += '\n';
-						}
-					}
-
-					return result;
 				}
 
-				return QString::fromStdString(field_data);
+				return QString::fromUtf8(field_data);
 			}
 			case Qt::EditRole:
-				return QString::fromStdString(slk->data(index.column(), index.row()));
+				return QString::fromUtf8(slk->data<std::string_view>(index.column(), index.row()));
 			case Qt::CheckStateRole: {
-				const std::string type = meta_slk->data("type", meta_id);
+				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "bool") {
 					return {};
 				}
 
-				return (slk->data(index.column(), index.row()) == "1") ? Qt::Checked : Qt::Unchecked;
+				return (slk->data<std::string_view>(index.column(), index.row()) == "1") ? Qt::Checked : Qt::Unchecked;
 			}
 			case Qt::DecorationRole:
-				const std::string type = meta_slk->data("type", meta_id);
+				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "icon") {
 					return {};
 				}
 
-				fs::path icon = slk->data(index.column(), index.row());
+				fs::path icon = slk->data<std::string_view>(index.column(), index.row());
 				if (icon.empty()) {
 					return invalid_icon->icon;
 				}
@@ -272,7 +243,7 @@ export class TableModel : public QAbstractTableModel {
 			case Qt::CheckStateRole: {
 				const std::string& id = slk->index_to_row.at(index.row());
 				const std::string& field = slk->index_to_column.at(index.column());
-				const std::string type = meta_slk->data("type", fieldToMetaID(id, field));
+				const std::string_view type = meta_slk->data<std::string_view>("type", fieldToMetaID(id, field));
 				if (type != "bool") {
 					return false;
 				}
@@ -291,9 +262,9 @@ export class TableModel : public QAbstractTableModel {
 		}
 
 		if (orientation == Qt::Orientation::Horizontal) {
-			return QString::fromStdString(slk->data(section, 0));
+			return QString::fromUtf8(slk->data<std::string_view>(section, 0));
 		} else {
-			return QString::fromStdString(slk->data(0, section));
+			return QString::fromUtf8(slk->data<std::string_view>(0, section));
 		}
 	}
 
@@ -306,7 +277,7 @@ export class TableModel : public QAbstractTableModel {
 
 		const std::string& id = slk->index_to_row.at(index.row());
 		const std::string& field = slk->index_to_column.at(index.column());
-		const std::string type = meta_slk->data("type", fieldToMetaID(id, field));
+		const std::string_view type = meta_slk->data<std::string_view>("type", fieldToMetaID(id, field));
 		if (type == "bool") {
 			flags |= Qt::ItemIsUserCheckable;
 		}
@@ -339,23 +310,23 @@ export class TableModel : public QAbstractTableModel {
 		endRemoveRows();
 	}
 
-	std::string fieldToMetaID(const std::string& id, const std::string& field) const {
-		if (meta_slk->meta_map.contains(field)) {
-			return meta_slk->meta_map.at(field);
+	const std::string& fieldToMetaID(const std::string& id, const std::string_view field) const {
+		if (auto found = meta_slk->meta_map.find(field); found != meta_slk->meta_map.end()) {
+			return found->second;
 		}
 
 		const size_t nr_position = field.find_first_of("0123456789");
-		const std::string new_field = field.substr(0, nr_position);
+		const std::string_view new_field = field.substr(0, nr_position);
 
-		if (meta_slk->meta_map.contains(new_field)) {
-			return meta_slk->meta_map.at(new_field);
+		if (auto found = meta_slk->meta_map.find(new_field); found != meta_slk->meta_map.end()) {
+			return found->second;
 		}
 
-		return meta_slk->meta_map.at(new_field + id);
+		return meta_slk->meta_map.at(std::string(new_field) + id);
 	}
 
 	// Returns the model index belonging to the row with the given id
-	QModelIndex rowIDToIndex(const std::string& id) const {
+	QModelIndex rowIDToIndex(const std::string_view id) const {
 		return createIndex(slk->row_headers.at(id), 0);
 	}
 };

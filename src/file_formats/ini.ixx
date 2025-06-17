@@ -3,7 +3,9 @@ module;
 #include <map>
 #include <string>
 #include <filesystem>
-#include <fstream>
+#include <utility>
+
+#include "ankerl/unordered_dense.h"
 
 export module INI;
 
@@ -16,11 +18,28 @@ import <absl/strings/str_split.h>;
 namespace fs = std::filesystem;
 
 namespace ini {
+	// To enable heterogeneous lookup
+	struct string_hash {
+		using is_transparent = void; // enable heterogeneous lookup
+		using is_avalanching = void; // mark class as high quality avalanching hash
+
+		[[nodiscard]] auto operator()(const char* str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+
+		[[nodiscard]] auto operator()(std::string_view str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+
+		[[nodiscard]] auto operator()(std::string const& str) const noexcept -> uint64_t {
+			return ankerl::unordered_dense::hash<std::string_view>{}(str);
+		}
+	};
+
 	export class INI {
 	  public:
 		/// header to items to list of values to value
-		// ToDo use ankerl::unordered_dense
-		std::map<std::string, std::map<std::string, std::vector<std::string>>> ini_data;
+		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::vector<std::string>, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> ini_data;
 
 		INI() = default;
 		explicit INI(const fs::path& path, bool local = false) {
@@ -110,63 +129,68 @@ namespace ini {
 		}
 
 		/// Replaces all values (not keys) which match one of the keys in substitution INI
-		void substitute(const INI& ini, const std::string& section) {
+		void substitute(const INI& ini, const std::string_view section) {
 			for (auto&& [section_key, section_value] : ini_data) {
 				for (auto&& [key, value] : section_value) {
 					for (auto&& part : value) {
-						std::string westring = ini.data(section, part);
-						if (!westring.empty()) {
-							part = westring;
+						std::string_view we_string = ini.data<std::string_view>(section, part);
+						if (!we_string.empty()) {
+							part = we_string;
 						}
 					}
 				}
 			}
 		}
 
-		std::map<std::string, std::vector<std::string>> section(const std::string& section) const {
-			if (ini_data.contains(section)) {
-				return ini_data.at(section);
+		const ankerl::unordered_dense::map<std::string, std::vector<std::string>, string_hash, std::equal_to<>>& section(const std::string_view section) const {
+			if (auto found = ini_data.find(section); found != ini_data.end()) {
+				return found->second;
 			} else {
-				return {};
+				throw std::runtime_error("section not found");
 			}
 		}
 
 		/// Sets the data of a whole key
-		void set_whole_data(const std::string& section, const std::string& key, std::string value) {
-			ini_data[section][key] = { value };
+		void set_whole_data(const std::string_view section, const std::string_view key, std::string value) {
+			ini_data[section][key] = { std::move(value) };
 		}
 
-		/// Retrieves the list of key values
-		std::vector<std::string> whole_data(const std::string& section, const std::string& key) const {
-			if (ini_data.contains(section) && ini_data.at(section).contains(key)) { // ToDo C++20 contains
-				return ini_data.at(section).at(key);
-			} else {
-				return {};
-			}
-		}
-
-		bool key_exists(const std::string& section, const std::string& key) const {
+		bool key_exists(const std::string_view section, const std::string_view key) const {
 			return ini_data.contains(section) && ini_data.at(section).contains(key);
 		}
 
-		bool section_exists(const std::string& section) const {
+		bool section_exists(const std::string_view section) const {
 			return ini_data.contains(section);
 		}
 
 		/// To access key data where the value of the key is comma seperated
 		template <typename T = std::string>
-		T data(const std::string& section, const std::string& key, const size_t argument = 0) const {
-			if (ini_data.contains(section) && ini_data.at(section).contains(key) && argument < ini_data.at(section).at(key).size()) {
-				if constexpr (std::is_same<T, std::string>()) {
-					return ini_data.at(section).at(key)[argument];
-				} else if constexpr (std::is_same<T, int>()) {
-					return std::stoi(ini_data.at(section).at(key)[argument]);
-				} else if constexpr (std::is_same<T, float>()) {
-					return std::stof(ini_data.at(section).at(key)[argument]);
-				}
-				static_assert("Type not supported. Convert yourself or add conversion here if it makes sense");
-			} else {
-				return T();
+		T data(const std::string_view section, const std::string_view key, const size_t argument = 0) const {
+			const auto sec = ini_data.find(section);
+			if (sec == ini_data.end()) {
+				throw std::runtime_error("section not found");
+			}
+			const auto value = sec->second.find(key);
+			if (value == sec->second.end()) {
+				// Returning an empty value is kind of cursed
+				return T{};
+				// throw std::runtime_error("key not found");
+			}
+
+			if (argument >= value->second.size()) {
+				throw std::runtime_error("section argument out of bounds");
+			}
+
+			if constexpr (std::is_same_v<T, std::string_view>) {
+				return value->second[argument];
+			} else if constexpr (std::is_same_v<T, std::string>) {
+				return value->second[argument];
+			} else if constexpr (std::is_same_v<T, int>) {
+				return std::stoi(value->second[argument]);
+			} else if constexpr (std::is_same_v<T, float>) {
+				return std::stof(value->second[argument]);
+			} else  {
+				static_assert(false, "Type not supported. Convert yourself or add conversion here if it makes sense");
 			}
 		}
 	};

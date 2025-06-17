@@ -91,12 +91,14 @@ export class TriggerStrings {
 		hierarchy.map_file_write("war3map.wts", writer.buffer);
 	}
 
-	std::string string(const std::string& key) const {
-		if (!strings.contains(key)) {
-			return "";
+	std::string_view string(const std::string_view key) const {
+		const auto found = strings.find(std::string(key));
+
+		if (found == strings.end()) {
+			return {};
 		}
 
-		return strings.at(key);
+		return found->second;
 	}
 
 	/// If the key exists then the correspending string in the trigger string file is set

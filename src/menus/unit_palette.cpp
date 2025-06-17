@@ -26,7 +26,7 @@ UnitPalette::UnitPalette(QWidget* parent) : Palette(parent) {
 			color_lookup = "0" + color_lookup;
 		}
 
-		std::string player_name = map->trigger_strings.string(player.name) + " (" + world_edit_strings.data("WorldEditStrings", "WESTRING_UNITCOLOR_" + color_lookup) + ")";
+		const auto player_name = std::format("{} ({})", map->trigger_strings.string(player.name), world_edit_strings.data("WorldEditStrings", "WESTRING_UNITCOLOR_" + color_lookup));
 
 		ui.player->addItem(QString::fromStdString(player_name), player.internal_number);
 	}

@@ -15,10 +15,10 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	// Description Tab
-	ui.name->setText(QString::fromStdString(map->trigger_strings.string(map->info.name)));
-	ui.suggestedPlayers->setText(QString::fromStdString(map->trigger_strings.string(map->info.suggested_players)));
-	ui.description->setPlainText(QString::fromStdString(map->trigger_strings.string(map->info.description)));
-	ui.author->setText(QString::fromStdString(map->trigger_strings.string(map->info.author)));
+	ui.name->setText(QString::fromUtf8(map->trigger_strings.string(map->info.name)));
+	ui.suggestedPlayers->setText(QString::fromUtf8(map->trigger_strings.string(map->info.suggested_players)));
+	ui.description->setPlainText(QString::fromUtf8(map->trigger_strings.string(map->info.description)));
+	ui.author->setText(QString::fromUtf8(map->trigger_strings.string(map->info.author)));
 
 	ui.mapVersion->setText(QString::number(map->info.map_version));
 	ui.editorVersion->setText(QString::number(map->info.editor_version));
@@ -57,9 +57,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		ui.campaignLoadingScreen->setCurrentIndex(map->info.loading_screen_number);
 	}
 
-	ui.loadingScreenTitle->setText(QString::fromStdString(map->trigger_strings.string(map->info.loading_screen_title)));
-	ui.loadingScreenSubtitle->setText(QString::fromStdString(map->trigger_strings.string(map->info.loading_screen_subtitle)));
-	ui.loadingScreenText->setPlainText(QString::fromStdString(map->trigger_strings.string(map->info.loading_screen_text)));
+	ui.loadingScreenTitle->setText(QString::fromUtf8(map->trigger_strings.string(map->info.loading_screen_title)));
+	ui.loadingScreenSubtitle->setText(QString::fromUtf8(map->trigger_strings.string(map->info.loading_screen_subtitle)));
+	ui.loadingScreenText->setPlainText(QString::fromUtf8(map->trigger_strings.string(map->info.loading_screen_text)));
 
 	// Options Tab
 	ui.meleeMap->setChecked(map->info.melee_map);
