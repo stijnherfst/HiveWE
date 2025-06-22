@@ -1,8 +1,9 @@
 export module SlkConversions;
 
 import std;
-import MapGlobal;
 import Map;
+import MapGlobal;
+import SLK;
 import Globals;
 
 /// Returns the new destructible ID

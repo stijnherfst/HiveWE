@@ -6,7 +6,7 @@ import std;
 import Hierarchy;
 import SLK;
 import Texture;
-import TerrainUndo;
+import WorldUndoManager;
 import Camera;
 import OpenGLUtilities;
 import ResourceManager;
@@ -141,11 +141,11 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			if (!lock_doodad_z) {
 				i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true);
 			}
-			i->update();
+			i->update(map->terrain);
 		}
 		emit position_changed();
 
-		map->doodads.update_doodad_pathing(selections);
+		map->doodads.update_doodad_pathing(selections, map->pathing_map);
 	}
 
 	if (event->modifiers() & Qt::ControlModifier) {
@@ -165,7 +165,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				}
 				for (const auto& i : selections) {
 					i->position.z += 0.1f;
-					i->update();
+					i->update(map->terrain);
 				}
 				emit position_changed();
 				break;
@@ -175,7 +175,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				}
 				for (const auto& i : selections) {
 					i->position.z -= 0.1f;
-					i->update();
+					i->update(map->terrain);
 				}
 				emit position_changed();
 				break;
@@ -190,7 +190,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				}
 				for (const auto& i : selections) {
 					i->scale.z += 0.1f;
-					i->update();
+					i->update(map->terrain);
 				}
 				emit scale_changed();
 				break;
@@ -200,7 +200,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				}
 				for (const auto& i : selections) {
 					i->scale.z -= 0.1f;
-					i->update();
+					i->update(map->terrain);
 				}
 				emit scale_changed();
 				break;
@@ -305,10 +305,10 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					if (!lock_doodad_z) {
 						doodad->position.z = map->terrain.interpolated_height(doodad->position.x, doodad->position.y, true);
 					}
-					doodad->update();
+					doodad->update(map->terrain);
 				}
 				emit position_changed();
-				map->doodads.update_doodad_pathing(selections);
+				map->doodads.update_doodad_pathing(selections, map->pathing_map);
 			} else if (event->modifiers() & Qt::ControlModifier) {
 				if (action == Action::none) {
 					start_action(Action::rotate);
@@ -322,13 +322,13 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 
 					i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, target_rotation);
 					i->position = glm::vec3(Doodad::acceptable_position(i->position, i->pathing, i->angle), i->position.z);
-					i->update();
+					i->update(map->terrain);
 				}
 				emit angle_changed();
 
-				map->doodads.update_doodad_pathing(selections);
+				map->doodads.update_doodad_pathing(selections, map->pathing_map);
 			} else if (mode == Mode::selection && selection_started) {
-				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
+				const glm::vec3 size = input_handler.mouse_world - selection_start;
 
 				auto query = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 				if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
@@ -376,11 +376,11 @@ void DoodadBrush::delete_selection() {
 		}
 		update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
 	}
-	map->terrain_undo.new_undo_group();
-	map->terrain_undo.add_undo_action(std::move(action));
+	map->world_undo.new_undo_group();
+	map->world_undo.add_undo_action(std::move(action));
 
 	map->doodads.remove_doodads(selections);
-	map->doodads.update_doodad_pathing(update_pathing_area);
+	map->doodads.update_doodad_pathing(update_pathing_area, map->pathing_map);
 
 	selections.clear();
 	emit selection_changed();
@@ -425,7 +425,7 @@ void DoodadBrush::place_clipboard() {
 		}
 
 		new_doodad.position = final_position;
-		new_doodad.update();
+		new_doodad.update(map->terrain);
 		doodad_undo->doodads.push_back(new_doodad);
 
 		if (new_doodad.pathing) {
@@ -482,8 +482,8 @@ void DoodadBrush::apply_end() {
 	if (doodad_undo->doodads.empty()) {
 		return;
 	}
-	map->terrain_undo.new_undo_group();
-	map->terrain_undo.add_undo_action(std::move(doodad_undo));
+	map->world_undo.new_undo_group();
+	map->world_undo.add_undo_action(std::move(doodad_undo));
 }
 
 void DoodadBrush::render_brush() {
@@ -499,7 +499,7 @@ void DoodadBrush::render_brush() {
 	final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, false);
 
 	doodad.position = final_position;
-	doodad.update();
+	doodad.update(map->terrain);
 	doodad.skeleton.update(0.016f);
 	map->render_manager.queue_render(*doodad.mesh, doodad.skeleton, doodad.color);
 
@@ -566,7 +566,7 @@ void DoodadBrush::render_clipboard() {
 
 		const auto previous_position = i.position;
 		i.position = final_position;
-		i.update();
+		i.update(map->terrain);
 		i.skeleton.update(0.016f);
 		i.position = previous_position;
 
@@ -585,7 +585,7 @@ bool DoodadBrush::can_place() {
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
 	context->makeCurrent();
-	doodad.init(doodad.id, map->doodads.get_mesh(doodad.id, variation));
+	doodad.init(doodad.id, map->doodads.get_mesh(doodad.id, variation), map->terrain);
 }
 
 void DoodadBrush::set_random_rotation() {
@@ -609,7 +609,7 @@ void DoodadBrush::set_random_rotation() {
 		brush_offset.y = (rotated_pathing_height % 4 != 0) ? 0.25f : 0.f;
 	}
 
-	doodad.update();
+	doodad.update(map->terrain);
 }
 
 void DoodadBrush::add_variation(int variation) {
@@ -636,7 +636,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 	variation = get_random_variation();
 
-	doodad.init(id, map->doodads.get_mesh(id, variation));
+	doodad.init(id, map->doodads.get_mesh(id, variation), map->terrain);
 
 	// It might be initially incorrect because another doodad.angle is not reset in init()
 	doodad.angle = Doodad::acceptable_angle(doodad.id, doodad.pathing, doodad.angle, doodad.angle);
@@ -663,7 +663,7 @@ void DoodadBrush::set_doodad(const std::string& id) {
 
 void DoodadBrush::start_action(Action new_action) {
 	action = new_action;
-	map->terrain_undo.new_undo_group();
+	map->world_undo.new_undo_group();
 	doodad_state_undo = std::make_unique<DoodadStateAction>();
 	for (const auto& i : selections) {
 		doodad_state_undo->old_doodads.push_back(*i);
@@ -674,7 +674,7 @@ void DoodadBrush::end_action() {
 	for (const auto& i : selections) {
 		doodad_state_undo->new_doodads.push_back(*i);
 	}
-	map->terrain_undo.add_undo_action(std::move(doodad_state_undo));
+	map->world_undo.add_undo_action(std::move(doodad_state_undo));
 	action = Action::none;
 }
 
@@ -683,9 +683,9 @@ void DoodadBrush::set_selection_angle(float angle) {
 	for (auto& i : selections) {
 		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, angle);
 		i->position = glm::vec3(Doodad::acceptable_position(i->position, i->pathing, i->angle), i->position.z);
-		i->update();
+		i->update(map->terrain);
 	}
-	map->doodads.update_doodad_pathing(selections);
+	map->doodads.update_doodad_pathing(selections, map->pathing_map);
 	end_action();
 }
 
@@ -693,7 +693,7 @@ void DoodadBrush::set_selection_absolute_height(float height) {
 	start_action(Action::move);
 	for (auto& i : selections) {
 		i->position.z = height;
-		i->update();
+		i->update(map->terrain);
 	}
 	end_action();
 }
@@ -702,7 +702,7 @@ void DoodadBrush::set_selection_relative_height(float height) {
 	start_action(Action::move);
 	for (auto& i : selections) {
 		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true) + height;
-		i->update();
+		i->update(map->terrain);
 	}
 	end_action();
 }
@@ -721,7 +721,7 @@ void DoodadBrush::set_selection_scale_component(int component, float scale) {
 		} else {
 			i->scale[component] = std::clamp(scale, min_scale, max_scale);
 		}
-		i->update();
+		i->update(map->terrain);
 	}
 	end_action();
 }

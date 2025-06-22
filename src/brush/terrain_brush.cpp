@@ -2,7 +2,10 @@
 
 import std;
 import MapGlobal;
-import "terrain.h";
+import Terrain;
+import DoodadsUndo;
+import PathingUndo;
+import TerrainUndo;
 
 TerrainBrush::TerrainBrush() : Brush() {
 	size_granularity = 4;
@@ -105,7 +108,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 void TerrainBrush::apply_begin() {
 	int width = map->terrain.width;
 	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	const auto& corners = map->terrain.corners;
 
 	const int x = position.x + 1;
 	const int y = position.y + 1;
@@ -114,9 +117,9 @@ void TerrainBrush::apply_begin() {
 	const int center_y = area.y() + area.height() * 0.5f;
 	
 	// Setup for undo/redo
-	map->terrain_undo.new_undo_group();
-	map->terrain.new_undo_group();
-	map->pathing_map.new_undo_group();
+	map->world_undo.new_undo_group();
+	old_corners = map->terrain.corners;
+	old_pathing_cells_static = map->pathing_map.pathing_cells_static;
 	texture_height_area = area;
 	cliff_area = area;
 
@@ -130,7 +133,7 @@ void TerrainBrush::apply_begin() {
 			case cliff_operation::shallow_water:
 				if (!corners[center_x][center_y].water) {
 					layer_height -= 1;
-				} else if (corners[center_x][center_y].final_water_height() > corners[center_x][center_y].final_ground_height() + 1) {
+				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset) > corners[center_x][center_y].final_ground_height() + 1) {
 					layer_height += 1;
 				}
 				break;
@@ -143,7 +146,7 @@ void TerrainBrush::apply_begin() {
 			case cliff_operation::deep_water:
 				if (!corners[center_x][center_y].water) {
 					layer_height -= 2;
-				} else if (corners[center_x][center_y].final_water_height() < corners[center_x][center_y].final_ground_height() + 1) {
+				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset) < corners[center_x][center_y].final_ground_height() + 1) {
 					layer_height -= 1;
 				}
 				break;
@@ -326,7 +329,7 @@ void TerrainBrush::apply(double frame_delta) {
 						case cliff_operation::raise1:
 						case cliff_operation::raise2:
 							if (corners[i][j].water) {
-								if (enforce_water_height_limits && corners[i][j].final_water_height() < corners[i][j].final_ground_height()) {
+								if (enforce_water_height_limits && corners[i][j].final_water_height(map->terrain.water_offset) < corners[i][j].final_ground_height()) {
 									corners[i][j].water = false;
 								}
 							}
@@ -406,9 +409,9 @@ void TerrainBrush::apply(double frame_delta) {
 
 						if (corner.water && apply_water_pathing) {
 							mask |= 0b01000000;
-							if (corner.final_water_height() > corner.final_ground_height() + 0.40) {
+							if (corner.final_water_height(map->terrain.water_offset) > corner.final_ground_height() + 0.40) {
 								mask |= 0b00001010;
-							} else if (corner.final_water_height() > corner.final_ground_height()) {
+							} else if (corner.final_water_height(map->terrain.water_offset) > corner.final_ground_height()) {
 								mask |= 0b00001000;
 							}
 						}
@@ -429,27 +432,27 @@ void TerrainBrush::apply(double frame_delta) {
 						pre_change_doodads.push_back(i);
 					}
 					i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y, true);
-					i.update();
+					i.update(map->terrain);
 					post_change_doodads[i.creation_number] = i;
 				}
 			}
 		}
-		map->units.update_area(updated_area);
+		map->units.update_area(updated_area, map->terrain);
 	}
 }
 
 void TerrainBrush::apply_end() {
 	if (apply_texture) {
-		map->terrain.add_undo(texture_height_area, Terrain::undo_type::texture);
+		add_terrain_undo(texture_height_area, TerrainUndoType::texture);
 	}
 
 	if (apply_height) {
-		map->terrain.add_undo(texture_height_area, Terrain::undo_type::height);
+		add_terrain_undo(texture_height_area, TerrainUndoType::height);
 	}
 
 	if (apply_cliff) {
 		QRect cliff_areaa = cliff_area.adjusted(0, 0, 1, 1).intersected({ 0, 0, map->terrain.width, map->terrain.height });
-		map->terrain.add_undo(cliff_areaa, Terrain::undo_type::cliff);
+		add_terrain_undo(cliff_areaa, TerrainUndoType::cliff);
 	}
 
 	if (change_doodad_heights) {
@@ -460,11 +463,11 @@ void TerrainBrush::apply_end() {
 		}
 		pre_change_doodads.clear();
 		post_change_doodads.clear();
-		map->terrain_undo.add_undo_action(std::move(undo));
+		map->world_undo.add_undo_action(std::move(undo));
 	}
 
 	QRect pathing_area = QRect(cliff_area.x() * 4, cliff_area.y() * 4, cliff_area.width() * 4, cliff_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
-	map->pathing_map.add_undo(pathing_area);
+	add_pathing_undo(pathing_area);
 
 	map->terrain.update_minimap();
 }
@@ -484,4 +487,55 @@ int TerrainBrush::get_random_variation() const {
 	}
 	assert("Didn't hit the list of tile variations");
 	return 0;
+}
+
+/// Adds the undo to the current undo group
+void TerrainBrush::add_terrain_undo(const QRect& area, TerrainUndoType type) {
+	auto undo_action = std::make_unique<TerrainGenericAction>();
+
+	undo_action->area = area;
+	undo_action->undo_type = type;
+
+	// Copy old corners
+	undo_action->old_corners.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->old_corners.push_back(old_corners[i][j]);
+		}
+	}
+
+	// Copy new corners
+	undo_action->new_corners.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->new_corners.push_back(map->terrain.corners[i][j]);
+		}
+	}
+
+	map->world_undo.add_undo_action(std::move(undo_action));
+}
+
+void TerrainBrush::add_pathing_undo(const QRect& area) {
+	auto undo_action = std::make_unique<PathingMapAction>();
+
+	undo_action->area = area;
+	const auto width = map->pathing_map.width;
+
+	// Copy old corners
+	undo_action->old_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->old_pathing.push_back(old_pathing_cells_static[j * width + i]);
+		}
+	}
+
+	// Copy new corners
+	undo_action->new_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->new_pathing.push_back(map->pathing_map.pathing_cells_static[j * width + i]);
+		}
+	}
+
+	map->world_undo.add_undo_action(std::move(undo_action));
 }

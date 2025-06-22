@@ -5,7 +5,7 @@
 import std;
 import Hierarchy;
 import Texture;
-import TerrainUndo;
+import WorldUndoManager;
 import Camera;
 import OpenGLUtilities;
 import RenderManager;
@@ -25,7 +25,7 @@ void UnitBrush::set_shape(const Shape new_shape) {
 void UnitBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
 		if (!event->isAutoRepeat()) {
-			map->terrain_undo.new_undo_group();
+			map->world_undo.new_undo_group();
 			unit_state_undo = std::make_unique<UnitStateAction>();
 			for (const auto& i : selections) {
 				unit_state_undo->old_units.push_back(*i);
@@ -74,7 +74,7 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 			for (const auto& i : selections) {
 				unit_state_undo->new_units.push_back(*i);
 			}
-			map->terrain_undo.add_undo_action(std::move(unit_state_undo));
+			map->world_undo.add_undo_action(std::move(unit_state_undo));
 		}
 	}
 }
@@ -131,7 +131,7 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 			if (dragging) {
 				if (!dragged) {
 					dragged = true;
-					map->terrain_undo.new_undo_group();
+					map->world_undo.new_undo_group();
 					unit_state_undo = std::make_unique<UnitStateAction>();
 					for (const auto& i : selections) {
 						unit_state_undo->old_units.push_back(*i);
@@ -159,7 +159,7 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					i->update();
 				}
 			} else if (selection_started) {
-				const glm::vec2 size = glm::vec2(input_handler.mouse_world) - selection_start;
+				const glm::vec3 size = input_handler.mouse_world - selection_start;
 
 				auto query = map->units.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 				if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
@@ -188,7 +188,7 @@ void UnitBrush::mouse_release_event(QMouseEvent* event) {
 		for (const auto& i : selections) {
 			unit_state_undo->new_units.push_back(*i);
 		}
-		map->terrain_undo.add_undo_action(std::move(unit_state_undo));
+		map->world_undo.add_undo_action(std::move(unit_state_undo));
 	}
 
 	Brush::mouse_release_event(event);
@@ -200,12 +200,12 @@ void UnitBrush::delete_selection() {
 	}
 
 	// Undo/redo
-	map->terrain_undo.new_undo_group();
+	map->world_undo.new_undo_group();
 	auto action = std::make_unique<UnitDeleteAction>();
 	for (const auto& i : selections) {
 		action->units.push_back(*i);
 	}
-	map->terrain_undo.add_undo_action(std::move(action));
+	map->world_undo.add_undo_action(std::move(action));
 	map->units.remove_units(selections);
 
 	selections.clear();
@@ -253,7 +253,7 @@ void UnitBrush::place_clipboard() {
 }
 
 void UnitBrush::apply_begin() {
-	map->terrain_undo.new_undo_group();
+	map->world_undo.new_undo_group();
 	unit_undo = std::make_unique<UnitAddAction>();
 }
 
@@ -278,7 +278,7 @@ void UnitBrush::apply(double frame_delta) {
 }
 
 void UnitBrush::apply_end() {
-	map->terrain_undo.add_undo_action(std::move(unit_undo));
+	map->world_undo.add_undo_action(std::move(unit_undo));
 }
 
 void UnitBrush::render_brush() {

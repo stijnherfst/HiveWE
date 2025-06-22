@@ -5,7 +5,6 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <terrain.h>
 
 #include <string_view>
 
@@ -70,8 +69,8 @@ public:
 
 	virtual void clear_clipboard() {};
 	
-	void render(const Terrain& terrain);
-	virtual void render_selector(const Terrain& terrain) const;
+	void render();
+	virtual void render_selector() const;
 	virtual void render_selection() const {};
 	virtual void render_clipboard() {}
 	virtual void render_brush();
@@ -92,7 +91,7 @@ protected:
 	glm::ivec2 position;
 
 	bool selection_started = false;
-	glm::vec2 selection_start;
+	glm::vec3 selection_start;
 
 	std::shared_ptr<Shader> selection_shader;
 	std::shared_ptr<Shader> selection_circle_shader;

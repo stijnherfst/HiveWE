@@ -7,12 +7,13 @@ export module Map;
 import std;
 import types;
 import MDX;
+import SLK;
 import GameCameras;
 import Imports;
 import MapInfo;
 import Sounds;
 import Regions;
-import TerrainUndo;
+import WorldUndoManager;
 import TriggerStrings;
 import PathingMap;
 import Physics;
@@ -24,11 +25,11 @@ import ModificationTables;
 import RenderManager;
 import TableModel;
 import Globals;
-import <units.h>;
-import <doodads.h>;
+import Units;
+import Doodads;
 import <ankerl/unordered_dense.h>;
 import "triggers.h";
-import "terrain.h";
+import Terrain;
 import "brush.h";
 import <glad/glad.h>;
 import <bullet/btBulletDynamicsCommon.h>;
@@ -48,7 +49,6 @@ export class Map : public QObject {
 	Triggers triggers;
 	MapInfo info;
 	Terrain terrain;
-	TerrainUndo terrain_undo;
 	PathingMap pathing_map;
 	Imports imports;
 	Doodads doodads;
@@ -58,6 +58,7 @@ export class Map : public QObject {
 	Sounds sounds;
 	// ShadowMap shadow_map;
 
+	WorldUndoManager world_undo;
 	Brush* brush = nullptr;
 	Physics physics;
 
@@ -312,7 +313,7 @@ export class Map : public QObject {
 		timer.reset();
 
 		info.load();
-		terrain.load();
+		terrain.load(physics);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
@@ -344,8 +345,8 @@ export class Map : public QObject {
 			load_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false);
 		}
 
-		doodads.load();
-		doodads.create();
+		doodads.load(terrain, info);
+		doodads.create(terrain, pathing_map);
 
 		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
@@ -368,7 +369,7 @@ export class Map : public QObject {
 
 		// Units/Items
 		if (hierarchy.map_file_exists("war3mapUnits.doo")) {
-			units.load();
+			units.load(terrain, info);
 			units.create();
 		}
 
@@ -459,7 +460,7 @@ export class Map : public QObject {
 		connect(doodads_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
 			const std::string& id = doodads_slk.index_to_row.at(top_left.row());
 			const std::string& field = doodads_slk.index_to_column.at(top_left.column());
-			doodads.process_doodad_field_change(id, field);
+			doodads.process_doodad_field_change(id, field, terrain);
 		});
 
 		connect(doodads_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
@@ -476,7 +477,7 @@ export class Map : public QObject {
 		connect(destructibles_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
 			const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
 			const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
-			doodads.process_destructible_field_change(id, field);
+			doodads.process_destructible_field_change(id, field, terrain);
 		});
 
 		connect(destructibles_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
@@ -513,13 +514,13 @@ export class Map : public QObject {
 		save_modification_file("war3mapSkin.w3d", doodads_slk, doodads_meta_slk, true, true);
 		save_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false, false);
 		save_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false, true);
-		doodads.save();
+		doodads.save(terrain);
 
 		save_modification_file("war3map.w3u", units_slk, units_meta_slk, false, false);
 		save_modification_file("war3mapSkin.w3u", units_slk, units_meta_slk, false, true);
 		save_modification_file("war3map.w3t", items_slk, items_meta_slk, false, false);
 		save_modification_file("war3mapSkin.w3t", items_slk, items_meta_slk, false, true);
-		units.save();
+		units.save(terrain);
 
 		save_modification_file("war3map.w3a", abilities_slk, abilities_meta_slk, true, false);
 		save_modification_file("war3mapSkin.w3a", abilities_slk, abilities_meta_slk, true, true);
@@ -621,7 +622,7 @@ export class Map : public QObject {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
-		terrain.render_ground(render_pathing, render_lighting);
+		terrain.render_ground(render_pathing, render_lighting, light_direction, brush, pathing_map);
 
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
@@ -651,7 +652,7 @@ export class Map : public QObject {
 		}
 
 		if (render_brush && brush) {
-			brush->render(terrain);
+			brush->render();
 		}
 
 		render_manager.render(render_lighting, light_direction);

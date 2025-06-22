@@ -6,9 +6,11 @@ import MPQ;
 import OpenGLUtilities;
 import Camera;
 import Globals;
+import Map;
 import <soil2/SOIL2.h>;
 import <StormLib.h>;
 import MapGlobal;
+import WorldUndoManager;
 import "pathing_palette.h";
 import "object_editor/object_editor.h";
 import "model_editor/model_editor.h";
@@ -73,14 +75,32 @@ HiveWE::HiveWE(QWidget* parent)
 		if (map->brush) {
 			map->brush->clear_selection();
 		}
-		map->terrain_undo.undo();
+
+		auto context = WorldEditContext {
+			.terrain = map->terrain,
+			.units = map->units,
+			.doodads = map->doodads,
+			.brush = map->brush,
+			.pathing_map = map->pathing_map,
+		};
+
+		map->world_undo.undo(context);
 	});
 	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {
 		// ToDo: temporary, undoing should still allow a selection to persist
 		if (map->brush) {
 			map->brush->clear_selection();
 		}
-		map->terrain_undo.redo();
+
+		auto context = WorldEditContext {
+			.terrain = map->terrain,
+			.units = map->units,
+			.doodads = map->doodads,
+			.brush = map->brush,
+			.pathing_map = map->pathing_map,
+		};
+
+		map->world_undo.redo(context);
 	});
 
 	connect(new QShortcut(Qt::CTRL | Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);

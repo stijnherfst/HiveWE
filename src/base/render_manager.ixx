@@ -1,7 +1,5 @@
 module;
 
-#include "units.h"
-
 export module RenderManager;
 
 import std;
@@ -15,12 +13,12 @@ import MDX;
 import Camera;
 import Utilities;
 import Globals;
+import Units;
 import <glad/glad.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
-// import "units.h";
-import "doodads.h";
+import Doodads;
 
 export class RenderManager {
   public:

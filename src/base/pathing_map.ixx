@@ -8,7 +8,6 @@ import std;
 import BinaryReader;
 import BinaryWriter;
 import PathingTexture;
-import TerrainUndo;
 import OpenGLUtilities;
 import Hierarchy;
 import <glm/glm.hpp>;
@@ -31,9 +30,6 @@ export class PathingMap {
 	GLuint texture_dynamic;
 	std::vector<uint8_t> pathing_cells_static;
 	std::vector<uint8_t> pathing_cells_dynamic;
-
-	// For undo/redo
-	std::vector<uint8_t> old_pathing_cells_static;
 
 	bool load(size_t terrain_width, size_t terrain_height) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.wpm");
@@ -199,74 +195,12 @@ export class PathingMap {
 		glTextureSubImage2D(texture_dynamic, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_dynamic.data());
 	}
 
-	void new_undo_group() {
-		old_pathing_cells_static = pathing_cells_static;
-	}
-
-	// Undo/redo structures
-	class PathingMapAction : public TerrainUndoAction {
-	  public:
-		QRect area;
-		std::vector<uint8_t> old_pathing;
-		std::vector<uint8_t> new_pathing;
-		PathingMap& pathing_map;
-
-		PathingMapAction(PathingMap& pathing_map)
-			: pathing_map(pathing_map) {
-		}
-
-		void undo() override {
-			for (int j = area.top(); j <= area.bottom(); j++) {
-				for (int i = area.left(); i <= area.right(); i++) {
-					pathing_map.pathing_cells_static[j * pathing_map.width + i] = old_pathing[(j - area.top()) * area.width() + i - area.left()];
-				}
-			}
-			pathing_map.upload_static_pathing();
-		}
-
-		void redo() override {
-			for (int j = area.top(); j <= area.bottom(); j++) {
-				for (int i = area.left(); i <= area.right(); i++) {
-					pathing_map.pathing_cells_static[j * pathing_map.width + i] = new_pathing[(j - area.top()) * area.width() + i - area.left()];
-				}
-			}
-			pathing_map.upload_static_pathing();
-		}
-	};
-
-	std::unique_ptr<PathingMapAction> add_undo(const QRect& area) {
-		auto undo_action = std::make_unique<PathingMapAction>(*this);
-
-		undo_action->area = area;
-
-		// Copy old corners
-		undo_action->old_pathing.reserve(area.width() * area.height());
-		for (int j = area.top(); j <= area.bottom(); j++) {
-			for (int i = area.left(); i <= area.right(); i++) {
-				undo_action->old_pathing.push_back(old_pathing_cells_static[j * width + i]);
-			}
-		}
-
-		// Copy new corners
-		undo_action->new_pathing.reserve(area.width() * area.height());
-		for (int j = area.top(); j <= area.bottom(); j++) {
-			for (int i = area.left(); i <= area.right(); i++) {
-				undo_action->new_pathing.push_back(pathing_cells_static[j * width + i]);
-			}
-		}
-
-		//map->terrain_undo.add_undo_action(std::move(undo_action));
-		return std::move(undo_action);
-	}
-
 	void resize(size_t new_width, size_t new_height) {
 		width = new_width;
 		height = new_height;
 
 		pathing_cells_static.resize(width * height);
 		pathing_cells_dynamic.resize(width * height);
-
-		old_pathing_cells_static.resize(width * height);
 
 		glDeleteTextures(1, &texture_static);
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);

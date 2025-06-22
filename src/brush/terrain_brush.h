@@ -3,7 +3,10 @@
 #include <string>
 
 #include "brush.h"
-#include "doodads.h"
+
+import Doodads;
+import Terrain;
+import TerrainUndo;
 
 class TerrainBrush : public Brush {
 public:
@@ -59,6 +62,10 @@ public:
 	void apply_end() override;
 
 	int get_random_variation() const;
+
+	void add_terrain_undo(const QRect& area, TerrainUndoType type);
+	void add_pathing_undo(const QRect& area);
+
 private:
 	// Total sum 570
 	const std::tuple<int, int> variation_chances[18] = {
@@ -90,4 +97,6 @@ private:
 	std::vector<Doodad> pre_change_doodads;
 	std::map<int, Doodad> post_change_doodads;
 
+	std::vector<std::vector<Corner>> old_corners;
+	std::vector<uint8_t> old_pathing_cells_static;
 };

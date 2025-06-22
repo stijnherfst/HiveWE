@@ -4,6 +4,7 @@
 
 import <glm/glm.hpp>;
 import MapGlobal;
+import PathingUndo;
 
 PathingBrush::PathingBrush() : Brush() {
 	brush_offset = {0.125f, 0.125f};
@@ -16,8 +17,8 @@ void PathingBrush::apply_begin() {
 
 	applied_area = QRect(x, y, size, size).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
 
-	map->terrain_undo.new_undo_group();
-	map->pathing_map.new_undo_group();
+	map->world_undo.new_undo_group();
+	old_pathing_cells_static = map->pathing_map.pathing_cells_static;
 }
 
 void PathingBrush::apply(double frame_delta) {
@@ -60,7 +61,30 @@ void PathingBrush::apply(double frame_delta) {
 }
 
 void PathingBrush::apply_end() {
-	map->terrain_undo.add_undo_action(map->pathing_map.add_undo(applied_area));
+	add_pathing_undo(applied_area);
+}
 
-	//map->pathing_map.add_undo(applied_area);
+void PathingBrush::add_pathing_undo(const QRect& area) {
+	auto undo_action = std::make_unique<PathingMapAction>();
+
+	undo_action->area = area;
+	const auto width = map->pathing_map.width;
+
+	// Copy old corners
+	undo_action->old_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->old_pathing.push_back(old_pathing_cells_static[j * width + i]);
+		}
+	}
+
+	// Copy new corners
+	undo_action->new_pathing.reserve(area.width() * area.height());
+	for (int j = area.top(); j <= area.bottom(); j++) {
+		for (int i = area.left(); i <= area.right(); i++) {
+			undo_action->new_pathing.push_back(map->pathing_map.pathing_cells_static[j * width + i]);
+		}
+	}
+
+	map->world_undo.add_undo_action(std::move(undo_action));
 }

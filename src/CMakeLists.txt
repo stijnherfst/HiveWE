@@ -5,23 +5,29 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 
 	"base/map.ixx"
 	"base/binary_reader.ixx"
+	"base/doodads.ixx"
 	"base/binary_writer.ixx"
 	"base/hierarchy.ixx"
 	"base/render_manager.ixx"
 	"base/game_cameras.ixx"
 	"base/imports.ixx"
-
 	"base/map_info.ixx"
 	"base/pathing_map.ixx"
 	"base/regions.ixx"
 	"base/camera.ixx"
-	"base/terrain_undo.ixx"
+	"base/world_undo_manager.ixx"
 	"base/window_handler.ixx"
 	"base/resource_manager.ixx"
 	"base/shadow_map.ixx"
 	"base/sounds.ixx"
 	"base/trigger_strings.ixx"
 	"base/physics.ixx"
+	"base/terrain_undo.ixx"
+	"base/units_undo.ixx"
+	"base/pathing_undo.ixx"
+	"base/doodads_undo.ixx"
+	"base/units.ixx"
+	"base/terrain.ixx"
 
 	"file_formats/blp.ixx"
 	"file_formats/casc.ixx"
@@ -85,7 +91,6 @@ target_sources(HiveWE PRIVATE
 	"main_window/glwidget.cpp"
 	"main_window/main_ribbon.cpp"
 
-
 	"brush/brush.cpp"
 	"brush/doodad_brush.cpp"
 	"brush/pathing_brush.cpp"
@@ -110,10 +115,7 @@ target_sources(HiveWE PRIVATE
 	"menus/tile_picker.cpp"
 	"menus/tile_setter.cpp"
 
-	"base/doodads.cpp"
-	"base/terrain.cpp"
 	"base/triggers.cpp"
-	"base/units.cpp"
 
 	"models/single_model.cpp"
 	

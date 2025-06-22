@@ -1,12 +1,3 @@
-module;
-
-#include <filesystem>
-
-#include <absl/strings/str_split.h>
-#include <absl/strings/str_join.h>
-
-#include "ankerl/unordered_dense.h"
-
 export module SLK;
 
 import std;
@@ -15,11 +6,11 @@ import no_init_allocator;
 import BinaryReader;
 import Utilities;
 import INI;
+import "absl/strings/str_split.h";
+import "absl/strings/str_join.h";
+import "ankerl/unordered_dense.h";
 
 namespace fs = std::filesystem;
-
-#undef mix
-#undef max
 
 using namespace std::string_literals;
 

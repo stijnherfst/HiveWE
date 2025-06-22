@@ -3,17 +3,20 @@
 #include <QObject>
 
 #include <set>
+#include <unordered_set>
 #include <string>
 #include <vector>
 #include <unordered_map>
-
-#include "doodads.h"
 #include "brush.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 import PathingTexture;
+import DoodadsUndo;
+import Doodads;
+import SkinnedMesh;
+import SkeletalModelInstance;
 
 class DoodadBrush : public Brush {
 	Q_OBJECT

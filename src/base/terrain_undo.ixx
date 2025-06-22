@@ -1,62 +1,76 @@
+module;
+
+#include <QRect>
+
 export module TerrainUndo;
 
-import std;
+import Terrain;
+import Units;
+import WorldUndoManager;
 
-export class TerrainUndoAction {
-  public:
-	virtual void undo() = 0;
-	virtual void redo() = 0;
-
-	virtual ~TerrainUndoAction() {
-	}
+export enum class TerrainUndoType {
+	texture,
+	height,
+	cliff,
+	water
 };
 
-export class TerrainUndo {
-	std::vector<std::vector<std::unique_ptr<TerrainUndoAction>>> undo_actions;
-	std::vector<std::vector<std::unique_ptr<TerrainUndoAction>>> redo_actions;
+export class TerrainGenericAction final : public WorldCommand {
+public:
+	QRect area;
+	std::vector<Corner> old_corners;
+	std::vector<Corner> new_corners;
+	TerrainUndoType undo_type;
 
-  public:
-	void undo() {
-		if (undo_actions.empty()) {
-			return;
+	void undo(WorldEditContext& ctx) override {
+		for (int j = area.top(); j <= area.bottom(); j++) {
+			for (int i = area.left(); i <= area.right(); i++) {
+				ctx.terrain.corners[i][j] = old_corners[(j - area.top()) * area.width() + i - area.left()];
+			}
 		}
 
-		auto& actions = undo_actions.back();
-		for (const auto& i : actions) {
-			i->undo();
+		if (undo_type == TerrainUndoType::height) {
+			ctx.terrain.update_ground_heights(area);
 		}
 
-		redo_actions.push_back(std::move(actions));
-		undo_actions.pop_back();
+		if (undo_type == TerrainUndoType::texture) {
+			ctx.terrain.update_ground_textures(area);
+		}
+
+		if (undo_type == TerrainUndoType::cliff) {
+			ctx.terrain.update_ground_heights(area);
+			ctx.terrain.update_cliff_meshes(area);
+			ctx.terrain.update_ground_textures(area);
+			ctx.terrain.update_water(area);
+		}
+
+		ctx.terrain.update_minimap();
+		ctx.units.update_area(area, ctx.terrain);
 	}
 
-	void redo() {
-		if (redo_actions.empty()) {
-			return;
+	void redo(WorldEditContext& ctx) override {
+		for (int j = area.top(); j <= area.bottom(); j++) {
+			for (int i = area.left(); i <= area.right(); i++) {
+				ctx.terrain.corners[i][j] = new_corners[(j - area.top()) * area.width() + i - area.left()];
+			}
 		}
 
-		auto& actions = redo_actions.back();
-		for (const auto& i : actions) {
-			i->redo();
+		if (undo_type == TerrainUndoType::height) {
+			ctx.terrain.update_ground_heights(area);
 		}
 
-		undo_actions.push_back(std::move(actions));
-		redo_actions.pop_back();
+		if (undo_type == TerrainUndoType::texture) {
+			ctx.terrain.update_ground_textures(area);
+		}
+
+		if (undo_type == TerrainUndoType::cliff) {
+			ctx.terrain.update_ground_heights(area);
+			ctx.terrain.update_cliff_meshes(area);
+			ctx.terrain.update_ground_textures(area);
+			ctx.terrain.update_water(area);
+		}
+
+		ctx.terrain.update_minimap();
+		ctx.units.update_area(area, ctx.terrain);
 	}
-
-	void new_undo_group() {
-		undo_actions.push_back({});
-	}
-
-	void add_undo_action(std::unique_ptr<TerrainUndoAction> action) {
-		if (undo_actions.empty()) {
-			return;
-		}
-
-		undo_actions.back().push_back(std::move(action));
-		redo_actions.clear();
-	};
 };
-
-
-

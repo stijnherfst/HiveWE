@@ -11,11 +11,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "units.h"
+import Units;
 #include "brush.h"
 
 import SkinnedMesh;
 import PathingTexture;
+import UnitsUndo;
+import SkeletalModelInstance;
 
 class UnitBrush : public Brush {
 	std::string id;
