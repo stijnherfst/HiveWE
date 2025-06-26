@@ -148,6 +148,9 @@ export class MapInfo {
 	uint32_t supported_modes;
 	uint32_t game_data_version;
 
+	uint32_t default_cam_distance;
+	uint32_t forced_cam_distance;
+
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
 	std::vector<UpgradeAvailability> available_upgrades;
@@ -156,18 +159,18 @@ export class MapInfo {
 	std::vector<RandomItemTable> random_item_tables;
 
 	static constexpr int write_version = 31;
-	static constexpr int write_editor_version = 6105;
-	static constexpr int write_game_version_major = 1;
-	static constexpr int write_game_version_minor = 32;
-	static constexpr int write_game_version_patch = 1;
-	static constexpr int write_game_version_build = 14604;
+	static constexpr int write_editor_version = 6115;
+	static constexpr int write_game_version_major = 2;
+	static constexpr int write_game_version_minor = 0;
+	static constexpr int write_game_version_patch = 2;
+	static constexpr int write_game_version_build = 22796;
 
 	void load() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
 
 		const int version = reader.read<uint32_t>();
 
-		if (version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
+		if (version != 32 && version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
 			std::cout << "Unknown war3map.w3i version\n";
 		}
 
@@ -253,6 +256,10 @@ export class MapInfo {
 			if (version >= 31) {
 				supported_modes = reader.read<uint32_t>();
 				game_data_version = reader.read<uint32_t>();
+			}
+			if (version >= 32) {
+				default_cam_distance = reader.read<uint32_t>();
+				forced_cam_distance = reader.read<uint32_t>();
 			}
 		} else if (version == 18) { // RoC
 			loading_screen_number = reader.read<uint32_t>();
