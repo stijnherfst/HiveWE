@@ -1,6 +1,9 @@
 #pragma once
 
+#include <QRect>
+
 #include <cstdint>
+#include <vector>
 
 #include "brush.h"
 

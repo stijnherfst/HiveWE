@@ -1,6 +1,9 @@
 #pragma once
 
 #include <QDialog>
+#include <QShortcut>
+
+#include <vector>
 
 import QRibbon;
 

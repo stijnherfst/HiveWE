@@ -2,6 +2,8 @@
 
 #include <QMouseEvent>
 
+import std;
+
 Minimap::Minimap(QWidget *parent) : QWidget(parent) {
 	ui.setupUi(this);
 	show();

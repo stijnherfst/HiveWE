@@ -1,14 +1,12 @@
 #include "map_info_editor.h"
 
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
 import std;
 import SLK;
 import Utilities;
 import MapGlobal;
 import Globals;
+
+namespace fs = std::filesystem;
 
 MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

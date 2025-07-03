@@ -6,6 +6,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include <memory>
 #include <string_view>
 
 import Shader;

@@ -1,13 +1,6 @@
 #include "single_model.h"
 
-#include <print>
-#include <format>
-
-#include <QPen>
 #include <QPainter>
-#include <QLineEdit>
-#include <QComboBox>
-#include <QDialog>
 #include <QPlainTextEdit>
 #include <QDialogButtonBox>
 #include <QTimer>
@@ -22,6 +15,7 @@
 
 #include "object_editor/icon_view.h"
 
+import std;
 import BaseTreeModel;
 import AbilityTreeModel;
 import UpgradeTreeModel;

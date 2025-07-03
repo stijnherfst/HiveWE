@@ -8,7 +8,6 @@ import std;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
-import <unordered_set>;
 
 export class InputHandler {
   public:

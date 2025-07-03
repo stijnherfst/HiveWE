@@ -1,14 +1,9 @@
-module;
-
-#define __CASCLIB_SELF__
-#define WIN32_LEAN_AND_MEAN
-#include <CascLib.h>
-
 export module CASC;
 
 import std;
 import types;
 import no_init_allocator;
+import <CascLib.h>;
 
 namespace fs = std::filesystem;
 

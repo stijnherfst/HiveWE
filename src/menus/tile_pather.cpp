@@ -1,18 +1,13 @@
 #include "tile_pather.h"
 
-#include "ankerl/unordered_dense.h"
-
-//#include "Globals.h"
-
-
-#include <glad/glad.h>
-
 import std;
 import OpenGLUtilities;
 import Texture;
 import MapGlobal;
 import SLK;
 import ResourceManager;
+import "ankerl/unordered_dense.h";
+import <glad/glad.h>;
 
 TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	ui.setupUi(this);

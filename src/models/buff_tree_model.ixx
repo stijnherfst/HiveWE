@@ -2,7 +2,6 @@ module;
 
 #include <QMap>
 #include <QModelIndex>
-#include "ankerl/unordered_dense.h"
 
 export module BuffTreeModel;
 
@@ -10,6 +9,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import "ankerl/unordered_dense.h";
 
 export class BuffTreeModel : public BaseTreeModel {
 	struct Category {

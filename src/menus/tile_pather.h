@@ -7,6 +7,8 @@
 #include <QButtonGroup>
 #include <QAbstractButton>
 
+#include <string>
+
 import FlowLayout;
 
 struct PathingOptions {

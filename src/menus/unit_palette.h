@@ -30,6 +30,8 @@
 #include <QPushButton>
 #include <QKeySequence>
 
+#include <string>
+
 import UnitListModel;
 import UnitSelector;
 import QRibbon;

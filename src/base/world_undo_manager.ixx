@@ -1,7 +1,3 @@
-module;
-
-#include "brush/brush.h"
-
 export module WorldUndoManager;
 
 import std;
@@ -9,6 +5,7 @@ import PathingMap;
 import Units;
 import Doodads;
 import Terrain;
+import "brush/brush.h";
 
 /// So we don't have to pass a global variable around
 export struct WorldEditContext {

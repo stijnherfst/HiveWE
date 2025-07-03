@@ -1,5 +1,7 @@
 #include "model_editor_camera.h"
 
+import std;
+
 void ModelEditorCamera::reset() {
 	distance = 20;
 	horizontal_angle = 0.0f;

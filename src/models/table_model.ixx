@@ -1,11 +1,8 @@
 module;
 
 #include <QAbstractTableModel>
-#include <absl/strings/str_join.h>
 
 export module TableModel;
-
-import <absl/strings/str_split.h>;
 
 import std;
 import Globals;
@@ -15,13 +12,15 @@ import TriggerStrings;
 import QIconResource;
 import Hierarchy;
 import ResourceManager;
+import <absl/strings/str_split.h>;
+import <absl/strings/str_join.h>;
 
 namespace fs = std::filesystem;
 
 std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
 
-class TableModel;
+export class TableModel;
 
 export inline TableModel* units_table;
 export inline TableModel* items_table;

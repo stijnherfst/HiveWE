@@ -1,9 +1,10 @@
 #include "terrain_palette.h"
 
-//#include "Globals.h"
 import MapGlobal;
 
 import std;
+import SLK;
+import Texture;
 import OpenGLUtilities;
 import ResourceManager;
 

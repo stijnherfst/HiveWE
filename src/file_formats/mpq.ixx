@@ -1,16 +1,7 @@
-module;
-
-#include <string>
-#include <vector>
-#include <stdexcept>
-#include <optional>
-#include <iostream>
-#include <filesystem>
-
-#define STORMLIB_NO_AUTO_LINK
-#include <StormLib.h>
-
 export module MPQ;
+
+import std;
+import "StormLib.h";
 
 namespace fs = std::filesystem;
 
@@ -36,13 +27,13 @@ namespace mpq {
 			return *this;
 		}
 
-		std::vector<uint8_t> read() const {
-			const uint32_t size = SFileGetFileSize(handle, nullptr);
+		std::vector<std::uint8_t> read() const {
+			const std::uint32_t size = SFileGetFileSize(handle, nullptr);
 			if (size == 0) {
 				return {};
 			}
 
-			std::vector<uint8_t> buffer(size);
+			std::vector<std::uint8_t> buffer(size);
 
 #ifdef _MSC_VER
 			unsigned long bytes_read;
@@ -57,13 +48,13 @@ namespace mpq {
 		}
 
 		/// An implementation using optional. Use this for all reads?
-		std::optional<std::vector<uint8_t>> read2() const {
-			const uint32_t size = SFileGetFileSize(handle, nullptr);
+		std::optional<std::vector<std::uint8_t>> read2() const {
+			const std::uint32_t size = SFileGetFileSize(handle, nullptr);
 			if (size == 0) {
 				return {};
 			}
 
-			std::vector<uint8_t> buffer(size);
+			std::vector<std::uint8_t> buffer(size);
 
 #ifdef _MSC_VER
 			unsigned long bytes_read;
@@ -157,7 +148,7 @@ namespace mpq {
 			return file;
 		}
 
-		void file_write(const fs::path& path, const std::vector<uint8_t>& data) const {
+		void file_write(const fs::path& path, const std::vector<std::uint8_t>& data) const {
 			HANDLE out_handle;
 			bool success = SFileCreateFile(handle, path.string().c_str(), 0, static_cast<DWORD>(data.size()), 0, MPQ_FILE_COMPRESS | MPQ_FILE_REPLACEEXISTING, &out_handle);
 			if (!success) {

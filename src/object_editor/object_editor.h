@@ -9,6 +9,9 @@
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 
+#include <string>
+#include <memory>
+
 import BaseTreeModel;
 import AbilityTreeModel;
 import DoodadTreeModel;

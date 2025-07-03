@@ -10,6 +10,7 @@
 //#include <map_global.h>
 #include <object_editor.h>
 
+import std;
 import TableModel;
 import WindowHandler;
 import MapGlobal;

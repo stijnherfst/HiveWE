@@ -4,6 +4,7 @@ import std;
 import types;
 import BinaryWriter;
 import Hierarchy;
+
 namespace fs = std::filesystem;
 
 // HiveWE does not use the war3map.imp file at all, but the old WE does

@@ -32,6 +32,8 @@
 
 #include <QConcatenateTablesProxyModel>
 
+#include <string>
+
 import QRibbon;
 import AspectRatioPixmapLabel;
 

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <map>
 #include <format>
+#include <string>
 
 import BinaryReader;
 import BinaryWriter;

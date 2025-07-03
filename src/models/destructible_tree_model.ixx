@@ -1,20 +1,20 @@
 module;
 
-#include <array>
 #include <QMap>
 #include <QMargins>
 #include <QObject>
 #include <QModelIndex>
 #include <QSize>
 #include <QIcon>
-#include "ankerl/unordered_dense.h"
 
 export module DestructibleTreeModel;
 
+import std;
 import BaseTreeModel;
 import QIconResource;
 import SLK;
 import Globals;
+import "ankerl/unordered_dense.h";
 
 export class DestructibleTreeModel : public BaseTreeModel {
 	struct Category {

@@ -1,7 +1,3 @@
-module;
-
-#include <glm/glm.hpp>
-
 export module Regions;
 
 import std;

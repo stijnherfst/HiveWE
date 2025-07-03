@@ -4,6 +4,7 @@
 #include <QSortFilterProxyModel>
 
 #include <unordered_map>
+#include <memory>
 
 import QIconResource;
 

@@ -3,6 +3,7 @@
 #include <QSettings>
 #include <QFile>
 
+import std;
 
 void setTestArgs(Ui::SettingsEditor &ui) {
 	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString::fromStdString(std::string("") + char(ui.diff->currentIndex() + '0')) +

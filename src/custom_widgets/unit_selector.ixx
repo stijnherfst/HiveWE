@@ -6,7 +6,6 @@ module;
 #include <QVBoxLayout>
 #include <QSortFilterProxyModel>
 
-
 export module UnitSelector;
 
 import std;

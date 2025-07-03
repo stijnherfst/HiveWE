@@ -24,6 +24,8 @@ import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 import "ankerl/unordered_dense.h";
 
+namespace fs = std::filesystem;
+
 export struct Doodad {
 	static inline int auto_increment;
 

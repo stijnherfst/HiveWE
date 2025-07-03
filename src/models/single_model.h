@@ -5,6 +5,7 @@
 #include <QHeaderView>
 #include <QStyledItemDelegate>
 
+#include <string>
 #include <vector>
 
 import TableModel;

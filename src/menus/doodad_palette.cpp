@@ -1,7 +1,5 @@
 ﻿#include "doodad_palette.h"
 
-#include <print>
-
 #include <QRadioButton>
 #include <QCheckBox>
 #include <QFormLayout>
@@ -29,6 +27,7 @@
 
 #include <object_editor/object_editor.h>
 
+import std;
 import TableModel;
 import QRibbon;
 import MapGlobal;

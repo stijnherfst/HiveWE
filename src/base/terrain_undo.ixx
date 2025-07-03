@@ -4,6 +4,7 @@ module;
 
 export module TerrainUndo;
 
+import std;
 import Terrain;
 import Units;
 import WorldUndoManager;

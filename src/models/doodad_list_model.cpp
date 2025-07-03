@@ -1,10 +1,9 @@
 #include "doodad_list_model.h"
 
-#include <ankerl/unordered_dense.h>
-
 import std;
 import Globals;
 import ResourceManager;
+import <ankerl/unordered_dense.h>;
 
 DoodadListModel::DoodadListModel(QObject* parent) : QIdentityProxyModel(parent) {
 	for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {

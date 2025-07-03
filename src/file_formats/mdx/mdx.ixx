@@ -1,8 +1,4 @@
-﻿module;
-
-#include <filesystem>
-
-export module MDX;
+﻿export module MDX;
 
 import std;
 import BinaryReader;

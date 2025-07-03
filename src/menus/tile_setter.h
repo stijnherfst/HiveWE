@@ -5,6 +5,8 @@
 #include <QDialog>
 #include "ui_tile_setter.h"
 
+#include <vector>
+
 import FlowLayout;
 
 class TileSetter : public QDialog {

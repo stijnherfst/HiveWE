@@ -5,6 +5,8 @@
 #include <QDialog>
 #include <QButtonGroup>
 
+#include <string>
+
 import FlowLayout;
 
 class TilePicker : public QDialog {
