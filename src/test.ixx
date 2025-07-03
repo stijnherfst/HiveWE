@@ -1,21 +1,12 @@
-module;
-
-#include <string>
-#include <vector>
-#include <fstream>
-#include <execution>
-#include <filesystem>
-#include <print>
-
-#include <glm/glm.hpp>
-
 export module test;
 
-namespace fs = std::filesystem;
-
+import std;
 import BinaryReader;
 import MDX;
 import no_init_allocator;
+import <glm/glm.hpp>;
+
+namespace fs = std::filesystem;
 
 void parse_all_mdx() {
 	std::vector<fs::path> paths;

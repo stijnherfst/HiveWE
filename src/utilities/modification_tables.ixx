@@ -1,14 +1,4 @@
-module;
-
-#define GLM_FORCE_CXX17
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_SILENT_WARNINGS
-#include <absl/container/flat_hash_map.h>
-#include "ankerl/unordered_dense.h"
-
 export module ModificationTables;
-
-namespace fs = std::filesystem;
 
 import std;
 import BinaryReader;
@@ -17,6 +7,10 @@ import Hierarchy;
 import SLK;
 import Utilities;
 import <glm/glm.hpp>;
+import "absl/container/flat_hash_map.h";
+import "ankerl/unordered_dense.h";
+
+namespace fs = std::filesystem;
 
 constexpr int mod_table_write_version = 3;
 

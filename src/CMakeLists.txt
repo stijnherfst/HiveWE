@@ -102,7 +102,10 @@ target_sources(HiveWE PRIVATE
 	"file_formats/mdx/mdx_reader.cpp"
 	"file_formats/mdx/mdx_writer.cpp"
 	"file_formats/mdx/optimizer.cpp"
-	
+	"file_formats/mdx/utilities.cpp"
+	"file_formats/mdx/validator.cpp"
+
+
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"
 	"menus/minimap.cpp"
