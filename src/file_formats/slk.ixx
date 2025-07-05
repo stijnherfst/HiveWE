@@ -6,36 +6,17 @@ import no_init_allocator;
 import BinaryReader;
 import Utilities;
 import INI;
+import UnorderedMap;
 import "absl/strings/str_split.h";
 import "absl/strings/str_join.h";
-import "ankerl/unordered_dense.h";
 
 namespace fs = std::filesystem;
 
 using namespace std::string_literals;
 
 namespace slk {
-	// To enable heterogeneous lookup
-	struct string_hash {
-		using is_transparent = void; // enable heterogeneous lookup
-		using is_avalanching = void; // mark class as high quality avalanching hash
-
-		[[nodiscard]] auto operator()(const char* str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-
-		[[nodiscard]] auto operator()(std::string_view str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-
-		[[nodiscard]] auto operator()(std::string const& str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-	};
-
 	export class SLK {
-		// column_header should be lowercase
-
+		/// column_header should be lowercase
 		std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
 			assert(to_lowercase_copy(column_header) == column_header);
 
@@ -58,15 +39,15 @@ namespace slk {
 
 
 	  public:
-		ankerl::unordered_dense::map<size_t, std::string> index_to_row;
-		ankerl::unordered_dense::map<size_t, std::string> index_to_column;
-		ankerl::unordered_dense::map<std::string, size_t, string_hash, std::equal_to<>> row_headers;
-		ankerl::unordered_dense::map<std::string, size_t, string_hash, std::equal_to<>> column_headers;
-		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> base_data;
-		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> shadow_data;
+		hive::unordered_map<size_t, std::string> index_to_row;
+		hive::unordered_map<size_t, std::string> index_to_column;
+		hive::unordered_map<std::string, size_t> row_headers;
+		hive::unordered_map<std::string, size_t> column_headers;
+		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> base_data;
+		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> shadow_data;
 
 		// The following map is only used in meta SLKs and maps the field (+unit/ability ID) to a meta ID
-		ankerl::unordered_dense::map<std::string, std::string, string_hash, std::equal_to<>> meta_map;
+		hive::unordered_map<std::string, std::string> meta_map;
 
 		SLK() = default;
 		explicit SLK(const fs::path& path, const bool local = false) {

@@ -28,6 +28,7 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/doodads_undo.ixx"
 	"base/units.ixx"
 	"base/terrain.ixx"
+	"base/triggers.ixx"
 
 	"file_formats/blp.ixx"
 	"file_formats/casc.ixx"
@@ -75,7 +76,8 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"utilities/utilities.ixx"
 	"utilities/opengl_utilities.ixx"
 	"utilities/modification_tables.ixx" 
-	 
+	"utilities/unordered_map.ixx"
+
 	"utilities/no_init_allocator.ixx"
 	"utilities/math_operations.ixx"
 	
@@ -117,8 +119,6 @@ target_sources(HiveWE PRIVATE
 	"menus/tile_pather.cpp"
 	"menus/tile_picker.cpp"
 	"menus/tile_setter.cpp"
-
-	"base/triggers.cpp"
 
 	"models/single_model.cpp"
 	

@@ -1,12 +1,3 @@
-module;
-
-#include <map>
-#include <string>
-#include <filesystem>
-#include <utility>
-
-#include "ankerl/unordered_dense.h"
-
 export module INI;
 
 import std;
@@ -14,32 +5,15 @@ import Utilities;
 import Hierarchy;
 import no_init_allocator;
 import <absl/strings/str_split.h>;
+import UnorderedMap;
 
 namespace fs = std::filesystem;
 
 namespace ini {
-	// To enable heterogeneous lookup
-	struct string_hash {
-		using is_transparent = void; // enable heterogeneous lookup
-		using is_avalanching = void; // mark class as high quality avalanching hash
-
-		[[nodiscard]] auto operator()(const char* str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-
-		[[nodiscard]] auto operator()(std::string_view str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-
-		[[nodiscard]] auto operator()(std::string const& str) const noexcept -> uint64_t {
-			return ankerl::unordered_dense::hash<std::string_view>{}(str);
-		}
-	};
-
 	export class INI {
 	  public:
 		/// header to items to list of values to value
-		ankerl::unordered_dense::map<std::string, ankerl::unordered_dense::map<std::string, std::vector<std::string>, string_hash, std::equal_to<>>, string_hash, std::equal_to<>> ini_data;
+		hive::unordered_map<std::string, hive::unordered_map<std::string, std::vector<std::string>>> ini_data;
 
 		INI() = default;
 		explicit INI(const fs::path& path, bool local = false) {
@@ -142,7 +116,7 @@ namespace ini {
 			}
 		}
 
-		const ankerl::unordered_dense::map<std::string, std::vector<std::string>, string_hash, std::equal_to<>>& section(const std::string_view section) const {
+		const hive::unordered_map<std::string, std::vector<std::string>>& section(const std::string_view section) const {
 			if (auto found = ini_data.find(section); found != ini_data.end()) {
 				return found->second;
 			} else {
