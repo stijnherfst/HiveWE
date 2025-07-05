@@ -534,7 +534,7 @@ export class Map : public QObject {
 		trigger_strings.save();
 		triggers.save();
 		triggers.save_jass();
-		triggers.generate_map_script();
+		triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras);
 		imports.save(filesystem_path);
 
 		std::println("Saving took: {:>5}ms", timer.elapsed_ms());

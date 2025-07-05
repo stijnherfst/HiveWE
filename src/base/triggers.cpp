@@ -6,9 +6,15 @@
 import std;
 import Hierarchy;
 import Utilities;
-import MapGlobal;
 import Globals;
 import <glm/glm.hpp>;
+import Units;
+import Doodads;
+import Regions;
+import GameCameras;
+import Sounds;
+import Terrain;
+import MapInfo;
 
 namespace fs = std::filesystem;
 
@@ -501,7 +507,7 @@ void Triggers::save_jass() const {
 	hierarchy.map_file_write("war3map.wct", writer.buffer);
 }
 
-void Triggers::generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables) {
+void Triggers::generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables, const Regions& regions, const GameCameras& cameras, const Sounds& sounds) {
 	if (script.mode == MapScriptWriter::Mode::jass) {
 		script.write_ln("globals");
 	}
@@ -533,21 +539,21 @@ void Triggers::generate_global_variables(MapScriptWriter& script, std::unordered
 		}
 	}
 
-	for (const auto& i : map->regions.regions) {
+	for (const auto& i : regions.regions) {
 		std::string region_name = i.name;
 		trim(region_name);
 		std::replace(region_name.begin(), region_name.end(), ' ', '_');
 		script.global("rect", "gg_rct_" + region_name, script.null());
 	}
 
-	for (const auto& i : map->cameras.cameras) {
+	for (const auto& i : cameras.cameras) {
 		std::string camera_name = i.name;
 		trim(camera_name);
 		std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
 		script.global("camerasetup", "gg_cam_" + camera_name, script.null());
 	}
 
-	for (const auto& i : map->sounds.sounds) {
+	for (const auto& i : sounds.sounds) {
 		std::string sound_name = i.name;
 		trim(sound_name);
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
@@ -628,14 +634,14 @@ void Triggers::generate_init_global_variables(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables) {
+void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, const Terrain& terrain, const Units& units) {
 	script.function("CreateAllUnits", [&]() {
 		script.local("unit", "u", script.null());
 		script.local("integer", "unitID", "0");
 		script.local("trigger", "t", script.null());
 		script.local("real", "life", "0");
 
-		for (const auto& i : map->units.units) {
+		for (const auto& i : units.units) {
 			if (i.id == "sloc") {
 				continue;
 			}
@@ -648,8 +654,8 @@ void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::s
 			script.set_variable(unit_reference, std::format("BlzCreateUnitWithSkin(Player({}), {}, {:.4f}, {:.4f}, {:.4f}, {})",
 															i.player,
 															script.four_cc(i.id),
-															i.position.x * 128.f + map->terrain.offset.x,
-															i.position.y * 128.f + map->terrain.offset.y,
+															i.position.x * 128.f + terrain.offset.x,
+															i.position.y * 128.f + terrain.offset.y,
 															glm::degrees(i.angle),
 															script.four_cc(i.skin_id)));
 
@@ -721,21 +727,21 @@ void Triggers::generate_units(MapScriptWriter& script, std::unordered_map<std::s
 	});
 }
 
-void Triggers::generate_items(MapScriptWriter& script) {
+void Triggers::generate_items(MapScriptWriter& script, const Terrain& terrain, const Units& units) {
 	script.function("CreateAllItems", [&]() {
-		for (const auto& i : map->units.items) {
-			script.call("BlzCreateItemWithSkin", script.four_cc(i.id), i.position.x * 128.f + map->terrain.offset.x, i.position.y * 128.f + map->terrain.offset.y, script.four_cc(i.id));
+		for (const auto& i : units.items) {
+			script.call("BlzCreateItemWithSkin", script.four_cc(i.id), i.position.x * 128.f + terrain.offset.x, i.position.y * 128.f + terrain.offset.y, script.four_cc(i.id));
 		}
 	});
 }
 
-void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables) {
+void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables, const Terrain& terrain, const Doodads& doodads) {
 	script.function("CreateAllDestructables", [&]() {
 		script.local("destructable", "d", script.null());
 		script.local("trigger", "t", script.null());
 		script.local("real", "life", "0");
 
-		for (const auto& i : map->doodads.doodads) {
+		for (const auto& i : doodads.doodads) {
 			std::string id = "d";
 
 			if (destructable_variables.contains(std::to_string(i.creation_number))) {
@@ -748,8 +754,8 @@ void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_ma
 
 			script.set_variable(id, std::format("BlzCreateDestructableZWithSkin({}, {:.4f}, {:.4f}, {:.4f}, {}, {}, {}, {})",
 												script.four_cc(i.id),
-												i.position.x * 128.f + map->terrain.offset.x,
-												i.position.y * 128.f + map->terrain.offset.y,
+												i.position.x * 128.f + terrain.offset.x,
+												i.position.y * 128.f + terrain.offset.y,
 												i.position.z * 128.f,
 												glm::degrees(i.angle),
 												i.scale.x,
@@ -776,10 +782,10 @@ void Triggers::generate_destructables(MapScriptWriter& script, std::unordered_ma
 	});
 }
 
-void Triggers::generate_regions(MapScriptWriter& script) {
+void Triggers::generate_regions(MapScriptWriter& script, const Regions& regions) {
 	script.function("CreateRegions", [&]() {
 		script.local("weathereffect", "we", script.null());
-		for (const auto& i : map->regions.regions) {
+		for (const auto& i : regions.regions) {
 			std::string region_name = "gg_rct_" + i.name;
 			trim(region_name);
 			std::replace(region_name.begin(), region_name.end(), ' ', '_');
@@ -794,9 +800,9 @@ void Triggers::generate_regions(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_cameras(MapScriptWriter& script) {
+void Triggers::generate_cameras(MapScriptWriter& script, const GameCameras& cameras) {
 	script.function("CreateCameras", [&]() {
-		for (const auto& i : map->cameras.cameras) {
+		for (const auto& i : cameras.cameras) {
 			std::string camera_name = "gg_cam_" + i.name;
 			trim(camera_name);
 			std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
@@ -819,9 +825,9 @@ void Triggers::generate_cameras(MapScriptWriter& script) {
 }
 
 // Todo, missing fields, soundduration also wrong
-void Triggers::generate_sounds(MapScriptWriter& script) {
+void Triggers::generate_sounds(MapScriptWriter& script, const Sounds& sounds) {
 	script.function("InitSounds", [&]() {
-		for (const auto& i : map->sounds.sounds) {
+		for (const auto& i : sounds.sounds) {
 			std::string sound_name = i.name;
 			trim(sound_name);
 			std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
@@ -953,13 +959,13 @@ void Triggers::generate_trigger_initialization(MapScriptWriter& script, std::vec
 	});
 }
 
-void Triggers::generate_players(MapScriptWriter& script) {
+void Triggers::generate_players(MapScriptWriter& script, const MapInfo& map_info) {
 	script.function("InitCustomPlayerSlots", [&]() {
 		const std::vector<std::string> players = { "MAP_CONTROL_USER", "MAP_CONTROL_COMPUTER", "MAP_CONTROL_NEUTRAL", "MAP_CONTROL_RESCUABLE" };
 		const std::vector<std::string> races = { "RACE_PREF_RANDOM", "RACE_PREF_HUMAN", "RACE_PREF_ORC", "RACE_PREF_UNDEAD", "RACE_PREF_NIGHTELF" };
 
 		size_t index = 0;
-		for (const auto& i : map->info.players) {
+		for (const auto& i : map_info.players) {
 			std::string player = "Player(" + std::to_string(i.internal_number) + ")";
 
 			script.call("SetPlayerStartLocation", player, index);
@@ -973,7 +979,7 @@ void Triggers::generate_players(MapScriptWriter& script) {
 			script.call("SetPlayerController", player, players[static_cast<int>(i.type)]);
 
 			if (i.type == PlayerType::rescuable) {
-				for (const auto& j : map->info.players) {
+				for (const auto& j : map_info.players) {
 					if (j.type == PlayerType::human) {
 						script.call("SetPlayerAlliance", player, "Player(" + std::to_string(j.internal_number) + ")", "ALLIANCE_RESCUABLE", true);
 					}
@@ -986,11 +992,11 @@ void Triggers::generate_players(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_custom_teams(MapScriptWriter& script) {
+void Triggers::generate_custom_teams(MapScriptWriter& script, const MapInfo& map_info) {
 	script.function("InitCustomTeams", [&]() {
 		int current_force = 0;
-		for (const auto& i : map->info.forces) {
-			for (const auto& j : map->info.players) {
+		for (const auto& i : map_info.forces) {
+			for (const auto& j : map_info.players) {
 				if (i.player_masks & (1 << j.internal_number)) {
 					script.call("SetPlayerTeam", "Player(" + std::to_string(j.internal_number) + ")", current_force);
 
@@ -1000,9 +1006,9 @@ void Triggers::generate_custom_teams(MapScriptWriter& script) {
 				}
 			}
 
-			for (const auto& j : map->info.players) {
+			for (const auto& j : map_info.players) {
 				if (i.player_masks & (1 << j.internal_number)) {
-					for (const auto& k : map->info.players) {
+					for (const auto& k : map_info.players) {
 						if (i.player_masks & (1 << k.internal_number) && j.internal_number != k.internal_number) {
 							if (i.allied) {
 								script.call("SetPlayerAllianceStateAllyBJ", "Player(" + std::to_string(j.internal_number) + ")", "Player(" + std::to_string(k.internal_number) + ")", true);
@@ -1025,20 +1031,20 @@ void Triggers::generate_custom_teams(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_ally_priorities(MapScriptWriter& script) {
+void Triggers::generate_ally_priorities(MapScriptWriter& script, const MapInfo& map_info) {
 	script.function("InitAllyPriorities", [&]() {
 		std::unordered_map<int, int> player_to_startloc;
 
 		int current_player = 0;
-		for (const auto& i : map->info.players) {
+		for (const auto& i : map_info.players) {
 			player_to_startloc[i.internal_number] = current_player;
 			current_player++;
 		}
 
 		current_player = 0;
-		for (const auto& i : map->info.players) {
+		for (const auto& i : map_info.players) {
 			size_t count = 0;
-			for (const auto& j : map->info.players) {
+			for (const auto& j : map_info.players) {
 				if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
 					count++;
 				} else if (i.ally_high_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
@@ -1049,7 +1055,7 @@ void Triggers::generate_ally_priorities(MapScriptWriter& script) {
 			script.call("SetStartLocPrioCount", current_player, count);
 
 			size_t current_index = 0;
-			for (const auto& j : map->info.players) {
+			for (const auto& j : map_info.players) {
 				if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
 					script.call("SetStartLocPrio", current_player, current_index, player_to_startloc[j.internal_number], "MAP_LOC_PRIO_LOW");
 					current_index++;
@@ -1064,32 +1070,32 @@ void Triggers::generate_ally_priorities(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_main(MapScriptWriter& script) {
+void Triggers::generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInfo& map_info) {
 	script.function("main", [&]() {
 		script.call("SetCameraBounds",
-					std::to_string(map->info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-					std::to_string(map->info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
+					std::to_string(map_info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+					std::to_string(map_info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
 
-					std::to_string(map->info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-					std::to_string(map->info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+					std::to_string(map_info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+					std::to_string(map_info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-					std::to_string(map->info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-					std::to_string(map->info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+					std::to_string(map_info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+					std::to_string(map_info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-					std::to_string(map->info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-					std::to_string(map->info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)");
+					std::to_string(map_info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+					std::to_string(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)");
 
-		const std::string terrain_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + map->terrain.tileset), "\\", "/");
-		const std::string unit_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + map->terrain.tileset), "\\", "/");
+		const std::string terrain_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
+		const std::string unit_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
 		script.call("SetDayNightModels", "\"" + terrain_lights + "\"", "\"" + unit_lights + "\"");
 
-		const std::string sound_environment = string_replaced(world_edit_data.data("SoundEnvironment", ""s + map->terrain.tileset), "\\", "/");
+		const std::string sound_environment = string_replaced(world_edit_data.data("SoundEnvironment", ""s + terrain.tileset), "\\", "/");
 		script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
-		const std::string ambient_day = string_replaced(world_edit_data.data("DayAmbience", ""s + map->terrain.tileset), "\\", "/");
+		const std::string ambient_day = string_replaced(world_edit_data.data("DayAmbience", ""s + terrain.tileset), "\\", "/");
 		script.call("SetAmbientDaySound", "\"" + ambient_day + "\"");
 
-		const std::string ambient_night = string_replaced(world_edit_data.data("NightAmbience", ""s + map->terrain.tileset), "\\", "/");
+		const std::string ambient_night = string_replaced(world_edit_data.data("NightAmbience", ""s + terrain.tileset), "\\", "/");
 		script.call("SetAmbientNightSound", "\"" + ambient_night + "\"");
 
 		script.call("SetMapMusic", "\"Music\"", true, 0);
@@ -1106,29 +1112,29 @@ void Triggers::generate_main(MapScriptWriter& script) {
 	});
 }
 
-void Triggers::generate_map_configuration(MapScriptWriter& script) {
+void Triggers::generate_map_configuration(MapScriptWriter& script, const Terrain& terrain, const Units& units, const MapInfo& map_info) {
 	script.function("config", [&]() {
-		script.call("SetMapName", "\"" + map->info.name + "\"");
-		script.call("SetMapDescription", "\"" + map->info.description + "\"");
-		script.call("SetPlayers", map->info.players.size());
-		script.call("SetTeams", map->info.forces.size());
+		script.call("SetMapName", "\"" + map_info.name + "\"");
+		script.call("SetMapDescription", "\"" + map_info.description + "\"");
+		script.call("SetPlayers", map_info.players.size());
+		script.call("SetTeams", map_info.forces.size());
 		script.call("SetGamePlacement", "MAP_PLACEMENT_USE_MAP_SETTINGS");
 
 		script.write("\n");
 
-		for (const auto& i : map->units.units) {
+		for (const auto& i : units.units) {
 			if (i.id == "sloc") {
-				script.call("DefineStartLocation", i.player, i.position.x * 128.f + map->terrain.offset.x, i.position.y * 128.f + map->terrain.offset.y);
+				script.call("DefineStartLocation", i.player, i.position.x * 128.f + terrain.offset.x, i.position.y * 128.f + terrain.offset.y);
 			}
 		}
 
 		script.write("\n");
 
 		script.call("InitCustomPlayerSlots");
-		if (map->info.custom_forces) {
+		if (map_info.custom_forces) {
 			script.call("InitCustomTeams");
 		} else {
-			for (const auto& i : map->info.players) {
+			for (const auto& i : map_info.players) {
 				script.call("SetPlayerSlotAvailable", "Player(" + std::to_string(i.internal_number) + ")", "MAP_CONTROL_USER");
 			}
 
@@ -1138,7 +1144,7 @@ void Triggers::generate_map_configuration(MapScriptWriter& script) {
 	});
 }
 
-QString Triggers::generate_map_script() {
+QString Triggers::generate_map_script(const Terrain& terrain, const Units& units, const Doodads& doodads, const MapInfo& map_info, const Sounds& sounds, const Regions& regions, const GameCameras& cameras) {
 	std::unordered_map<std::string, std::string> unit_variables;		 // creation_number, unit_id
 	std::unordered_map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 	std::vector<std::string> initialization_triggers;
@@ -1174,18 +1180,18 @@ QString Triggers::generate_map_script() {
 
 	MapScriptWriter script_writer;
 
-	generate_global_variables(script_writer, unit_variables, destructable_variables);
+	generate_global_variables(script_writer, unit_variables, destructable_variables, regions, cameras, sounds);
 	generate_init_global_variables(script_writer);
-	generate_item_tables(script_writer, "ItemTable_", map->info.random_item_tables);
-	generate_item_tables(script_writer, "UnitItemDrops_", map->units.units);
-	generate_item_tables(script_writer, "DoodadItemDrops_", map->doodads.doodads);
-	generate_sounds(script_writer);
+	generate_item_tables(script_writer, "ItemTable_", map_info.random_item_tables);
+	generate_item_tables(script_writer, "UnitItemDrops_", units.units);
+	generate_item_tables(script_writer, "DoodadItemDrops_", doodads.doodads);
+	generate_sounds(script_writer, sounds);
 
-	generate_destructables(script_writer, destructable_variables);
-	generate_items(script_writer);
-	generate_units(script_writer, unit_variables);
-	generate_regions(script_writer);
-	generate_cameras(script_writer);
+	generate_destructables(script_writer, destructable_variables, terrain, doodads);
+	generate_items(script_writer, terrain, units);
+	generate_units(script_writer, unit_variables, terrain, units);
+	generate_regions(script_writer, regions);
+	generate_cameras(script_writer, cameras);
 
 	// Write the results to a buffer
 	BinaryWriter writer;
@@ -1194,11 +1200,11 @@ QString Triggers::generate_map_script() {
 	script_writer.write(trigger_script);
 
 	generate_trigger_initialization(script_writer, initialization_triggers);
-	generate_players(script_writer);
-	generate_custom_teams(script_writer);
-	generate_ally_priorities(script_writer);
-	generate_main(script_writer);
-	generate_map_configuration(script_writer);
+	generate_players(script_writer, map_info);
+	generate_custom_teams(script_writer, map_info);
+	generate_ally_priorities(script_writer, map_info);
+	generate_main(script_writer, terrain, map_info);
+	generate_map_configuration(script_writer, terrain, units, map_info);
 
 	fs::path path = QDir::tempPath().toStdString() + "/input.lua";
 	std::ofstream output(path, std::ios::binary);

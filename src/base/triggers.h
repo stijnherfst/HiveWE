@@ -10,6 +10,14 @@ import BinaryReader;
 import BinaryWriter;
 import INI;
 
+import Units;
+import Doodads;
+import Regions;
+import GameCameras;
+import Sounds;
+import Terrain;
+import MapInfo;
+
 enum class Classifier {
 	map = 1,
 	library = 2,
@@ -341,20 +349,20 @@ class Triggers {
 	std::string generate_function_name(const std::string& trigger_name) const;
 	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& initialization_triggers) const;
 
-	void generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables);
+	void generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables, const Regions& regions, const GameCameras& cameras, const Sounds& sounds);
 	void generate_init_global_variables(MapScriptWriter& script);
-	void generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables);
-	void generate_items(MapScriptWriter& script);
-	void generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables);
-	void generate_regions(MapScriptWriter& script);
-	void generate_cameras(MapScriptWriter& script);
-	void generate_sounds(MapScriptWriter& script);
+	void generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, const Terrain& terrain, const Units& units);
+	void generate_items(MapScriptWriter& script, const Terrain& terrain, const Units& units);
+	void generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables, const Terrain& terrain, const Doodads& doodads);
+	void generate_regions(MapScriptWriter& script, const Regions& regions);
+	void generate_cameras(MapScriptWriter& script, const GameCameras& cameras);
+	void generate_sounds(MapScriptWriter& script, const Sounds& sounds);
 	void generate_trigger_initialization(MapScriptWriter& script, std::vector<std::string> initialization_triggers);
-	void generate_players(MapScriptWriter& script);
-	void generate_custom_teams(MapScriptWriter& script);
-	void generate_ally_priorities(MapScriptWriter& script);
-	void generate_main(MapScriptWriter& script);
-	void generate_map_configuration(MapScriptWriter& script);
+	void generate_players(MapScriptWriter& script, const MapInfo& map_info);
+	void generate_custom_teams(MapScriptWriter& script, const MapInfo& map_info);
+	void generate_ally_priorities(MapScriptWriter& script, const MapInfo& map_info);
+	void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInfo& map_info);
+	void generate_map_configuration(MapScriptWriter& script, const Terrain& terrain, const Units& units, const MapInfo& map_info);
 
   public:
 	ini::INI trigger_strings;
@@ -376,5 +384,5 @@ class Triggers {
 	static void write_item_table_entry(MapScriptWriter& script, int chance, const std::string& id);
 
 	// Returns compile output which could contain errors or general information
-	QString generate_map_script();
+	QString generate_map_script(const Terrain& terrain, const Units& units, const Doodads& doodads, const MapInfo& map_info, const Sounds& sounds, const Regions& regions, const GameCameras& cameras);
 };
