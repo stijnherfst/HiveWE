@@ -270,32 +270,32 @@ export class SkinnedMesh : public Resource {
 		}
 
 		// Reclaim some space
-		for (auto& i : model->geosets) {
-			i.vertices.shrink_to_fit();
-			i.vertices.clear();
-			i.normals.clear();
-			i.normals.shrink_to_fit();
-			i.face_type_groups.clear();
-			i.face_type_groups.shrink_to_fit();
-			i.face_groups.clear();
-			i.face_groups.shrink_to_fit();
-			i.faces.clear();
-			i.faces.shrink_to_fit();
-			i.vertex_groups.clear();
-			i.vertex_groups.shrink_to_fit();
-			i.matrix_groups.clear();
-			i.matrix_groups.shrink_to_fit();
-			i.matrix_indices.clear();
-			i.matrix_indices.shrink_to_fit();
-			i.extents.clear();
-			i.extents.shrink_to_fit();
-			i.tangents.clear();
-			i.tangents.shrink_to_fit();
-			i.skin.clear();
-			i.skin.shrink_to_fit();
-			i.uv_sets.clear();
-			i.uv_sets.shrink_to_fit();
-		}
+		// for (auto& i : model->geosets) {
+		// 	i.vertices.shrink_to_fit();
+		// 	i.vertices.clear();
+		// 	i.normals.clear();
+		// 	i.normals.shrink_to_fit();
+		// 	i.face_type_groups.clear();
+		// 	i.face_type_groups.shrink_to_fit();
+		// 	i.face_groups.clear();
+		// 	i.face_groups.shrink_to_fit();
+		// 	i.faces.clear();
+		// 	i.faces.shrink_to_fit();
+		// 	i.vertex_groups.clear();
+		// 	i.vertex_groups.shrink_to_fit();
+		// 	i.matrix_groups.clear();
+		// 	i.matrix_groups.shrink_to_fit();
+		// 	i.matrix_indices.clear();
+		// 	i.matrix_indices.shrink_to_fit();
+		// 	i.extents.clear();
+		// 	i.extents.shrink_to_fit();
+		// 	i.tangents.clear();
+		// 	i.tangents.shrink_to_fit();
+		// 	i.skin.clear();
+		// 	i.skin.shrink_to_fit();
+		// 	i.uv_sets.clear();
+		// 	i.uv_sets.shrink_to_fit();
+		// }
 
 		glVertexArrayElementBuffer(vao, index_buffer);
 	}

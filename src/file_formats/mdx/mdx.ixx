@@ -109,6 +109,8 @@ namespace mdx {
 		T value;
 		T inTan;
 		T outTan;
+
+		bool operator==(const Track&) const = default;
 	};
 
 	export enum class InterpolationType {
@@ -165,11 +167,15 @@ namespace mdx {
 				}
 			}
 		}
+
+		bool operator==(const TrackHeader&) const = default;
 	};
 
 	export struct LayerTexture {
 		uint32_t id;
 		TrackHeader<uint32_t> KMTF;
+
+		bool operator==(const LayerTexture&) const = default;
 	};
 
 	export struct Layer {
@@ -204,6 +210,8 @@ namespace mdx {
 			no_depth_test = 64,
 			no_depth_set = 128
 		};
+
+		bool operator==(const Layer&) const = default;
 	};
 
 	export struct Node {
@@ -362,12 +370,16 @@ namespace mdx {
 			wrap_width = 1,
 			wrap_height
 		};
+
+		bool operator==(const Texture&) const = default;
 	};
 
 	export struct Material {
 		uint32_t priority_plane;
 		uint32_t flags;
 		std::vector<Layer> layers;
+
+		bool operator==(const Material&) const = default;
 	};
 
 	struct Bone {
@@ -702,6 +714,8 @@ namespace mdx {
 		};
 
 		OptimizationStats optimize(float max_error);
+		void deduplicate_textures();
+		void deduplicate_materials();
 
 		template<std::invocable<Node&> Func>
 		void for_each_node(const Func F) {
@@ -814,3 +828,130 @@ namespace mdx {
 		}
 	};
 } // namespace mdx
+
+// All our hashes
+// C++ really needs a derive macro for this
+template <typename T>
+void hash_combine(std::size_t& seed, const T& v) {
+	seed ^= std::hash<T>{}(v) + 0x9e3779b97f4a7c15ULL + (seed<<6) + (seed>>2);
+}
+
+template <typename T>
+struct hash_vector {
+	std::size_t operator()(const std::vector<T>& vec) const {
+		std::size_t h = 0;
+		for (const auto& item : vec)
+			hash_combine(h, item);  // assumes std::hash<T> is defined
+		return h;
+	}
+};
+
+namespace std {
+	template <>
+	struct hash<glm::vec3> {
+		std::size_t operator()(const glm::vec3& v) const {
+			std::size_t h = 0;
+			hash_combine(h, v.x);
+			hash_combine(h, v.y);
+			hash_combine(h, v.z);
+			return h;
+		}
+	};
+
+	template <typename T>
+	struct std::hash<mdx::Track<T>> {
+		std::size_t operator()(const mdx::Track<T>& t) const {
+			std::size_t h = 0;
+			hash_combine(h, t.frame);
+			hash_combine(h, t.value);
+			hash_combine(h, t.inTan);
+			hash_combine(h, t.outTan);
+			return h;
+		}
+	};
+
+	template <typename T>
+	struct std::hash<mdx::TrackHeader<T>> {
+		std::size_t operator()(const mdx::TrackHeader<T>& th) const {
+			std::size_t h = 0;
+			hash_combine(h, static_cast<int>(th.interpolation_type));
+			hash_combine(h, th.global_sequence_ID);
+			for (const auto& track : th.tracks)
+				hash_combine(h, track);
+			return h;
+		}
+	};
+
+	template <>
+	struct hash<mdx::LayerTexture> {
+		std::size_t operator()(const mdx::LayerTexture& lt) const {
+			std::size_t h = 0;
+			hash_combine(h, lt.id);
+			hash_combine(h, lt.KMTF);
+			return h;
+		}
+	};
+
+
+	template <>
+	struct hash<mdx::Layer> {
+		std::size_t operator()(const mdx::Layer& l) const {
+			std::size_t h = 0;
+			hash_combine(h, l.blend_mode);
+			hash_combine(h, l.shading_flags);
+			hash_combine(h, l.texture_animation_id);
+			hash_combine(h, l.coord_id);
+			hash_combine(h, l.alpha);
+			hash_combine(h, l.emissive_gain);
+			hash_combine(h, l.fresnel_color);
+			hash_combine(h, l.fresnel_opacity);
+			hash_combine(h, l.fresnel_team_color);
+			hash_combine(h, l.hd);
+			for (const auto& tex : l.texturess)
+				hash_combine(h, tex);
+			hash_combine(h, l.KMTA);
+			hash_combine(h, l.KMTE);
+			hash_combine(h, l.KFC3);
+			hash_combine(h, l.KFCA);
+			hash_combine(h, l.KFTC);
+			return h;
+		}
+	};
+
+	// template<typename T>
+	// struct hash<std::vector<T>> {
+	// 	std::size_t operator()(const std::vector<T>& vec) const {
+	// 		std::size_t h = 0;
+	// 		for (const auto& item : vec)
+	// 			hash_combine(h, item);  // assumes std::hash<T> exists
+	// 		return h;
+	// 	}
+	// };
+
+
+	template<>
+	struct std::hash<mdx::Material>
+	{
+		std::size_t operator()(const mdx::Material& s) const noexcept
+		{
+			std::size_t h1 = std::hash<uint32_t>{}(s.priority_plane);
+			std::size_t h2 = std::hash<uint32_t>{}(s.flags);
+			std::size_t h3 = hash_vector<mdx::Layer>{}(s.layers);
+
+			// std::size_t h3 = std::hash<std::vector<mdx::Layer>>{}(s.layers);
+			return h1 ^ (h2 << 1) ^(h3 << 1); // or use boost::hash_combine
+		}
+	};
+
+	template<>
+	struct std::hash<mdx::Texture>
+	{
+		std::size_t operator()(const mdx::Texture& s) const noexcept
+		{
+			std::size_t h1 = std::hash<fs::path>{}(s.file_name);
+			std::size_t h2 = std::hash<uint32_t>{}(s.flags);
+			std::size_t h3 = std::hash<uint32_t>{}(s.replaceable_id);
+			return h1 ^ (h2 << 1) ^(h3 << 1); // or use boost::hash_combine
+		}
+	};
+}

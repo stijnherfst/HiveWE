@@ -560,7 +560,7 @@ namespace mdx {
 				}
 			});
 		}
-		std::print("Elapsed {}ms", timer.elapsed_ms());
+		std::println("Elapsed {}ms", timer.elapsed_ms());
 		return mdl.mdl;
 	}
 } // namespace mdx

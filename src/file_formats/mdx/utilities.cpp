@@ -1,101 +1,33 @@
-module;
-
-// #include <QDesktopServices>
-// #include <QStandardPaths>
-// #include <qurl.h>
-// #include <filesystem>
-
 module MDX;
 
 import std;
-// import types;
 import "glm/glm.hpp";
 
 namespace mdx {
-	/// Will delete sequences and bones because there is no straightforward way to merge them
+	/// Will not retain sequences and bones because there is no straightforward way to merge them
 	void MDX::merge_with(const MDX& mdx, const glm::mat4& transform) {
-		sequences.clear();
-		global_sequences.clear();
-		animations.clear();
-		bones.clear();
-		lights.clear();
-		help_bones.clear();
-		attachments.clear();
-		pivots.clear();
-		emitters1.clear();
-		emitters2.clear();
-		ribbons.clear();
-		event_objects.clear();
-		collision_shapes.clear();
-		corn_emitters.clear();
-		facefxes.clear();
-		cameras.clear();
-		bind_poses.clear();
-		texture_animations.clear();
-
-		// animations.push_back(GeosetAnimation {
-		// 	.alpha = 1.f,
-		// 	.flags = 0,
-		// 	.color = glm::vec3(1.f,1.f,1.f),
-		// 	.geoset_id = 0,
-		// });
-
-		// validate();
-
-		// auto mdl = to_mdl();
-
-		// auto path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/" + QString::fromStdString(name) + ".mdl";
-		//
-		// std::ofstream file(path.toStdString());
-		// file.write(mdl.data(), mdl.size());
-		// file.close();
-		//
-		// QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
-		//
-		// return;
-
-		for (auto& geoset : geosets) {
-			// Zero skin weights because we will have only 1 bone
-			geoset.skin = std::vector<std::uint8_t>(geoset.vertices.size(), 0);
-			// Set the contribution of the first bone to 255
-			for (size_t i = 0; i < geoset.skin.size(); i += 8) {
-				geoset.skin[i + 4] = 255;
-			}
-		}
-
 		MDX new_mdx = mdx;
 		for (auto& geoset : new_mdx.geosets) {
-			// geoset.material_id += materials.size();
+			geoset.material_id += materials.size();
+
 			geoset.matrix_groups.clear();
 			geoset.matrix_indices.clear();
+			geoset.vertex_groups.clear();
 
 			for (auto & vertex : geoset.vertices) {
-				vertex = glm::vec4(vertex, 1.f) * transform;
+				vertex = transform * glm::vec4(vertex, 1.f);
 			}
 			for (auto & normal : geoset.normals) {
 				normal = glm::normalize(normal * glm::mat3(transform));
 			}
 
-			// if (!geoset.matrix_groups.empty()) {
-			// 	geoset.skin = MDX::matrix_groups_as_skin_weights(geoset);
-			// }
-
 			// Zero skin weights because we will have only 1 bone
-			geoset.skin = std::vector<std::uint8_t>(geoset.vertices.size(), 0);
+			geoset.skin = std::vector<std::uint8_t>(geoset.vertices.size() * 8, 0);
 			// Set the contribution of the first bone to 255
 			for (size_t i = 0; i < geoset.skin.size(); i += 8) {
 				geoset.skin[i + 4] = 255;
 			}
 		}
-
-		// for (auto& animation : new_mdx.animations) {
-		// 	animation.geoset_id += geosets.size();
-		// }
-
-		// for (auto& bone : new_mdx.bones) {
-		// 	bone.geoset_id += geosets.size();
-		// 	bone.geoset_animation_id += animations.size();
-		// }
 
 		for (auto & material : new_mdx.materials) {
 			for (auto & layer : material.layers) {
@@ -114,39 +46,6 @@ namespace mdx {
 		// for (auto & ribbon : new_mdx.ribbons) {
 		// 	ribbon.material_id += materials.size();
 		// }
-
-		// This doesn't merge the sequences but only appends them
-		// You cannot play an animation for any of the containing MDXs at the same time
-		// const auto max_frame = sequences.back().end_frame;
-		// for (auto & sequence : new_mdx.sequences) {
-		// 	sequence.start_frame += max_frame;
-		// 	sequence.end_frame += max_frame;
-		// }
-		//
-		// new_mdx.for_each_track([&]<typename T>(TrackHeader<T>& header) {
-		// 	header.global_sequence_ID += global_sequences.size();
-		// 	header.id += unique_tracks;
-		// 	for (auto& track : header.tracks) {
-		// 		track.frame += max_frame;
-		// 	}
-		// });
-		// unique_tracks += new_mdx.unique_tracks;
-		//
-		// size_t node_count = new_mdx.bones.size() +
-		// 					new_mdx.lights.size() +
-		// 					new_mdx.help_bones.size() +
-		// 					new_mdx.attachments.size() +
-		// 					new_mdx.emitters1.size() +
-		// 					new_mdx.emitters2.size() +
-		// 					new_mdx.ribbons.size() +
-		// 					new_mdx.event_objects.size() +
-		// 					new_mdx.collision_shapes.size() +
-		// 					new_mdx.corn_emitters.size();
-		//
-		// new_mdx.for_each_node([node_count](auto& node) {
-		// 	node.id += node_count;
-		// 	node.parent_id += node_count;
-		// });
 
 		geosets.append_range(new_mdx.geosets);
 		// sequences.append_range(new_mdx.sequences);

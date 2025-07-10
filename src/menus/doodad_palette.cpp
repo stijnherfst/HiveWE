@@ -27,12 +27,21 @@
 
 #include <object_editor/object_editor.h>
 
+#include <QDesktopServices>
+#include <QStandardPaths>
+#include <qurl.h>
+
 import std;
 import TableModel;
 import QRibbon;
 import MapGlobal;
 import Globals;
 import WindowHandler;
+import SLK;
+import MDX;
+import BinaryWriter;
+import BinaryReader;
+import Hierarchy;
 
 DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -248,6 +257,11 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	info_layout->addWidget(edit_in_oe);
 	info_layout->addWidget(select_in_palette);
 
+	QSmallRibbonButton* merge_selection = new QSmallRibbonButton;
+	merge_selection->setText("Merge MDXs");
+	merge_selection->setToolTip("Will merge all the selected doodad/destructables into a single MDX");
+	merge_selection->setIcon(QIcon("data/icons/ribbon/doodads32x32.png"));
+
 	current_selection_section->addLayout(scaling_layout);
 	current_selection_section->addSpacing(5);
 	current_selection_section->addLayout(rotation_layout);
@@ -256,6 +270,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	current_selection_section->addWidget(average_z);
 	current_selection_section->addSpacing(5);
 	current_selection_section->addLayout(info_layout);
+	current_selection_section->addSpacing(5);
+	current_selection_section->addWidget(merge_selection);
 
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(placement_section);
@@ -355,6 +371,51 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(select_in_palette, &QSmallRibbonButton::clicked, [&]() {
 		const Doodad* doodad = *brush.selections.begin();
 		select_id_in_palette(doodad->id);
+	});
+
+	connect(merge_selection, &QSmallRibbonButton::clicked, [&]() {
+		if (brush.selections.empty()) {
+			return;
+		}
+
+		mdx::MDX base;
+
+		glm::vec3 midpoint = glm::vec3(0.f);
+		for (const auto& doodad : brush.selections) {
+			midpoint += doodad->position;
+		}
+		midpoint /= brush.selections.size();
+
+		for (const auto& doodad : brush.selections) {
+			glm::mat4 centered = glm::translate(glm::mat4(1.0f), -midpoint) * doodad->skeleton.matrix;
+			glm::mat4 final = glm::scale(glm::mat4(1.0f), glm::vec3(128.0f)) * centered;
+			base.merge_with(*doodad->mesh->model, final);
+		}
+		base.deduplicate_textures();
+		base.deduplicate_materials();
+
+		auto writer = base.save();
+		std::ofstream outfile("C:/Users/User/Desktop/merged.mdx", std::ios::binary | std::ios::out);
+
+		if (!outfile) {
+			throw std::runtime_error("Error writing merged file ");
+		}
+
+		outfile.write(reinterpret_cast<char const*>(writer.buffer.data()), writer.buffer.size());
+		outfile.close();
+
+		BinaryReader reader = hierarchy.open_file("C:/Users/User/Desktop/merged.mdx");
+		mdx::MDX mdx (reader);
+
+		auto mdl = mdx.to_mdl();
+
+		auto path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/yeet.mdl";
+
+		std::ofstream file(path.toStdString());
+		file.write(mdl.data(), mdl.size());
+		file.close();
+
+		QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
 	});
 
 	// Default to Trees/Destructibles

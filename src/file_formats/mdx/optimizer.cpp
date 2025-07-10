@@ -80,6 +80,51 @@ namespace mdx {
 		mdx.textures.resize(write);
 	}
 
+	/// Deduplicate materials and geosets before this for best results
+	void MDX::deduplicate_textures() {
+		std::unordered_map<Texture, size_t> texture_map;
+		std::vector<u32> mapping;
+
+		for (const auto& texture : textures) {
+			const auto& [elem, inserted] = texture_map.emplace(texture, mapping.size());
+			mapping.push_back(elem->second);
+		}
+
+		for (auto& material : materials) {
+			for (auto& layer : material.layers) {
+				for (auto& texture : layer.texturess) {
+					texture.id = mapping[texture.id];
+				}
+			}
+		}
+
+		textures.clear();
+		for (const auto& [key, value] : texture_map) {
+			textures.push_back(key);
+		}
+	}
+
+	/// Call after deduplicate_textures for best results
+	/// as the texture IDs will be deduplicated so fewer differences
+	void MDX::deduplicate_materials() {
+		std::unordered_map<Material, size_t> material_map;
+		std::vector<u32> mapping;
+
+		for (const auto& material : materials) {
+			const auto& [elem, inserted] = material_map.emplace(material, mapping.size());
+			mapping.push_back(elem->second);
+		}
+
+		for (auto& geoset : geosets) {
+			geoset.material_id = mapping[geoset.material_id];
+		}
+
+		materials.clear();
+		for (const auto& [key, value] : material_map) {
+			materials.push_back(key);
+		}
+	}
+
 	/// Removes tracks that are not inside a sequence start<->end frame
 	template <typename T>
 	void remove_tracks_outside_sequences(TrackHeader<T>& header, std::vector<Sequence>& sequences) {
