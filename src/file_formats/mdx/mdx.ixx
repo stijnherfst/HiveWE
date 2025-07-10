@@ -633,7 +633,9 @@ namespace mdx {
 	public:
 		int unique_tracks = 0;
 
-		int version;
+		static constexpr uint32_t LATEST_MDX_VERSION = 1100;
+
+		uint32_t version = LATEST_MDX_VERSION;
 		std::string name;
 		std::string animation_filename;
 		Extent extent;
@@ -666,9 +668,10 @@ namespace mdx {
 
 	private:
 		void load(BinaryReader& reader);
-		MDX() = default;
 
 	public:
+		MDX() = default;
+
 		explicit MDX(BinaryReader& reader) {
 			load(reader);
 		}
@@ -682,7 +685,7 @@ namespace mdx {
 
 		void merge_with(const MDX& mdx, const glm::mat4& transform);
 
-		// static std::vector<unsigned char> matrix_groups_as_skin_weights(const Geoset& geoset);
+		static std::vector<glm::u8vec4> matrix_groups_as_skin_weights(const Geoset& geoset);
 
 		struct OptimizationStats {
 			size_t materials_removed = 0;

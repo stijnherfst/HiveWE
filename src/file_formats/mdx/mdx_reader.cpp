@@ -13,30 +13,38 @@ namespace mdx {
 			total_size += reader.read<uint32_t>();
 
 			Geoset geoset;
-			reader.advance(4);
+			reader.advance(4); // VRTX
 			const uint32_t vertex_count = reader.read<uint32_t>();
 			geoset.vertices = reader.read_vector<glm::vec3>(vertex_count);
-			reader.advance(4);
+
+			reader.advance(4); // NRMS
 			const uint32_t normal_count = reader.read<uint32_t>();
 			geoset.normals = reader.read_vector<glm::vec3>(normal_count);
-			reader.advance(4);
+
+			reader.advance(4); // PTYP
 			const uint32_t face_type_groups_count = reader.read<uint32_t>();
 			geoset.face_type_groups = reader.read_vector<uint32_t>(face_type_groups_count);
-			reader.advance(4);
+
+			reader.advance(4); // PCNT
 			const uint32_t face_groups_count = reader.read<uint32_t>();
 			geoset.face_groups = reader.read_vector<uint32_t>(face_groups_count);
-			reader.advance(4);
+
+			reader.advance(4); // PVTX
 			const uint32_t faces_count = reader.read<uint32_t>();
 			geoset.faces = reader.read_vector<uint16_t>(faces_count);
-			reader.advance(4);
+
+			reader.advance(4); // GNDX
 			const uint32_t vertex_groups_count = reader.read<uint32_t>();
 			geoset.vertex_groups = reader.read_vector<uint8_t>(vertex_groups_count);
-			reader.advance(4);
+
+			reader.advance(4); // MTGC
 			const uint32_t matrix_group_count = reader.read<uint32_t>();
 			geoset.matrix_groups = reader.read_vector<uint32_t>(matrix_group_count);
-			reader.advance(4); // Mats
+
+			reader.advance(4); // MATS
 			const uint32_t matrix_indices_count = reader.read<uint32_t>();
 			geoset.matrix_indices = reader.read_vector<uint32_t>(matrix_indices_count);
+
 			geoset.material_id = reader.read<uint32_t>();
 			geoset.selection_group = reader.read<uint32_t>();
 			geoset.selection_flags = reader.read<uint32_t>();
@@ -70,7 +78,7 @@ namespace mdx {
 
 			const uint32_t texture_coordinate_sets_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < texture_coordinate_sets_count; i++) {
-				reader.advance(4);
+				reader.advance(4); // UVBS
 				const uint32_t texture_coordinates_count = reader.read<uint32_t>();
 				geoset.uv_sets.push_back(reader.read_vector<glm::vec2>(texture_coordinates_count));
 			}

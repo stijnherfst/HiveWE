@@ -418,7 +418,7 @@ public:
 
 		// Mesh doesn't exist at all
 		if (!hierarchy.file_exists(mesh_path)) {
-			std::cout << "Invalid model file for " << id << " With file path: " << mesh_path << "\n";
+			std::cout << "Missing model file for " << id << " With file path: " << mesh_path << "\n";
 			id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
 			return id_to_mesh[id];
 		}

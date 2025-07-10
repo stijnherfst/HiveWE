@@ -176,47 +176,37 @@ namespace mdx {
 
 	/// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
 	/// This could cause graphical inconsistencies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
-	// std::vector<unsigned char> MDX::matrix_groups_as_skin_weights(const Geoset& geoset) {
-		// std::vector<glm::u8vec4> groups;
-		// std::vector<glm::u8vec4> weights;
-		//
-		// size_t bone_offset = 0;
-		// for (const auto& group_size : geoset.matrix_groups) {
-		// 	const int bone_count = std::min(group_size, 4u);
-		// 	glm::uvec4 indices(0);
-		// 	glm::uvec4 weightss(0);
-		//
-		// 	const int weight = 255 / bone_count;
-		// 	for (size_t j = 0; j < bone_count; j++) {
-		// 		indices[j] = geoset.matrix_indices[bone_offset + j];
-		// 		weightss[j] = weight;
-		// 	}
-		//
-		// 	const int remainder = 255 - weight * bone_count;
-		// 	weightss[0] += remainder;
-		//
-		// 	groups.push_back(indices);
-		// 	weights.push_back(weightss);
-		// 	bone_offset += group_size;
-		// }
-		//
-		// std::vector<glm::u8vec4> skin_weights;
-		// skin_weights.reserve(groups.size() * 2);
-		// for (const auto& vertex_group : geoset.vertex_groups) {
-		// 	skin_weights.push_back(groups[vertex_group]);
-		// 	skin_weights.push_back(weights[vertex_group]);
-		// }
-		//
-		// // return skin_weights;
-		// std::vector<unsigned char> flattened;
-		// flattened.reserve(skin_weights.size() * 4);
-		// for (const auto& vec : skin_weights) {
-		// 	flattened.push_back(vec[0]);
-		// 	flattened.push_back(vec[1]);
-		// 	flattened.push_back(vec[2]);
-		// 	flattened.push_back(vec[3]);
-		// }
-		// return flattened;
-		// return {};
-	// }
+	std::vector<glm::u8vec4> MDX::matrix_groups_as_skin_weights(const Geoset& geoset) {
+		std::vector<glm::u8vec4> groups;
+		groups.reserve(geoset.matrix_groups.size());
+		std::vector<glm::u8vec4> weights;
+		weights.reserve(geoset.matrix_groups.size());
+
+		size_t bone_offset = 0;
+		for (const auto& group_size : geoset.matrix_groups) {
+			const int bone_count = std::min(group_size, 4u);
+			glm::uvec4 indices(0);
+			glm::uvec4 weightss(0);
+
+			const int weight = 255 / bone_count;
+			for (size_t j = 0; j < bone_count; j++) {
+				indices[j] = geoset.matrix_indices[bone_offset + j];
+				weightss[j] = weight;
+			}
+			weightss[0] += 255 % bone_count;
+
+			groups.push_back(indices);
+			weights.push_back(weightss);
+			bone_offset += group_size;
+		}
+
+		std::vector<glm::u8vec4> skin_weights;
+		skin_weights.reserve(groups.size() * 2);
+		for (const auto& vertex_group : geoset.vertex_groups) {
+			skin_weights.push_back(groups[vertex_group]);
+			skin_weights.push_back(weights[vertex_group]);
+		}
+
+		return skin_weights;
+	}
 }

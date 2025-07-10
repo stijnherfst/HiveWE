@@ -56,6 +56,7 @@ namespace mdx {
 			writer.write<uint32_t>(geoset.material_id);
 			writer.write<uint32_t>(geoset.selection_group);
 			writer.write<uint32_t>(geoset.selection_flags);
+
 			writer.write<uint32_t>(geoset.lod);
 			writer.write_c_string_padded(geoset.lod_name, 80);
 
@@ -130,7 +131,6 @@ namespace mdx {
 
 				writer.write<uint32_t>(layer.hd);
 				writer.write<uint32_t>(layer.texturess.size());
-
 
 				for (size_t i = 0; i < layer.texturess.size(); i++) {
 					writer.write<uint32_t>(layer.texturess[i].id);
@@ -638,7 +638,7 @@ namespace mdx {
 		writer.write_string("MDLX");
 		writer.write(ChunkTag::VERS);
 		writer.write<uint32_t>(4);
-		writer.write<uint32_t>(1100);
+		writer.write<uint32_t>(LATEST_MDX_VERSION);
 
 		writer.write(ChunkTag::MODL);
 		writer.write<uint32_t>(372);

@@ -103,6 +103,42 @@ namespace mdx {
 			}
 		});
 
+		for (auto& i : geosets) {
+			if (i.uv_sets.empty()) {
+				std::println("Error: No UV sets in model");
+				return;
+			}
+
+			if (!i.vertex_groups.empty() && !i.skin.empty()) {
+				std::println("Error: Both vertex_groups and skin weights are set");
+				return;
+			}
+
+			bool same = i.vertices.size() == i.uv_sets.front().size() && i.vertices.size() == i.normals.size();
+			if (i.vertex_groups.size() > 0) {
+				same = same && i.vertices.size() == i.vertex_groups.size();
+
+				if (!same) {
+					std::println("One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nvertex_groups: {}", i.vertices.size(), i.uv_sets.front().size(), i.normals.size(), i.vertex_groups.size());
+					return;
+				}
+			} else {
+				same = same && i.vertices.size() == i.skin.size() / 8;
+
+				if (!same) {
+					std::println("One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nskin weights: {}", i.vertices.size(), i.uv_sets.front().size(), i.normals.size(), i.skin.size() / 8);
+					return;
+				}
+			}
+
+			for (const auto& set : i.uv_sets) {
+				if (set.empty()) {
+					std::println("Error: Empty UV set");
+					return;
+				}
+			}
+		}
+
 		// Fix vertex groups that reference non existent matrix groups
 		for (auto& i : geosets) {
 			// RMS seems to output -1 here sometimes ;(
@@ -122,4 +158,4 @@ namespace mdx {
 			}
 		}
 	}
-}
+} // namespace mdx
