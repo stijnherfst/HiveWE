@@ -340,14 +340,19 @@ namespace mdx {
 		uint32_t material_id;
 		uint32_t selection_group;
 		uint32_t selection_flags;
+	    /// LODs are unused by the WC3 engine afaik
 		uint32_t lod;
 		std::string lod_name;
+	    /// The extent of this geoset not accounting for animations (?)
 		Extent extent;
 
-		std::vector<Extent> extents;
+		/// One per sequence?
+		std::vector<Extent> sequence_extents;
 
 		std::vector<glm::vec4> tangents;
+		/// vertices.size() * 4 bone indices, each a byte, 4 weights, each a byte
 		std::vector<uint8_t> skin;
+		/// We only support one uv set
 		std::vector<std::vector<glm::vec2>> uv_sets;
 	};
 
@@ -714,8 +719,11 @@ namespace mdx {
 		};
 
 		OptimizationStats optimize(float max_error);
-		void deduplicate_textures();
-		void deduplicate_materials();
+		MDX& deduplicate_textures();
+		MDX& deduplicate_materials();
+		MDX& deduplicate_geosets();
+
+		MDX& calculate_extents();
 
 		template<std::invocable<Node&> Func>
 		void for_each_node(const Func F) {

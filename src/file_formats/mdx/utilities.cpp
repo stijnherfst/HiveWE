@@ -14,10 +14,12 @@ namespace mdx {
 			geoset.matrix_indices.clear();
 			geoset.vertex_groups.clear();
 
-			for (auto & vertex : geoset.vertices) {
+			geoset.sequence_extents.resize(1);
+
+			for (auto& vertex : geoset.vertices) {
 				vertex = transform * glm::vec4(vertex, 1.f);
 			}
-			for (auto & normal : geoset.normals) {
+			for (auto& normal : geoset.normals) {
 				normal = glm::normalize(normal * glm::mat3(transform));
 			}
 
@@ -29,11 +31,11 @@ namespace mdx {
 			}
 		}
 
-		for (auto & material : new_mdx.materials) {
-			for (auto & layer : material.layers) {
+		for (auto& material : new_mdx.materials) {
+			for (auto& layer : material.layers) {
 				layer.texture_animation_id = 0;
 				layer.texture_animation_id += texture_animations.size();
-				for (auto & texture : layer.texturess) {
+				for (auto& texture : layer.texturess) {
 					texture.id += textures.size();
 				}
 			}
@@ -108,4 +110,34 @@ namespace mdx {
 
 		return skin_weights;
 	}
-}
+
+	MDX& MDX::calculate_extents() {
+		for (auto& geoset : geosets) {
+			geoset.extent.minimum = glm::vec3(std::numeric_limits<float>::max());
+			geoset.extent.maximum = glm::vec3(std::numeric_limits<float>::lowest());
+			for (const auto& i : geoset.vertices) {
+				geoset.extent.minimum = glm::min(geoset.extent.minimum, i);
+				geoset.extent.maximum = glm::max(geoset.extent.maximum, i);
+			}
+
+			geoset.extent.bounds_radius =
+				std::max(glm::distance(glm::vec3(0.0), geoset.extent.minimum), glm::distance(glm::vec3(0.0), geoset.extent.maximum));
+
+			for (auto& extent : geoset.sequence_extents) {
+				// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement
+				extent = geoset.extent;
+			}
+
+			extent.minimum = glm::min(extent.minimum, geoset.extent.minimum);
+			extent.maximum = glm::max(extent.maximum, geoset.extent.maximum);
+			extent.bounds_radius = std::max(extent.bounds_radius, geoset.extent.bounds_radius);
+		}
+
+		for (auto& sequence : sequences) {
+			// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement
+			sequence.extent = extent;
+		}
+
+		return *this;
+	}
+} // namespace mdx

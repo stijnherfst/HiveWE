@@ -392,7 +392,7 @@ namespace mdx {
 				mdl.write_line("MaximumExtent {{ {}, {}, {} }},", geoset.extent.maximum.x, geoset.extent.maximum.z, geoset.extent.maximum.z);
 				mdl.write_line("BoundsRadius {},", geoset.extent.bounds_radius);
 
-				for (const auto& i : geoset.extents) {
+				for (const auto& i : geoset.sequence_extents) {
 					mdl.start_group("Anim", [&]() {
 						mdl.write_line("MinimumExtent {{ {}, {}, {} }},", i.minimum.x, i.minimum.z, i.minimum.z);
 						mdl.write_line("MaximumExtent {{ {}, {}, {} }},", i.maximum.x, i.maximum.z, i.maximum.z);

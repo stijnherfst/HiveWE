@@ -61,8 +61,8 @@ namespace mdx {
 			writer.write_c_string_padded(geoset.lod_name, 80);
 
 			geoset.extent.save(writer);
-			writer.write<uint32_t>(geoset.extents.size());
-			for (const auto& extent : geoset.extents) {
+			writer.write<uint32_t>(geoset.sequence_extents.size());
+			for (const auto& extent : geoset.sequence_extents) {
 				extent.save(writer);
 			}
 

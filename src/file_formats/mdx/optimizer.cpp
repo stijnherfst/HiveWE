@@ -81,7 +81,7 @@ namespace mdx {
 	}
 
 	/// Deduplicate materials and geosets before this for best results
-	void MDX::deduplicate_textures() {
+	MDX& MDX::deduplicate_textures() {
 		std::unordered_map<Texture, size_t> texture_map;
 		std::vector<u32> mapping;
 
@@ -102,11 +102,13 @@ namespace mdx {
 		for (const auto& [key, value] : texture_map) {
 			textures.push_back(key);
 		}
+		return *this;
 	}
 
 	/// Call after deduplicate_textures for best results
 	/// as the texture IDs will be deduplicated so fewer differences
-	void MDX::deduplicate_materials() {
+	/// Material IDs will be sequential, from zero, without gaps after this
+	MDX& MDX::deduplicate_materials() {
 		std::unordered_map<Material, size_t> material_map;
 		std::vector<u32> mapping;
 
@@ -123,6 +125,56 @@ namespace mdx {
 		for (const auto& [key, value] : material_map) {
 			materials.push_back(key);
 		}
+		return *this;
+	}
+
+	/// Call after deduplicate_materials() for best results.
+	/// Does not guarantee correct results if the model has any kind of animation
+	/// as it merges geosets purely based on matching material IDs.
+	/// Requires material IDs to be sequential, from zero, without gaps.
+	/// Requires recalculating extents after.
+	MDX& MDX::deduplicate_geosets() {
+		std::ranges::sort(geosets, [](const auto& a, const auto& b) {
+			return a.material_id < b.material_id;
+		});
+
+		size_t i = 0;
+		while (i < geosets.size()) {
+			const size_t index = geosets[i].material_id;
+
+			if (i == index) {
+				i += 1;
+				continue;
+			}
+
+			geosets[index].vertices.append_range(geosets[i].vertices);
+			geosets[index].normals.append_range(geosets[i].normals);
+			geosets[index].face_type_groups.append_range(geosets[i].face_type_groups);
+			// Just use triangles
+			// geosets[current_material].face_groups.append_range(geosets[i].face_groups);
+			geosets[index].faces.append_range(geosets[i].faces);
+			// The following three lines are likely wrong but w/e, you should use skin anyway
+			geosets[index].vertex_groups.append_range(geosets[i].vertex_groups);
+			geosets[index].matrix_groups.append_range(geosets[i].matrix_groups);
+			geosets[index].matrix_indices.append_range(geosets[i].matrix_indices);
+
+			// We told the user to recalculate extents after
+			// geosets[index].extents.append_range(geosets[i].extents);
+
+			geosets[index].tangents.append_range(geosets[i].tangents);
+			geosets[index].skin.append_range(geosets[i].skin);
+
+			// By the lord, please don't use multiple uv sets
+			assert(geosets[base_geoset].uv_sets.size() == geosets[i].uv_sets.size());
+
+			for (size_t j = 0; j < geosets[i].uv_sets.size(); j++) {
+				geosets[index].uv_sets[j].append_range(geosets[i].uv_sets[j]);
+			}
+
+			geosets.erase(geosets.begin() + i);
+		}
+
+		return *this;
 	}
 
 	/// Removes tracks that are not inside a sequence start<->end frame

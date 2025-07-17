@@ -59,7 +59,7 @@ namespace mdx {
 			geoset.extent = Extent(reader);
 			const uint32_t extents_count = reader.read<uint32_t>();
 			for (size_t i = 0; i < extents_count; i++) {
-				geoset.extents.emplace_back(Extent(reader));
+				geoset.sequence_extents.emplace_back(Extent(reader));
 			}
 
 			std::string tag = reader.read_string(4);

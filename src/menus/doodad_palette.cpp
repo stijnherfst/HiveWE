@@ -43,7 +43,8 @@ import BinaryWriter;
 import BinaryReader;
 import Hierarchy;
 
-DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
+DoodadPalette::DoodadPalette(QWidget* parent)
+	: Palette(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
@@ -51,15 +52,15 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	map->brush = &brush;
 
 	ui.tileset->addItem("All Tilesets", '*');
-	for (auto&&[key, value] : world_edit_data.section("TileSets")) {
+	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
 		ui.tileset->addItem(QString::fromStdString(value.front()), key.front());
 	}
 
-	for (auto&&[key, value] : world_edit_data.section("DoodadCategories")) {
+	for (auto&& [key, value] : world_edit_data.section("DoodadCategories")) {
 		ui.type->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
 	}
 
-	for (auto&&[key, value] : world_edit_data.section("DestructibleCategories")) {
+	for (auto&& [key, value] : world_edit_data.section("DestructibleCategories")) {
 		ui.type->addItem(QString::fromStdString(value.front()), QString::fromStdString(key));
 	}
 
@@ -93,20 +94,20 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	selection_mode->setCheckable(true);
 	selection_section->addWidget(selection_mode);
 
-	//selections_button->setText("View\nSelections");
-	//selections_button->setIcon(QIcon("data/icons/ribbon/description32x32.png.png"));
-	//selection_section->addWidget(selections_button);
+	// selections_button->setText("View\nSelections");
+	// selections_button->setIcon(QIcon("data/icons/ribbon/description32x32.png.png"));
+	// selection_section->addWidget(selections_button);
 
-	//QVBoxLayout* selection_choices_layout = new QVBoxLayout;
-	//QCheckBox* select_destructibles = new QCheckBox("Destructibles");
-	//select_destructibles->setChecked(true);
-	//QCheckBox* select_doodads = new QCheckBox("Doodads");
-	//select_doodads->setChecked(true);
-	
-	//selection_choices_layout->addWidget(select_destructibles);
-	//selection_choices_layout->addWidget(select_doodads);
+	// QVBoxLayout* selection_choices_layout = new QVBoxLayout;
+	// QCheckBox* select_destructibles = new QCheckBox("Destructibles");
+	// select_destructibles->setChecked(true);
+	// QCheckBox* select_doodads = new QCheckBox("Doodads");
+	// select_doodads->setChecked(true);
 
-	//selection_section->addLayout(selection_choices_layout);
+	// selection_choices_layout->addWidget(select_destructibles);
+	// selection_choices_layout->addWidget(select_doodads);
+
+	// selection_section->addLayout(selection_choices_layout);
 
 	find_this = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	find_parent = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
@@ -291,7 +292,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
 		// Possible Qt bug. Try swapping the two lines below and see if it crashes when selecting a tree and then swapping to a doodad category
-		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());	
+		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());
 		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
 	});
 
@@ -356,7 +357,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(group_height_minimum, &QAction::triggered, this, &DoodadPalette::set_group_height_minimum);
 	connect(group_height_average, &QAction::triggered, this, &DoodadPalette::set_group_height_average);
 	connect(group_height_maximum, &QAction::triggered, this, &DoodadPalette::set_group_height_maximum);
-	
+
 	connect(edit_in_oe, &QSmallRibbonButton::clicked, [&]() {
 		bool created;
 		auto editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
@@ -391,8 +392,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 			glm::mat4 final = glm::scale(glm::mat4(1.0f), glm::vec3(128.0f)) * centered;
 			base.merge_with(*doodad->mesh->model, final);
 		}
-		base.deduplicate_textures();
-		base.deduplicate_materials();
+		base.deduplicate_textures().deduplicate_materials().deduplicate_geosets().calculate_extents();
 
 		auto writer = base.save();
 		std::ofstream outfile("C:/Users/User/Desktop/merged.mdx", std::ios::binary | std::ios::out);
@@ -405,7 +405,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		outfile.close();
 
 		BinaryReader reader = hierarchy.open_file("C:/Users/User/Desktop/merged.mdx");
-		mdx::MDX mdx (reader);
+		mdx::MDX mdx(reader);
 
 		auto mdl = mdx.to_mdl();
 
@@ -433,7 +433,7 @@ DoodadPalette::~DoodadPalette() {
 	map->brush = nullptr;
 }
 
-bool DoodadPalette::event(QEvent *e) {
+bool DoodadPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
 		// Remove shortcut from parent
 		find_this->setEnabled(false);
@@ -493,7 +493,7 @@ void DoodadPalette::selection_changed(const QModelIndex& index) {
 
 void DoodadPalette::select_id_in_palette(std::string id) {
 	ui.search->clear();
-	
+
 	if (destructibles_slk.row_headers.contains(id)) {
 		const auto category = destructibles_slk.data("category", id);
 		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
