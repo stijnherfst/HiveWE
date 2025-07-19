@@ -121,8 +121,8 @@ export class MapInfo {
 	bool custom_ability_skins;
 	bool disable_deny_icon;
 	bool force_default_zoom;
-	bool force_min_zoom;
 	bool force_max_zoom;
+	bool force_min_zoom;
 
 	int loading_screen_number;
 	std::string loading_screen_model;
@@ -227,8 +227,8 @@ export class MapInfo {
 		custom_ability_skins = flags & 0x40000;
 		disable_deny_icon = flags & 0x80000;
 		force_default_zoom = flags & 0x100000;
-		force_min_zoom = flags & 0x200000;
-		force_max_zoom = flags & 0x400000;
+		force_max_zoom = flags & 0x200000;
+		force_min_zoom = flags & 0x400000;
 
 		// Tileset
 		reader.advance(1);
@@ -269,7 +269,9 @@ export class MapInfo {
 			if (version >= 32) {
 				default_cam_distance = reader.read<uint32_t>();
 				max_cam_distance = reader.read<uint32_t>();
-				min_cam_distance = reader.read<uint32_t>();
+				if (version >= 33) {
+					min_cam_distance = reader.read<uint32_t>();
+				}
 			}
 		} else if (version == 18) { // RoC
 			loading_screen_number = reader.read<uint32_t>();
@@ -428,8 +430,8 @@ export class MapInfo {
 						| custom_ability_skins * 0x40000
 						| disable_deny_icon * 0x80000	
 						| force_default_zoom * 0x100000
-						| force_min_zoom * 0x200000
-						| force_max_zoom * 0x400000;
+						| force_max_zoom * 0x200000
+						| force_min_zoom * 0x400000;
 
 		writer.write(flags);
 
