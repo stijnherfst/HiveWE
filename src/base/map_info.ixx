@@ -119,6 +119,10 @@ export class MapInfo {
 	bool water_tinting;
 	bool accurate_probability_for_calculations;
 	bool custom_ability_skins;
+	bool disable_deny_icon;
+	bool force_default_zoom;
+	bool force_max_zoom;
+	bool force_min_zoom;
 
 	int loading_screen_number;
 	std::string loading_screen_model;
@@ -148,6 +152,10 @@ export class MapInfo {
 	uint32_t supported_modes;
 	uint32_t game_data_version;
 
+	uint32_t default_cam_distance;
+	uint32_t max_cam_distance;
+	uint32_t min_cam_distance;
+
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
 	std::vector<UpgradeAvailability> available_upgrades;
@@ -155,19 +163,19 @@ export class MapInfo {
 	std::vector<RandomUnitTable> random_unit_tables;
 	std::vector<RandomItemTable> random_item_tables;
 
-	static constexpr int write_version = 31;
-	static constexpr int write_editor_version = 6105;
-	static constexpr int write_game_version_major = 1;
-	static constexpr int write_game_version_minor = 32;
-	static constexpr int write_game_version_patch = 1;
-	static constexpr int write_game_version_build = 14604;
+	static constexpr int write_version = 33;
+	static constexpr int write_editor_version = 6116;
+	static constexpr int write_game_version_major = 2;
+	static constexpr int write_game_version_minor = 0;
+	static constexpr int write_game_version_patch = 3;
+	static constexpr int write_game_version_build = 22978;
 
 	void load() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
 
 		const int version = reader.read<uint32_t>();
 
-		if (version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
+		if (version != 33 && version != 32 && version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
 			std::cout << "Unknown war3map.w3i version\n";
 		}
 
@@ -217,6 +225,10 @@ export class MapInfo {
 		water_tinting = flags & 0x10000;
 		accurate_probability_for_calculations = flags & 0x20000;
 		custom_ability_skins = flags & 0x40000;
+		disable_deny_icon = flags & 0x80000;
+		force_default_zoom = flags & 0x100000;
+		force_max_zoom = flags & 0x200000;
+		force_min_zoom = flags & 0x400000;
 
 		// Tileset
 		reader.advance(1);
@@ -253,6 +265,13 @@ export class MapInfo {
 			if (version >= 31) {
 				supported_modes = reader.read<uint32_t>();
 				game_data_version = reader.read<uint32_t>();
+			}
+			if (version >= 32) {
+				default_cam_distance = reader.read<uint32_t>();
+				max_cam_distance = reader.read<uint32_t>();
+				if (version >= 33) {
+					min_cam_distance = reader.read<uint32_t>();
+				}
 			}
 		} else if (version == 18) { // RoC
 			loading_screen_number = reader.read<uint32_t>();
@@ -390,7 +409,29 @@ export class MapInfo {
 		writer.write(playable_width);
 		writer.write(playable_height);
 
-		const int flags = hide_minimap_preview * 0x0001 | modif_ally_priorities * 0x0002 | melee_map * 0x0004 | unknown * 0x0008 | masked_area_partially_visible * 0x0010 | fixed_player_settings * 0x0020 | custom_forces * 0x0040 | custom_techtree * 0x0080 | custom_abilities * 0x0100 | custom_upgrades * 0x0200 | unknown2 * 0x0400 | cliff_shore_waves * 0x0800 | rolling_shore_waves * 0x1000 | unknown3 * 0x2000 | unknown4 * 0x4000 | item_classification * 0x8000 | water_tinting * 0x10000 | accurate_probability_for_calculations * 0x20000 | custom_ability_skins * 0x40000;
+		const int flags = hide_minimap_preview * 0x0001 
+						| modif_ally_priorities * 0x0002
+						| melee_map * 0x0004
+						| unknown * 0x0008
+						| masked_area_partially_visible * 0x0010
+						| fixed_player_settings * 0x0020
+						| custom_forces * 0x0040
+						| custom_techtree * 0x0080
+						| custom_abilities * 0x0100
+						| custom_upgrades * 0x0200
+						| unknown2 * 0x0400
+						| cliff_shore_waves * 0x0800
+						| rolling_shore_waves * 0x1000
+						| unknown3 * 0x2000
+						| unknown4 * 0x4000
+						| item_classification * 0x8000
+						| water_tinting * 0x10000
+						| accurate_probability_for_calculations * 0x20000
+						| custom_ability_skins * 0x40000
+						| disable_deny_icon * 0x80000	
+						| force_default_zoom * 0x100000
+						| force_max_zoom * 0x200000
+						| force_min_zoom * 0x400000;
 
 		writer.write(flags);
 
@@ -424,6 +465,10 @@ export class MapInfo {
 
 		writer.write(supported_modes);
 		writer.write(game_data_version);
+
+		writer.write(default_cam_distance);
+		writer.write(max_cam_distance);
+		writer.write(min_cam_distance);
 
 		writer.write<uint32_t>(players.size());
 		for (const auto& i : players) {
