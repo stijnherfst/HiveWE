@@ -170,7 +170,7 @@ export class MapInfo {
 	static constexpr int write_game_version_patch = 3;
 	static constexpr int write_game_version_build = 22978;
 
-	void loadMainPart(BinaryReader reader, int version) {
+	void loadMainPart(BinaryReader& reader, int version) {
 
 		if (version < 1)
 			return;
@@ -273,10 +273,6 @@ export class MapInfo {
 		supported_modes = reader.read<uint32_t>();
 		if (version < 30)
 			return;
-		game_data_version = reader.read<uint32_t>();
-		if (version < 31) 
-			return;
-		supported_modes = reader.read<uint32_t>();
 		game_data_version = reader.read<uint32_t>();
 		if (version < 32)
 			return;
@@ -399,7 +395,7 @@ export class MapInfo {
 		if (version >= 12) {
 			random_unit_tables.resize(reader.read<uint32_t>());
 			for (auto&& i : random_unit_tables) {
-				i.number = reader.read<uint32_t>();
+				i.creation_number = reader.read<uint32_t>();
 				i.name = reader.read_c_string();
 				i.positions = reader.read_vector<int>(reader.read<uint32_t>());
 
