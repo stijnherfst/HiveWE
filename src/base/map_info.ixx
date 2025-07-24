@@ -170,40 +170,17 @@ export class MapInfo {
 	static constexpr int write_game_version_patch = 3;
 	static constexpr int write_game_version_build = 22978;
 
-	void load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
+	void loadMainPart(BinaryReader& reader, int version) {
 
-		const int version = reader.read<uint32_t>();
-
-		if (version != 33 && version != 32 && version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
-			std::cout << "Unknown war3map.w3i version\n";
-		}
-
-		if (version >= 18) {
-			map_version = reader.read<uint32_t>();
-			editor_version = reader.read<uint32_t>();
-
-			if (version >= 28) {
-				game_version_major = reader.read<uint32_t>();
-				game_version_minor = reader.read<uint32_t>();
-				game_version_patch = reader.read<uint32_t>();
-				game_version_build = reader.read<uint32_t>();
-			}
-		}
-		name = reader.read_c_string();
-		author = reader.read_c_string();
-		description = reader.read_c_string();
-		suggested_players = reader.read_c_string();
-
-		camera_left_bottom = reader.read<glm::vec2>();
-		camera_right_top = reader.read<glm::vec2>();
-		camera_left_top = reader.read<glm::vec2>();
-		camera_right_bottom = reader.read<glm::vec2>();
-
-		camera_complements = reader.read<glm::ivec4>();
-
+		if (version < 1)
+			return;
 		playable_width = reader.read<uint32_t>();
 		playable_height = reader.read<uint32_t>();
+		if (version < 2)
+			return;
+		if (version < 9) {
+			reader.advance(4); // unknown
+		}
 
 		const int flags = reader.read<uint32_t>();
 		hide_minimap_preview = flags & 0x0001;
@@ -217,7 +194,7 @@ export class MapInfo {
 		custom_abilities = flags & 0x0100;
 		custom_upgrades = flags & 0x0200;
 		unknown2 = flags & 0x0400; // has properties menu been opened
-		cliff_shore_waves = flags & 0x0800;
+		cliff_shore_waves = flags & 0x0800 || version < 15;
 		rolling_shore_waves = flags & 0x1000;
 		unknown3 = flags & 0x2000; // has terrain fog
 		unknown4 = flags & 0x4000; // requires expansion
@@ -230,68 +207,124 @@ export class MapInfo {
 		force_max_zoom = flags & 0x200000;
 		force_min_zoom = flags & 0x400000;
 
-		// Tileset
-		reader.advance(1);
+		if (version < 8)
+			return;
+		reader.advance(1); // tileset
+		
 
-		if (version >= 25) { // TFT
+		if (version < 10)
+			return;
+
+		if (version >= 17) {
 			loading_screen_number = reader.read<uint32_t>();
-			loading_screen_model = reader.read_c_string();
-			loading_screen_text = reader.read_c_string();
-			loading_screen_title = reader.read_c_string();
-			loading_screen_subtitle = reader.read_c_string();
-
-			game_data_set = reader.read<uint32_t>();
-
-			prologue_screen_model = reader.read_c_string();
-			prologue_text = reader.read_c_string();
-			prologue_title = reader.read_c_string();
-			prologue_subtitle = reader.read_c_string();
-
-			fog_style = reader.read<uint32_t>();
-			fog_start_z_height = reader.read<float>();
-			fog_end_z_height = reader.read<float>();
-			fog_density = reader.read<float>();
-			fog_color = reader.read<glm::u8vec4>();
-
-			weather_id = reader.read<uint32_t>();
-			custom_sound_environment = reader.read_c_string();
-			custom_light_tileset = reader.read<uint8_t>();
-			water_color = reader.read<glm::u8vec4>();
-
-			if (version >= 28) {
-				lua = reader.read<uint32_t>() == 1;
-			}
-
-			if (version >= 31) {
-				supported_modes = reader.read<uint32_t>();
-				game_data_version = reader.read<uint32_t>();
-			}
-			if (version >= 32) {
-				default_cam_distance = reader.read<uint32_t>();
-				max_cam_distance = reader.read<uint32_t>();
-				if (version >= 33) {
-					min_cam_distance = reader.read<uint32_t>();
-				}
-			}
-		} else if (version == 18) { // RoC
-			loading_screen_number = reader.read<uint32_t>();
-			loading_screen_text = reader.read_c_string();
-			loading_screen_title = reader.read_c_string();
-			loading_screen_subtitle = reader.read_c_string();
-
-			// game_data_set = reader.read<uint32_t>();
-			reader.advance(4); // ToDo RoC map loading screen number
-
-			prologue_text = reader.read_c_string();
-			prologue_title = reader.read_c_string();
-			prologue_subtitle = reader.read_c_string();
-		} else {
-			reader.advance(1); // unknown, loading screen number but only 1 digit?
-			loading_screen_text = reader.read_c_string();
-			loading_screen_title = reader.read_c_string();
-			loading_screen_subtitle = reader.read_c_string();
-			reader.advance(4); // prologue stuff?
 		}
+
+		if (version != 18 && version != 19) {
+			loading_screen_model = reader.read_c_string();
+		}
+
+		loading_screen_text = reader.read_c_string();
+
+		if (version < 11) 
+			return;
+
+		loading_screen_title = reader.read_c_string();
+		loading_screen_subtitle = reader.read_c_string();
+		
+		
+		if (version >= 17) {
+			game_data_set = reader.read<uint32_t>();
+		}
+
+		if (version < 13)
+			return;
+
+		if (version != 18 && version != 19) {
+			prologue_screen_model = reader.read_c_string();
+		}
+		prologue_text = reader.read_c_string();
+		prologue_title = reader.read_c_string();
+		prologue_subtitle = reader.read_c_string();
+
+		if (version < 19)
+			return;
+		fog_style = reader.read<uint32_t>();
+		fog_start_z_height = reader.read<float>();
+		fog_end_z_height = reader.read<float>();
+		fog_density = reader.read<float>();
+		fog_color = reader.read<glm::u8vec4>();
+		if (version < 21)
+			return;
+		weather_id = reader.read<uint32_t>();
+		if (version < 22)
+			return;
+		custom_sound_environment = reader.read_c_string();
+		if (version < 23)
+			return;
+		custom_light_tileset = reader.read<uint8_t>();
+		if (version < 25)
+			return;
+		water_color = reader.read<glm::u8vec4>();
+		if (version < 28)
+			return;
+		lua = reader.read<uint32_t>() == 1;
+		if (version < 29)
+			return;
+		supported_modes = reader.read<uint32_t>();
+		if (version < 30)
+			return;
+		game_data_version = reader.read<uint32_t>();
+		if (version < 32)
+			return;
+		default_cam_distance = reader.read<uint32_t>();
+		max_cam_distance = reader.read<uint32_t>();
+		if (version < 33)
+			return;
+		min_cam_distance = reader.read<uint32_t>();
+	}
+
+	void load() {
+		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
+
+		const int version = reader.read<uint32_t>();
+
+		if (version != 33 && version != 32 && version != 31 && version != 28 && version != 25 && version != 18 && version != 15) {
+			std::cout << "Possibly unsupported war3map.w3i version\n";
+		}
+
+		if (version >= 16) {
+			map_version = reader.read<uint32_t>();
+			editor_version = reader.read<uint32_t>();
+			if (version >= 27) {
+				game_version_major = reader.read<uint32_t>();
+				game_version_minor = reader.read<uint32_t>();
+				game_version_patch = reader.read<uint32_t>();
+				game_version_build = reader.read<uint32_t>();
+			}
+		}
+
+		name = reader.read_c_string();
+		author = reader.read_c_string();
+		description = reader.read_c_string();
+		if (version >= 8) {
+			suggested_players = reader.read_c_string();
+		}
+
+		if (version < 4) {
+			reader.advance(8); // unknown
+		} else if (version < 9) {
+			reader.advance(24); // unknown
+		}
+		camera_left_bottom = reader.read<glm::vec2>();
+		camera_right_top = reader.read<glm::vec2>();
+		camera_left_top = reader.read<glm::vec2>();
+		camera_right_bottom = reader.read<glm::vec2>();
+
+		if (version >= 14) {
+			camera_complements = reader.read<glm::ivec4>();
+		}
+
+		loadMainPart(reader, version);
 
 		players.resize(reader.read<uint32_t>());
 		for (auto&& i : players) {
@@ -301,73 +334,86 @@ export class MapInfo {
 			i.fixed_start_position = reader.read<uint32_t>();
 			i.name = reader.read_c_string();
 			i.starting_position = reader.read<glm::vec2>();
-			i.ally_low_priorities_flags = reader.read<uint32_t>();
-			i.ally_high_priorities_flags = reader.read<uint32_t>();
-			if (version >= 31) {
-				i.enemy_low_priorities_flags = reader.read<uint32_t>();
-				i.enemy_high_priorities_flags = reader.read<uint32_t>();
-			}
-		}
-
-		forces.resize(reader.read<uint32_t>());
-		for (auto&& i : forces) {
-			const uint32_t force_flags = reader.read<uint32_t>();
-			i.allied = force_flags & 0b00000001;
-			i.allied_victory = force_flags & 0b00000010;
-			i.share_vision = force_flags & 0b00001000;
-			i.share_unit_control = force_flags & 0b00010000;
-			i.share_advanced_unit_control = force_flags & 0b00100000;
-
-			i.player_masks = reader.read<uint32_t>();
-			i.name = reader.read_c_string();
-		}
-
-		if (reader.remaining() < 4) {
-			return;
-		}
-
-		available_upgrades.resize(reader.read<uint32_t>());
-		for (auto&& i : available_upgrades) {
-			i.player_flags = reader.read<uint32_t>();
-			i.id = reader.read_string(4);
-			i.level = reader.read<uint32_t>();
-			i.availability = reader.read<uint32_t>();
-		}
-
-		if (reader.remaining() < 4) {
-			return;
-		}
-
-		available_tech.resize(reader.read<uint32_t>());
-		for (auto&& i : available_tech) {
-			i.player_flags = reader.read<uint32_t>();
-			i.id = reader.read_string(4);
-		}
-
-		if (reader.remaining() < 4) {
-			return;
-		}
-
-		random_unit_tables.resize(reader.read<uint32_t>());
-		for (auto&& i : random_unit_tables) {
-			i.creation_number = reader.read<uint32_t>();
-			i.name = reader.read_c_string();
-			i.positions = reader.read_vector<int>(reader.read<uint32_t>());
-
-			i.lines.resize(reader.read<uint32_t>());
-			for (auto&& j : i.lines) {
-				j.chance = reader.read<uint32_t>();
-				for (size_t k = 0; k < i.positions.size(); k++) {
-					j.ids.push_back(reader.read_string(4));
+			if (version >= 5) {
+				i.ally_low_priorities_flags = reader.read<uint32_t>();
+				i.ally_high_priorities_flags = reader.read<uint32_t>();
+				if (version >= 31) {
+					i.enemy_low_priorities_flags = reader.read<uint32_t>();
+					i.enemy_high_priorities_flags = reader.read<uint32_t>();
 				}
 			}
 		}
 
+		if (version >= 3) {
+			forces.resize(reader.read<uint32_t>());
+			for (auto&& i : forces) {
+				const uint32_t force_flags = reader.read<uint32_t>();
+				i.allied = force_flags & 0b00000001;
+				i.allied_victory = force_flags & 0b00000010;
+				i.share_vision = force_flags & 0b00001000;
+				i.share_unit_control = force_flags & 0b00010000;
+				i.share_advanced_unit_control = force_flags & 0b00100000;
+
+				i.player_masks = reader.read<uint32_t>();
+				i.name = reader.read_c_string();
+			}
+		}
+		else {
+			// init melee layout, 1 force, or let it break?
+		}
+
 		if (reader.remaining() < 4) {
 			return;
 		}
 
-		if (version >= 25) {
+		if (version >= 6) {
+			available_upgrades.resize(reader.read<uint32_t>());
+			for (auto&& i : available_upgrades) {
+				i.player_flags = reader.read<uint32_t>();
+				i.id = reader.read_string(4);
+				i.level = reader.read<uint32_t>();
+				i.availability = reader.read<uint32_t>();
+			}
+		}
+
+		if (reader.remaining() < 4) {
+			return;
+		}
+
+		if (version >= 7) {
+			available_tech.resize(reader.read<uint32_t>());
+			for (auto&& i : available_tech) {
+				i.player_flags = reader.read<uint32_t>();
+				i.id = reader.read_string(4);
+			}
+		}
+
+		if (reader.remaining() < 4) {
+			return;
+		}
+
+		if (version >= 12) {
+			random_unit_tables.resize(reader.read<uint32_t>());
+			for (auto&& i : random_unit_tables) {
+				i.creation_number = reader.read<uint32_t>();
+				i.name = reader.read_c_string();
+				i.positions = reader.read_vector<int>(reader.read<uint32_t>());
+
+				i.lines.resize(reader.read<uint32_t>());
+				for (auto&& j : i.lines) {
+					j.chance = reader.read<uint32_t>();
+					for (size_t k = 0; k < i.positions.size(); k++) {
+						j.ids.push_back(reader.read_string(4));
+					}
+				}
+			}
+		}
+		
+		if (reader.remaining() < 4) {
+			return;
+		}
+
+		if (version >= 24) {
 			random_item_tables.resize(reader.read<uint32_t>());
 			for (auto&& i : random_item_tables) {
 				i.creation_number = reader.read<uint32_t>();
@@ -381,6 +427,14 @@ export class MapInfo {
 					}
 				}
 			}
+		}
+		
+		if (reader.remaining() < 4) {
+			return;
+		}
+		
+		if (version == 26 || version == 27) {
+			lua = reader.read<uint32_t>() == 1;
 		}
 	}
 
