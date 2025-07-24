@@ -170,6 +170,123 @@ export class MapInfo {
 	static constexpr int write_game_version_patch = 3;
 	static constexpr int write_game_version_build = 22978;
 
+	void loadMainPart(BinaryReader reader, int version) {
+
+		if (version < 1)
+			return;
+		playable_width = reader.read<uint32_t>();
+		playable_height = reader.read<uint32_t>();
+		if (version < 2)
+			return;
+		if (version < 9) {
+			reader.advance(4); // unknown
+		}
+
+		const int flags = reader.read<uint32_t>();
+		hide_minimap_preview = flags & 0x0001;
+		modif_ally_priorities = flags & 0x0002;
+		melee_map = flags & 0x0004;
+		unknown = flags & 0x0008; // playable map size was large
+		masked_area_partially_visible = flags & 0x0010;
+		fixed_player_settings = flags & 0x0020;
+		custom_forces = flags & 0x0040;
+		custom_techtree = flags & 0x0080;
+		custom_abilities = flags & 0x0100;
+		custom_upgrades = flags & 0x0200;
+		unknown2 = flags & 0x0400; // has properties menu been opened
+		cliff_shore_waves = flags & 0x0800 || version < 15;
+		rolling_shore_waves = flags & 0x1000;
+		unknown3 = flags & 0x2000; // has terrain fog
+		unknown4 = flags & 0x4000; // requires expansion
+		item_classification = flags & 0x8000;
+		water_tinting = flags & 0x10000;
+		accurate_probability_for_calculations = flags & 0x20000;
+		custom_ability_skins = flags & 0x40000;
+		disable_deny_icon = flags & 0x80000;
+		force_default_zoom = flags & 0x100000;
+		force_max_zoom = flags & 0x200000;
+		force_min_zoom = flags & 0x400000;
+
+		if (version < 8)
+			return;
+		reader.advance(1); // tileset
+		
+
+		if (version < 10)
+			return;
+
+		if (version >= 17) {
+			loading_screen_number = reader.read<uint32_t>();
+		}
+
+		if (version != 18 && version != 19) {
+			loading_screen_model = reader.read_c_string();
+		}
+
+		loading_screen_text = reader.read_c_string();
+
+		if (version < 11) 
+			return;
+
+		loading_screen_title = reader.read_c_string();
+		loading_screen_subtitle = reader.read_c_string();
+		
+		
+		if (version >= 17) {
+			game_data_set = reader.read<uint32_t>();
+		}
+
+		if (version < 13)
+			return;
+
+		if (version != 18 && version != 19) {
+			prologue_screen_model = reader.read_c_string();
+		}
+		prologue_text = reader.read_c_string();
+		prologue_title = reader.read_c_string();
+		prologue_subtitle = reader.read_c_string();
+
+		if (version < 19)
+			return;
+		fog_style = reader.read<uint32_t>();
+		fog_start_z_height = reader.read<float>();
+		fog_end_z_height = reader.read<float>();
+		fog_density = reader.read<float>();
+		fog_color = reader.read<glm::u8vec4>();
+		if (version < 21)
+			return;
+		weather_id = reader.read<uint32_t>();
+		if (version < 22)
+			return;
+		custom_sound_environment = reader.read_c_string();
+		if (version < 23)
+			return;
+		custom_light_tileset = reader.read<uint8_t>();
+		if (version < 25)
+			return;
+		water_color = reader.read<glm::u8vec4>();
+		if (version < 28)
+			return;
+		lua = reader.read<uint32_t>() == 1;
+		if (version < 29)
+			return;
+		supported_modes = reader.read<uint32_t>();
+		if (version < 30)
+			return;
+		game_data_version = reader.read<uint32_t>();
+		if (version < 31) 
+			return;
+		supported_modes = reader.read<uint32_t>();
+		game_data_version = reader.read<uint32_t>();
+		if (version < 32)
+			return;
+		default_cam_distance = reader.read<uint32_t>();
+		max_cam_distance = reader.read<uint32_t>();
+		if (version < 33)
+			return;
+		min_cam_distance = reader.read<uint32_t>();
+	}
+
 	void load() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
 
@@ -211,109 +328,7 @@ export class MapInfo {
 			camera_complements = reader.read<glm::ivec4>();
 		}
 
-		if (version >= 1) {
-			playable_width = reader.read<uint32_t>();
-			playable_height = reader.read<uint32_t>();
-			if (version >= 2) {
-				if (version < 9) {
-					reader.advance(4); // unknown
-				}
-
-				const int flags = reader.read<uint32_t>();
-				hide_minimap_preview = flags & 0x0001;
-				modif_ally_priorities = flags & 0x0002;
-				melee_map = flags & 0x0004;
-				unknown = flags & 0x0008; // playable map size was large
-				masked_area_partially_visible = flags & 0x0010;
-				fixed_player_settings = flags & 0x0020;
-				custom_forces = flags & 0x0040;
-				custom_techtree = flags & 0x0080;
-				custom_abilities = flags & 0x0100;
-				custom_upgrades = flags & 0x0200;
-				unknown2 = flags & 0x0400; // has properties menu been opened
-				cliff_shore_waves = flags & 0x0800 || version < 15;
-				rolling_shore_waves = flags & 0x1000;
-				unknown3 = flags & 0x2000; // has terrain fog
-				unknown4 = flags & 0x4000; // requires expansion
-				item_classification = flags & 0x8000;
-				water_tinting = flags & 0x10000;
-				accurate_probability_for_calculations = flags & 0x20000;
-				custom_ability_skins = flags & 0x40000;
-				disable_deny_icon = flags & 0x80000;
-				force_default_zoom = flags & 0x100000;
-				force_max_zoom = flags & 0x200000;
-				force_min_zoom = flags & 0x400000;
-
-				if (version >= 8) {
-					reader.advance(1); // tileset
-				}
-
-				if (version >= 10) {
-					if (version >= 17) {
-						loading_screen_number = reader.read<uint32_t>();
-					}
-					if (version != 18 && version != 19) {
-						loading_screen_model = reader.read_c_string();
-					}
-					loading_screen_text = reader.read_c_string();
-					if (version >= 11) {
-						loading_screen_title = reader.read_c_string();
-						loading_screen_subtitle = reader.read_c_string();
-					}
-				}
-				if (version >= 17) {
-					game_data_set = reader.read<uint32_t>();
-				}
-			}
-		}
-
-		if (version >= 13) {
-			if (version != 18 && version != 19) {
-				prologue_screen_model = reader.read_c_string();
-			}
-			prologue_text = reader.read_c_string();
-			prologue_title = reader.read_c_string();
-			prologue_subtitle = reader.read_c_string();
-		}
-		if (version >= 19) {
-			fog_style = reader.read<uint32_t>();
-			fog_start_z_height = reader.read<float>();
-			fog_end_z_height = reader.read<float>();
-			fog_density = reader.read<float>();
-			fog_color = reader.read<glm::u8vec4>();
-			if (version >= 21) {
-				weather_id = reader.read<uint32_t>();
-				if (version >= 22) {
-					custom_sound_environment = reader.read_c_string();
-					if (version >= 23) {
-						custom_light_tileset = reader.read<uint8_t>();
-						if (version >= 25) {
-							water_color = reader.read<glm::u8vec4>();
-							if (version >= 28) {
-								lua = reader.read<uint32_t>() == 1;
-								if (version >= 29) {
-									supported_modes = reader.read<uint32_t>();
-									if (version >= 30) {
-										game_data_version = reader.read<uint32_t>();
-										if (version >= 31) {
-											supported_modes = reader.read<uint32_t>();
-											game_data_version = reader.read<uint32_t>();
-											if (version >= 32) {
-												default_cam_distance = reader.read<uint32_t>();
-												max_cam_distance = reader.read<uint32_t>();
-												if (version >= 33) {
-													min_cam_distance = reader.read<uint32_t>();
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
+		loadMainPart(reader, version);
 
 		players.resize(reader.read<uint32_t>());
 		for (auto&& i : players) {
