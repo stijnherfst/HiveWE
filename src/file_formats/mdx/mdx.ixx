@@ -402,6 +402,7 @@ namespace mdx {
 		float intensity;
 		glm::vec3 ambient_color;
 		float ambient_intensity;
+		float shadow_intensity;
 
 		TrackHeader<uint32_t> KLAS;
 		TrackHeader<uint32_t> KLAE;
@@ -650,7 +651,7 @@ namespace mdx {
 	public:
 		int unique_tracks = 0;
 
-		static constexpr uint32_t LATEST_MDX_VERSION = 1100;
+		static constexpr uint32_t LATEST_MDX_VERSION = 1200;
 
 		uint32_t version = LATEST_MDX_VERSION;
 		std::string name;
