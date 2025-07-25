@@ -368,6 +368,13 @@ namespace mdx {
 			light.intensity = reader.read<float>();
 			light.ambient_color = reader.read<glm::vec3>();
 			light.ambient_intensity = reader.read<float>();
+			if (mdx.version >= 1200) {
+			 light.shadow_intensity = reader.read<float>();
+			}
+			else {
+				light.shadow_intensity = 0.4f;
+			}
+
 			while (reader.position < node_reader_pos + inclusive_size) {
 				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KLAS) {
