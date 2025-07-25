@@ -269,6 +269,7 @@ namespace mdx {
 			writer.write<float>(light.intensity);
 			writer.write<glm::vec3>(light.ambient_color);
 			writer.write<float>(light.ambient_intensity);
+			writer.write<float>(light.shadow_intensity);
 
 			light.KLAS.save(TrackTag::KLAS, writer);
 			light.KLAE.save(TrackTag::KLAE, writer);
