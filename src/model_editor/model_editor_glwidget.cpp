@@ -14,10 +14,15 @@ import OpenGLUtilities;
 import BinaryReader;
 import Hierarchy;
 import MDX;
+import Camera;
 import ResourceManager;
 import <imgui.h>;
 
 namespace fs = std::filesystem;
+
+// 2025/07/30 These aren't in the class due to some compiler issue with modules
+InputHandler my_input_handler;
+mdx::MDX::OptimizationStats stats;
 
 ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
 	makeCurrent();
@@ -253,7 +258,7 @@ void ModelEditorGLWidget::paintGL() {
 	//for (const auto& i : mesh->model->textures) {
 	//	ImGui::Text(i.file_name.string().c_str());
 	//}
-	
+
 
 	// more widgets...
 

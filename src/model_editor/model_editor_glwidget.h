@@ -43,10 +43,8 @@ public:
 
 	int64_t optimization_file_size_reduction = 0;
 	float optimization_file_size_reduction_percent = 0.f;
-	mdx::MDX::OptimizationStats stats;
 
 	std::shared_ptr<Shader> shader;
 
 	ModelEditorCamera camera;
-	InputHandler my_input_handler;
 };

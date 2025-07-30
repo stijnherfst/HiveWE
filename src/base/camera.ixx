@@ -22,10 +22,10 @@ export class InputHandler {
 	std::unordered_set<int> keys_pressed;
 
 	bool key_pressed(const Qt::Key key) const {
-		return keys_pressed.count(key);
+		return keys_pressed.contains(key);
 	}
 
-	void mouse_move_event(QMouseEvent* event) {
+	void mouse_move_event(const QMouseEvent* event) {
 		previous_mouse = mouse;
 		mouse = { event->pos().x(), event->pos().y() };
 	}
@@ -182,7 +182,7 @@ export struct Camera {
 		return v0 && v1 && v2 && v3 && v4;
 	}
 
-	void update(double delta) {
+	void update(const double delta) {
 		direction = glm::vec3(
 			std::cos(vertical_angle) * std::sin(horizontal_angle),
 			std::cos(vertical_angle) * std::cos(horizontal_angle),
@@ -235,7 +235,7 @@ export struct Camera {
 		}
 	}
 
-	void mouse_scroll_event(QWheelEvent* event) {
+	void mouse_scroll_event(const QWheelEvent* event) {
 		distance = std::clamp(distance * std::pow(0.999f, static_cast<float>(event->angleDelta().y())), 0.001f, 1000.f);
 		update(0.0);
 	}
