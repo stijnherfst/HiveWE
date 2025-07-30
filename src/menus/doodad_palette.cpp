@@ -8,6 +8,8 @@
 #include <QListView>
 #include <QToolButton>
 #include <QShortcut>
+#include <QFileDialog>
+#include <QSettings>
 #include <QFrame>
 #include <QGridLayout>
 #include <QBoxLayout>
@@ -43,8 +45,9 @@ import BinaryWriter;
 import BinaryReader;
 import Hierarchy;
 
-DoodadPalette::DoodadPalette(QWidget* parent)
-	: Palette(parent) {
+namespace fs = std::filesystem;
+
+DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
@@ -313,13 +316,9 @@ DoodadPalette::DoodadPalette(QWidget* parent)
 		ui.search->selectAll();
 	});
 
-	connect(change_mode_this, &QShortcut::activated, [&]() {
-		selection_mode->click();
-	});
+	connect(change_mode_this, &QShortcut::activated, [&]() { selection_mode->click(); });
 
-	connect(change_mode_parent, &QShortcut::activated, [&]() {
-		selection_mode->click();
-	});
+	connect(change_mode_parent, &QShortcut::activated, [&]() { selection_mode->click(); });
 
 	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
@@ -379,6 +378,20 @@ DoodadPalette::DoodadPalette(QWidget* parent)
 			return;
 		}
 
+		QSettings settings;
+
+		const fs::path file_name = QFileDialog::getSaveFileName(
+									   this,
+									   "Choose Save Location",
+									   settings.value("openDirectory").toString(),
+									   "Warcraft III Model (*.mdx)"
+		)
+									   .toStdString();
+
+		if (file_name.empty()) {
+			return;
+		}
+
 		mdx::MDX base;
 
 		glm::vec3 midpoint = glm::vec3(0.f);
@@ -395,27 +408,13 @@ DoodadPalette::DoodadPalette(QWidget* parent)
 		base.deduplicate_textures().deduplicate_materials().deduplicate_geosets().calculate_extents();
 
 		auto writer = base.save();
-		std::ofstream outfile("C:/Users/User/Desktop/merged.mdx", std::ios::binary | std::ios::out);
+		std::ofstream outfile(file_name, std::ios::binary | std::ios::out);
 
 		if (!outfile) {
 			throw std::runtime_error("Error writing merged file ");
 		}
 
 		outfile.write(reinterpret_cast<char const*>(writer.buffer.data()), writer.buffer.size());
-		outfile.close();
-
-		BinaryReader reader = hierarchy.open_file("C:/Users/User/Desktop/merged.mdx");
-		mdx::MDX mdx(reader);
-
-		auto mdl = mdx.to_mdl();
-
-		auto path = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/yeet.mdl";
-
-		std::ofstream file(path.toStdString());
-		file.write(mdl.data(), mdl.size());
-		file.close();
-
-		QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
 	});
 
 	// Default to Trees/Destructibles
@@ -497,7 +496,8 @@ void DoodadPalette::select_id_in_palette(std::string id) {
 	if (destructibles_slk.row_headers.contains(id)) {
 		const auto category = destructibles_slk.data("category", id);
 		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
-		const auto index = destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(id)));
+		const auto index =
+			destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(id)));
 		const auto finally = concat_table->mapFromSource(index);
 		ui.doodads->setCurrentIndex(finally);
 		selection_changed(finally);
@@ -573,7 +573,8 @@ void DoodadPalette::update_selection_info() {
 				auto index = doodads_table->index(doodads_slk.row_headers.at(doodad.id), doodads_slk.column_headers.at("name"));
 				selection_name->setText(doodads_table->data(index).toString());
 			} else {
-				auto index = destructibles_table->index(destructibles_slk.row_headers.at(doodad.id), destructibles_slk.column_headers.at("name"));
+				auto index =
+					destructibles_table->index(destructibles_slk.row_headers.at(doodad.id), destructibles_slk.column_headers.at("name"));
 				selection_name->setText(destructibles_table->data(index).toString());
 			}
 		} else {

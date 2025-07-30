@@ -15,6 +15,7 @@ AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: Yes

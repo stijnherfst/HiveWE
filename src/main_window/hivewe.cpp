@@ -2,6 +2,7 @@
 
 import std;
 import Hierarchy;
+import BinaryReader;
 import MPQ;
 import OpenGLUtilities;
 import Camera;
