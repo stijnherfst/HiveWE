@@ -165,7 +165,7 @@ namespace mdx {
 			geosets[index].skin.append_range(geosets[i].skin);
 
 			// By the lord, please don't use multiple uv sets
-			assert(geosets[base_geoset].uv_sets.size() == geosets[i].uv_sets.size());
+			assert(geosets[index].uv_sets.size() == geosets[i].uv_sets.size());
 
 			for (size_t j = 0; j < geosets[i].uv_sets.size(); j++) {
 				geosets[index].uv_sets[j].append_range(geosets[i].uv_sets[j]);

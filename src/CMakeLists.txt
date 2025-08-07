@@ -28,7 +28,10 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/doodads_undo.ixx"
 	"base/units.ixx"
 	"base/terrain.ixx"
-	"base/triggers.ixx"
+
+	"base/triggers/triggers.ixx"
+	"base/triggers/gui.cpp"
+	"base/triggers/map_script.cpp"
 
 	"file_formats/blp.ixx"
 	"file_formats/casc.ixx"
