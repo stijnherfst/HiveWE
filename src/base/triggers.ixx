@@ -1,7 +1,7 @@
 module;
 
-#include <QProcess>
 #include <QDir>
+#include <QProcess>
 
 export module Triggers;
 
@@ -178,7 +178,7 @@ struct MapScriptWriter {
 		}
 	}
 
-	template <typename... Args>
+	template<typename... Args>
 	constexpr void inline_call(std::string_view name, Args&&... args) {
 		std::string work = "{}(";
 
@@ -193,7 +193,7 @@ struct MapScriptWriter {
 		raw_write_to_log(work, std::make_format_args(name, args...));
 	}
 
-	template <typename... Args>
+	template<typename... Args>
 	constexpr void call(std::string_view name, Args&&... args) {
 		std::string work;
 
@@ -226,7 +226,7 @@ struct MapScriptWriter {
 		script += string;
 	}
 
-	template <typename... Args>
+	template<typename... Args>
 	constexpr void write_ln(Args&&... args) {
 		std::string work = std::string(current_indentation, '\t');
 		for (size_t i = 0; i < sizeof...(args); i++) {
@@ -238,7 +238,7 @@ struct MapScriptWriter {
 		raw_write_to_log(work, std::make_format_args(args...));
 	}
 
-	template <typename T>
+	template<typename T>
 	constexpr void forloop(size_t start, size_t end, T callback) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
@@ -254,7 +254,7 @@ struct MapScriptWriter {
 		script += "end\n";
 	}
 
-	template <typename T>
+	template<typename T>
 	void function(std::string_view name, T callback) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
@@ -280,7 +280,7 @@ struct MapScriptWriter {
 		}
 	}
 
-	template <typename T>
+	template<typename T>
 	void if_statement(std::string_view condition, T callback) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
@@ -302,30 +302,30 @@ struct MapScriptWriter {
 		}
 	}
 
-	 template <typename T>
-	 void global_variable(std::string_view name, T value) {
+	template<typename T>
+	void global_variable(std::string_view name, T value) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
 		}
 		std::format_to(std::back_inserter(script), "udg_{} = {}", name, value);
-	 }
+	}
 
-	 /// The ID should not be quoted
-	 std::string four_cc(std::string_view id) {
+	/// The ID should not be quoted
+	std::string four_cc(std::string_view id) {
 		if (mode == Mode::lua) {
 			return std::format("FourCC(\"{}\")", id);
 		} else {
-			return std::format("\"{}\"", id);;
+			return std::format("\"{}\"", id);
 		}
-	 }
+	}
 
-	 std::string null() {
+	std::string null() {
 		if (mode == Mode::lua) {
 			return "nil";
 		} else {
 			return "null";
 		}
-	 }
+	}
 };
 
 export class Triggers {
@@ -340,7 +340,7 @@ export class Triggers {
 	int unknown2 = 0;
 	int trig_def_ver = 2;
 
-public:
+  public:
 	ini::INI trigger_strings;
 	ini::INI trigger_data;
 
@@ -351,8 +351,7 @@ public:
 	std::vector<TriggerVariable> variables;
 	std::vector<Trigger> triggers;
 
-private:
-
+  private:
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version) {
 		parameter.type = static_cast<TriggerParameter::Type>(reader.read<uint32_t>());
 		parameter.value = reader.read_c_string();
@@ -455,8 +454,12 @@ private:
 
 		if (eca.name == "WaitForCondition") {
 			output += "while (true) do\n";
-			output += std::format("if (({})) then break end\n", resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)));
-			output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
+			output += std::format(
+				"if (({})) then break end\n",
+				resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0))
+			);
+			output += "TriggerSleepAction(RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, "
+				+ resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "))\n";
 			output += "end\n";
 
 			return output;
@@ -484,7 +487,11 @@ private:
 
 			output += variable + " = " + resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + "\n";
 			output += "while (true) do\n";
-			output += std::format("if (({} > {})) then break end\n", variable, resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2)));
+			output += std::format(
+				"if (({} > {})) then break end\n",
+				variable,
+				resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2))
+			);
 			for (const auto& i : eca.ecas) {
 				output += convert_eca_to_jass(i, pre_actions, trigger_name, false) + "\n";
 			}
@@ -522,16 +529,19 @@ private:
 			return "if (" + function_name + "()) then\n" + thentext + "else\n" + elsetext + "end";
 		}
 
-		if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple" || eca.name == "EnumDestructablesInCircleBJMultiple") {
+		if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple"
+			|| eca.name == "EnumDestructablesInCircleBJMultiple") {
 			std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
 
 			const std::string function_name = generate_function_name(trigger_name);
 
 			if (eca.name == "EnumDestructablesInCircleBJMultiple") {
-				output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", " +
-						  resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + ", function " + function_name + ")\n";
+				output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", "
+					+ resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1)) + ", function " + function_name
+					+ ")\n";
 			} else {
-				output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0)) + ", function " + function_name + ")\n";
+				output += script_name + "(" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0))
+					+ ", function " + function_name + ")\n";
 			}
 
 			std::string toto;
@@ -580,17 +590,21 @@ private:
 		return testt(trigger_name, eca.name, eca.parameters, pre_actions, !nested);
 	}
 
-	std::string testt(const std::string& trigger_name, const std::string& parent_name, const std::vector<TriggerParameter>& parameters, std::string& pre_actions, bool add_call) const {
+	std::string testt(
+		const std::string& trigger_name,
+		const std::string& parent_name,
+		const std::vector<TriggerParameter>& parameters,
+		std::string& pre_actions,
+		bool add_call
+	) const {
 		std::string output;
 
 		std::string script_name = trigger_data.data("TriggerActions", "_" + parent_name + "_ScriptName");
 
 		if (parent_name == "SetVariable") {
-			const std::string& type = (*find_if(variables.begin(), variables.end(),
-												[parameters](const TriggerVariable& var) {
-													return var.name == parameters[0].value;
-												}))
-										  .type;
+			const std::string& type = (*std::ranges::find_if(variables, [parameters](const TriggerVariable& var) {
+										  return var.name == parameters[0].value;
+									  })).type;
 			const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, "");
 			const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, type);
 
@@ -632,7 +646,11 @@ private:
 			output += resolve_parameter(parameters[1], trigger_name, pre_actions, get_type(parent_name, 1)) + "\n";
 
 			output += "while (true) do\n";
-			output += std::format("if (({} > {})) then break end\n", variable, resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2)));
+			output += std::format(
+				"if (({} > {})) then break end\n",
+				variable,
+				resolve_parameter(parameters[2], trigger_name, pre_actions, get_type(parent_name, 2))
+			);
 			output += resolve_parameter(parameters[3], trigger_name, pre_actions, get_type(parent_name, 3), true) + "\n";
 			output += variable + " = " + variable + " + 1\n";
 			output += "end\n";
@@ -770,7 +788,13 @@ private:
 		return /*(add_call ? "call " : "") + */ (script_name.empty() ? parent_name : script_name) + "(" + output + ")";
 	}
 
-	std::string resolve_parameter(const TriggerParameter& parameter, const std::string& trigger_name, std::string& pre_actions, const std::string& type, bool add_call = false) const {
+	std::string resolve_parameter(
+		const TriggerParameter& parameter,
+		const std::string& trigger_name,
+		std::string& pre_actions,
+		const std::string& type,
+		bool add_call = false
+	) const {
 		if (parameter.has_sub_parameter) {
 			return testt(trigger_name, parameter.sub_parameter.name, parameter.sub_parameter.parameters, pre_actions, add_call);
 		} else {
@@ -786,7 +810,10 @@ private:
 					}
 
 					if (preset_type == "timedlifebuffcode" // ToDo this seems like a hack?
-						|| type == "abilcode" || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode" || type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode" || type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode" || type == "terraintype") {
+						|| type == "abilcode" || type == "buffcode" || type == "destructablecode" || type == "itemcode"
+						|| type == "ordercode" || type == "techcode" || type == "unitcode" || type == "heroskillcode"
+						|| type == "weathereffectcode" || type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode"
+						|| type == "terraintype") {
 						return "FourCC(" + trigger_data.data("TriggerParams", parameter.value, 2) + ")";
 					}
 
@@ -814,7 +841,10 @@ private:
 					} else if (get_base_type(type) == "string") {
 						return "\"" + parameter.value + "\"";
 					} else if (type == "abilcode" // ToDo this seems like a hack?
-							   || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode" || type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode" || type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode" || type == "terraintype") {
+							   || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode"
+							   || type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode"
+							   || type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode"
+							   || type == "terraintype") {
 						return "FourCC('" + parameter.value + "')";
 					} else {
 						return parameter.value;
@@ -917,14 +947,12 @@ private:
 
 		if (!conditions.is_empty()) {
 			final_trigger.function(trigger_conditions_name, [&] {
-			    final_trigger.merge(conditions);
+				final_trigger.merge(conditions);
 				final_trigger.write_ln("return true");
 			});
 		}
 
-		final_trigger.function(trigger_action_name, [&] {
-			final_trigger.merge(actions);
-		});
+		final_trigger.function(trigger_action_name, [&] { final_trigger.merge(actions); });
 
 		final_trigger.function("InitTrig_" + trigger_name, [&] {
 			final_trigger.set_variable(trigger_variable_name, "CreateTrigger()");
@@ -944,7 +972,14 @@ private:
 		// return pre_actions + conditions + actions + events;
 	}
 
-	void generate_global_variables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, std::unordered_map<std::string, std::string>& destructable_variables, const Regions& regions, const GameCameras& cameras, const Sounds& sounds) {
+	void generate_global_variables(
+		MapScriptWriter& script,
+		std::unordered_map<std::string, std::string>& unit_variables,
+		std::unordered_map<std::string, std::string>& destructable_variables,
+		const Regions& regions,
+		const GameCameras& cameras,
+		const Sounds& sounds
+	) {
 		if (script.mode == MapScriptWriter::Mode::jass) {
 			script.write_ln("globals");
 		}
@@ -1071,7 +1106,12 @@ private:
 		});
 	}
 
-	void generate_units(MapScriptWriter& script, std::unordered_map<std::string, std::string>& unit_variables, const Terrain& terrain, const Units& units) {
+	void generate_units(
+		MapScriptWriter& script,
+		std::unordered_map<std::string, std::string>& unit_variables,
+		const Terrain& terrain,
+		const Units& units
+	) {
 		script.function("CreateAllUnits", [&]() {
 			script.local("unit", "u", script.null());
 			script.local("integer", "unitID", "0");
@@ -1088,13 +1128,18 @@ private:
 					unit_reference = std::format("gg_unit_{}_{:0>4}", i.id, i.creation_number);
 				}
 
-				script.set_variable(unit_reference, std::format("BlzCreateUnitWithSkin(Player({}), {}, {:.4f}, {:.4f}, {:.4f}, {})",
-																i.player,
-																script.four_cc(i.id),
-																i.position.x * 128.f + terrain.offset.x,
-																i.position.y * 128.f + terrain.offset.y,
-																glm::degrees(i.angle),
-																script.four_cc(i.skin_id)));
+				script.set_variable(
+					unit_reference,
+					std::format(
+						"BlzCreateUnitWithSkin(Player({}), {}, {:.4f}, {:.4f}, {:.4f}, {})",
+						i.player,
+						script.four_cc(i.id),
+						i.position.x * 128.f + terrain.offset.x,
+						i.position.y * 128.f + terrain.offset.y,
+						glm::degrees(i.angle),
+						script.four_cc(i.skin_id)
+					)
+				);
 
 				if (i.health != -1) {
 					script.set_variable("life", std::format("GetUnitState({}, {})", unit_reference, "UNIT_STATE_LIFE"));
@@ -1167,12 +1212,23 @@ private:
 	void generate_items(MapScriptWriter& script, const Terrain& terrain, const Units& units) {
 		script.function("CreateAllItems", [&]() {
 			for (const auto& i : units.items) {
-				script.call("BlzCreateItemWithSkin", script.four_cc(i.id), i.position.x * 128.f + terrain.offset.x, i.position.y * 128.f + terrain.offset.y, script.four_cc(i.id));
+				script.call(
+					"BlzCreateItemWithSkin",
+					script.four_cc(i.id),
+					i.position.x * 128.f + terrain.offset.x,
+					i.position.y * 128.f + terrain.offset.y,
+					script.four_cc(i.id)
+				);
 			}
 		});
 	}
 
-	void generate_destructables(MapScriptWriter& script, std::unordered_map<std::string, std::string>& destructable_variables, const Terrain& terrain, const Doodads& doodads) {
+	void generate_destructables(
+		MapScriptWriter& script,
+		std::unordered_map<std::string, std::string>& destructable_variables,
+		const Terrain& terrain,
+		const Doodads& doodads
+	) {
 		script.function("CreateAllDestructables", [&]() {
 			script.local("destructable", "d", script.null());
 			script.local("trigger", "t", script.null());
@@ -1189,15 +1245,20 @@ private:
 					continue;
 				}
 
-				script.set_variable(id, std::format("BlzCreateDestructableZWithSkin({}, {:.4f}, {:.4f}, {:.4f}, {}, {}, {}, {})",
-													script.four_cc(i.id),
-													i.position.x * 128.f + terrain.offset.x,
-													i.position.y * 128.f + terrain.offset.y,
-													i.position.z * 128.f,
-													glm::degrees(i.angle),
-													i.scale.x,
-													i.variation,
-													script.four_cc(i.skin_id)));
+				script.set_variable(
+					id,
+					std::format(
+						"BlzCreateDestructableZWithSkin({}, {:.4f}, {:.4f}, {:.4f}, {}, {}, {}, {})",
+						script.four_cc(i.id),
+						i.position.x * 128.f + terrain.offset.x,
+						i.position.y * 128.f + terrain.offset.y,
+						i.position.z * 128.f,
+						glm::degrees(i.angle),
+						i.scale.x,
+						i.variation,
+						script.four_cc(i.skin_id)
+					)
+				);
 
 				if (i.life != 100) {
 					script.set_variable("life", "GetDestructableLife(" + id + ")");
@@ -1227,7 +1288,16 @@ private:
 				trim(region_name);
 				std::replace(region_name.begin(), region_name.end(), ' ', '_');
 
-				script.set_variable(region_name, std::format("Rect({}, {}, {}, {})", std::min(i.left, i.right), std::min(i.bottom, i.top), std::max(i.left, i.right), std::max(i.bottom, i.top)));
+				script.set_variable(
+					region_name,
+					std::format(
+						"Rect({}, {}, {}, {})",
+						std::min(i.left, i.right),
+						std::min(i.bottom, i.top),
+						std::max(i.left, i.right),
+						std::max(i.bottom, i.top)
+					)
+				);
 
 				if (!i.weather_id.empty()) {
 					script.set_variable("we", std::format("AddWeatherEffect({}, {})", region_name, script.four_cc(i.weather_id)));
@@ -1269,14 +1339,19 @@ private:
 				trim(sound_name);
 				std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
 
-				script.set_variable(sound_name, std::format("CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")",
-										 string_replaced(i.file, "\\", "\\\\"),
-										 i.looping ? "true" : "false",
-										 i.is_3d ? "true" : "false",
-										 i.stop_out_of_range ? "true" : "false",
-										 i.fade_in_rate,
-										 i.fade_out_rate,
-										 string_replaced(i.eax_effect, "\\", "\\\\")));
+				script.set_variable(
+					sound_name,
+					std::format(
+						"CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")",
+						string_replaced(i.file, "\\", "\\\\"),
+						i.looping ? "true" : "false",
+						i.is_3d ? "true" : "false",
+						i.stop_out_of_range ? "true" : "false",
+						i.fade_in_rate,
+						i.fade_out_rate,
+						string_replaced(i.eax_effect, "\\", "\\\\")
+					)
+				);
 
 				script.call("SetSoundDuration", sound_name, i.fade_in_rate);
 				script.call("SetSoundChannel", sound_name, i.channel);
@@ -1309,8 +1384,10 @@ private:
 
 	void generate_players(MapScriptWriter& script, const MapInfo& map_info) {
 		script.function("InitCustomPlayerSlots", [&]() {
-			const std::vector<std::string> players = { "MAP_CONTROL_USER", "MAP_CONTROL_COMPUTER", "MAP_CONTROL_NEUTRAL", "MAP_CONTROL_RESCUABLE" };
-			const std::vector<std::string> races = { "RACE_PREF_RANDOM", "RACE_PREF_HUMAN", "RACE_PREF_ORC", "RACE_PREF_UNDEAD", "RACE_PREF_NIGHTELF" };
+			const std::vector<std::string> players =
+				{"MAP_CONTROL_USER", "MAP_CONTROL_COMPUTER", "MAP_CONTROL_NEUTRAL", "MAP_CONTROL_RESCUABLE"};
+			const std::vector<std::string> races =
+				{"RACE_PREF_RANDOM", "RACE_PREF_HUMAN", "RACE_PREF_ORC", "RACE_PREF_UNDEAD", "RACE_PREF_NIGHTELF"};
 
 			size_t index = 0;
 			for (const auto& i : map_info.players) {
@@ -1329,7 +1406,13 @@ private:
 				if (i.type == PlayerType::rescuable) {
 					for (const auto& j : map_info.players) {
 						if (j.type == PlayerType::human) {
-							script.call("SetPlayerAlliance", player, "Player(" + std::to_string(j.internal_number) + ")", "ALLIANCE_RESCUABLE", true);
+							script.call(
+								"SetPlayerAlliance",
+								player,
+								"Player(" + std::to_string(j.internal_number) + ")",
+								"ALLIANCE_RESCUABLE",
+								true
+							);
 						}
 					}
 				}
@@ -1349,7 +1432,12 @@ private:
 						script.call("SetPlayerTeam", "Player(" + std::to_string(j.internal_number) + ")", current_force);
 
 						if (i.allied_victory) {
-							script.call("SetPlayerState", "Player(" + std::to_string(j.internal_number) + ")", "PLAYER_STATE_ALLIED_VICTORY", 1);
+							script.call(
+								"SetPlayerState",
+								"Player(" + std::to_string(j.internal_number) + ")",
+								"PLAYER_STATE_ALLIED_VICTORY",
+								1
+							);
 						}
 					}
 				}
@@ -1359,16 +1447,36 @@ private:
 						for (const auto& k : map_info.players) {
 							if (i.player_masks & (1 << k.internal_number) && j.internal_number != k.internal_number) {
 								if (i.allied) {
-									script.call("SetPlayerAllianceStateAllyBJ", "Player(" + std::to_string(j.internal_number) + ")", "Player(" + std::to_string(k.internal_number) + ")", true);
+									script.call(
+										"SetPlayerAllianceStateAllyBJ",
+										"Player(" + std::to_string(j.internal_number) + ")",
+										"Player(" + std::to_string(k.internal_number) + ")",
+										true
+									);
 								}
 								if (i.share_vision) {
-									script.call("SetPlayerAllianceStateVisionBJ", "Player(" + std::to_string(j.internal_number) + ")", "Player(" + std::to_string(k.internal_number) + ")", true);
+									script.call(
+										"SetPlayerAllianceStateVisionBJ",
+										"Player(" + std::to_string(j.internal_number) + ")",
+										"Player(" + std::to_string(k.internal_number) + ")",
+										true
+									);
 								}
 								if (i.share_unit_control) {
-									script.call("SetPlayerAllianceStateControlBJ", "Player(" + std::to_string(j.internal_number) + ")", "Player(" + std::to_string(k.internal_number) + ")", true);
+									script.call(
+										"SetPlayerAllianceStateControlBJ",
+										"Player(" + std::to_string(j.internal_number) + ")",
+										"Player(" + std::to_string(k.internal_number) + ")",
+										true
+									);
 								}
 								if (i.share_advanced_unit_control) {
-									script.call("SetPlayerAllianceStateFullControlBJ", "Player(" + std::to_string(j.internal_number) + ")", "Player(" + std::to_string(k.internal_number) + ")", true);
+									script.call(
+										"SetPlayerAllianceStateFullControlBJ",
+										"Player(" + std::to_string(j.internal_number) + ")",
+										"Player(" + std::to_string(k.internal_number) + ")",
+										true
+									);
 								}
 							}
 						}
@@ -1405,10 +1513,22 @@ private:
 				size_t current_index = 0;
 				for (const auto& j : map_info.players) {
 					if (i.ally_low_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-						script.call("SetStartLocPrio", current_player, current_index, player_to_startloc[j.internal_number], "MAP_LOC_PRIO_LOW");
+						script.call(
+							"SetStartLocPrio",
+							current_player,
+							current_index,
+							player_to_startloc[j.internal_number],
+							"MAP_LOC_PRIO_LOW"
+						);
 						current_index++;
 					} else if (i.ally_high_priorities_flags & (1 << j.internal_number) && i.internal_number != j.internal_number) {
-						script.call("SetStartLocPrio", current_player, current_index, player_to_startloc[j.internal_number], "MAP_LOC_PRIO_HIGH");
+						script.call(
+							"SetStartLocPrio",
+							current_player,
+							current_index,
+							player_to_startloc[j.internal_number],
+							"MAP_LOC_PRIO_HIGH"
+						);
 						current_index++;
 					}
 				}
@@ -1420,24 +1540,27 @@ private:
 
 	void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInfo& map_info) {
 		script.function("main", [&]() {
-			script.call("SetCameraBounds",
-						std::to_string(map_info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-						std::to_string(map_info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
+			script.call(
+				"SetCameraBounds",
+				std::to_string(map_info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+				std::to_string(map_info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
 
-						std::to_string(map_info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-						std::to_string(map_info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+				std::to_string(map_info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+				std::to_string(map_info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-						std::to_string(map_info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-						std::to_string(map_info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+				std::to_string(map_info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+				std::to_string(map_info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-						std::to_string(map_info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-						std::to_string(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)");
+				std::to_string(map_info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+				std::to_string(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)"
+			);
 
 			const std::string terrain_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
 			const std::string unit_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
 			script.call("SetDayNightModels", "\"" + terrain_lights + "\"", "\"" + unit_lights + "\"");
 
-			const std::string sound_environment = string_replaced(world_edit_data.data("SoundEnvironment", ""s + terrain.tileset), "\\", "/");
+			const std::string sound_environment =
+				string_replaced(world_edit_data.data("SoundEnvironment", ""s + terrain.tileset), "\\", "/");
 			script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
 			const std::string ambient_day = string_replaced(world_edit_data.data("DayAmbience", ""s + terrain.tileset), "\\", "/");
@@ -1472,7 +1595,12 @@ private:
 
 			for (const auto& i : units.units) {
 				if (i.id == "sloc") {
-					script.call("DefineStartLocation", i.player, i.position.x * 128.f + terrain.offset.x, i.position.y * 128.f + terrain.offset.y);
+					script.call(
+						"DefineStartLocation",
+						i.player,
+						i.position.x * 128.f + terrain.offset.x,
+						i.position.y * 128.f + terrain.offset.y
+					);
 				}
 			}
 
@@ -1492,7 +1620,7 @@ private:
 		});
 	}
 
-public:
+  public:
 	void load() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.wtg");
 
@@ -1503,7 +1631,7 @@ public:
 		// Manual fixes
 		trigger_data.set_whole_data("TriggerTypeDefaults", "string", "\"\"");
 
-		for (auto&& section : { "TriggerActions"s, "TriggerEvents"s, "TriggerConditions"s, "TriggerCalls"s }) {
+		for (auto&& section : {"TriggerActions"s, "TriggerEvents"s, "TriggerConditions"s, "TriggerCalls"s}) {
 			for (const auto& [key, value] : trigger_data.section(section)) {
 				if (key.front() == '_') {
 					continue;
@@ -1541,32 +1669,31 @@ public:
 		}
 	}
 
-
 	void load_version_31(BinaryReader& reader, uint32_t version) {
 		uint32_t sub_version = reader.read<uint32_t>();
 		if (sub_version != 7 && sub_version != 4) {
 			std::print("Unknown 1.31 WTG subformat! Trying anyway.\n");
 		}
 
-		reader.advance(4);							 // map_count
+		reader.advance(4); // map_count
 		reader.advance(4 * reader.read<uint32_t>()); // map ids of deleted maps
 
-		reader.advance(4);							 // library_count
+		reader.advance(4); // library_count
 		reader.advance(4 * reader.read<uint32_t>()); // library ids of deleted libraries
 
-		reader.advance(4);							 // category_count
+		reader.advance(4); // category_count
 		reader.advance(4 * reader.read<uint32_t>()); // category ids of deleted categories
 
-		reader.advance(4);							 // trigger_count
+		reader.advance(4); // trigger_count
 		reader.advance(4 * reader.read<uint32_t>()); // trigger ids of deleted triggers
 
-		reader.advance(4);							 // comment_count
+		reader.advance(4); // comment_count
 		reader.advance(4 * reader.read<uint32_t>()); // comment ids of deleted comments
 
-		reader.advance(4);							 // script_count
+		reader.advance(4); // script_count
 		reader.advance(4 * reader.read<uint32_t>()); // script ids of deleted scripts
 
-		reader.advance(4);							 // variable_count
+		reader.advance(4); // variable_count
 		reader.advance(4 * reader.read<uint32_t>()); // variable ids of deleted variables
 
 		unknown1 = reader.read<uint32_t>();
@@ -1641,9 +1768,9 @@ public:
 					break;
 				}
 				case Classifier::variable: {
-					reader.advance(4);		   // id
+					reader.advance(4); // id
 					reader.advance_c_string(); // name
-					reader.advance(4);		   // parentid
+					reader.advance(4); // parentid
 					break;
 				}
 			}
@@ -1672,8 +1799,8 @@ public:
 		reader.advance(4); // dunno
 
 		int variable_category = Trigger::next_id++;
-		categories.insert(categories.begin(), { Classifier::map, 0, "Map Header", true, false, -1 });
-		categories.insert(categories.begin(), { Classifier::category, variable_category, "Variables", true, false, 0 });
+		categories.insert(categories.begin(), {Classifier::map, 0, "Map Header", true, false, -1});
+		categories.insert(categories.begin(), {Classifier::category, variable_category, "Variables", true, false, 0});
 
 		variables.resize(reader.read<uint32_t>());
 		for (auto& i : variables) {
@@ -1862,7 +1989,7 @@ public:
 		writer.write<uint32_t>(1);
 
 		writer.write_c_string(global_jass_comment);
-		if (global_jass.size() == 0) {
+		if (global_jass.empty()) {
 			writer.write<uint32_t>(0);
 		} else {
 			writer.write<uint32_t>(global_jass.size() + (global_jass.back() == '\0' ? 0 : 1));
@@ -1888,8 +2015,8 @@ public:
 		hierarchy.map_file_write("war3map.wct", writer.buffer);
 	}
 
-	template <typename T>
-	void generate_item_tables(MapScriptWriter& script, const std::string& table_name_prefix, std::vector<T> table_holders) {
+	template<typename T>
+	void generate_item_tables(MapScriptWriter& script, const std::string& table_name_prefix, const std::vector<T>& table_holders) {
 		for (const auto& i : table_holders) {
 			if (i.item_sets.empty()) {
 				continue;
@@ -1903,9 +2030,7 @@ public:
 
 				script.set_variable("trigWidget", "bj_lastDyingWidget");
 
-				script.if_statement("trigWidget == " + script.null(), [&]() {
-					script.set_variable("trigUnit", "GetTriggerUnit()");
-				});
+				script.if_statement("trigWidget == " + script.null(), [&]() { script.set_variable("trigUnit", "GetTriggerUnit()"); });
 
 				script.if_statement("trigUnit ~= " + script.null(), [&]() {
 					script.set_variable("canDrop", "not IsUnitHidden(trigUnit)");
@@ -1937,10 +2062,9 @@ public:
 	}
 
 	static void write_item_table_entry(MapScriptWriter& script, int chance, const std::string& id) {
-		if (id == "") {
+		if (id.empty()) {
 			script.call("RandomDistAddItem", -1, chance);
-		} else if (id[0] == 'Y' && id[2] == 'I' &&
-				   ((id[1] >= 'i' && id[1] <= 'o') || id[1] == 'Y')) { // Random items
+		} else if (id[0] == 'Y' && id[2] == 'I' && ((id[1] >= 'i' && id[1] <= 'o') || id[1] == 'Y')) { // Random items
 
 			std::string item_type;
 			switch (id[1]) {
@@ -1968,18 +2092,29 @@ public:
 				case 'Y':
 					item_type = "ANY";
 					break;
+				default:
+					std::println("Error: unknown random item type {}", id[1]);
 			}
 
-			const std::string random_item = std::format("ChooseRandomItemEx(ITEM_TYPE_{}, {})", item_type, (id[3] == '/') ? "-1" : std::string(1, id[3]));
+			const std::string random_item =
+				std::format("ChooseRandomItemEx(ITEM_TYPE_{}, {})", item_type, (id[3] == '/') ? "-1" : std::string(1, id[3]));
 			script.call("RandomDistAddItem", random_item, chance);
-				   } else {
-				   	script.call("RandomDistAddItem", script.four_cc(id), chance);
-				   }
+		} else {
+			script.call("RandomDistAddItem", script.four_cc(id), chance);
+		}
 	}
 
 	// Returns compile output which could contain errors or general information
-	std::string generate_map_script(const Terrain& terrain, const Units& units, const Doodads& doodads, const MapInfo& map_info, const Sounds& sounds, const Regions& regions, const GameCameras& cameras) {
-		std::unordered_map<std::string, std::string> unit_variables;		 // creation_number, unit_id
+	std::string generate_map_script(
+		const Terrain& terrain,
+		const Units& units,
+		const Doodads& doodads,
+		const MapInfo& map_info,
+		const Sounds& sounds,
+		const Regions& regions,
+		const GameCameras& cameras
+	) {
+		std::unordered_map<std::string, std::string> unit_variables; // creation_number, unit_id
 		std::unordered_map<std::string, std::string> destructable_variables; // creation_number, destructable_id
 		std::vector<std::string> initialization_triggers;
 
@@ -2007,7 +2142,8 @@ public:
 		pos = trigger_script.find("gg_dest", 0);
 		while (pos != std::string::npos) {
 			std::string type = trigger_script.substr(pos + 8, 4);
-			std::string creation_number = trigger_script.substr(pos + 13, trigger_script.find_first_not_of("0123456789", pos + 13) - pos - 13);
+			std::string creation_number =
+				trigger_script.substr(pos + 13, trigger_script.find_first_not_of("0123456789", pos + 13) - pos - 13);
 			destructable_variables[creation_number] = type;
 			pos = trigger_script.find("gg_dest", pos + 17);
 		}
