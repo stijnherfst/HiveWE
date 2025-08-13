@@ -40,7 +40,7 @@ import <glm/gtc/matrix_transform.hpp>;
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
 
-export class Map : public QObject {
+export class Map: public QObject {
 	Q_OBJECT
 
   public:
@@ -428,11 +428,15 @@ export class Map : public QObject {
 
 		loaded = true;
 
-		connect(units_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-			const std::string& id = units_slk.index_to_row.at(top_left.row());
-			const std::string& field = units_slk.index_to_column.at(top_left.column());
-			units.process_unit_field_change(id, field);
-		});
+		connect(
+			units_table,
+			&TableModel::dataChanged,
+			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+				const std::string& id = units_slk.index_to_row.at(top_left.row());
+				const std::string& field = units_slk.index_to_column.at(top_left.column());
+				units.process_unit_field_change(id, field);
+			}
+		);
 
 		connect(units_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
@@ -445,11 +449,15 @@ export class Map : public QObject {
 			}
 		});
 
-		connect(items_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-			const std::string& id = items_slk.index_to_row.at(top_left.row());
-			const std::string& field = items_slk.index_to_column.at(top_left.column());
-			units.process_item_field_change(id, field);
-		});
+		connect(
+			items_table,
+			&TableModel::dataChanged,
+			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+				const std::string& id = items_slk.index_to_row.at(top_left.row());
+				const std::string& field = items_slk.index_to_column.at(top_left.column());
+				units.process_item_field_change(id, field);
+			}
+		);
 
 		connect(items_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
@@ -458,11 +466,15 @@ export class Map : public QObject {
 			}
 		});
 
-		connect(doodads_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-			const std::string& id = doodads_slk.index_to_row.at(top_left.row());
-			const std::string& field = doodads_slk.index_to_column.at(top_left.column());
-			doodads.process_doodad_field_change(id, field, terrain);
-		});
+		connect(
+			doodads_table,
+			&TableModel::dataChanged,
+			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+				const std::string& id = doodads_slk.index_to_row.at(top_left.row());
+				const std::string& field = doodads_slk.index_to_column.at(top_left.column());
+				doodads.process_doodad_field_change(id, field, terrain);
+			}
+		);
 
 		connect(doodads_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
@@ -475,11 +487,15 @@ export class Map : public QObject {
 			}
 		});
 
-		connect(destructibles_table, &TableModel::dataChanged, [&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-			const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
-			const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
-			doodads.process_destructible_field_change(id, field, terrain);
-		});
+		connect(
+			destructibles_table,
+			&TableModel::dataChanged,
+			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
+				const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
+				const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
+				doodads.process_destructible_field_change(id, field, terrain);
+			}
+		);
 
 		connect(destructibles_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
@@ -535,7 +551,13 @@ export class Map : public QObject {
 		trigger_strings.save();
 		triggers.save();
 		triggers.save_jass();
-		triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras);
+
+		ScriptMode mode = ScriptMode::jass;
+		if (info.lua) {
+			mode = ScriptMode::lua;
+		}
+
+		triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
 		imports.save(filesystem_path);
 
 		std::println("Saving took: {:>5}ms", timer.elapsed_ms());
@@ -563,7 +585,7 @@ export class Map : public QObject {
 
 		// Map mouse coordinates to world coordinates
 		if (input_handler.mouse != input_handler.previous_mouse) {
-			glm::vec3 window = { input_handler.mouse.x, height - input_handler.mouse.y, 1.f };
+			glm::vec3 window = {input_handler.mouse.x, height - input_handler.mouse.y, 1.f};
 			glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));
 			glm::vec3 origin = camera.position - camera.direction * camera.distance;
 			glm::vec3 direction = glm::normalize(pos - origin);
@@ -591,7 +613,10 @@ export class Map : public QObject {
 			} // ToDo handle starting locations
 
 			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-			if (!camera.inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			if (!camera.inside_frustrum(
+					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
+					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)
+				)) {
 				return;
 			}
 
@@ -606,7 +631,10 @@ export class Map : public QObject {
 		// Animate doodads
 		std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
 			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
-			if (!camera.inside_frustrum(i.skeleton.matrix * glm::vec4(extent.minimum, 1.f), i.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			if (!camera.inside_frustrum(
+					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
+					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)
+				)) {
 				return;
 			}
 
@@ -659,8 +687,8 @@ export class Map : public QObject {
 		render_manager.render(render_lighting, light_direction);
 		terrain.render_water();
 
-		 // physics.dynamicsWorld->debugDrawWorld();
-		 // physics.draw->render();
+		// physics.dynamicsWorld->debugDrawWorld();
+		// physics.draw->render();
 	}
 
 	void resize(size_t width, size_t height) {
@@ -674,10 +702,12 @@ export class Map : public QObject {
 		std::uniform_int_distribution<int> dist(0, 25);
 	again:
 
-		std::string id = ""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
+		std::string id =
+			""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
 
-		if (units_slk.row_headers.contains(id) || items_slk.row_headers.contains(id) || abilities_slk.row_headers.contains(id) || doodads_slk.row_headers.contains(id) || destructibles_slk.row_headers.contains(id) || upgrade_slk.row_headers.contains(id) || buff_slk.row_headers.contains(id)) {
-
+		if (units_slk.row_headers.contains(id) || items_slk.row_headers.contains(id) || abilities_slk.row_headers.contains(id)
+			|| doodads_slk.row_headers.contains(id) || destructibles_slk.row_headers.contains(id) || upgrade_slk.row_headers.contains(id)
+			|| buff_slk.row_headers.contains(id)) {
 			std::print("Generated an existing ID: {} what're the odds\n", id);
 			goto again;
 		}

@@ -152,7 +152,9 @@ namespace ini {
 			}
 
 			if (argument >= value->second.size()) {
-				throw std::runtime_error("section argument out of bounds");
+				// Returning an empty value is kind of cursed
+				return T{};
+				// throw std::runtime_error("section argument out of bounds");
 			}
 
 			if constexpr (std::is_same_v<T, std::string_view>) {

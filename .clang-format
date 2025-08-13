@@ -13,7 +13,7 @@ AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: All
+AllowShortLambdasOnASingleLine: Empty
 AllowShortLoopsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
@@ -65,7 +65,7 @@ PointerAlignment: Left
 ReferenceAlignment: Left              # New in v13. int &name  ==>  int& name
 ReflowComments: false
 SeparateDefinitionBlocks: Always      # New in v14.
-SortIncludes: true
+SortIncludes: Never
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false

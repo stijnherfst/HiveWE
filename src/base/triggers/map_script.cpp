@@ -20,11 +20,11 @@ void generate_global_variables(
 	const GameCameras& cameras,
 	const Sounds& sounds
 ) {
-	if (script.mode == MapScriptWriter::Mode::jass) {
+	if (script.mode == ScriptMode::jass) {
 		script.write_ln("globals");
 	}
 
-	if (script.mode == MapScriptWriter::Mode::jass) {
+	if (script.mode == ScriptMode::jass) {
 		for (const auto& variable : variables) {
 			const std::string base_type = get_base_type(variable.type, trigger_data);
 			if (variable.is_array) {
@@ -91,7 +91,7 @@ void generate_global_variables(
 		script.global("destructable", "gg_dest_" + type + "_" + creation_number, script.null());
 	}
 
-	if (script.mode == MapScriptWriter::Mode::jass) {
+	if (script.mode == ScriptMode::jass) {
 		script.write_ln("endglobals");
 	}
 }
@@ -326,7 +326,7 @@ void generate_regions(MapScriptWriter& script, const Regions& regions) {
 		for (const auto& i : regions.regions) {
 			std::string region_name = "gg_rct_" + i.name;
 			trim(region_name);
-			std::replace(region_name.begin(), region_name.end(), ' ', '_');
+			std::ranges::replace(region_name, ' ', '_');
 
 			script.set_variable(
 				region_name,
@@ -352,7 +352,7 @@ void generate_cameras(MapScriptWriter& script, const GameCameras& cameras) {
 		for (const auto& i : cameras.cameras) {
 			std::string camera_name = "gg_cam_" + i.name;
 			trim(camera_name);
-			std::replace(camera_name.begin(), camera_name.end(), ' ', '_');
+			std::ranges::replace(camera_name, ' ', '_');
 
 			script.set_variable(camera_name, "CreateCameraSetup()");
 			script.call("CameraSetupSetField", camera_name, "CAMERA_FIELD_ZOFFSET", i.z_offset, 0.0);
@@ -746,7 +746,8 @@ std::string Triggers::generate_map_script(
 	const MapInfo& map_info,
 	const Sounds& sounds,
 	const Regions& regions,
-	const GameCameras& cameras
+	const GameCameras& cameras,
+	ScriptMode mode
 ) {
 	std::unordered_map<std::string, std::string> unit_variables; // creation_number, unit_id
 	std::unordered_map<std::string, std::string> destructable_variables; // creation_number, destructable_id
@@ -760,7 +761,7 @@ std::string Triggers::generate_map_script(
 		if (!i.custom_text.empty()) {
 			trigger_script += i.custom_text + "\n";
 		} else {
-			trigger_script += convert_gui_to_jass(i, initialization_triggers);
+			trigger_script += convert_gui_to_jass(i, initialization_triggers, mode);
 		}
 	}
 

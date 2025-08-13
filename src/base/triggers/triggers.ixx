@@ -19,6 +19,272 @@ import INI;
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
 
+export enum class ScriptMode {
+	lua,
+	jass
+};
+
+/// A minimal utility wrapper around a std::string that manages newlines, indentation and closing braces
+struct MapScriptWriter {
+	std::string script;
+	size_t current_indentation = 0;
+
+	ScriptMode mode;
+
+	explicit MapScriptWriter(ScriptMode mode = ScriptMode::lua) : mode(mode) {}
+
+	bool is_empty() {
+		return script.empty();
+	}
+
+	void merge(const MapScriptWriter& writer) {
+		script += writer.script;
+	}
+
+	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
+		std::vformat_to(std::back_inserter(script), users_fmt, args);
+	}
+
+	constexpr void local(std::string_view type, std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			std::format_to(std::back_inserter(script), "local {} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "local {} {} = {}\n", type, name, value);
+		}
+	}
+
+	constexpr void global(std::string_view type, std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "{} {} = {}\n", type, name, value);
+		}
+	}
+
+	constexpr void set_variable(std::string_view name, std::string_view value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
+		} else {
+			std::format_to(std::back_inserter(script), "set {} = {}\n", name, value);
+		}
+	}
+
+	template<typename... Args>
+	constexpr void inline_call(std::string_view name, Args&&... args) {
+		std::string work = "{}(";
+
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+			if (i < sizeof...(args) - 1) {
+				work += ", ";
+			}
+		}
+		work += ")";
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(name, args...));
+	}
+
+	template<typename... Args>
+	constexpr void call(std::string_view name, Args&&... args) {
+		std::string work;
+
+		if (mode == ScriptMode::jass) {
+			work = "call {}(";
+		} else {
+			work = "{}(";
+		}
+
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+			if (i < sizeof...(args) - 1) {
+				work += ", ";
+			}
+		}
+		work += ")\n";
+
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(name, args...));
+	}
+
+	void write(std::string_view string) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		script += string;
+	}
+
+	template<typename... Args>
+	constexpr void write_ln(Args&&... args) {
+		std::string work = std::string(current_indentation, '\t');
+		for (size_t i = 0; i < sizeof...(args); i++) {
+			work += "{}";
+		}
+		work.push_back('\n');
+
+		// Reduce binary code size by having only one instantiation
+		raw_write_to_log(work, std::make_format_args(args...));
+	}
+
+	template<typename T>
+	constexpr void forloop(size_t start, size_t end, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			//script += '\t';
+		}
+		std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		script += "end\n";
+	}
+
+	template<typename T>
+	void function(std::string_view name, T callback, const std::string_view return_type = "takes nothing returns nothing") {
+		for (size_t i = 0; i < current_indentation; i++) {
+			// script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			std::format_to(std::back_inserter(script), "function {}()\n", name);
+		} else {
+			std::format_to(std::back_inserter(script), "function {} {}\n", name, return_type);
+		}
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			// script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			script += "end\n\n";
+		} else {
+			script += "endfunction\n\n";
+		}
+	}
+
+	template<typename T>
+	void while_statement(std::string_view condition, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		std::format_to(std::back_inserter(script), "while ({}) do\n", condition);
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			script += "end\n";
+		} else {
+			// TODO while loops in jass??
+			script += "end\n";
+		}
+	}
+
+	template<typename T>
+	void if_statement(std::string_view condition, T callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		std::format_to(std::back_inserter(script), "if ({}) then\n", condition);
+
+		current_indentation += 1;
+		callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			script += "end\n";
+		} else {
+			script += "endif\n";
+		}
+	}
+
+	template<typename T1, typename T2>
+	void if_else_statement(std::string_view condition, T1 if_callback, T2 else_callback) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		std::format_to(std::back_inserter(script), "if ({}) then\n", condition);
+
+		current_indentation += 1;
+		if_callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		script += "else\n";
+
+		current_indentation += 1;
+		else_callback();
+		current_indentation -= 1;
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+
+		if (mode == ScriptMode::lua) {
+			script += "end\n";
+		} else {
+			script += "endif\n";
+		}
+	}
+
+	template<typename T>
+	void global_variable(std::string_view name, T value) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		std::format_to(std::back_inserter(script), "udg_{} = {}", name, value);
+	}
+
+	/// The ID should not be quoted
+	std::string four_cc(std::string_view id) {
+		if (mode == ScriptMode::lua) {
+			return std::format("FourCC(\"{}\")", id);
+		} else {
+			return std::format("\"{}\"", id);
+		}
+	}
+
+	std::string null() {
+		if (mode == ScriptMode::lua) {
+			return "nil";
+		} else {
+			return "null";
+		}
+	}
+};
+
 enum class Classifier {
 	map = 1,
 	library = 2,
@@ -149,24 +415,30 @@ export class Triggers {
   private:
 	std::string get_type(const std::string& function_name, int parameter) const;
 
-	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations) const;
+	std::string
+	convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const;
 
 	std::string resolve_parameter(
 		const TriggerParameter& parameter,
 		const std::string& trigger_name,
-		std::string& pre_actions,
+		MapScriptWriter& pre_actions,
 		const std::string& type,
-		bool add_call
+		ScriptMode mode
 	) const;
 
-	std::string convert_eca_to_jass(const ECA& eca, std::string& pre_actions, const std::string& trigger_name, bool nested) const;
+	std::string convert_toplevel_eca_to_script(
+		const ECA& eca,
+		MapScriptWriter& pre_actions,
+		const std::string& trigger_name,
+		ScriptMode mode
+	) const;
 
-	std::string testt(
+	std::string convert_sub_eca_to_script(
 		const std::string& trigger_name,
 		const std::string& parent_name,
 		const std::vector<TriggerParameter>& parameters,
-		std::string& pre_actions,
-		bool add_call
+		MapScriptWriter& pre_actions,
+		ScriptMode mode
 	) const;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version) {
@@ -665,238 +937,7 @@ export class Triggers {
 		const MapInfo& map_info,
 		const Sounds& sounds,
 		const Regions& regions,
-		const GameCameras& cameras
+		const GameCameras& cameras,
+		ScriptMode mode
 	);
-};
-
-/// A minimal utility wrapper around a std::string that manages newlines, indentation and closing braces
-struct MapScriptWriter {
-	std::string script;
-	size_t current_indentation = 0;
-
-	enum class Mode {
-		lua,
-		jass
-	};
-	Mode mode = Mode::lua;
-
-	bool is_empty() {
-		return script.empty();
-	}
-
-	void merge(const MapScriptWriter& writer) {
-		script += writer.script;
-	}
-
-	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
-		std::vformat_to(std::back_inserter(script), users_fmt, args);
-	}
-
-	constexpr void local(std::string_view type, std::string_view name, std::string_view value) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			std::format_to(std::back_inserter(script), "local {} = {}\n", name, value);
-		} else {
-			std::format_to(std::back_inserter(script), "local {} {} = {}\n", type, name, value);
-		}
-	}
-
-	constexpr void global(std::string_view type, std::string_view name, std::string_view value) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
-		} else {
-			std::format_to(std::back_inserter(script), "{} {} = {}\n", type, name, value);
-		}
-	}
-
-	constexpr void set_variable(std::string_view name, std::string_view value) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			std::format_to(std::back_inserter(script), "{} = {}\n", name, value);
-		} else {
-			std::format_to(std::back_inserter(script), "set {} = {}\n", name, value);
-		}
-	}
-
-	template<typename... Args>
-	constexpr void inline_call(std::string_view name, Args&&... args) {
-		std::string work = "{}(";
-
-		for (size_t i = 0; i < sizeof...(args); i++) {
-			work += "{}";
-			if (i < sizeof...(args) - 1) {
-				work += ", ";
-			}
-		}
-		work += ")";
-		// Reduce binary code size by having only one instantiation
-		raw_write_to_log(work, std::make_format_args(name, args...));
-	}
-
-	template<typename... Args>
-	constexpr void call(std::string_view name, Args&&... args) {
-		std::string work;
-
-		if (mode == Mode::jass) {
-			work = "call {}(";
-		} else {
-			work = "{}(";
-		}
-
-		for (size_t i = 0; i < sizeof...(args); i++) {
-			work += "{}";
-			if (i < sizeof...(args) - 1) {
-				work += ", ";
-			}
-		}
-		work += ")\n";
-
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-		// Reduce binary code size by having only one instantiation
-		raw_write_to_log(work, std::make_format_args(name, args...));
-	}
-
-	void write(std::string_view string) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		script += string;
-	}
-
-	template<typename... Args>
-	constexpr void write_ln(Args&&... args) {
-		std::string work = std::string(current_indentation, '\t');
-		for (size_t i = 0; i < sizeof...(args); i++) {
-			work += "{}";
-		}
-		work.push_back('\n');
-
-		// Reduce binary code size by having only one instantiation
-		raw_write_to_log(work, std::make_format_args(args...));
-	}
-
-	template<typename T>
-	constexpr void forloop(size_t start, size_t end, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-		std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
-
-		current_indentation += 1;
-		callback();
-		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-		script += "end\n";
-	}
-
-	template<typename T>
-	void function(std::string_view name, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			std::format_to(std::back_inserter(script), "function {}()\n", name);
-		} else {
-			std::format_to(std::back_inserter(script), "function {} takes nothing returns nothing\n", name);
-		}
-
-		current_indentation += 1;
-		callback();
-		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			script += "end\n";
-		} else {
-			script += "endfunction\n";
-		}
-	}
-
-	template<typename T>
-	void while_statement(std::string_view condition, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		std::format_to(std::back_inserter(script), "while ({}) then\n", condition);
-
-		current_indentation += 1;
-		callback();
-		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			script += "end\n";
-		} else {
-			// TODO while loops in jass??
-			script += "end\n";
-		}
-	}
-
-	template<typename T>
-	void if_statement(std::string_view condition, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		std::format_to(std::back_inserter(script), "if ({}) then\n", condition);
-
-		current_indentation += 1;
-		callback();
-		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-
-		if (mode == Mode::lua) {
-			script += "end\n";
-		} else {
-			script += "endif\n";
-		}
-	}
-
-	template<typename T>
-	void global_variable(std::string_view name, T value) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-		std::format_to(std::back_inserter(script), "udg_{} = {}", name, value);
-	}
-
-	/// The ID should not be quoted
-	std::string four_cc(std::string_view id) {
-		if (mode == Mode::lua) {
-			return std::format("FourCC(\"{}\")", id);
-		} else {
-			return std::format("\"{}\"", id);
-		}
-	}
-
-	std::string null() {
-		if (mode == Mode::lua) {
-			return "nil";
-		} else {
-			return "null";
-		}
-	}
 };
