@@ -319,28 +319,12 @@ struct TriggerSubParameter {
 	std::vector<TriggerParameter> parameters;
 };
 
-struct TriggerParameter {
-	enum class Type {
-		invalid = -1,
-		preset,
-		variable,
-		function,
-		string
-	};
-	Type type;
-	int unknown;
-	std::string value;
-	bool has_sub_parameter;
-	TriggerSubParameter sub_parameter;
-	bool is_array = false;
-	std::vector<TriggerParameter> parameters; // There is really only one so unique_ptr I guess
-};
-
 struct ECA {
 	enum class Type {
 		event,
 		condition,
-		action
+		action,
+		call
 	};
 
 	Type type;
@@ -349,6 +333,28 @@ struct ECA {
 	bool enabled;
 	std::vector<TriggerParameter> parameters;
 	std::vector<ECA> ecas;
+};
+
+struct TriggerParameter {
+	enum class Type {
+		invalid = -1,
+		constant,
+		variable,
+		function,
+		string
+	};
+	Type type;
+	int unknown;
+	/// Unused when has_sub_parameter is true, sometimes contains garbage
+	std::string value;
+	bool has_sub_parameter;
+	ECA sub_parameter;
+	/// Only used when Type::function and has_sub_parameter=true
+	// TriggerSubParameter sub_parameter;
+	/// Only used when Type::variable
+	bool is_array = false;
+	/// Only used when Type::variable and is_array=true
+	std::vector<TriggerParameter> parameters;
 };
 
 export struct Trigger {
@@ -426,18 +432,10 @@ export class Triggers {
 		ScriptMode mode
 	) const;
 
-	std::string convert_toplevel_eca_to_script(
+	std::string convert_eca_to_script(
 		const ECA& eca,
 		MapScriptWriter& pre_actions,
 		const std::string& trigger_name,
-		ScriptMode mode
-	) const;
-
-	std::string convert_sub_eca_to_script(
-		const std::string& trigger_name,
-		const std::string& parent_name,
-		const std::vector<TriggerParameter>& parameters,
-		MapScriptWriter& pre_actions,
 		ScriptMode mode
 	) const;
 
@@ -446,10 +444,12 @@ export class Triggers {
 		parameter.value = reader.read_c_string();
 		parameter.has_sub_parameter = reader.read<uint32_t>();
 		if (parameter.has_sub_parameter) {
-			parameter.sub_parameter.type = static_cast<TriggerSubParameter::Type>(reader.read<uint32_t>());
+			parameter.sub_parameter.type = static_cast<ECA::Type>(reader.read<uint32_t>());
+			parameter.sub_parameter.group = 0;
 			parameter.sub_parameter.name = reader.read_c_string();
-			parameter.sub_parameter.begin_parameters = reader.read<uint32_t>();
-			if (parameter.sub_parameter.begin_parameters) {
+			parameter.sub_parameter.enabled = true;
+			bool has_parameters = reader.read<uint32_t>();
+			if (has_parameters) {
 				parameter.sub_parameter.parameters.resize(argument_counts[parameter.sub_parameter.name]);
 				for (auto&& i : parameter.sub_parameter.parameters) {
 					parse_parameter_structure(reader, i, version);
@@ -501,11 +501,9 @@ export class Triggers {
 		if (parameter.has_sub_parameter) {
 			writer.write<uint32_t>(static_cast<int>(parameter.sub_parameter.type));
 			writer.write_c_string(parameter.sub_parameter.name);
-			writer.write<uint32_t>(parameter.sub_parameter.begin_parameters);
-			if (parameter.sub_parameter.begin_parameters) {
-				for (const auto& i : parameter.sub_parameter.parameters) {
-					print_parameter_structure(writer, i);
-				}
+			writer.write<uint32_t>(!parameter.sub_parameter.parameters.empty());
+			for (const auto& i : parameter.sub_parameter.parameters) {
+				print_parameter_structure(writer, i);
 			}
 
 			writer.write<uint32_t>(parameter.unknown);

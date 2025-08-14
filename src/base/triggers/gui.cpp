@@ -33,14 +33,14 @@ std::string Triggers::resolve_parameter(
 		case TriggerParameter::Type::invalid:
 			std::print("Invalid parameter type\n");
 			return "";
-		case TriggerParameter::Type::preset: {
-			const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
+		case TriggerParameter::Type::constant: {
+			const std::string constant_type = trigger_data.data("TriggerParams", parameter.value, 1);
 
-			if (get_base_type(preset_type, trigger_data) == "string") {
+			if (get_base_type(constant_type, trigger_data) == "string") {
 				return string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "`", "\"");
 			}
 
-			if (preset_type == "timedlifebuffcode" // ToDo this seems like a hack?
+			if (constant_type == "timedlifebuffcode" // ToDo this seems like a hack?
 				|| type == "abilcode" || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode"
 				|| type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode"
 				|| type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode" || type == "terraintype") {
@@ -51,13 +51,7 @@ std::string Triggers::resolve_parameter(
 		}
 		case TriggerParameter::Type::function:
 			if (parameter.has_sub_parameter) {
-				return convert_sub_eca_to_script(
-					trigger_name,
-					parameter.sub_parameter.name,
-					parameter.sub_parameter.parameters,
-					pre_actions,
-					mode
-				);
+				return convert_eca_to_script(parameter.sub_parameter, pre_actions, trigger_name, mode);
 			} else {
 				return parameter.value + "()";
 			}
@@ -93,7 +87,7 @@ std::string Triggers::resolve_parameter(
 	return "";
 }
 
-std::string Triggers::convert_toplevel_eca_to_script(
+std::string Triggers::convert_eca_to_script(
 	const ECA& eca,
 	MapScriptWriter& pre_actions,
 	const std::string& trigger_name,
@@ -111,7 +105,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 			if (i.type != ECA::Type::condition) {
 				continue;
 			}
-			conditions.push_back(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 		}
 
 		pre_actions.function(
@@ -128,7 +122,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 			"takes nothing returns boolean"
 		);
 
-		MapScriptWriter writer;
+		MapScriptWriter writer(mode);
 
 		writer.if_else_statement(
 			function_name + "()",
@@ -139,7 +133,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 					}
 
 					if (i.group == 1) {
-						writer.write_ln(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 					}
 				}
 			},
@@ -151,7 +145,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 
 					// TODO, I suspect group 0 is the if, group 1 is the then and group 2 is the else
 					if (i.group != 1) {
-						writer.write_ln(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 					}
 				}
 			}
@@ -167,7 +161,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 		const auto start_at = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0), mode);
 		const auto exit_when = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1), mode);
 
-		MapScriptWriter writer;
+		MapScriptWriter writer(mode);
 
 		writer.set_variable(loop_index, start_at);
 		// Have to set this as somebody might have used the variable inside
@@ -178,7 +172,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 			});
 
 			for (const auto& i : eca.ecas) {
-				writer.write_ln(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+				writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 			}
 
 			writer.set_variable(loop_index, loop_index + " + 1");
@@ -187,21 +181,26 @@ std::string Triggers::convert_toplevel_eca_to_script(
 		return writer.script;
 	}
 
-	if (eca.name == "ForLoopVarMultiple") {
+	if (eca.name == "ForLoopVarMultiple" || eca.name == "ForLoopVar") {
 		const auto variable = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "integer", mode);
 		const auto start_at = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1), mode);
 		const auto exit_when = resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2), mode);
 
-		MapScriptWriter writer;
+		MapScriptWriter writer(mode);
 		writer.set_variable(variable, start_at);
 		writer.while_statement("true", [&] {
 			writer.if_statement(std::format("{} > {}", variable, exit_when), [&] {
 				writer.write_ln("break");
 			});
 
-			for (const auto& i : eca.ecas) {
-				writer.write_ln(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+			if (eca.name == "ForLoopVarMultiple") {
+				for (const auto& i : eca.ecas) {
+					writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+				}
+			} else {
+				writer.write_ln(resolve_parameter(eca.parameters[3], trigger_name, pre_actions, get_type(eca.name, 3), mode));
 			}
+
 
 			writer.set_variable(variable, variable + " + 1");
 		});
@@ -217,7 +216,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 
 		std::vector<std::string> ecas;
 		for (const auto& i : eca.ecas) {
-			ecas.push_back(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+			ecas.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 		}
 
 		pre_actions.function(function_name, [&] {
@@ -226,7 +225,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 			}
 		});
 
-		MapScriptWriter writer;
+		MapScriptWriter writer(mode);
 
 		const auto parameter1 = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0), mode);
 
@@ -245,7 +244,7 @@ std::string Triggers::convert_toplevel_eca_to_script(
 
 		std::vector<std::string> conditions;
 		for (const auto& i : eca.ecas) {
-			conditions.push_back(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 		}
 
 		pre_actions.function(
@@ -275,83 +274,65 @@ std::string Triggers::convert_toplevel_eca_to_script(
 		return function_name + "()";
 	}
 
-	return convert_sub_eca_to_script(trigger_name, eca.name, eca.parameters, pre_actions, mode);
-}
-
-std::string Triggers::convert_sub_eca_to_script(
-	const std::string& trigger_name,
-	const std::string& parent_name,
-	const std::vector<TriggerParameter>& parameters,
-	MapScriptWriter& pre_actions,
-	ScriptMode mode
-) const {
-	if (parent_name == "SetVariable") {
-		const std::string& type = std::ranges::find_if(variables, [parameters](const TriggerVariable& var) {
-									  return var.name == parameters[0].value;
+	if (eca.name == "SetVariable") {
+		const std::string& type = std::ranges::find_if(variables, [&](const TriggerVariable& var) {
+									  return var.name == eca.parameters[0].value;
 								  })->type;
-		const std::string first = resolve_parameter(parameters[0], trigger_name, pre_actions, "", mode);
-		const std::string second = resolve_parameter(parameters[1], trigger_name, pre_actions, type, mode);
+		const std::string first = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
+		const std::string second = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, type, mode);
 
-		return first + " = " + second;
+		MapScriptWriter writer(mode);
+		writer.set_variable(first, second);
+		return writer.script;
 	}
 
-	if (parent_name == "CommentString") {
+	if (eca.name == "CommentString") {
 		// TODO comments in lua are with --
-		return "//" + resolve_parameter(parameters[0], trigger_name, pre_actions, "", mode);
+		return "//" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
 	}
 
-	if (parent_name == "CustomScriptCode") {
-		return resolve_parameter(parameters[0], trigger_name, pre_actions, "", mode);
+	if (eca.name == "CustomScriptCode") {
+		return resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
 	}
 
 	std::vector<std::string> resolved_parameters;
-	for (size_t i = 0; i < parameters.size(); ++i) {
-		resolved_parameters.push_back(resolve_parameter(parameters[i], trigger_name, pre_actions, get_type(parent_name, i), mode));
+	for (size_t i = 0; i < eca.parameters.size(); ++i) {
+		resolved_parameters.push_back(resolve_parameter(eca.parameters[i], trigger_name, pre_actions, get_type(eca.name, i), mode));
 	}
 
-	if (parent_name == "WaitForCondition") {
-		MapScriptWriter writer;
+	if (eca.name == "WaitForCondition") {
+		MapScriptWriter writer(mode);
 		writer.while_statement("true", [&] {
 			writer.if_statement(resolved_parameters[0], [&] {
-				writer.call("TriggerSleepAction", std::format("RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, {})", resolved_parameters[1]));
+				writer.write_ln("break");
 			});
+
+			writer.call("TriggerSleepAction", std::format("RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, {})", resolved_parameters[1]));
 		});
 
 		return writer.script;
 	}
 
-	if (parent_name.substr(0, 15) == "OperatorCompare") {
+	if (eca.name.substr(0, 15) == "OperatorCompare" || eca.name == "OperatorInt" || eca.name == "OperatorReal") {
 		auto result_operator = resolved_parameters[1];
-		if (result_operator == "!=") {
+		if (result_operator == "!=" && mode == ScriptMode::lua) {
 			result_operator = "~=";
 		}
 
 		return std::format("{} {} {}", resolved_parameters[0], result_operator, resolved_parameters[2]);
 	}
 
-	if (parent_name == "OperatorString") {
-		return std::format("({} .. {})\n", resolved_parameters[0], resolved_parameters[1]);
+	if (eca.name == "OperatorString") {
+		if (mode == ScriptMode::jass) {
+			return std::format("({} + {})\n", resolved_parameters[0], resolved_parameters[1]);
+		} else {
+			return std::format("({} .. {})\n", resolved_parameters[0], resolved_parameters[1]);
+		}
 	}
 
 	// TODO ForLoopA and ForLoopB
 
-	if (parent_name == "ForLoopVar") {
-		MapScriptWriter writer;
-
-		writer.set_variable(resolved_parameters[0], resolved_parameters[1]);
-		writer.while_statement("true", [&] {
-			writer.if_statement(std::format("{} > {}", resolved_parameters[0], resolved_parameters[2]), [&] {
-				writer.write_ln("break");
-			});
-
-			writer.write_ln(resolved_parameters[3]);
-			writer.set_variable(resolved_parameters[0], resolved_parameters[0] + " + 1");
-		});
-
-		return writer.script;
-	}
-
-	if (parent_name == "IfThenElse") {
+	if (eca.name == "IfThenElse") {
 		const std::string function_name = generate_function_name(trigger_name);
 
 		pre_actions.function(
@@ -362,72 +343,28 @@ std::string Triggers::convert_sub_eca_to_script(
 			"takes nothing returns boolean"
 		);
 
-		MapScriptWriter writer;
+		MapScriptWriter writer(mode);
 
 		writer.if_else_statement(
 			function_name + "()",
 			[&] {
-				writer.call(resolved_parameters[1]);
+				writer.write_ln(resolved_parameters[1]);
 			},
 			[&] {
-				writer.call(resolved_parameters[2]);
+				writer.write_ln(resolved_parameters[2]);
 			}
 		);
 
 		return writer.script;
 	}
 
-	if (parent_name == "ForForce" || parent_name == "ForGroup") {
-		const std::string function_name = generate_function_name(trigger_name);
-		pre_actions.function(function_name, [&] {
-			pre_actions.write_ln(resolved_parameters[1]);
-		});
-
-		MapScriptWriter writer;
-		writer.call(parent_name, resolved_parameters[0], function_name + "()");
-		return writer.script;
-	}
-
-	if (parent_name == "GetBooleanAnd" || parent_name == "GetBooleanOr") {
-		const std::string function_name1 = generate_function_name(trigger_name);
-		pre_actions.function(
-			function_name1,
-			[&] {
-				pre_actions.write_ln("return ", resolved_parameters[0]);
-			},
-			"takes nothing returns boolean"
-		);
-
-		const std::string function_name2 = generate_function_name(trigger_name);
-		pre_actions.function(
-			function_name2,
-			[&] {
-				pre_actions.write_ln("return ", resolved_parameters[1]);
-			},
-			"takes nothing returns boolean"
-		);
-
-		MapScriptWriter writer;
-		writer.call(parent_name, function_name1 + "()", function_name2 + "()");
-		return writer.script;
-	}
-
-	if (parent_name == "OperatorInt" || parent_name == "OperatorReal") {
-		auto result_operator = resolved_parameters[1];
-		if (result_operator == "!=") {
-			result_operator = "~=";
-		}
-
-		return std::format("({} {} {})", resolved_parameters[0], result_operator, resolved_parameters[1]);
-	}
-
-	if (parent_name == "AddTriggerEvent") {
+	if (eca.name == "AddTriggerEvent") {
 		return resolved_parameters[1].insert(resolved_parameters[1].find_first_of('(') + 1, resolved_parameters[0] + ", ");
 	}
 
 	std::string output;
-	for (size_t k = 0; k < parameters.size(); k++) {
-		const std::string type = get_type(parent_name, k);
+	for (size_t k = 0; k < eca.parameters.size(); k++) {
+		const std::string type = get_type(eca.name, k);
 		if (type == "boolexpr") {
 			const std::string function_name = generate_function_name(trigger_name);
 			pre_actions.function(
@@ -438,6 +375,16 @@ std::string Triggers::convert_sub_eca_to_script(
 				"takes nothing returns boolean"
 			);
 			output += function_name;
+		} if (type == "boolcall") {
+			const std::string function_name = generate_function_name(trigger_name);
+			pre_actions.function(
+				function_name,
+				[&] {
+					pre_actions.write_ln("return ", resolved_parameters[k]);
+				},
+				"takes nothing returns boolean"
+			);
+			output += function_name + "()";
 		} else if (type == "code") {
 			const std::string function_name = generate_function_name(trigger_name);
 			pre_actions.function(function_name, [&] {
@@ -448,13 +395,13 @@ std::string Triggers::convert_sub_eca_to_script(
 			output += resolved_parameters[k];
 		}
 
-		if (k < parameters.size() - 1) {
+		if (k < eca.parameters.size() - 1) {
 			output += ", ";
 		}
 	}
 
-	const std::string script_name = trigger_data.data("TriggerActions", "_" + parent_name + "_ScriptName");
-	return (script_name.empty() ? parent_name : script_name) + "(" + output + ")";
+	const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
+	return (script_name.empty() ? eca.name : script_name) + "(" + output + ")";
 }
 
 std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const {
@@ -505,12 +452,12 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 				break;
 			}
 			case ECA::Type::condition:
-				conditions.if_statement(std::format("not ({})", convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode)), [&] {
+				conditions.if_statement(std::format("not ({})", convert_eca_to_script(i, pre_actions, trigger_name, mode)), [&] {
 					conditions.write_ln("return false");
 				});
 				break;
 			case ECA::Type::action:
-				actions.write_ln(convert_toplevel_eca_to_script(i, pre_actions, trigger_name, mode));
+				actions.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
 				break;
 		}
 	}
