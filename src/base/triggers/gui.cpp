@@ -2,7 +2,7 @@ module Triggers;
 
 import std;
 
-std::string Triggers::get_type(const std::string& function_name, const int parameter) const {
+std::string Triggers::get_type(const std::string_view function_name, const size_t parameter) const {
 	std::string type;
 
 	if (trigger_data.key_exists("TriggerActions", function_name)) {
@@ -27,7 +27,8 @@ std::string Triggers::resolve_parameter(
 	const std::string& trigger_name,
 	MapScriptWriter& pre_actions,
 	const std::string& type,
-	ScriptMode mode
+	ScriptMode mode,
+	bool add_call = false
 ) const {
 	switch (parameter.type) {
 		case TriggerParameter::Type::invalid:
@@ -51,7 +52,7 @@ std::string Triggers::resolve_parameter(
 		}
 		case TriggerParameter::Type::function:
 			if (parameter.has_sub_parameter) {
-				return convert_eca_to_script(parameter.sub_parameter, pre_actions, trigger_name, mode);
+				return convert_eca_to_script(parameter.sub_parameter, pre_actions, trigger_name, mode, add_call);
 			} else {
 				return parameter.value + "()";
 			}
@@ -91,10 +92,40 @@ std::string Triggers::convert_eca_to_script(
 	const ECA& eca,
 	MapScriptWriter& pre_actions,
 	const std::string& trigger_name,
-	ScriptMode mode
+	ScriptMode mode,
+	bool add_call
 ) const {
 	if (!eca.enabled) {
 		return "";
+	}
+
+	if (eca.name == "IfThenElse") {
+		const std::string function_name = generate_function_name(trigger_name);
+
+		pre_actions.function(
+			function_name,
+			[&] {
+				pre_actions.write_ln(
+					"return ",
+					resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0), mode)
+				);
+			},
+			"takes nothing returns boolean"
+		);
+
+		MapScriptWriter writer(mode);
+
+		writer.if_else_statement(
+			function_name + "()",
+			[&] {
+				writer.write_ln(resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1), mode, true));
+			},
+			[&] {
+				writer.write_ln(resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2), mode, true));
+			}
+		);
+
+		return writer.script;
 	}
 
 	if (eca.name == "IfThenElseMultiple") {
@@ -105,7 +136,7 @@ std::string Triggers::convert_eca_to_script(
 			if (i.type != ECA::Type::condition) {
 				continue;
 			}
-			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode, false));
 		}
 
 		pre_actions.function(
@@ -133,7 +164,7 @@ std::string Triggers::convert_eca_to_script(
 					}
 
 					if (i.group == 1) {
-						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
 					}
 				}
 			},
@@ -145,7 +176,7 @@ std::string Triggers::convert_eca_to_script(
 
 					// TODO, I suspect group 0 is the if, group 1 is the then and group 2 is the else
 					if (i.group != 1) {
-						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+						writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
 					}
 				}
 			}
@@ -154,9 +185,9 @@ std::string Triggers::convert_eca_to_script(
 		return writer.script;
 	}
 
-	if (eca.name == "ForLoopAMultiple" || eca.name == "ForLoopBMultiple") {
-		const std::string loop_index = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
-		const std::string loop_index_end = eca.name == "ForLoopAMultiple" ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
+	if (eca.name.starts_with("ForLoopA") || eca.name.starts_with("ForLoopB")) {
+		const std::string loop_index = eca.name.starts_with("ForLoopA") ? "bj_forLoopAIndex" : "bj_forLoopBIndex";
+		const std::string loop_index_end = eca.name.starts_with("ForLoopA") ? "bj_forLoopAIndexEnd" : "bj_forLoopBIndexEnd";
 
 		const auto start_at = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0), mode);
 		const auto exit_when = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1), mode);
@@ -166,13 +197,14 @@ std::string Triggers::convert_eca_to_script(
 		writer.set_variable(loop_index, start_at);
 		// Have to set this as somebody might have used the variable inside
 		writer.set_variable(loop_index_end, exit_when);
-		writer.while_statement("true", [&] {
-			writer.if_statement(std::format("{} > {}", loop_index, loop_index_end), [&] {
-				writer.write_ln("break");
-			});
 
-			for (const auto& i : eca.ecas) {
-				writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+		writer.while_statement(std::format("{} <= {}", loop_index, loop_index_end), [&] {
+			if (eca.name.ends_with("Multiple")) {
+				for (const auto& i : eca.ecas) {
+					writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
+				}
+			} else {
+				writer.write_ln(resolve_parameter(eca.parameters[2], trigger_name, pre_actions, get_type(eca.name, 2), mode, true));
 			}
 
 			writer.set_variable(loop_index, loop_index + " + 1");
@@ -188,53 +220,17 @@ std::string Triggers::convert_eca_to_script(
 
 		MapScriptWriter writer(mode);
 		writer.set_variable(variable, start_at);
-		writer.while_statement("true", [&] {
-			writer.if_statement(std::format("{} > {}", variable, exit_when), [&] {
-				writer.write_ln("break");
-			});
-
+		writer.while_statement(std::format("{} <= {}", variable, exit_when), [&] {
 			if (eca.name == "ForLoopVarMultiple") {
 				for (const auto& i : eca.ecas) {
-					writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+					writer.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
 				}
 			} else {
-				writer.write_ln(resolve_parameter(eca.parameters[3], trigger_name, pre_actions, get_type(eca.name, 3), mode));
+				writer.write_ln(resolve_parameter(eca.parameters[3], trigger_name, pre_actions, get_type(eca.name, 3), mode, true));
 			}
-
 
 			writer.set_variable(variable, variable + " + 1");
 		});
-
-		return writer.script;
-	}
-
-	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple"
-		|| eca.name == "EnumDestructablesInCircleBJMultiple") {
-		const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
-
-		const std::string function_name = generate_function_name(trigger_name);
-
-		std::vector<std::string> ecas;
-		for (const auto& i : eca.ecas) {
-			ecas.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
-		}
-
-		pre_actions.function(function_name, [&] {
-			for (const auto& i : ecas) {
-				pre_actions.write_ln(i);
-			}
-		});
-
-		MapScriptWriter writer(mode);
-
-		const auto parameter1 = resolve_parameter(eca.parameters[0], trigger_name, pre_actions, get_type(eca.name, 0), mode);
-
-		if (eca.name == "EnumDestructablesInCircleBJMultiple") {
-			const auto parameter2 = resolve_parameter(eca.parameters[1], trigger_name, pre_actions, get_type(eca.name, 1), mode);
-			writer.call(script_name, parameter1, parameter2, "function " + function_name);
-		} else {
-			writer.call(script_name, parameter1, "function " + function_name);
-		}
 
 		return writer.script;
 	}
@@ -244,7 +240,7 @@ std::string Triggers::convert_eca_to_script(
 
 		std::vector<std::string> conditions;
 		for (const auto& i : eca.ecas) {
-			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+			conditions.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode, false));
 		}
 
 		pre_actions.function(
@@ -300,20 +296,44 @@ std::string Triggers::convert_eca_to_script(
 		resolved_parameters.push_back(resolve_parameter(eca.parameters[i], trigger_name, pre_actions, get_type(eca.name, i), mode));
 	}
 
+	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple"
+		|| eca.name == "EnumDestructablesInCircleBJMultiple") {
+		const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
+
+		const std::string function_name = generate_function_name(trigger_name);
+
+		std::vector<std::string> ecas;
+		for (const auto& i : eca.ecas) {
+			ecas.push_back(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
+		}
+
+		pre_actions.function(function_name, [&] {
+			for (const auto& i : ecas) {
+				pre_actions.write_ln(i);
+			}
+		});
+
+		MapScriptWriter writer(mode);
+
+		if (eca.name == "EnumDestructablesInCircleBJMultiple") {
+			writer.call(script_name, resolved_parameters[0], resolved_parameters[1], "function " + function_name);
+		} else {
+			writer.call(script_name, resolved_parameters[0], "function " + function_name);
+		}
+
+		return writer.script;
+	}
+
 	if (eca.name == "WaitForCondition") {
 		MapScriptWriter writer(mode);
-		writer.while_statement("true", [&] {
-			writer.if_statement(resolved_parameters[0], [&] {
-				writer.write_ln("break");
-			});
-
+		writer.while_statement(std::format("not ({})", resolved_parameters[0]), [&] {
 			writer.call("TriggerSleepAction", std::format("RMaxBJ(bj_WAIT_FOR_COND_MIN_INTERVAL, {})", resolved_parameters[1]));
 		});
 
 		return writer.script;
 	}
 
-	if (eca.name.substr(0, 15) == "OperatorCompare" || eca.name == "OperatorInt" || eca.name == "OperatorReal") {
+	if (eca.name.starts_with("OperatorCompare") || eca.name == "OperatorInt" || eca.name == "OperatorReal") {
 		auto result_operator = resolved_parameters[1];
 		if (result_operator == "!=" && mode == ScriptMode::lua) {
 			result_operator = "~=";
@@ -328,34 +348,6 @@ std::string Triggers::convert_eca_to_script(
 		} else {
 			return std::format("({} .. {})\n", resolved_parameters[0], resolved_parameters[1]);
 		}
-	}
-
-	// TODO ForLoopA and ForLoopB
-
-	if (eca.name == "IfThenElse") {
-		const std::string function_name = generate_function_name(trigger_name);
-
-		pre_actions.function(
-			function_name,
-			[&] {
-				pre_actions.write_ln("return ", resolved_parameters[0]);
-			},
-			"takes nothing returns boolean"
-		);
-
-		MapScriptWriter writer(mode);
-
-		writer.if_else_statement(
-			function_name + "()",
-			[&] {
-				writer.write_ln(resolved_parameters[1]);
-			},
-			[&] {
-				writer.write_ln(resolved_parameters[2]);
-			}
-		);
-
-		return writer.script;
 	}
 
 	if (eca.name == "AddTriggerEvent") {
@@ -375,7 +367,8 @@ std::string Triggers::convert_eca_to_script(
 				"takes nothing returns boolean"
 			);
 			output += function_name;
-		} if (type == "boolcall") {
+		}
+		if (type == "boolcall") {
 			const std::string function_name = generate_function_name(trigger_name);
 			pre_actions.function(
 				function_name,
@@ -401,7 +394,7 @@ std::string Triggers::convert_eca_to_script(
 	}
 
 	const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
-	return (script_name.empty() ? eca.name : script_name) + "(" + output + ")";
+	return (add_call ? "call " : "") + (script_name.empty() ? eca.name : script_name) + "(" + output + ")";
 }
 
 std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const {
@@ -452,12 +445,12 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 				break;
 			}
 			case ECA::Type::condition:
-				conditions.if_statement(std::format("not ({})", convert_eca_to_script(i, pre_actions, trigger_name, mode)), [&] {
+				conditions.if_statement(std::format("not ({})", convert_eca_to_script(i, pre_actions, trigger_name, mode, false)), [&] {
 					conditions.write_ln("return false");
 				});
 				break;
 			case ECA::Type::action:
-				actions.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode));
+				actions.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, false));
 				break;
 		}
 	}
@@ -486,12 +479,21 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		final_trigger.merge(events);
 
 		if (!conditions.is_empty()) {
-			final_trigger.call("TriggerAddCondition", trigger_variable_name, trigger_conditions_name);
+			if (mode == ScriptMode::jass) {
+				final_trigger.call("TriggerAddCondition", trigger_variable_name, "Condition( function " + trigger_conditions_name + ")");
+			} else {
+				final_trigger.call("TriggerAddCondition", trigger_variable_name, trigger_conditions_name);
+			}
 		}
 		if (!trigger.initially_on) {
 			final_trigger.call("DisableTrigger", trigger_variable_name);
 		}
-		final_trigger.call("TriggerAddAction", trigger_variable_name, trigger_action_name);
+
+		if (mode == ScriptMode::jass) {
+			final_trigger.call("TriggerAddAction", trigger_variable_name, "function " + trigger_action_name);
+		} else {
+			final_trigger.call("TriggerAddAction", trigger_variable_name, trigger_action_name);
+		}
 	});
 
 	return final_trigger.script;

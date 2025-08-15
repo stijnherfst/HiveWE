@@ -37,7 +37,7 @@ namespace ini {
 
 			std::string_view current_section;
 
-			while (view.size()) {
+			while (!view.empty()) {
 				size_t eol = view.find('\n');
 				if (eol == std::string_view::npos) {
 					eol = view.size() - 1;
@@ -116,7 +116,7 @@ namespace ini {
 			}
 		}
 
-		const hive::unordered_map<std::string, std::vector<std::string>>& section(const std::string_view section) const {
+		[[nodiscard]] const hive::unordered_map<std::string, std::vector<std::string>>& section(const std::string_view section) const {
 			if (auto found = ini_data.find(section); found != ini_data.end()) {
 				return found->second;
 			} else {
@@ -129,17 +129,17 @@ namespace ini {
 			ini_data[section][key] = { std::move(value) };
 		}
 
-		bool key_exists(const std::string_view section, const std::string_view key) const {
+		[[nodiscard]] bool key_exists(const std::string_view section, const std::string_view key) const {
 			return ini_data.contains(section) && ini_data.at(section).contains(key);
 		}
 
-		bool section_exists(const std::string_view section) const {
+		[[nodiscard]] bool section_exists(const std::string_view section) const {
 			return ini_data.contains(section);
 		}
 
 		/// To access key data where the value of the key is comma seperated
 		template <typename T = std::string>
-		T data(const std::string_view section, const std::string_view key, const size_t argument = 0) const {
+		[[nodiscard]] T data(const std::string_view section, const std::string_view key, const size_t argument = 0) const {
 			const auto sec = ini_data.find(section);
 			if (sec == ini_data.end()) {
 				throw std::runtime_error("section not found");

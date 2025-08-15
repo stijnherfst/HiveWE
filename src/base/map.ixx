@@ -306,7 +306,7 @@ export class Map: public QObject {
 
 			// Custom text triggers (JASS)
 			if (hierarchy.map_file_exists("war3map.wct")) {
-				triggers.load_jass();
+				triggers.load_scripts();
 			}
 		}
 
@@ -550,14 +550,13 @@ export class Map: public QObject {
 		info.save(terrain.tileset);
 		trigger_strings.save();
 		triggers.save();
-		triggers.save_jass();
-
+		triggers.save_scripts();
 		ScriptMode mode = ScriptMode::jass;
 		if (info.lua) {
 			mode = ScriptMode::lua;
 		}
-
 		triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
+
 		imports.save(filesystem_path);
 
 		std::println("Saving took: {:>5}ms", timer.elapsed_ms());

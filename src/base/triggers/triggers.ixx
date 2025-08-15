@@ -41,7 +41,7 @@ struct MapScriptWriter {
 		script += writer.script;
 	}
 
-	void raw_write_to_log(std::string_view users_fmt, std::format_args&& args) {
+	void raw_write_to_log(const std::string_view users_fmt, std::format_args&& args) {
 		std::vformat_to(std::back_inserter(script), users_fmt, args);
 	}
 
@@ -121,7 +121,7 @@ struct MapScriptWriter {
 		raw_write_to_log(work, std::make_format_args(name, args...));
 	}
 
-	void write(std::string_view string) {
+	void write(const std::string_view string) {
 		for (size_t i = 0; i < current_indentation; i++) {
 			script += '\t';
 		}
@@ -144,17 +144,15 @@ struct MapScriptWriter {
 	template<typename T>
 	constexpr void forloop(size_t start, size_t end, T callback) {
 		for (size_t i = 0; i < current_indentation; i++) {
-			//script += '\t';
+			script += '\t';
 		}
 		std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
 
 		current_indentation += 1;
 		callback();
 		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
-		script += "end\n";
+
+		write("end\n");
 	}
 
 	template<typename T>
@@ -172,37 +170,42 @@ struct MapScriptWriter {
 		current_indentation += 1;
 		callback();
 		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			// script += '\t';
-		}
 
 		if (mode == ScriptMode::lua) {
-			script += "end\n\n";
+			write("end\n\n");
 		} else {
-			script += "endfunction\n\n";
+			write("endfunction\n\n");
 		}
 	}
 
 	template<typename T>
 	void while_statement(std::string_view condition, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
+		if (mode == ScriptMode::jass) {
+			write("loop\n");
+		} else {
+			for (size_t i = 0; i < current_indentation; i++) {
+				script += '\t';
+			}
 
-		std::format_to(std::back_inserter(script), "while ({}) do\n", condition);
+			std::format_to(std::back_inserter(script), "while ({}) do\n", condition);
+		}
 
 		current_indentation += 1;
-		callback();
-		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
+
+		if (mode == ScriptMode::jass) {
+			for (size_t i = 0; i < current_indentation; i++) {
+				script += '\t';
+			}
+			std::format_to(std::back_inserter(script), "exitwhen (not ({}))\n", condition);
 		}
 
-		if (mode == ScriptMode::lua) {
-			script += "end\n";
+		callback();
+		current_indentation -= 1;
+
+		if (mode == ScriptMode::jass) {
+			write("endloop\n");
 		} else {
-			// TODO while loops in jass??
-			script += "end\n";
+			write("end\n");
 		}
 	}
 
@@ -217,14 +220,11 @@ struct MapScriptWriter {
 		current_indentation += 1;
 		callback();
 		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
 
 		if (mode == ScriptMode::lua) {
-			script += "end\n";
+			write("end\n");
 		} else {
-			script += "endif\n";
+			write("endif\n");
 		}
 	}
 
@@ -239,23 +239,17 @@ struct MapScriptWriter {
 		current_indentation += 1;
 		if_callback();
 		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
 
-		script += "else\n";
+		write("else\n");
 
 		current_indentation += 1;
 		else_callback();
 		current_indentation -= 1;
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
-		}
 
 		if (mode == ScriptMode::lua) {
-			script += "end\n";
+			write("end\n");
 		} else {
-			script += "endif\n";
+			write("endif\n");
 		}
 	}
 
@@ -419,7 +413,7 @@ export class Triggers {
 	std::vector<Trigger> triggers;
 
   private:
-	std::string get_type(const std::string& function_name, int parameter) const;
+	std::string get_type(const std::string_view function_name, size_t parameter) const;
 
 	std::string
 	convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const;
@@ -429,14 +423,16 @@ export class Triggers {
 		const std::string& trigger_name,
 		MapScriptWriter& pre_actions,
 		const std::string& type,
-		ScriptMode mode
+		ScriptMode mode,
+		bool add_call
 	) const;
 
 	std::string convert_eca_to_script(
 		const ECA& eca,
 		MapScriptWriter& pre_actions,
 		const std::string& trigger_name,
-		ScriptMode mode
+		ScriptMode mode,
+		bool add_call
 	) const;
 
 	void parse_parameter_structure(BinaryReader& reader, TriggerParameter& parameter, uint32_t version) {
@@ -448,7 +444,7 @@ export class Triggers {
 			parameter.sub_parameter.group = 0;
 			parameter.sub_parameter.name = reader.read_c_string();
 			parameter.sub_parameter.enabled = true;
-			bool has_parameters = reader.read<uint32_t>();
+			const bool has_parameters = reader.read<uint32_t>();
 			if (has_parameters) {
 				parameter.sub_parameter.parameters.resize(argument_counts[parameter.sub_parameter.name]);
 				for (auto&& i : parameter.sub_parameter.parameters) {
@@ -765,7 +761,8 @@ export class Triggers {
 		}
 	}
 
-	void load_jass() {
+	/// Can be Jass or Lua depending on the map
+	void load_scripts() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.wct");
 
 		const uint32_t version = reader.read<uint32_t>();
@@ -894,7 +891,8 @@ export class Triggers {
 		hierarchy.map_file_write("war3map.wtg", writer.buffer);
 	}
 
-	void save_jass() const {
+	/// Can be jass or lua depending on the map
+	void save_scripts() const {
 		BinaryWriter writer;
 
 		writer.write<uint32_t>(write_version);
@@ -908,7 +906,7 @@ export class Triggers {
 			writer.write_c_string(global_jass);
 		}
 
-		// Custom text (jass) needs to be saved in the order they appear in the hierarchy
+		// Custom text (jass/lua) needs to be saved in the order they appear in the hierarchy
 		for (const auto& j : categories) {
 			for (const auto& i : triggers) {
 				if (i.parent_id == j.id) {

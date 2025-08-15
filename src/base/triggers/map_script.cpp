@@ -525,7 +525,9 @@ void generate_item_tables(MapScriptWriter& script, const std::string& table_name
 
 			script.set_variable("trigWidget", "bj_lastDyingWidget");
 
-			script.if_statement("trigWidget == " + script.null(), [&]() { script.set_variable("trigUnit", "GetTriggerUnit()"); });
+			script.if_statement("trigWidget == " + script.null(), [&] {
+				script.set_variable("trigUnit", "GetTriggerUnit()");
+			});
 
 			script.if_statement("trigUnit ~= " + script.null(), [&]() {
 				script.set_variable("canDrop", "not IsUnitHidden(trigUnit)");
@@ -782,7 +784,7 @@ std::string Triggers::generate_map_script(
 		pos = trigger_script.find("gg_dest", pos + 17);
 	}
 
-	MapScriptWriter script_writer;
+	MapScriptWriter script_writer(mode);
 
 	generate_global_variables(
 		script_writer,
@@ -825,7 +827,11 @@ std::string Triggers::generate_map_script(
 	output.write((char*)script_writer.script.data(), script_writer.script.size());
 	output.close();
 
-	hierarchy.map_file_add(path, "war3map.lua");
+	if (mode == ScriptMode::jass) {
+		hierarchy.map_file_add(path, "war3map.j");
+	} else {
+		hierarchy.map_file_add(path, "war3map.lua");
+	}
 
 	/*QProcess* proc = new QProcess();
 		proc->setWorkingDirectory("data/tools");
