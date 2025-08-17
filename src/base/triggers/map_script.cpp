@@ -26,19 +26,18 @@ void generate_global_variables(
 
 	if (script.mode == ScriptMode::jass) {
 		for (const auto& variable : variables) {
-			const std::string base_type = get_base_type(variable.type, trigger_data);
+			const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
+			const std::string type = base_type.empty() ? variable.type : base_type;
 			if (variable.is_array) {
-				//writer.write_ln(base_type, " array udg_", variable.name);
-				script.global(base_type, "array udg_" + variable.name, script.null());
+				script.write_ln(std::format("{} array udg_{}", type, variable.name));
 			} else {
-				std::string default_value = trigger_data.data("TriggerTypeDefaults", base_type);
+				std::string default_value = trigger_data.data("TriggerTypeDefaults", type);
 
 				if (default_value.empty()) { // handle?
 					default_value = "null";
 				}
 
-				// writer.write_string("\t" + base_type + " udg_" + variable.name + " = " + default_value + "\n");
-				script.global(base_type, "udg_" + variable.name, default_value);
+				script.global(type, "udg_" + variable.name, default_value);
 			}
 		}
 	} else {
@@ -69,7 +68,13 @@ void generate_global_variables(
 		std::string sound_name = i.name;
 		trim(sound_name);
 		std::replace(sound_name.begin(), sound_name.end(), ' ', '_');
-		script.global("sound", sound_name, script.null());
+
+		if (i.music) {
+			// Music files are stored as just a file path string
+			script.global("string", sound_name, "\"\"");
+		} else {
+			script.global("sound", sound_name, script.null());
+		}
 	}
 
 	for (const auto& i : triggers) {
@@ -98,6 +103,8 @@ void generate_global_variables(
 
 void generate_init_global_variables(MapScriptWriter& script, const std::vector<TriggerVariable>& variables, const ini::INI& trigger_data) {
 	script.function("InitGlobals", [&]() {
+		script.local("integer", "i", "0");
+
 		for (const auto& variable : variables) {
 			const std::string base_type = trigger_data.data("TriggerTypes", variable.type, 4);
 			const std::string type = base_type.empty() ? variable.type : base_type;
@@ -107,40 +114,33 @@ void generate_init_global_variables(MapScriptWriter& script, const std::vector<T
 				continue;
 			}
 
-			if (variable.is_array) {
-				script.forloop(0, variable.array_size, [&]() {
-					if (variable.is_initialized) {
-						if (type == "string" && variable.initial_value.empty()) {
-							script.set_variable("udg_" + variable.name + "[i]", "\"\"");
-						} else {
-							script.set_variable("udg_" + variable.name + "[i]", "\"" + variable.initial_value + "\"");
-						}
+			std::string value;
+			if (variable.is_initialized) {
+				const std::string converted_value = trigger_data.data("TriggerParams", variable.initial_value, 2);
+
+				if (converted_value.empty()) {
+					if (type == "string") {
+						value = "\"" + variable.initial_value + "\"";
 					} else {
-						if (type == "string") {
-							script.set_variable("udg_" + variable.name + "[i]", "\"\"");
-						} else {
-							script.set_variable("udg_" + variable.name + "[i]", default_value);
-						}
+						value = variable.initial_value;
 					}
-				});
-			} else if (type == "string") {
-				if (variable.is_initialized) {
-					script.set_variable("udg_" + variable.name, "\"" + variable.initial_value + "\"");
 				} else {
-					script.set_variable("udg_" + variable.name, "\"\"");
+					value = converted_value;
 				}
 			} else {
-				if (variable.is_initialized) {
-					const std::string converted_value = trigger_data.data("TriggerParams", variable.initial_value, 2);
-
-					if (converted_value.empty()) {
-						script.set_variable("udg_" + variable.name, variable.initial_value);
-					} else {
-						script.set_variable("udg_" + variable.name, converted_value);
-					}
+				if (type == "string") {
+					value = "\"\"";
 				} else {
-					script.set_variable("udg_" + variable.name, default_value);
+					value = default_value;
 				}
+			}
+
+			if (variable.is_array) {
+				script.forloop(0, variable.array_size, "i", [&] {
+					script.set_variable("udg_" + variable.name + "[i]", value);
+				});
+			} else {
+				script.set_variable("udg_" + variable.name, value);
 			}
 		}
 	});
@@ -243,7 +243,12 @@ void generate_units(
 				script.set_variable("t", "CreateTrigger()");
 				script.call("TriggerRegisterUnitEvent", "t", unit_reference, "EVENT_UNIT_DEATH");
 				script.call("TriggerRegisterUnitEvent", "t", unit_reference, "EVENT_UNIT_CHANGE_OWNER");
-				script.call("TriggerAddAction", "t", "UnitItemDrops_" + std::to_string(i.creation_number));
+
+				if (script.mode == ScriptMode::jass) {
+					script.call("TriggerAddAction", "t", "function UnitItemDrops_" + std::to_string(i.creation_number));
+				} else {
+					script.call("TriggerAddAction", "t", "UnitItemDrops_" + std::to_string(i.creation_number));
+				}
 			}
 		}
 	});
@@ -308,13 +313,26 @@ void generate_destructables(
 			if (!i.item_sets.empty()) {
 				script.set_variable("t", "CreateTrigger()");
 				script.call("TriggerRegisterDeathEvent", "t", id);
-				script.call("TriggerAddAction", "t", "SaveDyingWidget");
-				script.call("TriggerAddAction", "t", "DoodadItemDrops_" + std::to_string(i.creation_number));
+				if (script.mode == ScriptMode::jass) {
+					script.call("TriggerAddAction", "t", "function SaveDyingWidget");
+				} else {
+					script.call("TriggerAddAction", "t", "SaveDyingWidget");
+				}
+				if (script.mode == ScriptMode::jass) {
+					script.call("TriggerAddAction", "t", "function DoodadItemDrops_" + std::to_string(i.creation_number));
+				} else {
+					script.call("TriggerAddAction", "t", "DoodadItemDrops_" + std::to_string(i.creation_number));
+				}
 			} else if (i.item_table_pointer != -1) {
 				script.set_variable("t", "CreateTrigger()");
 				script.call("TriggerRegisterDeathEvent", "t", id);
-				script.call("TriggerAddAction", "t", "SaveDyingWidget");
-				script.call("TriggerAddAction", "t", "ItemTable_" + std::to_string(i.item_table_pointer));
+				if (script.mode == ScriptMode::jass) {
+					script.call("TriggerAddAction", "t", "function SaveDyingWidget");
+					script.call("TriggerAddAction", "t", "function ItemTable_" + std::to_string(i.item_table_pointer));
+				} else {
+					script.call("TriggerAddAction", "t", "SaveDyingWidget");
+					script.call("TriggerAddAction", "t", "ItemTable_" + std::to_string(i.item_table_pointer));
+				}
 			}
 		}
 	});
@@ -379,24 +397,29 @@ void generate_sounds(MapScriptWriter& script, const Sounds& sounds) {
 			trim(sound_name);
 			std::ranges::replace(sound_name, ' ', '_');
 
-			script.set_variable(
-				sound_name,
-				std::format(
-					"CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")",
-					string_replaced(i.file, "\\", "\\\\"),
-					i.looping ? "true" : "false",
-					i.is_3d ? "true" : "false",
-					i.stop_out_of_range ? "true" : "false",
-					i.fade_in_rate,
-					i.fade_out_rate,
-					string_replaced(i.eax_effect, "\\", "\\\\")
-				)
-			);
+			if (i.music) {
+				// I suppose music files can't be muted?
+				script.set_variable(sound_name, "\"" + string_replaced(i.file, "\\", "\\\\") + "\"");
+			} else {
+				script.set_variable(
+					sound_name,
+					std::format(
+						"CreateSound(\"{}\", {}, {}, {}, {}, {}, \"{}\")",
+						string_replaced(i.file, "\\", "\\\\"),
+						i.looping ? "true" : "false",
+						i.is_3d ? "true" : "false",
+						i.stop_out_of_range ? "true" : "false",
+						i.fade_in_rate,
+						i.fade_out_rate,
+						string_replaced(i.eax_effect, "\\", "\\\\")
+					)
+				);
 
-			script.call("SetSoundDuration", sound_name, i.fade_in_rate);
-			script.call("SetSoundChannel", sound_name, i.channel);
-			script.call("SetSoundVolume", sound_name, i.volume);
-			script.call("SetSoundPitch", sound_name, i.pitch);
+				script.call("SetSoundDuration", sound_name, i.fade_in_rate);
+				script.call("SetSoundChannel", sound_name, i.channel);
+				script.call("SetSoundVolume", sound_name, i.volume);
+				script.call("SetSoundPitch", sound_name, i.pitch);
+			}
 		}
 	});
 }
@@ -529,9 +552,9 @@ void generate_item_tables(MapScriptWriter& script, const std::string& table_name
 				script.set_variable("trigUnit", "GetTriggerUnit()");
 			});
 
-			script.if_statement("trigUnit ~= " + script.null(), [&]() {
+			script.if_statement("not(trigUnit == " + script.null() + ")", [&]() {
 				script.set_variable("canDrop", "not IsUnitHidden(trigUnit)");
-				script.if_statement("canDrop and GetChangingUnit() ~= " + script.null(), [&]() {
+				script.if_statement("canDrop and not(GetChangingUnit() == " + script.null() + ")", [&]() {
 					script.set_variable("canDrop", "(GetChangingUnitPrevOwner() == Player(PLAYER_NEUTRAL_AGGRESSIVE))");
 				});
 			});
@@ -543,8 +566,8 @@ void generate_item_tables(MapScriptWriter& script, const std::string& table_name
 						write_item_table_entry(script, chance, id);
 					}
 					script.set_variable("itemID", "RandomDistChoose()");
-					script.if_statement("trigUnit ~= " + script.null(), [&]() {
-						script.call("UnitDropitem", "trigUnit", "itemID"); // Todo fourcc?
+					script.if_statement("not(trigUnit == " + script.null() + ")", [&]() {
+						script.call("UnitDropItem", "trigUnit", "itemID"); // Todo fourcc?
 					});
 					script.if_statement("trigUnit == " + script.null(), [&]() {
 						script.call("WidgetDropItem", "trigWidget", "itemID"); // Todo fourcc?
@@ -693,9 +716,9 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 		script.call("InitSounds");
 		script.call("CreateRegions");
 		script.call("CreateCameras");
-		script.call("CreateDestructables");
-		script.call("CreateItems");
-		script.call("CreateUnits");
+		script.call("CreateAllDestructables");
+		script.call("CreateAllItems");
+		script.call("CreateAllUnits");
 		script.call("InitBlizzard");
 		script.call("InitGlobals");
 		script.call("InitCustomTriggers");
@@ -740,8 +763,8 @@ void generate_map_configuration(MapScriptWriter& script, const Terrain& terrain,
 	});
 }
 
-// Returns compile output which could contain errors or general information
-std::string Triggers::generate_map_script(
+/// Returns compile output which could contain errors or general information
+std::expected<void, std::string> Triggers::generate_map_script(
 	const Terrain& terrain,
 	const Units& units,
 	const Doodads& doodads,
@@ -809,9 +832,7 @@ std::string Triggers::generate_map_script(
 	generate_regions(script_writer, regions);
 	generate_cameras(script_writer, cameras);
 
-	// Write the results to a buffer
-	BinaryWriter writer;
-	writer.write_string(global_jass); // ToDo, this isn't written to anything
+	script_writer.write_ln(global_jass);
 
 	script_writer.write(trigger_script);
 
@@ -828,26 +849,25 @@ std::string Triggers::generate_map_script(
 	output.close();
 
 	if (mode == ScriptMode::jass) {
-		hierarchy.map_file_add(path, "war3map.j");
+		QProcess* proc = new QProcess();
+		proc->setWorkingDirectory("data/tools");
+		proc->start(
+			"data/tools/clijasshelper.exe",
+			{"--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j"}
+		);
+		proc->waitForFinished();
+		const QString result = proc->readAllStandardOutput();
+
+		if (result.contains("Compile error")) {
+			return std::unexpected(result.mid(result.indexOf("Compile error")).toStdString());
+		} else if (result.contains("compile errors")) {
+			return std::unexpected(result.mid(result.indexOf("compile errors.")).toStdString());
+		} else {
+			hierarchy.map_file_add("data/tools/war3map.j", "war3map.j");
+		}
 	} else {
 		hierarchy.map_file_add(path, "war3map.lua");
 	}
 
-	/*QProcess* proc = new QProcess();
-		proc->setWorkingDirectory("data/tools");
-		proc->start("data/tools/clijasshelper.exe", { "--scriptonly", "common.j", "blizzard.j", QString::fromStdString(path.string()), "war3map.j" });
-		proc->waitForFinished();
-		QString result = proc->readAllStandardOutput();
-
-		if (result.contains("Compile error")) {
-			QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information\n" + result.mid(result.indexOf("Compile error")), QMessageBox::StandardButton::Ok);
-			return result.mid(result.indexOf("Compile error"));
-		} else if (result.contains("compile errors")) {
-			QMessageBox::information(nullptr, "vJass output", "There were compilation errors. See the output tab for more information" + result.mid(result.indexOf("compile errors")), QMessageBox::StandardButton::Ok);
-			return result.mid(result.indexOf("compile errors."));
-		} else {
-			hierarchy.map_file_add("data/tools/war3map.j", "war3map.j");
-			return "Compilation successful";
-		}*/
-	return "Compilation successful";
+	return {};
 }

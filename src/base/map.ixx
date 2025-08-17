@@ -555,7 +555,11 @@ export class Map: public QObject {
 		if (info.lua) {
 			mode = ScriptMode::lua;
 		}
-		triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
+
+		const auto result = triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
+		if (!result.has_value()) {
+			QMessageBox::information(nullptr, "vJass output", "There were compilation errors:\n" + QString::fromStdString(result.error()), QMessageBox::StandardButton::Ok);
+		}
 
 		imports.save(filesystem_path);
 

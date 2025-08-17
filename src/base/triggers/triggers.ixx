@@ -129,6 +129,14 @@ struct MapScriptWriter {
 		script += string;
 	}
 
+	constexpr void write_ln(const std::string_view string) {
+		for (size_t i = 0; i < current_indentation; i++) {
+			script += '\t';
+		}
+		script += string;
+		script += '\n';
+	}
+
 	template<typename... Args>
 	constexpr void write_ln(Args&&... args) {
 		std::string work = std::string(current_indentation, '\t');
@@ -142,23 +150,42 @@ struct MapScriptWriter {
 	}
 
 	template<typename T>
-	constexpr void forloop(size_t start, size_t end, T callback) {
-		for (size_t i = 0; i < current_indentation; i++) {
-			script += '\t';
+	constexpr void forloop(size_t start, size_t end, const std::string_view variable, T callback) {
+		if (mode == ScriptMode::jass) {
+			set_variable(variable, std::to_string(start));
+			write_ln("loop");
+			current_indentation += 1;
+			for (size_t i = 0; i < current_indentation; i++) {
+				script += '\t';
+			}
+			std::format_to(std::back_inserter(script), "exitwhen {} > {}\n", variable, end);
+		} else {
+			for (size_t i = 0; i < current_indentation; i++) {
+				script += '\t';
+			}
+			std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
+			current_indentation += 1;
 		}
-		std::format_to(std::back_inserter(script), "for i={},{} do\n", start, end);
 
-		current_indentation += 1;
 		callback();
 		current_indentation -= 1;
 
-		write("end\n");
+		if (mode == ScriptMode::jass) {
+			for (size_t i = 0; i < current_indentation; i++) {
+				script += '\t';
+			}
+			std::format_to(std::back_inserter(script), "set {} = {} + 1\n", variable, variable);
+			write_ln("endloop");
+		} else {
+			write_ln("end");
+		}
+
 	}
 
 	template<typename T>
 	void function(std::string_view name, T callback, const std::string_view return_type = "takes nothing returns nothing") {
 		for (size_t i = 0; i < current_indentation; i++) {
-			// script += '\t';
+			script += '\t';
 		}
 
 		if (mode == ScriptMode::lua) {
@@ -181,7 +208,7 @@ struct MapScriptWriter {
 	template<typename T>
 	void while_statement(std::string_view condition, T callback) {
 		if (mode == ScriptMode::jass) {
-			write("loop\n");
+			write_ln("loop");
 		} else {
 			for (size_t i = 0; i < current_indentation; i++) {
 				script += '\t';
@@ -203,9 +230,9 @@ struct MapScriptWriter {
 		current_indentation -= 1;
 
 		if (mode == ScriptMode::jass) {
-			write("endloop\n");
+			write_ln("endloop");
 		} else {
-			write("end\n");
+			write_ln("end");
 		}
 	}
 
@@ -222,9 +249,9 @@ struct MapScriptWriter {
 		current_indentation -= 1;
 
 		if (mode == ScriptMode::lua) {
-			write("end\n");
+			write_ln("end");
 		} else {
-			write("endif\n");
+			write_ln("endif");
 		}
 	}
 
@@ -247,9 +274,9 @@ struct MapScriptWriter {
 		current_indentation -= 1;
 
 		if (mode == ScriptMode::lua) {
-			write("end\n");
+			write_ln("end");
 		} else {
-			write("endif\n");
+			write_ln("endif");
 		}
 	}
 
@@ -266,7 +293,7 @@ struct MapScriptWriter {
 		if (mode == ScriptMode::lua) {
 			return std::format("FourCC(\"{}\")", id);
 		} else {
-			return std::format("\"{}\"", id);
+			return std::format("'{}'", id);
 		}
 	}
 
@@ -332,7 +359,7 @@ struct ECA {
 struct TriggerParameter {
 	enum class Type {
 		invalid = -1,
-		constant,
+		preset,
 		variable,
 		function,
 		string
@@ -925,8 +952,8 @@ export class Triggers {
 		hierarchy.map_file_write("war3map.wct", writer.buffer);
 	}
 
-	// Returns compile output which could contain errors or general information
-	std::string generate_map_script(
+	/// Returns compile output which could contain errors or general information
+	std::expected<void, std::string> generate_map_script(
 		const Terrain& terrain,
 		const Units& units,
 		const Doodads& doodads,

@@ -18,8 +18,8 @@ std::string Triggers::get_type(const std::string_view function_name, const size_
 }
 
 std::string generate_function_name(const std::string& trigger_name) {
-	const auto time = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-	return "Trig_" + trigger_name + "_" + std::to_string(time & 0xFFFFFFFF);
+	static size_t counter = 0;
+	return "Trig_" + trigger_name + "_HiveWE" + std::to_string(counter++);
 }
 
 std::string Triggers::resolve_parameter(
@@ -34,18 +34,21 @@ std::string Triggers::resolve_parameter(
 		case TriggerParameter::Type::invalid:
 			std::print("Invalid parameter type\n");
 			return "";
-		case TriggerParameter::Type::constant: {
-			const std::string constant_type = trigger_data.data("TriggerParams", parameter.value, 1);
+		case TriggerParameter::Type::preset: {
+			const std::string preset_type = trigger_data.data("TriggerParams", parameter.value, 1);
 
-			if (get_base_type(constant_type, trigger_data) == "string") {
+			if (get_base_type(preset_type, trigger_data) == "string") {
 				return string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "`", "\"");
 			}
 
-			if (constant_type == "timedlifebuffcode" // ToDo this seems like a hack?
+			if (preset_type == "timedlifebuffcode" // ToDo this seems like a hack?
 				|| type == "abilcode" || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode"
 				|| type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode"
 				|| type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode" || type == "terraintype") {
-				return "FourCC(" + trigger_data.data("TriggerParams", parameter.value, 2) + ")";
+				MapScriptWriter writer(mode);
+				// We strip the ''
+				const auto stripped = string_replaced(trigger_data.data("TriggerParams", parameter.value, 2), "'", "");
+				return writer.four_cc(stripped);
 			}
 
 			return trigger_data.data("TriggerParams", parameter.value, 2);
@@ -69,17 +72,14 @@ std::string Triggers::resolve_parameter(
 			return output;
 		}
 		case TriggerParameter::Type::string:
-			const std::string import_type = trigger_data.data("TriggerTypes", type, 5);
-
-			if (!import_type.empty()) {
+			if (get_base_type(type, trigger_data) == "string") {
 				return "\"" + string_replaced(parameter.value, "\\", "\\\\") + "\"";
-			} else if (get_base_type(type, trigger_data) == "string") {
-				return "\"" + parameter.value + "\"";
 			} else if (type == "abilcode" // ToDo this seems like a hack?
 					   || type == "buffcode" || type == "destructablecode" || type == "itemcode" || type == "ordercode"
 					   || type == "techcode" || type == "unitcode" || type == "heroskillcode" || type == "weathereffectcode"
 					   || type == "timedlifebuffcode" || type == "doodadcode" || type == "timedlifebuffcode" || type == "terraintype") {
-				return "FourCC('" + parameter.value + "')";
+				MapScriptWriter writer(mode);
+				return writer.four_cc(parameter.value);
 			} else {
 				return parameter.value;
 			}
@@ -283,8 +283,11 @@ std::string Triggers::convert_eca_to_script(
 	}
 
 	if (eca.name == "CommentString") {
-		// TODO comments in lua are with --
-		return "//" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
+		if (mode == ScriptMode::jass) {
+			return "//" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
+		} else {
+			return "--" + resolve_parameter(eca.parameters[0], trigger_name, pre_actions, "", mode);
+		}
 	}
 
 	if (eca.name == "CustomScriptCode") {
@@ -296,8 +299,8 @@ std::string Triggers::convert_eca_to_script(
 		resolved_parameters.push_back(resolve_parameter(eca.parameters[i], trigger_name, pre_actions, get_type(eca.name, i), mode));
 	}
 
-	if (eca.name == "ForForceMultiple" || eca.name == "ForGroupMultiple" || eca.name == "EnumDestructablesInRectAllMultiple"
-		|| eca.name == "EnumDestructablesInCircleBJMultiple") {
+	// Handle remaining multiples
+	if (eca.name.ends_with("Multiple")) {
 		const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
 
 		const std::string function_name = generate_function_name(trigger_name);
@@ -344,14 +347,15 @@ std::string Triggers::convert_eca_to_script(
 
 	if (eca.name == "OperatorString") {
 		if (mode == ScriptMode::jass) {
-			return std::format("({} + {})\n", resolved_parameters[0], resolved_parameters[1]);
+			return std::format("({} + {})", resolved_parameters[0], resolved_parameters[1]);
 		} else {
-			return std::format("({} .. {})\n", resolved_parameters[0], resolved_parameters[1]);
+			return std::format("({} .. {})", resolved_parameters[0], resolved_parameters[1]);
 		}
 	}
 
 	if (eca.name == "AddTriggerEvent") {
-		return resolved_parameters[1].insert(resolved_parameters[1].find_first_of('(') + 1, resolved_parameters[0] + ", ");
+		return (add_call ? "call " : "")
+			+ resolved_parameters[1].insert(resolved_parameters[1].find_first_of('(') + 1, resolved_parameters[0] + ", ");
 	}
 
 	std::string output;
@@ -359,6 +363,7 @@ std::string Triggers::convert_eca_to_script(
 		const std::string type = get_type(eca.name, k);
 		if (type == "boolexpr") {
 			const std::string function_name = generate_function_name(trigger_name);
+
 			pre_actions.function(
 				function_name,
 				[&] {
@@ -366,10 +371,14 @@ std::string Triggers::convert_eca_to_script(
 				},
 				"takes nothing returns boolean"
 			);
-			output += function_name;
-		}
-		if (type == "boolcall") {
+			if (mode == ScriptMode::jass) {
+				output += "Condition(function " + function_name + ")";
+			} else {
+				output += function_name;
+			}
+		} else if (type == "boolcall") {
 			const std::string function_name = generate_function_name(trigger_name);
+
 			pre_actions.function(
 				function_name,
 				[&] {
@@ -380,10 +389,16 @@ std::string Triggers::convert_eca_to_script(
 			output += function_name + "()";
 		} else if (type == "code") {
 			const std::string function_name = generate_function_name(trigger_name);
+
+			const auto code = resolve_parameter(eca.parameters[k], trigger_name, pre_actions, get_type(eca.name, k), mode, true);
 			pre_actions.function(function_name, [&] {
-				pre_actions.write_ln(resolved_parameters[k]);
+				pre_actions.write_ln(code);
 			});
-			output += function_name;
+			if (mode == ScriptMode::jass) {
+				output += "function " + function_name;
+			} else {
+				output += function_name;
+			}
 		} else {
 			output += resolved_parameters[k];
 		}
@@ -450,7 +465,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 				});
 				break;
 			case ECA::Type::action:
-				actions.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, false));
+				actions.write_ln(convert_eca_to_script(i, pre_actions, trigger_name, mode, true));
 				break;
 		}
 	}

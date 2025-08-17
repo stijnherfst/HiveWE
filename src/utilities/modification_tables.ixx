@@ -177,7 +177,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 					}
 
 					if (without_numbers == "data" || without_numbers == "unitid" || without_numbers == "cast") {
-						// Unfortunately mapping a data field to a key is not easy so we have to iterate over the entire meta_slk
+						// Unfortunately, mapping a data field to a key is not easy, so we have to iterate over the entire meta_slk
 						for (const auto& [key, dontcare2] : meta_slk.row_headers) {
 							if (meta_slk.data<int>("data", key) != data_pointer) {
 								continue;
@@ -187,8 +187,8 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 								continue;
 							}
 
-							std::string use_specific = meta_slk.data("usespecific", key);
-							std::string not_specific = meta_slk.data("notspecific", key);
+							const std::string use_specific = meta_slk.data("usespecific", key);
+							const std::string not_specific = meta_slk.data("notspecific", key);
 
 							// If we are in the exclude list
 							if (not_specific.find(meta_id) != std::string::npos) {
@@ -207,13 +207,13 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				}
 
 				if (meta_data_key.empty()) {
-					std::println("Empty meta data key");
+					std::println("Empty meta data key for property {}, value {}", property_id, value);
 					exit(0);
 				}
 			}
 
 			if (meta_data_key.empty()) {
-				std::println("Empty meta data key");
+				std::println("Empty meta data key for property {}, value {}", property_id, value);
 				exit(0);
 			}
 
