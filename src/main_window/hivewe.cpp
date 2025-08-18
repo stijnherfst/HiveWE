@@ -1,4 +1,6 @@
 #include "HiveWE.h"
+#define __STORMLIB_NO_STATIC_LINK__
+#include "StormLib.h"
 
 import std;
 import Hierarchy;
@@ -9,7 +11,6 @@ import Camera;
 import Globals;
 import Map;
 import <soil2/SOIL2.h>;
-import <StormLib.h>;
 import MapGlobal;
 import WorldUndoManager;
 import "pathing_palette.h";

@@ -1,7 +1,11 @@
+module;
+
+#define __STORMLIB_NO_STATIC_LINK__
+#include "StormLib.h";
+
 export module MPQ;
 
 import std;
-import "StormLib.h";
 
 namespace fs = std::filesystem;
 
