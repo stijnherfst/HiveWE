@@ -52,7 +52,7 @@ QRibbon QTabBar::tab::selected {
 .QRibbonFileButton {
 	border: 1px solid transparent;
 	background-color: rgb(38, 109, 132);
-	height: 23px;
+	height: 24px;
 	color: white;
 	padding-left: 14px;
 	padding-right: 13px;
@@ -73,40 +73,41 @@ QRibbonFileButton::menu-indicator {
 
 /******************************************************/
 /* QRibbonMenu */
+
+
 QRibbonMenu {
-	color: black;
-	background-color: rgb(251, 252, 253);
-	border: 1px solid rgb(132, 146, 166);
+	background-color: rgb(53, 53, 53);
+	border: 1px solid rgb(38, 38, 38);
 }
 
 QRibbonMenu QToolButton {
+	padding-left: 3px;
+	padding-right: 2px;
+	qproperty-iconSize: 30px 30px;
+	background-color: rgb(53, 53, 53);
 	border: 1px solid transparent;
-	background-color: rgb(251, 252, 253);
 	height: 44px;
 	width: 216px;
-	color: black;
+	color: white;
 }
 
 QRibbonMenu QToolButton::hover {
-	border-color: rgb(168, 210, 253);
-	background-color: rgb(237, 244, 252);
+	background-color: rgb(85, 85, 85);
+	border: 1px solid transparent;
 }
 
-QRibbonMenu QFrame#verticalSeperator {
-	border: none;
-	max-width: 0px;
-	background-color: gray;
-	border-left: 1px solid rgb(220, 221, 222);
-	border-right: 1px solid rgb(254, 254, 255);
-	qproperty-frameShape: VLine;
+QRibbonMenu QToolButton::pressed {
+	background-color: rgb(100, 100, 100);
+	border: 1px solid transparent;
 }
 
-QRibbonMenu QFrame#horizontalSeperator {
-	border: none;
-	background-color: rgb(220, 221, 222);
-	max-height: 1px;
-	margin-left: 44px;
+QRibbonMenu QFrame {
 	qproperty-frameShape: HLine;
+	margin-left: 5;
+	margin-right: 5;
+	border: none;
+	background-color: rgb(38, 38, 38);
+	max-height: 1px;
 }
 
 /******************************************************/

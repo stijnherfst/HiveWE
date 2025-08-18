@@ -211,11 +211,11 @@ export class QRibbonMenu : public QMenu {
 		base->setSpacing(0);
 		actions->setContentsMargins(0, 0, 0, 0);
 
-		QFrame* line = new QFrame();
-		line->setObjectName("verticalSeperator");
+		// QFrame* line = new QFrame();
+		// line->setObjectName("verticalSeperator");
 
 		base->addLayout(actions);
-		base->addWidget(line);
+		// base->addWidget(line);
 		// base->addLayout(frequent_places);
 
 		setLayout(base);
