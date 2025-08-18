@@ -37,14 +37,8 @@ HiveWE::HiveWE(QWidget* parent)
 	setAutoFillBackground(true);
 
 	fs::path directory = find_warcraft_directory();
-	QSettings settings;
 
-	// TODO: these are out of hierarchy while QSettings have ICE in modules
-	hierarchy.ptr = settings.value("flavour", "Retail").toString() == "PTR";
-	hierarchy.hd = settings.value("hd", "False").toString() == "True";
-	hierarchy.teen = settings.value("teen", "False").toString() == "True";
-	QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
-	hierarchy.local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
+	QSettings settings;
 	while (!hierarchy.open_casc(directory)) {
 		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
 		if (directory == "") {
@@ -56,10 +50,10 @@ HiveWE::HiveWE(QWidget* parent)
 	// Place common.j and blizzard.j in the data folder. Required by JassHelper
 	BinaryReader common = hierarchy.open_file("scripts/common.j");
 	std::ofstream output("data/tools/common.j");
-	output.write((char*)common.buffer.data(), common.buffer.size());
+	output.write(reinterpret_cast<char*>(common.buffer.data()), common.buffer.size());
 	BinaryReader blizzard = hierarchy.open_file("scripts/blizzard.j");
 	std::ofstream output2("data/tools/blizzard.j");
-	output2.write((char*)blizzard.buffer.data(), blizzard.buffer.size());
+	output2.write(reinterpret_cast<char*>(blizzard.buffer.data()), blizzard.buffer.size());
 
 	ui.setupUi(this);
 	context = ui.widget;
