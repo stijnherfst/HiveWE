@@ -265,8 +265,10 @@ export class SkinnedMesh : public Resource {
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
 			}
-			glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, texture.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			// TODO we should have a unique texture resource for each combination of the below two settings
+			// Or emulate it in the shader?
+			// glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_S, texture.flags & 1 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+			// glTextureParameteri(textures.back()->id, GL_TEXTURE_WRAP_T, texture.flags & 2 ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 		}
 
 		// Reclaim some space

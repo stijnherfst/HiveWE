@@ -84,6 +84,7 @@ export class Terrain : public QObject {
 	std::vector<float> ground_heights;
 	std::vector<float> final_ground_heights;
 	std::vector<glm::uvec4> ground_texture_list;
+	std::vector<GLuint64> ground_texture_handles;
 	std::vector<uint8_t> ground_exists_data;
 
 	std::vector<float> water_heights;
@@ -110,6 +111,7 @@ public:
 	GLuint ground_height_buffer;
 	GLuint cliff_level_buffer;
 	GLuint water_height_buffer;
+	GLuint ground_texture_handle_buffer;
 	GLuint ground_texture_data_buffer;
 	GLuint ground_exists_buffer;
 	GLuint water_exists_buffer;
@@ -237,7 +239,7 @@ public:
         return true;
     }
 
-    void create(Physics& physics) {
+    void create(const Physics& physics) {
         // Determine if cliff
         for (int i = 0; i < width - 1; i++) {
             for (int j = 0; j < height - 1; j++) {
@@ -312,10 +314,12 @@ public:
         for (const auto& tile_id : tileset_ids) {
             ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id)));
             ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
+        	ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
         }
         blight_texture = static_cast<int>(ground_textures.size());
         ground_texture_to_id.emplace("blight", blight_texture);
         ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1)));
+		ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 
         // Cliff Textures
         for (const auto& cliff_id : cliffset_ids) {
@@ -339,6 +343,8 @@ public:
         glNamedBufferStorage(cliff_level_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
         glCreateBuffers(1, &ground_texture_data_buffer);
         glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+		glCreateBuffers(1, &ground_texture_handle_buffer);
+		glNamedBufferStorage(ground_texture_handle_buffer, ground_texture_handles.size() * sizeof(GLuint64), ground_texture_handles.data(), GL_DYNAMIC_STORAGE_BIT);
         glCreateBuffers(1, &ground_exists_buffer);
         glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint8_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
@@ -460,9 +466,6 @@ public:
             glUniform2fv(5, 1, &brush->get_position()[0]);
         }
 
-        for (size_t i = 0; i < ground_textures.size(); i++) {
-            glBindTextureUnit(i, ground_textures[i]->id);
-        }
         glBindTextureUnit(17, pathing_map.texture_static);
         glBindTextureUnit(18, pathing_map.texture_dynamic);
 
@@ -475,6 +478,7 @@ public:
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ground_height_buffer);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ground_texture_data_buffer);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ground_exists_buffer);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ground_texture_handle_buffer);
 
         // Use gl_VertexID in the shader to determine square position
         glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
@@ -643,7 +647,7 @@ public:
         }
     }
 
-    /// The 4 ground textures of the tilepoint. First 5 bits are which texture array to use and the next 5 bits are which subtexture to use
+    /// The 4 ground textures of the tilepoint. The first 16 bits are which texture array to use and the next 16 bits are which subtexture to use
     glm::uvec4 get_texture_variations(const int x, const int y) const {
         const int bottom_left = real_tile_texture(x, y);
         const int bottom_right = real_tile_texture(x + 1, y);
@@ -651,10 +655,10 @@ public:
         const int top_right = real_tile_texture(x + 1, y + 1);
 
         std::set<int> set({ bottom_left, bottom_right, top_left, top_right });
-        glm::uvec4 tiles(17); // 17 is a black transparent texture
+        glm::uvec4 tiles(0xFFFF); // 0xFFFF is a transparent black pixel in the fragment shader
         int component = 1;
 
-        tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 5);
+        tiles.x = *set.begin() + (get_tile_variation(*set.begin(), corners[x][y].ground_variation) << 16);
         set.erase(set.begin());
 
         std::bitset<4> index;
@@ -664,7 +668,7 @@ public:
             index[2] = top_right == texture;
             index[3] = top_left == texture;
 
-            tiles[component++] = texture + (index.to_ulong() << 5);
+            tiles[component++] = texture + (index.to_ulong() << 16);
         }
         return tiles;
     }

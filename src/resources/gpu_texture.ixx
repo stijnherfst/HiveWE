@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
 export class GPUTexture : public Resource {
   public:
 	GLuint id = 0;
-	//GLuint64 bindless_handle = 0;
+	GLuint64 bindless_handle = 0;
 
 	static constexpr const char* name = "GPUTexture";
 
@@ -45,7 +45,7 @@ export class GPUTexture : public Resource {
 			int width;
 			int height;
 			int channels;
-			u8* data = blp::load(reader, width, height, channels);
+			const u8* data = blp::load(reader, width, height, channels);
 
 			glCreateTextures(GL_TEXTURE_2D, 1, &id);
 			glTextureStorage2D(id, std::log2(std::max(width, height)) + 1, GL_RGBA8, width, height);
@@ -65,8 +65,8 @@ export class GPUTexture : public Resource {
 		glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		//bindless_handle = glGetTextureHandleARB(id);
-		//glMakeTextureHandleResidentARB(bindless_handle);
+		bindless_handle = glGetTextureHandleARB(id);
+		glMakeTextureHandleResidentARB(bindless_handle);
 	}
 
 	virtual ~GPUTexture() {

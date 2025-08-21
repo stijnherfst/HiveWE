@@ -15,6 +15,7 @@ namespace fs = std::filesystem;
 export class GroundTexture : public Resource {
   public:
 	GLuint id = 0;
+	GLuint64 bindless_handle = 0;
 	int tile_size;
 	bool extended = false;
 	glm::vec4 minimap_color;
@@ -73,13 +74,15 @@ export class GroundTexture : public Resource {
 				}
 			}
 		}
+		delete data;
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
 		glGenerateTextureMipmap(id);
 
 		glGetTextureSubImage(id, lods - 1, 0, 0, 0, 1, 1, 1, format, GL_FLOAT, 16, &minimap_color);
 		minimap_color *= 255.f;
 
-		delete data;
+		bindless_handle = glGetTextureHandleARB(id);
+		glMakeTextureHandleResidentARB(bindless_handle);
 	}
 
 	virtual ~GroundTexture() {
