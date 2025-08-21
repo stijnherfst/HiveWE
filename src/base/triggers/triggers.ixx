@@ -327,19 +327,6 @@ struct TriggerCategory {
 
 struct TriggerParameter;
 
-struct TriggerSubParameter {
-	enum class Type {
-		events,
-		conditions,
-		actions,
-		calls
-	};
-	Type type;
-	std::string name;
-	bool begin_parameters;
-	std::vector<TriggerParameter> parameters;
-};
-
 struct ECA {
 	enum class Type {
 		event,

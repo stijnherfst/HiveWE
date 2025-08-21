@@ -415,6 +415,7 @@ void generate_sounds(MapScriptWriter& script, const Sounds& sounds) {
 					)
 				);
 
+				// TODO how to determine duration. Load the file?
 				script.call("SetSoundDuration", sound_name, i.fade_in_rate);
 				script.call("SetSoundChannel", sound_name, i.channel);
 				script.call("SetSoundVolume", sound_name, i.volume);

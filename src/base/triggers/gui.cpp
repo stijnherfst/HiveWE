@@ -354,7 +354,7 @@ std::string Triggers::convert_eca_to_script(
 	}
 
 	if (eca.name == "AddTriggerEvent") {
-		return (add_call ? "call " : "")
+		return (add_call && mode == ScriptMode::jass ? "call " : "")
 			+ resolved_parameters[1].insert(resolved_parameters[1].find_first_of('(') + 1, resolved_parameters[0] + ", ");
 	}
 
@@ -409,7 +409,7 @@ std::string Triggers::convert_eca_to_script(
 	}
 
 	const std::string script_name = trigger_data.data("TriggerActions", "_" + eca.name + "_ScriptName");
-	return (add_call ? "call " : "") + (script_name.empty() ? eca.name : script_name) + "(" + output + ")";
+	return (add_call && mode == ScriptMode::jass ? "call " : "") + (script_name.empty() ? eca.name : script_name) + "(" + output + ")";
 }
 
 std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const {
@@ -497,7 +497,7 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 			if (mode == ScriptMode::jass) {
 				final_trigger.call("TriggerAddCondition", trigger_variable_name, "Condition( function " + trigger_conditions_name + ")");
 			} else {
-				final_trigger.call("TriggerAddCondition", trigger_variable_name, trigger_conditions_name);
+				final_trigger.call("TriggerAddCondition", trigger_variable_name, "Condition(" + trigger_conditions_name + ")");
 			}
 		}
 		if (!trigger.initially_on) {
