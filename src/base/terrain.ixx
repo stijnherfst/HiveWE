@@ -78,7 +78,7 @@ export struct TilePathingg {
 export class Terrain : public QObject {
 	Q_OBJECT
 
-	static constexpr int write_version = 11;
+	static constexpr int write_version = 12;
 
 	// Sequential versions for GPU uploading
 	std::vector<float> ground_heights;
@@ -184,7 +184,7 @@ public:
             return false;
         }
 
-        reader.advance(4); // Version
+        const uint32_t version = reader.read<uint32_t>();
 
         tileset = reader.read<char>();
         reader.advance(4); // Custom tileset
@@ -216,21 +216,31 @@ public:
                 corners[i][j].water_height = ((water_and_edge & 0x3FFF) - 8192.f) / 512.f;
                 corner.map_edge = water_and_edge & 0x4000;
 
-                const uint8_t texture_and_flags = reader.read<uint8_t>();
-                corner.ground_texture = texture_and_flags & 0b00001111;
+                if (version >= 12 ) {
+                    const uint16_t texture_and_flags = reader.read<uint16_t>();
+                    corner.ground_texture = texture_and_flags & 0x003F;
 
-                corner.ramp = texture_and_flags & 0b00010000;
-                corner.blight = texture_and_flags & 0b00100000;
-                corner.water = texture_and_flags & 0b01000000;
-                corner.boundary = texture_and_flags & 0b10000000;
+                    corner.ramp = texture_and_flags & 0x0040;
+                    corner.blight = texture_and_flags & 0x0080;
+                    corner.water = texture_and_flags & 0x0100;
+                    corner.boundary = texture_and_flags & 0x0200;
+                } else {
+                    const uint8_t texture_and_flags = reader.read<uint8_t>();
+                    corner.ground_texture = texture_and_flags & 0x0F;
+
+                    corner.ramp = texture_and_flags & 0x10;
+                    corner.blight = texture_and_flags & 0x20;
+                    corner.water = texture_and_flags & 0x40;
+                    corner.boundary = texture_and_flags & 0x80;
+                }
 
                 const uint8_t variation = reader.read<uint8_t>();
-                corner.ground_variation = variation & 0b00011111;
-                corner.cliff_variation = (variation & 0b11100000) >> 5;
+                corner.ground_variation = variation & 0x1F;
+                corner.cliff_variation = (variation & 0xE0) >> 5;
 
                 const uint8_t misc = reader.read<uint8_t>();
-                corner.cliff_texture = (misc & 0b11110000) >> 4;
-                corner.layer_height = misc & 0b00001111;
+                corner.cliff_texture = (misc & 0xF0) >> 4;
+                corner.layer_height = misc & 0x0F;
             }
         }
 
@@ -428,12 +438,12 @@ public:
                 water_and_edge += corner.map_edge << 14;
                 writer.write(water_and_edge);
 
-                uint8_t texture_and_flags = corner.ground_texture;
-                texture_and_flags |= corner.ramp << 4;
+                uint16_t texture_and_flags = corner.ground_texture;
+                texture_and_flags |= corner.ramp << 6;
 
-                texture_and_flags |= corner.blight << 5;
-                texture_and_flags |= corner.water << 6;
-                texture_and_flags |= corner.boundary << 7;
+                texture_and_flags |= corner.blight << 7;
+                texture_and_flags |= corner.water << 8;
+                texture_and_flags |= corner.boundary << 9;
                 writer.write(texture_and_flags);
 
                 uint8_t variation = corner.ground_variation;
