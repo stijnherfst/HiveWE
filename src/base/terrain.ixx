@@ -218,29 +218,29 @@ public:
 
                 if (version >= 12 ) {
                     const uint16_t texture_and_flags = reader.read<uint16_t>();
-                    corner.ground_texture = texture_and_flags & 0x003F;
+                    corner.ground_texture = texture_and_flags & 0b00'0011'1111'1111;
 
-                    corner.ramp = texture_and_flags & 0x0040;
-                    corner.blight = texture_and_flags & 0x0080;
-                    corner.water = texture_and_flags & 0x0100;
-                    corner.boundary = texture_and_flags & 0x0200;
+                    corner.ramp = texture_and_flags & 0b00'0100'0000;
+                    corner.blight = texture_and_flags & 0b00'1000'0000;
+                    corner.water = texture_and_flags & 0b01'0000'0000;
+                    corner.boundary = texture_and_flags & 0b10'0000'0000;
                 } else {
                     const uint8_t texture_and_flags = reader.read<uint8_t>();
-                    corner.ground_texture = texture_and_flags & 0x0F;
+                    corner.ground_texture = texture_and_flags & 0b0000'1111;
 
-                    corner.ramp = texture_and_flags & 0x10;
-                    corner.blight = texture_and_flags & 0x20;
-                    corner.water = texture_and_flags & 0x40;
-                    corner.boundary = texture_and_flags & 0x80;
+                    corner.ramp = texture_and_flags & 0b0001'0000;
+                    corner.blight = texture_and_flags & 0b0010'0000;
+                    corner.water = texture_and_flags & 0b0100'0000;
+                    corner.boundary = texture_and_flags & 0b1000'0000;
                 }
 
                 const uint8_t variation = reader.read<uint8_t>();
-                corner.ground_variation = variation & 0x1F;
-                corner.cliff_variation = (variation & 0xE0) >> 5;
+                corner.ground_variation = variation & 0b0001'1111;
+                corner.cliff_variation = (variation & 0b1110'0000) >> 5;
 
                 const uint8_t misc = reader.read<uint8_t>();
-                corner.cliff_texture = (misc & 0xF0) >> 4;
-                corner.layer_height = misc & 0x0F;
+                corner.cliff_texture = (misc & 0b1111'0000) >> 4;
+                corner.layer_height = misc & 0b0000'1111;
             }
         }
 
