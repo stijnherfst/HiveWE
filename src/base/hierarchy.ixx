@@ -52,42 +52,99 @@ export class Hierarchy {
 
 	BinaryReader open_file(const fs::path& path) const {
 		casc::File file;
-		
-		if (fs::exists("data/overrides" / path)) {
-			std::ifstream stream("data/overrides" / path, std::ios::binary);
-			return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
-		} else if (local_files && fs::exists(root_directory / path)) {
-			std::ifstream stream(root_directory / path, std::ios::binary);
-			return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
-		} else if (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path.string())) {
-			return map_file_read("_hd.w3mod:_teen.w3mod:" + path.string());
-		} else if (hd && map_file_exists("_hd.w3mod:" + path.string())) {
-			return map_file_read("_hd.w3mod:" + path.string());
-		} else if (map_file_exists(path)) {
-			return map_file_read(path);
-		} else if (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string());
-		} else if (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string());
-		} else if (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_hd.w3mod:"s + path.string());
-		} else if (game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string());
-		} else if (game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_locales/enus.w3mod:"s + path.string());
-		} else if (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_teen.w3mod:"s + path.string());
-		} else if (game_data.file_exists("war3.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:"s + path.string());
-		} else if (game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())) {
-			file = game_data.file_open("war3.w3mod:_deprecated.w3mod:"s + path.string());
-		} else if (aliases.exists(path.string())) {
-			return open_file(aliases.alias(path.string()));
-		} else {
-			throw std::invalid_argument(path.string() + " could not be found in the hierarchy");
+
+		std::ifstream stream("data/overrides" / path, std::ios::binary);
+		if (stream) {
+			return BinaryReader(
+				std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
+			);
 		}
 
-		return BinaryReader(file.read());
+		if (local_files) {
+			std::ifstream local_file(root_directory / path, std::ios::binary);
+			if (local_file) {
+				return BinaryReader(
+					std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(local_file), std::istreambuf_iterator<char>())
+				);
+			}
+		}
+
+		const std::string path_str = path.string();
+
+		if (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path_str)) {
+			// TODO, handle map_file_read not returning std::expected
+			return map_file_read("_hd.w3mod:_teen.w3mod:" + path_str);
+		}
+
+		if (hd && map_file_exists("_hd.w3mod:" + path_str)) {
+			return map_file_read("_hd.w3mod:" + path_str);
+		}
+
+		if (map_file_exists(path)) {
+			return map_file_read(path);
+		}
+
+		if (hd) {
+			auto result = game_data.file_open(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str));
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		if (hd && teen) {
+			auto result = game_data.file_open("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		if (hd) {
+			auto result = game_data.file_open("war3.w3mod:_hd.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		{
+			auto result = game_data.file_open(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str));
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		{
+			auto result = game_data.file_open("war3.w3mod:_locales/enus.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		if (teen) {
+			auto result = game_data.file_open("war3.w3mod:_teen.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		{
+			auto result = game_data.file_open("war3.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		{
+			auto result = game_data.file_open("war3.w3mod:_deprecated.w3mod:"s + path_str);
+			if (result) {
+				return BinaryReader(result.value().read());
+			}
+		}
+
+		if (aliases.exists(path_str)) {
+			return open_file(aliases.alias(path_str));
+		} else {
+			throw std::invalid_argument(path_str + " could not be found in the hierarchy");
+		}
 	}
 
 	bool file_exists(const fs::path& path) const {
@@ -95,12 +152,25 @@ export class Hierarchy {
 			return false;
 		}
 
-		return fs::exists("data/overrides" / path) || (local_files && fs::exists(root_directory / path)) || (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path.string())) || (hd && map_file_exists("_hd.w3mod:" + path.string())) || map_file_exists(path) || (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())) || (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string())) || (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string())) || game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string()) || game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string()) || (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path.string())) || game_data.file_exists("war3.w3mod:"s + path.string()) || game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string()) || (aliases.exists(path.string()) ? file_exists(aliases.alias(path.string())) : false);
+		return fs::exists("data/overrides" / path) || (local_files && fs::exists(root_directory / path))
+			|| (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path.string()))
+			|| (hd && map_file_exists("_hd.w3mod:" + path.string())) || map_file_exists(path)
+			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string()))
+			|| (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string()))
+			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string()))
+			|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())
+			|| game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())
+			|| (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path.string()))
+			|| game_data.file_exists("war3.w3mod:"s + path.string())
+			|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())
+			|| (aliases.exists(path.string()) ? file_exists(aliases.alias(path.string())) : false);
 	}
 
 	BinaryReader map_file_read(const fs::path& path) const {
 		std::ifstream stream(map_directory / path, std::ios::binary);
-		return BinaryReader(std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()));
+		return BinaryReader(
+			std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
+		);
 	}
 
 	/// source somewhere on disk, destination relative to the map

@@ -14,9 +14,9 @@ layout (location = 7) uniform ivec2 map_size;
 out vec2 UV;
 out vec4 Color;
 
-const float min_depth = 10.f / 128;
-const float deeplevel = 64.f / 128;
-const float maxdepth = 72.f / 128;
+const float min_depth = 10.f / 128.f;
+const float deeplevel = 64.f / 128.f;
+const float maxdepth = 72.f / 128.f;
 
 const vec2[6] position = vec2[6](
 	vec2(1, 1),

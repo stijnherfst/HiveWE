@@ -55,7 +55,7 @@ export struct Doodad {
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color = glm::vec3(1.f);
 
-	void init(std::string id, std::shared_ptr<SkinnedMesh> mesh, Terrain& terrain) {
+	void init(const std::string_view id, const std::shared_ptr<SkinnedMesh> mesh, const Terrain& terrain) {
 		this->id = id;
 		this->skin_id = id;
 		this->mesh = mesh;
@@ -66,14 +66,20 @@ export struct Doodad {
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 		pathing.reset();
-		const std::string pathing_texture_path = slk.data("pathtex", id);
-		if (hierarchy.file_exists(pathing_texture_path)) {
-			pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
+		const auto path = slk.data("pathtex", id);
+		const auto trimmed_path = trimmed(path);
+		if (!trimmed_path.empty() && trimmed_path != "none" && trimmed_path != "_" ) {
+			try {
+				pathing = resource_manager.load<PathingTexture>(trimmed_path);
+			} catch (const std::exception& e) {
+				std::println("Error load pathing texture for doodad with ID: {} and error {}", id, e.what());
+			}
 		}
+
 		update(terrain);
 	}
 
-	void update(Terrain& terrain) {
+	void update(const Terrain& terrain) {
 		float base_scale = 1.f;
 		float max_roll;
 		float max_pitch;
@@ -132,7 +138,8 @@ export struct Doodad {
 		skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
 	}
 
-	static glm::vec2 acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned = false) {
+	static glm::vec2
+	acceptable_position(glm::vec2 position, std::shared_ptr<PathingTexture> pathing, float rotation, bool force_grid_aligned = false) {
 		if (!pathing) {
 			if (force_grid_aligned) {
 				return glm::round(position * 2.f) * 0.5f;
@@ -178,7 +185,8 @@ export struct Doodad {
 			if (pathing->width == pathing->height && pathing->homogeneous) {
 				return target_angle;
 			} else {
-				return (static_cast<int>((target_angle + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>() * 0.5f;
+				return (static_cast<int>((target_angle + glm::pi<float>() * 0.25f) / (glm::pi<float>() * 0.5f)) % 4) * glm::pi<float>()
+					* 0.5f;
 			}
 		} else {
 			return target_angle;
@@ -206,7 +214,7 @@ export class Doodads {
 	static constexpr int write_subversion = 11;
 	static constexpr int write_special_version = 0;
 
-public:
+  public:
 	std::vector<SpecialDoodad> special_doodads;
 	std::vector<Doodad> doodads;
 
@@ -337,7 +345,7 @@ public:
 
 			float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
 			i.matrix = glm::translate(i.matrix, i.position);
-			i.matrix = glm::scale(i.matrix, { 1.f / 128.f, 1.f / 128.f, 1.f / 128.f });
+			i.matrix = glm::scale(i.matrix, {1.f / 128.f, 1.f / 128.f, 1.f / 128.f});
 			i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
 		}
 
@@ -363,7 +371,7 @@ public:
 		doodad.variation = variation;
 		doodad.mesh = get_mesh(id, variation);
 		doodad.position = position;
-		doodad.scale = { 1, 1, 1 };
+		doodad.scale = {1, 1, 1};
 		doodad.angle = 0;
 		doodad.creation_number = ++Doodad::auto_increment;
 		doodad.skeleton = SkeletalModelInstance(doodad.mesh->model);
@@ -413,9 +421,9 @@ public:
 		QRectF update_pathing_area;
 		for (const auto& i : target_doodads) {
 			if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-				update_pathing_area = { i.position.x, i.position.y, 1.f, 1.f };
+				update_pathing_area = {i.position.x, i.position.y, 1.f, 1.f};
 			}
-			update_pathing_area |= { i.position.x, i.position.y, 1.f, 1.f };
+			update_pathing_area |= {i.position.x, i.position.y, 1.f, 1.f};
 		}
 
 		update_doodad_pathing(update_pathing_area, pathing_map);
@@ -425,9 +433,9 @@ public:
 		QRectF update_pathing_area;
 		for (const auto& i : target_doodads) {
 			if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-				update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
+				update_pathing_area = {i->position.x, i->position.y, 1.f, 1.f};
 			}
-			update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
+			update_pathing_area |= {i->position.x, i->position.y, 1.f, 1.f};
 		}
 
 		update_doodad_pathing(update_pathing_area, pathing_map);
@@ -451,7 +459,7 @@ public:
 
 	void update_special_doodad_pathing(const QRectF& area, Terrain& terrain) {
 		QRectF new_area = area.adjusted(-6.f, -6.f, 6.f, 6.f);
-		new_area = new_area.intersected({ 0, 0, static_cast<float>(terrain.width), static_cast<float>(terrain.height) });
+		new_area = new_area.intersected({0, 0, static_cast<float>(terrain.width), static_cast<float>(terrain.height)});
 
 		for (int i = new_area.left(); i < new_area.right(); i++) {
 			for (int j = new_area.top(); j < new_area.bottom(); j++) {

@@ -98,11 +98,11 @@ namespace casc {
 			handle = nullptr;
 		}
 
-		File file_open(const fs::path& path) const {
+		[[nodiscard]] std::expected<File, std::string> file_open(const fs::path& path) const {
 			File file;
 			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
 			if (!opened) {
-				std::print("Error opening {} with error: {}\n", path.string(), GetCascError());
+				return std::unexpected(std::format("Error opening {} with error: {}\n", path.string(), GetCascError()));
 			}
 			return file;
 		}
