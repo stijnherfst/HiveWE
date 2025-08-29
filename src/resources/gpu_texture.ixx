@@ -14,7 +14,6 @@ namespace fs = std::filesystem;
 export class GPUTexture : public Resource {
   public:
 	GLuint id = 0;
-	GLuint64 bindless_handle = 0;
 
 	static constexpr const char* name = "GPUTexture";
 
@@ -67,9 +66,6 @@ export class GPUTexture : public Resource {
 		glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTextureParameteri(id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		bindless_handle = glGetTextureHandleARB(id);
-		glMakeTextureHandleResidentARB(bindless_handle);
 	}
 
 	virtual ~GPUTexture() {
