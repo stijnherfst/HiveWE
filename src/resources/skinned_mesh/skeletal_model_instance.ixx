@@ -83,16 +83,16 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	void update_location(glm::vec3 position, glm::quat rotation, const glm::vec3& scale) {
+	void update_location(const glm::vec3 position, const glm::quat& rotation, const glm::vec3& scale) {
 		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
 
-	void update_location(glm::vec3 position, float angle, const glm::vec3& scale) {
-		glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
+	void update_location(const glm::vec3 position, const float angle, const glm::vec3& scale) {
+		const glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
 		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
 
-	void update(double delta) {
+	void update(const double delta) {
 		if (model->sequences.empty() || sequence_index == -1) {
 			return;
 		}

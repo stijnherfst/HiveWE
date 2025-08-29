@@ -102,34 +102,38 @@ export struct Doodad {
 
 		constexpr float SAMPLE_RADIUS = 32.f / 128.f;
 
+		// A negative value is a way for the user to set a specific (positive) value
+		// A positive value indicates to follow the terrain
 		float pitch = 0.f;
 		if (max_pitch < 0.f) {
-			pitch = max_pitch;
+			pitch = -max_pitch;
 		} else if (max_pitch > 0.f) {
-			float forward_x = position.x + (SAMPLE_RADIUS * std::cos(angle));
-			float forward_y = position.y + (SAMPLE_RADIUS * std::sin(angle));
-			float backward_x = position.x - (SAMPLE_RADIUS * std::cos(angle));
-			float backward_y = position.y - (SAMPLE_RADIUS * std::sin(angle));
+			const float forward_x = position.x + (SAMPLE_RADIUS * std::cos(angle));
+			const float forward_y = position.y + (SAMPLE_RADIUS * std::sin(angle));
+			const float backward_x = position.x - (SAMPLE_RADIUS * std::cos(angle));
+			const float backward_y = position.y - (SAMPLE_RADIUS * std::sin(angle));
 
-			float height1 = terrain.interpolated_height(backward_x, backward_y, false);
-			float height2 = terrain.interpolated_height(forward_x, forward_y, false);
+			const float height1 = terrain.interpolated_height(backward_x, backward_y, false);
+			const float height2 = terrain.interpolated_height(forward_x, forward_y, false);
 
 			pitch = std::clamp(std::atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -pitch, pitch);
 		}
 		rotation *= glm::angleAxis(-pitch, glm::vec3(0, 1, 0));
 
+		// A negative value is a way for the user to set a specific (positive) value
+		// A positive value indicates to follow the terrain
 		float roll = 0.f;
 		if (max_roll < 0.f) {
-			roll = max_roll;
+			roll = -max_roll;
 		} else if (max_roll > 0.f) {
-			float left_of_angle = angle + (3.1415926535 / 2.0);
-			float forward_x = position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
-			float forward_y = position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
-			float backward_x = position.x - (SAMPLE_RADIUS * std::cos(left_of_angle));
-			float backward_y = position.y - (SAMPLE_RADIUS * std::sin(left_of_angle));
+			const float left_of_angle = angle + (3.1415926535 / 2.0);
+			const float forward_x = position.x + (SAMPLE_RADIUS * std::cos(left_of_angle));
+			const float forward_y = position.y + (SAMPLE_RADIUS * std::sin(left_of_angle));
+			const float backward_x = position.x - (SAMPLE_RADIUS * std::cos(left_of_angle));
+			const float backward_y = position.y - (SAMPLE_RADIUS * std::sin(left_of_angle));
 
-			float height1 = terrain.interpolated_height(backward_x, backward_y, false);
-			float height2 = terrain.interpolated_height(forward_x, forward_y, false);
+			const float height1 = terrain.interpolated_height(backward_x, backward_y, false);
+			const float height2 = terrain.interpolated_height(forward_x, forward_y, false);
 
 			roll = std::clamp(atan2(height2 - height1, SAMPLE_RADIUS * 2.f), -roll, roll);
 		}
