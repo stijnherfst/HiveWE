@@ -176,7 +176,7 @@ public:
     }
 
     bool load(Physics& physics) {
-        BinaryReader reader = hierarchy.map_file_read("war3map.w3e");
+        BinaryReader reader = hierarchy.map_file_read("war3map.w3e").value();
 
         const std::string magic_number = reader.read_string(4);
         if (magic_number != "W3E!") {

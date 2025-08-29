@@ -27,7 +27,7 @@ export class GameCameras {
 	std::vector<GameCamera> cameras;
 
 	void load(int game_version_major, int game_version_minor) {
-		BinaryReader reader = hierarchy.map_file_read("war3map.w3c");
+		BinaryReader reader = hierarchy.map_file_read("war3map.w3c").value();
 
 		int version = reader.read<u32>();
 		if (version != 0) {

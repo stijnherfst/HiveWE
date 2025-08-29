@@ -11,7 +11,6 @@ import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
-
 export class GPUTexture : public Resource {
   public:
 	GLuint id = 0;
@@ -22,26 +21,24 @@ export class GPUTexture : public Resource {
 	explicit GPUTexture(const fs::path& path) {
 		fs::path new_path = path;
 
-		if (hierarchy.hd) {
-			new_path.replace_filename(path.stem().string() + "_diffuse.dds");
-		}
-
-		new_path = path;
 		new_path.replace_extension(".tga");
-		if (!hierarchy.file_exists(new_path)) {
-			new_path.replace_extension(".blp");
-			if (!hierarchy.file_exists(new_path)) {
+		BinaryReader reader = hierarchy.open_file(new_path)
+			.or_else([&](const std::string&) {
+				new_path.replace_extension(".blp");
+				return hierarchy.open_file(new_path);
+			})
+			.or_else([&](const std::string&) {
 				new_path.replace_extension(".dds");
-				if (!hierarchy.file_exists(new_path)) {
-					std::println("Error loading texture {}", new_path.string());
-					new_path = "Textures/btntempw.dds";
-				}
-			}
-		}
+				return hierarchy.open_file(new_path);
+			})
+			.or_else([&](const std::string&) {
+				std::println("Error loading texture {}", new_path.string());
+				new_path = "Textures/btntempw.dds";
+				return hierarchy.open_file(new_path);
+			})
+			.value();
 
-		BinaryReader reader = hierarchy.open_file(new_path);
-
-		if (new_path.extension() == ".blp" || new_path.extension() == ".BLP") {
+		if (new_path.extension() == ".blp") {
 			int width;
 			int height;
 			int channels;
@@ -53,7 +50,13 @@ export class GPUTexture : public Resource {
 			glGenerateTextureMipmap(id);
 			delete data;
 		} else {
-			id = SOIL_load_OGL_texture_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), SOIL_LOAD_AUTO, SOIL_LOAD_AUTO, SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE);
+			id = SOIL_load_OGL_texture_from_memory(
+				reader.buffer.data(),
+				static_cast<int>(reader.buffer.size()),
+				SOIL_LOAD_AUTO,
+				SOIL_LOAD_AUTO,
+				SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE
+			);
 			if (id == 0) {
 				glCreateTextures(GL_TEXTURE_2D, 1, &id);
 				std::println("Error loading texture: {}", path.string());

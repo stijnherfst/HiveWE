@@ -25,7 +25,7 @@ QRibbon::pane {
 }
 
 QRibbon QTabBar::tab { 
-	height: 22px;
+	height: 23px;
 	background-color: rgb(53, 53, 53);
 	border: 1px solid rgb(53, 53, 53);
 	border-bottom-width: 0px;

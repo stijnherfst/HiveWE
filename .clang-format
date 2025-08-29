@@ -86,3 +86,10 @@ SpacesInSquareBrackets: false
 Standard: Latest
 TabWidth: 4
 UseTab: Always
+BreakAfterAttributes: Always           # v16. [[attribute]] ⏎ void f();
+EmptyLineAfterAccessModifier: Never    # v13.
+EmptyLineBeforeAccessModifier: Always  # v12.
+InsertBraces: true                     # v15. if (true) return;  ==>  if (true) { return; }
+InsertNewlineAtEOF: true               # v16.
+RemoveParentheses: ReturnStatement              # v17. return(0)  ==>  return 0
+RemoveSemicolon: true                  # v16. int max() {}; ->  int max() {}

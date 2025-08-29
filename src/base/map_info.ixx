@@ -171,7 +171,7 @@ export class MapInfo {
 	static constexpr int write_game_version_build = 22978;
 
 	void load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.w3i");
+		BinaryReader reader = hierarchy.map_file_read("war3map.w3i").value();
 
 		const int version = reader.read<uint32_t>();
 

@@ -25,8 +25,8 @@ export class CliffMesh : public Resource {
 
 	explicit CliffMesh(const fs::path& path) {
 		if (path.extension() == ".mdx" || path.extension() == ".MDX") {
-			auto reader = BinaryReader(hierarchy.open_file(path));
-			mdx::MDX model = mdx::MDX(reader);
+			auto reader = hierarchy.open_file(path).value();
+			const mdx::MDX model = mdx::MDX(reader);
 
 			auto set = model.geosets.front();
 

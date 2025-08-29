@@ -106,7 +106,7 @@ public:
 	std::vector<Unit> items;
 
 	void load(const Terrain& terrain, const MapInfo& info) {
-		BinaryReader reader = hierarchy.map_file_read("war3mapUnits.doo");
+		BinaryReader reader = hierarchy.map_file_read("war3mapUnits.doo").value();
 
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "W3do") {

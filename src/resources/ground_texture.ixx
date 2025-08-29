@@ -26,26 +26,32 @@ export class GroundTexture : public Resource {
 		fs::path new_path = path;
 
 		if (hierarchy.hd) {
-			new_path.replace_filename(path.stem().string() + "_diffuse.tga");
+			new_path.replace_filename(path.stem().string() + "_diffuse");
 		}
 
-		new_path = path;
 		new_path.replace_extension(".tga");
-		if (!hierarchy.file_exists(new_path)) {
-			new_path.replace_extension(".blp");
-			if (!hierarchy.file_exists(new_path)) {
+		BinaryReader reader = hierarchy.open_file(new_path)
+			.or_else([&](const std::string&) {
+				new_path.replace_extension(".blp");
+				return hierarchy.open_file(new_path);
+			})
+			.or_else([&](const std::string&) {
 				new_path.replace_extension(".dds");
-			}
-		}
-
-		BinaryReader reader = hierarchy.open_file(new_path);
+				return hierarchy.open_file(new_path);
+			})
+			.or_else([&](const std::string&) {
+				std::println("Error loading texture {}", new_path.string());
+				new_path = "Textures/btntempw.dds";
+				return hierarchy.open_file(new_path);
+			})
+			.value();
 
 		int width;
 		int height;
 		int channels;
 		uint8_t* data;
 
-		if (new_path.extension() == ".blp" || new_path.extension() == ".BLP") {
+		if (new_path.extension() == ".blp") {
 			data = blp::load(reader, width, height, channels);
 		} else {
 			data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);

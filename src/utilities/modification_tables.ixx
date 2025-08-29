@@ -86,7 +86,7 @@ void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& s
 }
 
 export void load_modification_file(const std::string& file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints) {
-	BinaryReader reader = hierarchy.map_file_read(file_name);
+	BinaryReader reader = hierarchy.map_file_read(file_name).value();
 
 	const int version = reader.read<uint32_t>();
 	if (version != 1 && version != 2 && version != 3) {

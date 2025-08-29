@@ -48,7 +48,7 @@ void ModelEditorGLWidget::initializeGL() {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx");
+	BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx").value();
 
 	const auto mdx = std::make_shared<mdx::MDX>(reader);
 	mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
@@ -132,7 +132,7 @@ void ModelEditorGLWidget::paintGL() {
 			throw;
 		}
 
-		BinaryReader reader = hierarchy.open_file(path);
+		BinaryReader reader = hierarchy.open_file(path).value();
 		const auto mdx = std::make_shared<mdx::MDX>(reader);
 		mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
 		skeleton = SkeletalModelInstance(mesh->mdx);
@@ -178,7 +178,7 @@ void ModelEditorGLWidget::paintGL() {
 	ImGui::Begin("Optimizer");
 		static float max_error = 0.0001f;
 		if (ImGui::SliderFloat("Max error", &max_error, 0.0f, 0.01f, "%.5f")) {
-			BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx");
+			BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx").value();
 			auto mdx = std::make_shared<mdx::MDX>(reader);
 			stats = mdx->optimize(max_error);
 

@@ -13,7 +13,7 @@ export class TriggerStrings {
 
   public:
 	void load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.wts");
+		BinaryReader reader = hierarchy.map_file_read("war3map.wts").value();
 
 		std::stringstream file;
 		file.write(reinterpret_cast<char*>(reader.buffer.data()), reader.buffer.size());

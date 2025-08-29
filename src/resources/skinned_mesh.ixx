@@ -75,7 +75,7 @@ export class SkinnedMesh : public Resource {
 			throw;
 		}
 
-		BinaryReader reader = hierarchy.open_file(path);
+		BinaryReader reader = hierarchy.open_file(path).value();
 		this->path = path;
 
 		size_t vertices = 0;

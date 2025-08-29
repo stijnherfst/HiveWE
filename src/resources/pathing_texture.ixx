@@ -23,7 +23,7 @@ export class PathingTexture : public Resource {
 	static constexpr const char* name = "PathingTexture";
 
 	explicit PathingTexture(const fs::path& path) {
-		BinaryReader reader = hierarchy.open_file(path);
+		BinaryReader reader = hierarchy.open_file(path).value();
 		uint8_t* image_data;
 
 		if (path.extension() == ".blp" || path.extension() == ".BLP") {

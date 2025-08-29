@@ -60,7 +60,7 @@ namespace slk {
 				std::ifstream stream(path, std::ios::binary);
 				buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
 			} else {
-				buffer = hierarchy.open_file(path).buffer;
+				buffer = hierarchy.open_file(path).value().buffer;
 			}
 
 			std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());

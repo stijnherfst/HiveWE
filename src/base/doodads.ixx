@@ -219,7 +219,7 @@ export class Doodads {
 	std::vector<Doodad> doodads;
 
 	bool load(Terrain& terrain, MapInfo& info) {
-		BinaryReader reader = hierarchy.map_file_read("war3map.doo");
+		BinaryReader reader = hierarchy.map_file_read("war3map.doo").value();
 
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "W3do") {

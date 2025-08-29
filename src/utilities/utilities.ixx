@@ -2,6 +2,9 @@ export module Utilities;
 
 import std;
 import <glm/glm.hpp>;
+import BinaryReader;
+import no_init_allocator;
+import types;
 
 namespace fs = std::filesystem;
 
@@ -88,6 +91,17 @@ export std::string read_text_file(const fs::path& path) {
 
 	return text;
 }
+
+export const auto read_file = [](const fs::path& path) -> std::expected<BinaryReader, std::string> {
+	std::ifstream stream(path, std::ios::binary);
+	if (stream) {
+		return BinaryReader(
+			std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
+		);
+	} else {
+		return std::unexpected("Unable to open file");
+	}
+};
 
 export struct ItemSet {
 	std::vector<std::pair<int, std::string>> items;

@@ -3,59 +3,13 @@ export module CASC;
 import std;
 import types;
 import no_init_allocator;
+import BinaryReader;
 import <CascLib.h>;
 
 namespace fs = std::filesystem;
 
 // A thin wrapper around CascLib https://github.com/ladislav-zezula/CascLib
 namespace casc {
-	export class File {
-	  public:
-		HANDLE handle = nullptr;
-
-		File() = default;
-		~File() {
-			close();
-		}
-		File(File&& move) noexcept {
-			handle = move.handle;
-			move.handle = nullptr;
-		}
-		File(const File&) = default;
-		File& operator=(const File&) = default;
-		File& operator=(File&& move) noexcept {
-			handle = move.handle;
-			move.handle = nullptr;
-			return *this;
-		}
-
-		// std::span<uint8_t> read() const;
-		std::vector<u8, default_init_allocator<u8>> read() const {
-			const u32 size = CascGetFileSize(handle, 0);
-			std::vector<u8, default_init_allocator<u8>> buffer(size);
-
-#ifdef _MSC_VER
-			unsigned long bytes_read;
-#else
-			unsigned bytes_read;
-#endif
-			const bool success = CascReadFile(handle, buffer.data(), size, &bytes_read);
-			if (!success) {
-				std::print("Failed to read file: {}\n", GetCascError());
-			}
-			return buffer;
-		}
-		// std::pair<std::unique_ptr<uint8_t[]>, std::size_t> read() const;
-
-		size_t size() const noexcept {
-			return CascGetFileSize(handle, 0);
-		}
-
-		void close() const noexcept {
-			CascCloseFile(handle);
-		}
-	};
-
 	export class CASC {
 	  public:
 		HANDLE handle = nullptr;
@@ -98,19 +52,31 @@ namespace casc {
 			handle = nullptr;
 		}
 
-		[[nodiscard]] std::expected<File, std::string> file_open(const fs::path& path) const {
-			File file;
-			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
+		[[nodiscard]] std::expected<BinaryReader, std::string> open_file(const fs::path& path) const {
+			HANDLE file_handle = nullptr;
+			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file_handle);
 			if (!opened) {
 				return std::unexpected(std::format("Error opening {} with error: {}\n", path.string(), GetCascError()));
 			}
-			return file;
+
+			const u32 size = CascGetFileSize(file_handle, nullptr);
+			std::vector<u8, default_init_allocator<u8>> buffer(size);
+
+			#ifdef _MSC_VER
+			unsigned long bytes_read;
+			#else
+			unsigned bytes_read;
+			#endif
+			const bool success = CascReadFile(file_handle, buffer.data(), size, &bytes_read);
+			if (!success) {
+				return std::unexpected(std::format("Error failed to read file: {}\n", GetCascError()));
+			}
+			return BinaryReader(buffer);
 		}
 
-		/// ToDo is there a better way to check if a file exists?
 		bool file_exists(const fs::path& path) const {
-			File file;
-			return CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file.handle);
+			HANDLE file_handle = nullptr;
+			return CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file_handle);
 		}
 	};
 } // namespace casc

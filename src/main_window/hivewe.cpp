@@ -48,10 +48,10 @@ HiveWE::HiveWE(QWidget* parent)
 	settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
 	// Place common.j and blizzard.j in the data folder. Required by JassHelper
-	BinaryReader common = hierarchy.open_file("scripts/common.j");
+	BinaryReader common = hierarchy.open_file("scripts/common.j").value();
 	std::ofstream output("data/tools/common.j");
 	output.write(reinterpret_cast<char*>(common.buffer.data()), common.buffer.size());
-	BinaryReader blizzard = hierarchy.open_file("scripts/blizzard.j");
+	BinaryReader blizzard = hierarchy.open_file("scripts/blizzard.j").value();
 	std::ofstream output2("data/tools/blizzard.j");
 	output2.write(reinterpret_cast<char*>(blizzard.buffer.data()), blizzard.buffer.size());
 

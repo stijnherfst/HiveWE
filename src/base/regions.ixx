@@ -24,7 +24,7 @@ export class Regions {
 	std::vector<Region> regions;
 
 	bool load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.w3r");
+		BinaryReader reader = hierarchy.map_file_read("war3map.w3r").value();
 
 		const int version = reader.read<uint32_t>();
 		if (version != 5) {

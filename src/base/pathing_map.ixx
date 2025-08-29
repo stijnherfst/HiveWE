@@ -32,7 +32,7 @@ export class PathingMap {
 	std::vector<uint8_t> pathing_cells_dynamic;
 
 	bool load(size_t terrain_width, size_t terrain_height) {
-		BinaryReader reader = hierarchy.map_file_read("war3map.wpm");
+		BinaryReader reader = hierarchy.map_file_read("war3map.wpm").value();
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "MP3W") {
 			std::print("Invalid war3map.wpm magic number, expected MP3W but got {}", magic_number);

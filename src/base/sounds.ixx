@@ -38,7 +38,7 @@ export class Sounds {
 	std::vector<Sound> sounds;
 
 	void load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.w3s");
+		BinaryReader reader = hierarchy.map_file_read("war3map.w3s").value();
 
 		int version = reader.read<u32>();
 		if (version != 1 && version != 2 && version != 3) {
