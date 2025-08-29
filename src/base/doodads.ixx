@@ -106,7 +106,7 @@ export struct Doodad {
 		// A positive value indicates to follow the terrain
 		float pitch = 0.f;
 		if (max_pitch < 0.f) {
-			pitch = -max_pitch;
+			pitch = max_pitch;
 		} else if (max_pitch > 0.f) {
 			const float forward_x = position.x + (SAMPLE_RADIUS * std::cos(angle));
 			const float forward_y = position.y + (SAMPLE_RADIUS * std::sin(angle));

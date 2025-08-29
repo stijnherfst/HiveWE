@@ -57,7 +57,7 @@ export class GroundTexture : public Resource {
 			data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
 		}
 
-		tile_size = height * 0.25;
+		tile_size = std::max(height * 0.25f, 1.f);
 		extended = (width == height * 2);
 		int lods = log2(tile_size) + 1;
 
@@ -92,6 +92,7 @@ export class GroundTexture : public Resource {
 	}
 
 	virtual ~GroundTexture() {
+		glMakeTextureHandleNonResidentARB(bindless_handle);
 		glDeleteTextures(1, &id);
 	}
 };
