@@ -85,10 +85,10 @@ export class Terrain : public QObject {
 	std::vector<float> final_ground_heights;
 	std::vector<glm::uvec4> ground_texture_list;
 	std::vector<GLuint64> ground_texture_handles;
-	std::vector<uint8_t> ground_exists_data;
+	std::vector<std::uint32_t> ground_exists_data;
 
 	std::vector<float> water_heights;
-	std::vector<uint8_t> water_exists_data;
+	std::vector<uint32_t> water_exists_data;
 
 	btHeightfieldTerrainShape* collision_shape;
 	btRigidBody* collision_body;
@@ -346,7 +346,7 @@ public:
 		glCreateBuffers(1, &ground_texture_handle_buffer);
 		glNamedBufferStorage(ground_texture_handle_buffer, ground_texture_handles.size() * sizeof(GLuint64), ground_texture_handles.data(), GL_DYNAMIC_STORAGE_BIT);
         glCreateBuffers(1, &ground_exists_buffer);
-        glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint8_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
         // Cliff
         glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
@@ -363,7 +363,7 @@ public:
         glCreateBuffers(1, &water_height_buffer);
         glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
         glCreateBuffers(1, &water_exists_buffer);
-        glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint8_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
         // Water textures
         glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -790,11 +790,11 @@ public:
     }
 
     void upload_ground_exists() const {
-        glNamedBufferSubData(ground_exists_buffer, 0, ground_exists_data.size() * sizeof(uint8_t), ground_exists_data.data());
+        glNamedBufferSubData(ground_exists_buffer, 0, ground_exists_data.size() * sizeof(uint32_t), ground_exists_data.data());
     }
 
     void upload_water_exists() const {
-        glNamedBufferSubData(water_exists_buffer, 0, water_exists_data.size() * sizeof(uint8_t), water_exists_data.data());
+        glNamedBufferSubData(water_exists_buffer, 0, water_exists_data.size() * sizeof(uint32_t), water_exists_data.data());
     }
 
     void upload_water_heights() const {

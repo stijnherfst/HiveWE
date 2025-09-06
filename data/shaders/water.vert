@@ -1,8 +1,5 @@
 #version 450 core
 
-#extension GL_EXT_shader_8bit_storage : enable
-#extension GL_NV_gpu_shader5 : enable
-
 layout (location = 0) uniform mat4 MVP;
 layout (location = 1) uniform vec4 shallow_color_min;
 layout (location = 2) uniform vec4 shallow_color_max;
@@ -36,7 +33,7 @@ layout(std430, binding = 1) buffer layoutName2 {
 };
 
 layout(std430, binding = 2) buffer layoutName3 {
-	uint8_t water_exists[];
+	uint water_exists[];
 };
 
 void main() { 
