@@ -83,6 +83,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	lighting_visible->setChecked(true);
 	visible_section->addWidget(lighting_visible);
 
+	click_helpers_visible->setIcon(QIcon("data/icons/ribbon/click_helpers.png"));
+	click_helpers_visible->setText("Click\nHelpers");
+	click_helpers_visible->setCheckable(true);
+	click_helpers_visible->setChecked(true);
+	visible_section->addWidget(click_helpers_visible);
+
 	wireframe_visible->setIcon(QIcon("data/icons/ribbon/wireframe32x32.png"));
 	wireframe_visible->setText("Wireframe");
 	wireframe_visible->setCheckable(true);

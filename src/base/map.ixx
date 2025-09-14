@@ -70,6 +70,7 @@ export class Map: public QObject {
 	bool render_pathing = false;
 	bool render_brush = true;
 	bool render_lighting = true;
+	bool render_click_helpers = true;
 	bool render_wireframe = false;
 	bool render_debug = false;
 
@@ -659,10 +660,12 @@ export class Map: public QObject {
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
 				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
-				bool is_doodad = doodads_slk.row_headers.contains(i.id);
-				slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-				if (slk.data<bool>("useclickhelper", i.id)) {
-					render_manager.queue_click_helper(i.skeleton.matrix);
+				if (render_click_helpers) {
+					const bool is_doodad = doodads_slk.row_headers.contains(i.id);
+					const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+					if (slk.data<bool>("useclickhelper", i.id)) {
+						render_manager.queue_click_helper(i.skeleton.matrix);
+					}
 				}
 			}
 			for (const auto& i : doodads.special_doodads) {
@@ -687,7 +690,7 @@ export class Map: public QObject {
 			brush->render();
 		}
 
-		render_manager.render(render_lighting, light_direction);
+		render_manager.render(render_lighting, render_click_helpers, light_direction);
 		terrain.render_water();
 
 		// physics.dynamicsWorld->debugDrawWorld();

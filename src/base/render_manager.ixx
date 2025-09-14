@@ -79,8 +79,8 @@ export class RenderManager {
 		glDeleteFramebuffers(1, &color_picking_framebuffer);
 	}
 
-	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, glm::vec3 color) {
-		mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
+	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color) {
+		const mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
 		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
@@ -117,12 +117,14 @@ export class RenderManager {
 		click_helper_instances.push_back(a);
 	}
 
-	void render(bool render_lighting, glm::vec3 light_direction) {
+	void render(bool render_lighting, bool render_click_helpers, glm::vec3 light_direction) {
 		GLint old_vao;
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
-		for (const auto& i : click_helper_instances) {
-			queue_render(*click_helper, i, glm::vec3(1.f));
+		if (render_click_helpers) {
+			for (const auto& i : click_helper_instances) {
+				queue_render(*click_helper, i, glm::vec3(1.f));
+			}
 		}
 
 		uint64_t size = 0;
