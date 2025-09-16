@@ -29,6 +29,7 @@ find_package(outcome CONFIG REQUIRED)
 find_package(unordered_dense CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
+find_package(unofficial-qscintilla CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -49,7 +50,8 @@ target_include_directories(HiveWE PRIVATE
 	"src/models"
 	"src/model_editor"
 	"src/object_editor"
-	"src/resources" 
+	"src/trigger_editor"
+	"src/resources"
 	"src/resources/skinned_mesh" 
 	"src/utilities"
 
@@ -77,6 +79,7 @@ target_link_libraries(HiveWE PUBLIC
 	outcome::hl
 	unordered_dense::unordered_dense
 	nlohmann_json::nlohmann_json
+	unofficial::qscintilla::qscintilla
 	${BULLET_LIBRARIES}
 )
 

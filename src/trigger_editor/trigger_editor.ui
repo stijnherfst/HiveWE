@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TriggerEditor</class>
+ <widget class="QMainWindow" name="TriggerEditor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>720</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Trigger Editor</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionGenerateScript"/>
+   <addaction name="separator"/>
+   <addaction name="actionCreateCategory"/>
+   <addaction name="actionCreateGuiTrigger"/>
+   <addaction name="actionCreateJassTrigger"/>
+   <addaction name="actionCreateVariable"/>
+   <addaction name="actionCreateComment"/>
+  </widget>
+  <action name="actionGenerateScript">
+   <property name="icon">
+    <iconset>
+     <normaloff>Data/Icons/Ribbon/triggereditor32x32.png</normaloff>Data/Icons/Ribbon/triggereditor32x32.png</iconset>
+   </property>
+   <property name="text">
+    <string>GenerateScript</string>
+   </property>
+   <property name="toolTip">
+    <string>Generate map script and check for errors</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F10</string>
+   </property>
+  </action>
+  <action name="actionCreateGuiTrigger">
+   <property name="text">
+    <string>Create Gui Trigger</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a GUI trigger</string>
+   </property>
+  </action>
+  <action name="actionCreateJassTrigger">
+   <property name="text">
+    <string>Create Jass Trigger</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a Jass Trigger</string>
+   </property>
+  </action>
+  <action name="actionCreateComment">
+   <property name="text">
+    <string>Create Comment</string>
+   </property>
+   <property name="toolTip">
+    <string>Creates a Comment</string>
+   </property>
+  </action>
+  <action name="actionCreateVariable">
+   <property name="text">
+    <string>actionCreateVariable</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a global variable</string>
+   </property>
+  </action>
+  <action name="actionCreateCategory">
+   <property name="text">
+    <string>Create Category</string>
+   </property>
+   <property name="toolTip">
+    <string>Create a category</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

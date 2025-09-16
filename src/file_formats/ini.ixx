@@ -65,37 +65,16 @@ namespace ini {
 						continue;
 					}
 
-					std::vector<std::string> parts;
+					const auto parts = split_string_escaped(value);
 
-					if (value.front() == '\"') {
-						parts = absl::StrSplit(value, "\",\"");
-					} else {
-						parts = absl::StrSplit(value, ',');
-					}
-
-					// Strip off quotes at the front/back
-					for (auto&& i : parts) {
-						if (i.size() < 2) {
-							continue;
-						}
-						if (i.front() == '\"') {
-							i.erase(i.begin());
-						}
-						if (i.back() == '\"') {
-							i.pop_back();
-						}
-					}
-
-					// Sometimes there are duplicate keys and only the first seen value has to be retained
+					// Sometimes there are duplicate keys and only the first seen value has to be retained.
 					// E.g. the destructable LTt0 in destructableskin.txt has multiple minScale/maxScale
-					auto current_section_string = std::string(current_section);
-					auto key_string = std::string(key);
-					if (auto found = ini_data.find(current_section_string); found != ini_data.end()) {
-						if (!found->second.contains(key_string)) {
-							found->second[key_string] = parts;	
+					if (auto found = ini_data.find(current_section); found != ini_data.end()) {
+						if (!found->second.contains(key)) {
+							found->second[key] = parts;
 						}
 					} else {
-						ini_data[current_section_string][key_string] = parts;	
+						ini_data[current_section][key] = parts;
 					}
 				}
 				view.remove_prefix(eol + 1);
@@ -107,7 +86,7 @@ namespace ini {
 			for (auto&& [section_key, section_value] : ini_data) {
 				for (auto&& [key, value] : section_value) {
 					for (auto&& part : value) {
-						std::string_view we_string = ini.data<std::string_view>(section, part);
+						const std::string_view we_string = ini.data<std::string_view>(section, part);
 						if (!we_string.empty()) {
 							part = we_string;
 						}
@@ -127,6 +106,10 @@ namespace ini {
 		/// Sets the data of a whole key
 		void set_whole_data(const std::string_view section, const std::string_view key, std::string value) {
 			ini_data[section][key] = { std::move(value) };
+		}
+
+		std::vector<std::string> whole_data(const std::string_view section, const std::string_view key) {
+			return ini_data[section][key];
 		}
 
 		[[nodiscard]] bool key_exists(const std::string_view section, const std::string_view key) const {

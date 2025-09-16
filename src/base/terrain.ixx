@@ -218,7 +218,7 @@ public:
 
                 if (version >= 12 ) {
                     const uint16_t texture_and_flags = reader.read<uint16_t>();
-                    corner.ground_texture = texture_and_flags & 0b00'0011'1111'1111;
+                    corner.ground_texture = texture_and_flags & 0b00'0000'0011'1111;
 
                     corner.ramp = texture_and_flags & 0b00'0100'0000;
                     corner.blight = texture_and_flags & 0b00'1000'0000;

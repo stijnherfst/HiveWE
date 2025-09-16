@@ -306,7 +306,7 @@ struct MapScriptWriter {
 	}
 };
 
-enum class Classifier {
+export enum class Classifier {
 	map = 1,
 	library = 2,
 	category = 4,
@@ -316,7 +316,7 @@ enum class Classifier {
 	variable = 64
 };
 
-struct TriggerCategory {
+export struct TriggerCategory {
 	Classifier classifier;
 	int id;
 	std::string name;
@@ -325,9 +325,9 @@ struct TriggerCategory {
 	int parent_id;
 };
 
-struct TriggerParameter;
+export struct TriggerParameter;
 
-struct ECA {
+export struct ECA {
 	enum class Type {
 		event,
 		condition,
@@ -343,7 +343,7 @@ struct ECA {
 	std::vector<ECA> ecas;
 };
 
-struct TriggerParameter {
+export struct TriggerParameter {
 	enum class Type {
 		invalid = -1,
 		preset,
@@ -382,7 +382,7 @@ export struct Trigger {
 	static inline int next_id = 0;
 };
 
-struct TriggerVariable {
+export struct TriggerVariable {
 	std::string name;
 	std::string type;
 	uint32_t unknown;

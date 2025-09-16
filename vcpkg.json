@@ -1,56 +1,59 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+  "vcpkg-configuration": {
+    "overlay-ports": [
+      "overlay-ports"
+    ]
+  },
   "name": "hivewe",
   "version": "0.7.0",
-  "vcpkg-configuration": {
-    "overlay-ports": [ "overlay-ports" ]
-  },
+  "builtin-baseline": "73e9c8e73fbebbfecea912efbda2ec6475134dd1",
   "dependencies": [
-    {
-      "name": "qtbase",
-      "default-features": false,
-      "features": [
-        "gui",
-        "widgets",
-        "opengl",
-        "png",
-        "jpeg"
-      ]
-    },
-    "glm",
-    {
-      "name": "glad",
-      "default-features": false,
-      "features": [
-        "loader",
-        "extensions",
-        "gl-api-46"
-      ]
-    },
-    "imgui",
-    "soil2",
-    "stormlib",
-    "casclib",
-    "libjpeg-turbo",
-    "bullet3",
-    "qt-advanced-docking-system",
     {
       "name": "abseil",
       "features": [
         "cxx17"
       ]
     },
-    "tbb",
-    "outcome",
-    "unordered-dense",
+    "bullet3",
     "bzip2",
-    "nlohmann-json",
+    "casclib",
+    {
+      "name": "glad",
+      "default-features": false,
+      "features": [
+        "extensions",
+        "gl-api-46",
+        "loader"
+      ]
+    },
+    "glm",
+    "imgui",
+    "libjpeg-turbo",
     {
       "name": "mimalloc",
       "features": [
         "override"
       ]
-    }
-  ],
-  "builtin-baseline": "73e9c8e73fbebbfecea912efbda2ec6475134dd1"
+    },
+    "nlohmann-json",
+    "outcome",
+    "qt-advanced-docking-system",
+    {
+      "name": "qtbase",
+      "default-features": false,
+      "features": [
+        "gui",
+        "jpeg",
+        "opengl",
+        "png",
+        "widgets"
+      ]
+    },
+    "soil2",
+    "stormlib",
+    "tbb",
+    "unordered-dense",
+    "qscintilla"
+  ]
 }

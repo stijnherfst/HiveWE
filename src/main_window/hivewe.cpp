@@ -27,6 +27,7 @@ import "terrain_palette.h";
 import "doodad_palette.h";
 import "unit_palette.h";
 import "object_editor/icon_view.h";
+#include "trigger_editor.h"
 #include "QMessageBox"
 #include "QProcess"
 
@@ -193,6 +194,12 @@ HiveWE::HiveWE(QWidget* parent)
 	});
 
 	setAutoFillBackground(true);
+
+	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
+		bool created = false;
+		auto editor = window_handler.create_or_raise<TriggerEditor>(nullptr, created);
+		connect(this, &HiveWE::saving_initiated, editor, &TriggerEditor::save_changes, Qt::UniqueConnection);
+	});
 
 	connect(ui.ribbon->object_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;

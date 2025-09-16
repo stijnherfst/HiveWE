@@ -127,7 +127,15 @@ target_sources(HiveWE PRIVATE
 	
 	"custom_widgets/aspect_ratio_pixmap_label.h"
 	"custom_widgets/color_button.h"
-	
+
+	"trigger_editor/trigger_editor.cpp"
+	"trigger_editor/search_window.cpp"
+	"trigger_editor/jass_editor.cpp"
+	"trigger_editor/jass_tokenizer.cpp"
+	"trigger_editor/trigger_explorer.cpp"
+	"trigger_editor/variable_editor.cpp"
+	"trigger_editor/trigger_model.cpp"
+
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
 	"model_editor/model_editor_glwidget.cpp"

@@ -92,6 +92,26 @@ export std::string read_text_file(const fs::path& path) {
 	return text;
 }
 
+// Splits a string
+export std::vector<std::string> split_string_escaped(const std::string_view input) {
+	std::vector<std::string> result;
+	std::string current;
+	bool in_quotes = false;
+
+	for (char c : input) {
+		if (c == '"') {
+			in_quotes = !in_quotes;
+		} else if (c == ',' && !in_quotes) {
+			result.push_back(current);
+			current.clear();
+		} else {
+			current.push_back(c);
+		}
+	}
+	result.push_back(current);
+	return result;
+}
+
 export const auto read_file = [](const fs::path& path) -> std::expected<BinaryReader, std::string> {
 	std::ifstream stream(path, std::ios::binary);
 	if (stream) {
