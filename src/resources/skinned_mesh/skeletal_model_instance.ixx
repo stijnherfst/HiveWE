@@ -1,5 +1,6 @@
 module;
 
+#include <cassert>
 #include <chrono>
 
 export module SkeletalModelInstance;
@@ -132,52 +133,34 @@ export class SkeletalModelInstance {
 	void update_nodes() {
 		assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
-		// update skeleton to position based on animation @ time
-		for (auto& node : render_nodes) {
-			// node.position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
-			// node.rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
-			// node.scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+		const glm::mat3 inverse_model_rotation = glm::transpose(
+			glm::mat3 {
+				glm::normalize(glm::vec3(matrix[0])),
+				glm::normalize(glm::vec3(matrix[1])),
+				glm::normalize(glm::vec3(matrix[2])),
+			}
+		);
 
-			glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
-			glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
-			glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+		const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(glm::inverse(camera.view));
+		const glm::mat3 inverse_camera_world = glm::mat3(cam_world[2], cam_world[0], cam_world[1]);
 
-			fromRotationTranslationScaleOrigin(rotation, position, scale, world_matrices[node.node->id], node.pivot);
+		for (const auto& node : render_nodes) {
+			const glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
+			const glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
+			const glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
+
+			const glm::quat final_rotation = node.billboarded ? glm::quat_cast(inverse_camera_world) : rotation;
+
+			fromRotationTranslationScaleOrigin(final_rotation, position, scale, world_matrices[node.node->id], node.pivot);
 
 			if (node.node->parent_id != -1) {
 				world_matrices[node.node->id] = world_matrices[node.node->parent_id] * world_matrices[node.node->id];
-			}
-
-			if (node.billboarded || node.billboardedX) {
-
-				world_matrices[node.node->id][1][0] = 0.f;
-				world_matrices[node.node->id][2][0] = 0.f;
-				world_matrices[node.node->id][3][0] = 0.f;
-				world_matrices[node.node->id][2][1] = 0.f;
-				world_matrices[node.node->id][3][1] = 0.f;
-				world_matrices[node.node->id][3][2] = 0.f;
-
-				world_matrices[node.node->id][0][1] = 0.f;
-				world_matrices[node.node->id][0][2] = 0.f;
-				world_matrices[node.node->id][0][3] = 0.f;
-				world_matrices[node.node->id][1][2] = 0.f;
-				world_matrices[node.node->id][1][3] = 0.f;
-				world_matrices[node.node->id][2][3] = 0.f;
-
-				// Cancel the parent's rotation
-				/*if (node.parent) {
-					node.localRotation = node.parent->inverseWorldRotation * inverseInstanceRotation;
-				} else {
-					node.localRotation = inverseInstanceRotation;
-				}
-
-				node.localRotation *= camera->decomposed_rotation;*/
 			}
 		}
 	}
 
 	/// Sets the current sequence to sequence_index and recalculates required keyframe data
-	void set_sequence(int sequence_index) {
+	void set_sequence(const int sequence_index) {
 		this->sequence_index = sequence_index;
 		current_frame = model->sequences[sequence_index].start_frame;
 
