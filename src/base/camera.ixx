@@ -53,6 +53,7 @@ export struct Camera {
 
 	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 	glm::mat4 view = glm::lookAt(position - direction * distance, position, up);
+	glm::mat4 view_inverse;
 	glm::mat4 projection_view;
 
 	glm::vec4 frustum_planes[6];
@@ -215,6 +216,7 @@ export struct Camera {
 
 		projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
 		view = glm::lookAt(position - direction * distance, position, up);
+		view_inverse = glm::inverse(view);
 		projection_view = projection * view;
 
 		extract_frustrum_planes(projection, view);

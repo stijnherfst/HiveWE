@@ -43,7 +43,7 @@ export class SkeletalModelInstance {
 
 	SkeletalModelInstance() = default;
 	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : model(model) {
-		size_t node_count = model->bones.size() +
+		const size_t node_count = model->bones.size() +
 							model->lights.size() +
 							model->help_bones.size() +
 							model->attachments.size() +
@@ -57,21 +57,14 @@ export class SkeletalModelInstance {
 		// ToDo: for each camera: add camera source node to renderNodes
 		render_nodes.resize(node_count);
 		world_matrices.resize(node_count);
-		model->for_each_node([&](mdx::Node& node) {
+		model->for_each_node([&](const mdx::Node& node) {
 			// Seen it happen with Emmitter1, is this an error in the model?
 			// ToDo purge (when adding a validation layer or just crashing)
 			if (node.id == -1) {
 				return;
 			}
 
-			RenderNode renderNode = RenderNode(node, model->pivots[node.id]);
-			if (node.parent_id != -1) {
-				renderNode.parent = &render_nodes[node.parent_id];
-			} else {
-				renderNode.parent = nullptr;
-			}
-
-			render_nodes[node.id] = renderNode;
+			render_nodes[node.id] = RenderNode(node, model->pivots[node.id]);
 		});
 
 		current_keyframes.resize(model->unique_tracks);
@@ -85,12 +78,12 @@ export class SkeletalModelInstance {
 	}
 
 	void update_location(const glm::vec3 position, const glm::quat& rotation, const glm::vec3& scale) {
-		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
+		from_rotation_translation_scale_origin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
 
 	void update_location(const glm::vec3 position, const float angle, const glm::vec3& scale) {
 		const glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
-		fromRotationTranslationScaleOrigin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
+		from_rotation_translation_scale_origin(rotation, position, scale, matrix, glm::vec3(0, 0, 0));
 	}
 
 	void update(const double delta) {
@@ -130,7 +123,7 @@ export class SkeletalModelInstance {
 		update_nodes();
 	}
 
-	void update_nodes() {
+void update_nodes() {
 		assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
 		const glm::mat3 inverse_model_rotation = glm::transpose(
@@ -141,17 +134,38 @@ export class SkeletalModelInstance {
 			}
 		);
 
-		const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(glm::inverse(camera.view));
-		const glm::mat3 inverse_camera_world = glm::mat3(cam_world[2], cam_world[0], cam_world[1]);
-
+		// Todo, node->parent_id can be higher than their current id. No ordering exists
+		// So in the loop below the parent_matrix might be empty for the first frame and an animation might be one frame behind
 		for (const auto& node : render_nodes) {
 			const glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
 			const glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
 			const glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
 
-			const glm::quat final_rotation = node.billboarded ? glm::quat_cast(inverse_camera_world) : rotation;
+			glm::quat final_rotation = rotation;
+			if (node.billboarded) {
+				const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(camera.view_inverse);
+				const glm::mat3 inverse_camera_world = glm::mat3(cam_world[2], cam_world[0], cam_world[1]);
 
-			fromRotationTranslationScaleOrigin(final_rotation, position, scale, world_matrices[node.node->id], node.pivot);
+				if (node.node->parent_id != -1) {
+					// Extract and invert parent rotation to keep billboard effect
+					const glm::mat4& parent_matrix = world_matrices[node.node->parent_id];
+					const glm::vec3 parent_scale = glm::vec3(
+						glm::length(glm::vec3(parent_matrix[0])),
+						glm::length(glm::vec3(parent_matrix[1])),
+						glm::length(glm::vec3(parent_matrix[2]))
+					);
+					const glm::mat3 parent_rotation = glm::mat3(
+						glm::vec3(parent_matrix[0]) / parent_scale.x,
+						glm::vec3(parent_matrix[1]) / parent_scale.y,
+						glm::vec3(parent_matrix[2]) / parent_scale.z
+					);
+					final_rotation = glm::quat_cast(glm::transpose(parent_rotation)) * glm::quat_cast(inverse_camera_world);
+				} else {
+					final_rotation = glm::quat_cast(inverse_camera_world);
+				}
+			}
+
+			from_rotation_translation_scale_origin(final_rotation, position, scale, world_matrices[node.node->id], node.pivot);
 
 			if (node.node->parent_id != -1) {
 				world_matrices[node.node->id] = world_matrices[node.node->parent_id] * world_matrices[node.node->id];
@@ -159,7 +173,7 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	/// Sets the current sequence to sequence_index and recalculates required keyframe data
+	// Sets the current sequence to sequence_index and recalculates required keyframe data
 	void set_sequence(const int sequence_index) {
 		this->sequence_index = sequence_index;
 		current_frame = model->sequences[sequence_index].start_frame;

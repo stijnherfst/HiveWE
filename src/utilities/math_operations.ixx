@@ -16,7 +16,7 @@ export extern const glm::quat ROTATION_IDENTITY(1, 0, 0, 0);
 // worldMatrix *= glm::mat4_cast(rotation);
 // worldMatrix = glm::translate(worldMatrix, -pivot);
 export void
-fromRotationTranslationScaleOrigin(const glm::quat& q, const glm::vec3& v, const glm::vec3& s, glm::mat4& out, const glm::vec3& pivot) {
+from_rotation_translation_scale_origin(const glm::quat& q, const glm::vec3& v, const glm::vec3& s, glm::mat4& out, const glm::vec3& pivot) {
 	// ho tom bambadil
 	// tom bombadillo
 	// Retera was here
