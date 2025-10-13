@@ -285,7 +285,9 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const {
 }
 
 Qt::DropActions TreeModel::supportedDropActions() const {
-	return Qt::CopyAction | Qt::MoveAction;
+	// return Qt::CopyAction | Qt::MoveAction;
+	return Qt::IgnoreAction;
+
 }
 
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const {

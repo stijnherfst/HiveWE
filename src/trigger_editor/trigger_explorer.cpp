@@ -63,7 +63,7 @@ TriggerExplorer::TriggerExplorer(QWidget* parent) : QTreeView(parent) {
 			selectionModel()->select(model()->index(0, 0), QItemSelectionModel::SelectionFlag::ClearAndSelect);
 		}
 
-		TreeItem* item = static_cast<TreeItem*>(selectionModel()->selectedRows().front().internalPointer());
+		const TreeItem* item = static_cast<TreeItem*>(selectionModel()->selectedRows().front().internalPointer());
 
 		addCategory->setVisible(item->id == 0 || item->type == Classifier::category);
 		addGuiTrigger->setVisible(item->type == Classifier::category);

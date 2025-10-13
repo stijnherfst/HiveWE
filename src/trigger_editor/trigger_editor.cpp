@@ -39,10 +39,15 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	dock_manager->setStyleSheet("");
 	setCentralWidget(dock_manager);
 
-	ads::CDockWidget* CentralDockWidget = new ads::CDockWidget("");
-	CentralDockWidget->setObjectName("-1");
-	dock_area = dock_manager->setCentralWidget(CentralDockWidget);
-	dock_area->setAllowedAreas(ads::DockWidgetArea::OuterDockAreas);
+	QLabel* image = new QLabel();
+	image->setPixmap(QPixmap("data/icons/trigger_editor/background.png"));
+	image->setAlignment(Qt::AlignCenter);
+
+	ads::CDockWidget* centraldock_widget = new ads::CDockWidget("");
+	centraldock_widget->setWidget(image);
+	centraldock_widget->setObjectName("-1");
+	centraldock_widget->setFeature(ads::CDockWidget::NoTab, true);
+	dock_area = dock_manager->setCentralWidget(centraldock_widget);
 
 	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
 	explorer_widget->setObjectName("-1");
@@ -85,7 +90,7 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		const auto result =
 			map->triggers
 				.generate_map_script(map->terrain, map->units, map->doodads, map->info, map->sounds, map->regions, map->cameras, mode);
-		;
+
 		if (!result) {
 			compile_output->setPlainText(QString::fromStdString(result.error()));
 		}
@@ -169,7 +174,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 
 			splitter->addWidget(jass_editor);
 		} else {
-			Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+			const Trigger& trigger = *std::ranges::find_if(map->triggers.triggers, [item](const Trigger& trigger) {
 				return trigger.id == item->id;
 			});
 
@@ -207,7 +212,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		dock_tab->setWidget(splitter);
 	} else if (item->type == Classifier::variable) {
 		TriggerVariable& variable =
-			*std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [item](const TriggerVariable& i) {
+			*std::ranges::find_if(map->triggers.variables, [item](const TriggerVariable& i) {
 				return i.id == item->id;
 			});
 
@@ -217,7 +222,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		edit->setObjectName("var_editor");
 		dock_tab->setWidget(edit);
 	} else if (item->type == Classifier::comment) {
-		Trigger& trigger = *std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [item](const Trigger& trigger) {
+		Trigger& trigger = *std::ranges::find_if(map->triggers.triggers, [item](const Trigger& trigger) {
 			return trigger.id == item->id;
 		});
 
@@ -253,7 +258,7 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 			map->triggers.global_jass_comment = comments->toPlainText().toStdString();
 		} else {
 			Trigger& trigger =
-				*std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [trigger_id](const Trigger& trigger) {
+				*std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
 					return trigger.id == trigger_id;
 				});
 
@@ -268,7 +273,7 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 			map->triggers.global_jass = jass_editor->text().toStdString();
 		} else {
 			Trigger& trigger =
-				*std::find_if(map->triggers.triggers.begin(), map->triggers.triggers.end(), [trigger_id](const Trigger& trigger) {
+				*std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
 					return trigger.id == trigger_id;
 				});
 
@@ -280,7 +285,7 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 	auto var_editor = tab->findChild<VariableEditor*>("var_editor");
 	if (var_editor) {
 		TriggerVariable& variable =
-			*std::find_if(map->triggers.variables.begin(), map->triggers.variables.end(), [trigger_id](const TriggerVariable& i) {
+			*std::ranges::find_if(map->triggers.variables, [trigger_id](const TriggerVariable& i) {
 				return i.id == trigger_id;
 			});
 
@@ -399,16 +404,20 @@ std::string TriggerEditor::get_parameters_names(
 			std::vector<std::string> sub_string_parameters;
 			switch (j.sub_parameter.type) {
 				case ECA::Type::event:
-					sub_string_parameters = map->triggers.trigger_data.whole_data("TriggerEvents", "_" + j.sub_parameter.name + "_Parameters");
+					sub_string_parameters =
+						map->triggers.trigger_data.whole_data("TriggerEvents", "_" + j.sub_parameter.name + "_Parameters");
 					break;
 				case ECA::Type::condition:
-					sub_string_parameters = map->triggers.trigger_data.whole_data("TriggerConditions", "_" + j.sub_parameter.name + "_Parameters");
+					sub_string_parameters =
+						map->triggers.trigger_data.whole_data("TriggerConditions", "_" + j.sub_parameter.name + "_Parameters");
 					break;
 				case ECA::Type::action:
-					sub_string_parameters = map->triggers.trigger_data.whole_data("TriggerActions", "_" + j.sub_parameter.name + "_Parameters");
+					sub_string_parameters =
+						map->triggers.trigger_data.whole_data("TriggerActions", "_" + j.sub_parameter.name + "_Parameters");
 					break;
 				case ECA::Type::call:
-					sub_string_parameters = map->triggers.trigger_data.whole_data("TriggerCalls", "_" + j.sub_parameter.name + "_Parameters");
+					sub_string_parameters =
+						map->triggers.trigger_data.whole_data("TriggerCalls", "_" + j.sub_parameter.name + "_Parameters");
 					break;
 			}
 			result += "(" + get_parameters_names(sub_string_parameters, j.sub_parameter.parameters) + ")";
