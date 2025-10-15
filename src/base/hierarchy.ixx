@@ -31,15 +31,16 @@ export class Hierarchy {
 	bool local_files = true;
 
 	Hierarchy() {
-		QSettings settings;
-		ptr = settings.value("flavour", "Retail").toString() == "PTR";
-		hd = settings.value("hd", "False").toString() == "True";
-		teen = settings.value("teen", "False").toString() == "True";
 		QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
 		local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
 	}
 
 	bool open_casc(const fs::path& directory) {
+		QSettings settings;
+		ptr = settings.value("flavour", "Retail").toString() == "PTR";
+		hd = settings.value("hd", "False").toString() == "True";
+		teen = settings.value("teen", "False").toString() == "True";
+
 		warcraft_directory = directory;
 
 		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
