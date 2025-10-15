@@ -383,7 +383,11 @@ public:
 
         const std::string file_name = water_slk.data("texfile", tileset + "Sha"s);
         for (int i = 0; i < water_textures_nr; i++) {
+			// Hack to force loading of SD water textures till I implement a water shader
+        	const auto hd = hierarchy.hd;
+        	hierarchy.hd = false;
             const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i));
+        	hierarchy.hd = hd;
 
             if (texture->width != 128 || texture->height != 128) {
                 std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
