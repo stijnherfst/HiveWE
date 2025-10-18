@@ -139,6 +139,20 @@ export glm::vec2 float32x3_to_oct(glm::vec3 v) {
 	return (v.z <= 0.f) ? ((1.f - glm::abs(glm::vec2(p.y, p.x))) * sign_not_zero(p)) : p;
 }
 
+/// 21 bits per component ~= 2,097,152 distinct values
+/// With an extent of 4096 that would give a precision of ~0.0019
+export glm::uvec2 pack_vec3_to_uvec2(const glm::vec3 v, const float extent) {
+	glm::vec3 normalized = glm::clamp(v / extent, glm::vec3(-1.0f), glm::vec3(1.0f));
+	normalized = (normalized + 1.0f) * 0.5f;
+
+	const uint64_t x = normalized.x * static_cast<float>((1ull << 21) - 1); // 21 bits
+	const uint64_t y = normalized.y * static_cast<float>((1ull << 21) - 1); // 21 bits
+	const uint64_t z = normalized.z * static_cast<float>((1ull << 22) - 1); // 22 bits
+	const uint64_t packed = x << 43 | y << 22 | z;
+
+	return glm::uvec2(packed & 0xFFFFFFFF, packed >> 32);
+}
+
 // From http://www.jcgt.org/published/0006/02/01/
 export bool intersect_aabb(const glm::vec3& aabb_min, const glm::vec3& aabb_max, const glm::vec3& origin, const glm::vec3& direction) {
 	const glm::vec3 t1 = (aabb_min - origin) / direction;

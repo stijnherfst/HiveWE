@@ -1,5 +1,7 @@
 module;
 
+#include <glad/glad.h>
+
 export module RenderManager;
 
 import std;
@@ -14,7 +16,6 @@ import Camera;
 import Utilities;
 import Globals;
 import Units;
-import <glad/glad.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
@@ -53,7 +54,6 @@ export class RenderManager {
 		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instanced_hd.vert", "data/shaders/skinned_mesh_instanced_hd.frag" });
 		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag" });
 		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag" });
-		preskin_mesh_shader = resource_manager.load<Shader>({ "data/shaders/preskin_mesh.comp" });
 		colored_skinned_shader = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag" });
 		
 		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
@@ -127,16 +127,10 @@ export class RenderManager {
 			}
 		}
 
-		uint64_t size = 0;
 		for (const auto& i : skinned_meshes) {
-			i->upload_render_data(size);
+			i->upload_render_data();
 		}
 
-		preskin_mesh_shader->use();
-		glUniform3fv(6, 1, &light_direction.x);
-		for (const auto& i : skinned_meshes) {
-			i->preskin_geometry();
-		}
 		// Render opaque meshes
 		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
 		instance_skinned_mesh_shader_sd->use();
@@ -150,13 +144,14 @@ export class RenderManager {
 
 		instance_skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniform3fv(8, 1, &light_direction.x);
 
 		for (const auto& i : skinned_meshes) {
 			i->render_opaque(true, render_lighting);
 		}
 
 		// Render transparent meshes
-		std::sort(skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& left, auto& right) { return left.distance > right.distance; });
+		std::ranges::sort(skinned_transparent_instances, [](auto& left, auto& right) { return left.distance > right.distance; });
 		glEnable(GL_BLEND);
 		glDepthMask(false);
 
@@ -170,6 +165,7 @@ export class RenderManager {
 
 		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniform3fv(8, 1, &light_direction.x);
 
 		for (const auto& i : skinned_transparent_instances) {
 			i.mesh->render_transparent(i.instance_id, true, render_lighting);

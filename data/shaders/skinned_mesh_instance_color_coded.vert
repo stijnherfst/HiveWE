@@ -14,6 +14,18 @@ layout(std430, binding = 2) buffer layoutName6 {
     uvec2 skins[];
 };
 
+vec3 unpack_uvec2_to_vec3(const uvec2 v, const float extent) {
+	const uint x = v.y >> 11;
+	const uint y = ((v.y & 0x7FFu) << 10) + (v.x >> 22);
+	const uint z = v.x & 0x3FFFFFu;
+
+	const float xf = (float(x) / float(1u << 21) * 2.f - 1.f) * extent;
+	const float yf = (float(y) / float(1u << 21) * 2.f - 1.f) * extent;
+	const float zf = (float(z) / float(1u << 22) * 2.f - 1.f) * extent;
+
+	return vec3(xf, yf, zf);
+}
+
 void main() {
 	const mat4 b0 = bones[int(skins[gl_VertexID].x & 0x000000FF)];
 	const mat4 b1 = bones[int(skins[gl_VertexID].x & 0x0000FF00) >> 8];
@@ -27,7 +39,7 @@ void main() {
 	vec2 xy = unpackSnorm2x16(vertices[gl_VertexID].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices[gl_VertexID].y) * 1024.f;
 
-	vec4 position = vec4(xy, zw);
+	vec4 position = vec4(unpack_uvec2_to_vec3(vertices[gl_VertexID], 4096.f), 1.f);
 	position = b0 * position * w0 + b1 * position * w1 + b2 * position * w2 + b3 * position * w3;
 	position.w = 1.f;
 
