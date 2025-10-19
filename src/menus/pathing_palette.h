@@ -20,6 +20,11 @@ private:
 	Ui::PathingPalette ui;
 	PathingBrush brush;
 
+	QRibbonTab* ribbon_tab = new QRibbonTab;
+	QRibbonButton* selection_mode = new QRibbonButton;
+	QRibbonButton* import_pathing = new QRibbonButton;
+	QRibbonButton* export_pathing = new QRibbonButton;
+
 public slots:
 	void deactivate(QRibbonTab* tab) override;
 };

@@ -222,6 +222,7 @@ HiveWE::HiveWE(QWidget* parent)
 
 	ui.widget->makeCurrent();
 	map->load("data/test map/");
+	// map->load("C:/Users/User/Desktop/MCFC.w3x");
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 }
 

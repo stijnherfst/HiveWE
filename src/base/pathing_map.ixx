@@ -1,6 +1,7 @@
 module;
 
 #include <QRect>
+#include <glad/glad.h>
 
 export module PathingMap;
 
@@ -11,7 +12,6 @@ import PathingTexture;
 import OpenGLUtilities;
 import Hierarchy;
 import <glm/glm.hpp>;
-import <glad/glad.h>;
 
 export class PathingMap {
 	static constexpr int write_version = 0;
@@ -65,7 +65,7 @@ export class PathingMap {
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
 		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
-		const uint8_t clear_color = 0;
+		constexpr uint8_t clear_color = 0;
 		glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
 		glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -86,9 +86,41 @@ export class PathingMap {
 		hierarchy.map_file_write("war3map.wpm", writer.buffer);
 	}
 
+	/// Converts the 3-byte RGB array to the pathing map
+	/// data.size() should be width * height * 3
+	bool from_rgb(const std::span<uint8_t> data) {
+		if (data.size() != pathing_cells_static.size() * 3) {
+			return false;
+		}
+
+		for (size_t i = 0; i < data.size(); i += 3) {
+			pathing_cells_static[i / 3] =
+				(data[i] > 250) * Flags::unwalkable + (data[i + 1] > 250) * Flags::unflyable + (data[i + 2] > 250) * Flags::unbuildable;
+		}
+
+		upload_static_pathing();
+
+		return true;
+	}
+
+	/// Converts the internal data (a bitflag array) to a 3-byte RGB array
+	[[nodiscard]]
+	std::vector<uint8_t> to_rgb() const {
+		std::vector<uint8_t> data;
+		data.reserve(width * height);
+
+		for (const auto cell : pathing_cells_static) {
+			data.push_back(cell & unwalkable ? 255 : 0);
+			data.push_back(cell & unflyable ? 255 : 0);
+			data.push_back(cell & unbuildable ? 255 : 0);
+		}
+
+		return data;
+	}
+
 	/// Clears an area with zeroes
 	void dynamic_clear_area(const QRect& area) {
-		const QRect t = QRect(area.left() * 4, area.top() * 4, area.width() * 4, area.height() * 4).intersected({ 0, 0, width, height });
+		const QRect t = QRect(area.left() * 4, area.top() * 4, area.width() * 4, area.height() * 4).intersected({0, 0, width, height});
 
 		for (int j = t.top(); j < t.bottom(); j++) {
 			for (int i = t.left(); i < t.right(); i++) {
@@ -133,7 +165,9 @@ export class PathingMap {
 
 				const unsigned int index = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
 
-				uint8_t pathing_texture_mask = (pathing_texture->data[index] > 250) * Flags::unwalkable | (pathing_texture->data[index + 1] > 250) * Flags::unflyable | (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
+				const uint8_t pathing_texture_mask = (pathing_texture->data[index] > 250) * Flags::unwalkable
+					| (pathing_texture->data[index + 1] > 250) * Flags::unflyable
+					| (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
 
 				if (pathing_texture_mask & mask && pathing_cells_dynamic[yy * width + xx] && mask) {
 					return false;
@@ -180,7 +214,9 @@ export class PathingMap {
 
 				const unsigned int index = ((pathing_texture->height - 1 - j) * pathing_texture->width + i) * pathing_texture->channels;
 
-				uint8_t bytes = (pathing_texture->data[index] > 250) * Flags::unwalkable | (pathing_texture->data[index + 1] > 250) * Flags::unflyable | (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
+				uint8_t bytes = (pathing_texture->data[index] > 250) * Flags::unwalkable
+					| (pathing_texture->data[index + 1] > 250) * Flags::unflyable
+					| (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
 
 				pathing_cells_dynamic[yy * width + xx] |= bytes;
 			}
