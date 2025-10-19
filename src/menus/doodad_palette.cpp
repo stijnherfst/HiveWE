@@ -264,7 +264,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	QSmallRibbonButton* merge_selection = new QSmallRibbonButton;
 	merge_selection->setText("Merge MDXs");
 	merge_selection->setToolTip("Will merge all the selected doodad/destructables into a single MDX");
-	merge_selection->setIcon(QIcon("data/icons/ribbon/doodads32x32.png"));
+	merge_selection->setIcon(QIcon("data/icons/doodad_palette/merge.png"));
 
 	current_selection_section->addLayout(scaling_layout);
 	current_selection_section->addSpacing(5);

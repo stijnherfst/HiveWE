@@ -244,7 +244,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	object_editor->setText("Object\nEditor");
 	editor_section->addWidget(object_editor);
 
-	model_editor->setIcon(QIcon("data/icons/ribbon/objecteditor32x32.png"));
+	model_editor->setIcon(QIcon("data/icons/ribbon/model_editor.png"));
 	model_editor->setText("Model\nEditor");
 	model_editor->setEnabled(false);
 	editor_section->addWidget(model_editor);
@@ -260,7 +260,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	doodad_palette->setText("Doodads");
 	palette_section->addWidget(doodad_palette);
 
-	unit_palette->setIcon(QIcon("data/icons/ribbon/doodads32x32.png"));
+	unit_palette->setIcon(QIcon("data/icons/ribbon/units32x32.png"));
 	unit_palette->setText("Units");
 	palette_section->addWidget(unit_palette);
 

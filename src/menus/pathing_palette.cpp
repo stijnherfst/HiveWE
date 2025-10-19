@@ -71,14 +71,18 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
 
 	connect(import_pathing, &QSmallRibbonButton::clicked, [&]() {
-		const QSettings settings;
-		const QString directory = settings.value("openDirectory", QDir::current().path()).toString();
+		QSettings settings;
+		const QString directory = settings.value("openDirectoryPathing", QDir::current().path()).toString();
 
 		const QString file_name = QFileDialog::getOpenFileName(this, "Open Pathing Image", directory, "Images (*.png *.jpg *.jpeg *.bmp *.gif)");
 
 		if (file_name == "") {
 			return;
 		}
+
+		const fs::path path(file_name.toStdString());
+		settings.setValue("openDirectoryPathing", QString::fromStdString(path.parent_path().string()));
+
 		QImage image;
 		if (!image.load(file_name)) {
 			QMessageBox::critical(this, "Error", "Failed to open image");
