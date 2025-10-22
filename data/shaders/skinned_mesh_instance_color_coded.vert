@@ -39,7 +39,7 @@ void main() {
 	vec2 xy = unpackSnorm2x16(vertices[gl_VertexID].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices[gl_VertexID].y) * 1024.f;
 
-	vec4 position = vec4(unpack_uvec2_to_vec3(vertices[gl_VertexID], 4096.f), 1.f);
+	vec4 position = vec4(unpack_uvec2_to_vec3(vertices[gl_VertexID], 8192.f), 1.f);
 	position = b0 * position * w0 + b1 * position * w1 + b2 * position * w2 + b3 * position * w3;
 	position.w = 1.f;
 

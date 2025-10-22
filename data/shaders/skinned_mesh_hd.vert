@@ -84,7 +84,7 @@ void main() {
 	const float w3 = ((skins[gl_VertexID].y & 0xFF000000) >> 24) / 255.f;
 	const mat4 skin_matrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 
-	const vec3 vertex = unpack_uvec2_to_vec3(vertices[gl_VertexID], 4096.f);
+	const vec3 vertex = unpack_uvec2_to_vec3(vertices[gl_VertexID], 8192.f);
 
 	gl_Position = VP * instance_matrices[instanceID] * skin_matrix * vec4(vertex, 1.f);
 
