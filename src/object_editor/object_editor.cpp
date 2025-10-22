@@ -42,7 +42,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	image->setPixmap(QPixmap("data/icons/object_editor/background.png"));
 	image->setAlignment(Qt::AlignCenter);
 
-	auto centraldock_widget = new ads::CDockWidget("CentralWidget");
+	auto centraldock_widget = new ads::CDockWidget(dock_manager, "CentralWidget");
 	centraldock_widget->setWidget(image);
 	centraldock_widget->setFeature(ads::CDockWidget::NoTab, true);
 	dock_area = dock_manager->setCentralWidget(centraldock_widget);
@@ -110,7 +110,7 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	view->setIconSize({ 24, 24 });
 	view->setWordWrap(true);
 
-	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
+	ads::CDockWidget* dock_tab = new ads::CDockWidget(dock_manager, "");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 	dock_tab->setWidget(view);
 	dock_tab->setObjectName(QString::fromStdString(item->id));
@@ -335,7 +335,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 	bar->addWidget(search);
 	bar->addWidget(hideDefault);
 
-	ads::CDockWidget* tab = new ads::CDockWidget(name);
+	ads::CDockWidget* tab = new ads::CDockWidget(dock_manager, name);
 	tab->setToolBar(bar);
 	tab->setWidget(view);
 	tab->setFeature(ads::CDockWidget::DockWidgetClosable, false);

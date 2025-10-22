@@ -16,6 +16,43 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	redo->setText("Redo");
 	history_section->addWidget(redo);
 
+	QRibbonSection* editor_section = new QRibbonSection;
+	editor_section->setText("Editor/Viewer");
+
+	trigger_editor->setIcon(QIcon("Data/Icons/Ribbon/triggereditor32x32.png"));
+	trigger_editor->setText("Trigger\nEditor");
+	editor_section->addWidget(trigger_editor);
+
+	object_editor->setIcon(QIcon("data/icons/ribbon/objecteditor32x32.png"));
+	object_editor->setText("Object\nEditor");
+	editor_section->addWidget(object_editor);
+
+	model_editor->setIcon(QIcon("data/icons/ribbon/model_editor.png"));
+	model_editor->setText("Model\nEditor");
+	model_editor->setEnabled(false);
+	editor_section->addWidget(model_editor);
+
+	QRibbonSection* palette_section = new QRibbonSection;
+	palette_section->setText("Palette");
+
+	terrain_palette->setIcon(QIcon("data/icons/ribbon/heightmap32x32.png"));
+	terrain_palette->setText("Terrain");
+	palette_section->addWidget(terrain_palette);
+
+	doodad_palette->setIcon(QIcon("data/icons/ribbon/doodads32x32.png"));
+	doodad_palette->setText("Doodads");
+	palette_section->addWidget(doodad_palette);
+
+	unit_palette->setIcon(QIcon("data/icons/ribbon/units32x32.png"));
+	unit_palette->setText("Units");
+	palette_section->addWidget(unit_palette);
+
+	pathing_palette->setIcon(QIcon("data/icons/ribbon/pathing32x32.png"));
+	pathing_palette->setText("Pathing");
+	palette_section->addWidget(pathing_palette);
+
+
+
 	//view_history->setIcon(QIcon("data/icons/ribbon/description32x32.png"));
 	//view_history->setText("View\nHistory");
 	//view_history->setEnabled(false);
@@ -45,6 +82,8 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 
 	//history_section->addLayout(lay);
 	home_tab->addSection(history_section);
+	home_tab->addSection(editor_section);
+	home_tab->addSection(palette_section);
 
 	// View
 	QRibbonTab* view_tab = new QRibbonTab;
@@ -211,7 +250,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	QRibbonSection* tileset_section = new QRibbonSection;
 	tileset_section->setText("Tileset");
 
-	change_tileset->setIcon(QIcon("data/icons/ribbon/tileset32x32.png"));
+	change_tileset->setIcon(QIcon("data/icons/ribbon/tileset.png"));
 	change_tileset->setText("Change\nTileset");
 	tileset_section->addWidget(change_tileset);
 
@@ -228,55 +267,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	switch_warcraft->setText("Change\n Game folder");
 	game_section->addWidget(switch_warcraft);
 
-	tools_tab->addSection(game_section);	
-
-	// Window Tab
-	QRibbonTab* window_tab = new QRibbonTab;
-
-	QRibbonSection* editor_section = new QRibbonSection;
-	editor_section->setText("Editor/Viewer");
-
-	trigger_editor->setIcon(QIcon("Data/Icons/Ribbon/triggereditor32x32.png"));
-	trigger_editor->setText("Trigger\nEditor");
-	editor_section->addWidget(trigger_editor);
-
-	object_editor->setIcon(QIcon("data/icons/ribbon/objecteditor32x32.png"));
-	object_editor->setText("Object\nEditor");
-	editor_section->addWidget(object_editor);
-
-	model_editor->setIcon(QIcon("data/icons/ribbon/model_editor.png"));
-	model_editor->setText("Model\nEditor");
-	model_editor->setEnabled(false);
-	editor_section->addWidget(model_editor);
-
-	QRibbonSection* palette_section = new QRibbonSection;
-	palette_section->setText("Palette"); 
-	
-	terrain_palette->setIcon(QIcon("data/icons/ribbon/heightmap32x32.png"));
-	terrain_palette->setText("Terrain");
-	palette_section->addWidget(terrain_palette);
-
-	doodad_palette->setIcon(QIcon("data/icons/ribbon/doodads32x32.png"));
-	doodad_palette->setText("Doodads");
-	palette_section->addWidget(doodad_palette);
-
-	unit_palette->setIcon(QIcon("data/icons/ribbon/units32x32.png"));
-	unit_palette->setText("Units");
-	palette_section->addWidget(unit_palette);
-
-	pathing_palette->setIcon(QIcon("data/icons/ribbon/pathing32x32.png"));
-	pathing_palette->setText("Pathing");
-	palette_section->addWidget(pathing_palette);
-
-	window_tab->addSection(editor_section);
-	window_tab->addSection(palette_section);
-
+	tools_tab->addSection(game_section);
 
 	addTab(home_tab, "Home");
 	addTab(view_tab, "View");
 	addTab(map_tab, "Map");
 	addTab(tools_tab, "Tools");
-	addTab(window_tab, "Window");
 
 }
 

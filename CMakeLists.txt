@@ -20,7 +20,7 @@ find_package(stormlib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED)
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
-find_package(qt6advanceddocking CONFIG REQUIRED)
+find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(libjpeg-turbo CONFIG REQUIRED)
@@ -70,10 +70,9 @@ target_link_libraries(HiveWE PUBLIC
 	StormLib::storm
 	BZip2::BZip2
 	libjpeg-turbo::jpeg
+	absl::base
 	libjpeg-turbo::turbojpeg
-	ads::qt6advanceddocking
-	absl::flat_hash_map
-	absl::flat_hash_set
+	ads::qtadvanceddocking-qt6
 	TBB::tbb
 	imgui::imgui
 	outcome::hl

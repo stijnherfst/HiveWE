@@ -7,7 +7,7 @@
   },
   "name": "hivewe",
   "version": "0.7.0",
-  "builtin-baseline": "73e9c8e73fbebbfecea912efbda2ec6475134dd1",
+  "builtin-baseline": "9cbe1df2acf09b1d53cf6e48afa5fda44f61147d",
   "dependencies": [
     {
       "name": "abseil",

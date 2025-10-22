@@ -8,5 +8,5 @@ VariableEditor::VariableEditor(TriggerVariable& variable) : QWidget() {
 	ui.array_size->setEnabled(variable.is_array);
 	ui.array_size->setValue(variable.array_size);
 	ui.value->setText(QString::fromStdString(variable.initial_value));
-	connect(ui.array, &QCheckBox::stateChanged, ui.array_size, &QSpinBox::setEnabled);
+	connect(ui.array, &QCheckBox::checkStateChanged, ui.array_size, &QSpinBox::setEnabled);
 }

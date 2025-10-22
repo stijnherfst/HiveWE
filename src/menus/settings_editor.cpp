@@ -41,9 +41,9 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 	connect(ui.testhd, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
 	connect(ui.testteen, &QComboBox::currentTextChanged, [&]() { setTestArgs(ui); });
 	connect(ui.profile, &QLineEdit::textChanged, [&]() { setTestArgs(ui); });
-	connect(ui.fixedseed, &QCheckBox::stateChanged, [&]() { setTestArgs(ui); });
-	connect(ui.nowfpause, &QCheckBox::stateChanged, [&]() { setTestArgs(ui); });
-	emit ui.nowfpause->stateChanged(0);
+	connect(ui.fixedseed, &QCheckBox::checkStateChanged, [&]() { setTestArgs(ui); });
+	connect(ui.nowfpause, &QCheckBox::checkStateChanged, [&]() { setTestArgs(ui); });
+	emit ui.nowfpause->checkStateChanged(Qt::CheckState::Unchecked);
 
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {

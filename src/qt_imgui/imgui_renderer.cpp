@@ -81,9 +81,9 @@ void ImGuiRenderer::initialize(WindowWrapper *window) {
     io.BackendPlatformName = "qtimgui";
     
     // Setup keyboard mapping
-    for (auto key : keyMap.values()) {
-        io.KeyMap[key] = key;
-    }
+    // for (auto key : keyMap.values()) {
+    //     io.KeyMap[key] = key;
+    // }
     
     // io.RenderDrawListsFn = [](ImDrawData *drawData) {
     //    instance()->renderDrawList(drawData);
@@ -223,7 +223,8 @@ bool ImGuiRenderer::createFontsTexture()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
     // Store our identifier
-    io.Fonts->TexID = (void *)(size_t)g_FontTexture;
+	io.Fonts->TexID = g_FontTexture;
+    // io.Fonts->TexID = (void *)(size_t)g_FontTexture;
 
     // Restore state
     glBindTexture(GL_TEXTURE_2D, last_texture);
@@ -432,7 +433,8 @@ void ImGuiRenderer::onKeyPressRelease(QKeyEvent *event)
     const auto key_it = keyMap.constFind( event->key() );
     if (key_it != keyMap.constEnd()) { // Qt's key found in keyMap
         const int imgui_key = *(key_it);
-        io.KeysDown[imgui_key] = key_pressed;
+    	io.AddKeyEvent(static_cast<ImGuiKey>(imgui_key), key_pressed);
+        // io.KeysDown[imgui_key] = key_pressed;
     }
 
     if (key_pressed) {

@@ -37,6 +37,11 @@ HiveWE::HiveWE(QWidget* parent)
 	: QMainWindow(parent) {
 	setAutoFillBackground(true);
 
+	// Buggy as of Qt 6.9.1. Likely requires 6.9.2 or later
+	// setWindowFlag(Qt::ExpandedClientAreaHint, true);
+	// setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
+	// setAttribute(Qt::WA_LayoutOnEntireRect, true);
+
 	fs::path directory = find_warcraft_directory();
 
 	QSettings settings;

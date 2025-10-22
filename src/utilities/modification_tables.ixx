@@ -6,8 +6,8 @@ import BinaryWriter;
 import Hierarchy;
 import SLK;
 import Utilities;
+import UnorderedMap;
 import <glm/glm.hpp>;
-import "absl/container/flat_hash_map.h";
 import "ankerl/unordered_dense.h";
 
 namespace fs = std::filesystem;
@@ -101,7 +101,7 @@ export void load_modification_file(const std::string& file_name, slk::SLK& base_
 // The way they are implemented is horrible though
 void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints, bool skin) {
 	// Create an temporary index to speed up field lookups
-	absl::flat_hash_map<std::string, std::string> meta_index;
+	hive::unordered_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
 		std::string field = to_lowercase_copy(meta_slk.data("field", key));
 		meta_index[field] = key;

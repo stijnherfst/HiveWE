@@ -88,7 +88,7 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 			QMessageBox::critical(this, "Error", "Failed to open image");
 		}
 		image = image.convertToFormat(QImage::Format::Format_RGB888);
-		image.mirror(false, true);
+		image.flip(Qt::Orientation::Vertical);
 
 		const bool success = map->pathing_map.from_rgb(std::span{const_cast<uint8_t*>(image.constBits()), static_cast<size_t>(image.sizeInBytes())});
 		if (!success) {
@@ -112,7 +112,7 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 
 		const auto data = map->pathing_map.to_rgb();
 		QImage image(data.data(), map->pathing_map.width, map->pathing_map.height, QImage::Format_RGB888);
-		image.mirror(false, true);
+		image.flip(Qt::Orientation::Vertical);
 		if (!image.save(file_name, "PNG")) {
 			QMessageBox::critical(this, "Error", "Failed to save image");
 		}

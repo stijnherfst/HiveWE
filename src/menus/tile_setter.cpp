@@ -19,6 +19,21 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
+	// widget_list->setViewMode(QListView::IconMode);
+	// widget_list->setResizeMode(QListView::Adjust);
+	// widget_list->setFlow(QListView::LeftToRight);
+	// widget_list->setMovement(QListView::Snap);
+	// widget_list->setGridSize(QSize(80, 80));
+	// widget_list->setIconSize(QSize(64, 64));
+	// widget_list->setUniformItemSizes(true);
+	// widget_list->setWrapping(true);
+	// widget_list->setDropIndicatorShown(true);
+	// widget_list->setDragDropMode(QAbstractItemView::InternalMove);
+	// widget_list->setAttribute(Qt::WA_TranslucentBackground);
+	// widget_list->setStyleSheet("QListWidget { background: transparent; }");
+	// widget_list->setAutoFillBackground(false);
+	// ui.flowlayout_placeholder_1->addWidget(widget_list);
+
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
@@ -26,6 +41,12 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i));
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
+
+		// QListWidgetItem* item = new QListWidgetItem;
+		// // item->setFlags(item->flags() | Qt::ItemIsDragEnabled | Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+		// item->setIcon(icon);
+		// item->setText(QString::fromStdString(slk.data("comment", i)));
+		// widget_list->addItem(item);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
@@ -49,6 +70,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	connect(ui.tileset, &QComboBox::currentTextChanged, this, &TileSetter::update_available_tiles);
 	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::existing_tile_clicked);
 	connect(available_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::available_tile_clicked);
+	connect(ui.additionalAdd, &QPushButton::clicked, this, &TileSetter::add_tile);
 	connect(ui.additionalAdd, &QPushButton::clicked, this, &TileSetter::add_tile);
 	connect(ui.selectedRemove, &QPushButton::clicked, this, &TileSetter::remove_tile);
 	connect(ui.selectedShiftLeft, &QPushButton::clicked, this, &TileSetter::shift_left);
@@ -74,13 +96,13 @@ void TileSetter::add_tile() const {
 	selected_layout->addWidget(button);
 	selected_group->addButton(button);
 
-	if (selected_group->buttons().size() >= 16) {
+	if (selected_group->buttons().size() >= 64) {
 		ui.additionalAdd->setDisabled(true);
 	}
 }
 
 void TileSetter::remove_tile() const {
-	auto selected_button = selected_group->checkedButton();
+	const auto selected_button = selected_group->checkedButton();
 	if (!selected_button) {
 		return;
 	}
@@ -95,9 +117,9 @@ void TileSetter::remove_tile() const {
 void TileSetter::update_available_tiles() const {
 	available_layout->clear();
 
-	std::string tileset = ui.tileset->currentData().toString().toStdString();
+	const std::string tileset = ui.tileset->currentData().toString().toStdString();
 
-	slk::SLK& slk = map->terrain.terrain_slk;
+	const slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&&[key, value] : map->terrain.terrain_slk.row_headers) {
 		if (key.front() != tileset.front()) {
 			continue;
@@ -129,14 +151,13 @@ void TileSetter::existing_tile_clicked(QAbstractButton* button) const {
 	// Check if cliff tile
 	const std::string tile_id = button->property("tileID").toString().toStdString();
 	auto& cliff_tiles = map->terrain.cliff_to_ground_texture;
-	if (map->terrain.ground_texture_to_id.count(tile_id)) {
-		const auto is_cliff_tile = std::find(cliff_tiles.begin(), cliff_tiles.end(), map->terrain.ground_texture_to_id[tile_id]);
-
+	if (map->terrain.ground_texture_to_id.contains(tile_id)) {
+		const auto is_cliff_tile = std::ranges::find(cliff_tiles, map->terrain.ground_texture_to_id[tile_id]);
 		ui.selectedRemove->setEnabled(is_cliff_tile == cliff_tiles.end());
 	}
 }
 
-void TileSetter::available_tile_clicked(QAbstractButton* button) const {
+void TileSetter::available_tile_clicked(const QAbstractButton* button) const {
 	ui.additionalTileLabel->setText("Tile: " + button->property("tileName").toString());
 
 	// Check if tile was already in existing/modified tileset
@@ -146,7 +167,7 @@ void TileSetter::available_tile_clicked(QAbstractButton* button) const {
 			tile_already_added = true;
 		}
 	}
-	tile_already_added |= selected_group->buttons().size() >= 16;
+	tile_already_added |= selected_group->buttons().size() >= 64;
 	ui.additionalAdd->setDisabled(tile_already_added);
 }
 
@@ -192,13 +213,13 @@ void TileSetter::save_tiles() {
 	for (size_t i = 0; i < map->terrain.tileset_ids.size(); i++) {
 		const std::string from_id = map->terrain.tileset_ids[i];
 
-		const auto found = std::find(to_ids.begin(), to_ids.end(), from_id);
+		const auto found = std::ranges::find(to_ids, from_id);
 		if (found != to_ids.end()) {
 			from_to_id[i] =  found - to_ids.begin();
 		} else {
 			TilePicker replace_dialog(this, { from_id }, to_ids);
-			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string id, std::string to_id) {
-				auto tile_found = std::find(to_ids.begin(), to_ids.end(), to_id);
+			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string id, const std::string& to_id) {
+				const auto tile_found = std::ranges::find(to_ids, to_id);
 				from_to_id[i] = tile_found - to_ids.begin();
 			});
 			replace_dialog.exec();

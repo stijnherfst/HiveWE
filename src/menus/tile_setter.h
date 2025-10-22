@@ -20,12 +20,14 @@ private:
 	void remove_tile() const;
 	void update_available_tiles() const;
 	void existing_tile_clicked(QAbstractButton* button) const;
-	void available_tile_clicked(QAbstractButton* button) const;
+	void available_tile_clicked(const QAbstractButton* button) const;
 	void shift_left() const;
 	void shift_right() const;
 	void save_tiles();
 
 	Ui::TileSetter ui;
+
+	// QListWidget* widget_list = new QListWidget;
 
 	QButtonGroup* selected_group = new QButtonGroup;
 	QButtonGroup* available_group = new QButtonGroup;

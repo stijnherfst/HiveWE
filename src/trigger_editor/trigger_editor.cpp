@@ -43,19 +43,19 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	image->setPixmap(QPixmap("data/icons/trigger_editor/background.png"));
 	image->setAlignment(Qt::AlignCenter);
 
-	ads::CDockWidget* centraldock_widget = new ads::CDockWidget("");
+	ads::CDockWidget* centraldock_widget = new ads::CDockWidget(dock_manager, "");
 	centraldock_widget->setWidget(image);
 	centraldock_widget->setObjectName("-1");
 	centraldock_widget->setFeature(ads::CDockWidget::NoTab, true);
 	dock_area = dock_manager->setCentralWidget(centraldock_widget);
 
-	ads::CDockWidget* explorer_widget = new ads::CDockWidget("Trigger Explorer");
+	ads::CDockWidget* explorer_widget = new ads::CDockWidget(dock_manager, "Trigger Explorer");
 	explorer_widget->setObjectName("-1");
 	explorer_widget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	explorer_widget->setWidget(explorer);
 	dock_manager->addDockWidget(ads::LeftDockWidgetArea, explorer_widget, dock_area);
 
-	ads::CDockWidget* output_widget = new ads::CDockWidget("Output");
+	ads::CDockWidget* output_widget = new ads::CDockWidget(dock_manager, "Output");
 	output_widget->setObjectName("-11");
 	output_widget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
 	output_widget->setWidget(compile_output);
@@ -146,7 +146,7 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		return;
 	}
 
-	ads::CDockWidget* dock_tab = new ads::CDockWidget("");
+	ads::CDockWidget* dock_tab = new ads::CDockWidget(dock_manager, "");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 
 	if (item->type == Classifier::gui || item->type == Classifier::script) {
