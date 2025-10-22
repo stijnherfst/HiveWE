@@ -172,7 +172,7 @@ export class SkinnedMesh : public Resource {
 
 			std::vector<uint32_t> uvs_snorm;
 			for (const auto& j : i.uv_sets.front()) {
-				uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 4.f));
+				uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 8.f));
 			}
 			glNamedBufferSubData(uv_snorm_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), uvs_snorm.data());
 

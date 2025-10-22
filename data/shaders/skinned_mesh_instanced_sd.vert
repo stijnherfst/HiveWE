@@ -81,7 +81,7 @@ void main() {
 
 	gl_Position = VP * instance_matrices[gl_InstanceID] * skin_matrix * vec4(vertex, 1.f);
 
-	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 4.f - 1.f;
+	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 8.f - 1.f;
 	Normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));
 	vertexColor = layer_colors[gl_InstanceID * layer_skip_count + layer_index];
 }
