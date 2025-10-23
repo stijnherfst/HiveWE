@@ -33,9 +33,45 @@ layout(std430, binding = 7) buffer layoutName7 {
 	mat4 bone_matrices[];
 };
 
+layout(std430, binding = 8) buffer layoutName8 {
+	uint team_color_indexes[];
+};
+
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
+out vec3 team_color;
+
+const vec3 team_colors[28] = {
+	vec3(1.000, 0.012, 0.012),
+	vec3(0.000, 0.259, 1.000),
+	vec3(0.106, 0.906, 0.729),
+	vec3(0.333, 0.000, 0.506),
+	vec3(0.996, 0.988, 0.000),
+	vec3(0.996, 0.537, 0.051),
+	vec3(0.129, 0.749, 0.000),
+	vec3(0.894, 0.361, 0.686),
+	vec3(0.576, 0.584, 0.588),
+	vec3(0.494, 0.749, 0.945),
+	vec3(0.063, 0.384, 0.278),
+	vec3(0.310, 0.169, 0.020),
+	vec3(0.612, 0.000, 0.000),
+	vec3(0.000, 0.000, 0.765),
+	vec3(0.000, 0.922, 1.000),
+	vec3(0.741, 0.000, 1.000),
+	vec3(0.925, 0.808, 0.529),
+	vec3(0.969, 0.647, 0.545),
+	vec3(0.749, 1.000, 0.506),
+	vec3(0.859, 0.722, 0.922),
+	vec3(0.310, 0.314, 0.333),
+	vec3(0.925, 0.941, 1.000),
+	vec3(0.000, 0.471, 0.118),
+	vec3(0.647, 0.435, 0.204),
+	vec3(0.180, 0.176, 0.180),
+	vec3(0.180, 0.176, 0.180),
+	vec3(0.180, 0.176, 0.180),
+	vec3(0.180, 0.176, 0.180),
+};
 
 vec2 sign_not_zero(vec2 v) {
 	return vec2((v.x >= 0.f) ? +1.f : -1.f, (v.y >= 0.f) ? +1.f : -1.f);
@@ -84,4 +120,5 @@ void main() {
 	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 8.f - 1.f;
 	Normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));
 	vertexColor = layer_colors[gl_InstanceID * layer_skip_count + layer_index];
+	team_color = team_colors[team_color_indexes[gl_InstanceID]];
 }

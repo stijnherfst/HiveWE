@@ -72,7 +72,7 @@ void GLWidget::initializeGL() {
 	
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-	glDebugMessageCallback(GLDEBUGPROC(gl_debug_output), nullptr);
+	glDebugMessageCallback(reinterpret_cast<GLDEBUGPROC>(gl_debug_output), nullptr);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, false);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_LOW, 0, nullptr, true);
 	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_MEDIUM, 0, nullptr, true);
@@ -99,7 +99,7 @@ void GLWidget::resizeGL(const int w, const int h) {
 	glViewport(0, 0, w, h);
 
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
-	camera.aspect_ratio = double(w) / h;
+	camera.aspect_ratio = static_cast<double>(w) / h;
 
 	if (!map || !map->loaded) {
 		return;

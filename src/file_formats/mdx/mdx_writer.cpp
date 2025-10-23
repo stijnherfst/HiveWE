@@ -130,12 +130,12 @@ namespace mdx {
 				writer.write<float>(layer.fresnel_team_color);
 
 				writer.write<uint32_t>(layer.hd);
-				writer.write<uint32_t>(layer.texturess.size());
+				writer.write<uint32_t>(layer.textures.size());
 
-				for (size_t i = 0; i < layer.texturess.size(); i++) {
-					writer.write<uint32_t>(layer.texturess[i].id);
+				for (size_t i = 0; i < layer.textures.size(); i++) {
+					writer.write<uint32_t>(layer.textures[i].id);
 					writer.write<uint32_t>(i);
-					layer.texturess[i].KMTF.save(TrackTag::KMTF, writer);
+					layer.textures[i].KMTF.save(TrackTag::KMTF, writer);
 				}
 
 				layer.KMTA.save(TrackTag::KMTA, writer);

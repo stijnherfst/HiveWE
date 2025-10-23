@@ -179,8 +179,8 @@ export class EditableMesh : public Resource {
 				bool found = false;
 				for (const auto& material : mdx->materials) {
 					for (const auto& layer : material.layers) {
-						for (size_t j = 0; j < layer.texturess.size(); j++) {
-							if (layer.texturess[j].id != i) {
+						for (size_t j = 0; j < layer.textures.size(); j++) {
+							if (layer.textures[j].id != i) {
 								continue;
 							}
 
@@ -329,8 +329,8 @@ export class EditableMesh : public Resource {
 			glDepthMask(true);
 		}
 
-		for (size_t texture_slot = 0; texture_slot < layers[0].texturess.size(); texture_slot++) {
-			glBindTextureUnit(texture_slot, textures[layers[0].texturess[texture_slot].id]->id);
+		for (size_t texture_slot = 0; texture_slot < layers[0].textures.size(); texture_slot++) {
+			glBindTextureUnit(texture_slot, textures[layers[0].textures[texture_slot].id]->id);
 		}
 
 		glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);

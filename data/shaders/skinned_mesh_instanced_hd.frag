@@ -9,23 +9,23 @@ layout (binding = 5) uniform sampler2D environment;
 
 layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
+layout (location = 10) uniform bool is_team_color;
 
 in vec2 UV;
 in vec3 tangent_light_direction;
 in vec4 vertexColor;
+in vec3 team_color;
 
 out vec4 color;
 
 void main() {
-	// color = vec4(1.f, 1.f, 1.f, 1.f);
-
 	color = texture(diffuse, UV) * vertexColor;
 	
 	if (show_lighting) {
 		vec3 emissive_texel = texture(emissive, UV).rgb;
 		vec4 orm_texel = texture(orm, UV);
 		vec3 tc_texel = texture(teamColor, UV).rgb;
-		color.rgb = (color.rgb * (1 - orm_texel.w) + color.rgb * tc_texel * orm_texel.w);
+		color.rgb = (color.rgb * (1 - orm_texel.w) + color.rgb * tc_texel.r * team_color * orm_texel.w);
 
 		// normal is a 2 channel normal map so we have to deduce the 3rd value
 		vec2 normal_texel = texture(normal, UV).xy * 2.0 - 1.0;

@@ -292,7 +292,7 @@ void UnitBrush::render_brush() {
 	if (mesh) {
 		skeleton.update_location(final_position, glm::angleAxis(rotation, glm::vec3(0, 0, 1)), final_scale);
 		skeleton.update(0.016f);
-		map->render_manager.queue_render(*mesh, skeleton, glm::vec3(1.f));
+		map->render_manager.queue_render(*mesh, skeleton, glm::vec3(1.f), 0);
 	}
 }
 
@@ -335,7 +335,7 @@ void UnitBrush::render_clipboard() {
 		i.skeleton.update_location(final_position, glm::angleAxis(i.angle, glm::vec3(0, 0, 1)), final_scale);
 		i.skeleton.update(0.016f);
 		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
-		map->render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f));
+		map->render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f), 0);
 	}
 }
 

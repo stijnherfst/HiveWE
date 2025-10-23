@@ -51,7 +51,7 @@ namespace mdx {
 		std::set<u32> used_textures;
 		for (const auto& material : mdx.materials) {
 			for (const auto& layer : material.layers) {
-				for (const auto& texture : layer.texturess) {
+				for (const auto& texture : layer.textures) {
 					used_textures.emplace(texture.id);
 				}
 			}
@@ -65,7 +65,7 @@ namespace mdx {
 
 		for (auto& material : mdx.materials) {
 			for (auto& layer : material.layers) {
-				for (auto& texture : layer.texturess) {
+				for (auto& texture : layer.textures) {
 					texture.id = mapping[texture.id];
 				}
 			}
@@ -92,7 +92,7 @@ namespace mdx {
 
 		for (auto& material : materials) {
 			for (auto& layer : material.layers) {
-				for (auto& texture : layer.texturess) {
+				for (auto& texture : layer.textures) {
 					texture.id = mapping[texture.id];
 				}
 			}

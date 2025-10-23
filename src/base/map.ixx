@@ -659,7 +659,7 @@ export class Map: public QObject {
 
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
-				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color, 0);
 				if (render_click_helpers) {
 					const bool is_doodad = doodads_slk.row_headers.contains(i.id);
 					const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -669,7 +669,7 @@ export class Map: public QObject {
 				}
 			}
 			for (const auto& i : doodads.special_doodads) {
-				render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f));
+				render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f), 0);
 			}
 		}
 
@@ -679,10 +679,10 @@ export class Map: public QObject {
 					continue;
 				} // ToDo handle starting locations
 
-				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color, i.player);
 			}
 			for (auto& i : units.items) {
-				render_manager.queue_render(*i.mesh, i.skeleton, i.color);
+				render_manager.queue_render(*i.mesh, i.skeleton, i.color, i.player);
 			}
 		}
 

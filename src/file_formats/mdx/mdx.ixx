@@ -192,7 +192,7 @@ namespace mdx {
 
 		bool hd;
 
-		std::vector<LayerTexture> texturess;
+		std::vector<LayerTexture> textures;
 
 		TrackHeader<float> KMTA;
 		TrackHeader<float> KMTE;
@@ -810,7 +810,7 @@ namespace mdx {
 					F(j.KFC3);
 					F(j.KFCA);
 					F(j.KFTC);
-					for (auto& k : j.texturess) {
+					for (auto& k : j.textures) {
 						F(k.KMTF);
 					}
 				}
@@ -916,8 +916,9 @@ namespace std {
 			hash_combine(h, l.fresnel_opacity);
 			hash_combine(h, l.fresnel_team_color);
 			hash_combine(h, l.hd);
-			for (const auto& tex : l.texturess)
-				hash_combine(h, tex);
+			for (const auto& texture : l.textures) {
+				hash_combine(h, texture);
+			}
 			hash_combine(h, l.KMTA);
 			hash_combine(h, l.KMTE);
 			hash_combine(h, l.KFC3);

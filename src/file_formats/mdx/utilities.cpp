@@ -35,7 +35,7 @@ namespace mdx {
 			for (auto& layer : material.layers) {
 				layer.texture_animation_id = 0;
 				layer.texture_animation_id += texture_animations.size();
-				for (auto& texture : layer.texturess) {
+				for (auto& texture : layer.textures) {
 					texture.id += textures.size();
 				}
 			}

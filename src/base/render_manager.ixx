@@ -16,6 +16,7 @@ import Camera;
 import Utilities;
 import Globals;
 import Units;
+import SLK;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
@@ -79,7 +80,7 @@ export class RenderManager {
 		glDeleteFramebuffers(1, &color_picking_framebuffer);
 	}
 
-	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color) {
+	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
 		const mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
 		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
@@ -87,6 +88,7 @@ export class RenderManager {
 
 		skinned_mesh.render_jobs.push_back(skeleton.matrix);
 		skinned_mesh.render_colors.push_back(color);
+		skinned_mesh.render_team_color_indexes.push_back(team_color_index);
 		skinned_mesh.skeletons.push_back(&skeleton);
 
 		// Register for opaque drawing
@@ -110,20 +112,20 @@ export class RenderManager {
 	}
 
 	// Renders a click helper (little purple checkered box), kinda inefficient but couldn't be bothered writing a whole new rendering path
-	void queue_click_helper(glm::mat4 model) {
+	void queue_click_helper(const glm::mat4& model) {
 		auto a = SkeletalModelInstance(click_helper->model);
 		a.matrix = model;
 		a.update(0.016f);
 		click_helper_instances.push_back(a);
 	}
 
-	void render(bool render_lighting, bool render_click_helpers, glm::vec3 light_direction) {
+	void render(const bool render_lighting, const bool render_click_helpers, const glm::vec3 light_direction) {
 		GLint old_vao;
 		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
 
 		if (render_click_helpers) {
 			for (const auto& i : click_helper_instances) {
-				queue_render(*click_helper, i, glm::vec3(1.f));
+				queue_render(*click_helper, i, glm::vec3(1.f), 0);
 			}
 		}
 
@@ -172,23 +174,18 @@ export class RenderManager {
 		}
 
 		glBindVertexArray(old_vao);
+		glDepthMask(true);
 
 		for (const auto& i : skinned_meshes) {
-			i->render_jobs.clear();
-			i->render_colors.clear();
-			i->skeletons.clear();
-			i->instance_bone_matrices.clear();
+			i->clear_render_data();
 		}
 
 		click_helper_instances.clear();
-
-		glDepthMask(true);
-
 		skinned_meshes.clear();
 		skinned_transparent_instances.clear();
 	}
 
-	void resize_framebuffers(int width, int height) {
+	void resize_framebuffers(const int width, const int height) {
 		glNamedRenderbufferStorage(color_buffer, GL_RGBA8, width, height);
 		glNamedRenderbufferStorage(depth_buffer, GL_DEPTH24_STENCIL8, width, height);
 		window_width = width;
@@ -198,7 +195,7 @@ export class RenderManager {
 	/// Requires the OpenGL context to be active/current
 	/// Returns the unit ID of the unit that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	std::optional<size_t> pick_unit_id_under_mouse(Units& units, glm::vec2 mouse_position) {
+	[[nodiscard]] std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) const {
 		GLint old_fbo;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 		GLint old_vao;
@@ -244,7 +241,7 @@ export class RenderManager {
 	/// Requires the OpenGL context to be active/current
 	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	std::optional<size_t> pick_doodad_id_under_mouse(Doodads& doodads, glm::vec2 mouse_position) {
+	[[nodiscard]] std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) const {
 		GLint old_fbo;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 		GLint old_vao;
@@ -272,8 +269,8 @@ export class RenderManager {
 			glm::vec3 local_min = extent.minimum;
 			glm::vec3 local_max = extent.maximum;
 
-			bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
-			slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+			const bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
+			const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 			bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
 			if (use_click_helper) {
 				local_min = glm::min(local_min, click_helper->model->extent.minimum);

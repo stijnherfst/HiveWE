@@ -270,7 +270,7 @@ namespace mdx {
 								mdl.write_line("NoDepthSet");
 							}
 
-							mdl.write_track(layer.texturess.at(i).KMTF, "TextureID", layer.texturess.at(i).id);
+							mdl.write_track(layer.textures.at(i).KMTF, "TextureID", layer.textures.at(i).id);
 							mdl.write_track(layer.KMTA, "Alpha", layer.alpha);
 							mdl.write_track(layer.KMTE, "EmissiveGain", layer.emissive_gain);
 							mdl.write_track(layer.KFC3, "FresnelColor", layer.fresnel_color);
@@ -322,7 +322,7 @@ namespace mdx {
 									mdl.write_line("NoDepthSet");
 								}
 
-								mdl.write_track(layer.texturess.at(0).KMTF, "TextureID", layer.texturess.at(0).id);
+								mdl.write_track(layer.textures.at(0).KMTF, "TextureID", layer.textures.at(0).id);
 								mdl.write_track(layer.KMTA, "Alpha", layer.alpha);
 								mdl.write_track(layer.KMTE, "EmissiveGain", layer.emissive_gain);
 								mdl.write_track(layer.KFC3, "FresnelColor", layer.fresnel_color);

@@ -50,11 +50,10 @@ export class SkinnedMesh : public Resource {
 	GLuint tangent_buffer;
 	GLuint weight_buffer;
 	GLuint index_buffer;
-	GLuint layer_alpha;
 
 	GLuint instance_ssbo;
+	GLuint instance_team_color_index_ssbo;
 	GLuint layer_colors_ssbo;
-	GLuint layer_texture_ssbo;
 	GLuint bones_ssbo;
 	GLuint bones_ssbo_colored;
 
@@ -64,6 +63,7 @@ export class SkinnedMesh : public Resource {
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
+	std::vector<uint32_t> render_team_color_indexes;
 	std::vector<const SkeletalModelInstance*> skeletons;
 	std::vector<glm::mat4> instance_bone_matrices;
 	std::vector<glm::vec4> layer_colors;
@@ -130,8 +130,8 @@ export class SkinnedMesh : public Resource {
 		glNamedBufferStorage(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
 		glCreateBuffers(1, &instance_ssbo);
+		glCreateBuffers(1, &instance_team_color_index_ssbo);
 		glCreateBuffers(1, &layer_colors_ssbo);
-		glCreateBuffers(1, &layer_texture_ssbo);
 		glCreateBuffers(1, &bones_ssbo);
 		glCreateBuffers(1, &bones_ssbo_colored);
 
@@ -217,8 +217,8 @@ export class SkinnedMesh : public Resource {
 				bool found = false;
 				for (const auto& material : model->materials) {
 					for (const auto& layer : material.layers) {
-						for (size_t j = 0; j < layer.texturess.size(); j++) {
-							if (layer.texturess[j].id != i) {
+						for (size_t j = 0; j < layer.textures.size(); j++) {
+							if (layer.textures[j].id != i) {
 								continue;
 							}
 
@@ -303,9 +303,7 @@ export class SkinnedMesh : public Resource {
 		glDeleteBuffers(1, &tangent_buffer);
 		glDeleteBuffers(1, &weight_buffer);
 		glDeleteBuffers(1, &index_buffer);
-		glDeleteBuffers(1, &layer_alpha);
 		glDeleteBuffers(1, &layer_colors_ssbo);
-		glDeleteBuffers(1, &layer_texture_ssbo);
 		glDeleteBuffers(1, &instance_ssbo);
 		glDeleteBuffers(1, &bones_ssbo);
 		glDeleteBuffers(1, &bones_ssbo_colored);
@@ -317,14 +315,13 @@ export class SkinnedMesh : public Resource {
 		}
 
 		glNamedBufferData(instance_ssbo, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_DYNAMIC_DRAW);
+		glNamedBufferData(instance_team_color_index_ssbo, render_team_color_indexes.size() * sizeof(uint32_t), render_team_color_indexes.data(), GL_DYNAMIC_DRAW);
 
 		for (int i = 0; i < render_jobs.size(); i++) {
 			instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + model->bones.size());
 		}
 
 		glNamedBufferData(bones_ssbo, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
-
-		layer_colors.clear();
 
 		for (size_t k = 0; k < render_jobs.size(); k++) {
 			for (const auto& i : geosets) {
@@ -349,7 +346,16 @@ export class SkinnedMesh : public Resource {
 		glNamedBufferData(layer_colors_ssbo, layer_colors.size() * sizeof(glm::vec4), layer_colors.data(), GL_DYNAMIC_DRAW);
 	}
 
-	void render_opaque(bool render_hd, bool render_lighting) {
+	void clear_render_data() {
+		render_jobs.clear();
+		render_colors.clear();
+		render_team_color_indexes.clear();
+		skeletons.clear();
+		instance_bone_matrices.clear();
+		layer_colors.clear();
+	}
+
+	void render_opaque(const bool render_hd, const bool render_lighting) const {
 		if (!has_mesh) {
 			return;
 		}
@@ -367,6 +373,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, instance_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, weight_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, bones_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, instance_team_color_index_ssbo);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {
@@ -380,6 +387,7 @@ export class SkinnedMesh : public Resource {
 			for (const auto& j : layers) {
 				// We don't have to render fully transparent meshes
 				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
+				// TODO: this is a hack, if the first instance has an alpha animation that triggers this condition then all instances will be hidden, even if the others have a positive alpha
 				if (layer_colors[lay_index].a <= 0.01f) {
 					lay_index += 1;
 					continue;
@@ -391,7 +399,11 @@ export class SkinnedMesh : public Resource {
 				}
 
 				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
+				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 				glUniform1i(5, lay_index);
+				const bool is_team_color =
+					(model->textures[j.textures[0].id].replaceable_id == 1 || model->textures[j.textures[0].id].replaceable_id == 2);
+				glUniform1i(10, is_team_color);
 
 				switch (j.blend_mode) {
 					case 0:
@@ -415,8 +427,6 @@ export class SkinnedMesh : public Resource {
 						break;
 				}
 
-				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
-
 				if (j.shading_flags & 0x10) {
 					glDisable(GL_CULL_FACE);
 				} else {
@@ -435,8 +445,8 @@ export class SkinnedMesh : public Resource {
 					glDepthMask(true);
 				}
 
-				for (size_t texture_slot = 0; texture_slot < j.texturess.size(); texture_slot++) {
-					glBindTextureUnit(texture_slot, textures[j.texturess[texture_slot].id]->id);
+				for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
+					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 				}
 
 				glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
@@ -445,7 +455,7 @@ export class SkinnedMesh : public Resource {
 		}
 	}
 
-	void render_transparent(int instance_id, bool render_hd, bool render_lighting) {
+	void render_transparent(const int instance_id, const bool render_hd, const bool render_lighting) const {
 		if (!has_mesh) {
 			return;
 		}
@@ -465,6 +475,7 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, instance_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, weight_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, bones_ssbo);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, instance_team_color_index_ssbo);
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {
@@ -487,7 +498,11 @@ export class SkinnedMesh : public Resource {
 					continue;
 				}
 
+				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 				glUniform1i(7, lay_index);
+				const bool is_team_color =
+					(model->textures[j.textures[0].id].replaceable_id == 1 || model->textures[j.textures[0].id].replaceable_id == 2);
+				glUniform1i(10, is_team_color);
 
 				switch (j.blend_mode) {
 					case 2:
@@ -507,8 +522,6 @@ export class SkinnedMesh : public Resource {
 						break;
 				}
 
-				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
-
 				if (j.shading_flags & 0x10) {
 					glDisable(GL_CULL_FACE);
 				} else {
@@ -521,8 +534,8 @@ export class SkinnedMesh : public Resource {
 					glEnable(GL_DEPTH_TEST);
 				}
 
-				for (size_t texture_slot = 0; texture_slot < j.texturess.size(); texture_slot++) {
-					glBindTextureUnit(texture_slot, textures[j.texturess[texture_slot].id]->id);
+				for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
+					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 				}
 
 				glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
@@ -531,7 +544,7 @@ export class SkinnedMesh : public Resource {
 		}
 	}
 
-	void render_color_coded(const SkeletalModelInstance& skeleton, int id) {
+	void render_color_coded(const SkeletalModelInstance& skeleton, const int id) const {
 		if (!has_mesh) {
 			return;
 		}
@@ -561,7 +574,7 @@ export class SkinnedMesh : public Resource {
 					layer_visibility = skeleton.get_layer_visiblity(j);
 				}
 
-				float final_visibility = layer_visibility * geoset_anim_visibility;
+				const float final_visibility = layer_visibility * geoset_anim_visibility;
 				if (final_visibility <= 0.001f) {
 					continue;
 				}
