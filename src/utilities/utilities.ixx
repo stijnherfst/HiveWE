@@ -112,7 +112,7 @@ export std::vector<std::string> split_string_escaped(const std::string_view inpu
 	return result;
 }
 
-export const auto read_file = [](const fs::path& path) -> std::expected<BinaryReader, std::string> {
+export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
 	std::ifstream stream(path, std::ios::binary);
 	if (stream) {
 		return BinaryReader(

@@ -47,6 +47,7 @@ export class EditableMesh : public Resource {
 
 	static constexpr const char* name = "EditableMesh";
 
+	EditableMesh() = delete;
 	explicit EditableMesh(std::shared_ptr<mdx::MDX> mdx, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 		this->mdx = mdx;
 

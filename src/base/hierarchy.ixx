@@ -133,15 +133,8 @@ export class Hierarchy {
 	}
 
 	[[nodiscard]]
-	std::expected<BinaryReader, std::string> map_file_read(const fs::path& path) const {
-		std::ifstream stream(map_directory / path, std::ios::binary);
-		if (stream) {
-			return BinaryReader(
-				std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
-			);
-		} else {
-			return std::unexpected(path.string() + " could not be found");
-		}
+	auto map_file_read(const fs::path& path) const -> std::expected<BinaryReader, std::string> {
+		return read_file(map_directory / path);
 	}
 
 	/// source somewhere on disk, destination relative to the map

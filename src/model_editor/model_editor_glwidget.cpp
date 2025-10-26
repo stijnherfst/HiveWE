@@ -24,7 +24,7 @@ namespace fs = std::filesystem;
 InputHandler my_input_handler;
 mdx::MDX::OptimizationStats stats;
 
-ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent) {
+ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, std::shared_ptr<mdx::MDX> mdx) : QOpenGLWidget(parent), mdx(mdx) {
 	makeCurrent();
 
 	setMouseTracking(true);
@@ -35,7 +35,7 @@ ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent) : QOpenGLWidget(parent
 }
 
 void ModelEditorGLWidget::initializeGL() {
-	QtImGui::initialize(this);
+	ref = QtImGui::initialize(this, false);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -48,14 +48,16 @@ void ModelEditorGLWidget::initializeGL() {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx").value();
-
-	const auto mdx = std::make_shared<mdx::MDX>(reader);
 	mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
-	skeleton = SkeletalModelInstance(mesh->mdx);
+	skeleton = SkeletalModelInstance(mdx);
 
+	// Fit mesh extents AABB into screen
 	const auto& extent = mesh->mdx->sequences[skeleton.sequence_index].extent;
-	camera.position.z = (extent.maximum.z - extent.minimum.z) / 2.f;
+	const glm::vec3 size = extent.maximum - extent.minimum;
+	const float radius = length(size) * 0.5f * 1.1f;
+	const float dist = radius / std::sin(camera.fov_rad * 0.5f);
+	camera.distance = dist;
+	camera.position.z = extent.minimum.z + size.z / 2.f;
 
 	shader = resource_manager.load<Shader>({ "data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag" });
 }
@@ -97,7 +99,7 @@ void ModelEditorGLWidget::paintGL() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// ImGui
-	QtImGui::newFrame();
+	QtImGui::newFrame(ref);
 
 	ImGui::Begin("General");
 
@@ -254,23 +256,8 @@ void ModelEditorGLWidget::paintGL() {
 		ImGui::End();
 	}
 
-
-	//for (const auto& i : mesh->model->textures) {
-	//	ImGui::Text(i.file_name.string().c_str());
-	//}
-
-
-	// more widgets...
-
 	ImGui::Render();
-	QtImGui::render();
-
-	//QPainter p(this);
-	//p.setPen(QColor(Qt::GlobalColor::white));
-	//p.setFont(QFont("Arial", 10, 100, false));
-
-	//// Rendering time
-	//p.drawText(10, 20, "Test text drawing");
+	QtImGui::render(ref);
 }
 
 void ModelEditorGLWidget::keyPressEvent(QKeyEvent* event) {

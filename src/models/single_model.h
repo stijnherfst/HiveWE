@@ -83,6 +83,7 @@ public:
 	void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
 	QWidget* create_list_editor(QWidget* parent) const;
+	QWidget* create_model_editor(QWidget* parent) const;
 	QWidget* create_target_list_editor(QWidget* parent) const;
 	QWidget* create_upgrade_list_editor(QWidget* parent) const;
 	QWidget* create_unit_list_editor(QWidget* parent) const;

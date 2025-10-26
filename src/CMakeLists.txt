@@ -143,6 +143,7 @@ target_sources(HiveWE PRIVATE
 	"models/destructible_list_model.cpp"
 
 	"object_editor/icon_view.cpp"
+	"object_editor/model_view.cpp"
 	"object_editor/object_editor.cpp"
 
 	"qt_imgui/imgui_renderer.cpp"

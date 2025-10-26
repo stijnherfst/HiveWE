@@ -1,5 +1,7 @@
 #include "single_model.h"
 
+#include "model_view.h"
+
 #include <QPainter>
 #include <QPlainTextEdit>
 #include <QDialogButtonBox>
@@ -261,7 +263,6 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 TableDelegate::TableDelegate(QWidget* parent) : QStyledItemDelegate(parent) {
 }
 
-// ToDo look into splitting/simplifying the following functions 
 QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
 	auto model = static_cast<const SingleModel*>(index.model());
 	auto& mapping = model->getMapping();
@@ -288,6 +289,8 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		QTextEdit* editor = new QTextEdit(parent);
 //		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
+	} else if (type == "model") {
+		return create_model_editor(parent);
 	} else if (type == "targetList") {
 		return create_target_list_editor(parent);
 	} else if (type == "unitList") {
@@ -351,6 +354,9 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 				box->setChecked(true);
 			}
 		}
+	} else if (type == "model") {
+		ModelView* list = editor->findChild<ModelView*>("modelView");
+		list->set_current_model_path(model->data(index, Qt::EditRole).toString());
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
@@ -398,7 +404,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		IconView* list = editor->findChild<IconView*>("iconView");
 		list->setCurrentIconPath(model->data(index, Qt::EditRole).toString());
 	} else if (type == "doodadCategory") {
-		auto combo = static_cast<QComboBox*>(editor);
+		const auto combo = static_cast<QComboBox*>(editor);
 		for (int i = 0; i < combo->count(); i++) {
 			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
 				combo->setCurrentIndex(i);
@@ -430,6 +436,9 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 		auto text = static_cast<QTextEdit*>(editor)->toPlainText();
 		text.replace('\n', "|n");
 		singlemodel->setData(index, text);
+	} else if (type == "model") {
+		ModelView* list = editor->findChild<ModelView*>("modelView");
+		singlemodel->setData(index, list->current_model_path());
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
@@ -529,14 +538,14 @@ QWidget* TableDelegate::create_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	dialog->show();
@@ -544,6 +553,43 @@ QWidget* TableDelegate::create_list_editor(QWidget* parent) const {
 	return editor;
 
 }
+
+QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
+	auto editor = new QWidget(parent);
+
+	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
+	dialog->setAttribute(Qt::WA_DeleteOnClose);
+	dialog->resize(530, 512);
+	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	ModelView* view = new ModelView;
+	view->setObjectName("modelView");
+
+	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+	connect(dialog, &QDialog::accepted, [=]() {
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
+	});
+
+	connect(dialog, &QDialog::rejected, [=]() {
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
+	});
+
+	QVBoxLayout* layout = new QVBoxLayout(dialog);
+	layout->addWidget(view);
+	layout->addWidget(buttonBox);
+
+	dialog->show();
+
+	return editor;
+}
+
+
 QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
 	auto editor = new QWidget(parent);
 
@@ -577,14 +623,14 @@ QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	dialog->show();
@@ -694,14 +740,14 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=](){
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	dialog->show();
@@ -811,14 +857,14 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=](){
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	dialog->show();
@@ -931,14 +977,14 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 	layout->addWidget(buttonBox);
 
 	connect(dialog, &QDialog::accepted, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	dialog->show();
@@ -962,14 +1008,14 @@ QWidget* TableDelegate::create_icon_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
 	connect(dialog, &QDialog::accepted, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->commitData(editor);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->commitData(editor);
+		emit delegate->closeEditor(editor);
 	});
 
 	connect(dialog, &QDialog::rejected, [=]() {
-		auto yeet = const_cast<TableDelegate*>(this);
-		emit yeet->closeEditor(editor);
+		const auto delegate = const_cast<TableDelegate*>(this);
+		emit delegate->closeEditor(editor);
 	});
 
 	QVBoxLayout* layout = new QVBoxLayout(dialog);
