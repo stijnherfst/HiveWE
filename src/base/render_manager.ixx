@@ -76,7 +76,7 @@ export class RenderManager {
 	}
 
 	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
-		const mdx::Extent& extent = skinned_mesh.model->sequences[skeleton.sequence_index].extent;
+		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
 		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 			return;
 		}
@@ -108,7 +108,7 @@ export class RenderManager {
 
 	// Renders a click helper (little purple checkered box), kinda inefficient but couldn't be bothered writing a whole new rendering path
 	void queue_click_helper(const glm::mat4& model) {
-		auto a = SkeletalModelInstance(click_helper->model);
+		auto a = SkeletalModelInstance(click_helper->mdx);
 		a.matrix = model;
 		a.update(0.016f);
 		click_helper_instances.push_back(a);
@@ -214,7 +214,7 @@ export class RenderManager {
 				continue;
 			} // ToDo handle starting locations
 
-			mdx::Extent& extent = unit.mesh->model->sequences[unit.skeleton.sequence_index].extent;
+			mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
 			if (camera.inside_frustrum(unit.skeleton.matrix * glm::vec4(extent.minimum, 1.f), unit.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
 				unit.mesh->render_color_coded(unit.skeleton, i + 1);
 			}
@@ -262,7 +262,7 @@ export class RenderManager {
 		for (size_t i = 0; i < doodads.doodads.size(); i++) {
 			const Doodad& doodad = doodads.doodads[i];
 
-			const mdx::Extent& extent = doodad.mesh->model->sequences[doodad.skeleton.sequence_index].extent;
+			const mdx::Extent& extent = doodad.mesh->mdx->sequences[doodad.skeleton.sequence_index].extent;
 			glm::vec3 local_min = extent.minimum;
 			glm::vec3 local_max = extent.maximum;
 
@@ -270,8 +270,8 @@ export class RenderManager {
 			const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 			bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
 			if (use_click_helper) {
-				local_min = glm::min(local_min, click_helper->model->extent.minimum);
-				local_max = glm::max(local_max, click_helper->model->extent.maximum);
+				local_min = glm::min(local_min, click_helper->mdx->extent.minimum);
+				local_max = glm::max(local_max, click_helper->mdx->extent.maximum);
 			}
 
 			glm::vec3 min;
@@ -283,7 +283,7 @@ export class RenderManager {
 				doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
 
 				if (use_click_helper) {
-					auto a = SkeletalModelInstance(click_helper->model);
+					auto a = SkeletalModelInstance(click_helper->mdx);
 					a.matrix = doodad.skeleton.matrix;
 					a.update(0.016f);
 					click_helper->render_color_coded(a, i + 1);

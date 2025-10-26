@@ -9,6 +9,7 @@ layout (binding = 5) uniform sampler2D environment;
 
 layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
+layout (location = 3) uniform vec3 light_direction;
 layout (location = 10) uniform bool is_team_color;
 
 in vec2 UV;

@@ -27,7 +27,7 @@ DoodadBrush::DoodadBrush()
 	brush_offset = { 0.0f, 0.0f };
 
 	click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
-	click_helper_skeleton = SkeletalModelInstance(click_helper->model);
+	click_helper_skeleton = SkeletalModelInstance(click_helper->mdx);
 }
 
 /// Gets a random variation from the possible_variation list
@@ -521,10 +521,10 @@ void DoodadBrush::render_selection() const {
 
 	for (const auto& i : selections) {
 		float selection_scale = 1.f;
-		if (i->mesh->model->sequences.empty()) {
-			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
+		if (i->mesh->mdx->sequences.empty()) {
+			selection_scale = i->mesh->mdx->extent.bounds_radius / 128.f;
 		} else {
-			selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
+			selection_scale = i->mesh->mdx->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 		}
 		
 		bool is_doodad = doodads_slk.row_headers.contains(i->id);
@@ -532,10 +532,10 @@ void DoodadBrush::render_selection() const {
 		bool use_click_helper = slk.data<bool>("useclickhelper", i->id);
 
 		if (use_click_helper) {
-			selection_scale = std::max(selection_scale, click_helper->model->extent.bounds_radius / 128.f);
+			selection_scale = std::max(selection_scale, click_helper->mdx->extent.bounds_radius / 128.f);
 		}
 		if (selection_scale < 0.1f) { // Todo hack, what is the correct approach?
-			selection_scale = i->mesh->model->extent.bounds_radius / 128.f;
+			selection_scale = i->mesh->mdx->extent.bounds_radius / 128.f;
 		}
 
 		glm::mat4 model(1.f);

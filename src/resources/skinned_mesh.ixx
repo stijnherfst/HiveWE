@@ -35,7 +35,7 @@ export class SkinnedMesh : public Resource {
 		mdx::GeosetAnimation* geoset_anim; // can be nullptr, often
 	};
 
-	std::shared_ptr<mdx::MDX> model;
+	std::shared_ptr<mdx::MDX> mdx;
 
 	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
@@ -82,18 +82,18 @@ export class SkinnedMesh : public Resource {
 		size_t indices = 0;
 		size_t matrices = 0;
 
-		model = std::make_shared<mdx::MDX>(reader);
+		mdx = std::make_shared<mdx::MDX>(reader);
 
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		has_mesh = model->geosets.size();
+		has_mesh = mdx->geosets.size();
 		if (!has_mesh) {
 			return;
 		}
 
-		for (const auto& i : model->geosets) {
-			const auto& layer = model->materials[i.material_id].layers[0];
+		for (const auto& i : mdx->geosets) {
+			const auto& layer = mdx->materials[i.material_id].layers[0];
 			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
 				has_transparent_layers = true;
 				break;
@@ -101,7 +101,7 @@ export class SkinnedMesh : public Resource {
 		}
 
 		// Calculate required space
-		for (const auto& i : model->geosets) {
+		for (const auto& i : mdx->geosets) {
 			if (i.lod != 0) {
 				continue;
 			}
@@ -139,7 +139,7 @@ export class SkinnedMesh : public Resource {
 		int base_vertex = 0;
 		int base_index = 0;
 
-		for (const auto& i : model->geosets) {
+		for (const auto& i : mdx->geosets) {
 			if (i.lod != 0) {
 				continue;
 			}
@@ -195,19 +195,19 @@ export class SkinnedMesh : public Resource {
 		}
 
 		for (const auto& i : geosets) {
-			skip_count += model->materials[i.material_id].layers.size();
+			skip_count += mdx->materials[i.material_id].layers.size();
 			instance_vertex_count += i.indices;
 		}
 
 		// animations geoset ids > geosets
-		for (auto& i : model->animations) {
+		for (auto& i : mdx->animations) {
 			if (i.geoset_id >= 0 && i.geoset_id < geosets.size()) {
 				geosets[i.geoset_id].geoset_anim = &i;
 			}
 		}
 
-		for (size_t i = 0; i < model->textures.size(); i++) {
-			const mdx::Texture& texture = model->textures[i];
+		for (size_t i = 0; i < mdx->textures.size(); i++) {
+			const mdx::Texture& texture = mdx->textures[i];
 			
 			if (texture.replaceable_id != 0) {
 				// Figure out if this is an HD texture
@@ -215,7 +215,7 @@ export class SkinnedMesh : public Resource {
 				// So we take a guess using the index
 				std::string suffix("");
 				bool found = false;
-				for (const auto& material : model->materials) {
+				for (const auto& material : mdx->materials) {
 					for (const auto& layer : material.layers) {
 						for (size_t j = 0; j < layer.textures.size(); j++) {
 							if (layer.textures[j].id != i) {
@@ -266,32 +266,30 @@ export class SkinnedMesh : public Resource {
 		}
 
 		// Reclaim some space
-		// for (auto& i : model->geosets) {
-		// 	i.vertices.shrink_to_fit();
-		// 	i.vertices.clear();
-		// 	i.normals.clear();
-		// 	i.normals.shrink_to_fit();
-		// 	i.face_type_groups.clear();
-		// 	i.face_type_groups.shrink_to_fit();
-		// 	i.face_groups.clear();
-		// 	i.face_groups.shrink_to_fit();
-		// 	i.faces.clear();
-		// 	i.faces.shrink_to_fit();
-		// 	i.vertex_groups.clear();
-		// 	i.vertex_groups.shrink_to_fit();
-		// 	i.matrix_groups.clear();
-		// 	i.matrix_groups.shrink_to_fit();
-		// 	i.matrix_indices.clear();
-		// 	i.matrix_indices.shrink_to_fit();
-		// 	i.extents.clear();
-		// 	i.extents.shrink_to_fit();
-		// 	i.tangents.clear();
-		// 	i.tangents.shrink_to_fit();
-		// 	i.skin.clear();
-		// 	i.skin.shrink_to_fit();
-		// 	i.uv_sets.clear();
-		// 	i.uv_sets.shrink_to_fit();
-		// }
+		for (auto& i : mdx->geosets) {
+			i.vertices.clear();
+			i.vertices.shrink_to_fit();
+			i.normals.clear();
+			i.normals.shrink_to_fit();
+			i.face_type_groups.clear();
+			i.face_type_groups.shrink_to_fit();
+			i.face_groups.clear();
+			i.face_groups.shrink_to_fit();
+			i.faces.clear();
+			i.faces.shrink_to_fit();
+			i.vertex_groups.clear();
+			i.vertex_groups.shrink_to_fit();
+			i.matrix_groups.clear();
+			i.matrix_groups.shrink_to_fit();
+			i.matrix_indices.clear();
+			i.matrix_indices.shrink_to_fit();
+			i.tangents.clear();
+			i.tangents.shrink_to_fit();
+			i.skin.clear();
+			i.skin.shrink_to_fit();
+			i.uv_sets.clear();
+			i.uv_sets.shrink_to_fit();
+		}
 
 		glVertexArrayElementBuffer(vao, index_buffer);
 	}
@@ -318,7 +316,7 @@ export class SkinnedMesh : public Resource {
 		glNamedBufferData(instance_team_color_index_ssbo, render_team_color_indexes.size() * sizeof(uint32_t), render_team_color_indexes.data(), GL_DYNAMIC_DRAW);
 
 		for (int i = 0; i < render_jobs.size(); i++) {
-			instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + model->bones.size());
+			instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + mdx->bones.size());
 		}
 
 		glNamedBufferData(bones_ssbo, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
@@ -332,7 +330,7 @@ export class SkinnedMesh : public Resource {
 					geoset_anim_visibility = skeletons[k]->get_geoset_animation_visiblity(*i.geoset_anim);
 				}
 
-				const auto& layers = model->materials[i.material_id].layers;
+				const auto& layers = mdx->materials[i.material_id].layers;
 				for (auto& j : layers) {
 					float layer_visibility = 1.0f;
 					if (skeletons[k]->sequence_index >= 0) {
@@ -363,7 +361,7 @@ export class SkinnedMesh : public Resource {
 		glBindVertexArray(vao);
 
 		glUniform1i(4, skip_count);
-		glUniform1ui(6, model->bones.size());
+		glUniform1ui(6, mdx->bones.size());
 		glUniform1i(7, 0); // non-instanced instanceID uniform
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
@@ -378,7 +376,7 @@ export class SkinnedMesh : public Resource {
 
 		int lay_index = 0;
 		for (const auto& i : geosets) {
-			const auto& layers = model->materials[i.material_id].layers;
+			const auto& layers = mdx->materials[i.material_id].layers;
 
 			if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
 				lay_index += layers.size();
@@ -386,6 +384,11 @@ export class SkinnedMesh : public Resource {
 			}
 
 			for (const auto& j : layers) {
+				if (j.hd != render_hd) {
+					lay_index += 1;
+					continue;
+				}
+
 				// We don't have to render fully transparent meshes
 				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
 				// TODO: this is a hack, if the first instance has an alpha animation that triggers this condition then all instances will be hidden, even if the others have a positive alpha
@@ -394,16 +397,11 @@ export class SkinnedMesh : public Resource {
 					continue;
 				}
 
-				if (j.hd != render_hd) {
-					lay_index += 1;
-					continue;
-				}
-
 				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
 				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 				glUniform1i(5, lay_index);
 				const bool is_team_color =
-					(model->textures[j.textures[0].id].replaceable_id == 1 || model->textures[j.textures[0].id].replaceable_id == 2);
+					(mdx->textures[j.textures[0].id].replaceable_id == 1 || mdx->textures[j.textures[0].id].replaceable_id == 2);
 				glUniform1i(10, is_team_color);
 
 				switch (j.blend_mode) {
@@ -464,7 +462,7 @@ export class SkinnedMesh : public Resource {
 		glBindVertexArray(vao);
 
 		glUniform1i(4, skip_count);
-		glUniform1ui(6, model->bones.size());
+		glUniform1ui(6, mdx->bones.size());
 		glUniform1i(7, instance_id);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
@@ -479,7 +477,7 @@ export class SkinnedMesh : public Resource {
 
 		int layer_index = 0;
 		for (const auto& i : geosets) {
-			const auto& layers = model->materials[i.material_id].layers;
+			const auto& layers = mdx->materials[i.material_id].layers;
 
 			if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
 				layer_index += layers.size();
@@ -487,13 +485,13 @@ export class SkinnedMesh : public Resource {
 			}
 
 			for (const auto& j : layers) {
-				// We don't have to render fully transparent meshes
-				if (layer_colors[instance_id * skip_count + layer_index].a <= 0.01f) {
+				if (j.hd != render_hd) {
 					layer_index += 1;
 					continue;
 				}
 
-				if (j.hd != render_hd) {
+				// We don't have to render fully transparent meshes
+				if (layer_colors[instance_id * skip_count + layer_index].a <= 0.01f) {
 					layer_index += 1;
 					continue;
 				}
@@ -501,7 +499,7 @@ export class SkinnedMesh : public Resource {
 				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 				glUniform1i(5, layer_index);
 				const bool is_team_color =
-					(model->textures[j.textures[0].id].replaceable_id == 1 || model->textures[j.textures[0].id].replaceable_id == 2);
+					(mdx->textures[j.textures[0].id].replaceable_id == 1 || mdx->textures[j.textures[0].id].replaceable_id == 2);
 				glUniform1i(10, is_team_color);
 
 				switch (j.blend_mode) {
@@ -557,7 +555,7 @@ export class SkinnedMesh : public Resource {
 		glUniform1i(7, id);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bones_ssbo_colored);
-		glNamedBufferData(bones_ssbo_colored, model->bones.size() * sizeof(glm::mat4), skeleton.world_matrices.data(), GL_DYNAMIC_DRAW);
+		glNamedBufferData(bones_ssbo_colored, mdx->bones.size() * sizeof(glm::mat4), skeleton.world_matrices.data(), GL_DYNAMIC_DRAW);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vertex_snorm_buffer);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, weight_buffer);
@@ -568,7 +566,7 @@ export class SkinnedMesh : public Resource {
 				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
 			}
 
-			for (const auto& j : model->materials[i.material_id].layers) {
+			for (const auto& j : mdx->materials[i.material_id].layers) {
 				float layer_visibility = 1.0f;
 				if (skeleton.sequence_index >= 0) {
 					layer_visibility = skeleton.get_layer_visiblity(j);

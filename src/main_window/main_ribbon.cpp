@@ -29,7 +29,6 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 
 	model_editor->setIcon(QIcon("data/icons/ribbon/model_editor.png"));
 	model_editor->setText("Model\nEditor");
-	model_editor->setEnabled(false);
 	editor_section->addWidget(model_editor);
 
 	QRibbonSection* palette_section = new QRibbonSection;

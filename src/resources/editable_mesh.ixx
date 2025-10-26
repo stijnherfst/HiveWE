@@ -13,7 +13,7 @@ import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
-export class EditableMesh : public Resource {
+export class EditableMesh: public Resource {
   public:
 	struct MeshEntry {
 		int vertices = 0;
@@ -48,6 +48,7 @@ export class EditableMesh : public Resource {
 	static constexpr const char* name = "EditableMesh";
 
 	EditableMesh() = delete;
+
 	explicit EditableMesh(std::shared_ptr<mdx::MDX> mdx, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 		this->mdx = mdx;
 
@@ -215,9 +216,14 @@ export class EditableMesh : public Resource {
 				}
 
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags)));
+					textures.push_back(
+						resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags))
+					);
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
+					textures.push_back(resource_manager.load<GPUTexture>(
+						mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
+						std::to_string(texture.flags)
+					));
 				}
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
@@ -261,313 +267,130 @@ export class EditableMesh : public Resource {
 		glDeleteBuffers(1, &geoset_color);
 	}
 
-	void render(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction) {
-		render_opaque_hd(skeleton, projection_view, light_direction);
+	void render(
+		const int team_color_index,
+		const SkeletalModelInstance& skeleton,
+		const glm::mat4& projection_view,
+		const glm::vec3 light_direction
+	) const {
+		render_opaque(false, team_color_index, skeleton, projection_view, light_direction);
 	}
 
   private:
-	// void render_queue(const SkeletalModelInstance& skeleton, glm::vec3 color);
-	// void render_color_coded(const SkeletalModelInstance& skeleton, int id);
+	void render_opaque(
+		const bool render_hd,
+		const int team_color_index,
+		const SkeletalModelInstance& skeleton,
+		const glm::mat4& projection_view,
+		const glm::vec3 light_direction
+	) const {
+		if (!has_mesh) {
+			return;
+		}
+		glm::mat4 M = glm::mat4(1.f);
+		glm::mat4 MVP = projection_view * M;
 
-	// void render_opaque_sd();
-	void render_opaque_hd(const SkeletalModelInstance& skeleton, const glm::mat4& projection_view, glm::vec3 light_direction) {
-	if (!has_mesh) {
-		return;
+		glBindVertexArray(vao);
+
+		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
+		glUniform3fv(3, 1, &light_direction.x);
+		glUniformMatrix4fv(4, 1, false, &M[0][0]);
+		glUniform1i(6, mdx->bones.size());
+		glUniform1i(9, team_color_index);
+		glUniformMatrix4fv(11, mdx->bones.size(), false, &skeleton.world_matrices[0][0][0]);
+
+		for (const auto& i : geosets) {
+			const auto& layers = mdx->materials[i.material_id].layers;
+
+			if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
+				continue;
+			}
+
+			glm::vec3 geoset_color(1.f);
+			float geoset_anim_visibility = 1.0f;
+			if (i.geoset_anim && skeleton.sequence_index >= 0) {
+				geoset_color = skeleton.get_geoset_animation_color(*i.geoset_anim);
+				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
+			}
+
+			for (const auto& j : layers) {
+				if (j.hd != render_hd) {
+					continue;
+				}
+
+				float layer_visibility = 1.0f;
+				if (skeleton.sequence_index >= 0) {
+					layer_visibility = skeleton.get_layer_visiblity(j);
+				}
+
+				const glm::vec4 layer_color = glm::vec4(geoset_color, layer_visibility * geoset_anim_visibility);
+
+				// We don't have to render fully transparent meshes
+				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
+				// TODO: this is a hack, if the first instance has an alpha animation that triggers this condition then all instances will be hidden, even if the others have a positive alpha
+				if (layer_color.a <= 0.01f) {
+					continue;
+				}
+
+				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
+				glUniform1i(2, !(j.shading_flags & 0x1));
+				glUniform4fv(8, 1, &layer_color[0]);
+				const bool is_team_color =
+					(mdx->textures[j.textures[0].id].replaceable_id == 1 || mdx->textures[j.textures[0].id].replaceable_id == 2);
+				glUniform1i(10, is_team_color);
+
+				switch (j.blend_mode) {
+					case 0:
+					case 1:
+						glBlendFunc(GL_ONE, GL_ZERO);
+						break;
+					case 2:
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+						break;
+					case 3:
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+						break;
+					case 4:
+						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+						break;
+					case 5:
+						glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+						break;
+					case 6:
+						glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
+						break;
+				}
+
+				if (j.shading_flags & 0x10) {
+					glDisable(GL_CULL_FACE);
+				} else {
+					glEnable(GL_CULL_FACE);
+				}
+
+				if (j.shading_flags & 0x40) {
+					glDisable(GL_DEPTH_TEST);
+				} else {
+					glEnable(GL_DEPTH_TEST);
+				}
+
+				if (j.shading_flags & 0x80) {
+					glDepthMask(false);
+				} else {
+					glDepthMask(true);
+				}
+
+				for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
+					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
+				}
+
+				glDrawElementsBaseVertex(
+					GL_TRIANGLES,
+					i.indices,
+					GL_UNSIGNED_SHORT,
+					reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)),
+					i.base_vertex
+				);
+			}
+		}
 	}
-	glm::mat4 M = glm::mat4(1.f);
-	glm::mat4 MVP = projection_view * M;
-
-	glBindVertexArray(vao);
-	glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-	glUniform1i(2, true);
-	glUniform1i(3, mdx->bones.size());
-	glUniformMatrix4fv(4, 1, false, &M[0][0]);
-	glUniform3fv(6, 1, &light_direction.x);
-	glUniformMatrix4fv(8, mdx->bones.size(), false, &skeleton.world_matrices[0][0][0]);
-
-	for (const auto& i : geosets) {
-		if (!i.hd) {
-			continue;
-		}
-
-		const auto& layers = mdx->materials[i.material_id].layers;
-		if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
-			continue;
-		}
-
-		glm::vec3 geoset_color(1.f);
-		float geoset_anim_visibility = 1.0f;
-		if (i.geoset_anim && skeleton.sequence_index >= 0) {
-			geoset_color = skeleton.get_geoset_animation_color(*i.geoset_anim);
-			geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
-		}
-
-		float layer_visibility = 1.0f;
-		if (skeleton.sequence_index >= 0) {
-			layer_visibility = skeleton.get_layer_visiblity(layers[0]);
-		}
-
-		glm::vec4 layer_color = glm::vec4(geoset_color, layer_visibility * geoset_anim_visibility);
-
-		glUniform1f(1, layers[0].blend_mode == 1 ? 0.75f : -1.f);
-		glUniform4fv(5, 1, &layer_color[0]);
-
-		if (layers[0].shading_flags & 0x10) {
-			glDisable(GL_CULL_FACE);
-		} else {
-			glEnable(GL_CULL_FACE);
-		}
-
-		if (layers[0].shading_flags & 0x40) {
-			glDisable(GL_DEPTH_TEST);
-		} else {
-			glEnable(GL_DEPTH_TEST);
-		}
-
-		if (layers[0].shading_flags & 0x80) {
-			glDepthMask(false);
-		} else {
-			glDepthMask(true);
-		}
-
-		for (size_t texture_slot = 0; texture_slot < layers[0].textures.size(); texture_slot++) {
-			glBindTextureUnit(texture_slot, textures[layers[0].textures[texture_slot].id]->id);
-		}
-
-		glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-	}
-}
-	// void render_transparent_sd(int instance_id);
-	// void render_transparent_hd(int instance_id);
 };
-
-//void EditableMesh::render_transparent_sd(int instance_id) {
-//	if (!has_mesh) {
-//		return;
-//	}
-//
-//	glBindVertexArray(vao);
-//
-//	glm::mat4 MVP = camera->projection_view * render_jobs[instance_id];
-//	glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-//
-//	glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-//	glBindTextureUnit(5, bone_matrix_texture);
-//
-//	glUniform1i(3, model->bones.size());
-//	glUniform1i(4, instance_id);
-//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-//	glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
-//
-//	glUniform1i(5, skip_count);
-//
-//	int laya = 0;
-//	for (auto& i : geosets) {
-//		auto& layers = model->materials[i.material_id].layers;
-//		if (i.hd) {
-//			laya += layers.size();
-//			continue;
-//		}
-//
-//		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
-//			laya += layers.size();
-//			continue;
-//		}
-//
-//		for (auto& j : layers) {
-//			glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.f);
-//			glUniform1i(6, laya);
-//
-//			switch (j.blend_mode) {
-//				case 0:
-//				case 1:
-//					glBlendFunc(GL_ONE, GL_ZERO);
-//					break;
-//				case 2:
-//					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//					break;
-//				case 3:
-//					glBlendFunc(GL_ONE, GL_ONE);
-//					break;
-//				case 4:
-//					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//					break;
-//				case 5:
-//					glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-//					break;
-//				case 6:
-//					glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-//					break;
-//			}
-//
-//			if (j.shading_flags & 0x10) {
-//				glDisable(GL_CULL_FACE);
-//			} else {
-//				glEnable(GL_CULL_FACE);
-//			}
-//
-//			if (j.shading_flags & 0x40) {
-//				glDisable(GL_DEPTH_TEST);
-//			} else {
-//				glEnable(GL_DEPTH_TEST);
-//			}
-//
-//			if (j.shading_flags & 0x80) {
-//				glDepthMask(false);
-//			} else {
-//				glDepthMask(true);
-//			}
-//
-//			glBindTextureUnit(0, textures[j.texture_id]->id);
-//
-//			glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-//			laya++;
-//		}
-//	}
-//}
-//
-//void EditableMesh::render_transparent_hd(int instance_id) {
-//	if (!has_mesh) {
-//		return;
-//	}
-//
-//	glBindVertexArray(vao);
-//
-//	glm::mat4 MVP = camera->projection_view * render_jobs[instance_id];
-//	glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-//	glUniformMatrix4fv(5, 1, false, &render_jobs[instance_id][0][0]);
-//
-//	glTextureBuffer(bone_matrix_texture, GL_RGBA32UI, bone_matrix_buffer);
-//	glBindTextureUnit(5, bone_matrix_texture);
-//
-//	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
-//	glBindBuffer(GL_SHADER_STORAGE_BUFFER, layer_colors_ssbo);
-//
-//	glUniform1i(3, model->bones.size());
-//	glUniform1i(4, instance_id);
-//	glUniform1i(6, skip_count);
-//
-//	int laya = 0;
-//	for (auto& i : geosets) {
-//		auto& layers = model->materials[i.material_id].layers;
-//		if (!i.hd) {
-//			laya += layers.size();
-//			continue;
-//		}
-//
-//		if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
-//			laya += layers.size();
-//			continue;
-//		}
-//
-//		glUniform1i(7, laya);
-//		laya += layers.size();
-//
-//		switch (layers[0].blend_mode) {
-//			case 2:
-//				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//				break;
-//			case 3:
-//				glBlendFunc(GL_ONE, GL_ONE);
-//				break;
-//			case 4:
-//				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-//				break;
-//			case 5:
-//				glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-//				break;
-//			case 6:
-//				glBlendFunc(GL_DST_COLOR, GL_SRC_COLOR);
-//				break;
-//		}
-//
-//		if (layers[0].shading_flags & 0x10) {
-//			glDisable(GL_CULL_FACE);
-//		} else {
-//			glEnable(GL_CULL_FACE);
-//		}
-//
-//		if (layers[0].shading_flags & 0x40) {
-//			glDisable(GL_DEPTH_TEST);
-//		} else {
-//			glEnable(GL_DEPTH_TEST);
-//		}
-//
-//		if (layers[0].shading_flags & 0x80) {
-//			glDepthMask(false);
-//		} else {
-//			glDepthMask(true);
-//		}
-//
-//		for (auto& texture : layers[0].textures) {
-//			glBindTextureUnit(texture.first, textures[texture.second]->id);
-//		}
-//
-//		glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-//	}
-//}
-//
-//void EditableMesh::render_color_coded(const SkeletalModelInstance& skeleton, int id) {
-//	if (!has_mesh) {
-//		return;
-//	}
-//
-//	glBindVertexArray(vao);
-//
-//	glm::mat4 MVP = camera->projection_view * skeleton.matrix;
-//	glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-//
-//	glUniform1i(3, model->bones.size());
-//	glUniform1i(7, id);
-//
-//	glUniformMatrix4fv(8, model->bones.size(), false, &skeleton.world_matrices[0][0][0]);
-//
-//	for (auto& i : geosets) {
-//		glm::vec3 geoset_color(1.0f);
-//		float geoset_anim_visibility = 1.0f;
-//		if (i.geoset_anim && skeleton.sequence_index >= 0) {
-//			geoset_color = skeleton.get_geoset_animation_color(*i.geoset_anim);
-//			geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
-//		}
-//
-//		for (auto& j : model->materials[i.material_id].layers) {
-//			if (j.blend_mode == 0) {
-//				glUniform1f(1, -1.f);
-//			} else if (j.blend_mode == 1) {
-//				glUniform1f(1, 0.75f);
-//			} else {
-//				continue;
-//			}
-//
-//			if (j.shading_flags & 0x40) {
-//				glDisable(GL_DEPTH_TEST);
-//			} else {
-//				glEnable(GL_DEPTH_TEST);
-//			}
-//
-//			if (j.shading_flags & 0x80) {
-//				glDepthMask(false);
-//			} else {
-//				glDepthMask(true);
-//			}
-//
-//			if (j.shading_flags & 0x10) {
-//				glDisable(GL_CULL_FACE);
-//			} else {
-//				glEnable(GL_CULL_FACE);
-//			}
-//
-//			float layer_visibility = 1.0f;
-//			if (skeleton.sequence_index >= 0) {
-//				layer_visibility = skeleton.get_layer_visiblity(j);
-//			}
-//			float final_visibility = layer_visibility * geoset_anim_visibility;
-//
-//			glUniform3f(4, geoset_color.x, geoset_color.y, geoset_color.z);
-//			glUniform1f(5, final_visibility);
-//
-//			glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-//			break;
-//		}
-//	}
-//}

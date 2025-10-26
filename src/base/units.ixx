@@ -307,13 +307,13 @@ public:
 			}
 
 			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->model);
+			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 			i.update();
 		}
 
 		for (auto& i : items) {
 			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->model);
+			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 			i.update();
 		}
 	}
@@ -331,7 +331,7 @@ public:
 		unit.angle = 0.f;
 		unit.random = { 1, 0, 0, 0 };
 		unit.creation_number = ++Unit::auto_increment;
-		unit.skeleton = SkeletalModelInstance(unit.mesh->model);
+		unit.skeleton = SkeletalModelInstance(unit.mesh->mdx);
 		unit.update();
 
 		return units.back();
@@ -371,7 +371,7 @@ public:
 			for (auto& i : units) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id);
-					i.skeleton = SkeletalModelInstance(i.mesh->model);
+					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 					i.update();
 				}
 			}

@@ -11,6 +11,7 @@ import MDX;
 import Utilities;
 
 ModelEditor::ModelEditor(QWidget* parent) : QMainWindow(parent) {
+	setWindowTitle("Model Editor");
 	setAttribute(Qt::WA_DeleteOnClose);
 	resize(1200, 800);
 

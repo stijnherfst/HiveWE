@@ -616,7 +616,7 @@ export class Map: public QObject {
 				return;
 			} // ToDo handle starting locations
 
-			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
+			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
 			if (!camera.inside_frustrum(
 					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
 					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)
@@ -634,7 +634,7 @@ export class Map: public QObject {
 
 		// Animate doodads
 		std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
-			mdx::Extent& extent = i.mesh->model->sequences[i.skeleton.sequence_index].extent;
+			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
 			if (!camera.inside_frustrum(
 					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
 					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)

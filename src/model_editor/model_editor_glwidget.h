@@ -47,4 +47,6 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 
 	QtImGui::RenderRef ref = nullptr;
 	ModelEditorCamera camera;
+
+	void recenter_camera();
 };

@@ -403,7 +403,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		for (const auto& doodad : brush.selections) {
 			glm::mat4 centered = glm::translate(glm::mat4(1.0f), -midpoint) * doodad->skeleton.matrix;
 			glm::mat4 final = glm::scale(glm::mat4(1.0f), glm::vec3(128.0f)) * centered;
-			base.merge_with(*doodad->mesh->model, final);
+			base.merge_with(*doodad->mesh->mdx, final);
 		}
 		base.deduplicate_textures().deduplicate_materials().deduplicate_geosets().calculate_extents();
 

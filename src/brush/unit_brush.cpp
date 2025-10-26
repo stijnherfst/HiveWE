@@ -302,7 +302,7 @@ void UnitBrush::render_selection() const {
 	glEnableVertexAttribArray(0);
 
 	for (const auto& i : selections) {
-		float selection_scale = i->mesh->model->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
+		float selection_scale = i->mesh->mdx->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 
 		glm::mat4 model(1.f);
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
@@ -351,7 +351,7 @@ void UnitBrush::set_unit(const std::string& id) {
 	context->makeCurrent();
 	this->id = id;
 	mesh = map->units.get_mesh(id);
-	skeleton = SkeletalModelInstance(mesh->model);
+	skeleton = SkeletalModelInstance(mesh->mdx);
 }
 
 void UnitBrush::unselect_id(std::string_view id) {

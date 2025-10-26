@@ -60,7 +60,7 @@ export struct Doodad {
 		this->skin_id = id;
 		this->mesh = mesh;
 
-		skeleton = SkeletalModelInstance(mesh->model);
+		skeleton = SkeletalModelInstance(mesh->mdx);
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -338,7 +338,7 @@ export class Doodads {
 
 		for (auto&& i : special_doodads) {
 			i.mesh = get_mesh(i.id, i.variation);
-			i.skeleton = SkeletalModelInstance(i.mesh->model);
+			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 			const std::string pathing_texture_path = doodads_slk.data("pathtex", i.id);
 			if (hierarchy.file_exists(pathing_texture_path)) {
 				i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
@@ -378,7 +378,7 @@ export class Doodads {
 		doodad.scale = {1, 1, 1};
 		doodad.angle = 0;
 		doodad.creation_number = ++Doodad::auto_increment;
-		doodad.skeleton = SkeletalModelInstance(doodad.mesh->model);
+		doodad.skeleton = SkeletalModelInstance(doodad.mesh->mdx);
 
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -511,7 +511,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->model);
+					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 					i.update(terrain);
 				}
 			}
@@ -553,7 +553,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->model);
+					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
 					i.update(terrain);
 					i.skeleton.update(0.016f);
 				}
