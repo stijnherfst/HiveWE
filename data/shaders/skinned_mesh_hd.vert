@@ -1,12 +1,11 @@
 #version 450 core
 
-// Should match the uniform locations in skinned_mesh_sd.vert
 layout (location = 0) uniform mat4 VP;
-layout (location = 4) uniform int instanceID;
-layout (location = 6) uniform int layer_skip_count;
-layout (location = 7) uniform int layer_index;
-layout (location = 8) uniform vec3 light_direction;
-layout (location = 9) uniform uint bone_count;
+layout (location = 3) uniform vec3 light_direction;
+layout (location = 4) uniform int layer_skip_count;
+layout (location = 5) uniform int layer_index;
+layout (location = 6) uniform uint bone_count;
+layout (location = 7) uniform int instanceID;
 
 layout(std430, binding = 0) buffer layoutName {
     vec4 layer_colors[];
@@ -105,15 +104,19 @@ vec3 unpack_uvec2_to_vec3(const uvec2 v, const float extent) {
 	return vec3(xf, yf, zf);
 }
 
-mat4 fetchMatrix(uint bone_index) {
-	return bone_matrices[instanceID * bone_count + bone_index];
+mat4 fetchMatrix(int instance_id, uint bone_index) {
+	return bone_matrices[instance_id * bone_count + bone_index];
 }
 
 void main() {
-	const mat4 b0 = fetchMatrix(uint(skins[gl_VertexID].x & 0x000000FF));
-	const mat4 b1 = fetchMatrix(uint(skins[gl_VertexID].x & 0x0000FF00) >> 8);
-	const mat4 b2 = fetchMatrix(uint(skins[gl_VertexID].x & 0x00FF0000) >> 16);
-	const mat4 b3 = fetchMatrix(uint(skins[gl_VertexID].x & 0xFF000000) >> 24);
+	// In instanced draws we set instanceID to -1 so we always pick gl_InstanceID
+	// In non-instanced draws gl_InstanceID will be 0
+	const int instance_id = max(instanceID, gl_InstanceID);
+
+	const mat4 b0 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x000000FF));
+	const mat4 b1 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x0000FF00) >> 8);
+	const mat4 b2 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x00FF0000) >> 16);
+	const mat4 b3 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0xFF000000) >> 24);
 	const float w0 = (skins[gl_VertexID].y & 0x000000FF) / 255.f;
 	const float w1 = ((skins[gl_VertexID].y & 0x0000FF00) >> 8) / 255.f;
 	const float w2 = ((skins[gl_VertexID].y & 0x00FF0000) >> 16) / 255.f;
@@ -122,11 +125,11 @@ void main() {
 
 	const vec3 vertex = unpack_uvec2_to_vec3(vertices[gl_VertexID], 8192.f);
 
-	gl_Position = VP * instance_matrices[instanceID] * skin_matrix * vec4(vertex, 1.f);
+	gl_Position = VP * instance_matrices[instance_id] * skin_matrix * vec4(vertex, 1.f);
 
 	vec3 normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));
 
-	mat3 model = mat3(instance_matrices[instanceID] * skin_matrix);
+	mat3 model = mat3(instance_matrices[instance_id] * skin_matrix);
 	vec3 T = normalize(model * tangents[gl_VertexID].xyz);
 	vec3 N = normalize(model * normal);
 	vec3 B = cross(N, T) * tangents[gl_VertexID].w; // to fix handedness
@@ -134,6 +137,6 @@ void main() {
 
 	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 8.f - 1.f;
 	tangent_light_direction = normalize(TBN * light_direction);
-	vertexColor = layer_colors[instanceID * layer_skip_count + layer_index];
-	team_color = team_colors[team_color_indexes[instanceID]];
+	vertexColor = layer_colors[instance_id * layer_skip_count + layer_index];
+	team_color = team_colors[team_color_indexes[instance_id]];
 }

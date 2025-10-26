@@ -364,6 +364,7 @@ export class SkinnedMesh : public Resource {
 
 		glUniform1i(4, skip_count);
 		glUniform1ui(6, model->bones.size());
+		glUniform1i(7, 0); // non-instanced instanceID uniform
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_snorm_buffer);
@@ -462,10 +463,9 @@ export class SkinnedMesh : public Resource {
 
 		glBindVertexArray(vao);
 
-		glUniform1i(4, instance_id);
-		glUniform1i(6, skip_count);
-
-		glUniform1ui(9, model->bones.size());
+		glUniform1i(4, skip_count);
+		glUniform1ui(6, model->bones.size());
+		glUniform1i(7, instance_id);
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, layer_colors_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, uv_snorm_buffer);
@@ -477,29 +477,29 @@ export class SkinnedMesh : public Resource {
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, bones_ssbo);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, instance_team_color_index_ssbo);
 
-		int lay_index = 0;
+		int layer_index = 0;
 		for (const auto& i : geosets) {
 			const auto& layers = model->materials[i.material_id].layers;
 
 			if (layers[0].blend_mode == 0 || layers[0].blend_mode == 1) {
-				lay_index += layers.size();
+				layer_index += layers.size();
 				continue;
 			}
 
 			for (const auto& j : layers) {
 				// We don't have to render fully transparent meshes
-				if (layer_colors[instance_id * skip_count + lay_index].a <= 0.01f) {
-					lay_index += 1;
+				if (layer_colors[instance_id * skip_count + layer_index].a <= 0.01f) {
+					layer_index += 1;
 					continue;
 				}
 
 				if (j.hd != render_hd) {
-					lay_index += 1;
+					layer_index += 1;
 					continue;
 				}
 
 				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
-				glUniform1i(7, lay_index);
+				glUniform1i(5, layer_index);
 				const bool is_team_color =
 					(model->textures[j.textures[0].id].replaceable_id == 1 || model->textures[j.textures[0].id].replaceable_id == 2);
 				glUniform1i(10, is_team_color);
@@ -539,7 +539,7 @@ export class SkinnedMesh : public Resource {
 				}
 
 				glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
-				lay_index += 1;
+				layer_index += 1;
 			}
 		}
 	}

@@ -7,6 +7,7 @@ layout (binding = 3) uniform sampler2D emissive;
 layout (binding = 4) uniform sampler2D teamColor;
 layout (binding = 5) uniform sampler2D environment;
 
+layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
 layout (location = 10) uniform bool is_team_color;
 
@@ -33,5 +34,10 @@ void main() {
 		float lambert = clamp(dot(normal, -tangent_light_direction), 0.f, 1.f);
 		color.rgb *= clamp(lambert + 0.1, 0.f, 1.f);
 		color.rgb += emissive_texel;
+	}
+
+
+	if (color.a < alpha_test) {
+		discard;
 	}
 }

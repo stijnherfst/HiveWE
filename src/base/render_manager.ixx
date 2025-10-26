@@ -30,11 +30,8 @@ export class RenderManager {
 		float distance;
 	};
 
-	std::shared_ptr<Shader> instance_skinned_mesh_shader_sd;
-	std::shared_ptr<Shader> instance_skinned_mesh_shader_hd;
 	std::shared_ptr<Shader> skinned_mesh_shader_sd;
 	std::shared_ptr<Shader> skinned_mesh_shader_hd;
-	std::shared_ptr<Shader> preskin_mesh_shader;
 	std::shared_ptr<Shader> colored_skinned_shader;
 
 	std::vector<SkinnedMesh*> skinned_meshes;
@@ -51,8 +48,6 @@ export class RenderManager {
 	int window_height;
 
 	RenderManager() {
-		instance_skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instanced_sd.vert", "data/shaders/skinned_mesh_instanced_sd.frag" });
-		instance_skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instanced_hd.vert", "data/shaders/skinned_mesh_instanced_hd.frag" });
 		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag" });
 		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag" });
 		colored_skinned_shader = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag" });
@@ -135,7 +130,7 @@ export class RenderManager {
 
 		// Render opaque meshes
 		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
-		instance_skinned_mesh_shader_sd->use();
+		skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
 		glBlendFunc(GL_ONE, GL_ZERO);
@@ -144,9 +139,9 @@ export class RenderManager {
 			i->render_opaque(false, render_lighting);
 		}
 
-		instance_skinned_mesh_shader_hd->use();
+		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(8, 1, &light_direction.x);
+		glUniform3fv(3, 1, &light_direction.x);
 
 		for (const auto& i : skinned_meshes) {
 			i->render_opaque(true, render_lighting);
@@ -159,7 +154,8 @@ export class RenderManager {
 
 		skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(8, 1, &light_direction.x);
+		glUniform1f(1, -1.0f);
+		glUniform3fv(3, 1, &light_direction.x);
 
 		for (const auto& i : skinned_transparent_instances) {
 			i.mesh->render_transparent(i.instance_id, false, render_lighting);
@@ -167,7 +163,8 @@ export class RenderManager {
 
 		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(8, 1, &light_direction.x);
+		glUniform1f(1, -1.0f);
+		glUniform3fv(3, 1, &light_direction.x);
 
 		for (const auto& i : skinned_transparent_instances) {
 			i.mesh->render_transparent(i.instance_id, true, render_lighting);
