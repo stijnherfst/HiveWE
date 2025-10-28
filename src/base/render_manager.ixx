@@ -48,10 +48,12 @@ export class RenderManager {
 	int window_height;
 
 	RenderManager() {
-		skinned_mesh_shader_sd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag" });
-		skinned_mesh_shader_hd = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag" });
-		colored_skinned_shader = resource_manager.load<Shader>({ "data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag" });
-		
+		skinned_mesh_shader_sd = resource_manager.load<Shader>({"data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag"});
+		skinned_mesh_shader_hd = resource_manager.load<Shader>({"data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag"});
+		colored_skinned_shader = resource_manager.load<Shader>(
+			{"data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag"}
+		);
+
 		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
 
 		glCreateFramebuffers(1, &color_picking_framebuffer);
@@ -75,9 +77,11 @@ export class RenderManager {
 		glDeleteFramebuffers(1, &color_picking_framebuffer);
 	}
 
-	void queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
+	void
+	queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
 		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
-		if (!camera.inside_frustrum(skeleton.matrix * glm::vec4(extent.minimum, 1.f), skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+
+		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, skeleton.matrix)) {
 			return;
 		}
 
@@ -98,11 +102,13 @@ export class RenderManager {
 		}
 
 		if (skinned_mesh.has_transparent_layers) {
-			skinned_transparent_instances.push_back(RenderManager::SkinnedInstance{
-				.mesh = &skinned_mesh,
-				.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
-				.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
-			});
+			skinned_transparent_instances.push_back(
+				RenderManager::SkinnedInstance {
+					.mesh = &skinned_mesh,
+					.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
+					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
+				}
+			);
 		}
 	}
 
@@ -148,7 +154,9 @@ export class RenderManager {
 		}
 
 		// Render transparent meshes
-		std::ranges::sort(skinned_transparent_instances, [](auto& left, auto& right) { return left.distance > right.distance; });
+		std::ranges::sort(skinned_transparent_instances, [](auto& left, auto& right) {
+			return left.distance > right.distance;
+		});
 		glEnable(GL_BLEND);
 		glDepthMask(false);
 
@@ -192,7 +200,8 @@ export class RenderManager {
 	/// Requires the OpenGL context to be active/current
 	/// Returns the unit ID of the unit that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	[[nodiscard]] std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) const {
+	[[nodiscard]]
+	std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) const {
 		GLint old_fbo;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 		GLint old_vao;
@@ -215,7 +224,7 @@ export class RenderManager {
 			} // ToDo handle starting locations
 
 			mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
-			if (camera.inside_frustrum(unit.skeleton.matrix * glm::vec4(extent.minimum, 1.f), unit.skeleton.matrix * glm::vec4(extent.maximum, 1.f))) {
+			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
 				unit.mesh->render_color_coded(unit.skeleton, i + 1);
 			}
 		}
@@ -229,7 +238,7 @@ export class RenderManager {
 
 		const int index = color.r + (color.g << 8) + (color.b << 16);
 		if (index != 0) {
-			return { index - 1 };
+			return {index - 1};
 		} else {
 			return {};
 		}
@@ -238,7 +247,8 @@ export class RenderManager {
 	/// Requires the OpenGL context to be active/current
 	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
-	[[nodiscard]] std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) const {
+	[[nodiscard]]
+	std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) const {
 		GLint old_fbo;
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
 		GLint old_vao;
@@ -253,7 +263,7 @@ export class RenderManager {
 		glDepthMask(true);
 		glDisable(GL_BLEND);
 
-		glm::vec3 window = { input_handler.mouse.x, window_height - input_handler.mouse.y, 1.f };
+		glm::vec3 window = {input_handler.mouse.x, window_height - input_handler.mouse.y, 1.f};
 		glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, window_width, window_height));
 		glm::vec3 ray_origin = camera.position - camera.direction * camera.distance;
 		glm::vec3 ray_direction = glm::normalize(pos - ray_origin);
@@ -300,7 +310,7 @@ export class RenderManager {
 
 		const int index = color.r + (color.g << 8) + (color.b << 16);
 		if (index != 0) {
-			return { index - 1 };
+			return {index - 1};
 		} else {
 			return {};
 		}

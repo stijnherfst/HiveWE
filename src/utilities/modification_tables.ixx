@@ -207,13 +207,13 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 				}
 
 				if (meta_data_key.empty()) {
-					std::println("Empty meta data key for property {}, value {}", property_id, value);
+					std::println("Empty meta data key for id {} property {}, value {}", id, property_id, value);
 					exit(0);
 				}
 			}
 
 			if (meta_data_key.empty()) {
-				std::println("Empty meta data key for property {}, value {}", property_id, value);
+				std::println("Empty meta data key for id {} property {}, value {}", id, property_id, value);
 				exit(0);
 			}
 

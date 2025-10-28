@@ -442,7 +442,9 @@ export class Map: public QObject {
 		connect(units_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = units_slk.index_to_row.at(i);
-				std::erase_if(units.units, [&](Unit& unit) { return unit.id == id; });
+				std::erase_if(units.units, [&](Unit& unit) {
+					return unit.id == id;
+				});
 
 				if (brush) {
 					brush->unselect_id(id);
@@ -463,7 +465,9 @@ export class Map: public QObject {
 		connect(items_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = items_slk.index_to_row.at(i);
-				std::erase_if(units.items, [&](Unit& item) { return item.id == id; });
+				std::erase_if(units.items, [&](Unit& item) {
+					return item.id == id;
+				});
 			}
 		});
 
@@ -480,7 +484,9 @@ export class Map: public QObject {
 		connect(doodads_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = doodads_slk.index_to_row.at(i);
-				std::erase_if(doodads.doodads, [&](Doodad& doodad) { return doodad.id == id; });
+				std::erase_if(doodads.doodads, [&](Doodad& doodad) {
+					return doodad.id == id;
+				});
 
 				if (brush) {
 					brush->unselect_id(id);
@@ -501,7 +507,9 @@ export class Map: public QObject {
 		connect(destructibles_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
 			for (size_t i = first; i <= last; i++) {
 				const std::string& id = destructibles_slk.index_to_row.at(i);
-				std::erase_if(doodads.doodads, [&](Doodad& destructable) { return destructable.id == id; });
+				std::erase_if(doodads.doodads, [&](Doodad& destructable) {
+					return destructable.id == id;
+				});
 
 				if (brush) {
 					brush->unselect_id(id);
@@ -559,7 +567,12 @@ export class Map: public QObject {
 
 		const auto result = triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
 		if (!result.has_value()) {
-			QMessageBox::information(nullptr, "vJass output", "There were compilation errors:\n" + QString::fromStdString(result.error()), QMessageBox::StandardButton::Ok);
+			QMessageBox::information(
+				nullptr,
+				"vJass output",
+				"There were compilation errors:\n" + QString::fromStdString(result.error()),
+				QMessageBox::StandardButton::Ok
+			);
 		}
 
 		imports.save(filesystem_path);
@@ -617,10 +630,7 @@ export class Map: public QObject {
 			} // ToDo handle starting locations
 
 			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
-			if (!camera.inside_frustrum(
-					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
-					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)
-				)) {
+			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
 
@@ -635,10 +645,7 @@ export class Map: public QObject {
 		// Animate doodads
 		std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
 			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
-			if (!camera.inside_frustrum(
-					i.skeleton.matrix * glm::vec4(extent.minimum, 1.f),
-					i.skeleton.matrix * glm::vec4(extent.maximum, 1.f)
-				)) {
+			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
 
