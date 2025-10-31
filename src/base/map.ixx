@@ -28,7 +28,6 @@ import TableModel;
 import Globals;
 import Units;
 import Doodads;
-import <ankerl/unordered_dense.h>;
 import Triggers;
 import Terrain;
 import "brush.h";

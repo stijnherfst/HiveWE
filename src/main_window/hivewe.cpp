@@ -16,7 +16,6 @@ import WorldUndoManager;
 import "pathing_palette.h";
 import "object_editor/object_editor.h";
 import "model_editor/model_editor.h";
-import <ankerl/unordered_dense.h>;
 import "tile_setter.h";
 import "map_info_editor.h";
 import "terrain_palette.h";

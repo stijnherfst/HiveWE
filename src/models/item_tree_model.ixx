@@ -11,7 +11,6 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
-import "ankerl/unordered_dense.h";
 
 export class ItemTreeModel : public BaseTreeModel {
 	struct Category {

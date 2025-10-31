@@ -14,7 +14,6 @@ import BaseTreeModel;
 import QIconResource;
 import SLK;
 import Globals;
-import "ankerl/unordered_dense.h";
 
 export class DestructibleTreeModel : public BaseTreeModel {
 	struct Category {

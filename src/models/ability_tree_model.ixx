@@ -9,7 +9,6 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
-import "ankerl/unordered_dense.h";
 
 export class AbilityTreeModel : public BaseTreeModel {
 	struct Category {

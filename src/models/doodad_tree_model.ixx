@@ -12,7 +12,6 @@ import BaseTreeModel;
 import QIconResource;
 import SLK;
 import Globals;
-import "ankerl/unordered_dense.h";
 
 export class DoodadTreeModel : public BaseTreeModel {
 	struct Category {

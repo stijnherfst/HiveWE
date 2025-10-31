@@ -197,8 +197,8 @@ export class RenderManager {
 		window_height = height;
 	}
 
-	/// Requires the OpenGL context to be active/current
-	/// Returns the unit ID of the unit that is currently under the mouse coordinates
+	/// Requires the OpenGL context to be active/current.
+	/// Returns the unit ID of the unit that is currently under the mouse coordinates.
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
 	[[nodiscard]]
 	std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) const {
@@ -244,8 +244,8 @@ export class RenderManager {
 		}
 	}
 
-	/// Requires the OpenGL context to be active/current
-	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates
+	/// Requires the OpenGL context to be active/current.
+	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates.
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
 	[[nodiscard]]
 	std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) const {

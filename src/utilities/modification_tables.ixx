@@ -8,7 +8,6 @@ import SLK;
 import Utilities;
 import UnorderedMap;
 import <glm/glm.hpp>;
-import "ankerl/unordered_dense.h";
 
 namespace fs = std::filesystem;
 

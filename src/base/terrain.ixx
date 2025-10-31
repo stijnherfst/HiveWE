@@ -22,7 +22,6 @@ import ResourceManager;
 import Globals;
 import Camera;
 import "glad/glad.h";
-import "ankerl/unordered_dense.h";
 import "glm/glm.hpp";
 import "glm/gtc/matrix_transform.hpp";
 import "glm/gtc/quaternion.hpp";
@@ -604,7 +603,7 @@ public:
     }
 
     /// The texture of the tilepoint which is influenced by its surroundings. nearby cliff/ramp > blight > regular texture
-    int real_tile_texture(const int x, const int y) const {
+    [[nodiscard]] int real_tile_texture(const int x, const int y) const {
         for (int i = -1; i < 1; i++) {
             for (int j = -1; j < 1; j++) {
                 if (x + i >= 0 && x + i < width && y + j >= 0 && y + j < height) {

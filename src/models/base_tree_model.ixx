@@ -9,7 +9,6 @@ export module BaseTreeModel;
 
 import std;
 import SLK;
-import "ankerl/unordered_dense.h";
 
 export class BaseTreeItem {
   public:

@@ -6,7 +6,6 @@ import Texture;
 import MapGlobal;
 import SLK;
 import ResourceManager;
-import "ankerl/unordered_dense.h";
 import <glad/glad.h>;
 
 TilePather::TilePather(QWidget *parent) : QDialog(parent) {
