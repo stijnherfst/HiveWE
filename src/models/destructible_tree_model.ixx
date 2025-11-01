@@ -14,6 +14,7 @@ import BaseTreeModel;
 import QIconResource;
 import SLK;
 import Globals;
+import ResourceManager;
 
 export class DestructibleTreeModel : public BaseTreeModel {
 	struct Category {

@@ -9,6 +9,8 @@
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 
+#include "global_search.h"
+
 #include <string>
 #include <memory>
 
@@ -40,6 +42,23 @@ public:
 	};
 
 	void select_id(Category category, std::string id);
+
+	QElapsedTimer timer;
+
+	void keyPressEvent(QKeyEvent* event) override {
+		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {
+			if (timer.isValid() && timer.elapsed() < 400) {
+
+				GlobalSearchWidget search_widget = new GlobalSearchWidget(this);
+				timer.invalidate();
+			} else {
+				timer.start();
+			}
+		}
+		QMainWindow::keyPressEvent(event);
+	}
+
+	void open_by_id(TableModel* table, const std::string& id, const QString& name, QIcon icon);
 
 private:
 	Ui::ObjectEditor ui;
@@ -80,6 +99,6 @@ private:
 	std::shared_ptr<QIconResource> custom_buff_icon;
 	std::shared_ptr<QIconResource> custom_upgrade_icon;
 
-	void itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category);
+	void itemClicked(const QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index);
 	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category);
 };

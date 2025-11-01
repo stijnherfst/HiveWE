@@ -71,7 +71,6 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	connect(selected_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::existing_tile_clicked);
 	connect(available_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), this, &TileSetter::available_tile_clicked);
 	connect(ui.additionalAdd, &QPushButton::clicked, this, &TileSetter::add_tile);
-	connect(ui.additionalAdd, &QPushButton::clicked, this, &TileSetter::add_tile);
 	connect(ui.selectedRemove, &QPushButton::clicked, this, &TileSetter::remove_tile);
 	connect(ui.selectedShiftLeft, &QPushButton::clicked, this, &TileSetter::shift_left);
 	connect(ui.selectedShiftRight, &QPushButton::clicked, this, &TileSetter::shift_right);

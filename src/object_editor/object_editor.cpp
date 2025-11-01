@@ -67,13 +67,13 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	// Set initial sizes, the second size doesn't really matter with only 2 dock areas
 	dock_manager->setSplitterSizes(explorer_area, { 645, 9999 });
 
-	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(unitTreeFilter, units_table, index, Category::unit); });
-	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(itemTreeFilter, items_table, index, Category::item); });
-	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(doodadTreeFilter, doodads_table, index, Category::doodad); });
-	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(destructibleTreeFilter, destructibles_table, index, Category::destructible); });
-	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(abilityTreeFilter, abilities_table, index, Category::ability); });
-	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index, Category::upgrade); });
-	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index, Category::buff); });
+	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(unitTreeFilter, units_table, index); });
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(itemTreeFilter, items_table, index); });
+	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(doodadTreeFilter, doodads_table, index); });
+	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(destructibleTreeFilter, destructibles_table, index); });
+	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(abilityTreeFilter, abilities_table, index); });
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index); });
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index); });
 
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this), &QShortcut::activated, [&]() {
 		auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
@@ -84,20 +84,24 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	show();
 }
 
-void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index, Category category) {
-	BaseTreeItem* item = static_cast<BaseTreeItem*>(model->mapToSource(index).internalPointer());
+void ObjectEditor::itemClicked(const QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index) {
+	const BaseTreeItem* item = static_cast<BaseTreeItem*>(model->mapToSource(index).internalPointer());
 	if (item->baseCategory || item->subCategory) {
 		return;
 	}
 
+	open_by_id(table, item->id, index.data(Qt::DisplayRole).toString(), index.data(Qt::DecorationRole).value<QIcon>());
+}
+
+void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QString& name, QIcon icon) {
 	// If there is already one open for this item
-	if (auto found = dock_manager->findDockWidget(QString::fromStdString(item->id)); found) {
+	if (const auto found = dock_manager->findDockWidget(QString::fromStdString(id)); found) {
 		found->dockAreaWidget()->setCurrentDockWidget(found);
 		found->setFocus();
 		found->raise();
 		return;
 	}
-	
+
 	QTableView* view = new QTableView;
 	TableDelegate* delegate = new TableDelegate;
 	view->setItemDelegate(delegate);
@@ -113,12 +117,12 @@ void ObjectEditor::itemClicked(QSortFilterProxyModel* model, TableModel* table, 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget(dock_manager, "");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 	dock_tab->setWidget(view);
-	dock_tab->setObjectName(QString::fromStdString(item->id));
-	dock_tab->setWindowTitle(model->data(index, Qt::DisplayRole).toString());
-	dock_tab->setIcon(model->data(index, Qt::DecorationRole).value<QIcon>());
+	dock_tab->setObjectName(QString::fromStdString(id));
+	dock_tab->setWindowTitle(name);
+	dock_tab->setIcon(icon);
 
 	SingleModel* single_model = new SingleModel(table, this);
-	single_model->setID(item->id);
+	single_model->setID(id);
 	view->setModel(single_model);
 
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
@@ -176,7 +180,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 					const auto index = destructibles_table->rowIDToIndex(new_id);
 					const auto index2 = destructibleTreeModel->mapFromSource(index);
 					const auto index3 = destructibleTreeFilter->mapFromSource(index2);
-					itemClicked(destructibleTreeFilter, destructibles_table, index3, Category::destructible);
+					itemClicked(destructibleTreeFilter, destructibles_table, index3);
 				}
 			});
 		}

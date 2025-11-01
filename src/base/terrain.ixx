@@ -585,14 +585,19 @@ public:
         // Reload tile textures
         ground_textures.clear();	// ToDo Clear them after loading new ones?
         ground_texture_to_id.clear();
+		ground_texture_handles.clear();
 
         for (const auto& tile_id : tileset_ids) {
             ground_textures.push_back(resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
             ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
+        	ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
         }
         blight_texture = static_cast<int>(ground_textures.size());
         ground_texture_to_id.emplace("blight", blight_texture);
         ground_textures.push_back(resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1) + (hierarchy.hd ? "_diffuse.dds" : ".dds")));
+		ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+
+		glNamedBufferStorage(ground_texture_handle_buffer, ground_texture_handles.size() * sizeof(GLuint64), ground_texture_handles.data(), GL_DYNAMIC_STORAGE_BIT);
 
         cliff_to_ground_texture.clear();
         for (const auto& cliff_id : cliffset_ids) {

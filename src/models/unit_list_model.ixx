@@ -7,10 +7,11 @@ export module UnitListModel;
 
 import Globals;
 
-export class UnitListModel : public QIdentityProxyModel {
+export class UnitListModel: public QIdentityProxyModel {
 	Q_OBJECT
 
   public:
+	[[nodiscard]]
 	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override {
 		if (!sourceIndex.isValid()) {
 			return {};
@@ -19,6 +20,7 @@ export class UnitListModel : public QIdentityProxyModel {
 		return createIndex(sourceIndex.row(), 0);
 	}
 
+	[[nodiscard]]
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override {
 		if (!proxyIndex.isValid()) {
 			return {};
@@ -27,6 +29,7 @@ export class UnitListModel : public QIdentityProxyModel {
 		return sourceModel()->index(proxyIndex.row(), units_slk.column_headers.at("name"));
 	}
 
+	[[nodiscard]]
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
 			return {};
@@ -34,17 +37,16 @@ export class UnitListModel : public QIdentityProxyModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return sourceModel()->data(mapToSource(index), role).toString() + " " +
-					   sourceModel()->data(sourceModel()->index(index.row(), units_slk.column_headers.at("editorsuffix")), role).toString();
+				return mapToSource(index).data(role).toString() + " "
+					+ sourceModel()->index(index.row(), units_slk.column_headers.at("editorsuffix")).data(role).toString();
 			case Qt::DecorationRole:
-				return sourceModel()->data(sourceModel()->index(index.row(), units_slk.column_headers.at("art")), role);
-			// case Qt::SizeHintRole:
-			// return QSize(0, 24);
+				return sourceModel()->index(index.row(), units_slk.column_headers.at("art")).data(role);
 			default:
-				return sourceModel()->data(mapToSource(index), role);
+				return mapToSource(index).data(role);
 		}
 	}
 
+	[[nodiscard]]
 	Qt::ItemFlags flags(const QModelIndex& index) const override {
 		if (!index.isValid()) {
 			return Qt::NoItemFlags;
@@ -53,18 +55,22 @@ export class UnitListModel : public QIdentityProxyModel {
 		return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 	}
 
+	[[nodiscard]]
 	int rowCount(const QModelIndex& parent) const override {
 		return units_slk.rows();
 	}
 
+	[[nodiscard]]
 	int columnCount(const QModelIndex& parent) const override {
 		return 1;
 	}
 
+	[[nodiscard]]
 	QModelIndex index(int row, int column, const QModelIndex& parent) const override {
 		return createIndex(row, column);
 	}
 
+	[[nodiscard]]
 	QModelIndex parent(const QModelIndex& child) const override {
 		return QModelIndex();
 	}
@@ -72,26 +78,31 @@ export class UnitListModel : public QIdentityProxyModel {
 	using QIdentityProxyModel::QIdentityProxyModel;
 };
 
-export class UnitListFilter : public QSortFilterProxyModel {
+export class UnitListFilter: public QSortFilterProxyModel {
 	Q_OBJECT
 
-	bool filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
-		QModelIndex index0 = sourceModel()->index(sourceRow, 0);
+	[[nodiscard]]
+	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
+		if (QString::fromStdString(units_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+			return true;
+		}
 
 		if (!filterRegularExpression().pattern().isEmpty()) {
-			return sourceModel()->data(index0).toString().contains(filterRegularExpression());
+			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
+			return source_index.data().toString().contains(filterRegularExpression());
 		} else {
 			return QString::fromStdString(units_slk.data(units_slk.column_headers.at("race"), sourceRow)) == filterRace;
 		}
 	}
 
-	bool lessThan(const QModelIndex& left, const QModelIndex& right) const {
+	[[nodiscard]]
+	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
 		QString leftIndex = "0";
 		{
-			bool isHostile = units_slk.data("hostilepal", left.row()) == "1";
-			bool isBuilding = units_slk.data("isbldg", left.row()) == "1";
-			bool isHero = isupper(units_slk.index_to_row.at(left.row()).front());
-			bool isSpecial = units_slk.data("special", left.row()) == "1";
+			const bool isHostile = units_slk.data("hostilepal", left.row()) == "1";
+			const bool isBuilding = units_slk.data("isbldg", left.row()) == "1";
+			const bool isHero = isupper(units_slk.index_to_row.at(left.row()).front());
+			const bool isSpecial = units_slk.data("special", left.row()) == "1";
 
 			if (isSpecial) {
 				leftIndex = "3";
@@ -105,10 +116,10 @@ export class UnitListFilter : public QSortFilterProxyModel {
 
 		QString rightIndex = "0";
 		{
-			bool isHostile = units_slk.data("hostilepal", right.row()) == "1";
-			bool isBuilding = units_slk.data("isbldg", right.row()) == "1";
-			bool isHero = isupper(units_slk.index_to_row.at(right.row()).front());
-			bool isSpecial = units_slk.data("special", right.row()) == "1";
+			const bool isHostile = units_slk.data("hostilepal", right.row()) == "1";
+			const bool isBuilding = units_slk.data("isbldg", right.row()) == "1";
+			const bool isHero = isupper(units_slk.index_to_row.at(right.row()).front());
+			const bool isSpecial = units_slk.data("special", right.row()) == "1";
 
 			if (isSpecial) {
 				rightIndex = "3";
@@ -122,13 +133,15 @@ export class UnitListFilter : public QSortFilterProxyModel {
 
 		return leftIndex < rightIndex;
 	}
+
 	QString filterRace = "human";
 
   public:
 	using QSortFilterProxyModel::QSortFilterProxyModel;
 
   public slots:
-	void setFilterRace(QString race) {
+
+	void setFilterRace(const QString& race) {
 		filterRace = race;
 		invalidateFilter();
 	}

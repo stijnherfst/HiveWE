@@ -43,8 +43,6 @@ QVariant DoodadListModel::data(const QModelIndex& index, int role) const {
 				return {};
 			}
 		}
-		case Qt::SizeHintRole:
-			return QSize(0, 16);
 		default:
 			return sourceModel()->data(mapToSource(index), role);
 	}
@@ -74,11 +72,14 @@ QModelIndex DoodadListModel::parent(const QModelIndex& child) const {
 	return QModelIndex();
 }
 
-bool DoodadListFilter::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
-	QModelIndex index0 = sourceModel()->index(sourceRow, 0);
+bool DoodadListFilter::filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const {
+	if (QString::fromStdString(doodads_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+		return true;
+	}
 
 	if (!filterRegularExpression().pattern().isEmpty()) {
-		return sourceModel()->data(index0).toString().contains(filterRegularExpression());
+		const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
+		return source_index.data().toString().contains(filterRegularExpression());
 	} else {
 		const std::string tilesets = doodads_slk.data("tilesets", sourceRow);
 		return QString::fromStdString(doodads_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');

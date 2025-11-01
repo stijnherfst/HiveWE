@@ -145,6 +145,7 @@ target_sources(HiveWE PRIVATE
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"
 	"object_editor/object_editor.cpp"
+	"object_editor/global_search.cpp"
 
 	"qt_imgui/imgui_renderer.cpp"
 	"qt_imgui/qt_imgui.cpp"
