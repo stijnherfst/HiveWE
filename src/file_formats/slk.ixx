@@ -127,7 +127,7 @@ namespace slk {
 								row_headers.emplace(data, row - 1);
 								index_to_row.emplace(row - 1, data);
 							} else if (row == 0) {
-								// If it is a column header we need to lowercase it as column headers are case insensitive
+								// If it is a column header, we need to lowercase it as column headers are case-insensitive
 								to_lowercase(data);
 								// -1 as 0,0 is unitid/doodadid etc.
 								column_headers.emplace(data, column - 1);
@@ -159,6 +159,24 @@ namespace slk {
 						view.remove_prefix(view.find_first_of('\n') + 1);
 				}
 			}
+
+			// Remove empty rows (might contain data but don't have a row header)
+
+			size_t i = 0;
+			while (i < index_to_row.size()) {
+				if (index_to_row.at(i).empty()) {
+					for (size_t j = index_to_row.size() - 1; j > i; j--) {
+						if (!index_to_row.at(j).empty()) {
+							index_to_row[i] = index_to_row.at(j);
+							row_headers.at(index_to_row.at(i)) = i;
+							index_to_row.erase(j);
+							break;
+						}
+					}
+				}
+				i += 1;
+			}
+			row_headers.erase("");
 		}
 
 		void build_meta_map() {
@@ -270,17 +288,22 @@ namespace slk {
 			}
 		}
 
-		/// Merges the data of the files. INI sections are matched to row keys and INI keys are matched to column keys.
-		/// If an unknown section key is encountered then that section is skipped
-		/// If an unknown column key is encountered then the column is added
+		/// Merges the data of the files. INI sections are matched to row keys, and INI keys are matched to column keys.
+		/// If an unknown section key is encountered, then that section is skipped.
+		/// If an unknown column key is encountered, then the column is added
+
+		size_t non_matches = 0;
 		void merge(const ini::INI& ini, const SLK& meta_slk) {
 			for (const auto& [section_key, section_value] : ini.ini_data) {
-				if (!base_data.contains(section_key)) {
+				auto found_section = base_data.find(section_key);
+				if (found_section == base_data.end()) {
 					continue;
 				}
 
+				auto& [key, section] = *found_section;
+
 				for (const auto& [key, value] : section_value) {
-					std::string key_lower = to_lowercase_copy(key);
+					const std::string key_lower = to_lowercase_copy(key);
 
 					if (!column_headers.contains(key_lower)) {
 						add_column(key_lower);
@@ -289,9 +312,8 @@ namespace slk {
 					// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
 					// This means we have to manually split these into the correct column
 					if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos" || key_lower == "unbuttonpos" || key_lower == "researchbuttonpos") && column_headers.contains(key_lower + "2")) {
-
-						base_data[section_key][key_lower] = value[0];
-						base_data[section_key][key_lower + "2"] = value[1];
+						section[key_lower] = value[0];
+						section[key_lower + "2"] = value[1];
 						continue;
 					}
 
@@ -303,8 +325,8 @@ namespace slk {
 					} else if (auto found = meta_slk.meta_map.find(key_lower_stripped + section_key); found != meta_slk.meta_map.end()) {
 						id = found->second;
 					} else {
-						size_t nr_position = key_lower_stripped.find_first_of("0123456789");
-						std::string without_numbers = key_lower_stripped.substr(0, nr_position);
+						const size_t nr_position = key_lower_stripped.find_first_of("0123456789");
+						const std::string without_numbers = key_lower_stripped.substr(0, nr_position);
 
 						if (auto found = meta_slk.meta_map.find(without_numbers); found != meta_slk.meta_map.end()) {
 							id = found->second;
@@ -313,37 +335,20 @@ namespace slk {
 						}
 					}
 
-					//std::string id;
-					//if (meta_slk.meta_map.contains(key_lower_stripped)) {
-					//	id = meta_slk.meta_map.at(key_lower_stripped);
-					//} else if (meta_slk.meta_map.contains(key_lower_stripped + section_key)) {
-					//	id = meta_slk.meta_map.at(key_lower_stripped + section_key);
-					//} else {
-					//	size_t nr_position = key_lower_stripped.find_first_of("0123456789");
-					//	std::string without_numbers = key_lower_stripped.substr(0, nr_position);
-
-					//	if (meta_slk.meta_map.contains(without_numbers)) {
-					//		id = meta_slk.meta_map.at(without_numbers);
-					//	} else {
-					//		continue;
-					//	}
-					//}
-
 					const int repeat = meta_slk.data<int>("repeat", id);
 					if (repeat > 0 && !(meta_slk.column_headers.contains("appendindex") && meta_slk.data<int>("appendindex", id) > 0)) {
 						for (size_t i = 0; i < value.size(); i++) {
-							const std::string new_key = key_lower + std::to_string(i + 1);
+							const std::string new_key = std::format("{}{}", key_lower, i + 1);
 							if (!column_headers.contains(new_key)) {
 								add_column(new_key);
 							}
-							base_data[section_key][new_key] = value[i];
+							section[new_key] = value[i];
 						}
-						continue;
 					} else {
 						if (meta_slk.data<std::string>("type", id).ends_with("List")) {
-							base_data[section_key][key_lower] = absl::StrJoin(value, ",");
+							section[key_lower] = absl::StrJoin(value, ",");
 						} else {
-							base_data[section_key][key_lower] = value[0];
+							section[key_lower] = value[0];
 						}
 					}
 				}
