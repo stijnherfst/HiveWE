@@ -1,24 +1,17 @@
 module;
 
-#include <QIdentityProxyModel>
 #include <QSortFilterProxyModel>
 
 export module UnitListModel;
 
+import BaseListModel;
 import Globals;
 
-export class UnitListModel: public QIdentityProxyModel {
+export class UnitListModel: public BaseListModel {
 	Q_OBJECT
 
   public:
-	[[nodiscard]]
-	QModelIndex mapFromSource(const QModelIndex& sourceIndex) const override {
-		if (!sourceIndex.isValid()) {
-			return {};
-		}
-
-		return createIndex(sourceIndex.row(), 0);
-	}
+	explicit UnitListModel(QObject* parent = nullptr) : BaseListModel(units_slk, parent) {}
 
 	[[nodiscard]]
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override {
@@ -37,45 +30,13 @@ export class UnitListModel: public QIdentityProxyModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return mapToSource(index).data(role).toString() + " "
-					+ sourceModel()->index(index.row(), units_slk.column_headers.at("editorsuffix")).data(role).toString();
+				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), units_slk.column_headers.at("art")).data(role);
 			default:
-				return mapToSource(index).data(role);
+				return BaseListModel::data(index, role);
 		}
 	}
-
-	[[nodiscard]]
-	Qt::ItemFlags flags(const QModelIndex& index) const override {
-		if (!index.isValid()) {
-			return Qt::NoItemFlags;
-		}
-
-		return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-	}
-
-	[[nodiscard]]
-	int rowCount(const QModelIndex& parent) const override {
-		return units_slk.rows();
-	}
-
-	[[nodiscard]]
-	int columnCount(const QModelIndex& parent) const override {
-		return 1;
-	}
-
-	[[nodiscard]]
-	QModelIndex index(int row, int column, const QModelIndex& parent) const override {
-		return createIndex(row, column);
-	}
-
-	[[nodiscard]]
-	QModelIndex parent(const QModelIndex& child) const override {
-		return QModelIndex();
-	}
-
-	using QIdentityProxyModel::QIdentityProxyModel;
 };
 
 export class UnitListFilter: public QSortFilterProxyModel {

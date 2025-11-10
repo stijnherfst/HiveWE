@@ -246,7 +246,7 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 
 /// Manually color the headers because the default QHeaderView will only alternatively color the items
 void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logicalIndex) const {
-	Qt::Alignment align = (Qt::AlignLeft | Qt::AlignTop);
+	const Qt::Alignment align = (Qt::AlignLeft | Qt::AlignTop);
 
 	if (logicalIndex % 2 > 0) {
 		painter->fillRect(rect, palette().color(QPalette::AlternateBase));
@@ -264,12 +264,12 @@ TableDelegate::TableDelegate(QWidget* parent) : QStyledItemDelegate(parent) {
 }
 
 QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
-	auto model = static_cast<const SingleModel*>(index.model());
-	auto& mapping = model->getMapping();
+	const auto model = static_cast<const SingleModel*>(index.model());
+	const auto& mapping = model->getMapping();
 
-	std::string type = model->meta_slk->data("type", mapping[index.row()].key);
-	std::string minVal = model->meta_slk->data("minval", mapping[index.row()].key);
-	std::string maxVal = model->meta_slk->data("maxval", mapping[index.row()].key);
+	const std::string type = model->meta_slk->data("type", mapping[index.row()].key);
+	const std::string minVal = model->meta_slk->data("minval", mapping[index.row()].key);
+	const std::string maxVal = model->meta_slk->data("maxval", mapping[index.row()].key);
 
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
@@ -334,10 +334,10 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 }
 
 void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
-	auto model = static_cast<const SingleModel*>(index.model());
-	auto& mapping = model->getMapping();
+	const auto model = static_cast<const SingleModel*>(index.model());
+	const auto& mapping = model->getMapping();
 
-	std::string type = model->meta_slk->data("type", mapping[index.row()].key);
+	const std::string type = model->meta_slk->data("type", mapping[index.row()].key);
 
 	if (type == "int") {
 		static_cast<QSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toInt());

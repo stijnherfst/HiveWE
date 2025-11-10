@@ -27,8 +27,6 @@
 
 #include "doodad_brush.h"
 #include "palette.h"
-#include "doodad_list_model.h"
-#include "destructible_list_model.h"
 
 #include <QConcatenateTablesProxyModel>
 
@@ -36,6 +34,8 @@
 
 import QRibbon;
 import AspectRatioPixmapLabel;
+import DestructibleListModel;
+import DoodadListModel;
 
 class DoodadPalette : public Palette {
 	Q_OBJECT

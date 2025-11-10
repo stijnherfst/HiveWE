@@ -55,16 +55,25 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"resources/skinned_mesh/skeletal_model_instance.ixx" 
 	"resources/skinned_mesh.ixx" 
 
-	"models/base_tree_model.ixx"
-	"models/unit_tree_model.ixx"
-	"models/doodad_tree_model.ixx"
-	"models/item_tree_model.ixx"
-	"models/ability_tree_model.ixx"
-	"models/buff_tree_model.ixx"
-	"models/upgrade_tree_model.ixx"
-	"models/unit_list_model.ixx"
+	"models/tree/ability_tree_model.ixx"
+	"models/tree/base_tree_model.ixx"
+	"models/tree/buff_tree_model.ixx"
+	"models/tree/destructible_tree_model.ixx"
+	"models/tree/doodad_tree_model.ixx"
+	"models/tree/item_tree_model.ixx"
+	"models/tree/unit_tree_model.ixx"
+	"models/tree/upgrade_tree_model.ixx"
+
+	"models/list/ability_list_model.ixx"
+	"models/list/base_list_model.ixx"
+	"models/list/destructible_list_model.ixx"
+	"models/list/doodad_list_model.ixx"
+	"models/list/item_list_model.ixx"
+	"models/list/unit_list_model.ixx"
+	"models/list/upgrade_list_model.ixx"
+	"models/list/buff_list_model.ixx"
+
 	"models/table_model.ixx"
-	"models/destructible_tree_model.ixx"
 
 	"object_editor/slk_conversions.ixx"
 
@@ -139,8 +148,6 @@ target_sources(HiveWE PRIVATE
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
 	"model_editor/model_editor_glwidget.cpp"
-	"models/doodad_list_model.cpp"
-	"models/destructible_list_model.cpp"
 
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"
