@@ -1,50 +1,19 @@
 #include "global_search.h"
 
+#include "model_editor.h"
 #include "object_editor.h"
+#include "trigger_editor.h"
 
 #include <QLayout>
 #include <QFrame>
 #include <QDialog>
-#include <QSortFilterProxyModel>
 #include <ui_object_editor.h>
-#include <QStyledItemDelegate>
 #include <QPainter>
 
 import std;
 import WindowHandler;
 import Globals;
 import TableModel;
-
-class ExtraTextDelegate : public QStyledItemDelegate {
-public:
-	using QStyledItemDelegate::QStyledItemDelegate;
-
-	QFont font = QFont("Consolas");
-
-	void paint(QPainter *painter, const QStyleOptionViewItem &option,
-			   const QModelIndex &index) const override {
-
-		QStyledItemDelegate::paint(painter, option, index);
-
-		const QString rightText = index.data(Qt::UserRole).toString();
-		if (rightText.isEmpty()) {
-			return;
-		}
-
-		painter->save();
-		painter->setFont(font);
-		painter->setPen(Qt::gray);
-
-		const QRect rect = option.rect;
-		const QRect rightRect = rect.adjusted(6, 0, -6, 0);
-		const QFontMetrics fm = painter->fontMetrics();
-		const int x = rightRect.right() - fm.horizontalAdvance(rightText);
-		const int y = rightRect.top() + (rightRect.height() - fm.height()) / 2;
-
-		painter->drawText(x, y + fm.ascent(), rightText);
-		painter->restore();
-	}
-};
 
 GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	setWindowFlag(Qt::FramelessWindowHint, true);
@@ -101,6 +70,12 @@ GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	buff_filter_model->setSourceModel(buff_list_model);
 	buff_filter_model->sort(0, Qt::AscendingOrder);
 
+	action_model = new ActionListModel(this);
+	action_filter_model = new QSortFilterProxyModel(this);
+	action_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	action_filter_model->setSourceModel(action_model);
+	action_filter_model->sort(0, Qt::AscendingOrder);
+
 	concat_table = new QConcatenateTablesProxyModel(this);
 	concat_table->addSourceModel(units_filter_model);
 	concat_table->addSourceModel(ability_filter_model);
@@ -109,6 +84,7 @@ GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	concat_table->addSourceModel(item_filter_model);
 	concat_table->addSourceModel(upgrade_filter_model);
 	concat_table->addSourceModel(buff_filter_model);
+	concat_table->addSourceModel(action_filter_model);
 
 	list = new QListView;
 	list->setModel(concat_table);
@@ -140,13 +116,28 @@ GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	connect(edit, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(edit, &QLineEdit::textEdited, upgrade_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(edit, &QLineEdit::textEdited, buff_filter_model, &QSortFilterProxyModel::setFilterFixedString);
+	connect(edit, &QLineEdit::textEdited, action_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(edit, &QLineEdit::textEdited, [&] {
 		list->setCurrentIndex(concat_table->index(0, 0));
 	});
 
 	connect(list, &QListView::activated, [=](const QModelIndex& index) {
-		std::string id;
 		const auto model = concat_table->mapToSource(index).model();
+		if (model == action_filter_model) {
+			if (index.data() == "Open Model Editor") {
+				bool created;
+				window_handler.create_or_raise<ModelEditor>(nullptr, created);
+			} else if (index.data() == "Open Object Editor") {
+				bool created;
+				window_handler.create_or_raise<ObjectEditor>(nullptr, created);
+			} else if (index.data() == "Open Trigger Editor") {
+				bool created;
+				window_handler.create_or_raise<TriggerEditor>(nullptr, created);
+			}
+			return;
+		}
+
+		std::string id;
 		TableModel* table_model = nullptr;
 		if (model == units_filter_model) {
 			const int row = units_filter_model->mapToSource(concat_table->mapToSource(index)).row();
