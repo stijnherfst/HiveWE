@@ -29,7 +29,7 @@ class ObjectEditor : public QMainWindow {
 	Q_OBJECT
 
 public:
-	ObjectEditor(QWidget* parent = nullptr);
+	explicit ObjectEditor(QWidget* parent = nullptr);
 
 	enum class Category {
 		unit,
@@ -41,23 +41,7 @@ public:
 		buff
 	};
 
-	void select_id(Category category, std::string id);
-
-	QElapsedTimer timer;
-
-	void keyPressEvent(QKeyEvent* event) override {
-		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {
-			if (timer.isValid() && timer.elapsed() < 400) {
-
-				GlobalSearchWidget search_widget = new GlobalSearchWidget(this);
-				timer.invalidate();
-			} else {
-				timer.start();
-			}
-		}
-		QMainWindow::keyPressEvent(event);
-	}
-
+	void select_id(Category category, const std::string& id) const;
 	void open_by_id(TableModel* table, const std::string& id, const QString& name, QIcon icon);
 
 private:
@@ -101,4 +85,19 @@ private:
 
 	void itemClicked(const QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index);
 	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category);
+
+	QElapsedTimer double_shift_timer;
+
+	void keyPressEvent(QKeyEvent* event) override {
+		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {
+			if (double_shift_timer.isValid() && double_shift_timer.elapsed() < 400) {
+
+				GlobalSearchWidget search_widget = new GlobalSearchWidget(this);
+				double_shift_timer.invalidate();
+			} else {
+				double_shift_timer.start();
+			}
+		}
+		QMainWindow::keyPressEvent(event);
+	}
 };

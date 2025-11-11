@@ -1,6 +1,7 @@
 module;
 
 #include <QSortFilterProxyModel>
+#include <QSize>
 
 export module UnitListModel;
 
@@ -31,6 +32,8 @@ export class UnitListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole:
 				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(units_slk.data("editorsuffix", index.row()));
+			case Qt::UserRole:
+				return QString::fromStdString("units/" + units_slk.data("race", index.row()) + "/" + units_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), units_slk.column_headers.at("art")).data(role);
 			default:

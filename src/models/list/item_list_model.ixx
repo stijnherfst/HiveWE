@@ -31,6 +31,8 @@ export class ItemListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole:
 				return mapToSource(index).data(role).toString();
+			case Qt::UserRole:
+				return QString::fromStdString("items/" + items_slk.data("class", index.row()) + "/" + items_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), items_slk.column_headers.at("art")).data(role);
 			default:

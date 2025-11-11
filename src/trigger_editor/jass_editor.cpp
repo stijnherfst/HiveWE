@@ -347,12 +347,13 @@ JassEditor::JassEditor(QWidget* parent) : QsciScintilla(parent), lexer(this), ap
 	connect(this, &QsciScintilla::textChanged, this, &JassEditor::calculate_margin_width);
 }
 
-void JassEditor::highlight_text(std::string search_text) {
+void JassEditor::highlight_text(const std::string& search_text) {
 	SendScintilla(SCI_SETINDICATORCURRENT, search_indicator);
 	SendScintilla(SCI_INDICATORCLEARRANGE, 0, text().length());
 
-	if (search_text.empty())
+	if (search_text.empty()) {
 		return;
+	}
 
 	SendScintilla(SCI_TARGETWHOLEDOCUMENT);
 

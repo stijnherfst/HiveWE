@@ -78,7 +78,7 @@ private:
 
 public:
 	JassEditor(QWidget* parent = nullptr);
-	void highlight_text(std::string text);
+	void highlight_text(const std::string& text);
 	int max_line_number_width;
 
 	void calculate_margin_width();

@@ -17,7 +17,7 @@ export class UnitSelector : public QWidget {
 	Q_OBJECT
 
   public:
-	UnitSelector(QWidget* parent = nullptr)
+	explicit UnitSelector(QWidget* parent = nullptr)
 		: QWidget(parent) {
 		list_model = new UnitListModel(this);
 		list_model->setSourceModel(units_table);
@@ -33,6 +33,8 @@ export class UnitSelector : public QWidget {
 
 		search->setPlaceholderText("Search");
 
+		units->setUniformItemSizes(true);
+		units->setIconSize(QSize(24, 24));
 		units->setModel(filter_model);
 
 		QVBoxLayout* layout = new QVBoxLayout;

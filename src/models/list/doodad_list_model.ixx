@@ -37,6 +37,8 @@ export class DoodadListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole:
 				return sourceModel()->data(mapToSource(index), role).toString();
+			case Qt::UserRole:
+				return QString::fromStdString("doodads/" + doodads_slk.data("category", index.row()) + "/" + doodads_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole: {
 				char category = doodads_slk.data("category", index.row()).front();
 				if (icons.contains(category)) {

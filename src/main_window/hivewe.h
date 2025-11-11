@@ -9,8 +9,10 @@
 #include <QLabel>
 #include <QMenu>
 #include <QPainter>
+#include <QKeyEvent>
 
 #include "ui_HiveWE.h"
+#include "global_search.h"
 
 import QRibbon;
 import WindowHandler;
@@ -37,6 +39,21 @@ private:
 	Ui::HiveWEClass ui;
 	QRibbonTab* current_custom_tab = nullptr;
 	Minimap* minimap = new Minimap(this);
+
+	QElapsedTimer double_shift_timer;
+
+	void keyPressEvent(QKeyEvent* event) override {
+		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {
+			if (double_shift_timer.isValid() && double_shift_timer.elapsed() < 400) {
+
+				GlobalSearchWidget search_widget = new GlobalSearchWidget(this);
+				double_shift_timer.invalidate();
+			} else {
+				double_shift_timer.start();
+			}
+		}
+		QMainWindow::keyPressEvent(event);
+	}
 
 	void closeEvent(QCloseEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;

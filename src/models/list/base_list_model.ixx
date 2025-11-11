@@ -43,8 +43,6 @@ export class BaseListModel: public QIdentityProxyModel {
 				return mapToSource(index).data(role).toString();
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), items_slk.column_headers.at("art")).data(role);
-			case Qt::SizeHintRole:
-				return QSize(32, 32);
 			default:
 				return mapToSource(index).data(role);
 		}

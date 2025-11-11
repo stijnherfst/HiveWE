@@ -173,6 +173,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 	if (map->brush) {
 		map->brush->key_press_event(event);
 	}
+	QOpenGLWidget::keyPressEvent(event);
 }
 
 void GLWidget::keyReleaseEvent(QKeyEvent* event) {
@@ -185,6 +186,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent* event) {
 	if (map->brush) {
 		map->brush->key_release_event(event);
 	}
+	QOpenGLWidget::keyReleaseEvent(event);
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent* event) {

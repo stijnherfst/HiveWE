@@ -7,17 +7,50 @@
 #include <QDialog>
 #include <QSortFilterProxyModel>
 #include <ui_object_editor.h>
+#include <QStyledItemDelegate>
+#include <QPainter>
 
 import std;
 import WindowHandler;
 import Globals;
 import TableModel;
 
+class ExtraTextDelegate : public QStyledItemDelegate {
+public:
+	using QStyledItemDelegate::QStyledItemDelegate;
+
+	QFont font = QFont("Consolas");
+
+	void paint(QPainter *painter, const QStyleOptionViewItem &option,
+			   const QModelIndex &index) const override {
+
+		QStyledItemDelegate::paint(painter, option, index);
+
+		const QString rightText = index.data(Qt::UserRole).toString();
+		if (rightText.isEmpty()) {
+			return;
+		}
+
+		painter->save();
+		painter->setFont(font);
+		painter->setPen(Qt::gray);
+
+		const QRect rect = option.rect;
+		const QRect rightRect = rect.adjusted(6, 0, -6, 0);
+		const QFontMetrics fm = painter->fontMetrics();
+		const int x = rightRect.right() - fm.horizontalAdvance(rightText);
+		const int y = rightRect.top() + (rightRect.height() - fm.height()) / 2;
+
+		painter->drawText(x, y + fm.ascent(), rightText);
+		painter->restore();
+	}
+};
+
 GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	setWindowFlag(Qt::FramelessWindowHint, true);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	resize(400, 700);
+	resize(500, 700);
 
 	ability_list_model = new AbilityListModel(this);
 	ability_list_model->setSourceModel(abilities_table);
@@ -78,10 +111,12 @@ GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	concat_table->addSourceModel(buff_filter_model);
 
 	list = new QListView;
-	list->setIconSize(QSize(32, 32));
 	list->setModel(concat_table);
 	list->setUniformItemSizes(true);
+	list->setGridSize(QSize(list->gridSize().width(), 32));
+	list->setIconSize(QSize(32, 32));
 	list->setCurrentIndex(concat_table->index(0, 0));
+	list->setItemDelegate(new ExtraTextDelegate(list));
 
 	edit->setClearButtonEnabled(true);
 	edit->setPlaceholderText("Find anything");

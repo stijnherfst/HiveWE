@@ -31,11 +31,9 @@ export class AbilityListModel: public BaseListModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				if (QString::fromStdString(abilities_slk.index_to_row[index.row()]).isEmpty()) {
-					std::println("Yeety");
-				}
-
 				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", index.row()));
+			case Qt::UserRole:
+				return QString::fromStdString("abilities/" + abilities_slk.data("race", index.row()) + "/" + abilities_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), abilities_slk.column_headers.at("art")).data(role);
 

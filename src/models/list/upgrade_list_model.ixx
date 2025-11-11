@@ -31,6 +31,8 @@ export class UpgradeListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole:
 				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(upgrade_slk.data("editorsuffix", index.row()));
+			case Qt::UserRole:
+				return QString::fromStdString("upgrades/" + upgrade_slk.data("race", index.row()) + "/" + upgrade_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), upgrade_slk.column_headers.at("art1")).data(role);
 			default:

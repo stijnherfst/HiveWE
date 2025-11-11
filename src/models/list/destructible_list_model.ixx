@@ -37,6 +37,8 @@ export class DestructableListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole:
 				return sourceModel()->data(mapToSource(index), role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", index.row()));
+			case Qt::UserRole:
+				return QString::fromStdString("destructibles/" + destructibles_slk.data("category", index.row()) + "/" + destructibles_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole: {
 				char category = destructibles_slk.data("category", index.row()).front();
 				if (icons.contains(category)) {

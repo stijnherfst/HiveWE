@@ -5,6 +5,7 @@
 #include <QTreeView>
 #include <QTreeWidget>
 #include <QPlainTextEdit>
+#include <QKeyEvent>
 
 #include <vector>
 #include <string>
@@ -13,6 +14,7 @@
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include "trigger_explorer.h"
+#include "global_search.h"
 
 import Triggers;
 
@@ -20,8 +22,8 @@ class TriggerEditor : public QMainWindow {
 	Q_OBJECT
 
 public:
-	TriggerEditor(QWidget* parent = nullptr);
-	~TriggerEditor();
+	explicit TriggerEditor(QWidget* parent = nullptr);
+	~TriggerEditor() override;
 
 	void save_changes();
 private:
@@ -56,4 +58,19 @@ private:
 	void show_gui_trigger(QTreeWidget* edit, const Trigger& trigger);
 
 	std::string get_parameters_names(const std::vector<std::string>& string_parameters, const std::vector<TriggerParameter>& parameters) const;
+
+	QElapsedTimer double_shift_timer;
+
+	void keyPressEvent(QKeyEvent* event) override {
+		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {
+			if (double_shift_timer.isValid() && double_shift_timer.elapsed() < 400) {
+
+				GlobalSearchWidget search_widget = new GlobalSearchWidget(this);
+				double_shift_timer.invalidate();
+			} else {
+				double_shift_timer.start();
+			}
+		}
+		QMainWindow::keyPressEvent(event);
+	}
 };

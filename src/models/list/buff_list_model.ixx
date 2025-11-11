@@ -38,6 +38,8 @@ export class BuffListModel: public BaseListModel {
 					return editorname + " " + editorsuffix;
 				}
 			}
+			case Qt::UserRole:
+				return QString::fromStdString("buffs/" + buff_slk.data("race", index.row()) + "/" + buff_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
 				return sourceModel()->index(index.row(), buff_slk.column_headers.at("buffart")).data(role);
 			default:

@@ -134,7 +134,7 @@ void TriggerEditor::focus_search_window() {
 }
 
 void TriggerEditor::item_clicked(const QModelIndex& index) {
-	TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
+	const TreeItem* item = static_cast<TreeItem*>(index.internalPointer());
 	if (item->type == Classifier::category) {
 		return;
 	}
