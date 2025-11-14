@@ -1,19 +1,20 @@
 export module ModificationTables;
 
 import std;
+import std.compat;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
 import SLK;
 import Utilities;
 import UnorderedMap;
-import <glm/glm.hpp>;
+import <cassert>;
 
 namespace fs = std::filesystem;
 
 constexpr int mod_table_write_version = 3;
 
-void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& slk, slk::SLK& meta_slk, const bool modification, bool optional_ints) {
+void load_modification_table(BinaryReader& reader, const uint32_t version, slk::SLK& slk, const slk::SLK& meta_slk, const bool modification, const bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -84,7 +85,7 @@ void load_modification_table(BinaryReader& reader, uint32_t version, slk::SLK& s
 	}
 }
 
-export void load_modification_file(const std::string& file_name, slk::SLK& base_data, slk::SLK& meta_slk, bool optional_ints) {
+export void load_modification_file(const std::string_view file_name, slk::SLK& base_data, const slk::SLK& meta_slk, const bool optional_ints) {
 	BinaryReader reader = hierarchy.map_file_read(file_name).value();
 
 	const int version = reader.read<uint32_t>();
@@ -98,11 +99,11 @@ export void load_modification_file(const std::string& file_name, slk::SLK& base_
 
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
-void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta_slk, bool custom, bool optional_ints, bool skin) {
+void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const slk::SLK& meta_slk, const bool custom, const bool optional_ints, const bool skin) {
 	// Create an temporary index to speed up field lookups
 	hive::unordered_map<std::string, std::string> meta_index;
 	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-		std::string field = to_lowercase_copy(meta_slk.data("field", key));
+		std::string field = to_lowercase_copy(meta_slk.data<std::string_view>("field", key));
 		meta_index[field] = key;
 	}
 
@@ -166,48 +167,43 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 					variation = std::stoi(property_id.substr(nr_position));
 				}
 
-				if (meta_index.contains(without_numbers)) {
-					meta_data_key = meta_index.at(without_numbers);
-				} else {
-					// If it is a data field then it will contain a data_pointer/column at the end
-					if (without_numbers.starts_with("data")) {
-						data_pointer = without_numbers[4] - 'a' + 1;
-						without_numbers = "data";
-					}
-
-					if (without_numbers == "data" || without_numbers == "unitid" || without_numbers == "cast") {
-						// Unfortunately, mapping a data field to a key is not easy, so we have to iterate over the entire meta_slk
-						for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-							if (meta_slk.data<int>("data", key) != data_pointer) {
-								continue;
-							}
-
-							if (to_lowercase_copy(meta_slk.data("field", key)) != without_numbers) {
-								continue;
-							}
-
-							const std::string use_specific = meta_slk.data("usespecific", key);
-							const std::string not_specific = meta_slk.data("notspecific", key);
-
-							// If we are in the exclude list
-							if (not_specific.find(meta_id) != std::string::npos) {
-								continue;
-							}
-
-							// If the include list is not empty and we are not inside
-							if (!use_specific.empty() && use_specific.find(meta_id) == std::string::npos && use_specific.find(base_id) == std::string::npos) {
-								continue;
-							}
-
-							meta_data_key = key;
-							break;
-						}
-					}
+				// If it is a data field then it will contain a data_pointer/column at the end
+				if (without_numbers.starts_with("data")) {
+					data_pointer = without_numbers[4] - 'a' + 1;
+					without_numbers = "data";
 				}
 
-				if (meta_data_key.empty()) {
-					std::println("Empty meta data key for id {} property {}, value {}", id, property_id, value);
-					exit(0);
+				if (without_numbers == "data" || without_numbers == "unitid" || without_numbers == "cast") {
+					// Unfortunately, mapping a data field to a key is not easy, so we have to iterate over the entire meta_slk
+					for (const auto& [key, dontcare2] : meta_slk.row_headers) {
+						if (meta_slk.data<int>("data", key) != data_pointer) {
+							continue;
+						}
+
+						if (to_lowercase_copy(meta_slk.data<std::string_view>("field", key)) != without_numbers) {
+							continue;
+						}
+
+						const std::string_view use_specific = meta_slk.data<std::string_view>("usespecific", key);
+						const std::string_view not_specific = meta_slk.data<std::string_view>("notspecific", key);
+
+						// If we are in the exclude list
+						if (not_specific.find(meta_id) != std::string::npos) {
+							continue;
+						}
+
+						// If the include list is not empty and we are not inside
+						if (!use_specific.empty() && use_specific.find(meta_id) == std::string::npos && use_specific.find(base_id) == std::string::npos) {
+							continue;
+						}
+
+						meta_data_key = key;
+						break;
+					}
+				} else {
+					if (meta_index.contains(without_numbers)) {
+						meta_data_key = meta_index.at(without_numbers);
+					}
 				}
 			}
 
@@ -223,7 +219,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 			}
 
 			int write_type = -1;
-			const std::string type = meta_slk.data("type", meta_data_key);
+			const std::string_view type = meta_slk.data<std::string_view>("type", meta_data_key);
 			if (type == "int" || type == "bool" || type.ends_with("Flags") || type == "attackBits" || type == "channelType" || type == "deathType" || type == "defenseTypeInt" || type == "detectionType" || type == "spellDetail" || type == "teamColor" || type == "techAvail") {
 				write_type = 0;
 			} else if (type == "real") {
@@ -257,7 +253,7 @@ void save_modification_table(BinaryWriter& writer, slk::SLK& slk, slk::SLK& meta
 	writer.write_vector(sub_writer.buffer);
 }
 
-export void save_modification_file(const std::string& file_name, slk::SLK& slk, slk::SLK& meta_slk, bool optional_ints, bool skin) {
+export void save_modification_file(const std::string_view file_name, const slk::SLK& slk, const slk::SLK& meta_slk, const bool optional_ints, const bool skin) {
 	BinaryWriter writer;
 	writer.write<uint32_t>(mod_table_write_version);
 

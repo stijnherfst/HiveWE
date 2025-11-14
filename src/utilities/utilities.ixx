@@ -42,7 +42,7 @@ export std::string string_replaced(const std::string& source, const std::string_
 	return new_string;
 }
 
-export std::string to_lowercase_copy(const std::string_view& string) {
+export std::string to_lowercase_copy(const std::string_view string) {
 	std::string output(string);
 	std::transform(output.begin(), output.end(), output.begin(), [](unsigned char c) { return std::tolower(c); });
 	return output;

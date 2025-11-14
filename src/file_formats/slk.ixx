@@ -17,7 +17,7 @@ using namespace std::string_literals;
 namespace slk {
 	export class SLK {
 		/// column_header should be lowercase
-		std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
+		[[nodiscard]] std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
 			assert(to_lowercase_copy(column_header) == column_header);
 
 			// Shadow data
