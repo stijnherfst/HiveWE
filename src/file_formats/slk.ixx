@@ -186,14 +186,14 @@ namespace slk {
 			}
 
 			for (const auto& [header, row] : row_headers) {
-				std::string field = to_lowercase_copy(data("field", header));
+				std::string field = to_lowercase_copy(data<std::string_view>("field", header));
 
 				const int repeat = data<int>("data", header);
 				if (repeat > 0) {
 					field += 'a' + (repeat - 1);
 				}
 				if (column_headers.contains("usespecific")) {
-					std::vector<std::string> parts = absl::StrSplit(data("usespecific", header), ",", absl::SkipEmpty());
+					std::vector<std::string> parts = absl::StrSplit(data<std::string_view>("usespecific", header), ",", absl::SkipEmpty());
 					if (!parts.empty()) {
 						for (const auto& i : parts) {
 							meta_map.emplace(field, header + i);
@@ -345,7 +345,7 @@ namespace slk {
 							section[new_key] = value[i];
 						}
 					} else {
-						if (meta_slk.data<std::string>("type", id).ends_with("List")) {
+						if (meta_slk.data<std::string_view>("type", id).ends_with("List")) {
 							section[key_lower] = absl::StrJoin(value, ",");
 						} else {
 							section[key_lower] = value[0];

@@ -10,6 +10,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import UnorderedMap;
 
 export class UnitTreeModel : public BaseTreeModel {
 	Q_OBJECT
@@ -19,7 +20,7 @@ export class UnitTreeModel : public BaseTreeModel {
 		BaseTreeItem* item;
 	};
 
-	std::unordered_map<std::string, Category> categories;
+	hive::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
 	std::array<std::string, 4> subCategories = {
@@ -30,10 +31,10 @@ export class UnitTreeModel : public BaseTreeModel {
 	};
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string race = units_slk.data("race", id);
-		bool isBuilding = units_slk.data("isbldg", id) == "1";
-		bool isHero = isupper(id.front());
-		bool isSpecial = units_slk.data("special", id) == "1";
+		const std::string_view race = units_slk.data<std::string_view>("race", id);
+		const bool isBuilding = units_slk.data<std::string_view>("isbldg", id) == "1";
+		const bool isHero = isupper(id.front());
+		const bool isSpecial = units_slk.data<std::string_view>("special", id) == "1";
 
 		int subIndex = 0;
 		if (isSpecial) {
@@ -63,11 +64,11 @@ export class UnitTreeModel : public BaseTreeModel {
 				} else if (item->subCategory) {
 					return QString::fromStdString(subCategories[index.row()] + " (" + std::to_string(item->children.size()) + ")");
 				} else {
-					if (units_slk.data("campaign", item->id) == "1") {
-						const std::string properNames = units_slk.data("propernames", item->id);
+					if (units_slk.data<std::string_view>("campaign", item->id) == "1") {
+						const std::string_view properNames = units_slk.data<std::string_view>("propernames", item->id);
 
 						if (!properNames.empty()) {
-							return QString::fromStdString(properNames).split(',').first();
+							return QString::fromUtf8(properNames).split(',').first();
 						}
 					}
 

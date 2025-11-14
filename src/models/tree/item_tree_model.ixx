@@ -11,6 +11,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import UnorderedMap;
 
 export class ItemTreeModel : public BaseTreeModel {
 	struct Category {
@@ -18,11 +19,11 @@ export class ItemTreeModel : public BaseTreeModel {
 		BaseTreeItem* item;
 	};
 
-	std::unordered_map<std::string, Category> categories;
+	hive::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string itemClass = items_slk.data("class", id);
+		const std::string_view itemClass = items_slk.data<std::string_view>("class", id);
 		if (itemClass.empty()) {
 			std::cout << "Empty class for " << id << " in items\n";
 			return nullptr;

@@ -27,7 +27,7 @@ export class DestructibleTreeModel : public BaseTreeModel {
 	std::vector<char> rowToCategory;
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string category = destructibles_slk.data("category", id);
+		const std::string_view category = destructibles_slk.data<std::string_view>("category", id);
 
 		return categories.at(category.front()).item;
 	}

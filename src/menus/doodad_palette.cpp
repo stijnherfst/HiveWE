@@ -494,16 +494,16 @@ void DoodadPalette::select_id_in_palette(std::string id) {
 	ui.search->clear();
 
 	if (destructibles_slk.row_headers.contains(id)) {
-		const auto category = destructibles_slk.data("category", id);
-		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+		const auto category = destructibles_slk.data<std::string_view>("category", id);
+		ui.type->setCurrentIndex(ui.type->findData(QString::fromUtf8(category)));
 		const auto index =
 			destructable_filter_model->mapFromSource(destructable_list_model->mapFromSource(destructibles_table->rowIDToIndex(id)));
 		const auto finally = concat_table->mapFromSource(index);
 		ui.doodads->setCurrentIndex(finally);
 		selection_changed(finally);
 	} else {
-		const auto category = doodads_slk.data("category", id);
-		ui.type->setCurrentIndex(ui.type->findData(QString::fromStdString(category)));
+		const auto category = doodads_slk.data<std::string_view>("category", id);
+		ui.type->setCurrentIndex(ui.type->findData(QString::fromUtf8(category)));
 		const auto index = doodad_filter_model->mapFromSource(doodad_list_model->mapFromSource(doodads_table->rowIDToIndex(id)));
 		const auto finally = concat_table->mapFromSource(index);
 		ui.doodads->setCurrentIndex(finally);

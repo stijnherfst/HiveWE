@@ -65,7 +65,7 @@ export struct Doodad {
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
 		pathing.reset();
-		const auto path = slk.data("pathtex", id);
+		const auto path = slk.data<std::string_view>("pathtex", id);
 		const auto trimmed_path = trimmed(path);
 		if (!trimmed_path.empty() && trimmed_path != "none" && trimmed_path != "_" ) {
 			try {
@@ -338,7 +338,7 @@ export class Doodads {
 		for (auto&& i : special_doodads) {
 			i.mesh = get_mesh(i.id, i.variation);
 			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
-			const std::string pathing_texture_path = doodads_slk.data("pathtex", i.id);
+			const std::string_view pathing_texture_path = doodads_slk.data<std::string_view>("pathtex", i.id);
 			if (hierarchy.file_exists(pathing_texture_path)) {
 				i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 				i.position += glm::vec3(glm::vec2(i.pathing->width / 8.f, i.pathing->height / 8.f), 0.f);
@@ -381,7 +381,8 @@ export class Doodads {
 
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-		std::string pathing_texture_path = slk.data("pathtex", id);
+		const std::string_view pathing_texture_path = slk.data<std::string_view>("pathtex", id);
+
 		if (hierarchy.file_exists(pathing_texture_path)) {
 			doodad.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
 		}
@@ -525,10 +526,10 @@ export class Doodads {
 		}
 
 		if (field == "pathtex") {
-			const std::string pathing_texture_path = doodads_slk.data("pathtex", id);
+			const std::string_view pathing_texture_path = doodads_slk.data<std::string_view>("pathtex", id);
 
 			if (hierarchy.file_exists(pathing_texture_path)) {
-				auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
+				const auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
 				for (auto& i : doodads) {
 					if (i.id == id) {
 						i.pathing = new_pathing_texture;
@@ -568,10 +569,10 @@ export class Doodads {
 		}
 
 		if (field == "pathtex") {
-			const std::string pathing_texture_path = destructibles_slk.data("pathtex", id);
+			const std::string_view pathing_texture_path = destructibles_slk.data<std::string_view>("pathtex", id);
 
 			if (hierarchy.file_exists(pathing_texture_path)) {
-				auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
+				const auto new_pathing_texture = resource_manager.load<PathingTexture>(pathing_texture_path);
 				for (auto& i : doodads) {
 					if (i.id == id) {
 						i.pathing = new_pathing_texture;

@@ -9,6 +9,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import UnorderedMap;
 
 export class AbilityTreeModel : public BaseTreeModel {
 	struct Category {
@@ -16,7 +17,7 @@ export class AbilityTreeModel : public BaseTreeModel {
 		BaseTreeItem* item;
 	};
 
-	std::unordered_map<std::string, Category> categories;
+	hive::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
 	std::array<std::string, 3> subCategories = {
@@ -26,14 +27,14 @@ export class AbilityTreeModel : public BaseTreeModel {
 	};
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string race = abilities_slk.data("race", id);
+		const std::string_view race = abilities_slk.data<std::string_view>("race", id);
 		auto found_race = categories.find(race);
 		if (found_race == categories.end()) {
 			std::println("Warning: Empty or invalid race for ability ID `{}`, race `{}`", id, race);
 			return nullptr;
 		}
-		bool isHero = abilities_slk.data<bool>("hero", id);
-		bool isItem = abilities_slk.data<bool>("item", id);
+		const bool isHero = abilities_slk.data<bool>("hero", id);
+		const bool isItem = abilities_slk.data<bool>("item", id);
 
 		int subIndex = 0;
 		if (isHero) {

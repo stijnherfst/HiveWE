@@ -408,9 +408,9 @@ public:
 			return id_to_mesh[id];
 		}
 
-		fs::path mesh_path = units_slk.data("file", id);
+		fs::path mesh_path = units_slk.data<std::string_view>("file", id);
 		if (mesh_path.empty()) {
-			mesh_path = items_slk.data("file", id);
+			mesh_path = items_slk.data<std::string_view>("file", id);
 		}
 		mesh_path.replace_extension(".mdx");
 

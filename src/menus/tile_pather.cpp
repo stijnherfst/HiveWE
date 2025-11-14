@@ -22,7 +22,7 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 		pathing_options[tile_id].unbuildable = options.unbuildable;
 	}
 
-	slk::SLK& slk = map->terrain.terrain_slk;
+	const slk::SLK& slk = map->terrain.terrain_slk;
 	for (auto&& i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i));
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
@@ -33,7 +33,7 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 		button->setIconSize({ 64, 64 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);

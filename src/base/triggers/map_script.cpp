@@ -221,14 +221,14 @@ void generate_units(
 				}
 
 				if (std::get<1>(j)) {
-					std::string order_on = abilities_slk.data("orderon", std::get<0>(j));
+					std::string_view order_on = abilities_slk.data<std::string_view>("orderon", std::get<0>(j));
 					if (order_on.empty()) {
-						order_on = abilities_slk.data("order", std::get<0>(j));
+						order_on = abilities_slk.data<std::string_view>("order", std::get<0>(j));
 					}
 					script.call("IssueImmediateOrder", unit_reference, "\"" + order_on + "\"");
 
 				} else {
-					std::string order_off = abilities_slk.data("orderoff", std::get<0>(j));
+					std::string_view order_off = abilities_slk.data<std::string_view>("orderoff", std::get<0>(j));
 					if (!order_off.empty()) {
 						script.call("IssueImmediateOrder", unit_reference, "\"" + order_off + "\"");
 					}

@@ -9,6 +9,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import UnorderedMap;
 
 export class UpgradeTreeModel : public BaseTreeModel {
 	struct Category {
@@ -16,11 +17,11 @@ export class UpgradeTreeModel : public BaseTreeModel {
 		BaseTreeItem* item;
 	};
 
-	std::unordered_map<std::string, Category> categories;
+	hive::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string race = upgrade_slk.data("race", id);
+		const std::string_view race = upgrade_slk.data<std::string_view>("race", id);
 		if (race.empty()) {
 			std::cout << "Empty race for " << id << " in items\n";
 			return nullptr;
@@ -62,7 +63,7 @@ export class UpgradeTreeModel : public BaseTreeModel {
 				if (item->baseCategory) {
 					return QString::fromStdString(categories.at(rowToCategory[index.row()]).name);
 				} else {
-					return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromStdString(upgrade_slk.data("editorsuffix", item->id));
+					return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromUtf8(upgrade_slk.data<std::string_view>("editorsuffix", item->id));
 				}
 			default:
 				return BaseTreeModel::data(index, role);
@@ -87,7 +88,7 @@ export class UpgradeTreeModel : public BaseTreeModel {
 		for (int i = 0; i < upgrade_slk.rows(); i++) {
 			const std::string& id = upgrade_slk.index_to_row.at(i);
 
-			std::string race = upgrade_slk.data("race", id);
+			const std::string_view race = upgrade_slk.data<std::string_view>("race", id);
 			if (race.empty()) {
 				std::cout << "Empty race for " << i << " in items\n";
 				continue;

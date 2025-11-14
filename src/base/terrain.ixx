@@ -21,6 +21,7 @@ import Hierarchy;
 import ResourceManager;
 import Globals;
 import Camera;
+import UnorderedMap;
 import "glad/glad.h";
 import "glm/glm.hpp";
 import "glm/gtc/matrix_transform.hpp";
@@ -102,9 +103,9 @@ public:
 
 	// Ground
 	std::shared_ptr<Shader> ground_shader;
-	std::map<std::string, int> ground_texture_to_id;
+	hive::unordered_map<std::string, int> ground_texture_to_id;
 	std::vector<std::shared_ptr<GroundTexture>> ground_textures;
-	std::unordered_map<std::string, TilePathingg> pathing_options;
+	hive::unordered_map<std::string, TilePathingg> pathing_options;
 
 	// GPU buffers
 	GLuint ground_height_buffer;
@@ -334,7 +335,7 @@ public:
         for (const auto& cliff_id : cliffset_ids) {
             cliff_textures.push_back(resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id)));
             cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
-            cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
+            cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data<std::string_view>("groundtile", cliff_id)]);
         }
 
         // prepare GPU buffers
@@ -380,12 +381,12 @@ public:
         glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-        const std::string file_name = water_slk.data("texfile", tileset + "Sha"s);
+        const std::string_view file_name = water_slk.data<std::string_view>("texfile", tileset + "Sha"s);
         for (int i = 0; i < water_textures_nr; i++) {
-			// Hack to force loading of SD water textures till I implement a water shader
+	        // Hack to force loading of SD water textures till I implement a water shader
         	const auto hd = hierarchy.hd;
         	hierarchy.hd = false;
-            const auto texture = resource_manager.load<Texture>(file_name + (i < 10 ? "0" : "") + std::to_string(i));
+        	const auto texture = resource_manager.load<Texture>(std::format("{}{:02}", file_name, i));
         	hierarchy.hd = hd;
 
             if (texture->width != 128 || texture->height != 128) {
@@ -400,10 +401,6 @@ public:
         water_shader = resource_manager.load<Shader>({ "data/shaders/water.vert", "data/shaders/water.frag" });
 
         collision_shape = new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
-        if (collision_shape == nullptr) {
-            std::cout << "Error creating Bullet collision shape\n";
-        }
-
         collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
         collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it
         collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);

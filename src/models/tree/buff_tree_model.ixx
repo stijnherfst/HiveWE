@@ -9,6 +9,7 @@ import std;
 import BaseTreeModel;
 import SLK;
 import Globals;
+import UnorderedMap;
 
 export class BuffTreeModel : public BaseTreeModel {
 	struct Category {
@@ -16,7 +17,7 @@ export class BuffTreeModel : public BaseTreeModel {
 		BaseTreeItem* item;
 	};
 
-	std::unordered_map<std::string, Category> categories;
+	hive::unordered_map<std::string, Category> categories;
 	std::vector<std::string> rowToCategory;
 
 	std::array<std::string, 2> subCategories = {
@@ -25,14 +26,13 @@ export class BuffTreeModel : public BaseTreeModel {
 	};
 
 	BaseTreeItem* getFolderParent(const std::string& id) const override {
-		std::string race = buff_slk.data("race", id);
+		const std::string_view race = buff_slk.data<std::string_view>("race", id);
 		if (race.empty()) {
 			std::cout << "Empty race for " << id << " in buffs\n";
 			return nullptr;
 		}
-		bool isEffect = buff_slk.data("iseffect", id) == "1";
-
-		int subIndex = isEffect ? 1 : 0;
+		const bool isEffect = buff_slk.data("iseffect", id) == "1";
+		const int subIndex = isEffect ? 1 : 0;
 
 		return categories.at(race).item->children[subIndex];
 	}

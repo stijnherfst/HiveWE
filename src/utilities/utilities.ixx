@@ -9,7 +9,7 @@ import types;
 namespace fs = std::filesystem;
 
 // String functions
-export std::string_view trimmed(const std::string& string) {
+export std::string_view trimmed(const std::string_view string) {
 	size_t start = 0;
 	while (start < string.size() && std::isspace(string[start])) {
 		start += 1;
@@ -20,10 +20,10 @@ export std::string_view trimmed(const std::string& string) {
 		end -= 1;
 	}
 
-	return std::string_view(string).substr(start, end - start);
+	return string.substr(start, end - start);
 }
 
-export std::string string_replaced(const std::string& source, const std::string_view from, const std::string_view to) {
+export std::string string_replaced(const std::string_view source, const std::string_view from, const std::string_view to) {
 	std::string new_string;
 	new_string.reserve(source.length()); // avoids a few memory allocations
 

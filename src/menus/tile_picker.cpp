@@ -26,7 +26,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 		button->setIconSize({ 64, 64 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 		from_layout->addWidget(button);
 		from_group->addButton(button);
@@ -42,7 +42,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 		button->setIconSize({ 64, 64 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 		to_layout->addWidget(button);
 		to_group->addButton(button);

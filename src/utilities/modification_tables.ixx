@@ -37,7 +37,7 @@ void load_modification_table(BinaryReader& reader, const uint32_t version, slk::
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
 
-			std::string column_header = to_lowercase_copy(meta_slk.data("field", modification_id));
+			std::string column_header = to_lowercase_copy(meta_slk.data<std::string_view>("field", modification_id));
 			if (optional_ints) {
 				uint32_t level_variation = reader.read<uint32_t>();
 				uint32_t data_pointer = reader.read<uint32_t>();
@@ -188,12 +188,12 @@ void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const sl
 						const std::string_view not_specific = meta_slk.data<std::string_view>("notspecific", key);
 
 						// If we are in the exclude list
-						if (not_specific.find(meta_id) != std::string::npos) {
+						if (not_specific.contains(meta_id)) {
 							continue;
 						}
 
 						// If the include list is not empty and we are not inside
-						if (!use_specific.empty() && use_specific.find(meta_id) == std::string::npos && use_specific.find(base_id) == std::string::npos) {
+						if (!use_specific.empty() && !use_specific.contains(meta_id) && !use_specific.contains(base_id)) {
 							continue;
 						}
 

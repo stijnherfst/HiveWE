@@ -36,7 +36,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 		button->setIconSize({ 48, 48 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 		textures_layout->addWidget(button);
 		textures_group->addButton(button);
@@ -53,7 +53,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 			button->setIconSize({ 48, 48 });
 			button->setCheckable(true); 
 			button->setProperty("cliffID", QString::number(index));
-			button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+			button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 			cliff_layout->addWidget(button);
 			cliff_group->addButton(button);

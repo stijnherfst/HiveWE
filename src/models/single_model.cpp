@@ -85,16 +85,14 @@ QVariant SingleModel::data(const QModelIndex& index, int role) const {
 QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
 	if (role == Qt::DisplayRole) {
 		if (orientation == Qt::Orientation::Vertical) {
-			std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", id_mapping[section].key));
-			category = string_replaced(category, "&", "");
-			std::string display_name = meta_slk->data("displayname", id_mapping[section].key);
-
-			int level = id_mapping[section].level;
+			const std::string_view category = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", id_mapping[section].key));
+			const auto category2 = string_replaced(category, "&", "");
+			const std::string_view display_name = meta_slk->data<std::string_view>("displayname", id_mapping[section].key);
 
 			if (id_mapping[section].level > 0) {
-				return QString::fromStdString(std::format("{} - {} - Level {} ({})", category, display_name, id_mapping[section].level, id_mapping[section].key));
+				return QString::fromStdString(std::format("{} - {} - Level {} ({})", category2, display_name, id_mapping[section].level, id_mapping[section].key));
 			} else {
-				return QString::fromStdString(std::format("{} - {} ({})", category, display_name, id_mapping[section].key));
+				return QString::fromStdString(std::format("{} - {} ({})", category2, display_name, id_mapping[section].key));
 			}
 		} else {
 			return "UnitID";
@@ -166,12 +164,12 @@ void SingleModel::buildMapping() {
 			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
 				id_to_check = slk->shadow_data.at(id).at("oldid");
 			}
-			if (!meta_slk->data("usespecific", key).empty() && meta_slk->data("usespecific", key).find(id_to_check) == std::string::npos) {
+			if (!meta_slk->data<std::string_view>("usespecific", key).empty() && !meta_slk->data<std::string_view>("usespecific", key).contains(id_to_check)) {
 				continue;
 			}
 		}
 
-		std::string field_name = to_lowercase_copy(meta_slk->data("field", key));
+		std::string field_name = to_lowercase_copy(meta_slk->data<std::string_view>("field", key));
 		if (meta_slk->column_headers.contains("data") && meta_slk->data<int>("data", key) > 0) {
 			field_name += static_cast<char>('a' + (meta_slk->data<int>("data", key) - 1));
 		}
@@ -216,13 +214,11 @@ void SingleModel::buildMapping() {
 	}
 
 	std::ranges::sort(id_mapping, [&](const auto& left, const auto& right) {
-		std::string category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", left.key));
-		//category = string_replaced(category, "&", "");
-		const std::string left_string = category + " - " + meta_slk->data("displayname", left.key) + left.field;
+		const std::string_view category1 = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", left.key));
+		const std::string left_string = std::format("{} - {}{}", category1, meta_slk->data<std::string_view>("displayname", left.key), left.field);
 
-		category = world_edit_data.data("ObjectEditorCategories", meta_slk->data("category", right.key));
-		//category = string_replaced(category, "&", "");
-		const std::string right_string = category + " - " + meta_slk->data("displayname", right.key) + right.field;
+		const std::string_view category2 = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", right.key));
+		const std::string right_string = std::format("{} - {}{}", category2, meta_slk->data<std::string_view>("displayname", right.key), right.field);
 
 		return left_string < right_string;
 	});
@@ -337,7 +333,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	const auto model = static_cast<const SingleModel*>(index.model());
 	const auto& mapping = model->getMapping();
 
-	const std::string type = model->meta_slk->data("type", mapping[index.row()].key);
+	const std::string_view type = model->meta_slk->data<std::string_view>("type", mapping[index.row()].key);
 
 	if (type == "int") {
 		static_cast<QSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toInt());
@@ -426,7 +422,7 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	auto singlemodel = static_cast<SingleModel*>(model);
 	auto& mapping = singlemodel->getMapping();
 
-	std::string type = singlemodel->meta_slk->data("type", mapping[index.row()].key);
+	const std::string_view type = singlemodel->meta_slk->data<std::string_view>("type", mapping[index.row()].key);
 
 	if (type == "int") {
 		singlemodel->setData(index, static_cast<QSpinBox*>(editor)->value());

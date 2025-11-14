@@ -54,7 +54,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 		button->setIconSize({ 64, 64 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
 
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
@@ -133,7 +133,7 @@ void TileSetter::update_available_tiles() const {
 		button->setIconSize({ 64, 64 });
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(key));
-		button->setProperty("tileName", QString::fromStdString(slk.data("comment", key)));
+		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", key)));
 
 		available_layout->addWidget(button);
 		available_group->addButton(button);
