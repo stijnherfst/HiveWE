@@ -10,6 +10,7 @@
 #include <QSortFilterProxyModel>
 
 #include "global_search.h"
+#include "nlohmann/json.hpp"
 
 #include <string>
 #include <memory>
@@ -82,6 +83,8 @@ private:
 	std::shared_ptr<QIconResource> custom_ability_icon;
 	std::shared_ptr<QIconResource> custom_buff_icon;
 	std::shared_ptr<QIconResource> custom_upgrade_icon;
+
+	nlohmann::json ability_insights;
 
 	void itemClicked(const QSortFilterProxyModel* model, TableModel* table, const QModelIndex& index);
 	void addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category);

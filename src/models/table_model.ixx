@@ -12,12 +12,13 @@ import TriggerStrings;
 import QIconResource;
 import Hierarchy;
 import ResourceManager;
+import UnorderedMap;
 import <absl/strings/str_split.h>;
 import <absl/strings/str_join.h>;
 
 namespace fs = std::filesystem;
 
-std::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
+hive::unordered_map<std::string, std::shared_ptr<QIconResource>> path_to_icon;
 
 
 export class TableModel;
@@ -44,26 +45,30 @@ export class TableModel : public QAbstractTableModel {
 		invalid_icon = resource_manager.load<QIconResource>("ReplaceableTextures/WorldEditUI/DoodadPlaceholder.dds");
 	}
 
-	int rowCount(const QModelIndex& parent = QModelIndex()) const override {
+	[[nodiscard]] int rowCount(const QModelIndex& parent = QModelIndex()) const override {
 		return slk->rows();
 	}
 
-	int columnCount(const QModelIndex& parent = QModelIndex()) const override {
+	[[nodiscard]] int columnCount(const QModelIndex& parent = QModelIndex()) const override {
 		return slk->columns();
 	}
 
-	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override {
+	[[nodiscard]] QVariant data(const QModelIndex& index, const int role = Qt::DisplayRole) const override {
 		if (!index.isValid()) {
 			return {};
 		}
 
 		const std::string& id = slk->index_to_row.at(index.row());
 		const std::string& field = slk->index_to_column.at(index.column());
-		const std::string meta_id = fieldToMetaID(id, field);
+		return data(id, field, role);
+	}
+
+	[[nodiscard]] QVariant data(const std::string_view id, const std::string_view field, const int role = Qt::DisplayRole) const {
+		const std::string_view meta_id = fieldToMetaID(id, field);
 
 		switch (role) {
 			case Qt::DisplayRole: {
-				const std::string_view field_data = slk->data<std::string_view>(index.column(), index.row());
+				const std::string_view field_data = slk->data<std::string_view>(field, id);
 
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type == "string") {
@@ -164,7 +169,7 @@ export class TableModel : public QAbstractTableModel {
 							continue;
 						}
 
-						if (slk->data<std::string_view>(index.column(), index.row()) == value[0]) {
+						if (slk->data<std::string_view>(field, id) == value[0]) {
 							QString displayText = QString::fromStdString(value[1]);
 							displayText.replace('&', "");
 							return displayText;
@@ -187,14 +192,14 @@ export class TableModel : public QAbstractTableModel {
 				return QString::fromUtf8(field_data);
 			}
 			case Qt::EditRole:
-				return QString::fromUtf8(slk->data<std::string_view>(index.column(), index.row()));
+				return QString::fromUtf8(slk->data<std::string_view>(field, id));
 			case Qt::CheckStateRole: {
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "bool") {
 					return {};
 				}
 
-				return (slk->data<std::string_view>(index.column(), index.row()) == "1") ? Qt::Checked : Qt::Unchecked;
+				return (slk->data<std::string_view>(field, id) == "1") ? Qt::Checked : Qt::Unchecked;
 			}
 			case Qt::DecorationRole:
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
@@ -202,31 +207,28 @@ export class TableModel : public QAbstractTableModel {
 					return {};
 				}
 
-				fs::path icon = slk->data<std::string_view>(index.column(), index.row());
+				const std::string_view icon = slk->data<std::string_view>(field, id);
 				if (icon.empty()) {
 					return invalid_icon->icon;
 				}
 
-				if (path_to_icon.contains(icon.string())) {
-					return path_to_icon.at(icon.string())->icon;
+				if (path_to_icon.contains(icon)) {
+					return path_to_icon.at(icon)->icon;
 				}
 
+				fs::path icon_path = icon;
 				if (!hierarchy.file_exists(icon)) {
-					icon.replace_extension(".dds");
-					if (!hierarchy.file_exists(icon)) {
-						return {};
+					icon_path.replace_extension(".dds");
+					if (!hierarchy.file_exists(icon_path)) {
+						return invalid_icon->icon;
 					}
 				}
 
-				path_to_icon[icon.string()] = resource_manager.load<QIconResource>(icon);
-				return path_to_icon.at(icon.string())->icon;
+				path_to_icon[icon_path.string()] = resource_manager.load<QIconResource>(icon_path);
+				return path_to_icon.at(icon_path.string())->icon;
 		}
 
 		return {};
-	}
-
-	QVariant data(const std::string_view id, const std::string_view field, int role = Qt::DisplayRole) const {
-		return data(index(slk->row_headers.at(id), slk->column_headers.at(field)), role);
 	}
 
 	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override {
@@ -255,7 +257,7 @@ export class TableModel : public QAbstractTableModel {
 		return false;
 	}
 
-	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override {
+	QVariant headerData(int section, const Qt::Orientation orientation, const int role = Qt::DisplayRole) const override {
 		if (role != Qt::DisplayRole) {
 			return {};
 		}
@@ -267,15 +269,15 @@ export class TableModel : public QAbstractTableModel {
 		}
 	}
 
-	Qt::ItemFlags flags(const QModelIndex& index) const override {
+	[[nodiscard]] Qt::ItemFlags flags(const QModelIndex& index) const override {
 		if (!index.isValid()) {
 			return Qt::NoItemFlags;
 		}
 
 		Qt::ItemFlags flags = QAbstractTableModel::flags(index);
 
-		const std::string& id = slk->index_to_row.at(index.row());
-		const std::string& field = slk->index_to_column.at(index.column());
+		const std::string_view id = slk->index_to_row.at(index.row());
+		const std::string_view field = slk->index_to_column.at(index.column());
 		const std::string_view type = meta_slk->data<std::string_view>("type", fieldToMetaID(id, field));
 		if (type == "bool") {
 			flags |= Qt::ItemIsUserCheckable;
@@ -309,19 +311,19 @@ export class TableModel : public QAbstractTableModel {
 		endRemoveRows();
 	}
 
-	const std::string& fieldToMetaID(const std::string& id, const std::string_view field) const {
-		if (auto found = meta_slk->meta_map.find(field); found != meta_slk->meta_map.end()) {
+	[[nodiscard]] std::string_view fieldToMetaID(const std::string_view id, const std::string_view field) const {
+		if (const auto found = meta_slk->meta_map.find(field); found != meta_slk->meta_map.end()) {
 			return found->second;
 		}
 
 		const size_t nr_position = field.find_first_of("0123456789");
 		const std::string_view new_field = field.substr(0, nr_position);
 
-		if (auto found = meta_slk->meta_map.find(new_field); found != meta_slk->meta_map.end()) {
+		if (const auto found = meta_slk->meta_map.find(new_field); found != meta_slk->meta_map.end()) {
 			return found->second;
 		}
 
-		return meta_slk->meta_map.at(std::string(new_field) + id);
+		return meta_slk->meta_map.at(std::string(new_field).append(id));
 	}
 
 	// Returns the model index belonging to the row with the given id

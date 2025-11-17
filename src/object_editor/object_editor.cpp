@@ -12,6 +12,8 @@
 #include <QShortcut>
 #include <QDialog>
 #include <QToolButton>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QMenu>
 
 import std;
@@ -25,6 +27,9 @@ import "single_model.h";
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
+
+	std::ifstream f("data/warcraft/ability_insights.json");
+	ability_insights = nlohmann::json::parse(f);
 
 	custom_unit_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewUnit"));
 	custom_item_icon = resource_manager.load<QIconResource>(world_edit_data.data("WorldEditArt", "ToolBarIcon_OE_NewItem"));
@@ -102,6 +107,42 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 		return;
 	}
 
+	QVBoxLayout* layout = new QVBoxLayout;
+	layout->setContentsMargins(0, 0, 0, 0);
+
+	const auto found = ability_insights.find(id);
+	if (found != ability_insights.end()) {
+		QLabel* title = new QLabel(QString::fromUtf8((*found)["name"].get<std::string_view>()));
+		QFont font1 = title->font();
+		font1.setBold(true);
+		font1.setPointSize(15);
+		title->setFont(font1);
+
+		std::string all_tags = "Tags: ";
+		for (const auto& tag : (*found)["tags"]) {
+			all_tags += tag.get<std::string_view>() + " ";
+		}
+
+		QLabel* tags = new QLabel(QString::fromStdString(all_tags));
+		QFont font2 = tags->font();
+		font2.setBold(true);
+		tags->setFont(font2);
+
+		QLabel* label = new QLabel(QString::fromUtf8((*found)["raw_text"].get<std::string_view>()));
+		QLabel* latest_tested_version = new QLabel("Latest tested version: " + QString::fromUtf8((*found)["latest_tested_version"].get<std::string_view>()));
+		latest_tested_version->setFont(font2);
+
+		QLabel* link = new QLabel("Fix mistakes or add info directly in <a href=\"https://docs.google.com/document/d/1z17FTnhyfVL87tJgLmwWks3Low6TuQ0tjfKHXBELWpo/edit\">the Google Docs</a>!");
+		link->setOpenExternalLinks(true);
+
+		layout->addWidget(title);
+		layout->addWidget(tags);
+		layout->addWidget(label);
+		layout->addWidget(latest_tested_version);
+		layout->addWidget(link);
+		label->setWordWrap(true);
+	}
+
 	QTableView* view = new QTableView;
 	TableDelegate* delegate = new TableDelegate;
 	view->setItemDelegate(delegate);
@@ -113,10 +154,20 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
 	view->setIconSize({ 24, 24 });
 	view->setWordWrap(true);
+	view->setSizeAdjustPolicy(QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents);
+	layout->addWidget(view);
+
+	QWidget* container = new QWidget;
+	container->setLayout(layout);
+
+	QScrollArea* area = new QScrollArea;
+	area->setWidget(container);
+	area->setWidgetResizable(true);
 
 	ads::CDockWidget* dock_tab = new ads::CDockWidget(dock_manager, "");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
-	dock_tab->setWidget(view);
+	dock_tab->setWidget(area);
+	// dock_tab->setWidget(view);
 	dock_tab->setObjectName(QString::fromStdString(id));
 	dock_tab->setWindowTitle(name);
 	dock_tab->setIcon(icon);
@@ -126,6 +177,10 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	view->setModel(single_model);
 
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
+
+	// Scroll just past the ability insights
+	const int y = view->mapTo(area->widget(), QPoint(0,0)).y();
+	area->verticalScrollBar()->setValue(y);
 }
 
 void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category) {

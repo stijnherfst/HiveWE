@@ -231,10 +231,9 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 
 	for (size_t i = topLeft.row(); i < bottomRight.row(); i++) {
 		if (i == slk->row_headers.at(id)) {
-			
-			auto a = mapFromSource(createIndex(i, topLeft.column()));
-			auto b = mapFromSource(createIndex(i, bottomRight.column()));
-			emit dataChanged(a, b, roles);
+			const auto top_left = mapFromSource(createIndex(i, topLeft.column()));
+			const auto bottom_right = mapFromSource(createIndex(i, bottomRight.column()));
+			emit dataChanged(top_left, bottom_right, roles);
 			return;
 		}
 	}
