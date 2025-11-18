@@ -341,8 +341,6 @@ bool UnitBrush::can_place() {
 	const glm::vec2 position = input_handler.mouse_world;
 
 	for (const auto& i : map->units.units) {
-		// const glm::vec2 difference = position - glm::vec2(i.position);
-		// const float squared_distance = glm::dot(difference, difference);
 		const float other_radius = units_slk.data<float>("collision", i.id) / 128.f;
 
 		if (glm::distance(position, glm::vec2(i.position)) < radius + other_radius) {
