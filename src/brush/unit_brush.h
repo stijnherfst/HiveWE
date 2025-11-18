@@ -67,6 +67,8 @@ class UnitBrush : public Brush {
 	void render_selection() const override;
 	void render_clipboard() override;
 
+	bool can_place() override;
+
 	void set_random_rotation();
 	void set_unit(const std::string& id);
 

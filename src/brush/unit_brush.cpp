@@ -10,17 +10,15 @@ import Camera;
 import OpenGLUtilities;
 import RenderManager;
 import Globals;
+import PathingMap;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 import MapGlobal;
 
-UnitBrush::UnitBrush() : Brush() {
-}
+UnitBrush::UnitBrush() : Brush() {}
 
-void UnitBrush::set_shape(const Shape new_shape) {
-}
+void UnitBrush::set_shape(const Shape new_shape) {}
 
 void UnitBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
@@ -110,8 +108,8 @@ void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 							drag_offsets.push_back(input_handler.mouse_world - i->position);
 						}
 					} else {
-						selections = { &unit };
-						drag_offsets = { input_handler.mouse_world - unit.position };
+						selections = {&unit};
+						drag_offsets = {input_handler.mouse_world - unit.position};
 						emit selection_changed();
 					}
 					return;
@@ -124,7 +122,7 @@ void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 }
 
 void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	Brush::mouse_move_event(event,	frame_delta);
+	Brush::mouse_move_event(event, frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -150,7 +148,8 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				}
 			} else if (event->modifiers() & Qt::ControlModifier) {
 				for (auto&& i : selections) {
-					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					float target_rotation =
+						std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
 					if (target_rotation < 0) {
 						target_rotation = (glm::pi<float>() + target_rotation) + glm::pi<float>();
 					}
@@ -161,7 +160,7 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 			} else if (selection_started) {
 				const glm::vec3 size = input_handler.mouse_world - selection_start;
 
-				auto query = map->units.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+				auto query = map->units.query_area({selection_start.x, selection_start.y, size.x, size.y});
 				if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
 					selections.insert(query.begin(), query.end());
 				} else if (event->modifiers() & Qt::KeyboardModifier::AltModifier) {
@@ -172,7 +171,6 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					selections.clear();
 					selections.insert(query.begin(), query.end());
 				}
-
 
 				//selections = map->units.query_area({ selection_start.x, selection_start.y, size.x, size.y });
 				emit selection_changed();
@@ -334,9 +332,25 @@ void UnitBrush::render_clipboard() {
 
 		i.skeleton.update_location(final_position, glm::angleAxis(i.angle, glm::vec3(0, 0, 1)), final_scale);
 		i.skeleton.update(0.016f);
-		//i.mesh->render_queue(i.skeleton, glm::vec3(1.f));
 		map->render_manager.queue_render(*i.mesh, i.skeleton, glm::vec3(1.f), 0);
 	}
+}
+
+bool UnitBrush::can_place() {
+	const float radius = units_slk.data<float>("collision", id) / 128.f;
+	const glm::vec2 position = input_handler.mouse_world;
+
+	for (const auto& i : map->units.units) {
+		// const glm::vec2 difference = position - glm::vec2(i.position);
+		// const float squared_distance = glm::dot(difference, difference);
+		const float other_radius = units_slk.data<float>("collision", i.id) / 128.f;
+
+		if (glm::distance(position, glm::vec2(i.position)) < radius + other_radius) {
+			return false;
+		}
+	}
+
+	return map->pathing_map.is_area_free(position, radius, PathingMap::Flags::unwalkable);
 }
 
 void UnitBrush::set_random_rotation() {
@@ -354,7 +368,7 @@ void UnitBrush::set_unit(const std::string& id) {
 	skeleton = SkeletalModelInstance(mesh->mdx);
 }
 
-void UnitBrush::unselect_id(std::string_view id) {
+void UnitBrush::unselect_id(const std::string_view id) {
 	if (this->id == id) {
 		set_unit("hfoo");
 	}

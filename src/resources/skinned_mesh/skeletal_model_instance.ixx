@@ -42,7 +42,7 @@ export class SkeletalModelInstance {
 	std::vector<glm::mat4> world_matrices;
 
 	SkeletalModelInstance() = default;
-	explicit SkeletalModelInstance(std::shared_ptr<mdx::MDX> model) : model(model) {
+	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model) : model(model) {
 		const size_t node_count = model->bones.size() +
 							model->lights.size() +
 							model->help_bones.size() +

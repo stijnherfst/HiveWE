@@ -132,7 +132,7 @@ export class PathingMap {
 	/// Checks for every cell on the supplied pathing_texture where (pathing_texture & mask == true) whether (existing_pathing & mask == true) and if so returns false
 	/// Expects position in whole grid tiles
 	/// Rotation in multiples of 90
-	bool is_area_free(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, uint8_t mask) {
+	bool is_area_free(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, const uint8_t mask) const {
 		const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 		for (int j = 0; j < pathing_texture->height; j++) {
@@ -170,6 +170,22 @@ export class PathingMap {
 					| (pathing_texture->data[index + 2] > 250) * Flags::unbuildable;
 
 				if (pathing_texture_mask & mask && pathing_cells_dynamic[yy * width + xx] && mask) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
+	/// Returns whether all cells in the radius around position do not match (pathing & mask == true)
+	/// Expects position in whole grid tiles
+	bool is_area_free(const glm::vec2 position, const float radius, const uint8_t mask) const {
+		const glm::vec2 minimum = glm::max((position - glm::vec2(radius)) * 4.f, glm::vec2(0.0f));
+		const glm::vec2 maximum = glm::min((position + glm::vec2(radius)) * 4.f, glm::vec2(width, height));
+
+		for (int y = minimum.y; y < maximum.y; y++) {
+			for (int x = minimum.x; x < maximum.x; x++) {
+				if (pathing_cells_dynamic[y * width + x] & mask) {
 					return false;
 				}
 			}
