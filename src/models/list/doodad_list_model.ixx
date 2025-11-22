@@ -40,7 +40,7 @@ export class DoodadListModel: public BaseListModel {
 			case Qt::UserRole:
 				return QString::fromStdString("doodads/" + doodads_slk.data("category", index.row()) + "/" + doodads_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole: {
-				char category = doodads_slk.data("category", index.row()).front();
+				const char category = doodads_slk.data<std::string_view>("category", index.row()).front();
 				if (icons.contains(category)) {
 					return icons.at(category)->icon;
 				} else {
@@ -57,34 +57,46 @@ export class DoodadListModel: public BaseListModel {
 };
 
 export class DoodadListFilter : public QSortFilterProxyModel {
-	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(doodads_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
+	[[nodiscard]] bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(doodads_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
-		} else {
-			const std::string tilesets = doodads_slk.data("tilesets", sourceRow);
-			return QString::fromStdString(doodads_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');
 		}
+
+		if (filterCategory) {
+			if (doodads_slk.data<std::string_view>("category", sourceRow) != filterCategory->toStdString()) {
+				return false;
+			}
+		}
+
+		if (filterTileset) {
+			const std::string_view tilesets = doodads_slk.data<std::string_view>("tilesets", sourceRow);
+			if (tilesets.find('*') == std::string::npos && tilesets.find(*filterTileset) == std::string::npos && filterTileset != '*') {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
-		return doodads_slk.data("name", left.row()) < doodads_slk.data("name", right.row());
+		return doodads_slk.data<std::string_view>("name", left.row()) < doodads_slk.data<std::string_view>("name", right.row());
 	}
 
-	QString filterCategory = "";
-	char filterTileset = '*';
+	std::optional<QString> filterCategory;
+	std::optional<char> filterTileset;
 
 public:
-	void setFilterCategory(QString category) {
+	void setFilterCategory(const QString& category) {
 		filterCategory = category;
 		invalidateFilter();
 	}
 
-	void setFilterTileset(char tileset) {
+	void setFilterTileset(const char tileset) {
 		filterTileset = tileset;
 		invalidateFilter();
 	}

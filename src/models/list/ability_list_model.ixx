@@ -31,7 +31,7 @@ export class AbilityListModel: public BaseListModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(abilities_slk.data("editorsuffix", index.row()));
+				return mapToSource(index).data(role).toString() + " " + QString::fromUtf8(abilities_slk.data<std::string_view>("editorsuffix", index.row()));
 			case Qt::UserRole:
 				return QString::fromStdString("abilities/" + abilities_slk.data("race", index.row()) + "/" + abilities_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
@@ -48,11 +48,11 @@ export class AbilityListFilter: public QSortFilterProxyModel {
 
 	[[nodiscard]]
 	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(abilities_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(abilities_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
 		}

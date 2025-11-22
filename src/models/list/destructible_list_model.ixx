@@ -36,11 +36,11 @@ export class DestructableListModel: public BaseListModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return sourceModel()->data(mapToSource(index), role).toString() + " " + QString::fromStdString(destructibles_slk.data("editorsuffix", index.row()));
+				return sourceModel()->data(mapToSource(index), role).toString() + " " + QString::fromUtf8(destructibles_slk.data<std::string_view>("editorsuffix", index.row()));
 			case Qt::UserRole:
 				return QString::fromStdString("destructibles/" + destructibles_slk.data("category", index.row()) + "/" + destructibles_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole: {
-				char category = destructibles_slk.data("category", index.row()).front();
+				const char category = destructibles_slk.data<std::string_view>("category", index.row()).front();
 				if (icons.contains(category)) {
 					return icons.at(category)->icon;
 				} else {
@@ -57,26 +57,38 @@ export class DestructableListModel: public BaseListModel {
 };
 
 export class DestructableListFilter: public QSortFilterProxyModel {
-	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(destructibles_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
+	[[nodiscard]] bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(destructibles_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
-		} else {
-			const std::string tilesets = destructibles_slk.data("tilesets", sourceRow);
-			return QString::fromStdString(destructibles_slk.data("category", sourceRow)) == filterCategory && (tilesets.find('*') != std::string::npos || tilesets.find(filterTileset) != std::string::npos || filterTileset == '*');
 		}
+
+		if (filterCategory) {
+			if (destructibles_slk.data<std::string_view>("category", sourceRow) != filterCategory->toStdString()) {
+				return false;
+			}
+		}
+
+		if (filterTileset) {
+			const std::string_view tilesets = destructibles_slk.data<std::string_view>("tilesets", sourceRow);
+			if (tilesets.find('*') == std::string::npos && tilesets.find(*filterTileset) == std::string::npos && filterTileset != '*') {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
-	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
-		return destructibles_slk.data("name", left.row()) < destructibles_slk.data("name", right.row());
+	[[nodiscard]] bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
+		return destructibles_slk.data<std::string_view>("name", left.row()) < destructibles_slk.data<std::string_view>("name", right.row());
 	}
 
-	QString filterCategory = "";
-	char filterTileset = '*';
+	std::optional<QString> filterCategory;
+	std::optional<char> filterTileset;
 
   public:
 	void setFilterCategory(const QString& category) {

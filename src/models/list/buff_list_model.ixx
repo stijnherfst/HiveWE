@@ -31,7 +31,7 @@ export class BuffListModel: public BaseListModel {
 		switch (role) {
 			case Qt::DisplayRole: {
 				const QString editorname = sourceModel()->index(index.row(), buff_slk.column_headers.at("editorname")).data(role).toString();
-				const QString editorsuffix = QString::fromStdString(buff_slk.data("editorsuffix", index.row()));
+				const QString editorsuffix = QString::fromUtf8(buff_slk.data<std::string_view>("editorsuffix", index.row()));
 				if (editorname.isEmpty()) {
 					return sourceModel()->index(index.row(), buff_slk.column_headers.at("bufftip")).data(role).toString() + " " + editorsuffix;;
 				} else {
@@ -53,11 +53,11 @@ export class BuffListFilter: public QSortFilterProxyModel {
 
 	[[nodiscard]]
 	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(buff_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(buff_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
 		}

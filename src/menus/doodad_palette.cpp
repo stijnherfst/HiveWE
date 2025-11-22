@@ -77,11 +77,13 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	doodad_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
 	doodad_filter_model->setSourceModel(doodad_list_model);
 	doodad_filter_model->sort(0, Qt::AscendingOrder);
+	doodad_filter_model->setFilterTileset('*');
 
 	destructable_filter_model = new DestructableListFilter(this);
 	destructable_filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
 	destructable_filter_model->setSourceModel(destructable_list_model);
 	destructable_filter_model->sort(0, Qt::AscendingOrder);
+	destructable_filter_model->setFilterTileset('*');
 
 	concat_table = new QConcatenateTablesProxyModel(this);
 	concat_table->addSourceModel(destructable_filter_model);
@@ -401,8 +403,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		midpoint /= brush.selections.size();
 
 		for (const auto& doodad : brush.selections) {
-			glm::mat4 centered = glm::translate(glm::mat4(1.0f), -midpoint) * doodad->skeleton.matrix;
-			glm::mat4 final = glm::scale(glm::mat4(1.0f), glm::vec3(128.0f)) * centered;
+			const glm::mat4 centered = glm::translate(glm::mat4(1.0f), -midpoint) * doodad->skeleton.matrix;
+			const glm::mat4 final = glm::scale(glm::mat4(1.0f), glm::vec3(128.0f)) * centered;
 			base.merge_with(*doodad->mesh->mdx, final);
 		}
 		base.deduplicate_textures().deduplicate_materials().deduplicate_geosets().calculate_extents();
@@ -418,11 +420,12 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	});
 
 	// Default to Trees/Destructibles
-	ui.type->setCurrentIndex(ui.type->count() - 2);
+	ui.type->setCurrentIndex(ui.type->count() - 3);
 	ui.tileset->setCurrentIndex(0);
 
 	ui.search->setFocus();
 	ui.search->selectAll();
+	ui.search->setClearButtonEnabled(true);
 
 	ui.doodads->setCurrentIndex(ui.doodads->model()->index(0, 0));
 	selection_changed(ui.doodads->model()->index(0, 0));

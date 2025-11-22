@@ -373,6 +373,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 
 	QLineEdit* search = new QLineEdit;
 	search->setObjectName("search");
+	search->setClearButtonEnabled(true);
 	search->setPlaceholderText("Search " + name);
 	connect(search, &QLineEdit::textChanged, [=](const QString& string) {
 		filter->setFilterFixedString(string);

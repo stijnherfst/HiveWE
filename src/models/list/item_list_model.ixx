@@ -46,11 +46,11 @@ export class ItemListFilter: public QSortFilterProxyModel {
 
 	[[nodiscard]]
 	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(items_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(items_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
 		}

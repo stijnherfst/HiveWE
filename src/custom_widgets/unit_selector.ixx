@@ -26,12 +26,14 @@ export class UnitSelector : public QWidget {
 		filter_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
 		filter_model->setSourceModel(list_model);
 		filter_model->sort(0, Qt::AscendingOrder);
+		filter_model->setFilterRace("human");
 
 		race = new QComboBox(this);
 		search = new QLineEdit(this);
 		units = new QListView(this);
 
 		search->setPlaceholderText("Search");
+		search->setClearButtonEnabled(true);
 
 		units->setUniformItemSizes(true);
 		units->setIconSize(QSize(24, 24));

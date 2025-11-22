@@ -30,7 +30,7 @@ export class UpgradeListModel: public BaseListModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return mapToSource(index).data(role).toString() + " " + QString::fromStdString(upgrade_slk.data("editorsuffix", index.row()));
+				return mapToSource(index).data(role).toString() + " " + QString::fromUtf8(upgrade_slk.data<std::string_view>("editorsuffix", index.row()));
 			case Qt::UserRole:
 				return QString::fromStdString("upgrades/" + upgrade_slk.data("race", index.row()) + "/" + upgrade_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:
@@ -46,11 +46,11 @@ export class UpgradeListFilter: public QSortFilterProxyModel {
 
 	[[nodiscard]]
 	bool filterAcceptsRow(const int sourceRow, const QModelIndex& sourceParent) const override {
-		if (QString::fromStdString(upgrade_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
-			return true;
-		}
-
 		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(upgrade_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
 			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
 			return source_index.data().toString().contains(filterRegularExpression());
 		}
