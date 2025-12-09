@@ -22,6 +22,7 @@ public:
 	QRibbonButton* pathing_visible = new QRibbonButton;
 	QRibbonButton* brush_visible = new QRibbonButton;
 	QRibbonButton* lighting_visible = new QRibbonButton;
+	QRibbonButton* water_visible = new QRibbonButton;
 	QRibbonButton* click_helpers_visible = new QRibbonButton;
 	QRibbonButton* wireframe_visible = new QRibbonButton;
 	QRibbonButton* debug_visible = new QRibbonButton;

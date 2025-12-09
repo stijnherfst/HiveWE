@@ -69,6 +69,7 @@ export class Map: public QObject {
 	bool render_pathing = false;
 	bool render_brush = true;
 	bool render_lighting = true;
+	bool render_water = true;
 	bool render_click_helpers = true;
 	bool render_wireframe = false;
 	bool render_debug = false;
@@ -697,7 +698,9 @@ export class Map: public QObject {
 		}
 
 		render_manager.render(render_lighting, render_click_helpers, light_direction);
-		terrain.render_water();
+		if (render_water) {
+			terrain.render_water();
+		}
 
 		// physics.dynamicsWorld->debugDrawWorld();
 		// physics.draw->render();
@@ -712,7 +715,7 @@ export class Map: public QObject {
 		std::random_device rd;
 		std::mt19937 mt(rd());
 		std::uniform_int_distribution<int> dist(0, 25);
-	again:
+		again:
 
 		std::string id =
 			""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
