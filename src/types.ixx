@@ -3,7 +3,6 @@ export module types;
 import std;
 
 export {
-	// Integer types
 	using u8  = std::uint8_t;
 	using u16 = std::uint16_t;
 	using u32 = std::uint32_t;
@@ -14,7 +13,6 @@ export {
 	using i32 = std::int32_t;
 	using i64 = std::int64_t;
 
-	// Floating-point types
 	using f32 = float;
 	using f64 = double;
 }

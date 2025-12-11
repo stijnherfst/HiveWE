@@ -6,7 +6,6 @@
 #include <unordered_set>
 #include <string>
 #include <vector>
-#include <unordered_map>
 #include <memory>
 #include "brush.h"
 #include <glm/glm.hpp>
@@ -15,7 +14,7 @@
 
 import PathingTexture;
 import DoodadsUndo;
-import Doodads;
+import Doodad;
 import SkinnedMesh;
 import SkeletalModelInstance;
 
@@ -68,6 +67,8 @@ class DoodadBrush : public Brush {
 	Action action = Action::none;
 
 	DoodadBrush();
+
+	glm::vec2 get_position() const override;
 
 	void set_shape(const Shape new_shape) override;
 

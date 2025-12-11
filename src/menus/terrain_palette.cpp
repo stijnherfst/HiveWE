@@ -19,7 +19,6 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
-	selection_mode->setShortCut(Qt::Key_Space, { this, parent });
 
 	ui.flowLayout_placeholder->addLayout(textures_layout);
 	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
@@ -161,7 +160,7 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 		ui.brushSizeSlider->setValue(button->text().toInt());
 	});
 	connect(ui.brushSizeSlider, &QSlider::valueChanged, [&](int value) {
-		brush.set_size(value);
+		brush.set_size(glm::ivec2(value));
 		ui.brushSize->setValue(value);
 	});
 	
@@ -239,10 +238,18 @@ TerrainPalette::TerrainPalette(QWidget *parent) : Palette(parent) {
 TerrainPalette::~TerrainPalette() {
 	map->brush = nullptr;
 	delete change_mode_parent;
+	delete change_mode_this;
 }
 
 bool TerrainPalette::event(QEvent *e) {
-	if (e->type() == QEvent::WindowActivate) {
+	if (e->type() == QEvent::Close) {
+		change_mode_this->setEnabled(false);
+		change_mode_parent->setEnabled(false);
+		ribbon_tab->setParent(nullptr);
+		delete ribbon_tab;
+	} else if (e->type() == QEvent::WindowActivate) {
+		change_mode_this->setEnabled(true);
+		change_mode_parent->setEnabled(true);
 		map->brush = &brush;
 		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
@@ -252,5 +259,7 @@ bool TerrainPalette::event(QEvent *e) {
 void TerrainPalette::deactivate(QRibbonTab* tab) {
 	if (tab != ribbon_tab) {
 		brush.clear_selection();
+		change_mode_this->setEnabled(false);
+		change_mode_parent->setEnabled(false);
 	}
 }

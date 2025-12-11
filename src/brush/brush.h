@@ -27,29 +27,17 @@ public:
 		pasting
 	};
 
-	bool uv_offset_locked = false;
-	glm::ivec2 uv_offset = { 0, 0 };
-	int size_granularity = 1;
-	int uv_offset_granularity = 4;
-	float granularity = 1.f;
-
-	glm::vec2 brush_offset = { 0, 0 };
-
-	glm::u8vec4 brush_color = { 0, 255, 0, 128 };
 
 	GLuint brush_texture;
 
-	glm::vec2 position_new;
-
 	Brush();
 
-	virtual void set_position(const glm::vec2& position);
 	virtual glm::vec2 get_position() const;
-	virtual void set_size(int size);
+	virtual void set_size(glm::ivec2 size);
 	virtual void set_shape(Shape shape);
 	virtual void increase_size(int size);
 	virtual void decrease_size(int size);
-	virtual bool contains(int x, int y) const;
+	virtual bool contains(glm::ivec2 pos) const;
 
 	virtual void switch_mode();
 	Mode get_mode() {
@@ -88,8 +76,17 @@ protected:
 	Mode mode = Mode::placement;
 	Mode return_mode = Mode::placement;
 
-	int size = 1;
-	glm::ivec2 position;
+	/// The color used to render the brush which currently mimics the WC3 default
+	glm::u8vec4 brush_color = { 0, 255, 0, 128 };
+
+	/// How many quarter tiles fit into one size unit for this brush. Terrain brush is 4, pathing brush is 1.
+	int size_granularity = 1;
+	/// The granularity of the grid that the position will be snapped to. There will be 1 / position_granularity cells in a tile
+	float position_granularity = 1.f;
+	/// Whether the brush will be offset to center on a corner of the grid lattice rather than on a grid tile
+	bool center_on_tile_corner = false;
+	/// Size in 1/4ths of a tile (corresponding to the pathing map tile size which is the smallest)
+	glm::ivec2 size = glm::ivec2(1);
 
 	bool selection_started = false;
 	glm::vec3 selection_start;

@@ -6,7 +6,7 @@
 
 #include "brush.h"
 
-import Doodads;
+import Doodad;
 import Terrain;
 import TerrainUndo;
 

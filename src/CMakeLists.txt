@@ -5,6 +5,7 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 
 	"base/map.ixx"
 	"base/binary_reader.ixx"
+	"base/doodad.ixx"
 	"base/doodads.ixx"
 	"base/binary_writer.ixx"
 	"base/hierarchy.ixx"

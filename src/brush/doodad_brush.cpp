@@ -6,6 +6,7 @@ import std;
 import Hierarchy;
 import SLK;
 import Texture;
+import Doodad;
 import WorldUndoManager;
 import Camera;
 import OpenGLUtilities;
@@ -20,11 +21,10 @@ import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 
-DoodadBrush::DoodadBrush()
-	: Brush() {
-	granularity = 2.f;
-	uv_offset_granularity = 2;
-	brush_offset = { 0.0f, 0.0f };
+DoodadBrush::DoodadBrush() : Brush() {
+	position_granularity = 2.f;
+	size_granularity = 2;
+	center_on_tile_corner = false;
 
 	click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt);
 	click_helper_skeleton = SkeletalModelInstance(click_helper->mdx);
@@ -45,6 +45,10 @@ int DoodadBrush::get_random_variation() {
 	return *it;
 }
 
+glm::vec2 DoodadBrush::get_position() const {
+	return Doodad::acceptable_position(glm::vec2(input_handler.mouse_world), doodad.pathing, doodad.angle);
+}
+
 void DoodadBrush::set_shape(const Shape new_shape) {
 	context->makeCurrent();
 	shape = new_shape;
@@ -58,12 +62,12 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 
 	if (doodad.pathing) {
 		// 270 instead of 90 because OpenGL upside down shenanigans
-		const int32_t rotation = ((int)glm::degrees(doodad.angle) + 270);
+		const int32_t rotation = static_cast<int>(glm::degrees(doodad.angle)) + 270;
 
 		const int div_w = (rotation % 180) ? doodad.pathing->height : doodad.pathing->width;
 		const int div_h = (rotation % 180) ? doodad.pathing->width : doodad.pathing->height;
-		
-		std::vector<glm::u8vec4> brush(div_w * div_h, { 0, 0, 0, 0 });
+
+		std::vector<glm::u8vec4> brush(div_w * div_h, {0, 0, 0, 0});
 
 		for (int i = 0; i < doodad.pathing->width; i++) {
 			for (int j = 0; j < doodad.pathing->height; j++) {
@@ -88,11 +92,11 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 				const int in = ((doodad.pathing->height - 1 - j) * doodad.pathing->width + i) * doodad.pathing->channels;
 
 				// Have to check for > 250 because sometimes the pathing textures are not properly thresholded
-				glm::u8vec4 color = { 
+				const glm::u8vec4 color = {
 					doodad.pathing->data[in] > 250 ? 255 : 0,
 					doodad.pathing->data[in + 1] > 250 ? 255 : 0,
 					doodad.pathing->data[in + 2] > 250 ? 255 : 0,
-					128 
+					128
 				};
 
 				if (color.r || color.g || color.b) {
@@ -103,9 +107,9 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 		glTextureStorage2D(brush_texture, 1, GL_RGBA8, div_w, div_h);
 		glTextureSubImage2D(brush_texture, 0, 0, 0, div_w, div_h, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
 	} else {
-		std::vector<glm::u8vec4> brush(size * size, { 0, 0, 0, 0 });
-		glTextureStorage2D(brush_texture, 1, GL_RGBA8, size, size);
-		glTextureSubImage2D(brush_texture, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+		const std::vector<glm::u8vec4> brush(size.x * size.y, {0, 0, 0, 0});
+		glTextureStorage2D(brush_texture, 1, GL_RGBA8, size.x, size.y);
+		glTextureSubImage2D(brush_texture, 0, 0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
 	}
 }
 
@@ -115,10 +119,10 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			start_action(Action::move);
 		}
 
-		bool left = event->key() == Qt::Key_1 || event->key() == Qt::Key_4 || event->key() == Qt::Key_7;
-		bool right = event->key() == Qt::Key_3 || event->key() == Qt::Key_6 || event->key() == Qt::Key_9;
-		bool down = event->key() == Qt::Key_7 || event->key() == Qt::Key_8 || event->key() == Qt::Key_9;
-		bool up = event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3;
+		const bool left = event->key() == Qt::Key_1 || event->key() == Qt::Key_4 || event->key() == Qt::Key_7;
+		const bool right = event->key() == Qt::Key_3 || event->key() == Qt::Key_6 || event->key() == Qt::Key_9;
+		const bool down = event->key() == Qt::Key_7 || event->key() == Qt::Key_8 || event->key() == Qt::Key_9;
+		const bool up = event->key() == Qt::Key_1 || event->key() == Qt::Key_2 || event->key() == Qt::Key_3;
 
 		bool free_movement = true;
 		for (const auto& i : selections) {
@@ -135,6 +139,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 			y_displacement = -0.5f * up + 0.5f * down;
 		}
 
+		const QRect pre_action_area = map->doodads.get_pathing_bounding_box(selections);
 		for (const auto& i : selections) {
 			i->position.x += x_displacement;
 			i->position.y += y_displacement;
@@ -145,7 +150,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 		}
 		emit position_changed();
 
-		map->doodads.update_doodad_pathing(selections, map->pathing_map);
+		map->doodads.update_doodad_pathing(pre_action_area, map->pathing_map);
 	}
 
 	if (event->modifiers() & Qt::ControlModifier) {
@@ -251,8 +256,8 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 							drag_offsets.push_back(input_handler.mouse_world - i->position);
 						}
 					} else {
-						selections = { &doodad };
-						drag_offsets = { input_handler.mouse_world - doodad.position };
+						selections = {&doodad};
+						drag_offsets = {input_handler.mouse_world - doodad.position};
 						emit selection_changed();
 					}
 					return;
@@ -291,7 +296,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					offset = input_handler.mouse_world - drag_start;
 				} else {
 					offset = glm::round((input_handler.mouse_world) * 2.f + 0.5f) / 2.f - 0.25f;
-					offset -= glm::round((drag_start)*2.f + 0.5f) / 2.f - 0.25f;
+					offset -= glm::round((drag_start) * 2.f + 0.5f) / 2.f - 0.25f;
 				}
 				offset.z = 0;
 
@@ -300,6 +305,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 				}
 				drag_start = input_handler.mouse_world;
 
+				const QRect pre_action_area = map->doodads.get_pathing_bounding_box(selections);
 				for (const auto& doodad : selections) {
 					doodad->position += offset;
 					if (!lock_doodad_z) {
@@ -308,14 +314,16 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					doodad->update(map->terrain);
 				}
 				emit position_changed();
-				map->doodads.update_doodad_pathing(selections, map->pathing_map);
+				map->doodads.update_doodad_pathing(pre_action_area, map->pathing_map);
 			} else if (event->modifiers() & Qt::ControlModifier) {
 				if (action == Action::none) {
 					start_action(Action::rotate);
 				}
 
+				const QRect pre_action_area = map->doodads.get_pathing_bounding_box(selections);
 				for (auto&& i : selections) {
-					float target_rotation = std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
+					float target_rotation =
+						std::atan2(input_handler.mouse_world.y - i->position.y, input_handler.mouse_world.x - i->position.x);
 					if (target_rotation < 0) {
 						target_rotation += 2.f * glm::pi<float>();
 					}
@@ -325,12 +333,11 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 					i->update(map->terrain);
 				}
 				emit angle_changed();
-
-				map->doodads.update_doodad_pathing(selections, map->pathing_map);
+				map->doodads.update_doodad_pathing(pre_action_area, map->pathing_map);
 			} else if (mode == Mode::selection && selection_started) {
 				const glm::vec3 size = input_handler.mouse_world - selection_start;
 
-				auto query = map->doodads.query_area({ selection_start.x, selection_start.y, size.x, size.y });
+				auto query = map->doodads.query_area({selection_start.x, selection_start.y, size.x, size.y});
 				if (event->modifiers() & Qt::KeyboardModifier::ShiftModifier) {
 					selections.insert(query.begin(), query.end());
 				} else if (event->modifiers() & Qt::KeyboardModifier::AltModifier) {
@@ -365,22 +372,14 @@ void DoodadBrush::delete_selection() {
 		return;
 	}
 
-	QRectF update_pathing_area;
 	// Undo/redo
 	auto action = std::make_unique<DoodadDeleteAction>();
-	for (const auto& i : selections) {
-		action->doodads.push_back(*i);
-
-		if (update_pathing_area.width() == 0 || update_pathing_area.height() == 0) {
-			update_pathing_area = { i->position.x, i->position.y, 1.f, 1.f };
-		}
-		update_pathing_area |= { i->position.x, i->position.y, 1.f, 1.f };
-	}
 	map->world_undo.new_undo_group();
 	map->world_undo.add_undo_action(std::move(action));
 
+	const QRect pre_action_area = map->doodads.get_pathing_bounding_box(selections);
 	map->doodads.remove_doodads(selections);
-	map->doodads.update_doodad_pathing(update_pathing_area, map->pathing_map);
+	map->doodads.update_doodad_pathing(pre_action_area, map->pathing_map);
 
 	selections.clear();
 	emit selection_changed();
@@ -419,7 +418,14 @@ void DoodadBrush::place_clipboard() {
 		Doodad& new_doodad = map->doodads.add_doodad(i);
 		new_doodad.creation_number = ++Doodad::auto_increment;
 
-		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle), i.position.z);
+		glm::vec3 final_position = glm::vec3(
+			Doodad::acceptable_position(
+				glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset,
+				i.pathing,
+				i.angle
+			),
+			i.position.z
+		);
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
 		}
@@ -471,8 +477,8 @@ void DoodadBrush::apply(double frame_delta) {
 		const bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-		float min_scale = slk.data<float>("minscale", doodad.id);
-		float max_scale = slk.data<float>("maxscale", doodad.id);
+		const float min_scale = slk.data<float>("minscale", doodad.id);
+		const float max_scale = slk.data<float>("maxscale", doodad.id);
 		std::uniform_real_distribution dist(min_scale, max_scale);
 		doodad.scale = glm::vec3(dist(gen));
 	}
@@ -526,10 +532,10 @@ void DoodadBrush::render_selection() const {
 		} else {
 			selection_scale = i->mesh->mdx->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 		}
-		
-		bool is_doodad = doodads_slk.row_headers.contains(i->id);
-		slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-		bool use_click_helper = slk.data<bool>("useclickhelper", i->id);
+
+		const bool is_doodad = doodads_slk.row_headers.contains(i->id);
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
+		const bool use_click_helper = slk.data<bool>("useclickhelper", i->id);
 
 		if (use_click_helper) {
 			selection_scale = std::max(selection_scale, click_helper->mdx->extent.bounds_radius / 128.f);
@@ -558,7 +564,15 @@ void DoodadBrush::render_selection() const {
 
 void DoodadBrush::render_clipboard() {
 	for (auto& i : clipboard) {
-		glm::vec3 final_position = glm::vec3(Doodad::acceptable_position(glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset, i.pathing, i.angle, clipboard_force_grid_aligned), i.position.z);
+		glm::vec3 final_position = glm::vec3(
+			Doodad::acceptable_position(
+				glm::vec2(input_handler.mouse_world) + glm::vec2(i.position) - clipboard_mouse_offset,
+				i.pathing,
+				i.angle,
+				clipboard_force_grid_aligned
+			),
+			i.position.z
+		);
 
 		if (!lock_doodad_z) {
 			final_position.z = map->terrain.interpolated_height(final_position.x, final_position.y, true);
@@ -579,7 +593,12 @@ bool DoodadBrush::can_place() {
 		return true;
 	}
 
-	return map->pathing_map.is_area_free(doodad.position, glm::degrees(doodad.angle) + 90, doodad.pathing, PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
+	return map->pathing_map.is_area_free(
+		doodad.position,
+		glm::degrees(doodad.angle) + 90,
+		doodad.pathing,
+		PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable
+	);
 }
 
 void DoodadBrush::set_random_variation() {
@@ -593,22 +612,8 @@ void DoodadBrush::set_random_rotation() {
 	std::mt19937 gen(rd());
 
 	std::uniform_real_distribution dist(0.f, glm::pi<float>() * 2.f);
-	float target_rotation = dist(gen);
+	const float target_rotation = dist(gen);
 	doodad.angle = Doodad::acceptable_angle(doodad.id, doodad.pathing, target_rotation, target_rotation);
-
-	if (doodad.pathing) {
-		auto rotated_pathing_width = doodad.pathing->width;
-		auto rotated_pathing_height = doodad.pathing->height;
-
-		if (static_cast<uint32_t>(glm::round(glm::degrees(doodad.angle))) % 180 == 0) {
-			rotated_pathing_width = doodad.pathing->height;
-			rotated_pathing_height = doodad.pathing->width;
-		}
-
-		brush_offset.x = (rotated_pathing_width % 4 != 0) ? 0.25f : 0.f;
-		brush_offset.y = (rotated_pathing_height % 4 != 0) ? 0.25f : 0.f;
-	}
-
 	doodad.update(map->terrain);
 }
 
@@ -645,8 +650,8 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 
 	// Same as above for the scale
-	float min_scale = slk.data<float>("minscale", doodad.id);
-	float max_scale = slk.data<float>("maxscale", doodad.id);
+	const float min_scale = slk.data<float>("minscale", doodad.id);
+	const float max_scale = slk.data<float>("maxscale", doodad.id);
 	doodad.scale = glm::clamp(doodad.scale, min_scale, max_scale);
 	if (random_scale) {
 		std::random_device rd;
@@ -656,12 +661,13 @@ void DoodadBrush::set_doodad(const std::string& id) {
 	}
 
 	if (doodad.pathing) {
-		set_size(std::max(doodad.pathing->width, doodad.pathing->height));
+		const QRect aabb = doodad.get_pathing_bounding_box();
+		set_size(glm::ivec2(aabb.width() / size_granularity, aabb.height() / size_granularity));
 	}
 	set_shape(shape);
 }
 
-void DoodadBrush::start_action(Action new_action) {
+void DoodadBrush::start_action(const Action new_action) {
 	action = new_action;
 	map->world_undo.new_undo_group();
 	doodad_state_undo = std::make_unique<DoodadStateAction>();
@@ -678,7 +684,7 @@ void DoodadBrush::end_action() {
 	action = Action::none;
 }
 
-void DoodadBrush::set_selection_angle(float angle) {
+void DoodadBrush::set_selection_angle(const float angle) {
 	start_action(Action::rotate);
 	for (auto& i : selections) {
 		i->angle = Doodad::acceptable_angle(i->id, i->pathing, i->angle, angle);
@@ -689,7 +695,7 @@ void DoodadBrush::set_selection_angle(float angle) {
 	end_action();
 }
 
-void DoodadBrush::set_selection_absolute_height(float height) {
+void DoodadBrush::set_selection_absolute_height(const float height) {
 	start_action(Action::move);
 	for (auto& i : selections) {
 		i->position.z = height;
@@ -698,7 +704,7 @@ void DoodadBrush::set_selection_absolute_height(float height) {
 	end_action();
 }
 
-void DoodadBrush::set_selection_relative_height(float height) {
+void DoodadBrush::set_selection_relative_height(const float height) {
 	start_action(Action::move);
 	for (auto& i : selections) {
 		i->position.z = map->terrain.interpolated_height(i->position.x, i->position.y, true) + height;
@@ -707,7 +713,7 @@ void DoodadBrush::set_selection_relative_height(float height) {
 	end_action();
 }
 
-void DoodadBrush::set_selection_scale_component(int component, float scale) {
+void DoodadBrush::set_selection_scale_component(const int component, const float scale) {
 	start_action(Action::scale);
 	for (auto& i : selections) {
 		bool is_doodad = doodads_slk.row_headers.contains(i->id);
@@ -726,7 +732,7 @@ void DoodadBrush::set_selection_scale_component(int component, float scale) {
 	end_action();
 }
 
-void DoodadBrush::unselect_id(std::string_view id) {
+void DoodadBrush::unselect_id(const std::string_view id) {
 	if (doodad.id == id) {
 		set_doodad("ATtr");
 	}

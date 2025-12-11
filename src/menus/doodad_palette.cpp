@@ -36,6 +36,7 @@
 import std;
 import TableModel;
 import QRibbon;
+import Doodad;
 import MapGlobal;
 import Globals;
 import WindowHandler;
@@ -433,6 +434,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 
 DoodadPalette::~DoodadPalette() {
 	map->brush = nullptr;
+	delete change_mode_parent;
+	delete change_mode_this;
 }
 
 bool DoodadPalette::event(QEvent* e) {
@@ -525,7 +528,7 @@ void DoodadPalette::deactivate(QRibbonTab* tab) {
 	}
 }
 
-QString toString(float num) {
+QString toString(const float num) {
 	QString str = QString::number(num, 'f', 3);
 	str.remove(QRegularExpression("\\.?0+$"));
 	return str;
@@ -591,10 +594,6 @@ void DoodadPalette::update_scale_change(int component, const QString& text) {
 }
 
 void DoodadPalette::update_scale_finish(int component) {
-	if (brush.selections.empty()) {
-		return;
-	}
-
 	update_selection_info();
 }
 

@@ -12,6 +12,7 @@ import INI;
 import GameCameras;
 import Imports;
 import MapInfo;
+import Doodad;
 import Sounds;
 import Regions;
 import WorldUndoManager;

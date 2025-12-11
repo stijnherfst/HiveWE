@@ -6,9 +6,13 @@ import Terrain;
 import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
+import Camera;
 
 TerrainBrush::TerrainBrush() : Brush() {
+	position_granularity = 1.f;
 	size_granularity = 4;
+	center_on_tile_corner = true;
+
 	set_size(size);
 }
 
@@ -90,7 +94,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 			}
 
 			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
-			if (std::abs(difference) > 2 && !contains(begx + (k - i), begy + (l - k))) {
+			if (std::abs(difference) > 2 && !contains(glm::ivec2(begx + (k - i), begy + (l - k)))) {
 				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
 				map->terrain.corners[k][l].ramp = false;
 
@@ -110,9 +114,10 @@ void TerrainBrush::apply_begin() {
 	int height = map->terrain.height;
 	const auto& corners = map->terrain.corners;
 
+	const glm::vec2 position = get_position();
 	const int x = position.x + 1;
 	const int y = position.y + 1;
-	const QRect area = QRect(x, y, size / 4.f, size / 4.f).intersected({ 0, 0, width, height });
+	const QRect area = QRect(x, y, size.x / 4.f, size.y / 4.f).intersected({ 0, 0, width, height });
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
 	
@@ -170,10 +175,10 @@ void TerrainBrush::apply(double frame_delta) {
 	int height = map->terrain.height;
 	auto& corners = map->terrain.corners;
 
-	const int x = position.x + 1;
-	const int y = position.y + 1;
+	const glm::ivec2 pos = glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f;
 
-	QRect area = QRect(x, y, size / 4.f, size / 4.f).intersected({ 0, 0, width, height });
+	const glm::vec2 position = get_position();
+	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({ 0, 0, width, height });
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -185,7 +190,7 @@ void TerrainBrush::apply(double frame_delta) {
 		// Update textures
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			for (int j = area.y(); j < area.y() + area.height(); j++) {
-				if (!contains(i - area.x() - std::min(position.x + 1, 0), j - area.y() - std::min(position.y + 1, 0))) {
+				if (!contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
 					continue;
 				}
 
@@ -225,7 +230,7 @@ void TerrainBrush::apply(double frame_delta) {
 				float new_height = corners[i][j].height;
 				heights[i - area.x()][j - area.y()] = new_height;
 
-				if (!contains(i - area.x() - std::min(position.x + 1, 0), j - area.y() - std::min(position.y + 1, 0))) {
+				if (!contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
 					continue;
 				}
 				const int center_x = area.x() + area.width() * 0.5f;
@@ -234,12 +239,12 @@ void TerrainBrush::apply(double frame_delta) {
 				switch (deformation_type) {
 					case deformation::raise: {
 						auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-						new_height += std::max(0.0, 1 - distance / size * std::sqrt(2)) * frame_delta;
+						new_height += std::max(0.0, 1 - distance / size.x * std::sqrt(2)) * frame_delta;
 						break;
 					}
 					case deformation::lower: {
 						auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-						new_height -= std::max(0.0, 1 - distance / size * std::sqrt(2)) * frame_delta;
+						new_height -= std::max(0.0, 1 - distance / size.x * std::sqrt(2)) * frame_delta;
 						break;
 					}
 					case deformation::plateau: {
@@ -279,7 +284,7 @@ void TerrainBrush::apply(double frame_delta) {
 		texture_height_area = texture_height_area.united(area);
 	}
 
-	QRect updated_area = QRect(x - 1, y - 1, size / 4.f + 1, size / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
+	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
 		
@@ -314,9 +319,7 @@ void TerrainBrush::apply(double frame_delta) {
 		//} else {
 			for (int i = area.x(); i < area.x() + area.width(); i++) {
 				for (int j = area.y(); j < area.y() + area.height(); j++) {
-					const int xx = i - area.x() - std::min(position.x + 1, 0);
-					const int yy = j - area.y() - std::min(position.y + 1, 0);
-					if (!contains(xx, yy)) {
+					if (!contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
 						continue;
 					}
 					corners[i][j].ramp = false;
@@ -346,7 +349,7 @@ void TerrainBrush::apply(double frame_delta) {
 							break;
 					}
 
-					check_nearby(x, y, i, j, updated_area);
+					check_nearby(pos.x, pos.y, i, j, updated_area);
 				}
 			}
 		//}

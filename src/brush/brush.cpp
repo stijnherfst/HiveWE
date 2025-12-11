@@ -12,58 +12,55 @@ import <glm/gtc/matrix_transform.hpp>;
 Brush::Brush() {
 	set_size(size);
 
-	selection_shader = resource_manager.load<Shader>({ "data/shaders/selection.vert", "data/shaders/selection.frag" });
-	selection_circle_shader = resource_manager.load<Shader>({ "data/shaders/selection_circle.vert", "data/shaders/selection_circle.frag" });
-	brush_shader = resource_manager.load<Shader>({ "data/shaders/brush.vert", "data/shaders/brush.frag" });
-}
-
-void Brush::set_position(const glm::vec2& new_position) {
-	position_new = glm::round((new_position - brush_offset) * granularity) / granularity + brush_offset;
-
-	const glm::vec2 bottom_left_position = new_position - size / 2.f * 0.25f + brush_offset;
-	position = glm::floor(bottom_left_position);
-
-	if (!uv_offset_locked) {
-		glm::vec2 decimals = bottom_left_position - glm::vec2(position);
-
-		switch (uv_offset_granularity) {
-			case 1:
-				uv_offset = { 0.f, 0.f };
-				break;
-			case 2:
-				decimals *= 2.f;
-				decimals = glm::floor(decimals);
-				decimals *= 2.f;
-				uv_offset = glm::abs(decimals);
-				break;
-			case 4:
-				uv_offset = glm::abs(decimals * 4.f);
-				break;
-		}
-	}
+	selection_shader = resource_manager.load<Shader>({"data/shaders/selection.vert", "data/shaders/selection.frag"});
+	selection_circle_shader = resource_manager.load<Shader>({"data/shaders/selection_circle.vert", "data/shaders/selection_circle.frag"});
+	brush_shader = resource_manager.load<Shader>({"data/shaders/brush.vert", "data/shaders/brush.frag"});
 }
 
 glm::vec2 Brush::get_position() const {
-	return glm::round((glm::vec2(input_handler.mouse_world) - brush_offset) * granularity) / granularity + brush_offset;
+	const bool even_width = size.x % (2 * static_cast<size_t>(size_granularity)) == 0;
+	const bool even_height = size.y % (2 * static_cast<size_t>(size_granularity)) == 0;
+
+	glm::vec2 even = glm::floor(glm::vec2(input_handler.mouse_world) * position_granularity + 0.5f) / position_granularity;
+	glm::vec2 uneven = glm::floor(glm::vec2(input_handler.mouse_world) * position_granularity) / position_granularity + (1.f / position_granularity / 2.f);
+
+	if (center_on_tile_corner) {
+		std::swap(even, uneven);
+	}
+
+	glm::vec2 result;
+	if (even_width) {
+		result.x = even.x;
+	} else {
+		result.x = uneven.x;
+	}
+
+	if (even_height) {
+		result.y = even.y;
+	} else {
+		result.y = uneven.y;
+	}
+
+	return result;
 }
 
-void Brush::set_size(const int new_size) {
-	size = std::clamp(new_size * size_granularity, 1, 999);
+void Brush::set_size(const glm::ivec2 new_size) {
+	size = glm::clamp(new_size * size_granularity, 1, 999);
 	set_shape(shape);
 }
 
 void Brush::set_shape(const Shape new_shape) {
 	context->makeCurrent();
-	std::vector<glm::u8vec4> brush(size * size, { 0, 0, 0, 0 });
+	std::vector<glm::u8vec4> brush(size.x * size.y, {0, 0, 0, 0});
 
 	shape = new_shape;
 
-	for (int i = 0; i < size; i++) {
-		for (int j = 0; j < size; j++) {
-			if (contains(i / size_granularity, j / size_granularity)) {
-				brush[j * size + i] = brush_color;
+	for (int i = 0; i < size.x; i++) {
+		for (int j = 0; j < size.y; j++) {
+			if (contains(glm::ivec2(i, j) / size_granularity)) {
+				brush[j * size.x + i] = brush_color;
 			} else {
-				brush[j * size + i] = { 0, 0, 0, 0 };
+				brush[j * size.x + i] = {0, 0, 0, 0};
 			}
 		}
 	}
@@ -75,25 +72,23 @@ void Brush::set_shape(const Shape new_shape) {
 	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	glTextureStorage2D(brush_texture, 1, GL_RGBA8, size, size);
-	glTextureSubImage2D(brush_texture, 0, 0, 0, size, size, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+	glTextureStorage2D(brush_texture, 1, GL_RGBA8, size.x, size.y);
+	glTextureSubImage2D(brush_texture, 0, 0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
 }
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
-bool Brush::contains(const int x, const int y) const {
+bool Brush::contains(const glm::ivec2 pos) const {
 	switch (shape) {
 		case Shape::square:
 			return true;
 		case Shape::circle: {
-			int half_size = (size / 2) / size_granularity;
-			int distance = (x - half_size) * (x - half_size);
-			distance += (y - half_size) * (y - half_size);
+			const int half_size = (size.x / 2) / size_granularity;
+			const int distance = (pos.x - half_size) * (pos.x - half_size) + (pos.y - half_size) * (pos.y - half_size);
 			return distance <= half_size * half_size;
 		}
 		case Shape::diamond:
-			int half_size = (size / 2) / size_granularity;
-
-			return std::abs(x - half_size) + std::abs(y - half_size) <= half_size;
+			const int half_size = (size.x / 2) / size_granularity;
+			return std::abs(pos.x - half_size) + std::abs(pos.y - half_size) <= half_size;
 	}
 	return true;
 }
@@ -101,6 +96,7 @@ bool Brush::contains(const int x, const int y) const {
 void Brush::increase_size(const int new_size) {
 	set_size(size / size_granularity + new_size);
 }
+
 void Brush::decrease_size(const int new_size) {
 	set_size(size / size_granularity - new_size);
 }
@@ -149,8 +145,6 @@ void Brush::key_press_event(QKeyEvent* event) {
 }
 
 void Brush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	set_position(input_handler.mouse_world);
-
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::placement && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 			apply(frame_delta);
@@ -200,7 +194,7 @@ void Brush::mouse_release_event(QMouseEvent* event) {
 void Brush::render() {
 	if (mode == Mode::selection) {
 		render_selector();
-	} 
+	}
 	if (mode == Mode::placement) {
 		render_brush();
 	}

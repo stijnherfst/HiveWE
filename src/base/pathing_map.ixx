@@ -118,12 +118,13 @@ export class PathingMap {
 		return data;
 	}
 
-	/// Clears an area with zeroes
+	/// Clears an area with zeroes.
+	/// Expects input in pathing tiles.
 	void dynamic_clear_area(const QRect& area) {
-		const QRect t = QRect(area.left() * 4, area.top() * 4, area.width() * 4, area.height() * 4).intersected({0, 0, width, height});
-
-		for (int j = t.top(); j < t.bottom(); j++) {
-			for (int i = t.left(); i < t.right(); i++) {
+		const QRect t = area.intersected({0, 0, width, height});
+		// +1 because of a Qt quirk of .bottom() and .right()
+		for (int j = t.top(); j < t.bottom() + 1; j++) {
+			for (int i = t.left(); i < t.right() + 1; i++) {
 				pathing_cells_dynamic[j * width + i] = 0;
 			}
 		}
@@ -132,7 +133,7 @@ export class PathingMap {
 	/// Checks for every cell on the supplied pathing_texture where (pathing_texture & mask == true) whether (existing_pathing & mask == true) and if so returns false
 	/// Expects position in whole grid tiles
 	/// Rotation in multiples of 90
-	bool is_area_free(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, const uint8_t mask) const {
+	[[nodiscard]] bool is_area_free(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, const uint8_t mask) const {
 		const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 		for (int j = 0; j < pathing_texture->height; j++) {
@@ -197,7 +198,7 @@ export class PathingMap {
 	/// Expects position in whole grid tiles and draws the texture centered around this position
 	/// Rotation in multiples of 90
 	/// Blits the texture upside down as OpenGL uses the bottom-left as 0,0
-	void blit_pathing_texture(glm::vec2 position, int rotation, const std::shared_ptr<PathingTexture>& pathing_texture) {
+	void blit_pathing_texture(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture) {
 		const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 		for (int j = 0; j < pathing_texture->height; j++) {
