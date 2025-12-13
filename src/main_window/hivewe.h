@@ -78,7 +78,6 @@ private:
 			connect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 			connect(palette, &T::finished, [&]() {
 				remove_custom_tab();
-				disconnect(this, &HiveWE::palette_changed, palette, &Palette::deactivate);
 			});
 		}
 	}
