@@ -121,6 +121,12 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	lighting_visible->setChecked(true);
 	visible_section->addWidget(lighting_visible);
 
+	water_visible->setIcon(QIcon("data/icons/ribbon/water32x32.png"));
+	water_visible->setText("Water");
+	water_visible->setCheckable(true);
+	water_visible->setChecked(true);
+	visible_section->addWidget(water_visible);
+
 	click_helpers_visible->setIcon(QIcon("data/icons/ribbon/click_helpers.png"));
 	click_helpers_visible->setText("Click\nHelpers");
 	click_helpers_visible->setCheckable(true);
