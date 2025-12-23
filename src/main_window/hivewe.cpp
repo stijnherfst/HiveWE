@@ -268,7 +268,7 @@ void HiveWE::load_folder() {
 	delete loading_box;
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle("HiveWE 0.9 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 /// Load MPQ will extract all files from the archive in a user specified location
@@ -332,7 +332,7 @@ void HiveWE::load_mpq() {
 	ui.widget->makeCurrent();
 	map->load(final_directory);
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle("HiveWE 0.9 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::save() {
@@ -363,7 +363,7 @@ void HiveWE::save_as() {
 		map->save(file_name / map->name);
 	}
 
-	setWindowTitle("HiveWE 0.9 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::export_mpq() {
