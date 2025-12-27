@@ -24,6 +24,7 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QKeySequence>
+#include <QTimer>
 
 #include "doodad_brush.h"
 #include "palette.h"
@@ -36,6 +37,19 @@ import QRibbon;
 import AspectRatioPixmapLabel;
 import DestructibleListModel;
 import DoodadListModel;
+
+///	Only allows inputting doubles and automatically selects the text on focus
+class DoubleInput : public QLineEdit {
+	void focusInEvent(QFocusEvent* event) override {
+		QLineEdit::focusInEvent(event);
+		QTimer::singleShot(0, this, &QLineEdit::selectAll);
+	}
+
+public:
+	DoubleInput() {
+		setValidator(new QDoubleValidator(this));
+	}
+};
 
 class DoodadPalette : public Palette {
 	Q_OBJECT
@@ -66,13 +80,13 @@ private:
 	QRibbonContainer* variations = new QRibbonContainer;
 
 	QRibbonSection* current_selection_section = new QRibbonSection;
-	QLineEdit* x_scale = new QLineEdit;
-	QLineEdit* y_scale = new QLineEdit;
-	QLineEdit* z_scale = new QLineEdit;
-	QLineEdit* rotation = new QLineEdit;
+	DoubleInput* x_scale = new DoubleInput;
+	DoubleInput* y_scale = new DoubleInput;
+	DoubleInput* z_scale = new DoubleInput;
+	DoubleInput* rotation = new DoubleInput;
 
-	QLineEdit* absolute_height = new QLineEdit;
-	QLineEdit* relative_height = new QLineEdit;
+	DoubleInput* absolute_height = new DoubleInput;
+	DoubleInput* relative_height = new DoubleInput;
 
 	QAction* group_height_minimum = new QAction("Minimum");
 	QAction* group_height_average = new QAction("Average");

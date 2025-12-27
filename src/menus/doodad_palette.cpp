@@ -192,10 +192,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	scaling_layout->setSpacing(1);
 	scaling_layout->setHorizontalSpacing(5);
 
-	x_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
-	y_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
-	z_scale->setValidator(new QDoubleValidator(0.0, 100.0, 3));
-
 	scaling_layout->addRow("x scale:", x_scale);
 	scaling_layout->addRow("y scale:", y_scale);
 	scaling_layout->addRow("z scale:", z_scale);
@@ -216,8 +212,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	degrees90->setText("90");
 	degrees180->setText("180");
 	degrees270->setText("270");
-
-	rotation->setValidator(new QDoubleValidator(0.0, 100.0, 3));
 
 	QGridLayout* degrees_layout = new QGridLayout;
 	degrees_layout->addWidget(degrees0, 0, 0);
@@ -243,9 +237,6 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	QFormLayout* height_layout = new QFormLayout;
 	height_layout->setSpacing(1);
 	height_layout->setHorizontalSpacing(5);
-
-	absolute_height->setValidator(new QDoubleValidator(-100.0, 100.0, 3));
-	relative_height->setValidator(new QDoubleValidator(-100.0, 100.0, 3));
 
 	height_layout->addRow("Absolute Height:", absolute_height);
 	height_layout->addRow("Relative Height:", relative_height);
@@ -286,15 +277,31 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	ribbon_tab->addSection(flags_section);
 	ribbon_tab->addSection(current_selection_section);
 
-	connect(selection_mode, &QRibbonButton::toggled, [&]() { brush.switch_mode(); });
-	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) { brush.random_rotation = checked; });
-	connect(random_scale, &QRibbonButton::toggled, [&](bool checked) { brush.random_scale = checked; });
-	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) { brush.random_variation = checked; });
-	connect(lock_height, &QRibbonButton::toggled, [&](bool checked) { brush.lock_doodad_z = checked; });
+	connect(selection_mode, &QRibbonButton::toggled, [&]() {
+		brush.switch_mode();
+	});
+	connect(random_rotation, &QRibbonButton::toggled, [&](bool checked) {
+		brush.random_rotation = checked;
+	});
+	connect(random_scale, &QRibbonButton::toggled, [&](bool checked) {
+		brush.random_scale = checked;
+	});
+	connect(random_variation, &QRibbonButton::toggled, [&](bool checked) {
+		brush.random_variation = checked;
+	});
+	connect(lock_height, &QRibbonButton::toggled, [&](bool checked) {
+		brush.lock_doodad_z = checked;
+	});
 
-	connect(invisible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::invisible_non_solid; });
-	connect(visible_non_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_non_solid; });
-	connect(visible_solid, &QRadioButton::clicked, [&]() { brush.state = Doodad::State::visible_solid; });
+	connect(invisible_non_solid, &QRadioButton::clicked, [&]() {
+		brush.state = Doodad::State::invisible_non_solid;
+	});
+	connect(visible_non_solid, &QRadioButton::clicked, [&]() {
+		brush.state = Doodad::State::visible_non_solid;
+	});
+	connect(visible_solid, &QRadioButton::clicked, [&]() {
+		brush.state = Doodad::State::visible_solid;
+	});
 
 	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
 		// Possible Qt bug. Try swapping the two lines below and see if it crashes when selecting a tree and then swapping to a doodad category
@@ -319,9 +326,13 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		ui.search->selectAll();
 	});
 
-	connect(change_mode_this, &QShortcut::activated, [&]() { selection_mode->click(); });
+	connect(change_mode_this, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
 
-	connect(change_mode_parent, &QShortcut::activated, [&]() { selection_mode->click(); });
+	connect(change_mode_parent, &QShortcut::activated, [&]() {
+		selection_mode->click();
+	});
 
 	connect(ui.search, &QLineEdit::textEdited, doodad_filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(ui.search, &QLineEdit::textEdited, destructable_filter_model, &QSortFilterProxyModel::setFilterFixedString);
@@ -340,21 +351,41 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	connect(&brush, &DoodadBrush::position_changed, this, &DoodadPalette::update_selection_info);
 	connect(&brush, &DoodadBrush::request_doodad_select, this, &DoodadPalette::select_id_in_palette);
 
-	connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(0, text); });
-	connect(y_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(1, text); });
-	connect(z_scale, &QLineEdit::textEdited, [&](const QString& text) { update_scale_change(2, text); });
-	connect(x_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(0); });
-	connect(y_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(1); });
-	connect(z_scale, &QLineEdit::editingFinished, [&]() { update_scale_finish(2); });
+	connect(x_scale, &QLineEdit::textEdited, [&](const QString& text) {
+		update_scale_change(0, text);
+	});
+	connect(y_scale, &QLineEdit::textEdited, [&](const QString& text) {
+		update_scale_change(1, text);
+	});
+	connect(z_scale, &QLineEdit::textEdited, [&](const QString& text) {
+		update_scale_change(2, text);
+	});
+	connect(x_scale, &QLineEdit::editingFinished, [&]() {
+		update_scale_finish(0);
+	});
+	connect(y_scale, &QLineEdit::editingFinished, [&]() {
+		update_scale_finish(1);
+	});
+	connect(z_scale, &QLineEdit::editingFinished, [&]() {
+		update_scale_finish(2);
+	});
 
 	connect(rotation, &QLineEdit::textEdited, this, &DoodadPalette::update_rotation_change);
 	connect(absolute_height, &QLineEdit::textEdited, this, &DoodadPalette::update_absolute_change);
 	connect(relative_height, &QLineEdit::textEdited, this, &DoodadPalette::update_relative_change);
 
-	connect(degrees0, &QRibbonButton::clicked, [&]() { set_selection_rotation(0.f); });
-	connect(degrees90, &QRibbonButton::clicked, [&]() { set_selection_rotation(90.f); });
-	connect(degrees180, &QRibbonButton::clicked, [&]() { set_selection_rotation(180.f); });
-	connect(degrees270, &QRibbonButton::clicked, [&]() { set_selection_rotation(270.f); });
+	connect(degrees0, &QRibbonButton::clicked, [&]() {
+		set_selection_rotation(0.f);
+	});
+	connect(degrees90, &QRibbonButton::clicked, [&]() {
+		set_selection_rotation(90.f);
+	});
+	connect(degrees180, &QRibbonButton::clicked, [&]() {
+		set_selection_rotation(180.f);
+	});
+	connect(degrees270, &QRibbonButton::clicked, [&]() {
+		set_selection_rotation(270.f);
+	});
 
 	connect(group_height_minimum, &QAction::triggered, this, &DoodadPalette::set_group_height_minimum);
 	connect(group_height_average, &QAction::triggered, this, &DoodadPalette::set_group_height_average);
@@ -546,7 +577,8 @@ void DoodadPalette::update_selection_info() {
 		}
 		const Doodad& doodad = **brush.selections.begin();
 
-		float first_relative_height = doodad.position.z - map->terrain.interpolated_height(doodad.position.x, doodad.position.y, true);
+		const float first_relative_height =
+			doodad.position.z - map->terrain.interpolated_height(doodad.position.x, doodad.position.y, true);
 		bool same_object = true;
 		bool same_x = true;
 		bool same_y = true;
@@ -555,7 +587,7 @@ void DoodadPalette::update_selection_info() {
 		bool same_absolute_height = true;
 		bool same_relative_height = true;
 		for (const auto& i : brush.selections) {
-			float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y, true);
+			const float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y, true);
 
 			same_object = same_object && i->id == doodad.id;
 			same_x = same_x && i->scale.x == doodad.scale.x;
@@ -566,22 +598,45 @@ void DoodadPalette::update_selection_info() {
 			same_relative_height = same_relative_height && std::abs(other_relative_height - first_relative_height) < 0.001f;
 		}
 
-		x_scale->setText(same_x ? QString::number(doodad.scale.x) : "Differing");
-		y_scale->setText(same_y ? QString::number(doodad.scale.y) : "Differing");
-		z_scale->setText(same_z ? QString::number(doodad.scale.z) : "Differing");
-		rotation->setText(same_angle ? toString(glm::degrees(doodad.angle)) : "Differing");
-		absolute_height->setText(same_absolute_height ? toString(doodad.position.z) : "Differing");
-		relative_height->setText(same_relative_height ? toString(first_relative_height) : "Differing");
+		x_scale->setText(same_x ? QString::number(doodad.scale.x) : "Various");
+		y_scale->setText(same_y ? QString::number(doodad.scale.y) : "Various");
+		z_scale->setText(same_z ? QString::number(doodad.scale.z) : "Various");
+
+		if (same_angle) {
+			const auto text = rotation->text();
+			if (text.isEmpty() || text == "Various" || text.toFloat() != glm::degrees(doodad.angle)) {
+				rotation->setText(toString(glm::degrees(doodad.angle)));
+			}
+		} else {
+			rotation->setText("Various");
+		}
+
+		if (same_absolute_height) {
+			const auto text = absolute_height->text();
+			if (text.isEmpty() || text == "Various" || text.toFloat() != doodad.position.z) {
+				absolute_height->setText(toString(doodad.position.z));
+			}
+		} else {
+			absolute_height->setText("Various");
+		}
+
+		if (same_relative_height) {
+			const auto text = relative_height->text();
+			if (text.isEmpty() || text == "Various" || text.toFloat() != first_relative_height) {
+				relative_height->setText(toString(first_relative_height));
+			}
+		} else {
+			relative_height->setText("Various");
+		}
 
 		// Set the name
 		if (same_object) {
 			if (doodads_slk.row_headers.contains(doodad.id)) {
-				auto index = doodads_table->index(doodads_slk.row_headers.at(doodad.id), doodads_slk.column_headers.at("name"));
-				selection_name->setText(doodads_table->data(index).toString());
+				const auto name = doodads_table->data(doodad.id, "name").toString();
+				selection_name->setText(name);
 			} else {
-				auto index =
-					destructibles_table->index(destructibles_slk.row_headers.at(doodad.id), destructibles_slk.column_headers.at("name"));
-				selection_name->setText(destructibles_table->data(index).toString());
+				const auto name = destructibles_table->data(doodad.id, "name").toString();
+				selection_name->setText(name);
 			}
 		} else {
 			selection_name->setText("Various");
