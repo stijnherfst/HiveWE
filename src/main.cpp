@@ -18,12 +18,12 @@
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available
 extern "C" {
-	__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-	__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+__declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 }
 #endif
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	QCoreApplication::setApplicationName("HiveWE");
 
 	QLocale::setDefault(QLocale("en_US"));
-	
+
 	// Create a dark palette
 	// For some magically unknown reason Qt draws Qt::white text as black, so we use QColor(255, 254, 255) instead
 	QPalette darkPalette;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
 
 	QApplication::setPalette(darkPalette);
 	QApplication::setStyle("Fusion");
-	
+
 	QApplication a(argc, argv);
 
 	ads::CDockManager::setConfigFlag(ads::CDockManager::FocusHighlighting);
@@ -76,9 +76,13 @@ int main(int argc, char *argv[]) {
 	ads::CDockManager::setConfigFlag(ads::CDockManager::OpaqueSplitterResize);
 	ads::CDockManager::setConfigFlag(ads::CDockManager::MiddleMouseButtonClosesTab);
 
-	QSettings settings;
+	const QSettings settings;
 	QFile file("data/themes/" + settings.value("theme", "Dark").toString() + ".qss");
-	file.open(QFile::ReadOnly);
+	if (!file.open(QIODevice::ReadOnly)) {
+		qWarning() << "Error: Reading theme failed:" << file.error() << ": " << file.errorString();
+		return -1;
+	}
+
 	a.setStyleSheet(QLatin1String(file.readAll()));
 
 	HiveWE w;
