@@ -223,8 +223,8 @@ export class RenderManager {
 				continue;
 			} // ToDo handle starting locations
 
-			mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
-			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
+			const mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
+			if (camera.inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
 				unit.mesh->render_color_coded(unit.skeleton, i + 1);
 			}
 		}
