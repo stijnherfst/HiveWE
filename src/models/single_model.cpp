@@ -159,12 +159,31 @@ void SingleModel::buildMapping() {
 	id_mapping.clear();
 
 	for (const auto& [key, index] : meta_slk->row_headers) {
-		if (meta_slk->column_headers.contains("usespecific")) {
-			std::string id_to_check = id;
+		// Unit an ability SLKs contain usespecific, but only abilities use `usespecific`, the cell is always empty for units.
+		const std::string_view use_specific = meta_slk->data<std::string_view>("usespecific", key);
+		const std::string_view not_specific = meta_slk->data<std::string_view>("notspecific", key);
+		if (!use_specific.empty()) {
+			std::string_view id_to_check = id;
 			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
 				id_to_check = slk->shadow_data.at(id).at("oldid");
 			}
-			if (!meta_slk->data<std::string_view>("usespecific", key).empty() && !meta_slk->data<std::string_view>("usespecific", key).contains(id_to_check)) {
+
+			// For abilities we also have to check the one this might be aliasing
+			const std::string_view aliasing_ability = slk->data<std::string_view>("code", id);
+			if (!use_specific.contains(id_to_check) && !use_specific.contains(aliasing_ability)) {
+				continue;
+			}
+		}
+
+		if (!not_specific.empty()) {
+			std::string_view id_to_check = id;
+			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
+				id_to_check = slk->shadow_data.at(id).at("oldid");
+			}
+
+			// For abilities we also have to check the one this might be aliasing
+			const std::string_view aliasing_ability = slk->data<std::string_view>("code", id);
+			if (not_specific.contains(id_to_check) && not_specific.contains(aliasing_ability)) {
 				continue;
 			}
 		}

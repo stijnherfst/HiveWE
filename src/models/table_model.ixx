@@ -64,12 +64,10 @@ export class TableModel : public QAbstractTableModel {
 	}
 
 	[[nodiscard]] QVariant data(const std::string_view id, const std::string_view field, const int role = Qt::DisplayRole) const {
-		const std::string_view meta_id = fieldToMetaID(id, field);
-
 		switch (role) {
 			case Qt::DisplayRole: {
 				const std::string_view field_data = slk->data<std::string_view>(field, id);
-
+				const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type == "string") {
 					QString qt_string;
@@ -194,6 +192,7 @@ export class TableModel : public QAbstractTableModel {
 			case Qt::EditRole:
 				return QString::fromUtf8(slk->data<std::string_view>(field, id));
 			case Qt::CheckStateRole: {
+				const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "bool") {
 					return {};
@@ -202,6 +201,7 @@ export class TableModel : public QAbstractTableModel {
 				return (slk->data<std::string_view>(field, id) == "1") ? Qt::Checked : Qt::Unchecked;
 			}
 			case Qt::DecorationRole:
+				const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "icon") {
 					return {};
@@ -244,7 +244,8 @@ export class TableModel : public QAbstractTableModel {
 			case Qt::CheckStateRole: {
 				const std::string& id = slk->index_to_row.at(index.row());
 				const std::string& field = slk->index_to_column.at(index.column());
-				const std::string_view type = meta_slk->data<std::string_view>("type", fieldToMetaID(id, field));
+				const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
+				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 				if (type != "bool") {
 					return false;
 				}
@@ -278,7 +279,8 @@ export class TableModel : public QAbstractTableModel {
 
 		const std::string_view id = slk->index_to_row.at(index.row());
 		const std::string_view field = slk->index_to_column.at(index.column());
-		const std::string_view type = meta_slk->data<std::string_view>("type", fieldToMetaID(id, field));
+		const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
+		const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
 		if (type == "bool") {
 			flags |= Qt::ItemIsUserCheckable;
 		}
@@ -309,21 +311,6 @@ export class TableModel : public QAbstractTableModel {
 		beginRemoveRows(QModelIndex(), row, row);
 		slk->remove_row(row_header);
 		endRemoveRows();
-	}
-
-	[[nodiscard]] std::string_view fieldToMetaID(const std::string_view id, const std::string_view field) const {
-		if (const auto found = meta_slk->meta_map.find(field); found != meta_slk->meta_map.end()) {
-			return found->second;
-		}
-
-		const size_t nr_position = field.find_first_of("0123456789");
-		const std::string_view new_field = field.substr(0, nr_position);
-
-		if (const auto found = meta_slk->meta_map.find(new_field); found != meta_slk->meta_map.end()) {
-			return found->second;
-		}
-
-		return meta_slk->meta_map.at(std::string(new_field).append(id));
 	}
 
 	// Returns the model index belonging to the row with the given id

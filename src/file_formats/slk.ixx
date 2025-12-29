@@ -17,7 +17,8 @@ using namespace std::string_literals;
 namespace slk {
 	export class SLK {
 		/// column_header should be lowercase
-		[[nodiscard]] std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
+		[[nodiscard]]
+		std::optional<std::string_view> data_single_asset_type(std::string_view column_header, std::string_view row_header) const {
 			assert(to_lowercase_copy(column_header) == column_header);
 
 			// Shadow data
@@ -37,7 +38,6 @@ namespace slk {
 			return {};
 		}
 
-
 	  public:
 		hive::unordered_map<size_t, std::string> index_to_row;
 		hive::unordered_map<size_t, std::string> index_to_column;
@@ -50,6 +50,7 @@ namespace slk {
 		hive::unordered_map<std::string, std::string> meta_map;
 
 		SLK() = default;
+
 		explicit SLK(const fs::path& path, const bool local = false) {
 			load(path, local);
 		}
@@ -58,7 +59,10 @@ namespace slk {
 			std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
 			if (local) {
 				std::ifstream stream(path, std::ios::binary);
-				buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+				buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(
+					std::istreambuf_iterator<char>(stream),
+					std::istreambuf_iterator<char>()
+				);
 			} else {
 				buffer = hierarchy.open_file(path).value().buffer;
 			}
@@ -196,7 +200,7 @@ namespace slk {
 					std::vector<std::string> parts = absl::StrSplit(data<std::string_view>("usespecific", header), ",", absl::SkipEmpty());
 					if (!parts.empty()) {
 						for (const auto& i : parts) {
-							meta_map.emplace(field, header + i);
+							meta_map.emplace(field + i, header);
 						}
 					} else {
 						meta_map.emplace(field, header);
@@ -207,10 +211,53 @@ namespace slk {
 			}
 		}
 
+		/// To map a field in a data SLK (race, pathTex, moveSpeed, etc.) to the field ID in the meta SLK.
+		/// The ID of the unit/doodad/ability needs to be supplied as some fields can only be resolved that way (useSpecific for abilities).
+		[[nodiscard]]
+		std::optional<std::string_view> field_to_meta_id(const SLK& meta_slk, const std::string_view field_name, const std::string_view id) const {
+			// First check raw field name. They can sometimes have numbers already (effect1, mod2, etc.)
+			if (const auto found_field = meta_slk.meta_map.find(field_name); found_field != meta_slk.meta_map.end()) {
+				return found_field->second;
+			}
+
+			// Then strip the number as it then probably is just a variation number (e.g. name1 and name2 for different upgrade levels)
+			const std::string_view stripped_field_name = field_name.substr(0, field_name.find_first_of("0123456789"));
+			if (const auto found_field = meta_slk.meta_map.find(stripped_field_name); found_field != meta_slk.meta_map.end()) {
+				return found_field->second;
+			}
+
+			// Only abilities should get here as they're the only ones that have multiple field names mapping to the same field ID
+			std::string_view base_id = id;
+			if (const auto found_base_id = data_single_asset_type("oldid", id); found_base_id) {
+				base_id = found_base_id.value();
+			}
+
+			// Abilities can also alias another existing ability, so we have to check both the base ID and alias
+			// Sometimes only the base ID is used in `useSpecific` and sometimes only the alias.
+
+			// Safety: Only abilities should enter this block and they all have an alias
+			const auto alias = data_single_asset_type("code", id).value();
+			const auto found_alias = meta_slk.meta_map.find(std::string(stripped_field_name).append(alias));
+			if (found_alias != meta_slk.meta_map.end()) {
+				return found_alias->second;
+			}
+
+			const auto found = meta_slk.meta_map.find(std::string(stripped_field_name).append(base_id));
+			if (found != meta_slk.meta_map.end()) {
+				return found->second;
+			}
+
+			return {};
+		}
+
 		// column_header should be lowercase
-		template <typename T = std::string>
+		template<typename T = std::string>
 		T data(const std::string_view column_header, const std::string_view row_header) const {
-			static_assert(std::is_same_v<T, std::string_view> || std::is_same_v<T, std::string> || std::is_floating_point_v<T> || std::is_integral_v<T>,  "Type not supported. Convert yourself or add conversion here if it makes sense");
+			static_assert(
+				std::is_same_v<T, std::string_view> || std::is_same_v<T, std::string> || std::is_floating_point_v<T>
+					|| std::is_integral_v<T>,
+				"Type not supported. Convert yourself or add conversion here if it makes sense"
+			);
 			assert(to_lowercase_copy(column_header) == column_header);
 
 			auto data = data_single_asset_type(column_header, row_header);
@@ -223,7 +270,7 @@ namespace slk {
 			}
 
 			if (!data) {
-				return T();	
+				return T();
 			}
 
 			if constexpr (std::is_same<T, std::string_view>()) {
@@ -247,7 +294,7 @@ namespace slk {
 		// Does :sd and :hd tag resolution too
 		// column_header should be lowercase
 		// If you have both an integer row index and the string row name then use the overload that takes string_view as it will do a index->name conversion internally
-		template <typename T = std::string>
+		template<typename T = std::string>
 		T data(const std::string_view column_header, size_t row) const {
 			if (row >= index_to_row.size()) {
 				throw;
@@ -257,7 +304,7 @@ namespace slk {
 		}
 
 		// Gets the data by first checking the shadow table and then checking the base table
-		template <typename T = std::string>
+		template<typename T = std::string>
 		T data(size_t column, size_t row) const {
 			if (row >= index_to_row.size()) {
 				throw;
@@ -293,6 +340,7 @@ namespace slk {
 		/// If an unknown column key is encountered, then the column is added
 
 		size_t non_matches = 0;
+
 		void merge(const ini::INI& ini, const SLK& meta_slk) {
 			for (const auto& [section_key, section_value] : ini.ini_data) {
 				auto found_section = base_data.find(section_key);
@@ -311,14 +359,18 @@ namespace slk {
 
 					// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files.
 					// This means we have to manually split these into the correct column
-					if (value.size() > 1 && (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming" || key_lower == "missilespeed" || key_lower == "buttonpos" || key_lower == "unbuttonpos" || key_lower == "researchbuttonpos") && column_headers.contains(key_lower + "2")) {
+					if (value.size() > 1
+						&& (key_lower == "missilearc" || key_lower == "missileart" || key_lower == "missilehoming"
+							|| key_lower == "missilespeed" || key_lower == "buttonpos" || key_lower == "unbuttonpos"
+							|| key_lower == "researchbuttonpos")
+						&& column_headers.contains(key_lower + "2")) {
 						section[key_lower] = value[0];
 						section[key_lower + "2"] = value[1];
 						continue;
 					}
 
 					const std::string key_lower_stripped = key_lower.substr(0, key_lower.find_first_of(':'));
-					
+
 					std::string id;
 					if (auto found = meta_slk.meta_map.find(key_lower_stripped); found != meta_slk.meta_map.end()) {
 						id = found->second;

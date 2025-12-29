@@ -100,13 +100,6 @@ export void load_modification_file(const std::string_view file_name, slk::SLK& b
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
 void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const slk::SLK& meta_slk, const bool custom, const bool optional_ints, const bool skin) {
-	// Create an temporary index to speed up field lookups
-	hive::unordered_map<std::string, std::string> meta_index;
-	for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-		std::string field = to_lowercase_copy(meta_slk.data<std::string_view>("field", key));
-		meta_index[field] = key;
-	}
-
 	BinaryWriter sub_writer;
 
 	size_t count = 0;
@@ -140,77 +133,31 @@ void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const sl
 		}
 		sub_writer.write<uint32_t>(properties.size() - (properties.contains("oldid") ? 1 : 0));
 
-		const std::string base_id = custom ? properties.at("oldid") : id;
-		std::string meta_id = custom ? properties.at("oldid") : id;
-		if (slk.column_headers.contains("code")) {
-			meta_id = slk.data("code", meta_id);
-		}
-
 		for (const auto& [property_id, value] : properties) {
+			// The oldis property is a HiveWE specific field of storing the ID a unit/ability is based on
 			if (property_id == "oldid") {
 				continue;
 			}
 
-			// Find the metadata ID for this field name since modification files are stupid
-			std::string meta_data_key;
-
 			int variation = 0;
 			int data_pointer = 0;
-			if (meta_index.contains(property_id)) {
-				meta_data_key = meta_index.at(property_id);
-			} else {
-				// First strip off the variation/level
-				size_t nr_position = property_id.find_first_of("0123456789");
-				std::string without_numbers = property_id.substr(0, nr_position);
 
-				if (nr_position != std::string::npos) {
-					variation = std::stoi(property_id.substr(nr_position));
-				}
-
-				// If it is a data field then it will contain a data_pointer/column at the end
-				if (without_numbers.starts_with("data")) {
-					data_pointer = without_numbers[4] - 'a' + 1;
-					without_numbers = "data";
-				}
-
-				if (without_numbers == "data" || without_numbers == "unitid" || without_numbers == "cast") {
-					// Unfortunately, mapping a data field to a key is not easy, so we have to iterate over the entire meta_slk
-					for (const auto& [key, dontcare2] : meta_slk.row_headers) {
-						if (meta_slk.data<int>("data", key) != data_pointer) {
-							continue;
-						}
-
-						if (to_lowercase_copy(meta_slk.data<std::string_view>("field", key)) != without_numbers) {
-							continue;
-						}
-
-						const std::string_view use_specific = meta_slk.data<std::string_view>("usespecific", key);
-						const std::string_view not_specific = meta_slk.data<std::string_view>("notspecific", key);
-
-						// If we are in the exclude list
-						if (not_specific.contains(meta_id)) {
-							continue;
-						}
-
-						// If the include list is not empty and we are not inside
-						if (!use_specific.empty() && !use_specific.contains(meta_id) && !use_specific.contains(base_id)) {
-							continue;
-						}
-
-						meta_data_key = key;
-						break;
-					}
-				} else {
-					if (meta_index.contains(without_numbers)) {
-						meta_data_key = meta_index.at(without_numbers);
-					}
-				}
+			size_t nr_position = property_id.find_first_of("0123456789");
+			if (nr_position != std::string::npos) {
+				variation = std::stoi(property_id.substr(nr_position));
 			}
 
-			if (meta_data_key.empty()) {
-				std::println("Empty meta data key for id {} property {}, value {}", id, property_id, value);
+			// If it is a data field then it will contain a data_pointer/column at the end
+			if (property_id.starts_with("data")) {
+				data_pointer = property_id[4] - 'a' + 1;
+			}
+
+			const auto meta_id2 = slk.field_to_meta_id(meta_slk, property_id, id);
+			if (!meta_id2) {
+				std::println("Meta data key not found for id {} property {}", id, property_id);
 				exit(0);
 			}
+			const std::string meta_data_key = std::string(meta_id2.value());
 
 			sub_writer.write_string(meta_data_key);
 			// There's an error in AbilityMetaData.slk where Crs1 instead uses Crs so we need to pad till 4 characters
