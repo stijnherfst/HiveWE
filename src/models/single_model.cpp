@@ -287,17 +287,20 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
-
+		editor->setMinimum(INT_MIN);
+		editor->setMaximum(INT_MAX);
 		// handle empty minVal, maxVal
-		editor->setMinimum(std::stoi(minVal));
-		editor->setMaximum(std::stoi(maxVal));
-		editor->setSingleStep(std::clamp((std::stoi(maxVal) - std::stoi(minVal)) / 10, 1, 10));
+		// editor->setMinimum(std::stoi(minVal));
+		// editor->setMaximum(std::stoi(maxVal));
+		// editor->setSingleStep(std::clamp((std::stoi(maxVal) - std::stoi(minVal)) / 10, 1, 10));
 		return editor;
 	} else if (type == "real" || type == "unreal") {
 		QDoubleSpinBox* editor = new QDoubleSpinBox(parent);
-		editor->setMinimum(std::stod(minVal));
-		editor->setMaximum(std::stod(maxVal));
-		editor->setSingleStep(std::clamp((std::stod(maxVal) - std::stod(minVal)) / 10.0, 0.1, 10.0));
+		editor->setMinimum(-99999999999.0);
+		editor->setMaximum(99999999999.0);
+		// editor->setMinimum(std::stod(minVal));
+		// editor->setMaximum(std::stod(maxVal));
+		// editor->setSingleStep(std::clamp((std::stod(maxVal) - std::stod(minVal)) / 10.0, 0.1, 10.0));
 		return editor;
 	} else if (type == "string") {
 		QTextEdit* editor = new QTextEdit(parent);

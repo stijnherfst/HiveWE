@@ -21,11 +21,11 @@ void load_modification_table(BinaryReader& reader, const uint32_t version, slk::
 		const std::string modified_id = reader.read_string(4);
 
 		if (version >= 3) {
-			uint32_t set_count = reader.read<uint32_t>();
+			const uint32_t set_count = reader.read<uint32_t>();
 			if (set_count > 1) {
 				std::println("Set count of {} detected", set_count);
 			}
-			uint32_t set_flag = reader.read<uint32_t>();
+			const uint32_t set_flag = reader.read<uint32_t>();
 		}
 		if (modification && !slk.base_data.contains(modified_id)) {
 			slk.copy_row(original_id, modified_id, false);
@@ -39,18 +39,13 @@ void load_modification_table(BinaryReader& reader, const uint32_t version, slk::
 
 			std::string column_header = to_lowercase_copy(meta_slk.data<std::string_view>("field", modification_id));
 			if (optional_ints) {
-				uint32_t level_variation = reader.read<uint32_t>();
-				uint32_t data_pointer = reader.read<uint32_t>();
+				const uint32_t level_variation = reader.read<uint32_t>();
+				const uint32_t data_pointer = reader.read<uint32_t>();
 				if (data_pointer != 0) {
-					column_header += char('a' + data_pointer - 1);
+					column_header += static_cast<char>('a' + data_pointer - 1);
 				}
-				if (level_variation != 0) {
+				if (meta_slk.data<std::string_view>("repeat", modification_id) == "1") {
 					column_header += std::to_string(level_variation);
-				}
-
-				// Can remove after checking whether this holds for many maps
-				if (data_pointer != 0 && level_variation == 0) {
-					assert(!(data_pointer != 0 && level_variation == 0));
 				}
 			}
 
