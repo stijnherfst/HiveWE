@@ -18,6 +18,7 @@ namespace fs = std::filesystem;
 export class Hierarchy {
   public:
 	char tileset = 'L';
+	std::string locale = "enus";
 	casc::CASC game_data;
 	json::JSON aliases;
 
@@ -88,7 +89,7 @@ export class Hierarchy {
 				return game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str));
 			},
 			[&] {
-				return game_data.open_file("war3.w3mod:_locales/enus.w3mod:"s + path_str);
+				return game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str));
 			},
 			[&] {
 				return teen ? game_data.open_file("war3.w3mod:_teen.w3mod:"s + path_str) : std::unexpected("skip");
@@ -118,18 +119,20 @@ export class Hierarchy {
 			return false;
 		}
 
+		const auto path_str = path.string();
+
 		return fs::exists("data/overrides" / path) || (local_files && fs::exists(root_directory / path))
-			|| (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path.string()))
-			|| (hd && map_file_exists("_hd.w3mod:" + path.string())) || map_file_exists(path)
-			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string()))
-			|| (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path.string()))
-			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path.string()))
-			|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path.string())
-			|| game_data.file_exists("war3.w3mod:_locales/enus.w3mod:"s + path.string())
-			|| (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path.string()))
-			|| game_data.file_exists("war3.w3mod:"s + path.string())
-			|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path.string())
-			|| (aliases.exists(path.string()) ? file_exists(aliases.alias(path.string())) : false);
+			|| (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path_str))
+			|| (hd && map_file_exists("_hd.w3mod:" + path_str)) || map_file_exists(path)
+			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str))
+			|| (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path_str))
+			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path_str))
+			|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str)
+			|| game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str))
+			|| (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path_str))
+			|| game_data.file_exists("war3.w3mod:"s + path_str)
+			|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path_str)
+			|| (aliases.exists(path_str) ? file_exists(aliases.alias(path_str)) : false);
 	}
 
 	[[nodiscard]]

@@ -348,7 +348,7 @@ public:
 		units.erase(iterator);
 	}
 
-	std::vector<Unit*> query_area(const QRectF& area) {
+	[[nodiscard]] std::vector<Unit*> query_area(const QRectF& area) {
 		std::vector<Unit*> result;
 
 		for (auto& i : units) {
@@ -404,8 +404,8 @@ public:
 	}
 
 	std::shared_ptr<SkinnedMesh> get_mesh(const std::string& id) {
-		if (id_to_mesh.find(id) != id_to_mesh.end()) {
-			return id_to_mesh[id];
+		if (const auto found = id_to_mesh.find(id); found != id_to_mesh.end()) {
+			return found->second;
 		}
 
 		fs::path mesh_path = units_slk.data<std::string_view>("file", id);
