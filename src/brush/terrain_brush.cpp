@@ -83,7 +83,7 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 	Brush::mouse_release_event(event);
 }
 
-void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
+void TerrainBrush::check_nearby(const int begx, const int begy, const std::vector<glm::ivec2>& seeds, QRect& area) const {
 	auto& corners = map->terrain.corners;
 	const int width = map->terrain.width;
 	const int height = map->terrain.height;
@@ -96,9 +96,16 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 
 	std::vector<glm::ivec2> stack;
 	stack.reserve(64);
-	stack.emplace_back(i, j);
-	if (i >= 0 && i <= width && j >= 0 && j <= height) {
-		visited[visit_index(i, j)] = 1;
+	for (const auto& seed : seeds) {
+		if (seed.x < 0 || seed.x >= corner_width || seed.y < 0 || seed.y >= corner_height) {
+			continue;
+		}
+		const size_t index = visit_index(seed.x, seed.y);
+		if (visited[index] != 0) {
+			continue;
+		}
+		visited[index] = 1;
+		stack.emplace_back(seed);
 	}
 
 	while (!stack.empty()) {
@@ -309,6 +316,7 @@ void TerrainBrush::apply(double frame_delta) {
 	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
+		std::vector<glm::ivec2> cliff_seeds;
 		
 		//if (cliff_operation_type == cliff_operation::ramp) {
 		//	const int center_x = area.x() + area.width() * 0.5f;
@@ -371,10 +379,14 @@ void TerrainBrush::apply(double frame_delta) {
 							break;
 					}
 
-					check_nearby(pos.x, pos.y, i, j, updated_area);
+					cliff_seeds.emplace_back(i, j);
 				}
 			}
 		//}
+
+		if (!cliff_seeds.empty()) {
+			check_nearby(pos.x, pos.y, cliff_seeds, updated_area);
+		}
 
 		// Bounds check
 		updated_area = updated_area.intersected({ 0, 0, width - 1, height - 1 });
