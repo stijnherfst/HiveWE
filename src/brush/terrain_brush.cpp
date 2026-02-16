@@ -85,19 +85,31 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
 	auto& corners = map->terrain.corners;
+	const int width = map->terrain.width;
+	const int height = map->terrain.height;
+	const int corner_width = width + 1;
+	const int corner_height = height + 1;
+	std::vector<uint8_t> visited(static_cast<size_t>(corner_width * corner_height), 0);
+	auto visit_index = [corner_width](int x, int y) {
+		return static_cast<size_t>(y * corner_width + x);
+	};
+
 	std::vector<glm::ivec2> stack;
 	stack.reserve(64);
 	stack.emplace_back(i, j);
+	if (i >= 0 && i <= width && j >= 0 && j <= height) {
+		visited[visit_index(i, j)] = 1;
+	}
 
 	while (!stack.empty()) {
 		const glm::ivec2 current = stack.back();
 		stack.pop_back();
 
-		QRect bounds = QRect(current.x - 1, current.y - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
+		QRect bounds = QRect(current.x - 1, current.y - 1, 3, 3).intersected({ 0, 0, width, height });
 
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
 			for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-				if (k == 0 && l == 0) {
+				if (visited[visit_index(k, l)] != 0) {
 					continue;
 				}
 
@@ -111,6 +123,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 					area.setRight(std::max(area.right(), k));
 					area.setBottom(std::max(area.bottom(), l));
 
+					visited[visit_index(k, l)] = 1;
 					stack.emplace_back(k, l);
 				}
 			}
