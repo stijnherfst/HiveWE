@@ -83,27 +83,36 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 	Brush::mouse_release_event(event);
 }
 
-// Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
+	auto& corners = map->terrain.corners;
+	std::vector<glm::ivec2> stack;
+	stack.reserve(64);
+	stack.emplace_back(i, j);
 
-	for (int k = bounds.x(); k <= bounds.right(); k++) {
-		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-			if (k == 0 && l == 0) {
-				continue;
-			}
+	while (!stack.empty()) {
+		const glm::ivec2 current = stack.back();
+		stack.pop_back();
 
-			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
-			if (std::abs(difference) > 2 && !contains(glm::ivec2(begx + (k - i), begy + (l - k)))) {
-				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
-				map->terrain.corners[k][l].ramp = false;
+		QRect bounds = QRect(current.x - 1, current.y - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
 
-				area.setX(std::min(area.x(), k - 1));
-				area.setY(std::min(area.y(), l - 1));
-				area.setRight(std::max(area.right(), k));
-				area.setBottom(std::max(area.bottom(), l));
+		for (int k = bounds.x(); k <= bounds.right(); k++) {
+			for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+				if (k == 0 && l == 0) {
+					continue;
+				}
 
-				check_nearby(begx, begy, k, l, area);
+				const int difference = corners[current.x][current.y].layer_height - corners[k][l].layer_height;
+				if (std::abs(difference) > 2 && !contains(glm::ivec2(begx + (k - current.x), begy + (l - current.y)))) {
+					corners[k][l].layer_height = corners[current.x][current.y].layer_height - std::clamp(difference, -2, 2);
+					corners[k][l].ramp = false;
+
+					area.setX(std::min(area.x(), k - 1));
+					area.setY(std::min(area.y(), l - 1));
+					area.setRight(std::max(area.right(), k));
+					area.setBottom(std::max(area.bottom(), l));
+
+					stack.emplace_back(k, l);
+				}
 			}
 		}
 	}
