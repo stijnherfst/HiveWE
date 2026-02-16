@@ -391,11 +391,6 @@ export class SkinnedMesh : public Resource {
 
 				// We don't have to render fully transparent meshes
 				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
-				// TODO: this is a hack, if the first instance has an alpha animation that triggers this condition then all instances will be hidden, even if the others have a positive alpha
-				if (layer_colors[lay_index].a <= 0.01f) {
-					lay_index += 1;
-					continue;
-				}
 
 				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
 				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
