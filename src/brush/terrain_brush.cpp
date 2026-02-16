@@ -217,8 +217,8 @@ void TerrainBrush::apply(double frame_delta) {
 				}
 
 				bool cliff_near = false;
-				for (int k = -1; k < 1; k++) {
-					for (int l = -1; l < 1; l++) {
+				for (int k = -1; k <= 1; k++) {
+					for (int l = -1; l <= 1; l++) {
 						if (i + k >= 0 && i + k <= width && j + l >= 0 && j + l <= height) {
 							cliff_near = cliff_near || corners[i + k][j + l].cliff;
 						}
