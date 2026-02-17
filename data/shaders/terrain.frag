@@ -56,7 +56,7 @@ void main() {
 	if (render_brush) {
 		ivec2 brush_texture_size = textureSize(brush, 0);
 
-		vec2 brush_uv = ((brush_position - world_position) * 4.f) / vec2(brush_texture_size) + 0.5;
+		vec2 brush_uv = ((world_position - brush_position) * 4.f) / vec2(brush_texture_size) + 0.5;
 
 		vec4 brush_color = texture(brush, brush_uv);
 
