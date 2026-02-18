@@ -52,6 +52,10 @@ export void to_lowercase(std::string& string) {
 	std::transform(string.begin(), string.end(), string.begin(), [](unsigned char c) { return std::tolower(c); });
 }
 
+export void normalize_path_to_backslash(std::string& path) {
+	std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) { return c == '/' ? '\\' : c; });
+}
+
 // trim from start (in place)
 export void ltrim(std::string& s) {
 	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {

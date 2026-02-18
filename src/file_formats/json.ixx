@@ -1,5 +1,6 @@
 export module JSON;
 
+import UnorderedMap;
 import std;
 import types;
 import BinaryReader;
@@ -10,7 +11,7 @@ namespace fs = std::filesystem;
 namespace json {
 	export class JSON {
 	  public:
-		std::map<std::string, std::string> json_data;
+		hive::unordered_map<std::string, std::string> json_data;
 		
 		JSON() = default;
 
@@ -20,65 +21,87 @@ namespace json {
 
 		void load(const BinaryReader& reader) {
 			json_data.clear();
-			std::stringstream file;
-			file.write(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+			std::string_view data(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+			bool saw_array_start = false;
 
-			size_t end1;
-			std::string line;
-			if (std::getline(file, line)) {
-				if (line.front() == '[') {
-					while (std::getline(file, line) && line.back() != '}') {
-						// Normaly json files use ; for comments, but Blizzard uses //
-						if (line.substr(0, 2) == "//" || line.empty() || line.front() == ';') {
-							continue;
-						}
-						for (size_t i = 0; i < line.length(); i++) {
-							if (line.at(i) == '/') {
-								line.replace(i, 1, "\\");
-							}
-						}
-						if (line.substr(0, 12) == "    {\"src\":\"") {
-							end1 = line.find('\"', 13);
-							std::string key = line.substr(12, end1 - 12);
-							std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
-							// If the segment already exists
-							if (json_data.contains(key)) {
-								continue;
-							}
-							json_data[key] = line.substr(end1 + 11, line.find('\"', end1 + 12) - end1 - 11);
-						}
-					}
-					if (line.substr(0, 12) == "    {\"src\":\"") {
-						end1 = line.find('\"', 13);
-						const std::string key = line.substr(12, end1 - 12);
-						// If the segment already exists
-						if (json_data.contains(key)) {
-						} else {
-							json_data[key] = line.substr(end1 + 11, line.find('\"', end1 + 12) - end1 - 11);
-						}
-					}
+			while (!data.empty()) {
+				const size_t eol = data.find('\n');
+				std::string_view line = (eol == std::string_view::npos) ? data : data.substr(0, eol);
+				if (eol == std::string_view::npos) {
+					data = {};
 				} else {
-					std::cout << "Malformed Alias JSON\n";
+					data.remove_prefix(eol + 1);
 				}
+
+				if (!line.empty() && line.back() == '\r') {
+					line.remove_suffix(1);
+				}
+
+				// Normally json files use ; for comments, but Blizzard uses //
+				if (line.empty() || line.starts_with("//") || line.front() == ';') {
+					continue;
+				}
+
+				if (!saw_array_start) {
+					saw_array_start = line.front() == '[';
+					if (!saw_array_start) {
+						std::cout << "Malformed Alias JSON\n";
+						return;
+					}
+					continue;
+				}
+
+				const size_t src_key = line.find(R"("src":")");
+				if (src_key == std::string_view::npos) {
+					continue;
+				}
+
+				const size_t src_start = src_key + 7;
+				const size_t src_end = line.find('"', src_start);
+				if (src_end == std::string_view::npos) {
+					continue;
+				}
+
+				size_t dst_key = line.find(R"("dest":")", src_end);
+				if (dst_key == std::string_view::npos) {
+					dst_key = line.find(R"("dst":")", src_end);
+				}
+				if (dst_key == std::string_view::npos) {
+					continue;
+				}
+
+				size_t dst_start = dst_key;
+				if (line.substr(dst_key).starts_with(R"("dest":")")) {
+					dst_start = dst_key + 8;
+				} else {
+					dst_start = dst_key + 7;
+				}
+				const size_t dst_end = line.find('"', dst_start);
+				if (dst_end == std::string_view::npos) {
+					continue;
+				}
+
+				std::string key(line.substr(src_start, src_end - src_start));
+				std::string value(line.substr(dst_start, dst_end - dst_start));
+				normalize_path_to_backslash(key);
+				normalize_path_to_backslash(value);
+				to_lowercase(key);
+
+				json_data[key] = std::move(value);
 			}
 		}
 
-		bool exists(const std::string& file) const {
+		[[nodiscard]] bool exists(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
-							[](char c) {if (c == '/')return '\\'; return c; });
-			if (json_data.contains(file_lower_case)) {
-				return true;
-			}
-			return false;
+			normalize_path_to_backslash(file_lower_case);
+			to_lowercase(file_lower_case);
+			return json_data.contains(file_lower_case);
 		}
 
-		std::string alias(const std::string& file) const {
+		[[nodiscard]] std::string alias(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
-							[](char c) {if (c == '/')return '\\'; return c; });
+			normalize_path_to_backslash(file_lower_case);
+			to_lowercase(file_lower_case);
 			return json_data.at(file_lower_case);
 		}
 	};
