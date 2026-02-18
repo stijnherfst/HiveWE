@@ -89,8 +89,8 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const std::vecto
 	const int height = map->terrain.height;
 	const int corner_width = width + 1;
 	const int corner_height = height + 1;
-	std::vector<uint8_t> visited(static_cast<size_t>(corner_width * corner_height), 0);
-	auto visit_index = [corner_width](int x, int y) {
+	hive::unordered_map<size_t, bool> visited;
+	auto linear_index = [corner_width](int x, int y) {
 		return static_cast<size_t>(y * corner_width + x);
 	};
 
@@ -100,11 +100,11 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const std::vecto
 		if (seed.x < 0 || seed.x >= corner_width || seed.y < 0 || seed.y >= corner_height) {
 			continue;
 		}
-		const size_t index = visit_index(seed.x, seed.y);
-		if (visited[index] != 0) {
+		const size_t index = linear_index(seed.x, seed.y);
+		if (visited[index]) {
 			continue;
 		}
-		visited[index] = 1;
+		visited[index] = true;
 		stack.emplace_back(seed);
 	}
 
@@ -116,7 +116,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const std::vecto
 
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
 			for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-				if (visited[visit_index(k, l)] != 0) {
+				if (visited[linear_index(k, l)]) {
 					continue;
 				}
 
@@ -130,7 +130,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const std::vecto
 					area.setRight(std::max(area.right(), k));
 					area.setBottom(std::max(area.bottom(), l));
 
-					visited[visit_index(k, l)] = 1;
+					visited[linear_index(k, l)] = true;
 					stack.emplace_back(k, l);
 				}
 			}
