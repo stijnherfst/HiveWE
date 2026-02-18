@@ -51,7 +51,7 @@ namespace json {
 					continue;
 				}
 
-				const size_t src_key = line.find("\"src\":\"");
+				const size_t src_key = line.find(R"("src":")");
 				if (src_key == std::string_view::npos) {
 					continue;
 				}
@@ -62,16 +62,16 @@ namespace json {
 					continue;
 				}
 
-				size_t dst_key = line.find("\"dest\":\"", src_end);
+				size_t dst_key = line.find(R"("dest":")", src_end);
 				if (dst_key == std::string_view::npos) {
-					dst_key = line.find("\"dst\":\"", src_end);
+					dst_key = line.find(R"("dst":")", src_end);
 				}
 				if (dst_key == std::string_view::npos) {
 					continue;
 				}
 
 				size_t dst_start = dst_key;
-				if (line.substr(dst_key).starts_with("\"dest\":\"")) {
+				if (line.substr(dst_key).starts_with(R"("dest":")")) {
 					dst_start = dst_key + 8;
 				} else {
 					dst_start = dst_key + 7;
@@ -91,14 +91,14 @@ namespace json {
 			}
 		}
 
-		bool exists(const std::string& file) const {
+		[[nodiscard]] bool exists(const std::string& file) const {
 			std::string file_lower_case = file;
 			normalize_path_to_backslash(file_lower_case);
 			to_lowercase(file_lower_case);
 			return json_data.contains(file_lower_case);
 		}
 
-		std::string alias(const std::string& file) const {
+		[[nodiscard]] std::string alias(const std::string& file) const {
 			std::string file_lower_case = file;
 			normalize_path_to_backslash(file_lower_case);
 			to_lowercase(file_lower_case);
