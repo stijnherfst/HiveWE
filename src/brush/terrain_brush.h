@@ -57,7 +57,7 @@ public:
 	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
 	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
 
-	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
+	void check_nearby(int begx, int begy, const std::vector<glm::ivec2>& seeds, QRect& area) const;
 
 	void apply_begin() override;
 	void apply(double frame_delta) override;

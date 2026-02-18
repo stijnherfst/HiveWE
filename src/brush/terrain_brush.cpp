@@ -83,27 +83,56 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 	Brush::mouse_release_event(event);
 }
 
-// Make this an iterative function instead to avoid stack overflows
-void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
+void TerrainBrush::check_nearby(const int begx, const int begy, const std::vector<glm::ivec2>& seeds, QRect& area) const {
+	auto& corners = map->terrain.corners;
+	const int width = map->terrain.width;
+	const int height = map->terrain.height;
+	const int corner_width = width + 1;
+	const int corner_height = height + 1;
+	hive::unordered_map<size_t, bool> visited;
+	auto linear_index = [corner_width](int x, int y) {
+		return static_cast<size_t>(y * corner_width + x);
+	};
 
-	for (int k = bounds.x(); k <= bounds.right(); k++) {
-		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-			if (k == 0 && l == 0) {
-				continue;
-			}
+	std::vector<glm::ivec2> stack;
+	stack.reserve(64);
+	for (const auto& seed : seeds) {
+		if (seed.x < 0 || seed.x >= corner_width || seed.y < 0 || seed.y >= corner_height) {
+			continue;
+		}
+		const size_t index = linear_index(seed.x, seed.y);
+		if (visited[index]) {
+			continue;
+		}
+		visited[index] = true;
+		stack.emplace_back(seed);
+	}
 
-			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
-			if (std::abs(difference) > 2 && !contains(glm::ivec2(begx + (k - i), begy + (l - k)))) {
-				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
-				map->terrain.corners[k][l].ramp = false;
+	while (!stack.empty()) {
+		const glm::ivec2 current = stack.back();
+		stack.pop_back();
 
-				area.setX(std::min(area.x(), k - 1));
-				area.setY(std::min(area.y(), l - 1));
-				area.setRight(std::max(area.right(), k));
-				area.setBottom(std::max(area.bottom(), l));
+		QRect bounds = QRect(current.x - 1, current.y - 1, 3, 3).intersected({ 0, 0, width, height });
 
-				check_nearby(begx, begy, k, l, area);
+		for (int k = bounds.x(); k <= bounds.right(); k++) {
+			for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+				if (visited[linear_index(k, l)]) {
+					continue;
+				}
+
+				const int difference = corners[current.x][current.y].layer_height - corners[k][l].layer_height;
+				if (std::abs(difference) > 2 && !contains(glm::ivec2(begx + (k - current.x), begy + (l - current.y)))) {
+					corners[k][l].layer_height = corners[current.x][current.y].layer_height - std::clamp(difference, -2, 2);
+					corners[k][l].ramp = false;
+
+					area.setX(std::min(area.x(), k - 1));
+					area.setY(std::min(area.y(), l - 1));
+					area.setRight(std::max(area.right(), k));
+					area.setBottom(std::max(area.bottom(), l));
+
+					visited[linear_index(k, l)] = true;
+					stack.emplace_back(k, l);
+				}
 			}
 		}
 	}
@@ -195,8 +224,8 @@ void TerrainBrush::apply(double frame_delta) {
 				}
 
 				bool cliff_near = false;
-				for (int k = -1; k < 1; k++) {
-					for (int l = -1; l < 1; l++) {
+				for (int k = -1; k <= 1; k++) {
+					for (int l = -1; l <= 1; l++) {
 						if (i + k >= 0 && i + k <= width && j + l >= 0 && j + l <= height) {
 							cliff_near = cliff_near || corners[i + k][j + l].cliff;
 						}
@@ -287,6 +316,7 @@ void TerrainBrush::apply(double frame_delta) {
 	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
 
 	if (apply_cliff) {
+		std::vector<glm::ivec2> cliff_seeds;
 		
 		//if (cliff_operation_type == cliff_operation::ramp) {
 		//	const int center_x = area.x() + area.width() * 0.5f;
@@ -349,10 +379,14 @@ void TerrainBrush::apply(double frame_delta) {
 							break;
 					}
 
-					check_nearby(pos.x, pos.y, i, j, updated_area);
+					cliff_seeds.emplace_back(i, j);
 				}
 			}
 		//}
+
+		if (!cliff_seeds.empty()) {
+			check_nearby(pos.x, pos.y, cliff_seeds, updated_area);
+		}
 
 		// Bounds check
 		updated_area = updated_area.intersected({ 0, 0, width - 1, height - 1 });
