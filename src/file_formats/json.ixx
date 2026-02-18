@@ -1,5 +1,6 @@
 export module JSON;
 
+import UnorderedMap;
 import std;
 import types;
 import BinaryReader;
@@ -10,7 +11,7 @@ namespace fs = std::filesystem;
 namespace json {
 	export class JSON {
 	  public:
-		std::map<std::string, std::string> json_data;
+		hive::unordered_map<std::string, std::string> json_data;
 		
 		JSON() = default;
 
