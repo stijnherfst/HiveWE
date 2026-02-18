@@ -23,14 +23,6 @@ namespace json {
 			std::string_view data(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
 			bool saw_array_start = false;
 
-			auto normalize_path = [](std::string& value) {
-				for (char& c : value) {
-					if (c == '/') {
-						c = '\\';
-					}
-				}
-			};
-
 			while (!data.empty()) {
 				const size_t eol = data.find('\n');
 				std::string_view line = (eol == std::string_view::npos) ? data : data.substr(0, eol);
@@ -90,32 +82,25 @@ namespace json {
 
 				std::string key(line.substr(src_start, src_end - src_start));
 				std::string value(line.substr(dst_start, dst_end - dst_start));
-				normalize_path(key);
-				normalize_path(value);
-				std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c) { return std::tolower(c); });
+				normalize_path_to_backslash(key);
+				normalize_path_to_backslash(value);
+				to_lowercase(key);
 
-				if (!json_data.contains(key)) {
-					json_data[key] = std::move(value);
-				}
+				json_data[key] = std::move(value);
 			}
 		}
 
 		bool exists(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
-							[](char c) {if (c == '/')return '\\'; return c; });
-			if (json_data.contains(file_lower_case)) {
-				return true;
-			}
-			return false;
+			normalize_path_to_backslash(file_lower_case);
+			to_lowercase(file_lower_case);
+			return json_data.contains(file_lower_case);
 		}
 
 		std::string alias(const std::string& file) const {
 			std::string file_lower_case = file;
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(), [](unsigned char c) { return std::tolower(c); });
-			std::transform(file_lower_case.begin(), file_lower_case.end(), file_lower_case.begin(),
-							[](char c) {if (c == '/')return '\\'; return c; });
+			normalize_path_to_backslash(file_lower_case);
+			to_lowercase(file_lower_case);
 			return json_data.at(file_lower_case);
 		}
 	};
