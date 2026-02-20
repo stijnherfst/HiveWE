@@ -63,7 +63,8 @@ export class BinaryReader {
 		if (position + sizeof(T) * size > buffer.size()) {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
-		std::vector<T> result(reinterpret_cast<T*>(&buffer[position]), reinterpret_cast<T*>(&buffer[position]) + size);
+		std::vector<T> result(size);
+		std::memcpy(result.data(), &buffer[position], sizeof(T) * size);
 		position += sizeof(T) * size;
 		return result;
 	}

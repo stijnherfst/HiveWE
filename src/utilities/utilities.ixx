@@ -113,14 +113,23 @@ export std::vector<std::string> split_string_escaped(const std::string_view inpu
 }
 
 export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
+
 	std::ifstream stream(path, std::ios::binary);
-	if (stream) {
-		return BinaryReader(
-			std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
-		);
-	} else {
+	if (!stream) {
 		return std::unexpected("Unable to open file");
 	}
+
+	const size_t file_size = fs::file_size(path);
+	
+	std::vector<u8, default_init_allocator<u8>> buffer(file_size);
+	if (!buffer.empty()) {
+		stream.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(buffer.size()));
+		if (!stream) {
+			return std::unexpected("Unable to read file contents");
+		}
+	}
+
+	return BinaryReader(std::move(buffer));
 };
 
 export struct ItemSet {
