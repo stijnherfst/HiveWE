@@ -15,6 +15,7 @@
 #include <QScrollArea>
 #include <QScrollBar>
 #include <QMenu>
+#include <QMessageBox>
 
 import std;
 import UnitSelector;
@@ -250,6 +251,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			}
 		}
 		
+		// add new object
 		connect(addAction, &QAction::triggered, [=, this]() {
 			QDialog* selectdialog = new QDialog(this, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 			selectdialog->resize(300, 560);
@@ -310,12 +312,22 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
 			});
 
-			connect(id, &QLineEdit::textChanged, [buttonBox](const QString& text) {
-				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4);
+			connect(id, &QLineEdit::textChanged, [buttonBox, table](const QString& text) {
+				// enable "OK" button if the ID is valid (4 chars long and not already taken)
+				std::string new_id = text.toStdString();
+				bool is_duplicate = table->slk->row_headers.contains(new_id);
+				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4 && !is_duplicate);
 			});
 
 			auto select = [view, table, sub_filter, filter, selectdialog, id, treeModel](const QModelIndex& index) {
 				if (id->text().size() != 4) {
+					return;
+				}
+
+				// check if another object with selected ID already exists 
+				std::string new_id = id->text().toStdString();
+				if (table->slk->row_headers.contains(new_id)) {
+					QMessageBox::warning(selectdialog, "Duplicate ID", "An object with ID '" + QString::fromStdString(new_id) + "' already exists.\nPlease choose a different ID.");
 					return;
 				}
 
