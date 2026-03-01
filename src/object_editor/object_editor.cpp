@@ -143,8 +143,12 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 		label->setWordWrap(true);
 	}
 
+	SingleModel* single_model = new SingleModel(table, this);
+	single_model->setID(id);
+
+	TableDelegate* delegate = new TableDelegate(single_model);
+
 	QTableView* view = new QTableView;
-	TableDelegate* delegate = new TableDelegate;
 	view->setItemDelegate(delegate);
 	view->horizontalHeader()->hide();
 	view->setAlternatingRowColors(true);
@@ -155,6 +159,7 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	view->setIconSize({ 24, 24 });
 	view->setWordWrap(true);
 	view->setSizeAdjustPolicy(QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents);
+	view->setModel(single_model);
 	layout->addWidget(view);
 
 	QWidget* container = new QWidget;
@@ -172,9 +177,7 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	dock_tab->setWindowTitle(name);
 	dock_tab->setIcon(icon);
 
-	SingleModel* single_model = new SingleModel(table, this);
-	single_model->setID(id);
-	view->setModel(single_model);
+
 
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 

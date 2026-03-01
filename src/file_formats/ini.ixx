@@ -5,6 +5,7 @@ import Utilities;
 import Hierarchy;
 import no_init_allocator;
 import <absl/strings/str_split.h>;
+import "absl/strings/str_join.h";
 import UnorderedMap;
 
 namespace fs = std::filesystem;
@@ -58,7 +59,20 @@ namespace ini {
 					}
 
 					const std::string_view key = view.substr(0, found);
-					const std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
+					std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
+
+					// Strip comments from value
+					if (const size_t comment = value.find("//"); comment != std::string_view::npos) {
+						value = value.substr(0, comment);
+					}
+					if (const size_t comment = value.find(';'); comment != std::string_view::npos) {
+						value = value.substr(0, comment);
+					}
+
+					// Trim trailing whitespace from value
+					while (!value.empty() && std::isspace(static_cast<unsigned char>(value.back()))) {
+						value.remove_suffix(1);
+					}
 
 					if (key.empty() || value.empty()) {
 						view.remove_prefix(eol + 1);
@@ -78,6 +92,18 @@ namespace ini {
 					}
 				}
 				view.remove_prefix(eol + 1);
+			}
+		}
+
+		void save(const fs::path& path) {
+			std::fstream stream(path, std::ios::out | std::ios::binary);
+
+			stream << std::string{ static_cast<char>(0xEF), static_cast<char>(0xBB), static_cast<char>(0xBF) };
+			for (auto&& [section, section_data] : ini_data) {
+				stream << '[' << section << ']' << std::endl;
+				for (auto&& [key, values] : section_data) {
+					stream << key << '=' << absl::StrJoin(values, ",") << std::endl;
+				}
 			}
 		}
 

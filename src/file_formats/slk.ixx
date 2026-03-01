@@ -116,10 +116,15 @@ namespace slk {
 
 						{
 							std::string data;
+
 							if (view.front() == '\"') {
-								data = view.substr(1, view.find('"', 1) - 1);
+								data = view.substr(1, view.find_first_of("\r\n") - 1);
 							} else {
 								data = view.substr(0, view.find_first_of("\r\n"));
+							}
+
+							if (data.back() == '\"') {
+								data.pop_back();
 							}
 
 							if (data == "-" || data == "_") {
@@ -487,6 +492,7 @@ namespace slk {
 				add_column(column_header);
 			}
 
+			// If the shadow data is equal to to the base data we remove the shadow data
 			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
 				if (base_data.at(row_header).at(column_header) == data) {
 					if (shadow_data.contains(row_header)) {
