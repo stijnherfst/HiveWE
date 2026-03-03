@@ -33,11 +33,9 @@ export class BinaryReader {
 			throw std::out_of_range("Trying to read out of range of buffer");
 		}
 
-		std::string result;
-		result.resize(size);
-		std::memcpy(result.data(), &buffer[position], size);
+		std::string result(reinterpret_cast<const char*>(&buffer[position]), size);
 
-		if (const size_t pos = result.find_first_of('\0', 0); pos != std::string::npos) {
+		if (const size_t pos = result.find('\0'); pos != std::string::npos) {
 			result.resize(pos);
 		}
 
