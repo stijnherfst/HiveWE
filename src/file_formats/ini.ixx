@@ -85,10 +85,10 @@ namespace ini {
 					// E.g. the destructable LTt0 in destructableskin.txt has multiple minScale/maxScale
 					if (auto found = ini_data.find(current_section); found != ini_data.end()) {
 						if (!found->second.contains(key)) {
-							found->second[key] = parts;
+							found->second[key] = std::move(parts);
 						}
 					} else {
-						ini_data[current_section][key] = parts;
+						ini_data[current_section][key] = std::move(parts);
 					}
 				}
 				view.remove_prefix(eol + 1);
@@ -134,8 +134,8 @@ namespace ini {
 			ini_data[section][key] = { std::move(value) };
 		}
 
-		std::vector<std::string> whole_data(const std::string_view section, const std::string_view key) {
-			return ini_data[section][key];
+		[[nodiscard]] const std::vector<std::string>& whole_data(const std::string_view section, const std::string_view key) const {
+			return ini_data.at(section).at(key);
 		}
 
 		[[nodiscard]] bool key_exists(const std::string_view section, const std::string_view key) const {

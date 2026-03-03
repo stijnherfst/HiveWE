@@ -25,15 +25,13 @@ export class BinaryWriter {
 	}
 
 	/// Writes the string to the buffer (null terminated if the input string is null terminated)
-	/// ToDo string_view?
-	void write_string(const std::string& string) {
+	void write_string(const std::string_view string) {
 		buffer.resize(buffer.size() + string.size());
 		std::copy(string.begin(), string.end(), buffer.end() - string.size());
 	}
 
 	/// Writes a null terminated string to the buffer
-	/// ToDo string_view?
-	void write_c_string(const std::string& string) {
+	void write_c_string(const std::string_view string) {
 		if (!string.empty() && string.back() == '\0') {
 			buffer.resize(buffer.size() + string.size());
 			std::copy(string.begin(), string.end(), buffer.end() - string.size());
@@ -45,10 +43,9 @@ export class BinaryWriter {
 	}
 
 	/// Writes a null terminated string to the buffer with padding
-	/// ToDo string_view?
-	void write_c_string_padded(const std::string& string, int final_size) {
+	void write_c_string_padded(const std::string_view string, int final_size) {
 		buffer.resize(buffer.size() + final_size);
-		std::copy(string.begin(), string.end(), buffer.end() - final_size);
+		std::copy(string.begin(), string.begin() + std::min(static_cast<int>(string.size()), final_size), buffer.end() - final_size);
 
 		// std::vector::resize will memset to 0 so adding a \0 terminator is not required
 	}

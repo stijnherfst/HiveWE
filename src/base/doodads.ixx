@@ -196,12 +196,12 @@ export class Doodads {
 	}
 
 	// Will assign a creation number
-	Doodad& add_doodad(const std::string& id, const int variation, const glm::vec3 position, const Terrain& terrain) {
+	Doodad& add_doodad(std::string id, const int variation, const glm::vec3 position, const Terrain& terrain) {
 		Doodad doodad;
-		doodad.id = id;
 		doodad.skin_id = id;
+		doodad.id = std::move(id);
 		doodad.variation = variation;
-		doodad.mesh = get_mesh(id, variation);
+		doodad.mesh = get_mesh(doodad.id, variation);
 		doodad.position = position;
 		doodad.scale = {1, 1, 1};
 		doodad.angle = 0;
