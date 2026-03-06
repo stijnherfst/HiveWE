@@ -491,6 +491,413 @@
          </property>
         </widget>
        </widget>
+
+        <widget class="QWidget" name="tab_6">
+        <attribute name="title">
+         <string>Size and Camera Bounds</string>
+        </attribute>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <item>
+          <layout class="QGridLayout" name="gridLayout_bounds">
+           <item row="1" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_left">
+             <item>
+              <widget class="QLabel" name="label_mapLeft">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>Map</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="mapBoundsLeft">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_leftArrows">
+               <item>
+                <widget class="QPushButton" name="mapBoundsLeftDec">
+                 <property name="text">
+                  <string>◀</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="mapBoundsLeftInc">
+                 <property name="text">
+                  <string>▶</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_cameraLeft">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>Camera</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="cameraBoundsLeft">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="0" column="1">
+            <layout class="QVBoxLayout" name="verticalLayout_top">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_top">
+               <item>
+                <widget class="QLabel" name="label_mapTop">
+                 <property name="text">
+                  <string>Map</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="mapBoundsTop">
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_topArrows">
+                 <item>
+                  <widget class="QPushButton" name="mapBoundsTopInc">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>▲</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="mapBoundsTopDec">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>▼</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_cameraTop">
+                 <property name="text">
+                  <string>Camera</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="cameraBoundsTop">
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="boundsPreview">
+             <property name="minimumSize">
+              <size>
+               <width>300</width>
+               <height>300</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">background-color: rgb(128, 128, 128);</string>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <layout class="QVBoxLayout" name="verticalLayout_right">
+             <item>
+              <widget class="QLabel" name="label_mapRight">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>Map</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="mapBoundsRight">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_rightArrows">
+               <item>
+                <widget class="QPushButton" name="mapBoundsRightDec">
+                 <property name="text">
+                  <string>◀</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="mapBoundsRightInc">
+                 <property name="text">
+                  <string>▶</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_cameraRight">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>Camera</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="cameraBoundsRight">
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item row="2" column="1">
+            <layout class="QVBoxLayout" name="verticalLayout_bottom">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_bottom">
+               <item>
+                <widget class="QLabel" name="label_mapBottom">
+                 <property name="text">
+                  <string>Map</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="mapBoundsBottom">
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_bottomArrows">
+                 <item>
+                  <widget class="QPushButton" name="mapBoundsBottomInc">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>▲</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="mapBoundsBottomDec">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>▼</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QLabel" name="label_cameraBottom">
+                 <property name="text">
+                  <string>Camera</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="cameraBoundsBottom">
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_bottomInfo">
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_checkboxes">
+             <item>
+              <widget class="QCheckBox" name="modifyCameraBounds">
+               <property name="text">
+                <string>Modify Camera Bounds</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="modifyMapBounds">
+               <property name="text">
+                <string>Modify Map Bounds</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_bounds">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_mapInfo">
+             <item>
+              <widget class="QLabel" name="label_mapSizeInfo">
+               <property name="text">
+                <string>Map Size:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_description">
+               <item>
+                <widget class="QLabel" name="label_descriptionLabel">
+                 <property name="text">
+                  <string>Description:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="mapSizeDescription">
+                 <property name="text">
+                  <string>Tiny</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_playable">
+               <item>
+                <widget class="QLabel" name="label_playableLabel">
+                 <property name="text">
+                  <string>Playable:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="mapSizePlayable">
+                 <property name="text">
+                  <string>52 x 52</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_full">
+               <item>
+                <widget class="QLabel" name="label_fullLabel">
+                 <property name="text">
+                  <string>Full:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLabel" name="mapSizeFull">
+                 <property name="text">
+                  <string>64 x 64</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="resetCameraBounds">
+           <property name="text">
+            <string>Reset Camera Bounds to Defaults</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+
       </widget>
      </item>
      <item>

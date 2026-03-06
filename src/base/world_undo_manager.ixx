@@ -70,6 +70,13 @@ export class WorldUndoManager {
 		undo_actions.back().push_back(std::move(action));
 		redo_actions.clear();
 	};
+
+	/// Removes all undo/redo operations
+	void clear_all_undo()
+	{
+		undo_actions.clear();
+		redo_actions.clear();
+	}
 };
 
 

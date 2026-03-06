@@ -1,5 +1,7 @@
 #include "map_info_editor.h"
 
+#include <QMessageBox>
+
 import std;
 import SLK;
 import Utilities;
@@ -124,6 +126,42 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		close();
 	});
 
+	// Map size tab
+	// initialise values
+	oldMapBottomLeft.x = 0;
+	oldMapBottomLeft.y = 0;
+	oldMapTopRight.x = map->terrain.width - 1;
+	oldMapTopRight.y = map->terrain.height - 1;
+	newMapTopRight = oldMapTopRight;
+	newMapBottomLeft = oldMapBottomLeft;
+
+	oldPlayableBottomLeft.x = map->info.camera_complements[0];
+	oldPlayableBottomLeft.y = map->info.camera_complements[2];
+	oldPlayableTopRight.x = oldMapTopRight.x - map->info.camera_complements[1];
+	oldPlayableTopRight.y = oldMapTopRight.y - map->info.camera_complements[3];
+	newPlayableBottomLeft = oldPlayableBottomLeft;
+	newPlayableTopRight = oldPlayableTopRight;
+
+	updateSizeDisplays();
+
+	// connect arrow buttons to map size
+	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() { adjustBounds(1, 0, 0, 0); });
+	connect(ui.mapBoundsLeftInc, &QPushButton::clicked, [this]() { adjustBounds(-1, 0, 0, 0); });
+	connect(ui.mapBoundsRightDec, &QPushButton::clicked, [this]() { adjustBounds(0, -1, 0, 0); });
+	connect(ui.mapBoundsRightInc, &QPushButton::clicked, [this]() { adjustBounds(0, 1, 0, 0); });
+	connect(ui.mapBoundsTopDec, &QPushButton::clicked, [this]() { adjustBounds(0, 0, -1, 0); });
+	connect(ui.mapBoundsTopInc, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 1, 0); });
+	connect(ui.mapBoundsBottomDec, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 0, 1); });
+	connect(ui.mapBoundsBottomInc, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 0, -1); });
+
+	// reset camera bounds (unplayable area) to default
+	connect(ui.resetCameraBounds, &QPushButton::clicked, [this]() {
+		newPlayableBottomLeft.x = newMapBottomLeft.x + 6;
+		newPlayableBottomLeft.y = newMapBottomLeft.y + 4;
+		newPlayableTopRight.x = newMapTopRight.x - 6;
+		newPlayableTopRight.y = newMapTopRight.y - 8;
+	});
+
 	show();
 }
 
@@ -190,4 +228,133 @@ void MapInfoEditor::save() const {
 
 	map->info.water_tinting = ui.waterTinting->isChecked();
 	map->info.water_color = ui.waterColor->get_glm_color();
+
+	// Map size and camera bounds
+	bool changedMapSize = (newMapBottomLeft != oldMapBottomLeft) || (newMapTopRight != oldMapTopRight);
+	bool changedPlayableSize = (newPlayableBottomLeft != oldPlayableBottomLeft) || (newPlayableTopRight != oldPlayableTopRight);
+
+	if (changedMapSize || changedPlayableSize) {
+		int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+		int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+		int newPlayableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+		int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+		if (newWidth < 32 || newWidth > 480 || newHeight < 32 || newHeight > 480) {
+			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+		}
+		else if (newWidth % 32 != 0 || newHeight % 32 != 0) {
+			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be divisible by 32.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+		}
+		else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
+			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Playable Area", QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2").arg(newPlayableWidth).arg(newPlayableHeight));
+		}
+		else {
+			// to make this simpler, we first get rid of old bounduaries
+			if (changedMapSize || changedPlayableSize) {
+				map->set_playable_area(0, 0, 0, 0);
+			}
+
+			// resize the terrain
+			if (changedMapSize) {
+				int deltaLeft = oldMapBottomLeft.x - newMapBottomLeft.x;
+				int deltaRight = newMapTopRight.x - oldMapTopRight.x;
+				int deltaBottom = oldMapBottomLeft.y - newMapBottomLeft.y;
+				int deltaTop = newMapTopRight.y - oldMapTopRight.y;
+				map->resize(deltaLeft, deltaRight, deltaTop, deltaBottom);
+			}
+
+			// apply camera bounds changes
+			if (changedMapSize || changedPlayableSize) {
+				int unplayableLeft = newPlayableBottomLeft.x - newMapBottomLeft.x;
+				int unplayableRight = newMapTopRight.x - newPlayableTopRight.x;
+				int unplayableBottom = newPlayableBottomLeft.y - newMapBottomLeft.y;
+				int unplayableTop = newMapTopRight.y - newPlayableTopRight.y;
+				map->set_playable_area(unplayableLeft, unplayableRight, unplayableTop, unplayableBottom);
+			}
+		}
+	}
+}
+
+void MapInfoEditor::updateSizeDisplays() {
+	// updates the GUI when user presses arrows to change map size
+	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+	int newPlayableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+	int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+	// update  map size labels
+	ui.mapSizeFull->setText(QString::fromStdString(std::format("{} x {}", newWidth, newHeight)));
+	ui.mapSizePlayable->setText(QString::fromStdString(std::format("{} x {}", newPlayableWidth, newPlayableHeight)));
+}
+
+void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom) {
+	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+	// handle terrain size change
+	if (ui.modifyMapBounds->isChecked()) {
+		// vanilla editor behaviour - changing map is 4 times faster
+		deltaLeft *= 4;
+		deltaRight *= 4;
+		deltaTop *= 4;
+		deltaBottom *= 4;
+
+		// accept the adjustment if the map is within acceptable bounds
+		newWidth += deltaLeft + deltaRight;
+		newHeight += deltaTop + deltaBottom;
+
+		// bounds change
+		if (newWidth >= 32 and newWidth <= 480 and newHeight >= 32 and newHeight <= 480) {
+			newMapBottomLeft.x -= deltaLeft;
+			newMapBottomLeft.y -= deltaBottom;
+			newMapTopRight.x += deltaRight;
+			newMapTopRight.y += deltaTop;
+		}
+	}
+
+	// handle playable area change
+	if (ui.modifyCameraBounds->isChecked()) { 
+		newPlayableBottomLeft.x -= deltaLeft;
+		newPlayableBottomLeft.y -= deltaBottom;
+		newPlayableTopRight.x += deltaRight;
+		newPlayableTopRight.y += deltaTop;
+	}
+
+	// ensure playable area stays within map bounds
+	newPlayableBottomLeft.x = std::max(newPlayableBottomLeft.x, newMapBottomLeft.x);
+	newPlayableBottomLeft.y = std::max(newPlayableBottomLeft.y, newMapBottomLeft.y);
+	newPlayableTopRight.x = std::min(newPlayableTopRight.x, newMapTopRight.x);
+	newPlayableTopRight.y = std::min(newPlayableTopRight.y, newMapTopRight.y);
+
+	// ensure a minimum 9x5 playable area size
+	int playableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+	int playableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+	if (playableWidth < 9) {
+		int deficit = 9 - playableWidth;
+		// expand playable area on the opposite side to compensate
+		if (deltaLeft != 0) {
+			// left was adjusted, expand right
+			newPlayableTopRight.x += deficit;
+		} else if (deltaRight != 0) {
+			// right was adjusted, expand left
+			newPlayableBottomLeft.x -= deficit;
+		}
+	}
+
+	if (playableHeight < 5) {
+		int deficit = 5 - playableHeight;
+		// expand playable area on the opposite side to compensate
+		if (deltaBottom != 0) {
+			// bottom was adjusted, expand top
+			newPlayableTopRight.y += deficit;
+		} else if (deltaTop != 0) {
+			// top was adjusted, expand bottom
+			newPlayableBottomLeft.y -= deficit;
+		}
+	}
+
+	updateSizeDisplays();
 }

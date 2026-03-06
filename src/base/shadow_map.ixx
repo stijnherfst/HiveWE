@@ -13,12 +13,8 @@ export class ShadowMap {
 	GLuint texture;
 	std::vector<u8> cells;
 
-	bool load(BinaryReader& reader, size_t terrain_width, size_t terrain_height) {
-		width = terrain_width * 4;
-		height = terrain_height * 4;
-
-		cells = reader.read_vector<u8>(width * height);
-
+private:
+	void update_texture() {
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 		glTextureStorage2D(texture, 1, GL_R8UI, width, height);
 		glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, cells.data());
@@ -26,6 +22,27 @@ export class ShadowMap {
 		glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
+public:
+
+	bool load(size_t terrain_width, size_t terrain_height) {
+		BinaryReader reader = hierarchy.map_file_read("war3map.shd").value();
+
+		width = terrain_width * 4;
+		height = terrain_height * 4;
+
+		// check if the shadow map is correct size
+		const size_t expected_size = width * height;
+		const size_t file_size = reader.buffer.size();
+		if (file_size != expected_size) {
+			std::println("Error: Shadow map file size mismatch!");	
+			cells.resize(expected_size, 0);
+		} else {
+			cells = reader.read_vector<u8>(expected_size);
+		}
+
+		update_texture();
 
 		return true;
 	}
@@ -34,7 +51,41 @@ export class ShadowMap {
 		hierarchy.map_file_write("war3map.shd", cells);
 	}
 
-	void resize(size_t width, size_t height) {
-	
+	void resize(size_t new_width, size_t new_height) {
+		width = new_width;
+		height = new_height;
+		cells.resize(width * height, 0);
+		
+		glDeleteTextures(1, &texture);
+		update_texture();
+	}
+
+	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
+		size_t new_width = static_cast<size_t>(static_cast<int>(width) + delta_left + delta_right);
+		size_t new_height = static_cast<size_t>(static_cast<int>(height) + delta_top + delta_bottom);
+		
+		std::vector<u8> new_cells(new_width * new_height, 0);
+		
+		// copy old data to new position
+		for (size_t y = 0; y < height; ++y) {
+			for (size_t x = 0; x < width; ++x) {
+				int new_x = static_cast<int>(x) + delta_left;
+				int new_y = static_cast<int>(y) + delta_top;
+				
+				// only copy if the new position is within bounds
+				if (new_x >= 0 && new_x < static_cast<int>(new_width) && new_y >= 0 && new_y < static_cast<int>(new_height)) {
+					size_t old_index = y * width + x;
+					size_t new_index = static_cast<size_t>(new_y) * new_width + static_cast<size_t>(new_x);
+					new_cells[new_index] = cells[old_index];
+				}
+			}
+		}
+		
+		width = new_width;
+		height = new_height;
+		cells = std::move(new_cells);
+		
+		glDeleteTextures(1, &texture);
+		update_texture();
 	}
 };

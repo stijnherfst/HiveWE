@@ -366,6 +366,12 @@ public:
 		});
 	}
 
+	void remove_items(const std::unordered_set<Unit*>& list) {
+		std::erase_if(items, [&](Unit& item) {
+			return list.contains(&item);
+		});
+	}
+
 	void process_unit_field_change(const std::string& id, const std::string& field) {
 		if (field == "file" || field == "attachmentlinkprops") {
 			id_to_mesh.erase(id);

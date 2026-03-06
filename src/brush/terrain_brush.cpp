@@ -213,7 +213,7 @@ void TerrainBrush::apply(double frame_delta) {
 				} else {
 					corners[i][j].blight = false;
 					corners[i][j].ground_texture = id;
-					corners[i][j].ground_variation = get_random_variation();
+					corners[i][j].ground_variation = Terrain::get_random_variation();
 				}
 			}
 		}
@@ -473,23 +473,6 @@ void TerrainBrush::apply_end() {
 	add_pathing_undo(pathing_area);
 
 	map->terrain.update_minimap();
-}
-
-int TerrainBrush::get_random_variation() const {
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_int_distribution<> dist(0, 570);
-
-	int nr = dist(e2) - 1;
-
-	for (auto&&[variation, chance] : variation_chances) {
-		if (nr < chance) {
-			return variation;
-		}
-		nr -= chance;
-	}
-	assert("Didn't hit the list of tile variations");
-	return 0;
 }
 
 /// Adds the undo to the current undo group

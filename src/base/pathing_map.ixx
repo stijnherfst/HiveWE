@@ -274,4 +274,73 @@ export class PathingMap {
 		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
+
+	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
+        const int new_width = width + delta_left + delta_right;
+        const int new_height = height + delta_top + delta_bottom;
+
+		// sanity check
+		if (new_width <= 0 || new_height <= 0) {
+			return;
+		}
+		
+		if (new_width % 4 != 0 || new_height % 4 != 0) {
+			return;
+		}
+
+		// store old data and dimensions
+		std::vector<uint8_t> old_static = std::move(pathing_cells_static);
+		std::vector<uint8_t> old_dynamic = std::move(pathing_cells_dynamic);
+		const int old_width = width;
+		const int old_height = height;
+
+		// create new vectors with new dimensions
+		pathing_cells_static.resize(new_width * new_height);
+		pathing_cells_dynamic.resize(new_width * new_height);
+
+		// copy old data to new, with padding/trimming
+		for (int y = 0; y < new_height; y++) {
+			for (int x = 0; x < new_width; x++) {
+				// calculate source coordinates in old array
+				int src_x = x - delta_left;
+				int src_y = y - delta_bottom;
+
+				// clamp to old map boundaries for padding
+				// this handles both padding (uses edge values) and trimming (offsets source)
+				src_x = std::clamp(src_x, 0, old_width - 1);
+				src_y = std::clamp(src_y, 0, old_height - 1);
+
+				// copy from old to new
+				const int old_index = src_y * old_width + src_x;
+				const int new_index = y * new_width + x;
+
+				pathing_cells_static[new_index] = old_static[old_index];
+				pathing_cells_dynamic[new_index] = old_dynamic[old_index];
+			}
+		}
+
+		// update dimensions
+		width = new_width;
+		height = new_height;
+
+		// recreate textures with new data
+		glDeleteTextures(1, &texture_static);
+		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
+		glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
+		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
+		glTextureParameteri(texture_static, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTextureParameteri(texture_static, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glDeleteTextures(1, &texture_dynamic);
+		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
+		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
+		const uint8_t clear_color = 0;
+		glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
+		glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
 };

@@ -80,6 +80,28 @@ export class Terrain : public QObject {
 
 	static constexpr int write_version = 12;
 
+	// total sum 570
+	static constexpr std::tuple<int, int> variation_chances[18] = {
+		{ 0, 85 },
+		{ 16, 85 },
+		{ 0, 85 },
+		{ 1, 10 },
+		{ 2, 4 },
+		{ 3, 1 },
+		{ 4, 85 },
+		{ 5, 10 },
+		{ 6, 4 },
+		{ 7, 1 },
+		{ 8, 85 },
+		{ 9, 10 },
+		{ 10, 4 },
+		{ 11, 1 },
+		{ 12, 85 },
+		{ 13, 10 },
+		{ 14, 4 },
+		{ 15, 1 }
+	};
+
 	// Sequential versions for GPU uploading
 	std::vector<float> ground_heights;
 	std::vector<float> final_ground_heights;
@@ -1117,8 +1139,296 @@ public:
         //map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
     }
 
+    /// Computes the terrain pathing flags for the target cell. 
+    /// Takes cliffs, blight, water, terrain textures and boundaries into account
+    uint8_t get_terrain_pathing(size_t i, size_t j) {        
+        // Use floor division to correctly map pathing cells to corners
+        int corner_x = static_cast<int>(std::floor(i / 4.0));
+        int corner_y = static_cast<int>(std::floor(j / 4.0));
+        const Corner& bottom_left = corners[corner_x][corner_y];
+
+        // take terrain texture into account (from the closest corner)
+        int x = static_cast<int>(std::round(i / 4.0));
+        int y = static_cast<int>(std::round(j / 4.0));
+        const Corner& closest_corner = corners[x][y];
+        uint8_t mask = pathing_options[tileset_ids[closest_corner.ground_texture]].mask();
+
+        // cliffs are unbuildable and unwalkable
+        if (bottom_left.cliff) {
+            mask |= PathingMap::unbuildable | PathingMap::unwalkable;
+        } 
+        
+        // take blight into account
+        if (closest_corner.blight) {
+            mask |= 0b00100000;
+        }
+
+        // take water into account
+        if (closest_corner.water) {
+            // apply water mask
+            mask |= 0b01000000;
+
+            if (closest_corner.final_water_height(water_offset) > closest_corner.final_ground_height() + 0.40) {
+                // deep water is unwalkable and unbuildable
+                mask |= PathingMap::unbuildable | PathingMap::unwalkable;
+            } else if (closest_corner.final_water_height(water_offset) > closest_corner.final_ground_height()) {
+                // shallow water is unbuildable
+                mask |= PathingMap::unbuildable;
+            }
+        }
+
+        // boundaries and map edges are unwalkable, unflyable and unbuildable¸
+        // NOTE: game handles corners/boundaries differently
+        // if the bottom-left corner is a boundary, then the entire 4x4 cell is considered a boundary
+        if (bottom_left.map_edge || bottom_left.boundary) {
+            mask |= PathingMap::unbuildable | PathingMap::unflyable | PathingMap::unwalkable;
+        }
+
+        // Debug print
+        /*std::cout << "Pathing[" << i << "," << j << "] -> corner[" << x << "," << y << "] "
+                  << "tex:" << corner.ground_texture << " cliff:" << corner.cliff << " water:" << corner.water 
+                  << " blight:" << corner.blight << " | bottom_left[" << i/4 << "," << j/4 << "] "
+                  << "edge:" << bottom_left.map_edge << " boundary:" << bottom_left.boundary 
+                  << " | mask:" << std::hex << (int)mask << std::dec << std::endl;*/
+
+        return mask;
+    }
+
+    /// Updates the map_edge flags (shadows on the edges of the map) 
+    void set_unplayable_boundaries(int unplayable_left, int unplayable_right, int unplayable_top, int unplayable_bottom) {
+        // places "shadows" on the edges of the map
+        for (size_t i = 0; i < width; i++) {
+            for (size_t j = 0; j < height; j++) {
+                bool is_boundary = false;
+                
+                // check all bounduaries
+                if (i < unplayable_left) {
+                    is_boundary = true;
+                }
+                else if (i >= width - unplayable_right) {
+                    is_boundary = true;
+                }
+                else if (j < unplayable_bottom) {
+                    is_boundary = true;
+                }
+                else if (j >= height - unplayable_top) {
+                    is_boundary = true;
+                }
+                
+                corners[i][j].map_edge = is_boundary;
+            }
+        }
+
+        emit minimap_changed(minimap_image());
+    }
+
+    /// Resizes the terrain by expanding/shrinking it from all four sides
+    void resize(int delta_left, int delta_right, int delta_top, int delta_bottom, Physics& physics) {
+        const int new_width = width + delta_left + delta_right;
+        const int new_height = height + delta_top + delta_bottom;
+
+        // width/height must be at least 33
+        if (new_width < 33 || new_height < 33) {
+            return;
+        }
+
+        // maximum map size supported by wc3 is 481 x 481
+        if (new_width > 481 || new_height > 481) {
+            return;
+        }
+
+        // sanity check, (size - 1) must be multiple of 32
+        if (new_width % 32 != 1  || new_height % 32 != 1) {
+            return;
+        }
+
+        // create and setup
+        std::vector<std::vector<Corner>> new_corners = resize_corners(delta_left, delta_right, delta_top, delta_bottom);
+
+        // update terrain object
+        width = new_width;
+        height = new_height;
+        corners = new_corners;
+        offset.x -= delta_left * 128;
+        offset.y -= delta_bottom * 128;
+
+        re_render(physics);
+
+        emit minimap_changed(minimap_image());
+    }
+
     void update_minimap() {
         emit minimap_changed(minimap_image());
+    }
+
+    static int get_random_variation() {
+        std::random_device rd;
+        std::mt19937 e2(rd());
+        std::uniform_int_distribution<> dist(0, 570);
+
+        int nr = dist(e2) - 1;
+
+        for (auto&&[variation, chance] : variation_chances) {
+            if (nr < chance) {
+                return variation;
+            }
+            nr -= chance;
+        }
+        assert("Didn't hit the list of tile variations");
+        return 0;
+    }
+
+private:
+    Corner create_default_corner() const {
+        // creates a corner with default values, used when resize destroys the original terrain
+        Corner corner;
+
+        corner.map_edge = false;
+
+        corner.ramp = false;
+        corner.blight = false;
+        corner.water = false;
+        corner.boundary = false;
+        corner.cliff = false;
+        corner.special_doodad = false;
+
+        corner.layer_height = 2;
+        corner.cliff_texture = 15;
+        corner.cliff_variation = 0;
+
+        corner.height = 0;
+        corner.water_height = 0;
+
+        corner.ground_texture = 0;
+
+        return corner;
+    }
+
+    std::vector<std::vector<Corner>> resize_corners(int delta_left, int delta_right, int delta_top, int delta_bottom) const {
+        const int new_width = width + delta_left + delta_right;
+        const int new_height = height + delta_top + delta_bottom;
+
+        // initialise new corner vector
+        std::vector<std::vector<Corner>> new_corners(new_width, std::vector<Corner>(new_height));
+
+        // check if all old corners would be removed
+        int old_width_remaining = (int)width + std::min(0, delta_left) + std::min(0, delta_right);
+        int old_height_remaining = (int)height + std::min(0, delta_bottom) + std::min(0, delta_top);
+        if (old_width_remaining <= 0 || old_height_remaining <= 0) {
+            // all old corners deleted, fill with default
+            Corner default_corner = create_default_corner();
+            for (size_t i = 0; i < new_width; i++) {
+                for (size_t j = 0; j < new_height; j++) {
+                    // apply random tile variation and fix map_edge flag
+                    default_corner.ground_variation = get_random_variation();
+                    default_corner.map_edge = (i == 0 || i == new_width - 1 || j == 0 || j == new_height - 1);
+                    new_corners[i][j] = default_corner;
+                }
+            }
+            return new_corners;
+        }
+
+        // fill the new corners by mapping from old corners
+        for (size_t i = 0; i < new_width; i++) {
+            for (size_t j = 0; j < new_height; j++) {
+                // map new position to old position
+                int old_i = (int)i - delta_left;
+                int old_j = (int)j - delta_bottom;
+                
+                // check if this is an old corner (before clamping)
+                bool is_old_corner = (old_i >= 0 && old_i < (int)width && old_j >= 0 && old_j < (int)height);
+                
+                // clamp to valid old range
+                old_i = std::clamp(old_i, 0, (int)width - 1);
+                old_j = std::clamp(old_j, 0, (int)height - 1);
+                
+                new_corners[i][j] = corners[old_i][old_j];
+                
+                // fix map_edge flag for all corners
+                //new_corners[i][j].map_edge = (i == 0 || i == new_width - 1 || j == 0 || j == new_height - 1);
+                
+                // apply random variations and fix special_doodad for NEW corners
+                if (!is_old_corner) {
+                    new_corners[i][j].special_doodad = false;
+                    new_corners[i][j].ground_variation = get_random_variation();
+                }
+            }
+        }
+
+        return new_corners;
+    }
+
+    void re_render(Physics& physics) {
+        // clear old buffers
+        glDeleteBuffers(1, &ground_height_buffer);
+        glDeleteBuffers(1, &cliff_level_buffer);
+        glDeleteBuffers(1, &water_height_buffer);
+        glDeleteBuffers(1, &ground_texture_data_buffer);
+        glDeleteBuffers(1, &ground_exists_buffer);
+        glDeleteBuffers(1, &water_exists_buffer);
+
+        // clear all cliffs (this prevents out of bounds error when shrinking terrain)
+        cliffs.clear();
+
+        // clear romp flags on all corners
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                corners[i][j].romp = false;
+            }
+        }
+
+        // resize GPU buffer vectors
+        ground_heights.resize(width * height);
+        final_ground_heights.resize(width * height);
+        ground_texture_list.resize((width - 1) * (height - 1));
+        ground_exists_data.resize(width * height);
+        water_heights.resize(width * height);
+        water_exists_data.resize(width * height);
+
+        // determine cliff flags for all corners
+        for (int i = 0; i < width - 1; i++) {
+            for (int j = 0; j < height - 1; j++) {
+                Corner& bottom_left = corners[i][j];
+                Corner& bottom_right = corners[i + 1][j];
+                Corner& top_left = corners[i][j + 1];
+                Corner& top_right = corners[i + 1][j + 1];
+
+                bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
+                    || bottom_left.layer_height != top_left.layer_height
+                    || bottom_left.layer_height != top_right.layer_height;
+            }
+        }
+
+        // recreate GPU buffers with new size
+        glCreateBuffers(1, &ground_height_buffer);
+        glNamedBufferStorage(ground_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &cliff_level_buffer);
+        glNamedBufferStorage(cliff_level_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &ground_texture_data_buffer);
+        glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &ground_exists_buffer);
+        glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &water_height_buffer);
+        glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
+        glCreateBuffers(1, &water_exists_buffer);
+        glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+        // update everything else
+        update_ground_heights({ 0, 0, width, height });
+        update_ground_textures({ 0, 0, width - 1, height - 1 });
+        update_cliff_meshes({ 0, 0, width - 1, height - 1 });
+        update_water({ 0, 0, width, height });
+
+        // update physics collision shapeated)
+        physics.dynamicsWorld->removeRigidBody(collision_body);
+        delete collision_body;
+        delete collision_shape;
+
+        collision_shape = new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+        collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
+        collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f));
+        collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
+        physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
     }
 
 signals:
