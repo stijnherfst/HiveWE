@@ -16,7 +16,7 @@ public:
 
 	Ui::MapInfoEditor ui;
 
-	void save() const;
+	bool save() const;
 
 private:
 	void updateMapSizeGUI();

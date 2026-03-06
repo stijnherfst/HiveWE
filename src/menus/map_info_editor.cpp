@@ -116,17 +116,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.gameDataSet->setCurrentIndex(map->info.game_data_set);
 
 
-	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
-		save();
-		emit accept();
-		close();
-	});
-
-	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
-		emit reject();
-		close();
-	});
-
 	// Map size tab
 	// initialise values
 	oldMapBottomLeft.x = 0;
@@ -145,8 +134,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	originalMinimap = map->terrain.minimap_image();
 
-	updateMapSizeGUI();
-
 	// connect arrow buttons to map size
 	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() { adjustBounds(1, 0, 0, 0); });
 	connect(ui.mapBoundsLeftInc, &QPushButton::clicked, [this]() { adjustBounds(-1, 0, 0, 0); });
@@ -164,12 +151,25 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		newPlayableTopRight.x = newMapTopRight.x - 6;
 		newPlayableTopRight.y = newMapTopRight.y - 8;
 		updateMapSizeGUI();
+	});	
+
+	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
+		if (save()) {
+			emit accept();
+			close();
+		}
+	});
+
+	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
+		emit reject();
+		close();
 	});
 
 	show();
+	updateMapSizeGUI();
 }
 
-void MapInfoEditor::save() const {
+bool MapInfoEditor::save() const {
 	// Description Tab
 	map->trigger_strings.set_string(map->info.name, ui.name->text().toStdString());
 	map->trigger_strings.set_string(map->info.author, ui.author->text().toStdString());
@@ -246,12 +246,15 @@ void MapInfoEditor::save() const {
 
 		if (newWidth < 32 || newWidth > 480 || newHeight < 32 || newHeight > 480) {
 			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+			return false;
 		}
 		else if (newWidth % 32 != 0 || newHeight % 32 != 0) {
 			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be divisible by 32.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+			return false;
 		}
 		else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
 			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Playable Area", QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2").arg(newPlayableWidth).arg(newPlayableHeight));
+			return false;
 		}
 		else {
 			// to make this simpler, we first get rid of old bounduaries
@@ -278,6 +281,7 @@ void MapInfoEditor::save() const {
 			}
 		}
 	}
+	return true;
 }
 
 void MapInfoEditor::updateMapSizeGUI() {
@@ -295,20 +299,47 @@ void MapInfoEditor::updateBoundsText() {
 	int newPlayableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
 	int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
 
+	float offsetX = map->terrain.offset.x + (newMapBottomLeft.x - oldMapBottomLeft.x) * 128.f;
+	float offsetY = map->terrain.offset.y + (newMapBottomLeft.y - oldMapBottomLeft.y) * 128.f;
+
 	// update  map size labels
 	ui.mapSizeFull->setText(QString::fromStdString(std::format("{} x {}", newWidth, newHeight)));
 	ui.mapSizePlayable->setText(QString::fromStdString(std::format("{} x {}", newPlayableWidth, newPlayableHeight)));
 
 	// update map extents and camera bounds text
-	ui.mapBoundsLeft->setText(QString::number(map->terrain.offset.x));
-	ui.mapBoundsRight->setText(QString::number(map->terrain.offset.x + newWidth * 128.f));
-	ui.mapBoundsTop->setText(QString::number(map->terrain.offset.y + newHeight * 128.f));
-	ui.mapBoundsBottom->setText(QString::number(map->terrain.offset.y));
+	ui.mapBoundsLeft->setText(QString::number(offsetX));
+	ui.mapBoundsRight->setText(QString::number(offsetX + newWidth * 128.f));
+	ui.mapBoundsTop->setText(QString::number(offsetY + newHeight * 128.f));
+	ui.mapBoundsBottom->setText(QString::number(offsetY));
 
-	ui.cameraBoundsLeft->setText(QString::number(map->terrain.offset.x + (newPlayableBottomLeft.x + 4 - newMapBottomLeft.x) * 128.f));
-	ui.cameraBoundsRight->setText(QString::number(map->terrain.offset.x + (newPlayableTopRight.x - 4 - newMapBottomLeft.x) * 128.f));
-	ui.cameraBoundsTop->setText(QString::number(map->terrain.offset.y + (newPlayableTopRight.y - 2 - newMapBottomLeft.y) * 128.f));
-	ui.cameraBoundsBottom->setText(QString::number(map->terrain.offset.y + (newPlayableBottomLeft.y + 2 - newMapBottomLeft.y) * 128.f));
+	ui.cameraBoundsLeft->setText(QString::number(offsetX + (newPlayableBottomLeft.x + 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsRight->setText(QString::number(offsetX + (newPlayableTopRight.x - 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsTop->setText(QString::number(offsetY + (newPlayableTopRight.y - 2 - newMapBottomLeft.y) * 128.f));
+	ui.cameraBoundsBottom->setText(QString::number(offsetY + (newPlayableBottomLeft.y + 2 - newMapBottomLeft.y) * 128.f));
+
+	// map size text - determine size based on surface area
+	int surfaceArea = newWidth * newHeight;
+	QString sizeDescription;
+	
+	if (surfaceArea <= 80 * 80) {
+		sizeDescription = "Tiny";
+	} else if (surfaceArea <= 112 * 112) {
+		sizeDescription = "Extra Small";
+	} else if (surfaceArea <= 144 * 144) {
+		sizeDescription = "Small";
+	} else if (surfaceArea <= 176 * 176) {
+		sizeDescription = "Medium";
+	} else if (surfaceArea <= 208 * 208) {
+		sizeDescription = "Large";
+	} else if (surfaceArea <= 272 * 272) {
+		sizeDescription = "Extra Large";
+	} else if (surfaceArea <= 364 * 364) {
+		sizeDescription = "Huge";
+	} else {
+		sizeDescription = "Epic";
+	}
+	
+	ui.mapSizeDescription->setText(sizeDescription);
 }
 
 void MapInfoEditor::updateBoundsPreview() {
@@ -400,6 +431,9 @@ void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, in
 	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
 	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
 
+	int offsetX = static_cast<int>(map->terrain.offset.x / 128.0f);
+	int offsetY = static_cast<int>(map->terrain.offset.y / 128.0f);
+
 	// handle terrain size change
 	if (ui.modifyMapBounds->isChecked()) {
 		// vanilla editor behaviour - changing map is 4 times faster
@@ -412,8 +446,18 @@ void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, in
 		newWidth += deltaLeft + deltaRight;
 		newHeight += deltaTop + deltaBottom;
 
+		// check if the map is not too large, or too small
+		bool allowedSize = newWidth >= 32 and newWidth <= 480 and newHeight >= 32 and newHeight <= 480;
+
+		// check if the map extents are valid (vanilla WE constraint)
+		int leftExtent = newMapBottomLeft.x + offsetX - deltaLeft;
+		int rightExtent = newMapTopRight.x + offsetX + deltaRight;
+		int topExtent = newMapTopRight.y + offsetY + deltaTop;
+		int bottomExtent = newMapBottomLeft.y + offsetY - deltaBottom;
+		bool validExtents = (leftExtent >= -252 && rightExtent <= 252 && bottomExtent >= -252 && topExtent <= 252);
+
 		// bounds change
-		if (newWidth >= 32 and newWidth <= 480 and newHeight >= 32 and newHeight <= 480) {
+		if (allowedSize && validExtents) {
 			newMapBottomLeft.x -= deltaLeft;
 			newMapBottomLeft.y -= deltaBottom;
 			newMapTopRight.x += deltaRight;
