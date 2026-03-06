@@ -1,6 +1,7 @@
 #include "map_info_editor.h"
 
 #include <QMessageBox>
+#include <QPainter>
 
 import std;
 import SLK;
@@ -142,7 +143,9 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	newPlayableBottomLeft = oldPlayableBottomLeft;
 	newPlayableTopRight = oldPlayableTopRight;
 
-	updateSizeDisplays();
+	originalMinimap = map->terrain.minimap_image();
+
+	updateMapSizeGUI();
 
 	// connect arrow buttons to map size
 	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() { adjustBounds(1, 0, 0, 0); });
@@ -160,6 +163,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		newPlayableBottomLeft.y = newMapBottomLeft.y + 4;
 		newPlayableTopRight.x = newMapTopRight.x - 6;
 		newPlayableTopRight.y = newMapTopRight.y - 8;
+		updateMapSizeGUI();
 	});
 
 	show();
@@ -276,8 +280,15 @@ void MapInfoEditor::save() const {
 	}
 }
 
-void MapInfoEditor::updateSizeDisplays() {
-	// updates the GUI when user presses arrows to change map size
+void MapInfoEditor::updateMapSizeGUI() {
+	// update text in the menu
+	updateBoundsText();
+
+	// update the minimap image
+	updateBoundsPreview();
+}
+
+void MapInfoEditor::updateBoundsText() {
 	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
 	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
 
@@ -287,6 +298,102 @@ void MapInfoEditor::updateSizeDisplays() {
 	// update  map size labels
 	ui.mapSizeFull->setText(QString::fromStdString(std::format("{} x {}", newWidth, newHeight)));
 	ui.mapSizePlayable->setText(QString::fromStdString(std::format("{} x {}", newPlayableWidth, newPlayableHeight)));
+
+	// update map extents and camera bounds text
+	ui.mapBoundsLeft->setText(QString::number(map->terrain.offset.x));
+	ui.mapBoundsRight->setText(QString::number(map->terrain.offset.x + newWidth * 128.f));
+	ui.mapBoundsTop->setText(QString::number(map->terrain.offset.y + newHeight * 128.f));
+	ui.mapBoundsBottom->setText(QString::number(map->terrain.offset.y));
+
+	ui.cameraBoundsLeft->setText(QString::number(map->terrain.offset.x + (newPlayableBottomLeft.x + 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsRight->setText(QString::number(map->terrain.offset.x + (newPlayableTopRight.x - 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsTop->setText(QString::number(map->terrain.offset.y + (newPlayableTopRight.y - 2 - newMapBottomLeft.y) * 128.f));
+	ui.cameraBoundsBottom->setText(QString::number(map->terrain.offset.y + (newPlayableBottomLeft.y + 2 - newMapBottomLeft.y) * 128.f));
+}
+
+void MapInfoEditor::updateBoundsPreview() {
+	int deltaLeft = oldMapBottomLeft.x - newMapBottomLeft.x;
+	int deltaRight = newMapTopRight.x - oldMapTopRight.x;
+	int deltaBottom = oldMapBottomLeft.y - newMapBottomLeft.y;
+	int deltaTop = newMapTopRight.y - oldMapTopRight.y;
+
+	int newWidth = originalMinimap.width + deltaLeft + deltaRight;
+	int newHeight = originalMinimap.height + deltaBottom + deltaTop;
+
+	Texture newMinimapTex;
+	newMinimapTex.width = newWidth;
+	newMinimapTex.height = newHeight;
+	newMinimapTex.channels = 4;
+	newMinimapTex.data.resize(newWidth * newHeight * 4);
+
+	// crate the new image
+	for (int y = 0; y < newHeight; y++) {
+		for (int x = 0; x < newWidth; x++) {
+			// original coordinates
+			int srcX = x - deltaLeft;
+			int srcY = y - deltaTop;
+
+			int dstIndex = y * newWidth * 4 + x * 4;
+
+			// copy from original image if possible, fill with green otherwise
+			if (srcX >= 0 && srcX < originalMinimap.width && srcY >= 0 && srcY < originalMinimap.height) {
+				int srcIndex = srcY * originalMinimap.width * 4 + srcX * 4;
+				newMinimapTex.data[dstIndex + 0] = originalMinimap.data[srcIndex + 0];
+				newMinimapTex.data[dstIndex + 1] = originalMinimap.data[srcIndex + 1];
+				newMinimapTex.data[dstIndex + 2] = originalMinimap.data[srcIndex + 2];
+				newMinimapTex.data[dstIndex + 3] = originalMinimap.data[srcIndex + 3];
+			} else {
+				newMinimapTex.data[dstIndex + 0] = 0;
+				newMinimapTex.data[dstIndex + 1] = 192;
+				newMinimapTex.data[dstIndex + 2] = 0;
+				newMinimapTex.data[dstIndex + 3] = 255;
+			}
+
+			// check if pixel is in unplayable area
+			int mapX = newMapBottomLeft.x + x;
+			int mapY = newMapTopRight.y - y;
+			bool isUnplayable = (mapX < newPlayableBottomLeft.x || mapX > newPlayableTopRight.x || mapY < newPlayableBottomLeft.y || mapY > newPlayableTopRight.y);
+
+			// unplayable pixels are lighter
+			if (isUnplayable) {
+				newMinimapTex.data[dstIndex + 0] = (newMinimapTex.data[dstIndex + 0] + 255) / 2;
+				newMinimapTex.data[dstIndex + 1] = (newMinimapTex.data[dstIndex + 1] + 255) / 2;
+				newMinimapTex.data[dstIndex + 2] = (newMinimapTex.data[dstIndex + 2] + 255) / 2;
+			}
+		}
+	}
+
+	// create image with transparent background
+	QImage temp_image = QImage(newMinimapTex.data.data(), newMinimapTex.width, newMinimapTex.height, newMinimapTex.width * newMinimapTex.channels, QImage::Format::Format_RGBA8888);
+	QPixmap sourcePixmap = QPixmap::fromImage(temp_image);
+	
+	// scale the pixmap with sharp pixels (no smoothing)
+	QPixmap scaledPixmap = sourcePixmap.scaled(ui.boundsPreview->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
+	
+	// calculate camera bounds in original image coordinates
+	int cameraBoundsLeft = newPlayableBottomLeft.x + 4 - newMapBottomLeft.x;
+	int cameraBoundsBottom = newPlayableBottomLeft.y + 2 - newMapBottomLeft.y;
+	int cameraBoundsRight = newPlayableTopRight.x - 4 - newMapBottomLeft.x;
+	int cameraBoundsTop = newPlayableTopRight.y - 2 - newMapBottomLeft.y;
+	
+	// scale coordinates to match the scaled pixmap
+	float scaleX = static_cast<float>(scaledPixmap.width()) / newWidth;
+	float scaleY = static_cast<float>(scaledPixmap.height()) / newHeight;
+	
+	int scaledLeft = static_cast<int>(cameraBoundsLeft * scaleX);
+	int scaledTop = static_cast<int>((newHeight - cameraBoundsTop - 1) * scaleY);
+	int scaledRight = static_cast<int>(cameraBoundsRight * scaleX);
+	int scaledBottom = static_cast<int>((newHeight - cameraBoundsBottom - 1) * scaleY);
+	
+	// draw camera bounds rectangle on scaled image
+	QPen pen(QColor(0, 120, 255), 2);
+	QPainter painter(&scaledPixmap);
+	painter.setPen(pen);
+	painter.setRenderHint(QPainter::Antialiasing, false);
+	painter.drawRect(scaledLeft, scaledTop, scaledRight - scaledLeft, scaledBottom - scaledTop);
+	painter.end();
+
+	ui.boundsPreview->setPixmap(scaledPixmap);
 }
 
 void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom) {
@@ -356,5 +463,5 @@ void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, in
 		}
 	}
 
-	updateSizeDisplays();
+	updateMapSizeGUI();
 }

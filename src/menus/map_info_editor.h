@@ -19,19 +19,21 @@ public:
 	void save() const;
 
 private:
-	void updateSizeDisplays();
+	void updateMapSizeGUI();
 	void adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom);
+	void updateBoundsPreview();
+	void updateBoundsText();
 
 	// used for changing map size
-	glm::vec2 oldMapBottomLeft;
-	glm::vec2 oldMapTopRight;
-	glm::vec2 newMapBottomLeft;
-	glm::vec2 newMapTopRight;
+	glm::ivec2 oldMapBottomLeft;
+	glm::ivec2 oldMapTopRight;
+	glm::ivec2 newMapBottomLeft;
+	glm::ivec2 newMapTopRight;
 
-	glm::vec2 oldPlayableBottomLeft;
-	glm::vec2 oldPlayableTopRight;
-	glm::vec2 newPlayableBottomLeft;
-	glm::vec2 newPlayableTopRight;
+	glm::ivec2 oldPlayableBottomLeft;
+	glm::ivec2 oldPlayableTopRight;
+	glm::ivec2 newPlayableBottomLeft;
+	glm::ivec2 newPlayableTopRight;
 
-	Texture newMinimapTex;
+	Texture originalMinimap;
 };
