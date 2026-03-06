@@ -1184,13 +1184,6 @@ public:
             mask |= PathingMap::unbuildable | PathingMap::unflyable | PathingMap::unwalkable;
         }
 
-        // Debug print
-        /*std::cout << "Pathing[" << i << "," << j << "] -> corner[" << x << "," << y << "] "
-                  << "tex:" << corner.ground_texture << " cliff:" << corner.cliff << " water:" << corner.water 
-                  << " blight:" << corner.blight << " | bottom_left[" << i/4 << "," << j/4 << "] "
-                  << "edge:" << bottom_left.map_edge << " boundary:" << bottom_left.boundary 
-                  << " | mask:" << std::hex << (int)mask << std::dec << std::endl;*/
-
         return mask;
     }
 
