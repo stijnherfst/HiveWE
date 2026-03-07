@@ -10,8 +10,8 @@ import Doodad;
 import Terrain;
 import TerrainUndo;
 
-class TerrainBrush : public Brush {
-public:
+class TerrainBrush: public Brush {
+  public:
 	bool apply_texture = false;
 	bool apply_height = false;
 	bool apply_cliff = false;
@@ -66,7 +66,7 @@ public:
 	void add_terrain_undo(const QRect& area, TerrainUndoType type);
 	void add_pathing_undo(const QRect& area);
 
-private:
+  private:
 	int layer_height = 0;
 	float deformation_height = 0.f;
 

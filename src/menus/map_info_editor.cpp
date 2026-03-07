@@ -11,7 +11,7 @@ import Globals;
 
 namespace fs = std::filesystem;
 
-MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
+MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -25,7 +25,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.editorVersion->setText(QString::number(map->info.editor_version));
 
 	// Loading Screen Tab
-	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
+	for (auto&& [key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {
 			continue;
 		}
@@ -41,7 +41,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		}
 	}
 
-	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
+	for (auto&& [key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {
 			continue;
 		}
@@ -87,9 +87,12 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
 	for (size_t i = 1; i < weather_slk.rows(); i++) {
-		ui.globalWeatherCombo->addItem(QString::fromUtf8(weather_slk.data<std::string_view>("name", i)), QString::fromUtf8(weather_slk.data<std::string_view>("effectid", i)));
+		ui.globalWeatherCombo->addItem(
+			QString::fromUtf8(weather_slk.data<std::string_view>("name", i)),
+			QString::fromUtf8(weather_slk.data<std::string_view>("effectid", i))
+		);
 	}
-	std::string weather_id = { reinterpret_cast<char*>(&map->info.weather_id), 4 };
+	std::string weather_id = {reinterpret_cast<char*>(&map->info.weather_id), 4};
 	ui.globalWeatherCombo->setCurrentText(QString::fromUtf8(weather_slk.data<std::string_view>("name", weather_id)));
 
 	// Custom Sound
@@ -98,9 +101,14 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
 	for (size_t i = 1; i < environment_sounds_slk.rows(); i++) {
-		ui.customSoundCombo->addItem(QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)), QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i)));
+		ui.customSoundCombo->addItem(
+			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)),
+			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i))
+		);
 	}
-	ui.customSoundCombo->setCurrentText(QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", map->info.custom_sound_environment)));
+	ui.customSoundCombo->setCurrentText(
+		QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", map->info.custom_sound_environment))
+	);
 
 	// Custom Lighting
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
@@ -114,7 +122,6 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.itemClassification->setChecked(map->info.item_classification);
 	ui.gameDataSet->setCurrentIndex(map->info.game_data_set);
-
 
 	// Map size tab
 	// initialise values
@@ -135,14 +142,30 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	originalMinimap = map->terrain.minimap_image();
 
 	// connect arrow buttons to map size
-	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() { adjustBounds(1, 0, 0, 0); });
-	connect(ui.mapBoundsLeftInc, &QPushButton::clicked, [this]() { adjustBounds(-1, 0, 0, 0); });
-	connect(ui.mapBoundsRightDec, &QPushButton::clicked, [this]() { adjustBounds(0, -1, 0, 0); });
-	connect(ui.mapBoundsRightInc, &QPushButton::clicked, [this]() { adjustBounds(0, 1, 0, 0); });
-	connect(ui.mapBoundsTopDec, &QPushButton::clicked, [this]() { adjustBounds(0, 0, -1, 0); });
-	connect(ui.mapBoundsTopInc, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 1, 0); });
-	connect(ui.mapBoundsBottomDec, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 0, 1); });
-	connect(ui.mapBoundsBottomInc, &QPushButton::clicked, [this]() { adjustBounds(0, 0, 0, -1); });
+	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() {
+		adjustBounds(1, 0, 0, 0);
+	});
+	connect(ui.mapBoundsLeftInc, &QPushButton::clicked, [this]() {
+		adjustBounds(-1, 0, 0, 0);
+	});
+	connect(ui.mapBoundsRightDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, -1, 0, 0);
+	});
+	connect(ui.mapBoundsRightInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 1, 0, 0);
+	});
+	connect(ui.mapBoundsTopDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, -1, 0);
+	});
+	connect(ui.mapBoundsTopInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 1, 0);
+	});
+	connect(ui.mapBoundsBottomDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 0, 1);
+	});
+	connect(ui.mapBoundsBottomInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 0, -1);
+	});
 
 	// reset camera bounds (unplayable area) to default
 	connect(ui.resetCameraBounds, &QPushButton::clicked, [this]() {
@@ -151,7 +174,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		newPlayableTopRight.x = newMapTopRight.x - 6;
 		newPlayableTopRight.y = newMapTopRight.y - 8;
 		updateMapSizeGUI();
-	});	
+	});
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
 		if (save()) {
@@ -245,18 +268,29 @@ bool MapInfoEditor::save() const {
 		int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
 
 		if (newWidth < 32 || newWidth > 480 || newHeight < 32 || newHeight > 480) {
-			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+			QMessageBox::critical(
+				const_cast<MapInfoEditor*>(this),
+				"Invalid Map Size",
+				QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight)
+			);
 			return false;
-		}
-		else if (newWidth % 32 != 0 || newHeight % 32 != 0) {
-			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Map Size", QString("Map dimensions must be divisible by 32.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight));
+		} else if (newWidth % 32 != 0 || newHeight % 32 != 0) {
+			QMessageBox::critical(
+				const_cast<MapInfoEditor*>(this),
+				"Invalid Map Size",
+				QString("Map dimensions must be divisible by 32.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight)
+			);
 			return false;
-		}
-		else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
-			QMessageBox::critical(const_cast<MapInfoEditor*>(this), "Invalid Playable Area", QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2").arg(newPlayableWidth).arg(newPlayableHeight));
+		} else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
+			QMessageBox::critical(
+				const_cast<MapInfoEditor*>(this),
+				"Invalid Playable Area",
+				QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2")
+					.arg(newPlayableWidth)
+					.arg(newPlayableHeight)
+			);
 			return false;
-		}
-		else {
+		} else {
 			// to make this simpler, we first get rid of old bounduaries
 			if (changedMapSize || changedPlayableSize) {
 				map->set_playable_area(0, 0, 0, 0);
@@ -320,7 +354,7 @@ void MapInfoEditor::updateBoundsText() {
 	// map size text - determine size based on surface area
 	int surfaceArea = newWidth * newHeight;
 	QString sizeDescription;
-	
+
 	if (surfaceArea <= 80 * 80) {
 		sizeDescription = "Tiny";
 	} else if (surfaceArea <= 112 * 112) {
@@ -338,7 +372,7 @@ void MapInfoEditor::updateBoundsText() {
 	} else {
 		sizeDescription = "Epic";
 	}
-	
+
 	ui.mapSizeDescription->setText(sizeDescription);
 }
 
@@ -383,7 +417,9 @@ void MapInfoEditor::updateBoundsPreview() {
 			// check if pixel is in unplayable area
 			int mapX = newMapBottomLeft.x + x;
 			int mapY = newMapTopRight.y - y;
-			bool isUnplayable = (mapX < newPlayableBottomLeft.x || mapX > newPlayableTopRight.x || mapY < newPlayableBottomLeft.y || mapY > newPlayableTopRight.y);
+			bool isUnplayable =
+				(mapX < newPlayableBottomLeft.x || mapX > newPlayableTopRight.x || mapY < newPlayableBottomLeft.y
+				 || mapY > newPlayableTopRight.y);
 
 			// unplayable pixels are lighter
 			if (isUnplayable) {
@@ -395,27 +431,33 @@ void MapInfoEditor::updateBoundsPreview() {
 	}
 
 	// create image with transparent background
-	QImage temp_image = QImage(newMinimapTex.data.data(), newMinimapTex.width, newMinimapTex.height, newMinimapTex.width * newMinimapTex.channels, QImage::Format::Format_RGBA8888);
+	QImage temp_image = QImage(
+		newMinimapTex.data.data(),
+		newMinimapTex.width,
+		newMinimapTex.height,
+		newMinimapTex.width * newMinimapTex.channels,
+		QImage::Format::Format_RGBA8888
+	);
 	QPixmap sourcePixmap = QPixmap::fromImage(temp_image);
-	
+
 	// scale the pixmap with sharp pixels (no smoothing)
 	QPixmap scaledPixmap = sourcePixmap.scaled(ui.boundsPreview->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
-	
+
 	// calculate camera bounds in original image coordinates
 	int cameraBoundsLeft = newPlayableBottomLeft.x + 4 - newMapBottomLeft.x;
 	int cameraBoundsBottom = newPlayableBottomLeft.y + 2 - newMapBottomLeft.y;
 	int cameraBoundsRight = newPlayableTopRight.x - 4 - newMapBottomLeft.x;
 	int cameraBoundsTop = newPlayableTopRight.y - 2 - newMapBottomLeft.y;
-	
+
 	// scale coordinates to match the scaled pixmap
 	float scaleX = static_cast<float>(scaledPixmap.width()) / newWidth;
 	float scaleY = static_cast<float>(scaledPixmap.height()) / newHeight;
-	
+
 	int scaledLeft = static_cast<int>(cameraBoundsLeft * scaleX);
 	int scaledTop = static_cast<int>((newHeight - cameraBoundsTop - 1) * scaleY);
 	int scaledRight = static_cast<int>(cameraBoundsRight * scaleX);
 	int scaledBottom = static_cast<int>((newHeight - cameraBoundsBottom - 1) * scaleY);
-	
+
 	// draw camera bounds rectangle on scaled image
 	QPen pen(QColor(0, 120, 255), 2);
 	QPainter painter(&scaledPixmap);
@@ -466,7 +508,7 @@ void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, in
 	}
 
 	// handle playable area change
-	if (ui.modifyCameraBounds->isChecked()) { 
+	if (ui.modifyCameraBounds->isChecked()) {
 		newPlayableBottomLeft.x -= deltaLeft;
 		newPlayableBottomLeft.y -= deltaBottom;
 		newPlayableTopRight.x += deltaRight;

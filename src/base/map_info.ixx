@@ -409,29 +409,12 @@ export class MapInfo {
 		writer.write(playable_width);
 		writer.write(playable_height);
 
-		const int flags = hide_minimap_preview * 0x0001 
-						| modif_ally_priorities * 0x0002
-						| melee_map * 0x0004
-						| unknown * 0x0008
-						| masked_area_partially_visible * 0x0010
-						| fixed_player_settings * 0x0020
-						| custom_forces * 0x0040
-						| custom_techtree * 0x0080
-						| custom_abilities * 0x0100
-						| custom_upgrades * 0x0200
-						| unknown2 * 0x0400
-						| cliff_shore_waves * 0x0800
-						| rolling_shore_waves * 0x1000
-						| unknown3 * 0x2000
-						| unknown4 * 0x4000
-						| item_classification * 0x8000
-						| water_tinting * 0x10000
-						| accurate_probability_for_calculations * 0x20000
-						| custom_ability_skins * 0x40000
-						| disable_deny_icon * 0x80000	
-						| force_default_zoom * 0x100000
-						| force_max_zoom * 0x200000
-						| force_min_zoom * 0x400000;
+		const int flags = hide_minimap_preview * 0x0001 | modif_ally_priorities * 0x0002 | melee_map * 0x0004 | unknown * 0x0008
+			| masked_area_partially_visible * 0x0010 | fixed_player_settings * 0x0020 | custom_forces * 0x0040 | custom_techtree * 0x0080
+			| custom_abilities * 0x0100 | custom_upgrades * 0x0200 | unknown2 * 0x0400 | cliff_shore_waves * 0x0800
+			| rolling_shore_waves * 0x1000 | unknown3 * 0x2000 | unknown4 * 0x4000 | item_classification * 0x8000 | water_tinting * 0x10000
+			| accurate_probability_for_calculations * 0x20000 | custom_ability_skins * 0x40000 | disable_deny_icon * 0x80000
+			| force_default_zoom * 0x100000 | force_max_zoom * 0x200000 | force_min_zoom * 0x400000;
 
 		writer.write(flags);
 
@@ -486,7 +469,8 @@ export class MapInfo {
 
 		writer.write<uint32_t>(forces.size());
 		for (const auto& i : forces) {
-			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100 | i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
+			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100
+				| i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
 			writer.write(force_flags);
 
 			writer.write(i.player_masks);

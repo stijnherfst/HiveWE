@@ -13,7 +13,7 @@ export class ShadowMap {
 	GLuint texture;
 	std::vector<u8> cells;
 
-private:
+  private:
 	void update_texture() {
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture);
 		glTextureStorage2D(texture, 1, GL_R8UI, width, height);
@@ -24,8 +24,7 @@ private:
 		glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-public:
-
+  public:
 	bool load(size_t terrain_width, size_t terrain_height) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.shd").value();
 
@@ -36,7 +35,7 @@ public:
 		const size_t expected_size = width * height;
 		const size_t file_size = reader.buffer.size();
 		if (file_size != expected_size) {
-			std::println("Error: Shadow map file size mismatch!");	
+			std::println("Error: Shadow map file size mismatch!");
 			cells.resize(expected_size, 0);
 		} else {
 			cells = reader.read_vector<u8>(expected_size);
@@ -55,7 +54,7 @@ public:
 		width = new_width;
 		height = new_height;
 		cells.resize(width * height, 0);
-		
+
 		glDeleteTextures(1, &texture);
 		update_texture();
 	}
@@ -63,15 +62,15 @@ public:
 	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
 		size_t new_width = static_cast<size_t>(static_cast<int>(width) + delta_left + delta_right);
 		size_t new_height = static_cast<size_t>(static_cast<int>(height) + delta_top + delta_bottom);
-		
+
 		std::vector<u8> new_cells(new_width * new_height, 0);
-		
+
 		// copy old data to new position
 		for (size_t y = 0; y < height; ++y) {
 			for (size_t x = 0; x < width; ++x) {
 				int new_x = static_cast<int>(x) + delta_left;
 				int new_y = static_cast<int>(y) + delta_top;
-				
+
 				// only copy if the new position is within bounds
 				if (new_x >= 0 && new_x < static_cast<int>(new_width) && new_y >= 0 && new_y < static_cast<int>(new_height)) {
 					size_t old_index = y * width + x;
@@ -80,11 +79,11 @@ public:
 				}
 			}
 		}
-		
+
 		width = new_width;
 		height = new_height;
 		cells = std::move(new_cells);
-		
+
 		glDeleteTextures(1, &texture);
 		update_texture();
 	}

@@ -8,17 +8,17 @@
 
 import Texture;
 
-class MapInfoEditor : public QDialog {
+class MapInfoEditor: public QDialog {
 	Q_OBJECT
 
-public:
+  public:
 	MapInfoEditor(QWidget* parent = nullptr);
 
 	Ui::MapInfoEditor ui;
 
 	bool save() const;
 
-private:
+  private:
 	void updateMapSizeGUI();
 	void adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom);
 	void updateBoundsPreview();

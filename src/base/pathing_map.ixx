@@ -133,7 +133,13 @@ export class PathingMap {
 	/// Checks for every cell on the supplied pathing_texture where (pathing_texture & mask == true) whether (existing_pathing & mask == true) and if so returns false
 	/// Expects position in whole grid tiles
 	/// Rotation in multiples of 90
-	[[nodiscard]] bool is_area_free(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture, const uint8_t mask) const {
+	[[nodiscard]]
+	bool is_area_free(
+		const glm::vec2 position,
+		const int rotation,
+		const std::shared_ptr<PathingTexture>& pathing_texture,
+		const uint8_t mask
+	) const {
 		const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
 		for (int j = 0; j < pathing_texture->height; j++) {
@@ -276,14 +282,14 @@ export class PathingMap {
 	}
 
 	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
-        const int new_width = width + delta_left + delta_right;
-        const int new_height = height + delta_top + delta_bottom;
+		const int new_width = width + delta_left + delta_right;
+		const int new_height = height + delta_top + delta_bottom;
 
 		// sanity check
 		if (new_width <= 0 || new_height <= 0) {
 			return;
 		}
-		
+
 		if (new_width % 4 != 0 || new_height % 4 != 0) {
 			return;
 		}
