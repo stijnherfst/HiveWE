@@ -266,6 +266,11 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			id->setText(QString::fromStdString(map->get_unique_id(false)));
 			id->setFont(QFont("consolas"));
 
+			// error icon inside the id field, hidden by default
+			QAction* idErrorIcon = id->addAction(selectdialog->style()->standardIcon(QStyle::SP_MessageBoxCritical), QLineEdit::TrailingPosition);
+			idErrorIcon->setVisible(false);
+			idErrorIcon->setToolTip("");
+
 			QHBoxLayout* nameLayout = new QHBoxLayout;
 			nameLayout->addWidget(nameEdit, 3);
 			nameLayout->addWidget(id, 1);
@@ -288,6 +293,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 			connect(buttonBox, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
 			connect(buttonBox, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
+			buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false); 
 
 			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
 			selectlayout->addLayout(nameLayout);
@@ -312,11 +318,32 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
 			});
 
-			connect(id, &QLineEdit::textChanged, [buttonBox, table](const QString& text) {
+			// id input field
+			connect(id, &QLineEdit::textChanged, [buttonBox, table, id, idErrorIcon](const QString& text) {
 				// enable "OK" button if the ID is valid (4 chars long and not already taken)
+				// also handle the error icon and border styling
 				std::string new_id = text.toStdString();
+				bool wrong_size = text.size() != 4;
 				bool is_duplicate = table->slk->row_headers.contains(new_id);
-				buttonBox->button(QDialogButtonBox::Ok)->setEnabled(text.size() == 4 && !is_duplicate);
+
+				if (wrong_size) {
+					idErrorIcon->setVisible(true);
+					idErrorIcon->setToolTip("ID must be exactly 4 characters long.");
+					id->setStyleSheet("QLineEdit { border: 1px solid #e74c3c; }");
+					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+				}
+				else if (is_duplicate) {
+					idErrorIcon->setVisible(true);
+					idErrorIcon->setToolTip(QString::fromStdString(std::format("ID '{}' is already in use.", new_id)));
+					id->setStyleSheet("QLineEdit { border: 1px solid #e74c3c; }");
+					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+				}
+				else {
+					// no errors
+					idErrorIcon->setVisible(false);
+					id->setStyleSheet("");
+					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+				}
 			});
 
 			auto select = [view, table, sub_filter, filter, selectdialog, id, treeModel](const QModelIndex& index) {
@@ -327,7 +354,6 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				// check if another object with selected ID already exists 
 				std::string new_id = id->text().toStdString();
 				if (table->slk->row_headers.contains(new_id)) {
-					QMessageBox::warning(selectdialog, "Duplicate ID", "An object with ID '" + QString::fromStdString(new_id) + "' already exists.\nPlease choose a different ID.");
 					return;
 				}
 
@@ -368,6 +394,17 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			std::vector<std::string> ids_to_delete;
 			for (const auto& i : selection) {
 				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(i).internalPointer());
+				
+				// skip folders/categories
+				if (treeItem->baseCategory || treeItem->subCategory) {
+					continue;
+				}
+				
+				// skip base game objects (only delete custom objects)
+				if (!table->slk->shadow_data.contains(treeItem->id) || !table->slk->shadow_data.at(treeItem->id).contains("oldid")) {
+					continue;
+				}
+				
 				ids_to_delete.push_back(treeItem->id);
 
 				// Close any open dock widget
