@@ -391,7 +391,8 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	if (index.model() != single_model) {
 		transformed_index = dynamic_cast<const QSortFilterProxyModel*>(index.model())->mapToSource(index);
 	}
-	const std::string_view type = single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
+	const std::string_view type =
+		single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
 
 	if (type == "int") {
 		dynamic_cast<QSpinBox*>(editor)->setValue(index.data(Qt::EditRole).toInt());
@@ -401,7 +402,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
 		dynamic_cast<QTextEdit*>(editor)->setText(index.data(Qt::DisplayRole).toString());
 	} else if (type == "targetList") {
-		auto parts = index.data(Qt::EditRole).toString().split(',');
+		const auto parts = index.data(Qt::EditRole).toString().split(',');
 		for (const auto& i : parts) {
 			QCheckBox* box = editor->findChild<QCheckBox*>(i);
 			if (box) {
@@ -444,10 +445,13 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
 		}
+	} else if (type == "stringList") {
+		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
+		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(index.data(Qt::DisplayRole).toString());
 	} else if (type.ends_with("List")) {
 		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(index.data(Qt::EditRole).toString());
 	} else if (unit_editor_data.section_exists(type)) {
-		auto combo = dynamic_cast<QComboBox*>(editor);
+		const auto combo = dynamic_cast<QComboBox*>(editor);
 		// Find the item with the right userdata and set it as current index
 		for (int i = 0; i < combo->count(); i++) {
 			if (combo->itemData(i, Qt::UserRole).toString() == index.data(Qt::EditRole).toString()) {
@@ -465,7 +469,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			}
 		}
 	} else if (type == "destructableCategory") {
-		auto combo = dynamic_cast<QComboBox*>(editor);
+		const auto combo = dynamic_cast<QComboBox*>(editor);
 		for (int i = 0; i < combo->count(); i++) {
 			if (combo->itemData(i, Qt::UserRole).toString() == index.data(Qt::EditRole).toString()) {
 				combo->setCurrentIndex(i);
@@ -481,7 +485,8 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 	if (model != single_model) {
 		transformed_index = dynamic_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
 	}
-	const std::string_view type = single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
+	const std::string_view type =
+		single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
 
 	if (type == "int") {
 		model->setData(index, static_cast<QSpinBox*>(editor)->value());
