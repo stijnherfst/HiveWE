@@ -301,31 +301,21 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			selectlayout->addWidget(sub_view);
 			selectlayout->addWidget(buttonBox);
 
-			connect(search, &QLineEdit::textChanged, [=](const QString& string) {
-				sub_filter->setFilterFixedString(string);
-				sub_view->expandAll();
-			});
-
-			connect(sub_view->selectionModel(), &QItemSelectionModel::currentChanged, [table, sub_filter, filter, id, nameEdit](const QModelIndex& current, const QModelIndex& previous) {
-				if (!current.isValid()) {
-					return;
-				}
-				nameEdit->setText(sub_filter->data(current).toString());
-				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
-				if (treeItem->baseCategory || treeItem->subCategory) {
-					return;
-				}
-				id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
-			});
-
-			// id input field
-			connect(id, &QLineEdit::textChanged, [buttonBox, table, id, idErrorIcon](const QString& text) {
-				// enable "OK" button if the ID is valid (4 chars long and not already taken)
-				// also handle the error icon and border styling
-				std::string new_id = text.toStdString();
-				bool wrong_size = text.size() != 4;
+			// validation lambda to check if input is valid
+			auto is_valid = [sub_view, sub_filter, table, id, buttonBox, idErrorIcon]() {
+				std::string new_id = id->text().toStdString();
+				bool wrong_size = new_id.size() != 4;
 				bool is_duplicate = table->slk->row_headers.contains(new_id);
-
+				
+				// check if an actual object (not a folder) is selected
+				bool object_selected = false;
+				QModelIndex current = sub_view->selectionModel()->currentIndex();
+				if (current.isValid()) {
+					const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
+					object_selected = !treeItem->baseCategory && !treeItem->subCategory;
+				}
+				
+				// update UI based on validation
 				if (wrong_size) {
 					idErrorIcon->setVisible(true);
 					idErrorIcon->setToolTip("ID must be exactly 4 characters long.");
@@ -338,12 +328,39 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 					id->setStyleSheet("QLineEdit { border: 1px solid #e74c3c; }");
 					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 				}
+				else if (!object_selected) {
+					idErrorIcon->setVisible(false);
+					id->setStyleSheet("");
+					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+				}
 				else {
-					// no errors
+					// all valid
 					idErrorIcon->setVisible(false);
 					id->setStyleSheet("");
 					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
 				}
+			};
+
+			connect(search, &QLineEdit::textChanged, [=](const QString& string) {
+				sub_filter->setFilterFixedString(string);
+				sub_view->expandAll();
+			});
+
+			connect(sub_view->selectionModel(), &QItemSelectionModel::currentChanged, [table, sub_filter, filter, id, nameEdit, is_valid](const QModelIndex& current, const QModelIndex& previous) {
+				if (!current.isValid()) {
+					return;
+				}
+				nameEdit->setText(sub_filter->data(current).toString());
+				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
+				if (!(treeItem->baseCategory || treeItem->subCategory)) {
+					id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
+				}
+				is_valid();
+			});
+
+			// id input field
+			connect(id, &QLineEdit::textChanged, [is_valid](const QString& text) {
+				is_valid();
 			});
 
 			auto select = [view, table, sub_filter, filter, selectdialog, id, treeModel](const QModelIndex& index) {
