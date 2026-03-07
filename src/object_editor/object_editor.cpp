@@ -63,23 +63,69 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 
 	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units", Category::unit);
 	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items", Category::item);
-	addTypeTreeView(doodadTreeModel, doodadTreeFilter, doodads_table, doodad_explorer, custom_doodad_icon->icon, "Doodads", Category::doodad);
-	addTypeTreeView(destructibleTreeModel, destructibleTreeFilter, destructibles_table, destructible_explorer, custom_destructible_icon->icon, "Destructibles", Category::destructible);
-	addTypeTreeView(abilityTreeModel, abilityTreeFilter, abilities_table, ability_explorer, custom_ability_icon->icon, "Abilities", Category::ability);
-	addTypeTreeView(upgradeTreeModel, upgradeTreeFilter, upgrade_table, upgrade_explorer, custom_upgrade_icon->icon, "Upgrades", Category::upgrade);
+	addTypeTreeView(
+		doodadTreeModel,
+		doodadTreeFilter,
+		doodads_table,
+		doodad_explorer,
+		custom_doodad_icon->icon,
+		"Doodads",
+		Category::doodad
+	);
+	addTypeTreeView(
+		destructibleTreeModel,
+		destructibleTreeFilter,
+		destructibles_table,
+		destructible_explorer,
+		custom_destructible_icon->icon,
+		"Destructibles",
+		Category::destructible
+	);
+	addTypeTreeView(
+		abilityTreeModel,
+		abilityTreeFilter,
+		abilities_table,
+		ability_explorer,
+		custom_ability_icon->icon,
+		"Abilities",
+		Category::ability
+	);
+	addTypeTreeView(
+		upgradeTreeModel,
+		upgradeTreeFilter,
+		upgrade_table,
+		upgrade_explorer,
+		custom_upgrade_icon->icon,
+		"Upgrades",
+		Category::upgrade
+	);
 	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs", Category::buff);
 
 	explorer_area->setCurrentIndex(0);
 	// Set initial sizes, the second size doesn't really matter with only 2 dock areas
-	dock_manager->setSplitterSizes(explorer_area, { 645, 9999 });
+	dock_manager->setSplitterSizes(explorer_area, {645, 9999});
 
-	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(unitTreeFilter, units_table, index); });
-	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(itemTreeFilter, items_table, index); });
-	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(doodadTreeFilter, doodads_table, index); });
-	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(destructibleTreeFilter, destructibles_table, index); });
-	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(abilityTreeFilter, abilities_table, index); });
-	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(upgradeTreeFilter, upgrade_table, index); });
-	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) { itemClicked(buffTreeFilter, buff_table, index); });
+	connect(unit_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(unitTreeFilter, units_table, index);
+	});
+	connect(item_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(itemTreeFilter, items_table, index);
+	});
+	connect(doodad_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(doodadTreeFilter, doodads_table, index);
+	});
+	connect(destructible_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(destructibleTreeFilter, destructibles_table, index);
+	});
+	connect(ability_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(abilityTreeFilter, abilities_table, index);
+	});
+	connect(upgrade_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(upgradeTreeFilter, upgrade_table, index);
+	});
+	connect(buff_explorer, &QTreeView::doubleClicked, [&](const QModelIndex& index) {
+		itemClicked(buffTreeFilter, buff_table, index);
+	});
 
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_F), this), &QShortcut::activated, [&]() {
 		auto edit = explorer_area->currentDockWidget()->findChild<QLineEdit*>("search");
@@ -130,10 +176,13 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 		tags->setFont(font2);
 
 		QLabel* label = new QLabel(QString::fromUtf8((*found)["raw_text"].get<std::string_view>()));
-		QLabel* latest_tested_version = new QLabel("Latest tested version: " + QString::fromUtf8((*found)["latest_tested_version"].get<std::string_view>()));
+		QLabel* latest_tested_version =
+			new QLabel("Latest tested version: " + QString::fromUtf8((*found)["latest_tested_version"].get<std::string_view>()));
 		latest_tested_version->setFont(font2);
 
-		QLabel* link = new QLabel("Fix mistakes or add info directly in <a href=\"https://docs.google.com/document/d/1z17FTnhyfVL87tJgLmwWks3Low6TuQ0tjfKHXBELWpo/edit\">the Google Docs</a>!");
+		QLabel* link = new QLabel(
+			"Fix mistakes or add info directly in <a href=\"https://docs.google.com/document/d/1z17FTnhyfVL87tJgLmwWks3Low6TuQ0tjfKHXBELWpo/edit\">the Google Docs</a>!"
+		);
 		link->setOpenExternalLinks(true);
 
 		layout->addWidget(title);
@@ -153,7 +202,7 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	view->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::ResizeToContents);
 	view->verticalHeader()->setMinimumSectionSize(28);
 	view->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeMode::Stretch);
-	view->setIconSize({ 24, 24 });
+	view->setIconSize({24, 24});
 	view->setWordWrap(true);
 	view->setSizeAdjustPolicy(QAbstractScrollArea::SizeAdjustPolicy::AdjustToContents);
 	layout->addWidget(view);
@@ -180,11 +229,19 @@ void ObjectEditor::open_by_id(TableModel* table, const std::string& id, const QS
 	dock_manager->addDockWidget(ads::CenterDockWidgetArea, dock_tab, dock_area);
 
 	// Scroll just past the ability insights
-	const int y = view->mapTo(area->widget(), QPoint(0,0)).y();
+	const int y = view->mapTo(area->widget(), QPoint(0, 0)).y();
 	area->verticalScrollBar()->setValue(y);
 }
 
-void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter, TableModel* table, QTreeView* view, QIcon icon, QString name, Category category) {
+void ObjectEditor::addTypeTreeView(
+	BaseTreeModel* treeModel,
+	BaseFilter*& filter,
+	TableModel* table,
+	QTreeView* view,
+	QIcon icon,
+	QString name,
+	Category category
+) {
 	treeModel->setSourceModel(table);
 	filter = new BaseFilter;
 	filter->slk = table->slk;
@@ -247,10 +304,10 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 		} else {
 			BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(selection.front()).internalPointer());
 			if (!table->slk->shadow_data.contains(treeItem->id) || !table->slk->shadow_data.at(treeItem->id).contains("oldid")) {
-				removeAction->setDisabled(true);	
+				removeAction->setDisabled(true);
 			}
 		}
-		
+
 		// add new object
 		connect(addAction, &QAction::triggered, [=, this]() {
 			QDialog* selectdialog = new QDialog(this, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
@@ -267,7 +324,8 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			id->setFont(QFont("consolas"));
 
 			// error icon inside the id field, hidden by default
-			QAction* idErrorIcon = id->addAction(selectdialog->style()->standardIcon(QStyle::SP_MessageBoxCritical), QLineEdit::TrailingPosition);
+			QAction* idErrorIcon =
+				id->addAction(selectdialog->style()->standardIcon(QStyle::SP_MessageBoxCritical), QLineEdit::TrailingPosition);
 			idErrorIcon->setVisible(false);
 			idErrorIcon->setToolTip("");
 
@@ -293,7 +351,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 			connect(buttonBox, &QDialogButtonBox::accepted, selectdialog, &QDialog::accept);
 			connect(buttonBox, &QDialogButtonBox::rejected, selectdialog, &QDialog::reject);
-			buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false); 
+			buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 
 			QVBoxLayout* selectlayout = new QVBoxLayout(selectdialog);
 			selectlayout->addLayout(nameLayout);
@@ -306,7 +364,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				std::string new_id = id->text().toStdString();
 				bool wrong_size = new_id.size() != 4;
 				bool is_duplicate = table->slk->row_headers.contains(new_id);
-				
+
 				// check if an actual object (not a folder) is selected
 				bool object_selected = false;
 				QModelIndex current = sub_view->selectionModel()->currentIndex();
@@ -314,26 +372,23 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 					const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
 					object_selected = !treeItem->baseCategory && !treeItem->subCategory;
 				}
-				
+
 				// update UI based on validation
 				if (wrong_size) {
 					idErrorIcon->setVisible(true);
 					idErrorIcon->setToolTip("ID must be exactly 4 characters long.");
 					id->setStyleSheet("QLineEdit { border: 1px solid #e74c3c; }");
 					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-				}
-				else if (is_duplicate) {
+				} else if (is_duplicate) {
 					idErrorIcon->setVisible(true);
 					idErrorIcon->setToolTip(QString::fromStdString(std::format("ID '{}' is already in use.", new_id)));
 					id->setStyleSheet("QLineEdit { border: 1px solid #e74c3c; }");
 					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-				}
-				else if (!object_selected) {
+				} else if (!object_selected) {
 					idErrorIcon->setVisible(false);
 					id->setStyleSheet("");
 					buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-				}
-				else {
+				} else {
 					// all valid
 					idErrorIcon->setVisible(false);
 					id->setStyleSheet("");
@@ -346,17 +401,21 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				sub_view->expandAll();
 			});
 
-			connect(sub_view->selectionModel(), &QItemSelectionModel::currentChanged, [table, sub_filter, filter, id, nameEdit, is_valid](const QModelIndex& current, const QModelIndex& previous) {
-				if (!current.isValid()) {
-					return;
+			connect(
+				sub_view->selectionModel(),
+				&QItemSelectionModel::currentChanged,
+				[table, sub_filter, filter, id, nameEdit, is_valid](const QModelIndex& current, const QModelIndex& previous) {
+					if (!current.isValid()) {
+						return;
+					}
+					nameEdit->setText(sub_filter->data(current).toString());
+					const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
+					if (!(treeItem->baseCategory || treeItem->subCategory)) {
+						id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
+					}
+					is_valid();
 				}
-				nameEdit->setText(sub_filter->data(current).toString());
-				const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
-				if (!(treeItem->baseCategory || treeItem->subCategory)) {
-					id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
-				}
-				is_valid();
-			});
+			);
 
 			// id input field
 			connect(id, &QLineEdit::textChanged, [is_valid](const QString& text) {
@@ -368,7 +427,7 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 					return;
 				}
 
-				// check if another object with selected ID already exists 
+				// check if another object with selected ID already exists
 				std::string new_id = id->text().toStdString();
 				if (table->slk->row_headers.contains(new_id)) {
 					return;
@@ -387,7 +446,9 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 				view->scrollTo(new_index, QAbstractItemView::ScrollHint::PositionAtCenter);
 			};
 
-			connect(sub_view, &QTreeView::activated, [select](const QModelIndex& index) { select(index); });
+			connect(sub_view, &QTreeView::activated, [select](const QModelIndex& index) {
+				select(index);
+			});
 
 			connect(selectdialog, &QDialog::accepted, [sub_view, select]() {
 				auto indices = sub_view->selectionModel()->selectedIndexes();
@@ -411,17 +472,17 @@ void ObjectEditor::addTypeTreeView(BaseTreeModel* treeModel, BaseFilter*& filter
 			std::vector<std::string> ids_to_delete;
 			for (const auto& i : selection) {
 				BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(filter->mapToSource(i).internalPointer());
-				
+
 				// skip folders/categories
 				if (treeItem->baseCategory || treeItem->subCategory) {
 					continue;
 				}
-				
+
 				// skip base game objects (only delete custom objects)
 				if (!table->slk->shadow_data.contains(treeItem->id) || !table->slk->shadow_data.at(treeItem->id).contains("oldid")) {
 					continue;
 				}
-				
+
 				ids_to_delete.push_back(treeItem->id);
 
 				// Close any open dock widget
