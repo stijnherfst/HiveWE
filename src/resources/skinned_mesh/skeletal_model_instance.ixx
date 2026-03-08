@@ -1,6 +1,5 @@
 module;
 
-#include <algorithm>
 #include <cassert>
 #include <chrono>
 
