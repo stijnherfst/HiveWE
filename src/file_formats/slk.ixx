@@ -116,10 +116,15 @@ namespace slk {
 
 						{
 							std::string data;
+
 							if (view.front() == '\"') {
-								data = view.substr(1, view.find('"', 1) - 1);
+								data = view.substr(1, view.find_first_of("\r\n") - 1);
 							} else {
 								data = view.substr(0, view.find_first_of("\r\n"));
+							}
+
+							if (data.back() == '\"') {
+								data.pop_back();
 							}
 
 							if (data == "-" || data == "_") {
@@ -129,15 +134,15 @@ namespace slk {
 							if (column == 0) {
 								// -1 as 0,0 is unitid/doodadid etc.
 								row_headers.emplace(data, row - 1);
-								index_to_row.emplace(row - 1, data);
+								index_to_row.emplace(row - 1, std::move(data));
 							} else if (row == 0) {
 								// If it is a column header, we need to lowercase it as column headers are case-insensitive
 								to_lowercase(data);
 								// -1 as 0,0 is unitid/doodadid etc.
 								column_headers.emplace(data, column - 1);
-								index_to_column.emplace(column - 1, data);
+								index_to_column.emplace(column - 1, std::move(data));
 							} else {
-								base_data[index_to_row[row - 1]][index_to_column[column - 1]] = data;
+								base_data[index_to_row[row - 1]][index_to_column[column - 1]] = std::move(data);
 							}
 
 							view.remove_prefix(view.find('\n') + 1);
@@ -414,7 +419,7 @@ namespace slk {
 
 			for (auto& [id, properties] : base_data) {
 				for (auto& [prop_id, prop_value] : properties) {
-					std::string_view data = ini.data<std::string_view>(section, prop_value);
+					const std::string_view data = ini.data<std::string_view>(section, prop_value);
 					if (!data.empty()) {
 						prop_value = std::string(data);
 					}
@@ -427,14 +432,10 @@ namespace slk {
 			assert(base_data.contains(row_header));
 			assert(!base_data.contains(new_row_header));
 
-			// Get a weird allocation error if not done via a temporary 19/06/2021
-			const auto t = base_data.at(row_header);
-			base_data[new_row_header] = t;
+			base_data[new_row_header] = base_data.at(row_header);
 
 			if (copy_shadow_data && shadow_data.contains(row_header)) {
-				// Get a weird allocation error if not done via a temporary 19/06/2021
-				const auto tt = shadow_data.at(row_header);
-				shadow_data[new_row_header] = tt;
+				shadow_data[new_row_header] = shadow_data.at(row_header);
 			}
 
 			size_t index = row_headers.size();
@@ -458,7 +459,7 @@ namespace slk {
 				index_to_row.erase(index);
 				row_headers.erase(row_header);
 			} else {
-				// Swap with a element from the end to avoid having to change all indices
+				// Swap with an element from the end to avoid having to change all indices
 				const std::string replacement_id = index_to_row.at(rows() - 1);
 				index_to_row[index] = replacement_id;
 				row_headers[replacement_id] = index;
@@ -487,6 +488,7 @@ namespace slk {
 				add_column(column_header);
 			}
 
+			// If the shadow data is equal to to the base data we remove the shadow data
 			if (base_data.contains(row_header) && base_data.at(row_header).contains(column_header)) {
 				if (base_data.at(row_header).at(column_header) == data) {
 					if (shadow_data.contains(row_header)) {
@@ -499,7 +501,7 @@ namespace slk {
 				}
 			}
 
-			shadow_data[row_header][column_header] = data;
+			shadow_data[row_header][column_header] = std::move(data);
 		}
 
 		void set_shadow_data(const int column, const int row, std::string data) {

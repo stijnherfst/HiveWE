@@ -69,7 +69,7 @@ export class TableModel : public QAbstractTableModel {
 				const std::string_view field_data = slk->data<std::string_view>(field, id);
 				const std::string_view meta_id = slk->field_to_meta_id(*meta_slk, field, id).value();
 				const std::string_view type = meta_slk->data<std::string_view>("type", meta_id);
-				if (type == "string") {
+				if (type == "string" || type == "stringList") {
 					QString qt_string;
 					if (field_data.starts_with("TRIGSTR")) {
 						const auto data = trigger_strings->string(field_data);

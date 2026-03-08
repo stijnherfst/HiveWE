@@ -34,6 +34,7 @@ public:
 	QRibbonButton* map_loading_screen = new QRibbonButton;
 	QRibbonButton* map_options = new QRibbonButton;
 	QRibbonButton* map_size_camera_bounds = new QRibbonButton;
+	QRibbonButton* gameplay_constants = new QRibbonButton;
 
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;

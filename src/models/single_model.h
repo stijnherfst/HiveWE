@@ -72,8 +72,10 @@ protected:
 class TableDelegate : public QStyledItemDelegate {
 	Q_OBJECT
 
+	SingleModel* single_model;
+
 public:
-	TableDelegate(QWidget* parent = nullptr);
+	TableDelegate(SingleModel* single_model, QWidget* parent = nullptr);
 
 	QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 

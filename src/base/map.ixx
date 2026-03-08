@@ -31,6 +31,7 @@ import Units;
 import Doodads;
 import Triggers;
 import Terrain;
+import GameplayConstants;
 import "brush.h";
 import <glad/glad.h>;
 import <bullet/btBulletDynamicsCommon.h>;
@@ -57,6 +58,7 @@ export class Map: public QObject {
 	Regions regions;
 	GameCameras cameras;
 	Sounds sounds;
+	GameplayConstants gameplay_constants;
 	// ShadowMap shadow_map;
 
 	WorldUndoManager world_undo;
@@ -107,7 +109,7 @@ export class Map: public QObject {
 
 		unit_editor_data = ini::INI("UI/UnitEditorData.txt");
 		unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
-		// Have to substitute twice since some of the keys refer to other keys in the same file
+		// Have to substitute twice since some keys refer to other keys in the same file
 		unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
 		units_slk.merge(ini::INI("Units/UnitSkin.txt"), units_meta_slk);
@@ -314,6 +316,8 @@ export class Map: public QObject {
 
 		std::println("Trigger loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
+
+		gameplay_constants.load();
 
 		info.load();
 		terrain.load(physics);
@@ -575,6 +579,8 @@ export class Map: public QObject {
 				QMessageBox::StandardButton::Ok
 			);
 		}
+
+		gameplay_constants.save();
 
 		imports.save(filesystem_path);
 

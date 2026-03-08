@@ -232,6 +232,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	map_options->setText("Options");
 	map_section->addWidget(map_options);
 
+	gameplay_constants->setIcon(QIcon("data/icons/ribbon/options32x32.png"));
+	gameplay_constants->setText("Gameplay\nConstants");
+	map_section->addWidget(gameplay_constants);
+
 	//map_size_camera_bounds->setIcon(QIcon("data/icons/ribbon/sizebounds32x32.png"));
 	//map_size_camera_bounds->setText("Size&&Camera\nBounds");
 	//map_section->addWidget(map_size_camera_bounds);

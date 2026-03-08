@@ -14,17 +14,17 @@ using OUTCOME_V2_NAMESPACE::failure;
 using OUTCOME_V2_NAMESPACE::result;
 
 namespace mdx {
-	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture{
-		{ 1, "ReplaceableTextures/TeamColor/TeamColor00" },
-		{ 2, "ReplaceableTextures/TeamGlow/TeamGlow00" },
-		{ 11, "ReplaceableTextures/Cliff/Cliff0" },
-		{ 31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree" },
-		{ 32, "ReplaceableTextures/AshenvaleTree/AshenTree" },
-		{ 33, "ReplaceableTextures/BarrensTree/BarrensTree" },
-		{ 34, "ReplaceableTextures/NorthrendTree/NorthTree" },
-		{ 35, "ReplaceableTextures/Mushroom/MushroomTree" },
-		{ 36, "ReplaceableTextures/RuinsTree/RuinsTree" },
-		{ 37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree" }
+	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture {
+		{1, "ReplaceableTextures/TeamColor/TeamColor00"},
+		{2, "ReplaceableTextures/TeamGlow/TeamGlow00"},
+		{11, "ReplaceableTextures/Cliff/Cliff0"},
+		{31, "ReplaceableTextures/LordaeronTree/LordaeronFallTree"},
+		{32, "ReplaceableTextures/AshenvaleTree/AshenTree"},
+		{33, "ReplaceableTextures/BarrensTree/BarrensTree"},
+		{34, "ReplaceableTextures/NorthrendTree/NorthTree"},
+		{35, "ReplaceableTextures/Mushroom/MushroomTree"},
+		{36, "ReplaceableTextures/RuinsTree/RuinsTree"},
+		{37, "ReplaceableTextures/OutlandMushroomTree/MushroomTree"}
 	};
 
 	enum class TrackTag {
@@ -103,7 +103,7 @@ namespace mdx {
 		CAMS = 'SMAC'
 	};
 
-	export template <typename T>
+	export template<typename T>
 	struct Track {
 		int32_t frame;
 		T value;
@@ -120,7 +120,7 @@ namespace mdx {
 		bezier = 3,
 	};
 
-	export template <typename T>
+	export template<typename T>
 	struct TrackHeader {
 		InterpolationType interpolation_type = InterpolationType::none;
 		int32_t global_sequence_ID = -1;
@@ -129,6 +129,7 @@ namespace mdx {
 		int id = -1; // Used to track each individual track for animation purposes
 
 		TrackHeader() = default;
+
 		explicit TrackHeader(BinaryReader& reader, int track_id) {
 			const uint32_t tracks_count = reader.read<uint32_t>();
 			interpolation_type = static_cast<InterpolationType>(reader.read<int32_t>());
@@ -179,6 +180,8 @@ namespace mdx {
 	};
 
 	export struct Layer {
+		/// Blend mode 0 doesn't render fully transparent layers (we choose alpha < 0.01). Seen on some Reforged bridges
+		/// Blend mode 1 doesn't render layers that are alpha < 0.75. E.g. SD tree leaf textures
 		uint32_t blend_mode;
 		uint32_t shading_flags;
 		uint32_t texture_animation_id;
@@ -216,6 +219,7 @@ namespace mdx {
 
 	export struct Node {
 		Node() = default;
+
 		explicit Node(BinaryReader& reader, int& unique_tracks) {
 			const size_t reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
@@ -298,6 +302,7 @@ namespace mdx {
 		glm::vec3 maximum;
 
 		Extent() = default;
+
 		explicit Extent(BinaryReader& reader) {
 			bounds_radius = reader.read<float>();
 			minimum = reader.read<glm::vec3>();
@@ -340,10 +345,10 @@ namespace mdx {
 		uint32_t material_id;
 		uint32_t selection_group;
 		uint32_t selection_flags;
-	    /// LODs are unused by the WC3 engine afaik
+		/// LODs are unused by the WC3 engine afaik
 		uint32_t lod;
 		std::string lod_name;
-	    /// The extent of this geoset not accounting for animations (?)
+		/// The extent of this geoset not accounting for animations (?)
 		Extent extent;
 
 		/// One per sequence?
@@ -416,7 +421,7 @@ namespace mdx {
 	struct Attachment {
 		Node node;
 		std::string path; // Reference to Undead, NE, or Naga birth anim
-		int reserved;	  // ToDo mine meaning of reserved from Game.dll, likely strlen
+		int reserved; // ToDo mine meaning of reserved from Game.dll, likely strlen
 		int attachment_id;
 
 		TrackHeader<float> KATV;
@@ -617,16 +622,16 @@ namespace mdx {
 	*/
 	struct CollisionShape {
 		enum class Shape {
-			Box = 0,	 // 2 verts
-			Plane = 1,	 // 2 verts
-			Sphere = 2,	 // 1 verts
+			Box = 0, // 2 verts
+			Plane = 1, // 2 verts
+			Sphere = 2, // 1 verts
 			Cylinder = 3 // 2 vert
 		};
 
 		Node node;
 		Shape type;
 		glm::vec3 vertices[2]; // sometimes only 1 is used
-		float radius;		   // used for sphere/cylinder
+		float radius; // used for sphere/cylinder
 	};
 
 	struct FaceFX {
@@ -648,7 +653,7 @@ namespace mdx {
 	};
 
 	export class MDX {
-	public:
+	  public:
 		int unique_tracks = 0;
 
 		static constexpr uint32_t LATEST_MDX_VERSION = 1200;
@@ -684,17 +689,18 @@ namespace mdx {
 		std::vector<float> bind_poses;
 		std::vector<TextureAnimation> texture_animations;
 
-	private:
+	  private:
 		void load(BinaryReader& reader);
 
-	public:
+	  public:
 		MDX() = default;
 
 		explicit MDX(BinaryReader& reader) {
 			load(reader);
 		}
 
-		[[nodiscard]] BinaryWriter save() const;
+		[[nodiscard]]
+		BinaryWriter save() const;
 
 		std::string to_mdl();
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
@@ -770,10 +776,8 @@ namespace mdx {
 		}
 
 		template<typename Func>
-		requires std::invocable<Func, TrackHeader<float>&>
-		and std::invocable<Func, TrackHeader<uint32_t>&>
-		and std::invocable<Func, TrackHeader<glm::vec3>&>
-		and std::invocable<Func, TrackHeader<glm::quat>&>
+			requires std::invocable<Func, TrackHeader<float>&> and std::invocable<Func, TrackHeader<uint32_t>&>
+			and std::invocable<Func, TrackHeader<glm::vec3>&> and std::invocable<Func, TrackHeader<glm::quat>&>
 		void for_each_track(const Func F) {
 			for_each_node([&](Node& node) {
 				F(node.KGRT);
@@ -840,23 +844,24 @@ namespace mdx {
 
 // All our hashes
 // C++ really needs a derive macro for this
-template <typename T>
+template<typename T>
 void hash_combine(std::size_t& seed, const T& v) {
-	seed ^= std::hash<T>{}(v) + 0x9e3779b97f4a7c15ULL + (seed<<6) + (seed>>2);
+	seed ^= std::hash<T> {}(v) + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
 }
 
-template <typename T>
+template<typename T>
 struct hash_vector {
 	std::size_t operator()(const std::vector<T>& vec) const {
 		std::size_t h = 0;
-		for (const auto& item : vec)
-			hash_combine(h, item);  // assumes std::hash<T> is defined
+		for (const auto& item : vec) {
+			hash_combine(h, item); // assumes std::hash<T> is defined
+		}
 		return h;
 	}
 };
 
 namespace std {
-	template <>
+	template<>
 	struct hash<glm::vec3> {
 		std::size_t operator()(const glm::vec3& v) const {
 			std::size_t h = 0;
@@ -867,7 +872,7 @@ namespace std {
 		}
 	};
 
-	template <typename T>
+	template<typename T>
 	struct std::hash<mdx::Track<T>> {
 		std::size_t operator()(const mdx::Track<T>& t) const {
 			std::size_t h = 0;
@@ -879,19 +884,20 @@ namespace std {
 		}
 	};
 
-	template <typename T>
+	template<typename T>
 	struct std::hash<mdx::TrackHeader<T>> {
 		std::size_t operator()(const mdx::TrackHeader<T>& th) const {
 			std::size_t h = 0;
 			hash_combine(h, static_cast<int>(th.interpolation_type));
 			hash_combine(h, th.global_sequence_ID);
-			for (const auto& track : th.tracks)
+			for (const auto& track : th.tracks) {
 				hash_combine(h, track);
+			}
 			return h;
 		}
 	};
 
-	template <>
+	template<>
 	struct hash<mdx::LayerTexture> {
 		std::size_t operator()(const mdx::LayerTexture& lt) const {
 			std::size_t h = 0;
@@ -901,8 +907,7 @@ namespace std {
 		}
 	};
 
-
-	template <>
+	template<>
 	struct hash<mdx::Layer> {
 		std::size_t operator()(const mdx::Layer& l) const {
 			std::size_t h = 0;
@@ -938,30 +943,25 @@ namespace std {
 	// 	}
 	// };
 
-
 	template<>
-	struct std::hash<mdx::Material>
-	{
-		std::size_t operator()(const mdx::Material& s) const noexcept
-		{
-			std::size_t h1 = std::hash<uint32_t>{}(s.priority_plane);
-			std::size_t h2 = std::hash<uint32_t>{}(s.flags);
-			std::size_t h3 = hash_vector<mdx::Layer>{}(s.layers);
+	struct std::hash<mdx::Material> {
+		std::size_t operator()(const mdx::Material& s) const noexcept {
+			std::size_t h1 = std::hash<uint32_t> {}(s.priority_plane);
+			std::size_t h2 = std::hash<uint32_t> {}(s.flags);
+			std::size_t h3 = hash_vector<mdx::Layer> {}(s.layers);
 
 			// std::size_t h3 = std::hash<std::vector<mdx::Layer>>{}(s.layers);
-			return h1 ^ (h2 << 1) ^(h3 << 1); // or use boost::hash_combine
+			return h1 ^ (h2 << 1) ^ (h3 << 1); // or use boost::hash_combine
 		}
 	};
 
 	template<>
-	struct std::hash<mdx::Texture>
-	{
-		std::size_t operator()(const mdx::Texture& s) const noexcept
-		{
-			std::size_t h1 = std::hash<fs::path>{}(s.file_name);
-			std::size_t h2 = std::hash<uint32_t>{}(s.flags);
-			std::size_t h3 = std::hash<uint32_t>{}(s.replaceable_id);
-			return h1 ^ (h2 << 1) ^(h3 << 1); // or use boost::hash_combine
+	struct std::hash<mdx::Texture> {
+		std::size_t operator()(const mdx::Texture& s) const noexcept {
+			std::size_t h1 = std::hash<fs::path> {}(s.file_name);
+			std::size_t h2 = std::hash<uint32_t> {}(s.flags);
+			std::size_t h3 = std::hash<uint32_t> {}(s.replaceable_id);
+			return h1 ^ (h2 << 1) ^ (h3 << 1); // or use boost::hash_combine
 		}
 	};
-}
+} // namespace std

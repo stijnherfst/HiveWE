@@ -34,7 +34,8 @@ SingleModel::SingleModel(TableModel* table, QObject* parent) : QAbstractProxyMod
 		if (!index.isValid()) {
 			return;
 		}
-		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "maxlevel" || id_mapping[index.row()].field == "numvar") {
+		if (id_mapping[index.row()].field == "levels" || id_mapping[index.row()].field == "maxlevel"
+			|| id_mapping[index.row()].field == "numvar") {
 			buildMapping();
 		}
 	});
@@ -72,7 +73,19 @@ QModelIndex SingleModel::mapToSource(const QModelIndex& proxyIndex) const {
 
 QVariant SingleModel::data(const QModelIndex& index, int role) const {
 	if (role != Qt::ForegroundRole) {
-		return QAbstractProxyModel::data(index, role);
+		if (index.column() == 1) {
+			switch (role) {
+				case Qt::DisplayRole:
+				case Qt::EditRole:
+					return QString::fromStdString(meta_slk->data("description", id_mapping[index.row()].key));
+				case Qt::CheckStateRole:
+					return {};
+				default:
+					return QAbstractProxyModel::data(index, role);
+			}
+		} else {
+			return QAbstractProxyModel::data(index, role);
+		}
 	}
 
 	if (slk->shadow_data.contains(id) && slk->shadow_data.at(id).contains(id_mapping[index.row()].field)) {
@@ -85,14 +98,23 @@ QVariant SingleModel::data(const QModelIndex& index, int role) const {
 QVariant SingleModel::headerData(int section, Qt::Orientation orientation, int role) const {
 	if (role == Qt::DisplayRole) {
 		if (orientation == Qt::Orientation::Vertical) {
-			const std::string_view category = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", id_mapping[section].key));
+			const std::string_view category = world_edit_data.data<std::string_view>(
+				"ObjectEditorCategories",
+				meta_slk->data<std::string_view>("category", id_mapping[section].key)
+			);
 			const auto category2 = string_replaced(category, "&", "");
 			const std::string_view display_name = meta_slk->data<std::string_view>("displayname", id_mapping[section].key);
 
 			if (id_mapping[section].level > 0) {
-				return QString::fromStdString(std::format("{} - {} - Level {} ({})", category2, display_name, id_mapping[section].level, id_mapping[section].key));
+				return QString::fromStdString(
+					std::format("{} - {} - Level {} ({})", category2, display_name, id_mapping[section].level, id_mapping[section].key)
+				);
 			} else {
-				return QString::fromStdString(std::format("{} - {} ({})", category2, display_name, id_mapping[section].key));
+				if (category2.empty()) {
+					return QString::fromStdString(std::format("{} ({})", display_name, id_mapping[section].key));
+				} else {
+					return QString::fromStdString(std::format("{} - {} ({})", category2, display_name, id_mapping[section].key));
+				}
 			}
 		} else {
 			return "UnitID";
@@ -120,7 +142,11 @@ int SingleModel::rowCount(const QModelIndex& parent) const {
 }
 
 int SingleModel::columnCount(const QModelIndex& parent) const {
-	return 1;
+	if (meta_slk->column_headers.contains("description")) {
+		return 2;
+	} else {
+		return 1;
+	}
 }
 
 QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) const {
@@ -161,7 +187,6 @@ void SingleModel::buildMapping() {
 	for (const auto& [key, index] : meta_slk->row_headers) {
 		// Unit an ability SLKs contain usespecific, but only abilities use `usespecific`, the cell is always empty for units.
 		const std::string_view use_specific = meta_slk->data<std::string_view>("usespecific", key);
-		const std::string_view not_specific = meta_slk->data<std::string_view>("notspecific", key);
 		if (!use_specific.empty()) {
 			std::string_view id_to_check = id;
 			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
@@ -175,6 +200,7 @@ void SingleModel::buildMapping() {
 			}
 		}
 
+		const std::string_view not_specific = meta_slk->data<std::string_view>("notspecific", key);
 		if (!not_specific.empty()) {
 			std::string_view id_to_check = id;
 			if (slk->shadow_data.contains("id") && slk->shadow_data.at(id).contains("oldid")) {
@@ -220,7 +246,7 @@ void SingleModel::buildMapping() {
 					slk->add_column(new_field_name);
 				}
 
-				id_mapping.push_back({ key, new_field_name, i + 1 });
+				id_mapping.push_back({key, new_field_name, i + 1});
 			}
 		} else {
 			// We add a virtual column if it does not exist in the base table
@@ -228,16 +254,20 @@ void SingleModel::buildMapping() {
 				slk->add_column(field_name);
 			}
 
-			id_mapping.push_back({ key, field_name, 0 });
+			id_mapping.push_back({key, field_name, 0});
 		}
 	}
 
 	std::ranges::sort(id_mapping, [&](const auto& left, const auto& right) {
-		const std::string_view category1 = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", left.key));
-		const std::string left_string = std::format("{} - {}{}", category1, meta_slk->data<std::string_view>("displayname", left.key), left.field);
+		const std::string_view category1 =
+			world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", left.key));
+		const std::string left_string =
+			std::format("{} - {}{}", category1, meta_slk->data<std::string_view>("displayname", left.key), left.field);
 
-		const std::string_view category2 = world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", right.key));
-		const std::string right_string = std::format("{} - {}{}", category2, meta_slk->data<std::string_view>("displayname", right.key), right.field);
+		const std::string_view category2 =
+			world_edit_data.data<std::string_view>("ObjectEditorCategories", meta_slk->data<std::string_view>("category", right.key));
+		const std::string right_string =
+			std::format("{} - {}{}", category2, meta_slk->data<std::string_view>("displayname", right.key), right.field);
 
 		return left_string < right_string;
 	});
@@ -269,21 +299,27 @@ void AlterHeader::paintSection(QPainter* painter, const QRect& rect, int logical
 	}
 
 	painter->setPen(QPen(model()->headerData(logicalIndex, orientation(), Qt::ForegroundRole).value<QColor>()));
-	painter->drawText(rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, nullptr, this), 5, 0, 0), align, model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString());
+	painter->drawText(
+		rect.adjusted(2 * style()->pixelMetric(QStyle::PM_HeaderMargin, nullptr, this), 5, 0, 0),
+		align,
+		model()->headerData(logicalIndex, orientation(), Qt::DisplayRole).toString()
+	);
 	painter->setPen(QPen(palette().color(QPalette::Base)));
 	painter->drawLine(rect.x(), rect.bottom(), rect.right(), rect.bottom());
 }
 
-TableDelegate::TableDelegate(QWidget* parent) : QStyledItemDelegate(parent) {
-}
+TableDelegate::TableDelegate(SingleModel* single_model, QWidget* parent) : QStyledItemDelegate(parent), single_model(single_model) {}
 
 QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex& index) const {
-	const auto model = static_cast<const SingleModel*>(index.model());
-	const auto& mapping = model->getMapping();
+	auto transformed_index = index;
+	if (index.model() != single_model) {
+		transformed_index = dynamic_cast<const QSortFilterProxyModel*>(index.model())->mapToSource(index);
+	}
+	const auto& mapping = single_model->getMapping();
 
-	const std::string type = model->meta_slk->data("type", mapping[index.row()].key);
-	const std::string minVal = model->meta_slk->data("minval", mapping[index.row()].key);
-	const std::string maxVal = model->meta_slk->data("maxval", mapping[index.row()].key);
+	const std::string type = single_model->meta_slk->data("type", mapping[transformed_index.row()].key);
+	const std::string minVal = single_model->meta_slk->data("minval", mapping[transformed_index.row()].key);
+	const std::string maxVal = single_model->meta_slk->data("maxval", mapping[transformed_index.row()].key);
 
 	if (type == "int") {
 		QSpinBox* editor = new QSpinBox(parent);
@@ -304,7 +340,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return editor;
 	} else if (type == "string") {
 		QTextEdit* editor = new QTextEdit(parent);
-//		editor->setMaxLength(std::stoi(maxVal));
+		//		editor->setMaxLength(std::stoi(maxVal));
 		return editor;
 	} else if (type == "model") {
 		return create_model_editor(parent);
@@ -314,7 +350,7 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 		return create_unit_list_editor(parent);
 	} else if (type == "upgradeList") {
 		return create_upgrade_list_editor(parent);
-	}else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
+	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		return create_ability_list_editor(parent);
 	} else if (type.ends_with("List")) {
 		return create_list_editor(parent);
@@ -351,20 +387,22 @@ QWidget* TableDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem
 }
 
 void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const {
-	const auto model = static_cast<const SingleModel*>(index.model());
-	const auto& mapping = model->getMapping();
-
-	const std::string_view type = model->meta_slk->data<std::string_view>("type", mapping[index.row()].key);
+	auto transformed_index = index;
+	if (index.model() != single_model) {
+		transformed_index = dynamic_cast<const QSortFilterProxyModel*>(index.model())->mapToSource(index);
+	}
+	const std::string_view type =
+		single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
 
 	if (type == "int") {
-		static_cast<QSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toInt());
+		dynamic_cast<QSpinBox*>(editor)->setValue(index.data(Qt::EditRole).toInt());
 	} else if (type == "real" || type == "unreal") {
-		static_cast<QDoubleSpinBox*>(editor)->setValue(model->data(index, Qt::EditRole).toDouble());
+		dynamic_cast<QDoubleSpinBox*>(editor)->setValue(index.data(Qt::EditRole).toDouble());
 	} else if (type == "string") {
 		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
-		static_cast<QTextEdit*>(editor)->setText(model->data(index, Qt::DisplayRole).toString());
+		dynamic_cast<QTextEdit*>(editor)->setText(index.data(Qt::DisplayRole).toString());
 	} else if (type == "targetList") {
-		auto parts = model->data(index, Qt::EditRole).toString().split(',');
+		const auto parts = index.data(Qt::EditRole).toString().split(',');
 		for (const auto& i : parts) {
 			QCheckBox* box = editor->findChild<QCheckBox*>(i);
 			if (box) {
@@ -373,11 +411,11 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		}
 	} else if (type == "model") {
 		ModelView* list = editor->findChild<ModelView*>("modelView");
-		list->set_current_model_path(model->data(index, Qt::EditRole).toString());
+		list->set_current_model_path(index.data(Qt::EditRole).toString());
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
-		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(units_table->data(id.toStdString(), "name").toString());
@@ -388,7 +426,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "upgradeList") {
 		QListWidget* list = editor->findChild<QListWidget*>("upgradeList");
 
-		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(upgrade_table->data(id.toStdString(), "name1").toString());
@@ -399,7 +437,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
 
-		auto ids = model->data(index, Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
+		auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setText(abilities_table->data(id.toStdString(), "name").toString());
@@ -407,55 +445,60 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
 		}
+	} else if (type == "stringList") {
+		// A hack to resolve TRIGSTR. The downside of taking the Display value is that we overwrite the TRIGSTR reference
+		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(index.data(Qt::DisplayRole).toString());
 	} else if (type.ends_with("List")) {
-		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(model->data(index, Qt::EditRole).toString());
+		editor->findChild<QPlainTextEdit*>("editor")->setPlainText(index.data(Qt::EditRole).toString());
 	} else if (unit_editor_data.section_exists(type)) {
-		auto combo = static_cast<QComboBox*>(editor);
+		const auto combo = dynamic_cast<QComboBox*>(editor);
 		// Find the item with the right userdata and set it as current index
 		for (int i = 0; i < combo->count(); i++) {
-			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+			if (combo->itemData(i, Qt::UserRole).toString() == index.data(Qt::EditRole).toString()) {
 				combo->setCurrentIndex(i);
 			}
 		}
 	} else if (type == "icon") {
 		IconView* list = editor->findChild<IconView*>("iconView");
-		list->setCurrentIconPath(model->data(index, Qt::EditRole).toString());
+		list->setCurrentIconPath(index.data(Qt::EditRole).toString());
 	} else if (type == "doodadCategory") {
-		const auto combo = static_cast<QComboBox*>(editor);
+		const auto combo = dynamic_cast<QComboBox*>(editor);
 		for (int i = 0; i < combo->count(); i++) {
-			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+			if (combo->itemData(i, Qt::UserRole).toString() == index.data(Qt::EditRole).toString()) {
 				combo->setCurrentIndex(i);
 			}
 		}
 	} else if (type == "destructableCategory") {
-		auto combo = static_cast<QComboBox*>(editor);
+		const auto combo = dynamic_cast<QComboBox*>(editor);
 		for (int i = 0; i < combo->count(); i++) {
-			if (combo->itemData(i, Qt::UserRole).toString() == model->data(index, Qt::EditRole).toString()) {
+			if (combo->itemData(i, Qt::UserRole).toString() == index.data(Qt::EditRole).toString()) {
 				combo->setCurrentIndex(i);
 			}
 		}
 	} else {
-		static_cast<QLineEdit*>(editor)->setText(model->data(index, Qt::EditRole).toString());
+		dynamic_cast<QLineEdit*>(editor)->setText(index.data(Qt::EditRole).toString());
 	}
 }
 
 void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, const QModelIndex& index) const {
-	auto singlemodel = static_cast<SingleModel*>(model);
-	auto& mapping = singlemodel->getMapping();
-
-	const std::string_view type = singlemodel->meta_slk->data<std::string_view>("type", mapping[index.row()].key);
+	auto transformed_index = index;
+	if (model != single_model) {
+		transformed_index = dynamic_cast<QSortFilterProxyModel*>(model)->mapToSource(index);
+	}
+	const std::string_view type =
+		single_model->meta_slk->data<std::string_view>("type", single_model->getMapping()[transformed_index.row()].key);
 
 	if (type == "int") {
-		singlemodel->setData(index, static_cast<QSpinBox*>(editor)->value());
+		model->setData(index, static_cast<QSpinBox*>(editor)->value());
 	} else if (type == "real" || type == "unreal") {
-		singlemodel->setData(index, static_cast<QDoubleSpinBox*>(editor)->value());
+		model->setData(index, static_cast<QDoubleSpinBox*>(editor)->value());
 	} else if (type == "string") {
 		auto text = static_cast<QTextEdit*>(editor)->toPlainText();
 		text.replace('\n', "|n");
-		singlemodel->setData(index, text);
+		model->setData(index, text, Qt::EditRole);
 	} else if (type == "model") {
 		ModelView* list = editor->findChild<ModelView*>("modelView");
-		singlemodel->setData(index, list->current_model_path());
+		model->setData(index, list->current_model_path());
 	} else if (type == "unitList") {
 		QListWidget* list = editor->findChild<QListWidget*>("unitList");
 
@@ -467,10 +510,10 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			}
 			result += item->data(Qt::StatusTipRole).toString();
 		}
-		model->setData(index, result, Qt::EditRole);
+		model->setData(index, result);
 	} else if (type == "abilityList" || type == "heroAbilityList" || type == "abilitySkinList") {
 		QListWidget* list = editor->findChild<QListWidget*>("abilityList");
-		
+
 		QString result;
 		for (int i = 0; i < list->count(); i++) {
 			QListWidgetItem* item = list->item(i);
@@ -479,7 +522,7 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			}
 			result += item->data(Qt::StatusTipRole).toString();
 		}
-		model->setData(index, result, Qt::EditRole);
+		model->setData(index, result);
 	} else if (type == "upgradeList") {
 		QListWidget* list = editor->findChild<QListWidget*>("upgradeList");
 
@@ -491,7 +534,7 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			}
 			result += item->data(Qt::StatusTipRole).toString();
 		}
-		model->setData(index, result, Qt::EditRole);
+		model->setData(index, result);
 	} else if (type == "targetList") {
 		QString result;
 		for (const auto& [key, value] : unit_editor_data.section(type)) {
@@ -508,28 +551,27 @@ void TableDelegate::setModelData(QWidget* editor, QAbstractItemModel* model, con
 			}
 		}
 		model->setData(index, result, Qt::EditRole);
-	}  else if (type.ends_with("List")) {
-		singlemodel->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
+	} else if (type.ends_with("List")) {
+		model->setData(index, editor->findChild<QPlainTextEdit*>("editor")->toPlainText());
 	} else if (unit_editor_data.section_exists(type)) {
 		auto combo = static_cast<QComboBox*>(editor);
-		singlemodel->setData(index, combo->currentData());
+		model->setData(index, combo->currentData());
 	} else if (type == "icon") {
 		IconView* list = editor->findChild<IconView*>("iconView");
-		singlemodel->setData(index, list->currentIconPath());
+		model->setData(index, list->currentIconPath());
 	} else if (type == "doodadCategory") {
 		auto combo = static_cast<QComboBox*>(editor);
-		singlemodel->setData(index, combo->currentData());
+		model->setData(index, combo->currentData());
 	} else if (type == "destructableCategory") {
 		auto combo = static_cast<QComboBox*>(editor);
-		singlemodel->setData(index, combo->currentData());
+		model->setData(index, combo->currentData());
 	} else {
-		singlemodel->setData(index, static_cast<QLineEdit*>(editor)->text());
+		model->setData(index, static_cast<QLineEdit*>(editor)->text());
 	}
 }
 
 void TableDelegate::updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex&) const {
 	if (dynamic_cast<QDialog*>(editor)) {
-		
 	} else {
 		editor->setGeometry(option.rect);
 	}
@@ -568,7 +610,6 @@ QWidget* TableDelegate::create_list_editor(QWidget* parent) const {
 	dialog->show();
 
 	return editor;
-
 }
 
 QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
@@ -605,7 +646,6 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 
 	return editor;
 }
-
 
 QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
 	auto editor = new QWidget(parent);
@@ -756,7 +796,7 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=](){
+	connect(dialog, &QDialog::accepted, [=]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
@@ -873,7 +913,7 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=](){
+	connect(dialog, &QDialog::accepted, [=]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);

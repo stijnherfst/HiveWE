@@ -26,9 +26,10 @@ import "terrain_palette.h";
 import "doodad_palette.h";
 import "unit_palette.h";
 import "object_editor/icon_view.h";
-#include "trigger_editor.h"
+import "trigger_editor.h";
 #include "QMessageBox"
 #include "QProcess"
+import "menus/gameplay_constants_editor.h";
 
 namespace fs = std::filesystem;
 
@@ -215,6 +216,11 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(ui.ribbon->model_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;
 		window_handler.create_or_raise<ModelEditor>(nullptr, created);
+	});
+
+	connect(ui.ribbon->gameplay_constants, &QRibbonButton::clicked, [this]() {
+		bool created = false;
+		window_handler.create_or_raise<GameplayConstantsEditor>(nullptr, created);
 	});
 
 	minimap->setParent(ui.widget);

@@ -11,6 +11,7 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/hierarchy.ixx"
 	"base/render_manager.ixx"
 	"base/game_cameras.ixx"
+	"base/gameplay_constants.ixx"
 	"base/imports.ixx"
 	"base/map_info.ixx"
 	"base/pathing_map.ixx"
@@ -132,6 +133,8 @@ target_sources(HiveWE PRIVATE
 	"menus/tile_pather.cpp"
 	"menus/tile_picker.cpp"
 	"menus/tile_setter.cpp"
+	"menus/gameplay_constants_editor.cpp"
+	"menus/gameplay_constants_editor.h"
 
 	"models/single_model.cpp"
 	

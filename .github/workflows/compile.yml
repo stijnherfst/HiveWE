@@ -1,0 +1,52 @@
+name: Build HiveWE
+
+on:
+  pull_request:
+    branches: [ "master", "main" ]
+  push:
+    branches: [ "master", "main" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Restore/Save vcpkg Binary Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-binaries-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-binaries-${{ runner.os }}-
+
+      - name: Create vcpkg cache directory
+        run: mkdir -p ${{ github.workspace }}/vcpkg_cache
+
+      - name: Setup environment
+        run: |
+          echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
+          echo "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/vcpkg_cache,readwrite" >> $env:GITHUB_ENV
+
+      - name: Configure CMake
+        run: cmake --preset release
+
+      - name: Build
+        run: cmake --build --preset Release

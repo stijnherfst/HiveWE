@@ -132,7 +132,8 @@ export struct Doodad {
 		skeleton.update_location(position, rotation, (base_scale * scale) / 128.f);
 	}
 
-	[[nodiscard]] QRect get_pathing_bounding_box() const {
+	[[nodiscard]]
+	QRect get_pathing_bounding_box() const {
 		if (!pathing) {
 			return {};
 		}
@@ -142,7 +143,7 @@ export struct Doodad {
 		const int rotated_height = rotation % 180 ? pathing->height : pathing->width;
 		const int x = position.x * 4 - rotated_width / 2;
 		const int y = position.y * 4 - rotated_height / 2;
-		return QRect{x, y, rotated_width, rotated_height};
+		return QRect {x, y, rotated_width, rotated_height};
 	}
 
 	static glm::vec2 acceptable_position(
@@ -213,8 +214,36 @@ export struct SpecialDoodad {
 	glm::vec3 old_position;
 
 	// Auxiliary data
-	glm::mat4 matrix = glm::mat4(1.f);
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
+
+	void init(const std::string_view id, const std::shared_ptr<SkinnedMesh> mesh, const Terrain& terrain) {
+		this->id = id;
+		this->mesh = mesh;
+
+		skeleton = SkeletalModelInstance(mesh->mdx);
+
+		pathing.reset();
+		const auto path = doodads_slk.data<std::string_view>("pathtex", id);
+		const auto trimmed_path = trimmed(path);
+		if (!trimmed_path.empty() && trimmed_path != "none" && trimmed_path != "_") {
+			try {
+				pathing = resource_manager.load<PathingTexture>(trimmed_path);
+			} catch (const std::exception& e) {
+				std::println("Error load pathing texture for doodad with ID: {} and error {}", id, e.what());
+			}
+		}
+
+		update(terrain);
+	}
+
+	void update(const Terrain& terrain) {
+		position.z = terrain.interpolated_height(position.x, position.y, true);
+
+		const float angle = doodads_slk.data<int>("fixedrot", id) / 360.f * 2.f * glm::pi<float>();
+		const glm::quat rotation = glm::angleAxis(angle, glm::vec3(0, 0, 1));
+
+		skeleton.update_location(position, rotation, glm::vec3(1.0 / 128.f));
+	}
 };
