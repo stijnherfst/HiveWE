@@ -42,10 +42,11 @@ export class SkeletalModelInstance {
 	std::vector<RenderNode> render_nodes;
 	std::vector<glm::mat4> world_matrices;
 
-	std::vector<std::string> required_animation_names; // for support for setting an animation by name later
+	// Used in set_sequence(string)
+	std::vector<std::string> required_animation_names;
 
 	SkeletalModelInstance() = default;
-	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string> required_animation_names = {})
+	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string> &&required_animation_names = {})
 		: model(model), required_animation_names(required_animation_names) {
 		const size_t node_count = model->bones.size() +
 							model->lights.size() +
@@ -73,23 +74,7 @@ export class SkeletalModelInstance {
 
 		current_keyframes.resize(model->unique_tracks);
 
-		for (size_t i = 0; i < model->sequences.size(); i++) {
-			std::string anim_name = model->sequences[i].name;
-			std::transform(anim_name.begin(), anim_name.end(), anim_name.begin(),
-						   [](unsigned char c) { return std::tolower(c); });
-			if (anim_name.find("stand") == std::string::npos)
-				continue;
-			
-			bool good = true;
-			for (auto& req_anim_name : required_animation_names) {
-				if (anim_name.find(req_anim_name) == std::string::npos)
-					good = false;
-			}
-			if (!good)
-				continue;
- 			set_sequence(static_cast<int>(i));
-			break;
-		}
+		set_sequence("stand");
 	}
 
 	void update_location(const glm::vec3 position, const glm::quat& rotation, const glm::vec3& scale) {
@@ -208,6 +193,35 @@ void update_nodes() {
 			for (const auto& j : i.layers) {
 				calculate_sequence_extents(j.KMTA);
 				// Add more when required
+			}
+		}
+	}
+
+	/// Set sequence by name according to required animation names
+	/// Currently only used to set a stand animation
+	/// NOTE: This is not proper behaviour (as documented under https://lep.nrw/jassbot/doc/SetUnitAnimation)
+	///       Current behaviour will use the first animation matching all names, if any, starting with sequence_name
+	///       thus we will not get the idle animations cycling
+	void set_sequence(const std::string& sequence_name) {
+		std::string lowercase_sequence_name = sequence_name;
+		const auto &sequences = model->sequences;
+		to_lowercase(lowercase_sequence_name);
+		for (size_t i = 0; i < sequences.size(); i++) {
+			std::string anim_name = to_lowercase_copy(sequences[i].name);
+
+			if (!anim_name.starts_with(lowercase_sequence_name))
+				continue;
+
+			bool valid = true;
+			for (auto& req_anim_name : required_animation_names) {
+				if (!anim_name.contains(req_anim_name)) {
+					valid = false;
+					break;
+				}
+			}
+			if (valid) {
+				set_sequence(static_cast<int>(i));
+				break;
 			}
 		}
 	}

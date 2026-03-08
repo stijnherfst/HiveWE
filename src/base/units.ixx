@@ -1,6 +1,7 @@
 module;
 
 #include <QRect>
+#include <absl/strings/str_split.h>
 
 export module Units;
 
@@ -429,13 +430,8 @@ public:
 	}
 
 	static std::vector<std::string> get_required_animation_names(const std::string& id) {
-		std::vector<std::string> required_animation_names;
-		std::string animation_names = units_slk.data("attachmentlinkprops", id);
- 		std::stringstream names_stream(animation_names);
-		std::string animation_name;
-		while (std::getline(names_stream, animation_name, ',')) {
-			required_animation_names.push_back(animation_name);
-		}
-		return required_animation_names;
+		std::string animation_names_string = units_slk.data("attachmentlinkprops", id);
+		to_lowercase(animation_names_string);
+		return absl::StrSplit(animation_names_string, ",", absl::SkipEmpty());
 	}
 };
