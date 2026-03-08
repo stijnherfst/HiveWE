@@ -215,7 +215,7 @@ void TerrainBrush::apply(double frame_delta) {
 				} else {
 					corners[i][j].blight = false;
 					corners[i][j].ground_texture = id;
-					corners[i][j].ground_variation = Terrain::get_random_variation();
+					corners[i][j].set_random_variation();
 				}
 			}
 		}

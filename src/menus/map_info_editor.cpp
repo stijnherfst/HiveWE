@@ -274,13 +274,6 @@ bool MapInfoEditor::save() const {
 				QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight)
 			);
 			return false;
-		} else if (newWidth % 32 != 0 || newHeight % 32 != 0) {
-			QMessageBox::critical(
-				const_cast<MapInfoEditor*>(this),
-				"Invalid Map Size",
-				QString("Map dimensions must be divisible by 32.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight)
-			);
-			return false;
 		} else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
 			QMessageBox::critical(
 				const_cast<MapInfoEditor*>(this),

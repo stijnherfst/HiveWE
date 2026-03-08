@@ -220,8 +220,19 @@ export class Doodads {
 		doodads.erase(iterator);
 	}
 
+	void remove_sepcial_doodad(SpecialDoodad* doodad) {
+		const auto iterator = special_doodads.begin() + std::distance(special_doodads.data(), doodad);
+		special_doodads.erase(iterator);
+	}
+
 	void remove_doodads(const std::unordered_set<Doodad*>& list) {
 		std::erase_if(doodads, [&](Doodad& doodad) {
+			return list.contains(&doodad);
+		});
+	}
+
+	void remove_special_doodads(const std::unordered_set<SpecialDoodad*>& list) {
+		std::erase_if(special_doodads, [&](SpecialDoodad& doodad) {
 			return list.contains(&doodad);
 		});
 	}

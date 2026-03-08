@@ -724,11 +724,6 @@ export class Map: public QObject {
 		// physics.draw->render();
 	}
 
-	void resize(size_t width, size_t height) {
-		terrain.resize(width, height);
-		pathing_map.resize(width * 4, height * 4);
-	}
-
 	/// Resizes the entire map by expanding/shirnking it from all sides
 	/// Handles terrain, pathing map, shadow map and preplaced objects
 	/// Also, as per vanilla WE behaviour, clears the entire world undo stack
@@ -840,8 +835,10 @@ export class Map: public QObject {
 		const int height = terrain.height - 1;
 
 		// helper to update positions and collect out-of-bounds objects for removal
-		auto update_and_collect_unit = [&](auto& container) {
-			std::unordered_set<Unit*> to_delete;
+		auto update_and_collect = [&](auto& container, auto&& update_func) {
+			using ObjectType = std::decay_t<decltype(*container.begin())>;
+			using PointerType = std::remove_reference_t<ObjectType>*;
+			std::unordered_set<PointerType> to_delete;
 
 			for (auto& obj : container) {
 				// update the object position relative to the change in bottom-left corner
@@ -854,28 +851,7 @@ export class Map: public QObject {
 					++num_deleted;
 				} else {
 					// update rendered object position
-					obj.update();
-				}
-			}
-
-			return to_delete;
-		};
-
-		auto update_and_collect_doodad = [&](auto& container) {
-			std::unordered_set<Doodad*> to_delete;
-
-			for (auto& obj : container) {
-				// update the object position relative to the change in bottom-left corner
-				obj.position.x += delta_left;
-				obj.position.y += delta_bottom;
-
-				// check if the object is outside map bounds
-				if (obj.position.x < 0 || obj.position.y < 0 || obj.position.x > width || obj.position.y > height) {
-					to_delete.insert(&obj);
-					++num_deleted;
-				} else {
-					// update rendered object position
-					obj.update(terrain);
+					update_func(obj);
 				}
 			}
 
@@ -883,12 +859,19 @@ export class Map: public QObject {
 		};
 
 		// fix/remove all objects
-		units.remove_units(update_and_collect_unit(units.units));
-		units.remove_items(update_and_collect_unit(units.items));
-		doodads.remove_doodads(update_and_collect_doodad(doodads.doodads));
+		units.remove_units(update_and_collect(units.units, [](auto& obj) {
+			obj.update();
+		}));
 
-		// TODO: once special doodads are implemented, handle them as well
-		//doodads.remove_special_doodads(update_and_collect_doodad(doodads.special_doodads));
+		units.remove_items(update_and_collect(units.items, [](auto& obj) {
+			obj.update();
+		}));
+
+		doodads.remove_doodads(update_and_collect(doodads.doodads, [&](auto& obj) {
+			obj.update(terrain);
+		}));
+
+		doodads.remove_special_doodads(update_and_collect(doodads.special_doodads, [](auto& obj) { /* TODO: obj.update(terrain) */ }));
 
 		// TODO: once cameras and regions are implemented, handle them too
 

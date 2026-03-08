@@ -32,53 +32,25 @@ import "btBulletDynamicsCommon.h";
 using namespace std::literals::string_literals;
 
 export struct Corner {
-	bool map_edge;
+	bool map_edge = false;
 
-	int ground_texture;
+	int ground_texture = 0;
 
-	float height;
-	float water_height;
-	bool ramp;
-	bool blight;
-	bool water;
-	bool boundary;
+	float height = 0.f;
+	float water_height = 0.f;
+	bool ramp = false;
+	bool blight = false;
+	bool water = false;
+	bool boundary = false;
 	bool cliff = false;
 	bool romp = false;
 	bool special_doodad = false;
 
-	int ground_variation;
-	int cliff_variation;
+	int ground_variation = 0;
+	int cliff_variation = 0;
 
-	int cliff_texture;
-	int layer_height;
-
-	float final_ground_height() const {
-		return height + layer_height - 2.0;
-	}
-
-	float final_water_height(const float water_offset) const {
-		return water_height + water_offset;
-	}
-};
-
-export struct TilePathingg {
-	bool unwalkable = false;
-	bool unflyable = false;
-	bool unbuildable = false;
-
-	uint8_t mask() const {
-		uint8_t mask = 0;
-		mask |= unwalkable ? 0b00000010 : 0;
-		mask |= unflyable ? 0b00000100 : 0;
-		mask |= unbuildable ? 0b00001000 : 0;
-		return mask;
-	}
-};
-
-export class Terrain: public QObject {
-	Q_OBJECT
-
-	static constexpr int write_version = 12;
+	int cliff_texture = 15;
+	int layer_height = 2;
 
 	// total sum 570
 	static constexpr std::tuple<int, int> variation_chances[18] = {
@@ -101,6 +73,52 @@ export class Terrain: public QObject {
 		{14, 4},
 		{15, 1}
 	};
+
+	float final_ground_height() const {
+		return height + layer_height - 2.0;
+	}
+
+	float final_water_height(const float water_offset) const {
+		return water_height + water_offset;
+	}
+
+	void set_random_variation() {
+		std::random_device rd;
+		std::mt19937 e2(rd());
+		std::uniform_int_distribution<> dist(0, 570);
+
+		int nr = dist(e2) - 1;
+
+		for (auto&& [variation, chance] : variation_chances) {
+			if (nr < chance) {
+				ground_variation = variation;
+				return;
+			}
+			nr -= chance;
+		}
+		assert("Didn't hit the list of tile variations");
+		ground_variation = 0;
+	}
+};
+
+export struct TilePathingg {
+	bool unwalkable = false;
+	bool unflyable = false;
+	bool unbuildable = false;
+
+	uint8_t mask() const {
+		uint8_t mask = 0;
+		mask |= unwalkable ? 0b00000010 : 0;
+		mask |= unflyable ? 0b00000100 : 0;
+		mask |= unbuildable ? 0b00001000 : 0;
+		return mask;
+	}
+};
+
+export class Terrain: public QObject {
+	Q_OBJECT
+
+	static constexpr int write_version = 12;
 
 	// Sequential versions for GPU uploading
 	std::vector<float> ground_heights;
@@ -274,17 +292,8 @@ export class Terrain: public QObject {
 
 	void create(const Physics& physics) {
 		// Determine if cliff
-		for (int i = 0; i < width - 1; i++) {
-			for (int j = 0; j < height - 1; j++) {
-				Corner& bottom_left = corners[i][j];
-				Corner& bottom_right = corners[i + 1][j];
-				Corner& top_left = corners[i][j + 1];
-				Corner& top_right = corners[i + 1][j + 1];
+		compute_cliff_flags();
 
-				bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
-					|| bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
-			}
-		}
 		// Done parsing
 
 		hierarchy.tileset = tileset;
@@ -368,21 +377,10 @@ export class Terrain: public QObject {
 			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data<std::string_view>("groundtile", cliff_id)]);
 		}
 
-		// prepare GPU buffers
-		ground_heights.resize(width * height);
-		final_ground_heights.resize(width * height);
-		ground_texture_list.resize((width - 1) * (height - 1));
-		ground_exists_data.resize(width * height);
-		water_heights.resize(width * height);
-		water_exists_data.resize(width * height);
+		// Prepare and create GPU buffers
+		setup_GPU_buffers();
 
-		// Ground
-		glCreateBuffers(1, &ground_height_buffer);
-		glNamedBufferStorage(ground_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &cliff_level_buffer);
-		glNamedBufferStorage(cliff_level_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &ground_texture_data_buffer);
-		glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
+		// Ground texture handle buffer (only needed during initial creation)
 		glCreateBuffers(1, &ground_texture_handle_buffer);
 		glNamedBufferStorage(
 			ground_texture_handle_buffer,
@@ -390,8 +388,6 @@ export class Terrain: public QObject {
 			ground_texture_handles.data(),
 			GL_DYNAMIC_STORAGE_BIT
 		);
-		glCreateBuffers(1, &ground_exists_buffer);
-		glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 		// Cliff
 		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
@@ -422,12 +418,6 @@ export class Terrain: public QObject {
 			sub += 1;
 		}
 		glGenerateTextureMipmap(cliff_texture_array);
-
-		// Water
-		glCreateBuffers(1, &water_height_buffer);
-		glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &water_exists_buffer);
-		glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 		// Water textures
 		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -466,14 +456,7 @@ export class Terrain: public QObject {
 		cliff_shader = resource_manager.load<Shader>({"data/shaders/cliff.vert", "data/shaders/cliff.frag"});
 		water_shader = resource_manager.load<Shader>({"data/shaders/water.vert", "data/shaders/water.frag"});
 
-		collision_shape =
-			new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
-		collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-		collision_body->getWorldTransform().setOrigin(
-			btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)
-		); // Bullet centers the collision mesh automatically, we need to decenter it
-		collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
-		physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
+		setup_collision_shape(physics);
 
 		update_ground_textures({0, 0, width - 1, height - 1});
 		update_ground_heights({0, 0, width - 1, height - 1});
@@ -1103,104 +1086,12 @@ export class Terrain: public QObject {
 		update_ground_exists(ramp_area);
 	}
 
-	void resize(size_t new_width, size_t new_height) {
-		//glDeleteTextures(1, &ground_height);
-		//glDeleteTextures(1, &ground_texture_data);
-		//glDeleteTextures(1, &ground_exists);
-
-		//glDeleteTextures(1, &water_exists);
-		//glDeleteTextures(1, &water_height);
-
-		//width = new_width;
-		//height = new_height;
-
-		//auto t = corners[0][0];
-		//corners.clear();
-		//corners.resize(width, std::vector<Corner>(height, t));
-
-		//ground_heights.resize(width * height);
-		//ground_corner_heights.resize(width * height);
-		//ground_texture_list.resize((width - 1) * (height - 1));
-		//ground_exists_data.resize(width * height);
-
-		//water_heights.resize(width * height);
-		//water_exists_data.resize(width * height);
-
-		//for (int i = 0; i < width; i++) {
-		//	for (int j = 0; j < height; j++) {
-		//		ground_corner_heights[j * width + i] = corners[i][j].final_ground_height();
-		//		water_exists_data[j * width + i] = corners[i][j].water;
-		//		ground_heights[j * width + i] = corners[i][j].height;
-		//		water_heights[j * width + i] = corners[i][j].water_height;
-		//	}
-		//}
-
-		//for (int i = 0; i < width - 1; i++) {
-		//	for (int j = 0; j < height - 1; j++) {
-		//		Corner& bottom_left = corners[i][j];
-		//		Corner& bottom_right = corners[i + 1][j];
-		//		Corner& top_left = corners[i][j + 1];
-		//		Corner& top_right = corners[i + 1][j + 1];
-
-		//		bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height || bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
-		//	}
-		//}
-
-		//glCreateTextures(GL_TEXTURE_2D, 1, &ground_height);
-		//glTextureStorage2D(ground_height, 1, GL_R16F, width, height);
-		//glTextureSubImage2D(ground_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_heights.data());
-		//glTextureParameteri(ground_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		//glTextureParameteri(ground_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		//glCreateTextures(GL_TEXTURE_2D, 1, &ground_corner_height);
-		//glTextureStorage2D(ground_corner_height, 1, GL_R16F, width, height);
-		//glTextureSubImage2D(ground_corner_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, ground_corner_heights.data());
-		//glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		//glTextureParameteri(ground_corner_height, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		//glCreateTextures(GL_TEXTURE_2D, 1, &ground_texture_data);
-		//glTextureStorage2D(ground_texture_data, 1, GL_RGBA16UI, width - 1, height - 1);
-		//glTextureParameteri(ground_texture_data, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		//glTextureParameteri(ground_texture_data, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-		//glCreateTextures(GL_TEXTURE_2D, 1, &ground_exists);
-		//glTextureStorage2D(ground_exists, 1, GL_R8, width, height);
-
-		//// Water
-		//glCreateTextures(GL_TEXTURE_2D, 1, &water_height);
-		//glTextureStorage2D(water_height, 1, GL_R16F, width, height);
-		//glTextureSubImage2D(water_height, 0, 0, 0, width, height, GL_RED, GL_FLOAT, water_heights.data());
-
-		//glCreateTextures(GL_TEXTURE_2D, 1, &water_exists);
-		//glTextureStorage2D(water_exists, 1, GL_R8, width, height);
-		//glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		//glTextureSubImage2D(water_exists, 0, 0, 0, width, height, GL_RED, GL_UNSIGNED_BYTE, water_exists_data.data());
-		//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-		//update_cliff_meshes({ 0, 0, width - 1, height - 1 });
-		//update_ground_textures({ 0, 0, width - 1, height - 1 });
-		//update_ground_heights({ 0, 0, width - 1, height - 1 });
-
-		//map->physics.dynamicsWorld->removeRigidBody(collision_body);
-		//delete collision_body;
-		//delete collision_shape;
-
-		//collision_shape = new btHeightfieldTerrainShape(width, height, ground_corner_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
-		//if (collision_shape == nullptr) {
-		//	std::cout << "Error creating Bullet collision shape\n";
-		//}
-		//collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
-		//collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f)); // Bullet centers the collision mesh automatically, we need to decenter it and place it under the player
-		//collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
-		//map->physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
-	}
-
-	/// Computes the terrain pathing flags for the target cell.
+	/// Computes the terrain pathing flags for the target cell on the **PATHING** map
 	/// Takes cliffs, blight, water, terrain textures and boundaries into account
 	uint8_t get_terrain_pathing(size_t i, size_t j) {
-		// Use floor division to correctly map pathing cells to corners
-		int corner_x = static_cast<int>(std::floor(i / 4.0));
-		int corner_y = static_cast<int>(std::floor(j / 4.0));
+		// map pathing cell to corner
+		int corner_x = i / 4;
+		int corner_y = j / 4;
 		const Corner& bottom_left = corners[corner_x][corner_y];
 
 		// take terrain texture into account (from the closest corner)
@@ -1216,13 +1107,13 @@ export class Terrain: public QObject {
 
 		// take blight into account
 		if (closest_corner.blight) {
-			mask |= 0b00100000;
+			mask |= PathingMap::blight;
 		}
 
 		// take water into account
 		if (closest_corner.water) {
 			// apply water mask
-			mask |= 0b01000000;
+			mask |= PathingMap::water;
 
 			if (closest_corner.final_water_height(water_offset) > closest_corner.final_ground_height() + 0.40) {
 				// deep water is unwalkable and unbuildable
@@ -1248,20 +1139,8 @@ export class Terrain: public QObject {
 		// places "shadows" on the edges of the map
 		for (size_t i = 0; i < width; i++) {
 			for (size_t j = 0; j < height; j++) {
-				bool is_boundary = false;
-
-				// check all bounduaries
-				if (i < unplayable_left) {
-					is_boundary = true;
-				} else if (i >= width - unplayable_right) {
-					is_boundary = true;
-				} else if (j < unplayable_bottom) {
-					is_boundary = true;
-				} else if (j >= height - unplayable_top) {
-					is_boundary = true;
-				}
-
-				corners[i][j].map_edge = is_boundary;
+				corners[i][j].map_edge =
+					i < unplayable_left || i >= width - unplayable_right || j < unplayable_bottom || j >= height - unplayable_top;
 			}
 		}
 
@@ -1274,17 +1153,13 @@ export class Terrain: public QObject {
 		const int new_height = height + delta_top + delta_bottom;
 
 		// width/height must be at least 33
+		// in reforged, map size is not constrained to multiples of 32
 		if (new_width < 33 || new_height < 33) {
 			return;
 		}
 
 		// maximum map size supported by wc3 is 481 x 481
 		if (new_width > 481 || new_height > 481) {
-			return;
-		}
-
-		// sanity check, (size - 1) must be multiple of 32
-		if (new_width % 32 != 1 || new_height % 32 != 1) {
 			return;
 		}
 
@@ -1307,49 +1182,7 @@ export class Terrain: public QObject {
 		emit minimap_changed(minimap_image());
 	}
 
-	static int get_random_variation() {
-		std::random_device rd;
-		std::mt19937 e2(rd());
-		std::uniform_int_distribution<> dist(0, 570);
-
-		int nr = dist(e2) - 1;
-
-		for (auto&& [variation, chance] : variation_chances) {
-			if (nr < chance) {
-				return variation;
-			}
-			nr -= chance;
-		}
-		assert("Didn't hit the list of tile variations");
-		return 0;
-	}
-
   private:
-	Corner create_default_corner() const {
-		// creates a corner with default values, used when resize destroys the original terrain
-		Corner corner;
-
-		corner.map_edge = false;
-
-		corner.ramp = false;
-		corner.blight = false;
-		corner.water = false;
-		corner.boundary = false;
-		corner.cliff = false;
-		corner.special_doodad = false;
-
-		corner.layer_height = 2;
-		corner.cliff_texture = 15;
-		corner.cliff_variation = 0;
-
-		corner.height = 0;
-		corner.water_height = 0;
-
-		corner.ground_texture = 0;
-
-		return corner;
-	}
-
 	std::vector<std::vector<Corner>> resize_corners(int delta_left, int delta_right, int delta_top, int delta_bottom) const {
 		const int new_width = width + delta_left + delta_right;
 		const int new_height = height + delta_top + delta_bottom;
@@ -1362,13 +1195,11 @@ export class Terrain: public QObject {
 		int old_height_remaining = (int)height + std::min(0, delta_bottom) + std::min(0, delta_top);
 		if (old_width_remaining <= 0 || old_height_remaining <= 0) {
 			// all old corners deleted, fill with default
-			Corner default_corner = create_default_corner();
 			for (size_t i = 0; i < new_width; i++) {
 				for (size_t j = 0; j < new_height; j++) {
 					// apply random tile variation and fix map_edge flag
-					default_corner.ground_variation = get_random_variation();
-					default_corner.map_edge = (i == 0 || i == new_width - 1 || j == 0 || j == new_height - 1);
-					new_corners[i][j] = default_corner;
+					new_corners[i][j].set_random_variation();
+					new_corners[i][j].map_edge = (i == 0 || i == new_width - 1 || j == 0 || j == new_height - 1);
 				}
 			}
 			return new_corners;
@@ -1396,7 +1227,7 @@ export class Terrain: public QObject {
 				// apply random variations and fix special_doodad for NEW corners
 				if (!is_old_corner) {
 					new_corners[i][j].special_doodad = false;
-					new_corners[i][j].ground_variation = get_random_variation();
+					new_corners[i][j].set_random_variation();
 				}
 			}
 		}
@@ -1423,15 +1254,26 @@ export class Terrain: public QObject {
 			}
 		}
 
-		// resize GPU buffer vectors
-		ground_heights.resize(width * height);
-		final_ground_heights.resize(width * height);
-		ground_texture_list.resize((width - 1) * (height - 1));
-		ground_exists_data.resize(width * height);
-		water_heights.resize(width * height);
-		water_exists_data.resize(width * height);
-
 		// determine cliff flags for all corners
+		compute_cliff_flags();
+
+		// resize and recreate GPU buffers
+		setup_GPU_buffers();
+
+		// update everything else
+		update_ground_heights({0, 0, width, height});
+		update_ground_textures({0, 0, width - 1, height - 1});
+		update_cliff_meshes({0, 0, width - 1, height - 1});
+		update_water({0, 0, width, height});
+
+		// update physics collision shape
+		physics.dynamicsWorld->removeRigidBody(collision_body);
+		delete collision_body;
+		delete collision_shape;
+		setup_collision_shape(physics);
+	}
+
+	void compute_cliff_flags() {
 		for (int i = 0; i < width - 1; i++) {
 			for (int j = 0; j < height - 1; j++) {
 				Corner& bottom_left = corners[i][j];
@@ -1443,8 +1285,18 @@ export class Terrain: public QObject {
 					|| bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
 			}
 		}
+	}
 
-		// recreate GPU buffers with new size
+	void setup_GPU_buffers() {
+		// setup vectors
+		ground_heights.resize(width * height);
+		final_ground_heights.resize(width * height);
+		ground_texture_list.resize((width - 1) * (height - 1));
+		ground_exists_data.resize(width * height);
+		water_heights.resize(width * height);
+		water_exists_data.resize(width * height);
+
+		// ground buffers
 		glCreateBuffers(1, &ground_height_buffer);
 		glNamedBufferStorage(ground_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
 		glCreateBuffers(1, &cliff_level_buffer);
@@ -1453,24 +1305,16 @@ export class Terrain: public QObject {
 		glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
 		glCreateBuffers(1, &ground_exists_buffer);
 		glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+
+		// water buffers
 		glCreateBuffers(1, &water_height_buffer);
 		glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
 		glCreateBuffers(1, &water_exists_buffer);
 		glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+	}
 
-		// update everything else
-		update_ground_heights({0, 0, width, height});
-		update_ground_textures({0, 0, width - 1, height - 1});
-		update_cliff_meshes({0, 0, width - 1, height - 1});
-		update_water({0, 0, width, height});
-
-		// update physics collision shapeated)
-		physics.dynamicsWorld->removeRigidBody(collision_body);
-		delete collision_body;
-		delete collision_shape;
-
-		collision_shape =
-			new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2 /*z*/, PHY_FLOAT, false);
+	void setup_collision_shape(const Physics& physics) {
+		collision_shape = new btHeightfieldTerrainShape(width, height, final_ground_heights.data(), 0, -16.f, 16.f, 2, PHY_FLOAT, false);
 		collision_body = new btRigidBody(0, new btDefaultMotionState(), collision_shape);
 		collision_body->getWorldTransform().setOrigin(btVector3(width / 2.f - 0.5f, height / 2.f - 0.5f, 0.f));
 		collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);

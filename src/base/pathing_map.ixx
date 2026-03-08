@@ -24,10 +24,14 @@ export class PathingMap {
 		unwalkable = 0b00000010,
 		unflyable = 0b00000100,
 		unbuildable = 0b00001000,
+		harvestable = 0b00010000,
+		blight = 0b00100000,
+		water = 0b01000000,
+		amphibious = 0b10000000
 	};
 
-	GLuint texture_static;
-	GLuint texture_dynamic;
+	GLuint texture_static = 0;
+	GLuint texture_dynamic = 0;
 	std::vector<uint8_t> pathing_cells_static;
 	std::vector<uint8_t> pathing_cells_dynamic;
 
@@ -55,22 +59,7 @@ export class PathingMap {
 		pathing_cells_static = reader.read_vector<uint8_t>(width * height);
 		pathing_cells_dynamic.resize(width * height);
 
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
-		glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
-		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
-		glTextureParameteri(texture_static, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
-		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
-		constexpr uint8_t clear_color = 0;
-		glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		recreate_textures();
 
 		return true;
 	}
@@ -261,24 +250,7 @@ export class PathingMap {
 		pathing_cells_static.resize(width * height);
 		pathing_cells_dynamic.resize(width * height);
 
-		glDeleteTextures(1, &texture_static);
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
-		glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
-		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
-		glTextureParameteri(texture_static, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		glDeleteTextures(1, &texture_dynamic);
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
-		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
-		const uint8_t clear_color = 0;
-		glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		recreate_textures();
 	}
 
 	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
@@ -330,7 +302,14 @@ export class PathingMap {
 		height = new_height;
 
 		// recreate textures with new data
-		glDeleteTextures(1, &texture_static);
+		recreate_textures();
+	}
+
+  private:
+	void recreate_textures() {
+		if (texture_static != 0) {
+			glDeleteTextures(1, &texture_static);
+		}
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
 		glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
 		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
@@ -339,7 +318,9 @@ export class PathingMap {
 		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-		glDeleteTextures(1, &texture_dynamic);
+		if (texture_dynamic != 0) {
+			glDeleteTextures(1, &texture_dynamic);
+		}
 		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
 		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
 		const uint8_t clear_color = 0;

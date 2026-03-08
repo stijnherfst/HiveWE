@@ -63,26 +63,9 @@ export class ShadowMap {
 		size_t new_width = static_cast<size_t>(static_cast<int>(width) + delta_left + delta_right);
 		size_t new_height = static_cast<size_t>(static_cast<int>(height) + delta_top + delta_bottom);
 
-		std::vector<u8> new_cells(new_width * new_height, 0);
-
-		// copy old data to new position
-		for (size_t y = 0; y < height; ++y) {
-			for (size_t x = 0; x < width; ++x) {
-				int new_x = static_cast<int>(x) + delta_left;
-				int new_y = static_cast<int>(y) + delta_top;
-
-				// only copy if the new position is within bounds
-				if (new_x >= 0 && new_x < static_cast<int>(new_width) && new_y >= 0 && new_y < static_cast<int>(new_height)) {
-					size_t old_index = y * width + x;
-					size_t new_index = static_cast<size_t>(new_y) * new_width + static_cast<size_t>(new_x);
-					new_cells[new_index] = cells[old_index];
-				}
-			}
-		}
-
 		width = new_width;
 		height = new_height;
-		cells = std::move(new_cells);
+		cells.resize(width * height, 0);
 
 		glDeleteTextures(1, &texture);
 		update_texture();
