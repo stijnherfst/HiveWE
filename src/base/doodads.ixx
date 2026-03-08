@@ -165,20 +165,7 @@ export class Doodads {
 		}
 
 		for (auto&& i : special_doodads) {
-			i.mesh = get_mesh(i.id, i.variation);
-			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
-			const std::string_view pathing_texture_path = doodads_slk.data<std::string_view>("pathtex", i.id);
-			if (hierarchy.file_exists(pathing_texture_path)) {
-				i.pathing = resource_manager.load<PathingTexture>(pathing_texture_path);
-				i.position += glm::vec3(glm::vec2(i.pathing->width / 8.f, i.pathing->height / 8.f), 0.f);
-			}
-
-			i.position.z = terrain.interpolated_height(i.position.x, i.position.y, true);
-
-			float rotation = doodads_slk.data<int>("fixedrot", i.id) / 360.f * 2.f * glm::pi<float>();
-			i.matrix = glm::translate(i.matrix, i.position);
-			i.matrix = glm::scale(i.matrix, {1.f / 128.f, 1.f / 128.f, 1.f / 128.f});
-			i.matrix = glm::rotate(i.matrix, rotation, glm::vec3(0, 0, 1));
+			i.init(i.id, get_mesh(i.id, i.variation), terrain);
 		}
 
 		// Blit doodad pathing
