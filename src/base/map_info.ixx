@@ -521,4 +521,39 @@ export class MapInfo {
 
 		hierarchy.map_file_write("war3map.w3i", writer.buffer);
 	}
+
+	void update_map_bounds_info(
+		int unplayable_left,
+		int unplayable_right,
+		int unplayable_top,
+		int unplayable_bottom,
+		int terrain_width,
+		int terrain_height,
+		float terrain_offset_x,
+		float terrain_offset_y
+	) {
+		// update unplayable area in map info
+		camera_complements[0] = unplayable_left;
+		camera_complements[1] = unplayable_right;
+		camera_complements[2] = unplayable_bottom;
+		camera_complements[3] = unplayable_top;
+
+		// update playable map area
+		playable_width = terrain_width - 1 - camera_complements[0] - camera_complements[1];
+		playable_height = terrain_height - 1 - camera_complements[2] - camera_complements[3];
+
+		// compute camera bounds based on complements and terrain offset
+		// these bounds are used in the generated JASS script
+		camera_left_bottom.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
+
+		camera_right_top.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_left_top.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_right_bottom.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
+	}
 };

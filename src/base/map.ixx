@@ -777,7 +777,16 @@ export class Map: public QObject {
 		);
 
 		// update map info
-		update_map_bounds_info(unplayable_left, unplayable_right, unplayable_top, unplayable_bottom);
+		info.update_map_bounds_info(
+			unplayable_left,
+			unplayable_right,
+			unplayable_top,
+			unplayable_bottom,
+			terrain.width,
+			terrain.height,
+			terrain.offset.x,
+			terrain.offset.y
+		);
 	}
 
 	std::string get_unique_id(bool first_uppercase) {
@@ -902,32 +911,6 @@ export class Map: public QObject {
 		}
 
 		pathing_map.upload_static_pathing();
-	}
-
-	void update_map_bounds_info(int unplayable_left, int unplayable_right, int unplayable_top, int unplayable_bottom) {
-		// update unplayable area in map info
-		info.camera_complements[0] = unplayable_left;
-		info.camera_complements[1] = unplayable_right;
-		info.camera_complements[2] = unplayable_bottom;
-		info.camera_complements[3] = unplayable_top;
-
-		// update playable map area
-		info.playable_width = terrain.width - 1 - info.camera_complements[0] - info.camera_complements[1];
-		info.playable_height = terrain.height - 1 - info.camera_complements[2] - info.camera_complements[3];
-
-		// compute camera bounds based on complements and terrain offset
-		// these bounds are used in the generated JASS script
-		info.camera_left_bottom.x = (info.camera_complements[0] + 4) * 128.f + terrain.offset.x;
-		info.camera_left_bottom.y = (info.camera_complements[2] + 2) * 128.f + terrain.offset.y;
-
-		info.camera_right_top.x = (terrain.width - 1 - info.camera_complements[1] - 4) * 128.f + terrain.offset.x;
-		info.camera_right_top.y = (terrain.height - 1 - info.camera_complements[3] - 2) * 128.f + terrain.offset.y;
-
-		info.camera_left_top.x = (info.camera_complements[0] + 4) * 128.f + terrain.offset.x;
-		info.camera_left_top.y = (terrain.height - 1 - info.camera_complements[3] - 2) * 128.f + terrain.offset.y;
-
-		info.camera_right_bottom.x = (terrain.width - 1 - info.camera_complements[1] - 4) * 128.f + terrain.offset.x;
-		info.camera_right_bottom.y = (info.camera_complements[2] + 2) * 128.f + terrain.offset.y;
 	}
 };
 
