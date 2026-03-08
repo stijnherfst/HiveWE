@@ -21,7 +21,11 @@ out vec4 color;
 
 void main() {
 	color = texture(albedo, UV) * vertexColor;
-	
+
+	if (color.a < alpha_test) {
+		discard;
+	}
+
 	if (show_lighting) {
 		vec3 emissive_texel = texture(emissive, UV).rgb;
 		vec4 orm_texel = texture(orm, UV);
@@ -35,10 +39,5 @@ void main() {
 		float lambert = clamp(dot(normal, -tangent_light_direction), 0.f, 1.f);
 		color.rgb *= clamp(lambert + 0.1, 0.f, 1.f);
 		color.rgb += emissive_texel;
-	}
-
-
-	if (color.a < alpha_test) {
-		discard;
 	}
 }

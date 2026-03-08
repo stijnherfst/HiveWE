@@ -21,12 +21,12 @@ void main() {
 		color = texture(diffuse, UV) * vertexColor;
 	}
 
+	if (vertexColor.a == 0.0 || color.a < alpha_test) {
+		discard;
+	}
+
 	if (show_lighting) {
 		float contribution = (dot(Normal, -light_direction) + 1.f) * 0.5f;
 		color.rgb *= clamp(contribution, 0.f, 1.f);
-	}
-
-	if (vertexColor.a == 0.0 || color.a < alpha_test) {
-		discard;
 	}
 }

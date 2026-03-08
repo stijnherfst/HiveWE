@@ -21,7 +21,7 @@ import <glm/gtc/packing.hpp>;
 
 namespace fs = std::filesystem;
 
-export class SkinnedMesh : public Resource {
+export class SkinnedMesh: public Resource {
   public:
 	struct MeshEntry {
 		int vertices = 0;
@@ -168,7 +168,12 @@ export class SkinnedMesh : public Resource {
 			for (const auto& j : i.vertices) {
 				vertices_snorm.push_back(pack_vec3_to_uvec2(j, 8192.f));
 			}
-			glNamedBufferSubData(vertex_snorm_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * sizeof(glm::uvec2), vertices_snorm.data());
+			glNamedBufferSubData(
+				vertex_snorm_buffer,
+				base_vertex * sizeof(glm::uvec2),
+				entry.vertices * sizeof(glm::uvec2),
+				vertices_snorm.data()
+			);
 
 			std::vector<uint32_t> uvs_snorm;
 			for (const auto& j : i.uv_sets.front()) {
@@ -180,10 +185,20 @@ export class SkinnedMesh : public Resource {
 			for (const auto& normal : i.normals) {
 				normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
 			}
-			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), normals_oct_snorm.data());
+			glNamedBufferSubData(
+				normal_buffer,
+				base_vertex * sizeof(uint32_t),
+				entry.vertices * sizeof(uint32_t),
+				normals_oct_snorm.data()
+			);
 
 			if (!i.tangents.empty()) {
-				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+				glNamedBufferSubData(
+					tangent_buffer,
+					base_vertex * sizeof(glm::vec4),
+					entry.vertices * sizeof(glm::vec4),
+					i.tangents.data()
+				);
 			} else {
 				//glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
 			}
@@ -208,7 +223,7 @@ export class SkinnedMesh : public Resource {
 
 		for (size_t i = 0; i < mdx->textures.size(); i++) {
 			const mdx::Texture& texture = mdx->textures[i];
-			
+
 			if (texture.replaceable_id != 0) {
 				// Figure out if this is an HD texture
 				// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
@@ -252,9 +267,14 @@ export class SkinnedMesh : public Resource {
 				}
 
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags)));
+					textures.push_back(
+						resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags))
+					);
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix, std::to_string(texture.flags)));
+					textures.push_back(resource_manager.load<GPUTexture>(
+						mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
+						std::to_string(texture.flags)
+					));
 				}
 			} else {
 				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags)));
@@ -313,10 +333,19 @@ export class SkinnedMesh : public Resource {
 		}
 
 		glNamedBufferData(instance_ssbo, render_jobs.size() * sizeof(glm::mat4), render_jobs.data(), GL_DYNAMIC_DRAW);
-		glNamedBufferData(instance_team_color_index_ssbo, render_team_color_indexes.size() * sizeof(uint32_t), render_team_color_indexes.data(), GL_DYNAMIC_DRAW);
+		glNamedBufferData(
+			instance_team_color_index_ssbo,
+			render_team_color_indexes.size() * sizeof(uint32_t),
+			render_team_color_indexes.data(),
+			GL_DYNAMIC_DRAW
+		);
 
 		for (int i = 0; i < render_jobs.size(); i++) {
-			instance_bone_matrices.insert(instance_bone_matrices.end(), skeletons[i]->world_matrices.begin(), skeletons[i]->world_matrices.begin() + mdx->bones.size());
+			instance_bone_matrices.insert(
+				instance_bone_matrices.end(),
+				skeletons[i]->world_matrices.begin(),
+				skeletons[i]->world_matrices.begin() + mdx->bones.size()
+			);
 		}
 
 		glNamedBufferData(bones_ssbo, instance_bone_matrices.size() * sizeof(glm::mat4), instance_bone_matrices.data(), GL_DYNAMIC_DRAW);
@@ -389,15 +418,7 @@ export class SkinnedMesh : public Resource {
 					continue;
 				}
 
-				// We don't have to render fully transparent meshes
-				// Some Reforged bridges for instance have a FilterMode None but a static alpha of 0 for some materials
-				// TODO: this is a hack, if the first instance has an alpha animation that triggers this condition then all instances will be hidden, even if the others have a positive alpha
-				if (layer_colors[lay_index].a <= 0.01f) {
-					lay_index += 1;
-					continue;
-				}
-
-				glUniform1f(1, j.blend_mode == 1 ? 0.75f : -1.0f);
+				glUniform1f(1, j.blend_mode == 1 ? 0.75f : 0.01f);
 				glUniform1i(2, !(j.shading_flags & 0x1) && render_lighting);
 				glUniform1i(5, lay_index);
 				const bool is_team_color =
@@ -448,7 +469,14 @@ export class SkinnedMesh : public Resource {
 					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 				}
 
-				glDrawElementsInstancedBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), render_jobs.size(), i.base_vertex);
+				glDrawElementsInstancedBaseVertex(
+					GL_TRIANGLES,
+					i.indices,
+					GL_UNSIGNED_SHORT,
+					reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)),
+					render_jobs.size(),
+					i.base_vertex
+				);
 				lay_index += 1;
 			}
 		}
@@ -536,7 +564,13 @@ export class SkinnedMesh : public Resource {
 					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
 				}
 
-				glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
+				glDrawElementsBaseVertex(
+					GL_TRIANGLES,
+					i.indices,
+					GL_UNSIGNED_SHORT,
+					reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)),
+					i.base_vertex
+				);
 				layer_index += 1;
 			}
 		}
@@ -595,7 +629,13 @@ export class SkinnedMesh : public Resource {
 					glEnable(GL_CULL_FACE);
 				}
 
-				glDrawElementsBaseVertex(GL_TRIANGLES, i.indices, GL_UNSIGNED_SHORT, reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)), i.base_vertex);
+				glDrawElementsBaseVertex(
+					GL_TRIANGLES,
+					i.indices,
+					GL_UNSIGNED_SHORT,
+					reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)),
+					i.base_vertex
+				);
 				break;
 			}
 		}
