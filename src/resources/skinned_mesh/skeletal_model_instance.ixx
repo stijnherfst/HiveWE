@@ -203,13 +203,14 @@ void update_nodes() {
 	///       thus we will not get the idle animations cycling
 	void set_sequence(const std::string& sequence_name) {
 		std::string lowercase_sequence_name = sequence_name;
-		const auto &sequences = model->sequences;
+		const auto& sequences = model->sequences;
 		to_lowercase(lowercase_sequence_name);
 		for (size_t i = 0; i < sequences.size(); i++) {
 			std::string anim_name = to_lowercase_copy(sequences[i].name);
 
-			if (!anim_name.starts_with(lowercase_sequence_name))
+			if (!anim_name.starts_with(lowercase_sequence_name)) {
 				continue;
+			}
 
 			bool valid = true;
 			for (auto& req_anim_name : required_animation_names) {
