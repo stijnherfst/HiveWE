@@ -1,6 +1,7 @@
 module;
 
 #include <QRect>
+#include <absl/strings/str_split.h>
 
 export module Units;
 
@@ -307,13 +308,13 @@ public:
 			}
 
 			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+			i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
 			i.update();
 		}
 
 		for (auto& i : items) {
 			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+			i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
 			i.update();
 		}
 	}
@@ -331,7 +332,7 @@ public:
 		unit.angle = 0.f;
 		unit.random = { 1, 0, 0, 0 };
 		unit.creation_number = ++Unit::auto_increment;
-		unit.skeleton = SkeletalModelInstance(unit.mesh->mdx);
+		unit.skeleton = SkeletalModelInstance(unit.mesh->mdx, get_required_animation_names(id));
 		unit.update();
 
 		return units.back();
@@ -366,12 +367,12 @@ public:
 	}
 
 	void process_unit_field_change(const std::string& id, const std::string& field) {
-		if (field == "file") {
+		if (field == "file" || field == "attachmentlinkprops") {
 			id_to_mesh.erase(id);
 			for (auto& i : units) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+					i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(id));
 					i.update();
 				}
 			}
@@ -426,5 +427,11 @@ public:
 		id_to_mesh.emplace(id, resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt));
 
 		return id_to_mesh[id];
+	}
+
+	static std::vector<std::string> get_required_animation_names(const std::string& id) {
+		std::string animation_names_string = units_slk.data("attachmentlinkprops", id);
+		to_lowercase(animation_names_string);
+		return absl::StrSplit(animation_names_string, ",", absl::SkipEmpty());
 	}
 };
