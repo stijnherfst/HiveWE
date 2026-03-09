@@ -43,7 +43,7 @@ void main() {
 			extra_offset.y = 0.25f;
 		}
 
-		vec2 brush_uv = ((brush_position - world_position) * 4.f) / vec2(brush_texture_size) + 0.5;
+		vec2 brush_uv = ((world_position - brush_position) * 4.f) / vec2(brush_texture_size) + 0.5;
 
 		vec4 brush_color = texture(brush, brush_uv);
 
