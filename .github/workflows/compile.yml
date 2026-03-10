@@ -18,8 +18,7 @@ jobs:
     runs-on: windows-latest
 
     env:
-      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
-      VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/vcpkg_cache
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
 
     steps:
       - uses: actions/checkout@v4
@@ -37,16 +36,11 @@ jobs:
           restore-keys: |
             vcpkg-binaries-${{ runner.os }}-
 
-      - name: Create vcpkg cache directory
-        run: mkdir -p ${{ github.workspace }}/vcpkg_cache
-
-      - name: Setup environment
-        run: |
-          echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" >> $env:GITHUB_ENV
-          echo "VCPKG_BINARY_SOURCES=clear;files,${{ github.workspace }}/vcpkg_cache,readwrite" >> $env:GITHUB_ENV
-
       - name: Configure CMake
-        run: cmake --preset release
+        run: >
+          cmake --preset release 
+          -DVCPKG_TARGET_TRIPLET=x64-windows 
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
         run: cmake --build --preset Release
