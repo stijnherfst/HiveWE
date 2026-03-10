@@ -858,7 +858,7 @@ export class Map: public QObject {
 			obj.update(terrain);
 		}));
 
-		doodads.remove_special_doodads(update_and_collect(doodads.special_doodads, [](auto& obj) {
+		doodads.remove_special_doodads(update_and_collect(doodads.special_doodads, [&](auto& obj) {
 			obj.update(terrain);
 		}));
 
@@ -871,7 +871,7 @@ export class Map: public QObject {
 
 			// check if the camera is outside map bounds
 			if (camera.target_x < 0 || camera.target_y < 0 || camera.target_x > width || camera.target_y > height) {
-				to_delete.insert(&camera);
+				cameras_to_delete.insert(&camera);
 				++num_deleted;
 			} else {
 				// todo: uncomment once implemented
@@ -884,10 +884,10 @@ export class Map: public QObject {
 		std::unordered_set<Region*> regions_to_delete;
 		for (Region& region : regions.regions) {
 			// update the region position
-			region.left = max(region.left + delta_left, 0.f);
-			region.right = min(region.right + delta_left, float(width));
-			region.bottom = max(region.bottom + delta_bottom, 0.f);
-			region.top = min(region.top + delta_bottom, float(height));
+			region.left = std::max(region.left + delta_left, 0.f);
+			region.right = std::min(region.right + delta_left, float(width));
+			region.bottom = std::max(region.bottom + delta_bottom, 0.f);
+			region.top = std::min(region.top + delta_bottom, float(height));
 
 			// check if the region was destroyed by the resize operation
 			if (region.right <= region.left || region.top <= region.bottom) {

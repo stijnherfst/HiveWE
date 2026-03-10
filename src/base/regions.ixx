@@ -5,7 +5,7 @@ import BinaryReader;
 import Hierarchy;
 import <glm/glm.hpp>;
 
-struct Region {
+export struct Region {
 	float left;
 	float right;
 	float top;
