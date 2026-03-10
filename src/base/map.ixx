@@ -412,12 +412,12 @@ export class Map: public QObject {
 
 		// Regions
 		if (hierarchy.map_file_exists("war3map.w3r")) {
-			regions.load();
+			regions.load(terrain.offset.x, terrain.offset.y);
 		}
 
 		// Cameras
 		if (hierarchy.map_file_exists("war3map.w3c")) {
-			cameras.load(info.game_version_major, info.game_version_minor);
+			cameras.load(info.game_version_major, info.game_version_minor, terrain.offset.x, terrain.offset.y);
 		}
 
 		// Sounds
@@ -858,9 +858,47 @@ export class Map: public QObject {
 			obj.update(terrain);
 		}));
 
-		doodads.remove_special_doodads(update_and_collect(doodads.special_doodads, [](auto& obj) { /* TODO: obj.update(terrain) */ }));
+		doodads.remove_special_doodads(update_and_collect(doodads.special_doodads, [](auto& obj) {
+			obj.update(terrain);
+		}));
 
-		// TODO: once cameras and regions are implemented, handle them too
+		// fix and remove cameras
+		std::unordered_set<GameCamera*> cameras_to_delete;
+		for (GameCamera& camera : cameras.cameras) {
+			// update the camera position
+			camera.target_x += delta_left;
+			camera.target_y += delta_bottom;
+
+			// check if the camera is outside map bounds
+			if (camera.target_x < 0 || camera.target_y < 0 || camera.target_x > width || camera.target_y > height) {
+				to_delete.insert(&camera);
+				++num_deleted;
+			} else {
+				// todo: uncomment once implemented
+				// camera.update()
+			}
+		}
+		cameras.remove_cameras(cameras_to_delete);
+
+		// fix and remove regions
+		std::unordered_set<Region*> regions_to_delete;
+		for (Region& region : regions.regions) {
+			// update the region position
+			region.left = max(region.left + delta_left, 0.f);
+			region.right = min(region.right + delta_left, float(width));
+			region.bottom = max(region.bottom + delta_bottom, 0.f);
+			region.top = min(region.top + delta_bottom, float(height));
+
+			// check if the region was destroyed by the resize operation
+			if (region.right <= region.left || region.top <= region.bottom) {
+				regions_to_delete.insert(&region);
+				++num_deleted;
+			} else {
+				// todo: uncomment once implemented
+				// region.update()
+			}
+		}
+		regions.remove_regions(regions_to_delete);
 
 		return num_deleted;
 	}
