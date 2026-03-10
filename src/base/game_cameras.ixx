@@ -26,7 +26,7 @@ export class GameCameras {
   public:
 	std::vector<GameCamera> cameras;
 
-	void load(int game_version_major, int game_version_minor) {
+	void load(int game_version_major, int game_version_minor, float terrain_offset_x, float terrain_offset_y) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3c").value();
 
 		int version = reader.read<u32>();
@@ -36,9 +36,12 @@ export class GameCameras {
 
 		cameras.resize(reader.read<u32>());
 		for (auto& i : cameras) {
-			i.target_x = reader.read<float>();
-			i.target_y = reader.read<float>();
-			i.z_offset = reader.read<float>();
+			// change coordinate system to [0, terrain_width] x [0, terrain_height]
+			// as used by other objects in HiveWE
+			i.target_x = (reader.read<float>() - terrain_offset_x) / 128.f;
+			i.target_y = (reader.read<float>() - terrain_offset_y) / 128.f;
+			i.z_offset = reader.read<float>() / 128.f;
+
 			i.rotation = reader.read<float>();
 			i.angle_of_attack = reader.read<float>();
 			i.distance = reader.read<float>();
@@ -56,6 +59,16 @@ export class GameCameras {
 		}
 	}
 
-	void save() {
+	void save() {}
+
+	void remove_camera(GameCamera* camera) {
+		const auto iterator = cameras.begin() + std::distance(cameras.data(), camera);
+		cameras.erase(iterator);
+	}
+
+	void remove_cameras(const std::unordered_set<GameCamera*>& list) {
+		std::erase_if(cameras, [&](GameCamera& camera) {
+			return list.contains(&camera);
+		});
 	}
 };

@@ -18,7 +18,7 @@ TerrainBrush::TerrainBrush() : Brush() {
 
 void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	//if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
-		/*auto id = map->render_manager.pick_unit_id_under_mouse(map->units, input_handler.mouse);
+	/*auto id = map->render_manager.pick_unit_id_under_mouse(map->units, input_handler.mouse);
 		if (id) {
 			Unit& unit = map->units.units[id.value()];
 			selections = { &unit };
@@ -85,7 +85,7 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 
 // Make this an iterative function instead to avoid stack overflows
 void TerrainBrush::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({ 0, 0, map->terrain.width, map->terrain.height });
+	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, map->terrain.width, map->terrain.height});
 
 	for (int k = bounds.x(); k <= bounds.right(); k++) {
 		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
@@ -107,7 +107,7 @@ void TerrainBrush::check_nearby(const int begx, const int begy, const int i, con
 			}
 		}
 	}
-};
+}
 
 void TerrainBrush::apply_begin() {
 	int width = map->terrain.width;
@@ -117,10 +117,10 @@ void TerrainBrush::apply_begin() {
 	const glm::vec2 position = get_position();
 	const int x = position.x + 1;
 	const int y = position.y + 1;
-	const QRect area = QRect(x, y, size.x / 4.f, size.y / 4.f).intersected({ 0, 0, width, height });
+	const QRect area = QRect(x, y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
-	
+
 	// Setup for undo/redo
 	map->world_undo.new_undo_group();
 	old_corners = map->terrain.corners;
@@ -138,7 +138,8 @@ void TerrainBrush::apply_begin() {
 			case cliff_operation::shallow_water:
 				if (!corners[center_x][center_y].water) {
 					layer_height -= 1;
-				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset) > corners[center_x][center_y].final_ground_height() + 1) {
+				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset)
+						   > corners[center_x][center_y].final_ground_height() + 1) {
 					layer_height += 1;
 				}
 				break;
@@ -151,7 +152,8 @@ void TerrainBrush::apply_begin() {
 			case cliff_operation::deep_water:
 				if (!corners[center_x][center_y].water) {
 					layer_height -= 2;
-				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset) < corners[center_x][center_y].final_ground_height() + 1) {
+				} else if (corners[center_x][center_y].final_water_height(map->terrain.water_offset)
+						   < corners[center_x][center_y].final_ground_height() + 1) {
 					layer_height -= 1;
 				}
 				break;
@@ -178,7 +180,7 @@ void TerrainBrush::apply(double frame_delta) {
 	const glm::ivec2 pos = glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f;
 
 	const glm::vec2 position = get_position();
-	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({ 0, 0, width, height });
+	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -213,7 +215,7 @@ void TerrainBrush::apply(double frame_delta) {
 				} else {
 					corners[i][j].blight = false;
 					corners[i][j].ground_texture = id;
-					corners[i][j].ground_variation = get_random_variation();
+					corners[i][j].set_random_variation();
 				}
 			}
 		}
@@ -260,7 +262,7 @@ void TerrainBrush::apply(double frame_delta) {
 
 						for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
 							for (int l = acum_area.y(); l < acum_area.bottom() + 1; l++) {
-								if ((k < i || l < j) && k <= i && 
+								if ((k < i || l < j) && k <= i &&
 									// The checks below are required because the code is just wrong (area is too small so we cant convolute a cell from at the edges of the area)
 									k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
 									accumulate += heights[k - area.x()][l - area.y()];
@@ -284,10 +286,9 @@ void TerrainBrush::apply(double frame_delta) {
 		texture_height_area = texture_height_area.united(area);
 	}
 
-	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({ 0, 0, width - 1, height - 1 });
+	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({0, 0, width - 1, height - 1});
 
 	if (apply_cliff) {
-		
 		//if (cliff_operation_type == cliff_operation::ramp) {
 		//	const int center_x = area.x() + area.width() * 0.5f;
 		//	const int center_y = area.y() + area.height() * 0.5f;
@@ -317,45 +318,46 @@ void TerrainBrush::apply(double frame_delta) {
 		//	//	corners[i][j].ramp = true;
 		//	//}
 		//} else {
-			for (int i = area.x(); i < area.x() + area.width(); i++) {
-				for (int j = area.y(); j < area.y() + area.height(); j++) {
-					if (!contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
-						continue;
-					}
-					corners[i][j].ramp = false;
-					corners[i][j].layer_height = layer_height;
-
-					switch (cliff_operation_type) {
-						case cliff_operation::lower1:
-						case cliff_operation::lower2:
-						case cliff_operation::level:
-						case cliff_operation::raise1:
-						case cliff_operation::raise2:
-							if (corners[i][j].water) {
-								if (enforce_water_height_limits && corners[i][j].final_water_height(map->terrain.water_offset) < corners[i][j].final_ground_height()) {
-									corners[i][j].water = false;
-								}
-							}
-							break;
-						case cliff_operation::shallow_water:
-							corners[i][j].water = true;
-							corners[i][j].water_height = corners[i][j].layer_height - 1;
-							break;
-						case cliff_operation::deep_water:
-							corners[i][j].water = true;
-							corners[i][j].water_height = corners[i][j].layer_height;
-							break;
-						case cliff_operation::ramp:
-							break;
-					}
-
-					check_nearby(pos.x, pos.y, i, j, updated_area);
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
+			for (int j = area.y(); j < area.y() + area.height(); j++) {
+				if (!contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+					continue;
 				}
+				corners[i][j].ramp = false;
+				corners[i][j].layer_height = layer_height;
+
+				switch (cliff_operation_type) {
+					case cliff_operation::lower1:
+					case cliff_operation::lower2:
+					case cliff_operation::level:
+					case cliff_operation::raise1:
+					case cliff_operation::raise2:
+						if (corners[i][j].water) {
+							if (enforce_water_height_limits
+								&& corners[i][j].final_water_height(map->terrain.water_offset) < corners[i][j].final_ground_height()) {
+								corners[i][j].water = false;
+							}
+						}
+						break;
+					case cliff_operation::shallow_water:
+						corners[i][j].water = true;
+						corners[i][j].water_height = corners[i][j].layer_height - 1;
+						break;
+					case cliff_operation::deep_water:
+						corners[i][j].water = true;
+						corners[i][j].water_height = corners[i][j].layer_height;
+						break;
+					case cliff_operation::ramp:
+						break;
+				}
+
+				check_nearby(pos.x, pos.y, i, j, updated_area);
 			}
+		}
 		//}
 
 		// Bounds check
-		updated_area = updated_area.intersected({ 0, 0, width - 1, height - 1 });
+		updated_area = updated_area.intersected({0, 0, width - 1, height - 1});
 
 		// Determine if cliff
 		for (int i = updated_area.x(); i <= updated_area.right(); i++) {
@@ -366,8 +368,7 @@ void TerrainBrush::apply(double frame_delta) {
 				Corner& top_right = map->terrain.corners[i + 1][j + 1];
 
 				bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height
-					|| bottom_left.layer_height != top_left.layer_height
-					|| bottom_left.layer_height != top_right.layer_height;
+					|| bottom_left.layer_height != top_left.layer_height || bottom_left.layer_height != top_right.layer_height;
 
 				if (cliff_operation_type != cliff_operation::ramp) {
 					bottom_left.cliff_texture = cliff_id;
@@ -375,7 +376,7 @@ void TerrainBrush::apply(double frame_delta) {
 			}
 		}
 
-		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({ 0, 0, width - 1, height - 1 });
+		QRect tile_area = updated_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
 
 		map->terrain.update_cliff_meshes(tile_area);
 		map->terrain.update_ground_textures(updated_area);
@@ -401,8 +402,8 @@ void TerrainBrush::apply(double frame_delta) {
 					uint8_t mask = 0;
 					if ((bottom_left.cliff || bottom_left.romp) && !map->terrain.is_corner_ramp_entrance(i, j) && apply_cliff_pathing) {
 						mask = 0b00001010;
-					} 
-					
+					}
+
 					if (!bottom_left.cliff || (bottom_left.ramp && !bottom_left.romp)) {
 						Corner& corner = map->terrain.corners[i + k / 2][j + l / 2];
 						if (apply_tile_pathing) {
@@ -431,7 +432,14 @@ void TerrainBrush::apply(double frame_delta) {
 		if (change_doodad_heights) {
 			for (auto&& i : map->doodads.doodads) {
 				if (area.contains(i.position.x, i.position.y)) {
-					if (std::find_if(pre_change_doodads.begin(), pre_change_doodads.end(), [i](const Doodad& doodad) { return doodad.creation_number == i.creation_number; }) == pre_change_doodads.end()) {
+					if (std::find_if(
+							pre_change_doodads.begin(),
+							pre_change_doodads.end(),
+							[i](const Doodad& doodad) {
+								return doodad.creation_number == i.creation_number;
+							}
+						)
+						== pre_change_doodads.end()) {
 						pre_change_doodads.push_back(i);
 					}
 					i.position.z = map->terrain.interpolated_height(i.position.x, i.position.y, true);
@@ -454,7 +462,7 @@ void TerrainBrush::apply_end() {
 	}
 
 	if (apply_cliff) {
-		QRect cliff_areaa = cliff_area.adjusted(0, 0, 1, 1).intersected({ 0, 0, map->terrain.width, map->terrain.height });
+		QRect cliff_areaa = cliff_area.adjusted(0, 0, 1, 1).intersected({0, 0, map->terrain.width, map->terrain.height});
 		add_terrain_undo(cliff_areaa, TerrainUndoType::cliff);
 	}
 
@@ -469,27 +477,12 @@ void TerrainBrush::apply_end() {
 		map->world_undo.add_undo_action(std::move(undo));
 	}
 
-	QRect pathing_area = QRect(cliff_area.x() * 4, cliff_area.y() * 4, cliff_area.width() * 4, cliff_area.height() * 4).adjusted(-2, -2, 2, 2).intersected({ 0, 0, map->pathing_map.width, map->pathing_map.height });
+	QRect pathing_area = QRect(cliff_area.x() * 4, cliff_area.y() * 4, cliff_area.width() * 4, cliff_area.height() * 4)
+							 .adjusted(-2, -2, 2, 2)
+							 .intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
 	add_pathing_undo(pathing_area);
 
 	map->terrain.update_minimap();
-}
-
-int TerrainBrush::get_random_variation() const {
-	std::random_device rd;
-	std::mt19937 e2(rd());
-	std::uniform_int_distribution<> dist(0, 570);
-
-	int nr = dist(e2) - 1;
-
-	for (auto&&[variation, chance] : variation_chances) {
-		if (nr < chance) {
-			return variation;
-		}
-		nr -= chance;
-	}
-	assert("Didn't hit the list of tile variations");
-	return 0;
 }
 
 /// Adds the undo to the current undo group

@@ -94,6 +94,5 @@ export class Sounds {
 		}
 	}
 
-	void save() const {
-	}
+	void save() const {}
 };

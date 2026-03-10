@@ -5,7 +5,7 @@ import BinaryReader;
 import Hierarchy;
 import <glm/glm.hpp>;
 
-struct Region {
+export struct Region {
 	float left;
 	float right;
 	float top;
@@ -23,7 +23,7 @@ export class Regions {
   public:
 	std::vector<Region> regions;
 
-	bool load() {
+	bool load(float terrain_offset_x, float terrain_offset_y) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3r").value();
 
 		const int version = reader.read<uint32_t>();
@@ -33,10 +33,13 @@ export class Regions {
 
 		regions.resize(reader.read<uint32_t>());
 		for (auto& i : regions) {
-			i.left = reader.read<float>();
-			i.bottom = reader.read<float>();
-			i.right = reader.read<float>();
-			i.top = reader.read<float>();
+			// change coordinate system to [0, terrain_width] x [0, terrain_height]
+			// as used by other objects in HiveWE
+			i.left = (reader.read<float>() - terrain_offset_x) / 128.f;
+			i.bottom = (reader.read<float>() - terrain_offset_y) / 128.f;
+			i.right = (reader.read<float>() - terrain_offset_x) / 128.f;
+			i.top = (reader.read<float>() - terrain_offset_y) / 128.f;
+
 			i.name = reader.read_c_string();
 			i.creation_number = reader.read<int>();
 			i.weather_id = reader.read_string(4);
@@ -57,5 +60,16 @@ export class Regions {
 		// writer.write_vector<uint8_t>(pathing_cells_static);
 
 		//	hierarchy.map_file_write("war3map.wpr", writer.buffer);
+	}
+
+	void remove_region(Region* region) {
+		const auto iterator = regions.begin() + std::distance(regions.data(), region);
+		regions.erase(iterator);
+	}
+
+	void remove_regions(const std::unordered_set<Region*>& list) {
+		std::erase_if(regions, [&](Region& region) {
+			return list.contains(&region);
+		});
 	}
 };

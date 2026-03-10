@@ -10,8 +10,8 @@ import Doodad;
 import Terrain;
 import TerrainUndo;
 
-class TerrainBrush : public Brush {
-public:
+class TerrainBrush: public Brush {
+  public:
 	bool apply_texture = false;
 	bool apply_height = false;
 	bool apply_cliff = false;
@@ -63,34 +63,10 @@ public:
 	void apply(double frame_delta) override;
 	void apply_end() override;
 
-	int get_random_variation() const;
-
 	void add_terrain_undo(const QRect& area, TerrainUndoType type);
 	void add_pathing_undo(const QRect& area);
 
-private:
-	// Total sum 570
-	const std::tuple<int, int> variation_chances[18] = {
-		{ 0, 85 },
-		{ 16, 85 },
-		{ 0, 85 },
-		{ 1, 10 },
-		{ 2, 4 },
-		{ 3, 1 },
-		{ 4, 85 },
-		{ 5, 10 },
-		{ 6, 4 },
-		{ 7, 1 },
-		{ 8, 85 },
-		{ 9, 10 },
-		{ 10, 4 },
-		{ 11, 1 },
-		{ 12, 85 },
-		{ 13, 10 },
-		{ 14, 4 },
-		{ 15, 1 }
-	};
-
+  private:
 	int layer_height = 0;
 	float deformation_height = 0.f;
 

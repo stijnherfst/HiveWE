@@ -409,29 +409,12 @@ export class MapInfo {
 		writer.write(playable_width);
 		writer.write(playable_height);
 
-		const int flags = hide_minimap_preview * 0x0001 
-						| modif_ally_priorities * 0x0002
-						| melee_map * 0x0004
-						| unknown * 0x0008
-						| masked_area_partially_visible * 0x0010
-						| fixed_player_settings * 0x0020
-						| custom_forces * 0x0040
-						| custom_techtree * 0x0080
-						| custom_abilities * 0x0100
-						| custom_upgrades * 0x0200
-						| unknown2 * 0x0400
-						| cliff_shore_waves * 0x0800
-						| rolling_shore_waves * 0x1000
-						| unknown3 * 0x2000
-						| unknown4 * 0x4000
-						| item_classification * 0x8000
-						| water_tinting * 0x10000
-						| accurate_probability_for_calculations * 0x20000
-						| custom_ability_skins * 0x40000
-						| disable_deny_icon * 0x80000	
-						| force_default_zoom * 0x100000
-						| force_max_zoom * 0x200000
-						| force_min_zoom * 0x400000;
+		const int flags = hide_minimap_preview * 0x0001 | modif_ally_priorities * 0x0002 | melee_map * 0x0004 | unknown * 0x0008
+			| masked_area_partially_visible * 0x0010 | fixed_player_settings * 0x0020 | custom_forces * 0x0040 | custom_techtree * 0x0080
+			| custom_abilities * 0x0100 | custom_upgrades * 0x0200 | unknown2 * 0x0400 | cliff_shore_waves * 0x0800
+			| rolling_shore_waves * 0x1000 | unknown3 * 0x2000 | unknown4 * 0x4000 | item_classification * 0x8000 | water_tinting * 0x10000
+			| accurate_probability_for_calculations * 0x20000 | custom_ability_skins * 0x40000 | disable_deny_icon * 0x80000
+			| force_default_zoom * 0x100000 | force_max_zoom * 0x200000 | force_min_zoom * 0x400000;
 
 		writer.write(flags);
 
@@ -486,7 +469,8 @@ export class MapInfo {
 
 		writer.write<uint32_t>(forces.size());
 		for (const auto& i : forces) {
-			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100 | i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
+			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100
+				| i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
 			writer.write(force_flags);
 
 			writer.write(i.player_masks);
@@ -536,5 +520,40 @@ export class MapInfo {
 		}
 
 		hierarchy.map_file_write("war3map.w3i", writer.buffer);
+	}
+
+	void update_map_bounds_info(
+		int unplayable_left,
+		int unplayable_right,
+		int unplayable_top,
+		int unplayable_bottom,
+		int terrain_width,
+		int terrain_height,
+		float terrain_offset_x,
+		float terrain_offset_y
+	) {
+		// update unplayable area in map info
+		camera_complements[0] = unplayable_left;
+		camera_complements[1] = unplayable_right;
+		camera_complements[2] = unplayable_bottom;
+		camera_complements[3] = unplayable_top;
+
+		// update playable map area
+		playable_width = terrain_width - 1 - camera_complements[0] - camera_complements[1];
+		playable_height = terrain_height - 1 - camera_complements[2] - camera_complements[3];
+
+		// compute camera bounds based on complements and terrain offset
+		// these bounds are used in the generated JASS script
+		camera_left_bottom.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
+
+		camera_right_top.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_left_top.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_right_bottom.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
 	}
 };

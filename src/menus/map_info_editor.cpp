@@ -1,5 +1,8 @@
 #include "map_info_editor.h"
 
+#include <QMessageBox>
+#include <QPainter>
+
 import std;
 import SLK;
 import Utilities;
@@ -8,7 +11,7 @@ import Globals;
 
 namespace fs = std::filesystem;
 
-MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
+MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -22,7 +25,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.editorVersion->setText(QString::number(map->info.editor_version));
 
 	// Loading Screen Tab
-	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
+	for (auto&& [key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {
 			continue;
 		}
@@ -38,7 +41,7 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 		}
 	}
 
-	for (auto&&[key, value] : world_edit_data.section("LoadingScreens")) {
+	for (auto&& [key, value] : world_edit_data.section("LoadingScreens")) {
 		if (key == "NumScreens") {
 			continue;
 		}
@@ -84,9 +87,12 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
 	for (size_t i = 1; i < weather_slk.rows(); i++) {
-		ui.globalWeatherCombo->addItem(QString::fromUtf8(weather_slk.data<std::string_view>("name", i)), QString::fromUtf8(weather_slk.data<std::string_view>("effectid", i)));
+		ui.globalWeatherCombo->addItem(
+			QString::fromUtf8(weather_slk.data<std::string_view>("name", i)),
+			QString::fromUtf8(weather_slk.data<std::string_view>("effectid", i))
+		);
 	}
-	std::string weather_id = { reinterpret_cast<char*>(&map->info.weather_id), 4 };
+	std::string weather_id = {reinterpret_cast<char*>(&map->info.weather_id), 4};
 	ui.globalWeatherCombo->setCurrentText(QString::fromUtf8(weather_slk.data<std::string_view>("name", weather_id)));
 
 	// Custom Sound
@@ -95,9 +101,14 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
 	for (size_t i = 1; i < environment_sounds_slk.rows(); i++) {
-		ui.customSoundCombo->addItem(QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)), QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i)));
+		ui.customSoundCombo->addItem(
+			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)),
+			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i))
+		);
 	}
-	ui.customSoundCombo->setCurrentText(QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", map->info.custom_sound_environment)));
+	ui.customSoundCombo->setCurrentText(
+		QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", map->info.custom_sound_environment))
+	);
 
 	// Custom Lighting
 	for (auto&& [key, value] : world_edit_data.section("TileSets")) {
@@ -112,11 +123,64 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	ui.itemClassification->setChecked(map->info.item_classification);
 	ui.gameDataSet->setCurrentIndex(map->info.game_data_set);
 
+	// Map size tab
+	// initialise values
+	oldMapBottomLeft.x = 0;
+	oldMapBottomLeft.y = 0;
+	oldMapTopRight.x = map->terrain.width - 1;
+	oldMapTopRight.y = map->terrain.height - 1;
+	newMapTopRight = oldMapTopRight;
+	newMapBottomLeft = oldMapBottomLeft;
+
+	oldPlayableBottomLeft.x = map->info.camera_complements[0];
+	oldPlayableBottomLeft.y = map->info.camera_complements[2];
+	oldPlayableTopRight.x = oldMapTopRight.x - map->info.camera_complements[1];
+	oldPlayableTopRight.y = oldMapTopRight.y - map->info.camera_complements[3];
+	newPlayableBottomLeft = oldPlayableBottomLeft;
+	newPlayableTopRight = oldPlayableTopRight;
+
+	originalMinimap = map->terrain.minimap_image();
+
+	// connect arrow buttons to map size
+	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() {
+		adjustBounds(1, 0, 0, 0);
+	});
+	connect(ui.mapBoundsLeftInc, &QPushButton::clicked, [this]() {
+		adjustBounds(-1, 0, 0, 0);
+	});
+	connect(ui.mapBoundsRightDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, -1, 0, 0);
+	});
+	connect(ui.mapBoundsRightInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 1, 0, 0);
+	});
+	connect(ui.mapBoundsTopDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, -1, 0);
+	});
+	connect(ui.mapBoundsTopInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 1, 0);
+	});
+	connect(ui.mapBoundsBottomDec, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 0, 1);
+	});
+	connect(ui.mapBoundsBottomInc, &QPushButton::clicked, [this]() {
+		adjustBounds(0, 0, 0, -1);
+	});
+
+	// reset camera bounds (unplayable area) to default
+	connect(ui.resetCameraBounds, &QPushButton::clicked, [this]() {
+		newPlayableBottomLeft.x = newMapBottomLeft.x + 6;
+		newPlayableBottomLeft.y = newMapBottomLeft.y + 4;
+		newPlayableTopRight.x = newMapTopRight.x - 6;
+		newPlayableTopRight.y = newMapTopRight.y - 8;
+		updateMapSizeGUI();
+	});
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
-		save();
-		emit accept();
-		close();
+		if (save()) {
+			emit accept();
+			close();
+		}
 	});
 
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
@@ -125,9 +189,10 @@ MapInfoEditor::MapInfoEditor(QWidget *parent) : QDialog(parent) {
 	});
 
 	show();
+	updateMapSizeGUI();
 }
 
-void MapInfoEditor::save() const {
+bool MapInfoEditor::save() const {
 	// Description Tab
 	map->trigger_strings.set_string(map->info.name, ui.name->text().toStdString());
 	map->trigger_strings.set_string(map->info.author, ui.author->text().toStdString());
@@ -190,4 +255,292 @@ void MapInfoEditor::save() const {
 
 	map->info.water_tinting = ui.waterTinting->isChecked();
 	map->info.water_color = ui.waterColor->get_glm_color();
+
+	// Map size and camera bounds
+	bool changedMapSize = (newMapBottomLeft != oldMapBottomLeft) || (newMapTopRight != oldMapTopRight);
+	bool changedPlayableSize = (newPlayableBottomLeft != oldPlayableBottomLeft) || (newPlayableTopRight != oldPlayableTopRight);
+
+	if (changedMapSize || changedPlayableSize) {
+		int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+		int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+		int newPlayableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+		int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+		if (newWidth < 32 || newWidth > 480 || newHeight < 32 || newHeight > 480) {
+			QMessageBox::critical(
+				const_cast<MapInfoEditor*>(this),
+				"Invalid Map Size",
+				QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(newWidth).arg(newHeight)
+			);
+			return false;
+		} else if (newPlayableWidth < 9 || newPlayableHeight < 5) {
+			QMessageBox::critical(
+				const_cast<MapInfoEditor*>(this),
+				"Invalid Playable Area",
+				QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2")
+					.arg(newPlayableWidth)
+					.arg(newPlayableHeight)
+			);
+			return false;
+		} else {
+			// to make this simpler, we first get rid of old bounduaries
+			if (changedMapSize || changedPlayableSize) {
+				map->set_playable_area(0, 0, 0, 0);
+			}
+
+			// resize the terrain
+			if (changedMapSize) {
+				int deltaLeft = oldMapBottomLeft.x - newMapBottomLeft.x;
+				int deltaRight = newMapTopRight.x - oldMapTopRight.x;
+				int deltaBottom = oldMapBottomLeft.y - newMapBottomLeft.y;
+				int deltaTop = newMapTopRight.y - oldMapTopRight.y;
+				map->resize(deltaLeft, deltaRight, deltaTop, deltaBottom);
+			}
+
+			// apply camera bounds changes
+			if (changedMapSize || changedPlayableSize) {
+				int unplayableLeft = newPlayableBottomLeft.x - newMapBottomLeft.x;
+				int unplayableRight = newMapTopRight.x - newPlayableTopRight.x;
+				int unplayableBottom = newPlayableBottomLeft.y - newMapBottomLeft.y;
+				int unplayableTop = newMapTopRight.y - newPlayableTopRight.y;
+				map->set_playable_area(unplayableLeft, unplayableRight, unplayableTop, unplayableBottom);
+			}
+		}
+	}
+	return true;
+}
+
+void MapInfoEditor::updateMapSizeGUI() {
+	// update text in the menu
+	updateBoundsText();
+
+	// update the minimap image
+	updateBoundsPreview();
+}
+
+void MapInfoEditor::updateBoundsText() {
+	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+	int newPlayableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+	int newPlayableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+	float offsetX = map->terrain.offset.x + (newMapBottomLeft.x - oldMapBottomLeft.x) * 128.f;
+	float offsetY = map->terrain.offset.y + (newMapBottomLeft.y - oldMapBottomLeft.y) * 128.f;
+
+	// update  map size labels
+	ui.mapSizeFull->setText(QString::fromStdString(std::format("{} x {}", newWidth, newHeight)));
+	ui.mapSizePlayable->setText(QString::fromStdString(std::format("{} x {}", newPlayableWidth, newPlayableHeight)));
+
+	// update map extents and camera bounds text
+	ui.mapBoundsLeft->setText(QString::number(offsetX));
+	ui.mapBoundsRight->setText(QString::number(offsetX + newWidth * 128.f));
+	ui.mapBoundsTop->setText(QString::number(offsetY + newHeight * 128.f));
+	ui.mapBoundsBottom->setText(QString::number(offsetY));
+
+	ui.cameraBoundsLeft->setText(QString::number(offsetX + (newPlayableBottomLeft.x + 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsRight->setText(QString::number(offsetX + (newPlayableTopRight.x - 4 - newMapBottomLeft.x) * 128.f));
+	ui.cameraBoundsTop->setText(QString::number(offsetY + (newPlayableTopRight.y - 2 - newMapBottomLeft.y) * 128.f));
+	ui.cameraBoundsBottom->setText(QString::number(offsetY + (newPlayableBottomLeft.y + 2 - newMapBottomLeft.y) * 128.f));
+
+	// map size text - determine size based on surface area
+	int surfaceArea = newWidth * newHeight;
+	QString sizeDescription;
+
+	if (surfaceArea <= 80 * 80) {
+		sizeDescription = "Tiny";
+	} else if (surfaceArea <= 112 * 112) {
+		sizeDescription = "Extra Small";
+	} else if (surfaceArea <= 144 * 144) {
+		sizeDescription = "Small";
+	} else if (surfaceArea <= 176 * 176) {
+		sizeDescription = "Medium";
+	} else if (surfaceArea <= 208 * 208) {
+		sizeDescription = "Large";
+	} else if (surfaceArea <= 272 * 272) {
+		sizeDescription = "Extra Large";
+	} else if (surfaceArea <= 364 * 364) {
+		sizeDescription = "Huge";
+	} else {
+		sizeDescription = "Epic";
+	}
+
+	ui.mapSizeDescription->setText(sizeDescription);
+}
+
+void MapInfoEditor::updateBoundsPreview() {
+	int deltaLeft = oldMapBottomLeft.x - newMapBottomLeft.x;
+	int deltaRight = newMapTopRight.x - oldMapTopRight.x;
+	int deltaBottom = oldMapBottomLeft.y - newMapBottomLeft.y;
+	int deltaTop = newMapTopRight.y - oldMapTopRight.y;
+
+	int newWidth = originalMinimap.width + deltaLeft + deltaRight;
+	int newHeight = originalMinimap.height + deltaBottom + deltaTop;
+
+	Texture newMinimapTex;
+	newMinimapTex.width = newWidth;
+	newMinimapTex.height = newHeight;
+	newMinimapTex.channels = 4;
+	newMinimapTex.data.resize(newWidth * newHeight * 4);
+
+	// crate the new image
+	for (int y = 0; y < newHeight; y++) {
+		for (int x = 0; x < newWidth; x++) {
+			// original coordinates
+			int srcX = x - deltaLeft;
+			int srcY = y - deltaTop;
+
+			int dstIndex = y * newWidth * 4 + x * 4;
+
+			// copy from original image if possible, fill with green otherwise
+			if (srcX >= 0 && srcX < originalMinimap.width && srcY >= 0 && srcY < originalMinimap.height) {
+				int srcIndex = srcY * originalMinimap.width * 4 + srcX * 4;
+				newMinimapTex.data[dstIndex + 0] = originalMinimap.data[srcIndex + 0];
+				newMinimapTex.data[dstIndex + 1] = originalMinimap.data[srcIndex + 1];
+				newMinimapTex.data[dstIndex + 2] = originalMinimap.data[srcIndex + 2];
+				newMinimapTex.data[dstIndex + 3] = originalMinimap.data[srcIndex + 3];
+			} else {
+				newMinimapTex.data[dstIndex + 0] = 0;
+				newMinimapTex.data[dstIndex + 1] = 192;
+				newMinimapTex.data[dstIndex + 2] = 0;
+				newMinimapTex.data[dstIndex + 3] = 255;
+			}
+
+			// check if pixel is in unplayable area
+			int mapX = newMapBottomLeft.x + x;
+			int mapY = newMapTopRight.y - y;
+			bool isUnplayable =
+				(mapX < newPlayableBottomLeft.x || mapX > newPlayableTopRight.x || mapY < newPlayableBottomLeft.y
+				 || mapY > newPlayableTopRight.y);
+
+			// unplayable pixels are lighter
+			if (isUnplayable) {
+				newMinimapTex.data[dstIndex + 0] = (newMinimapTex.data[dstIndex + 0] + 255) / 2;
+				newMinimapTex.data[dstIndex + 1] = (newMinimapTex.data[dstIndex + 1] + 255) / 2;
+				newMinimapTex.data[dstIndex + 2] = (newMinimapTex.data[dstIndex + 2] + 255) / 2;
+			}
+		}
+	}
+
+	// create image with transparent background
+	QImage temp_image = QImage(
+		newMinimapTex.data.data(),
+		newMinimapTex.width,
+		newMinimapTex.height,
+		newMinimapTex.width * newMinimapTex.channels,
+		QImage::Format::Format_RGBA8888
+	);
+	QPixmap sourcePixmap = QPixmap::fromImage(temp_image);
+
+	// scale the pixmap with sharp pixels (no smoothing)
+	QPixmap scaledPixmap = sourcePixmap.scaled(ui.boundsPreview->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
+
+	// calculate camera bounds in original image coordinates
+	int cameraBoundsLeft = newPlayableBottomLeft.x + 4 - newMapBottomLeft.x;
+	int cameraBoundsBottom = newPlayableBottomLeft.y + 2 - newMapBottomLeft.y;
+	int cameraBoundsRight = newPlayableTopRight.x - 4 - newMapBottomLeft.x;
+	int cameraBoundsTop = newPlayableTopRight.y - 2 - newMapBottomLeft.y;
+
+	// scale coordinates to match the scaled pixmap
+	float scaleX = static_cast<float>(scaledPixmap.width()) / newWidth;
+	float scaleY = static_cast<float>(scaledPixmap.height()) / newHeight;
+
+	int scaledLeft = static_cast<int>(cameraBoundsLeft * scaleX);
+	int scaledTop = static_cast<int>((newHeight - cameraBoundsTop - 1) * scaleY);
+	int scaledRight = static_cast<int>(cameraBoundsRight * scaleX);
+	int scaledBottom = static_cast<int>((newHeight - cameraBoundsBottom - 1) * scaleY);
+
+	// draw camera bounds rectangle on scaled image
+	QPen pen(QColor(0, 120, 255), 2);
+	QPainter painter(&scaledPixmap);
+	painter.setPen(pen);
+	painter.setRenderHint(QPainter::Antialiasing, false);
+	painter.drawRect(scaledLeft, scaledTop, scaledRight - scaledLeft, scaledBottom - scaledTop);
+	painter.end();
+
+	ui.boundsPreview->setPixmap(scaledPixmap);
+}
+
+void MapInfoEditor::adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom) {
+	int newWidth = newMapTopRight.x - newMapBottomLeft.x;
+	int newHeight = newMapTopRight.y - newMapBottomLeft.y;
+
+	int offsetX = static_cast<int>(map->terrain.offset.x / 128.0f);
+	int offsetY = static_cast<int>(map->terrain.offset.y / 128.0f);
+
+	// handle terrain size change
+	if (ui.modifyMapBounds->isChecked()) {
+		// vanilla editor behaviour - changing map is 4 times faster
+		deltaLeft *= 4;
+		deltaRight *= 4;
+		deltaTop *= 4;
+		deltaBottom *= 4;
+
+		// accept the adjustment if the map is within acceptable bounds
+		newWidth += deltaLeft + deltaRight;
+		newHeight += deltaTop + deltaBottom;
+
+		// check if the map is not too large, or too small
+		bool allowedSize = newWidth >= 32 and newWidth <= 480 and newHeight >= 32 and newHeight <= 480;
+
+		// check if the map extents are valid (vanilla WE constraint)
+		int leftExtent = newMapBottomLeft.x + offsetX - deltaLeft;
+		int rightExtent = newMapTopRight.x + offsetX + deltaRight;
+		int topExtent = newMapTopRight.y + offsetY + deltaTop;
+		int bottomExtent = newMapBottomLeft.y + offsetY - deltaBottom;
+		bool validExtents = (leftExtent >= -252 && rightExtent <= 252 && bottomExtent >= -252 && topExtent <= 252);
+
+		// bounds change
+		if (allowedSize && validExtents) {
+			newMapBottomLeft.x -= deltaLeft;
+			newMapBottomLeft.y -= deltaBottom;
+			newMapTopRight.x += deltaRight;
+			newMapTopRight.y += deltaTop;
+		}
+	}
+
+	// handle playable area change
+	if (ui.modifyCameraBounds->isChecked()) {
+		newPlayableBottomLeft.x -= deltaLeft;
+		newPlayableBottomLeft.y -= deltaBottom;
+		newPlayableTopRight.x += deltaRight;
+		newPlayableTopRight.y += deltaTop;
+	}
+
+	// ensure playable area stays within map bounds
+	newPlayableBottomLeft.x = std::max(newPlayableBottomLeft.x, newMapBottomLeft.x);
+	newPlayableBottomLeft.y = std::max(newPlayableBottomLeft.y, newMapBottomLeft.y);
+	newPlayableTopRight.x = std::min(newPlayableTopRight.x, newMapTopRight.x);
+	newPlayableTopRight.y = std::min(newPlayableTopRight.y, newMapTopRight.y);
+
+	// ensure a minimum 9x5 playable area size
+	int playableWidth = newPlayableTopRight.x - newPlayableBottomLeft.x;
+	int playableHeight = newPlayableTopRight.y - newPlayableBottomLeft.y;
+
+	if (playableWidth < 9) {
+		int deficit = 9 - playableWidth;
+		// expand playable area on the opposite side to compensate
+		if (deltaLeft != 0) {
+			// left was adjusted, expand right
+			newPlayableTopRight.x += deficit;
+		} else if (deltaRight != 0) {
+			// right was adjusted, expand left
+			newPlayableBottomLeft.x -= deficit;
+		}
+	}
+
+	if (playableHeight < 5) {
+		int deficit = 5 - playableHeight;
+		// expand playable area on the opposite side to compensate
+		if (deltaBottom != 0) {
+			// bottom was adjusted, expand top
+			newPlayableTopRight.y += deficit;
+		} else if (deltaTop != 0) {
+			// top was adjusted, expand bottom
+			newPlayableBottomLeft.y -= deficit;
+		}
+	}
+
+	updateMapSizeGUI();
 }
