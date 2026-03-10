@@ -220,7 +220,7 @@ export class Doodads {
 		doodads.erase(iterator);
 	}
 
-	void remove_sepcial_doodad(SpecialDoodad* doodad) {
+	void remove_special_doodad(SpecialDoodad* doodad) {
 		const auto iterator = special_doodads.begin() + std::distance(special_doodads.data(), doodad);
 		special_doodads.erase(iterator);
 	}
