@@ -31,6 +31,7 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	setup_texture_operator();
 	setup_cliff_operator();
 	setup_deformation_operator();
+	setup_cell_operator();
 
 	// brush menu
 	setup_brush_menu();
@@ -69,6 +70,42 @@ void TerrainPalette::update_operator_gui() {
 	update_texture_operator_gui();
 	update_cliff_operator_gui();
 	update_deformation_operator_gui();
+	update_cell_operator_gui();
+}
+
+void TerrainPalette::update_cell_operator_gui() {
+	bool is_enabled = brush.cell_operator->is_enabled();
+
+	// update checkbox state (disable events for the change)
+	QSignalBlocker blocker(ui.cellCheckbox);
+	ui.cellCheckbox->setChecked(is_enabled);
+
+	// update cell operation buttons
+	auto operation = brush.cell_operator->cell_operation_type;
+	{
+		QSignalBlocker blocker(ui.addWater);
+		ui.addWater->setChecked(is_enabled && operation == CellOperator::cell_operation::add_water);
+	}
+	{
+		QSignalBlocker blocker(ui.removeWater);
+		ui.removeWater->setChecked(is_enabled && operation == CellOperator::cell_operation::remove_water);
+	}
+	{
+		QSignalBlocker blocker(ui.addBoundary);
+		ui.addBoundary->setChecked(is_enabled && operation == CellOperator::cell_operation::add_boundary);
+	}
+	{
+		QSignalBlocker blocker(ui.removeBoundary);
+		ui.removeBoundary->setChecked(is_enabled && operation == CellOperator::cell_operation::remove_boundary);
+	}
+	{
+		QSignalBlocker blocker(ui.addHole);
+		ui.addHole->setChecked(is_enabled && operation == CellOperator::cell_operation::add_hole);
+	}
+	{
+		QSignalBlocker blocker(ui.removeHole);
+		ui.removeHole->setChecked(is_enabled && operation == CellOperator::cell_operation::remove_hole);
+	}
 }
 
 void TerrainPalette::update_deformation_operator_gui() {
@@ -225,43 +262,107 @@ void TerrainPalette::setup_cliff_operator() {
 		update_operator_gui();
 	});
 
-	// cliff buttons
-	connect(ui.cliffButtonGroup, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&]() {
+	// specific cliff operations
+	connect(ui.cliffLower2, &QPushButton::clicked, [&]() {
+		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::lower2;
 		brush.activate_operator(brush.cliff_operator);
 		update_operator_gui();
 	});
 
-	// specific cliff operations
-	connect(ui.cliffLower2, &QPushButton::clicked, [&]() {
-		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::lower2;
-	});
-
 	connect(ui.cliffLower1, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::lower1;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffLevel, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::level;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffRaise1, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::raise1;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffRaise2, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::raise2;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffDeepWater, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::deep_water;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffShallowWater, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::shallow_water;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
 	});
 
 	connect(ui.cliffRamp, &QPushButton::clicked, [&]() {
 		brush.cliff_operator->cliff_operation_type = CliffOperator::cliff_operation::ramp;
+		brush.activate_operator(brush.cliff_operator);
+		update_operator_gui();
+	});
+}
+
+void TerrainPalette::setup_cell_operator() {
+	// allow the GUI to deselect all cell operations
+	ui.cellButtonGroup->setExclusive(false);
+
+	// setup operator
+	connect(ui.cellCheckbox, &QCheckBox::clicked, [&](bool checked) {
+		if (checked) {
+			brush.activate_operator(brush.cell_operator);
+		} else {
+			brush.deactivate_operator(brush.cell_operator);
+		}
+
+		update_operator_gui();
+	});
+
+	// cell operation choice
+	connect(ui.addWater, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::add_water;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::corner);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
+	});
+	connect(ui.removeWater, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::remove_water;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::corner);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
+	});
+	connect(ui.addBoundary, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::add_boundary;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
+	});
+	connect(ui.removeBoundary, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::remove_boundary;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
+	});
+	connect(ui.addHole, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::add_hole;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
+	});
+	connect(ui.removeHole, &QPushButton::clicked, [&]() {
+		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::remove_hole;
+		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
+		brush.activate_operator(brush.cell_operator);
+		update_operator_gui();
 	});
 }
 
@@ -280,27 +381,31 @@ void TerrainPalette::setup_deformation_operator() {
 		update_operator_gui();
 	});
 
-	connect(ui.deformationButtonGroup, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&]() {
-		// terrain brush takes care of operator deactivation
+	// height change operations - set deformation type first, then activate
+	connect(ui.terrainRaise, &QPushButton::clicked, [&]() {
+		brush.height_operator->deformation_type = HeightOperator::deformation::raise;
 		brush.activate_operator(brush.height_operator);
 		update_operator_gui();
 	});
-
-	// height change operations
-	connect(ui.terrainRaise, &QPushButton::clicked, [&]() {
-		brush.height_operator->deformation_type = HeightOperator::deformation::raise;
-	});
 	connect(ui.terrainLower, &QPushButton::clicked, [&]() {
 		brush.height_operator->deformation_type = HeightOperator::deformation::lower;
+		brush.activate_operator(brush.height_operator);
+		update_operator_gui();
 	});
 	connect(ui.terrainPlateau, &QPushButton::clicked, [&]() {
 		brush.height_operator->deformation_type = HeightOperator::deformation::plateau;
+		brush.activate_operator(brush.height_operator);
+		update_operator_gui();
 	});
 	connect(ui.terrainRipple, &QPushButton::clicked, [&]() {
 		brush.height_operator->deformation_type = HeightOperator::deformation::ripple;
+		brush.activate_operator(brush.height_operator);
+		update_operator_gui();
 	});
 	connect(ui.terrainSmooth, &QPushButton::clicked, [&]() {
 		brush.height_operator->deformation_type = HeightOperator::deformation::smooth;
+		brush.activate_operator(brush.height_operator);
+		update_operator_gui();
 	});
 }
 
@@ -365,10 +470,28 @@ void TerrainPalette::create_ribbon() {
 	apply_water_pathing->setChecked(true);
 	pathing_section->addWidget(apply_water_pathing);
 
+	QRibbonSection* deformation_section = new QRibbonSection;
+	deformation_section->setText("Deformation");
+
+	QRibbonButton* deform_ground = new QRibbonButton;
+	deform_ground->setText("Ground");
+	deform_ground->setIcon(QIcon("data/icons/ribbon/heightmap32x32.png"));
+	deform_ground->setCheckable(true);
+	deform_ground->setChecked(brush.deform_ground);
+	deformation_section->addWidget(deform_ground);
+
+	QRibbonButton* deform_water = new QRibbonButton;
+	deform_water->setText("Water");
+	deform_water->setIcon(QIcon("data/icons/ribbon/water32x32.png"));
+	deform_water->setCheckable(true);
+	deform_water->setChecked(brush.deform_water);
+	deformation_section->addWidget(deform_water);
+
 	ribbon_tab->addSection(selection_section);
 	ribbon_tab->addSection(general_section);
 	ribbon_tab->addSection(cliff_section);
 	ribbon_tab->addSection(pathing_section);
+	ribbon_tab->addSection(deformation_section);
 
 	connect(selection_mode, &QRibbonButton::toggled, [&]() {
 		brush.switch_mode();
@@ -403,6 +526,13 @@ void TerrainPalette::create_ribbon() {
 	});
 	connect(apply_water_pathing, &QRibbonButton::toggled, [&](bool checked) {
 		brush.apply_water_pathing = checked;
+	});
+
+	connect(deform_ground, &QRibbonButton::toggled, [&](bool checked) {
+		brush.deform_ground = checked;
+	});
+	connect(deform_water, &QRibbonButton::toggled, [&](bool checked) {
+		brush.deform_water = checked;
 	});
 }
 
@@ -485,5 +615,6 @@ TerrainPalette::terrain_button(const QIcon& icon, const char* propertyName, cons
 	button->setCheckable(true);
 	button->setProperty(propertyName, propertyValue);
 	button->setProperty("tileName", tileName);
+	button->setToolTip(tileName);
 	return button;
 }

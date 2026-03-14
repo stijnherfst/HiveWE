@@ -1180,20 +1180,24 @@ export class Terrain: public QObject {
 
 	/// Computes the terrain pathing flags for the target cell on the **PATHING** map
 	/// Takes cliffs, blight, water, terrain textures and boundaries into account
-	uint8_t get_terrain_pathing(size_t i, size_t j) {
+	uint8_t get_terrain_pathing(size_t i, size_t j, bool tile_pathing, bool cliff_pathing, bool water_pathing) {
 		// map pathing cell to corner
 		const size_t cx = i / 4;
 		const size_t cy = j / 4;
 		const size_t bl_idx = ci(cx, cy);
+		uint8_t mask = 0;
 
 		// take terrain texture into account (from the closest corner)
 		const int x = static_cast<int>(std::round(i / 4.0));
 		const int y = static_cast<int>(std::round(j / 4.0));
 		const size_t closest_idx = ci(x, y);
-		uint8_t mask = pathing_options[tileset_ids[corner_ground_texture[closest_idx]]].mask();
+
+		if (tile_pathing) {
+			mask = pathing_options[tileset_ids[corner_ground_texture[closest_idx]]].mask();
+		}
 
 		// cliffs are unbuildable and unwalkable
-		if (corner_cliff[bl_idx]) {
+		if (cliff_pathing && corner_cliff[bl_idx]) {
 			mask |= PathingMap::unbuildable | PathingMap::unwalkable;
 		}
 
@@ -1203,7 +1207,7 @@ export class Terrain: public QObject {
 		}
 
 		// take water into account
-		if (corner_water[closest_idx]) {
+		if (water_pathing && corner_water[closest_idx]) {
 			// apply water mask
 			mask |= PathingMap::water;
 

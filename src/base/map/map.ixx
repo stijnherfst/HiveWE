@@ -495,7 +495,6 @@ export class Map: public QObject {
 
 		std::println("Full loading: {:>5}ms", full_timer.elapsed_ms());
 
-
 		// Center camera
 		camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
 		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y, true);

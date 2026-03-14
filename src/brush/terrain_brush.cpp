@@ -16,6 +16,38 @@ TerrainBrush::TerrainBrush() : Brush() {
 	set_size(size);
 }
 
+<<<<<<< HEAD
+=======
+void TerrainBrush::setup_operators() {
+	height_operator = new HeightOperator(this);
+	texture_operator = new TextureOperator(this);
+	cliff_operator = new CliffOperator(this);
+	cell_operator = new CellOperator(this);
+
+	terrain_operators = {height_operator, texture_operator, cliff_operator, cell_operator};
+}
+
+void TerrainBrush::deactivate_operator(TerrainOperator* target) {
+	if (target) {
+		target->is_active = false;
+	}
+}
+
+void TerrainBrush::activate_operator(TerrainOperator* target) {
+	if (target) {
+		target->is_active = true;
+		center_on_tile_corner = target->center_on_tile_corner;
+
+		// deactivate incompatible operators
+		for (auto* op : terrain_operators) {
+			if (op != target && !target->can_combine_with(op)) {
+				op->is_active = false;
+			}
+		}
+	}
+}
+
+>>>>>>> dc0dadb (new terrain operations)
 void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	//if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
 	/*auto id = map->render_manager.pick_unit_id_under_mouse(map->units, input_handler.mouse);
@@ -114,14 +146,18 @@ void TerrainBrush::apply_begin() {
 	const int height = map->terrain.height;
 	const auto& terrain = map->terrain;
 
-	const glm::vec2 position = get_position();
-	const int x = position.x + 1;
-	const int y = position.y + 1;
-	const QRect area = QRect(x, y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
+	const glm::ivec2 pos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
+												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
+	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
+
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
 
+<<<<<<< HEAD
 	// Setup for undo/redo — snapshot all corners
+=======
+	// setup for undo/redo
+>>>>>>> dc0dadb (new terrain operations)
 	map->world_undo.new_undo_group();
 	old_corners_width = width;
 	old_corners_height = height;
@@ -135,6 +171,7 @@ void TerrainBrush::apply_begin() {
 	texture_height_area = area;
 	cliff_area = area;
 
+<<<<<<< HEAD
 	const size_t center_idx = terrain.ci(center_x, center_y);
 
 	if (apply_height) {
@@ -176,6 +213,12 @@ void TerrainBrush::apply_begin() {
 				break;
 			case cliff_operation::level:
 				break;
+=======
+	// apply all active operators
+	for (TerrainOperator* op : terrain_operators) {
+		if (op->is_enabled()) {
+			op->apply_begin(area, center_x, center_y);
+>>>>>>> dc0dadb (new terrain operations)
 		}
 		layer_height = std::clamp(layer_height, Terrain::min_layer_height, Terrain::max_layer_height);
 	}
@@ -186,10 +229,14 @@ void TerrainBrush::apply(double frame_delta) {
 	int height = map->terrain.height;
 	auto& terrain = map->terrain;
 
-	const glm::ivec2 pos = glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f;
+	const glm::ivec2 pos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
+												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
 
-	const glm::vec2 position = get_position();
 	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
+<<<<<<< HEAD
+=======
+	QRect updated_area = QRect(pos.x - 1, pos.y - 1, size.x / 4.f + 1, size.y / 4.f + 1).intersected({0, 0, width - 1, height - 1});
+>>>>>>> dc0dadb (new terrain operations)
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -406,12 +453,17 @@ void TerrainBrush::apply(double frame_delta) {
 	// Apply pathing
 	for (int i = updated_area.x(); i <= updated_area.right(); i++) {
 		for (int j = updated_area.y(); j <= updated_area.bottom(); j++) {
+<<<<<<< HEAD
 			const size_t bl_idx = terrain.ci(i, j);
 
+=======
+>>>>>>> dc0dadb (new terrain operations)
 			for (int k = 0; k < 4; k++) {
 				for (int l = 0; l < 4; l++) {
-					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] &= ~0b01001110;
+					const size_t pathing_x = i * 4 + k;
+					const size_t pathing_y = j * 4 + l;
 
+<<<<<<< HEAD
 					uint8_t mask = 0;
 					if ((terrain.corner_cliff[bl_idx] || terrain.corner_romp[bl_idx]) && !terrain.is_corner_ramp_entrance(i, j) && apply_cliff_pathing) {
 						mask = 0b00001010;
@@ -436,6 +488,15 @@ void TerrainBrush::apply(double frame_delta) {
 						}
 					}
 					map->pathing_map.pathing_cells_static[(j * 4 + l) * map->pathing_map.width + i * 4 + k] |= mask;
+=======
+					map->pathing_map.pathing_cells_static[pathing_y * map->pathing_map.width + pathing_x] &= ~0b01001110;
+
+					uint8_t mask =
+						map->terrain
+							.get_terrain_pathing(pathing_x, pathing_y, apply_tile_pathing, apply_cliff_pathing, apply_water_pathing);
+
+					map->pathing_map.pathing_cells_static[pathing_y * map->pathing_map.width + pathing_x] |= mask;
+>>>>>>> dc0dadb (new terrain operations)
 				}
 			}
 		}

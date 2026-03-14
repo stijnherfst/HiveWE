@@ -15,6 +15,7 @@ class TerrainOperator;
 class HeightOperator;
 class TextureOperator;
 class CliffOperator;
+class CellOperator;
 
 class TerrainBrush: public Brush {
 	// Friend declarations for terrain operators
@@ -22,11 +23,14 @@ class TerrainBrush: public Brush {
 	friend class HeightOperator;
 	friend class TextureOperator;
 	friend class CliffOperator;
+	friend class CellOperator;
 
   public:
 	bool apply_tile_pathing = true;
 	bool apply_cliff_pathing = true;
 	bool apply_water_pathing = true;
+	bool deform_water = false;
+	bool deform_ground = true;
 
 	bool enforce_water_height_limits = true;
 	bool change_doodad_heights = true;
@@ -54,6 +58,7 @@ class TerrainBrush: public Brush {
 	CliffOperator* cliff_operator = nullptr;
 	HeightOperator* height_operator = nullptr;
 	TextureOperator* texture_operator = nullptr;
+	CellOperator* cell_operator = nullptr;
 
 	/// Deactivates the specified operator
 	void deactivate_operator(TerrainOperator* target);
@@ -66,6 +71,8 @@ class TerrainBrush: public Brush {
 	// undo/redo stuff
 	QRect texture_height_area;
 	QRect cliff_area;
+	QRect pathing_area;
+
 	std::vector<Doodad> pre_change_doodads;
 	std::map<int, Doodad> post_change_doodads;
 

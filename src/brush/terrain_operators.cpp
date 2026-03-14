@@ -9,8 +9,21 @@ import PathingUndo;
 import TerrainUndo;
 import Camera;
 
+void TerrainOperator::set_brush_type(brush_type brush_type) {
+	if (brush_type == brush_type::cell) {
+		center_on_tile_corner = false;
+	} else if (brush_type == brush_type::corner) {
+		center_on_tile_corner = true;
+	}
+
+	if (is_active) {
+		brush->center_on_tile_corner = center_on_tile_corner;
+	}
+}
+
 void HeightOperator::apply_begin(const QRect& area, int center_x, int center_y) {
-	deformation_height = map->terrain.corners[center_x][center_y].height;
+	deformation_height_ground = map->terrain.corners[center_x][center_y].height;
+	deformation_height_water = map->terrain.corners[center_x][center_y].water_height;
 }
 
 void HeightOperator::apply(const QRect& area, double frame_delta, QRect& updated_area) {
@@ -20,11 +33,15 @@ void HeightOperator::apply(const QRect& area, double frame_delta, QRect& updated
 	const glm::vec2 position = brush->get_position();
 
 	std::vector<std::vector<float>> heights(area.width(), std::vector<float>(area.height()));
+	std::vector<std::vector<float>> water_heights(area.width(), std::vector<float>(area.height()));
 
 	for (int i = area.x(); i < area.x() + area.width(); i++) {
 		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			float new_height = corners[i][j].height;
-			heights[i - area.x()][j - area.y()] = new_height;
+			float new_height_ground = corners[i][j].height;
+			float new_height_water = corners[i][j].water_height;
+
+			heights[i - area.x()][j - area.y()] = new_height_ground;
+			water_heights[i - area.x()][j - area.y()] = new_height_water;
 
 			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
 				continue;
@@ -34,54 +51,88 @@ void HeightOperator::apply(const QRect& area, double frame_delta, QRect& updated
 
 			switch (deformation_type) {
 				case deformation::raise: {
-					auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-					new_height += std::max(0.0, 1 - distance / brush->size.x * std::sqrt(2)) * frame_delta;
+					double distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
+					double delta = std::max(0.0, 1 - distance / brush->size.x * std::sqrt(2)) * frame_delta;
+					new_height_ground += delta;
+					new_height_water += delta;
 					break;
 				}
 				case deformation::lower: {
-					auto distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
-					new_height -= std::max(0.0, 1 - distance / brush->size.x * std::sqrt(2)) * frame_delta;
+					double distance = std::sqrt(std::pow(center_x - i, 2) + std::pow(center_y - j, 2));
+					double delta = std::max(0.0, 1 - distance / brush->size.x * std::sqrt(2)) * frame_delta;
+					new_height_ground -= delta;
+					new_height_water -= delta;
 					break;
 				}
 				case deformation::plateau: {
-					new_height = deformation_height;
+					new_height_ground = deformation_height_ground;
+					new_height_water = deformation_height_water;
 					break;
 				}
 				case deformation::ripple:
 					break;
 				case deformation::smooth: {
-					float accumulate = 0;
+					auto smooth_height = [&](int i, int j, float current_height, auto height_vector, auto get_corner_height) {
+						float accumulate = 0;
 
-					QRect acum_area = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, width, height});
+						QRect acum_area = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, width, height});
 
-					for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
-						for (int l = acum_area.y(); l < acum_area.bottom() + 1; l++) {
-							if ((k < i || l < j) && k <= i &&
-								// The checks below are required because the code is just wrong (area is too small so we cant convolute a cell from at the edges of the area)
-								k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
-								accumulate += heights[k - area.x()][l - area.y()];
-							} else {
-								accumulate += corners[k][l].height;
+						for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
+							for (int l = acum_area.y(); l < acum_area.bottom() + 1; l++) {
+								if ((k < i || l < j) && k <= i &&
+									// The checks below are required because the code is just wrong (area is too small so we cant convolute a cell from at the edges of the area)
+									k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
+									accumulate += height_vector[k - area.x()][l - area.y()];
+								} else {
+									accumulate += get_corner_height(k, l);
+								}
 							}
 						}
-					}
-					accumulate -= new_height;
-					new_height = 0.8 * new_height + 0.2 * (accumulate / (acum_area.width() * acum_area.height() - 1));
+						accumulate -= current_height;
+						return 0.8f * current_height + 0.2f * (accumulate / (acum_area.width() * acum_area.height() - 1));
+					};
+
+					new_height_ground = smooth_height(i, j, new_height_ground, heights, [&](int k, int l) {
+						return corners[k][l].height;
+					});
+
+					new_height_water = smooth_height(i, j, new_height_water, water_heights, [&](int k, int l) {
+						return corners[k][l].water_height;
+					});
 					break;
 				}
 			}
 
-			corners[i][j].height = std::clamp(new_height, -16.f, 15.98f); // ToDo why 15.98?
+			// ToDo why 15.98?
+			if (brush->deform_ground) {
+				corners[i][j].height = std::clamp(new_height_ground, -16.f, 15.98f);
+			}
+
+			if (brush->deform_water) {
+				corners[i][j].water_height = std::clamp(new_height_water, -16.f, 15.98f);
+			}
 		}
 	}
 
-	map->terrain.update_ground_heights(area);
+	if (brush->deform_ground) {
+		map->terrain.update_ground_heights(area);
+	}
+
+	if (brush->deform_water) {
+		map->terrain.update_water(area.adjusted(0, 0, 1, 1));
+	}
 
 	brush->texture_height_area = brush->texture_height_area.united(area);
 }
 
 void HeightOperator::apply_end() {
-	brush->add_terrain_undo(brush->texture_height_area, TerrainUndoType::height);
+	if (brush->deform_ground) {
+		brush->add_terrain_undo(brush->texture_height_area, TerrainUndoType::height);
+	}
+
+	if (brush->deform_water) {
+		brush->add_terrain_undo(brush->texture_height_area, TerrainUndoType::water);
+	}
 }
 
 bool HeightOperator::can_combine_with(TerrainOperator* other) {
@@ -316,5 +367,72 @@ bool CliffOperator::can_combine_with(TerrainOperator* other) {
 	if (dynamic_cast<TextureOperator*>(other)) {
 		return true;
 	}
+	return false;
+}
+
+void CellOperator::apply_begin(const QRect& area, int center_x, int center_y) {
+	Corner& corner = map->terrain.corners[center_x][center_y];
+	int terrain_height = corner.layer_height - 2 + corner.height;
+	water_height = terrain_height + CellOperator::WATER_GROUND_ZERO + CellOperator::WATER_HEIGHT;
+}
+
+void CellOperator::apply(const QRect& area, double frame_delta, QRect& updated_area) {
+	int width = map->terrain.width;
+	int height = map->terrain.height;
+	auto& corners = map->terrain.corners;
+	const glm::vec2 position = brush->get_position();
+
+	bool edits_water = cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water;
+
+	// note: cell operator brush targets cells, not corners
+	for (int i = area.x(); i < area.x() + area.width(); i++) {
+		for (int j = area.y(); j < area.y() + area.height(); j++) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+				continue;
+			}
+
+			// bounds check
+			if (i >= width || j >= width || i < 0 || j < 0) {
+				continue;
+			}
+
+			// (i, j) is the bottom-left corner here
+			if (cell_operation_type == cell_operation::add_water) {
+				if (!corners[i][j].water) {
+					corners[i][j].water = true;
+					corners[i][j].water_height = water_height;
+				} else {
+					// if the water is not visible (below the ground), we want to incerase it's height
+					int terrain_height = corners[i][j].layer_height - 2 + corners[i][j].height;
+					if (corners[i][j].water_height <= terrain_height + CellOperator::WATER_GROUND_ZERO) {
+						corners[i][j].water_height = water_height;
+					}
+				}
+			} else if (cell_operation_type == cell_operation::remove_water) {
+				corners[i][j].water = false;
+				corners[i][j].water_height = -1;
+			} else if (cell_operation_type == cell_operation::add_boundary) {
+				corners[i][j].boundary = true;
+			} else if (cell_operation_type == cell_operation::remove_boundary) {
+				corners[i][j].boundary = false;
+			}
+		}
+	}
+
+	// finally, re-render the water if we changed it
+	if (edits_water) {
+		map->terrain.update_water(area.adjusted(0, 0, 1, 1));
+	}
+
+	brush->texture_height_area = brush->texture_height_area.united(area);
+}
+
+void CellOperator::apply_end() {
+	if (cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water) {
+		brush->add_terrain_undo(brush->texture_height_area, TerrainUndoType::water);
+	}
+}
+
+bool CellOperator::can_combine_with(TerrainOperator* other) {
 	return false;
 }

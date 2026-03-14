@@ -53,6 +53,10 @@ class TerrainPalette: public Palette {
 	void update_deformation_operator_gui();
 	void setup_deformation_operator();
 
+	// cell operator (boundaries, water, holes)
+	void update_cell_operator_gui();
+	void setup_cell_operator();
+
 	// ribbon
 	void create_ribbon();
 
