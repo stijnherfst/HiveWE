@@ -10,15 +10,15 @@
 import QRibbon;
 import FlowLayout;
 
-class TerrainPalette : public Palette {
+class TerrainPalette: public Palette {
 	Q_OBJECT
 
-public:
+  public:
 	TerrainPalette(QWidget* parent = nullptr);
 	~TerrainPalette();
 
-private:
-	bool event(QEvent *e) override;
+  private:
+	bool event(QEvent* e) override;
 
 	Ui::TerrainPalette ui;
 
@@ -36,6 +36,29 @@ private:
 	QShortcut* change_mode_this;
 	QShortcut* change_mode_parent;
 
-public slots:
+	// GUI creation functions
+	void update_operator_gui();
+
+	// textures
+	void update_texture_operator_gui();
+	void setup_texture_operator();
+	void create_terrain_buttons();
+	QPushButton* terrain_button(const QIcon& icon, const char* propertyName, const QVariant& propertyValue, const QString& tileName);
+
+	// cliff
+	void update_cliff_operator_gui();
+	void setup_cliff_operator();
+
+	// deformation
+	void update_deformation_operator_gui();
+	void setup_deformation_operator();
+
+	// ribbon
+	void create_ribbon();
+
+	// brush menu
+	void setup_brush_menu();
+
+  public slots:
 	void deactivate(QRibbonTab* tab) override;
 };

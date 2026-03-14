@@ -10,11 +10,20 @@ import Doodad;
 import Terrain;
 import TerrainUndo;
 
+// Forward declarations
+class TerrainOperator;
+class HeightOperator;
+class TextureOperator;
+class CliffOperator;
+
 class TerrainBrush: public Brush {
+	// Friend declarations for terrain operators
+	friend class TerrainOperator;
+	friend class HeightOperator;
+	friend class TextureOperator;
+	friend class CliffOperator;
+
   public:
-	bool apply_texture = false;
-	bool apply_height = false;
-	bool apply_cliff = false;
 	bool apply_tile_pathing = true;
 	bool apply_cliff_pathing = true;
 	bool apply_water_pathing = true;
@@ -22,31 +31,6 @@ class TerrainBrush: public Brush {
 	bool enforce_water_height_limits = true;
 	bool change_doodad_heights = true;
 	bool relative_cliff_heights = false;
-
-	std::string tile_id;
-
-	enum class deformation {
-		raise,
-		lower,
-		plateau,
-		ripple,
-		smooth
-	};
-	deformation deformation_type = deformation::plateau;
-
-	int cliff_id = 0;
-
-	enum class cliff_operation {
-		lower2,
-		lower1,
-		level,
-		raise1,
-		raise2,
-		deep_water,
-		shallow_water,
-		ramp
-	};
-	cliff_operation cliff_operation_type = cliff_operation::level;
 
 	bool dragging = false;
 	bool dragged = false;
@@ -66,10 +50,20 @@ class TerrainBrush: public Brush {
 	void add_terrain_undo(const QRect& area, TerrainUndoType type);
 	void add_pathing_undo(const QRect& area);
 
-  private:
-	int layer_height = 0;
-	float deformation_height = 0.f;
+	// all terrain operators
+	CliffOperator* cliff_operator = nullptr;
+	HeightOperator* height_operator = nullptr;
+	TextureOperator* texture_operator = nullptr;
 
+	/// Deactivates the specified operator
+	void deactivate_operator(TerrainOperator* target);
+
+	/// Activates the target terrain operator. Also disables all
+	/// active operators which cannot be used simultaneously
+	void activate_operator(TerrainOperator* target);
+
+  private:
+	// undo/redo stuff
 	QRect texture_height_area;
 	QRect cliff_area;
 	std::vector<Doodad> pre_change_doodads;
@@ -79,4 +73,8 @@ class TerrainBrush: public Brush {
 	int old_corners_width = 0;
 	int old_corners_height = 0;
 	std::vector<uint8_t> old_pathing_cells_static;
+
+	// terrain operator stuff
+	std::vector<TerrainOperator*> terrain_operators;
+	void setup_operators();
 };

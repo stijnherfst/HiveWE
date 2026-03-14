@@ -114,6 +114,7 @@ target_sources(HiveWE PRIVATE
 	"brush/doodad_brush.cpp"
 	"brush/pathing_brush.cpp"
 	"brush/terrain_brush.cpp"
+	"brush/terrain_operators.cpp"
 	"brush/unit_brush.cpp"
 	
 	"file_formats/mdx/mdl_reader.cpp"
