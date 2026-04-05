@@ -93,6 +93,7 @@ export class Map: public QObject {
 	RenderManager render_manager;
 
 	void load(const fs::path& path) {
+		Timer full_timer;
 		Timer timer;
 
 		hierarchy.map_directory = path;
@@ -451,6 +452,9 @@ export class Map: public QObject {
 
 		std::println("Shadows loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
+
+		std::println("Full loading: {:>5}ms", full_timer.elapsed_ms());
+
 
 		// Center camera
 		camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
