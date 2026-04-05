@@ -328,9 +328,11 @@ export class Map: public QObject {
 		gameplay_constants.load();
 
 		info.load();
+		profile_reset();
 		terrain.load(physics);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
+		profile_print();
 		timer.reset();
 
 		// Pathing Map
@@ -360,10 +362,12 @@ export class Map: public QObject {
 			load_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false);
 		}
 
+		profile_reset();
 		doodads.load(terrain, info);
 		doodads.create(terrain, pathing_map);
 
 		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
+		profile_print();
 		timer.reset();
 
 		if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -383,12 +387,14 @@ export class Map: public QObject {
 		}
 
 		// Units/Items
+		profile_reset();
 		if (hierarchy.map_file_exists("war3mapUnits.doo")) {
 			units.load(terrain, info);
 			units.create();
 		}
 
 		std::println("Unit loading:\t {:>5}ms", timer.elapsed_ms());
+		profile_print();
 		timer.reset();
 
 		// Abilities

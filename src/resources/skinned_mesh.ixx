@@ -11,6 +11,7 @@ import ResourceManager;
 import GPUTexture;
 import Shader;
 import Hierarchy;
+import Timer;
 import Camera;
 import SkeletalModelInstance;
 import Utilities;
@@ -75,17 +76,26 @@ export class SkinnedMesh: public Resource {
 			throw;
 		}
 
-		BinaryReader reader = hierarchy.open_file(path).value();
+		BinaryReader reader = [&] {
+			ScopedTimer t(profile_casc_ns);
+			return hierarchy.open_file(path).value();
+		}();
 		this->path = path;
 
 		size_t vertices = 0;
 		size_t indices = 0;
 		size_t matrices = 0;
 
-		mdx = std::make_shared<mdx::MDX>(reader);
+		{
+			ScopedTimer t(profile_parse_ns);
+			mdx = std::make_shared<mdx::MDX>(reader);
+		}
 
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
+		{
+			ScopedTimer t(profile_gl_ns);
+			glGenVertexArrays(1, &vao);
+			glBindVertexArray(vao);
+		}
 
 		has_mesh = mdx->geosets.size();
 		if (!has_mesh) {
@@ -111,33 +121,78 @@ export class SkinnedMesh: public Resource {
 		}
 
 		// Allocate space
-		glCreateBuffers(1, &vertex_snorm_buffer);
-		glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+		{
+			ScopedTimer t(profile_gl_ns);
+			glCreateBuffers(1, &vertex_snorm_buffer);
+			glNamedBufferStorage(vertex_snorm_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &uv_snorm_buffer);
-		glNamedBufferStorage(uv_snorm_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+			glCreateBuffers(1, &uv_snorm_buffer);
+			glNamedBufferStorage(uv_snorm_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &normal_buffer);
-		glNamedBufferStorage(normal_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+			glCreateBuffers(1, &normal_buffer);
+			glNamedBufferStorage(normal_buffer, vertices * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &tangent_buffer);
-		glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+			glCreateBuffers(1, &tangent_buffer);
+			glNamedBufferStorage(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &weight_buffer);
-		glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+			glCreateBuffers(1, &weight_buffer);
+			glNamedBufferStorage(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &index_buffer);
-		glNamedBufferStorage(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
+			glCreateBuffers(1, &index_buffer);
+			glNamedBufferStorage(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT | GL_MAP_READ_BIT);
 
-		glCreateBuffers(1, &instance_ssbo);
-		glCreateBuffers(1, &instance_team_color_index_ssbo);
-		glCreateBuffers(1, &layer_colors_ssbo);
-		glCreateBuffers(1, &bones_ssbo);
-		glCreateBuffers(1, &bones_ssbo_colored);
+			glCreateBuffers(1, &instance_ssbo);
+			glCreateBuffers(1, &instance_team_color_index_ssbo);
+			glCreateBuffers(1, &layer_colors_ssbo);
+			glCreateBuffers(1, &bones_ssbo);
+			glCreateBuffers(1, &bones_ssbo_colored);
+		}
 
 		// Buffer Data
+		struct GeosetBuffers {
+			std::vector<glm::u8vec4> skin_weights; // empty = use i.skin directly
+			std::vector<glm::uvec2> vertices_snorm;
+			std::vector<uint32_t> uvs_snorm;
+			std::vector<uint32_t> normals_oct_snorm;
+		};
+		std::vector<GeosetBuffers> packed_geosets;
+
+		// Pack phase (pure CPU, future candidate for parallelization)
+		{
+			ScopedTimer t(profile_parse_ns);
+			for (const auto& i : mdx->geosets) {
+				if (i.lod != 0) {
+					continue;
+				}
+				GeosetBuffers buf;
+
+				if (i.skin.empty()) {
+					buf.skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
+				}
+
+				buf.vertices_snorm.reserve(i.vertices.size());
+				for (const auto& j : i.vertices) {
+					buf.vertices_snorm.push_back(pack_vec3_to_uvec2(j, 8192.f));
+				}
+
+				buf.uvs_snorm.reserve(i.uv_sets.front().size());
+				for (const auto& j : i.uv_sets.front()) {
+					buf.uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 8.f));
+				}
+
+				buf.normals_oct_snorm.reserve(i.normals.size());
+				for (const auto& normal : i.normals) {
+					buf.normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
+				}
+
+				packed_geosets.push_back(std::move(buf));
+			}
+		}
+
+		// Upload phase
 		int base_vertex = 0;
 		int base_index = 0;
+		int packed_index = 0;
 
 		for (const auto& i : mdx->geosets) {
 			if (i.lod != 0) {
@@ -156,54 +211,43 @@ export class SkinnedMesh: public Resource {
 
 			geosets.push_back(entry);
 
-			if (i.skin.empty()) {
-				// If the skin vector is empty, then the model has SD bone weights, and we convert them to the HD skin weights.
-				const auto skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
-				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, skin_weights.data());
-			} else {
-				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
-			}
+			const GeosetBuffers& buf = packed_geosets[packed_index++];
 
-			std::vector<glm::uvec2> vertices_snorm;
-			for (const auto& j : i.vertices) {
-				vertices_snorm.push_back(pack_vec3_to_uvec2(j, 8192.f));
-			}
-			glNamedBufferSubData(
-				vertex_snorm_buffer,
-				base_vertex * sizeof(glm::uvec2),
-				entry.vertices * sizeof(glm::uvec2),
-				vertices_snorm.data()
-			);
+			{
+				ScopedTimer t(profile_gl_ns);
+				if (i.skin.empty()) {
+					glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, buf.skin_weights.data());
+				} else {
+					glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
+				}
 
-			std::vector<uint32_t> uvs_snorm;
-			for (const auto& j : i.uv_sets.front()) {
-				uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 8.f));
-			}
-			glNamedBufferSubData(uv_snorm_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), uvs_snorm.data());
-
-			std::vector<uint32_t> normals_oct_snorm;
-			for (const auto& normal : i.normals) {
-				normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
-			}
-			glNamedBufferSubData(
-				normal_buffer,
-				base_vertex * sizeof(uint32_t),
-				entry.vertices * sizeof(uint32_t),
-				normals_oct_snorm.data()
-			);
-
-			if (!i.tangents.empty()) {
 				glNamedBufferSubData(
-					tangent_buffer,
-					base_vertex * sizeof(glm::vec4),
-					entry.vertices * sizeof(glm::vec4),
-					i.tangents.data()
+					vertex_snorm_buffer,
+					base_vertex * sizeof(glm::uvec2),
+					entry.vertices * sizeof(glm::uvec2),
+					buf.vertices_snorm.data()
 				);
-			} else {
-				//glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), normals_vec4.data());
-			}
 
-			glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+				glNamedBufferSubData(uv_snorm_buffer, base_vertex * sizeof(uint32_t), entry.vertices * sizeof(uint32_t), buf.uvs_snorm.data());
+
+				glNamedBufferSubData(
+					normal_buffer,
+					base_vertex * sizeof(uint32_t),
+					entry.vertices * sizeof(uint32_t),
+					buf.normals_oct_snorm.data()
+				);
+
+				if (!i.tangents.empty()) {
+					glNamedBufferSubData(
+						tangent_buffer,
+						base_vertex * sizeof(glm::vec4),
+						entry.vertices * sizeof(glm::vec4),
+						i.tangents.data()
+					);
+				}
+
+				glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
+			}
 
 			base_vertex += entry.vertices;
 			base_index += entry.indices;
@@ -311,7 +355,10 @@ export class SkinnedMesh: public Resource {
 			i.uv_sets.shrink_to_fit();
 		}
 
-		glVertexArrayElementBuffer(vao, index_buffer);
+		{
+			ScopedTimer t(profile_gl_ns);
+			glVertexArrayElementBuffer(vao, index_buffer);
+		}
 	}
 
 	~SkinnedMesh() {
