@@ -163,32 +163,23 @@ export class Doodads {
 	}
 
 	void create(Terrain& terrain, PathingMap& pathing_map) {
-		// Load meshes into cache, multithreaded
+		// Load doodads multithreaded
 		std::vector<std::future<void>> futures;
 		futures.reserve(doodads.size() + special_doodads.size());
 
-		for (const auto& i : doodads) {
-			futures.push_back(gl_thread_pool.submit([this, id = i.id, variation = i.variation]() {
-				get_mesh(id, variation);
+		for (auto& i : doodads) {
+			futures.push_back(gl_thread_pool.submit([&] {
+				i.init(i.id, get_mesh(i.id, i.variation), terrain);
 			}));
 		}
-		for (const auto& i : special_doodads) {
-			futures.push_back(gl_thread_pool.submit([this, id = i.id, variation = i.variation]() {
-				get_mesh(id, variation);
+		for (auto& i : special_doodads) {
+			futures.push_back(gl_thread_pool.submit([&] {
+				i.init(i.id, get_mesh(i.id, i.variation), terrain);
 			}));
 		}
 
 		for (auto& f : futures) {
 			f.get();
-		}
-
-		// Phase 2: serial init — assigns mesh pointers and builds skeletons (fast)
-		for (auto&& i : doodads) {
-			i.init(i.id, get_mesh(i.id, i.variation), terrain);
-		}
-
-		for (auto&& i : special_doodads) {
-			i.init(i.id, get_mesh(i.id, i.variation), terrain);
 		}
 
 		// Blit doodad pathing

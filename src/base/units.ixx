@@ -305,44 +305,31 @@ export class Units {
 	}
 
 	void create() {
-		// Load meshes into cache, multithreaded
+		// Load units multithreaded
 		std::vector<std::future<void>> futures;
 		futures.reserve(units.size() + items.size());
 
-		for (const auto& i : units) {
+		for (auto& i : units) {
 			if (i.id == "sloc") {
 				continue;
 			}
-			futures.push_back(gl_thread_pool.submit([this, id = i.id]() {
-				get_mesh(id);
+
+			futures.push_back(gl_thread_pool.submit([&] {
+				i.mesh = get_mesh(i.id);
+				i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
+				i.update();
 			}));
 		}
-		for (const auto& i : items) {
-			futures.push_back(gl_thread_pool.submit([this, id = i.id]() {
-				get_mesh(id);
+		for (auto& i : items) {
+			futures.push_back(gl_thread_pool.submit([&] {
+				i.mesh = get_mesh(i.id);
+				i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
+				i.update();
 			}));
 		}
 
 		for (auto& f : futures) {
 			f.get();
-		}
-
-		// Phase 2: serial init — assigns mesh pointers and builds skeletons (fast)
-		for (auto& i : units) {
-			// ToDo handle starting location
-			if (i.id == "sloc") {
-				continue;
-			}
-
-			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
-			i.update();
-		}
-
-		for (auto& i : items) {
-			i.mesh = get_mesh(i.id);
-			i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
-			i.update();
 		}
 	}
 
