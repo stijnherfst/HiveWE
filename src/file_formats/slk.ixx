@@ -2,7 +2,6 @@ export module SLK;
 
 import std;
 import Hierarchy;
-import no_init_allocator;
 import BinaryReader;
 import Utilities;
 import INI;
@@ -56,18 +55,17 @@ namespace slk {
 		}
 
 		void load(const fs::path& path, const bool local = false) {
-			std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
-			if (local) {
-				std::ifstream stream(path, std::ios::binary);
-				buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(
-					std::istreambuf_iterator<char>(stream),
-					std::istreambuf_iterator<char>()
-				);
-			} else {
-				buffer = hierarchy.open_file(path).value().buffer;
-			}
+			const auto buffer = [&] {
+				if (local) {
+					auto res = read_file(path);
+					return std::move(res.value().buffer);
+				} else {
+					auto res = hierarchy.open_file(path);
+					return std::move(res.value().buffer);
+				}
+			}();
 
-			std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
+			std::string_view view(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 
 			if (!view.starts_with("ID")) {
 				std::print("Invalid SLK file, does not contain \"ID\" as first record\n");

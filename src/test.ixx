@@ -3,7 +3,7 @@ export module test;
 import std;
 import BinaryReader;
 import MDX;
-import no_init_allocator;
+import Utilities;
 import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
@@ -21,11 +21,8 @@ void parse_all_mdx() {
 	auto max = glm::vec3(-99999.f, -99999.f, -99999.f);
 
 	std::for_each(std::execution::seq, paths.begin(), paths.end(), [&](const fs::path& path) {
-		std::ifstream stream(path, std::ios::binary);
-		auto buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-
-		BinaryReader reader(buffer);
-		auto mdx = mdx::MDX(reader);
+		auto buffer = read_file(path).value();
+		const auto mdx = mdx::MDX(buffer);
 		
 		//min = glm::min(min, mdx.extent.minimum);
 		//max = glm::max(min, mdx.extent.maximum);

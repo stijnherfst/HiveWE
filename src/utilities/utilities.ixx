@@ -44,35 +44,49 @@ export std::string string_replaced(const std::string_view source, const std::str
 
 export std::string to_lowercase_copy(const std::string_view string) {
 	std::string output(string);
-	std::transform(output.begin(), output.end(), output.begin(), [](unsigned char c) { return std::tolower(c); });
+	std::ranges::transform(output, output.begin(), [](unsigned char c) {
+		return std::tolower(c);
+	});
 	return output;
 }
 
 export void to_lowercase(std::string& string) {
-	std::transform(string.begin(), string.end(), string.begin(), [](unsigned char c) { return std::tolower(c); });
+	std::ranges::transform(string, string.begin(), [](unsigned char c) {
+		return std::tolower(c);
+	});
 }
 
 export void normalize_path_to_backslash(std::string& path) {
-	std::transform(path.begin(), path.end(), path.begin(), [](const unsigned char c) { return c == '/' ? '\\' : c; });
+	std::ranges::transform(path, path.begin(), [](const unsigned char c) {
+		return c == '/' ? '\\' : c;
+	});
 }
 
 export void normalize_path_to_forward_slash(std::string& path) {
-	std::transform(path.begin(), path.end(), path.begin(), [](const unsigned char c) { return c == '\\' ? '/' : c; });
+	std::ranges::transform(path, path.begin(), [](const unsigned char c) {
+		return c == '\\' ? '/' : c;
+	});
 }
 
 // trim from start (in place)
 export void ltrim(std::string& s) {
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](const int ch) {
 				return !std::isspace(ch);
 			}));
 }
 
 // trim from end (in place)
 export void rtrim(std::string& s) {
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) {
+	s.erase(
+		std::find_if(
+			s.rbegin(),
+			s.rend(),
+			[](const int ch) {
 				return !std::isspace(ch);
-			}).base(),
-			s.end());
+			}
+		).base(),
+		s.end()
+	);
 }
 
 // trim from both ends (in place)
@@ -82,54 +96,104 @@ export void trim(std::string& s) {
 }
 
 export bool is_number(const std::string& s) {
-	return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) { return !std::isdigit(c); }) == s.end();
+	return !s.empty()
+		&& std::find_if(
+			   s.begin(),
+			   s.end(),
+			   [](const char c) {
+				   return !std::isdigit(c);
+			   }
+		   )
+		== s.end();
+}
+
+export std::vector<std::string> split_string_escaped(const std::string_view input) {
+	std::vector<std::string> result;
+	// Pre-allocate space for some fields to avoid initial reallocations
+	result.reserve(std::count(input.begin(), input.end(), ',') + 1);
+
+	const char* start = input.data();
+	const char* curr = start;
+	const char* end = start + input.size();
+	bool in_quotes = false;
+
+	while (curr < end) {
+		if (*curr == '"') {
+			in_quotes = !in_quotes;
+		} else if (*curr == ',' && !in_quotes) {
+			// Create the string in one shot from the range
+			result.emplace_back(start, curr - start);
+			start = curr + 1;
+		}
+		curr++;
+	}
+
+	// Add the final piece
+	result.emplace_back(start, end - start);
+	return result;
 }
 
 export std::string read_text_file(const fs::path& path) {
-	std::ifstream textfile(path.c_str());
-	std::string line;
-	std::string text;
+	std::ifstream file(path, std::ios::binary | std::ios::ate);
 
-	if (!textfile.is_open())
+	if (!file) {
 		return "";
-
-	while (getline(textfile, line)) {
-		text += line + "\n";
 	}
+
+	const auto size = file.tellg();
+	if (size <= 0) {
+		return "";
+	}
+
+	std::string text;
+	text.resize(size);
+
+	file.seekg(0, std::ios::beg);
+	file.read(text.data(), size);
 
 	return text;
 }
 
-// Splits a string
-export std::vector<std::string> split_string_escaped(const std::string_view input) {
-	std::vector<std::string> result;
-	std::string current;
-	bool in_quotes = false;
+export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
+	// Open at the end (ate) to get size in one go
+	std::ifstream stream(path, std::ios::binary | std::ios::ate);
 
-	for (char c : input) {
-		if (c == '"') {
-			in_quotes = !in_quotes;
-		} else if (c == ',' && !in_quotes) {
-			result.push_back(current);
-			current.clear();
-		} else {
-			current.push_back(c);
-		}
+	if (!stream.is_open()) {
+		return std::unexpected("Unable to open file: " + path.string());
 	}
-	result.push_back(current);
-	return result;
+
+	const auto size = static_cast<std::size_t>(stream.tellg());
+
+	// Handle empty files gracefully
+	if (size == 0) {
+		return BinaryReader(std::vector<u8, default_init_allocator<u8>> {});
+	}
+
+	// Rewind to beginning
+	stream.seekg(0, std::ios::beg);
+
+	std::vector<u8, default_init_allocator<u8>> buffer(size);
+
+	// Use the stream buffer directly for maximum throughput
+	if (!stream.read(reinterpret_cast<char*>(buffer.data()), size)) {
+		return std::unexpected("Error during read of file: " + path.string());
+	}
+
+	return BinaryReader(std::move(buffer));
 }
 
-export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
-	std::ifstream stream(path, std::ios::binary);
-	if (stream) {
-		return BinaryReader(
-			std::vector<u8, default_init_allocator<u8>>(std::istreambuf_iterator(stream), std::istreambuf_iterator<char>())
-		);
-	} else {
-		return std::unexpected("Unable to open file");
-	}
-};
+// export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
+// 	const auto size = std::filesystem::file_size(path);
+// 	std::vector<u8, default_init_allocator<u8>> buffer(size);
+// 	std::ifstream stream(path, std::ios::binary);
+//
+// 	if (stream) {
+// 		stream.read(reinterpret_cast<char*>(buffer.data()), size);
+// 		return BinaryReader(std::move(buffer));
+// 	} else {
+// 		return std::unexpected("Unable to open file");
+// 	}
+// };
 
 export struct ItemSet {
 	std::vector<std::pair<int, std::string>> items;
@@ -139,6 +203,7 @@ export struct ItemSet {
 export glm::vec2 sign_not_zero(glm::vec2 v) {
 	return glm::vec2((v.x >= 0.f) ? +1.f : -1.f, (v.y >= 0.f) ? +1.f : -1.f);
 }
+
 // Assume normalized input. Output is on [-1, 1] for each component.
 export glm::vec2 float32x3_to_oct(glm::vec3 v) {
 	// Project the sphere onto the octahedron, and then onto the xy plane
@@ -167,7 +232,7 @@ export bool intersect_aabb(const glm::vec3& aabb_min, const glm::vec3& aabb_max,
 	const glm::vec3 t2 = (aabb_max - origin) / direction;
 	const glm::vec3 tmin = glm::min(t1, t2);
 	const glm::vec3 tmax = glm::max(t1, t2);
-	
+
 	return glm::min(tmax.x, glm::min(tmax.y, tmax.z)) > glm::max(glm::max(tmin.x, 0.f), glm::max(tmin.y, tmin.z));
 }
 
@@ -179,7 +244,8 @@ export bool intersect_sphere(const glm::vec3& origin, const glm::vec3& direction
 }
 
 // Only works with uniform scaling
-export void transform_aabb_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
+export void
+transform_aabb_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
 	new_min = transform[3];
 	new_max = transform[3];
 	for (size_t i = 0; i < 3; i++) {
@@ -198,7 +264,8 @@ export void transform_aabb_uniform(const glm::vec3& min, const glm::vec3& max, g
 }
 
 // Works with non uniform scaling. For uniform scaling use the faster transform_aabb_uniform()
-export void transform_aabb_non_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
+export void
+transform_aabb_non_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3& new_min, glm::vec3& new_max, const glm::mat4& transform) {
 	glm::vec4 p1 = transform * glm::vec4(min, 1.f);
 	glm::vec4 p2 = transform * glm::vec4(max.x, min.y, min.z, 1.f);
 	glm::vec4 p3 = transform * glm::vec4(max.x, max.y, min.z, 1.f);

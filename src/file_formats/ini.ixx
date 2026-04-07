@@ -3,7 +3,7 @@ export module INI;
 import std;
 import Utilities;
 import Hierarchy;
-import no_init_allocator;
+import Utilities;
 import <absl/strings/str_split.h>;
 import "absl/strings/str_join.h";
 import UnorderedMap;
@@ -22,14 +22,17 @@ namespace ini {
 		}
 
 		void load(const fs::path& path, bool local = false) {
-			std::vector<uint8_t, default_init_allocator<uint8_t>> buffer;
-			if (local) {
-				std::ifstream stream(path, std::ios::binary);
-				buffer = std::vector<uint8_t, default_init_allocator<uint8_t>>(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
-			} else {
-				buffer = hierarchy.open_file(path).value().buffer;
-			}
-			std::string_view view(reinterpret_cast<char*>(buffer.data()), buffer.size());
+			const auto buffer = [&] {
+				if (local) {
+					auto res = read_file(path);
+					return std::move(res.value().buffer);
+				} else {
+					auto res = hierarchy.open_file(path);
+					return std::move(res.value().buffer);
+				}
+			}();
+
+			std::string_view view(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 
 			// Strip byte order marking
 			if (view.starts_with(std::string{ static_cast<char>(0xEF), static_cast<char>(0xBB), static_cast<char>(0xBF) })) {
