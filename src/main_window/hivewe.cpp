@@ -3,6 +3,7 @@
 #include "StormLib.h"
 
 import std;
+import GLThreadPool;
 import Hierarchy;
 import BinaryReader;
 import MPQ;
@@ -235,6 +236,7 @@ HiveWE::HiveWE(QWidget* parent)
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) { camera.position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z }; });
 	ui.widget->makeCurrent();
+	gl_thread_pool.init(8);
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
 

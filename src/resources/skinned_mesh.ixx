@@ -44,7 +44,7 @@ export class SkinnedMesh: public Resource {
 
 	uint32_t instance_vertex_count = 0;
 
-	GLuint vao;
+	GLuint vao = 0;
 	GLuint vertex_snorm_buffer;
 	GLuint uv_snorm_buffer;
 	GLuint normal_buffer;
@@ -89,12 +89,6 @@ export class SkinnedMesh: public Resource {
 		{
 			ScopedTimer t(profile_parse_ns);
 			mdx = std::make_shared<mdx::MDX>(reader);
-		}
-
-		{
-			ScopedTimer t(profile_gl_ns);
-			glGenVertexArrays(1, &vao);
-			glBindVertexArray(vao);
 		}
 
 		has_mesh = mdx->geosets.size();
@@ -355,13 +349,16 @@ export class SkinnedMesh: public Resource {
 			i.uv_sets.shrink_to_fit();
 		}
 
-		{
-			ScopedTimer t(profile_gl_ns);
-			glVertexArrayElementBuffer(vao, index_buffer);
-		}
+	}
+
+	// Called on first render and runs on the main GL context where VAOs live.
+	void setup_vao() {
+		glCreateVertexArrays(1, &vao);
+		glVertexArrayElementBuffer(vao, index_buffer);
 	}
 
 	~SkinnedMesh() {
+		glDeleteVertexArrays(1, &vao);
 		glDeleteBuffers(1, &vertex_snorm_buffer);
 		glDeleteBuffers(1, &uv_snorm_buffer);
 		glDeleteBuffers(1, &normal_buffer);
@@ -429,11 +426,14 @@ export class SkinnedMesh: public Resource {
 		layer_colors.clear();
 	}
 
-	void render_opaque(const bool render_hd, const bool render_lighting) const {
+	void render_opaque(const bool render_hd, const bool render_lighting) {
 		if (!has_mesh) {
 			return;
 		}
 
+		if (vao == 0) {
+			setup_vao();
+		}
 		glBindVertexArray(vao);
 
 		glUniform1i(4, skip_count);
@@ -529,11 +529,14 @@ export class SkinnedMesh: public Resource {
 		}
 	}
 
-	void render_transparent(const int instance_id, const bool render_hd, const bool render_lighting) const {
+	void render_transparent(const int instance_id, const bool render_hd, const bool render_lighting) {
 		if (!has_mesh) {
 			return;
 		}
 
+		if (vao == 0) {
+			setup_vao();
+		}
 		glBindVertexArray(vao);
 
 		glUniform1i(4, skip_count);

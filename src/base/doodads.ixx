@@ -6,6 +6,7 @@ export module Doodads;
 
 import std;
 import std.compat;
+import GLThreadPool;
 import Terrain;
 import Doodad;
 import BinaryReader;
@@ -40,7 +41,9 @@ const Doodad& as_doodad(const Doodad& t) {
 
 /// A class for that contains doodad and takes care of loading/saving war3map.doo files
 export class Doodads {
+	// TODO: this shouldn't be holding these (forever) as the resources will never be released, NOR does it clear cache right now due to object editor usage
 	hive::unordered_map<std::string, std::shared_ptr<SkinnedMesh>> id_to_mesh;
+	std::mutex mesh_mutex;
 
 	static constexpr int write_version = 8;
 	static constexpr int write_subversion = 11;
@@ -160,6 +163,26 @@ export class Doodads {
 	}
 
 	void create(Terrain& terrain, PathingMap& pathing_map) {
+		// Load meshes into cache, multithreaded
+		std::vector<std::future<void>> futures;
+		futures.reserve(doodads.size() + special_doodads.size());
+
+		for (const auto& i : doodads) {
+			futures.push_back(gl_thread_pool.submit([this, id = i.id, variation = i.variation]() {
+				get_mesh(id, variation);
+			}));
+		}
+		for (const auto& i : special_doodads) {
+			futures.push_back(gl_thread_pool.submit([this, id = i.id, variation = i.variation]() {
+				get_mesh(id, variation);
+			}));
+		}
+
+		for (auto& f : futures) {
+			f.get();
+		}
+
+		// Phase 2: serial init — assigns mesh pointers and builds skeletons (fast)
 		for (auto&& i : doodads) {
 			i.init(i.id, get_mesh(i.id, i.variation), terrain);
 		}
@@ -410,8 +433,11 @@ export class Doodads {
 
 	std::shared_ptr<SkinnedMesh> get_mesh(std::string id, const int variation) {
 		std::string full_id = id + std::to_string(variation);
-		if (id_to_mesh.contains(full_id)) {
-			return id_to_mesh[full_id];
+		{
+			std::lock_guard lock(mesh_mutex);
+			if (id_to_mesh.contains(full_id)) {
+				return id_to_mesh[full_id];
+			}
 		}
 
 		fs::path mesh_path;
@@ -446,23 +472,27 @@ export class Doodads {
 		// Mesh doesn't exist at all
 		if (!hierarchy.file_exists(mesh_path)) {
 			std::println("Invalid model file for {} with file path: {}", id, mesh_path.string());
-			id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt));
-			return id_to_mesh[full_id];
+			auto mesh = resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt);
+			std::lock_guard lock(mesh_mutex);
+			id_to_mesh.emplace(full_id, mesh);
+			return mesh;
 		}
 
+		std::shared_ptr<SkinnedMesh> mesh;
 		if (is_number(replaceable_id) && texture_name != "_") {
-			id_to_mesh.emplace(
-				full_id,
-				resource_manager.load<SkinnedMesh>(
-					mesh_path,
-					texture_name.string(),
-					std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))
-				)
+			mesh = resource_manager.load<SkinnedMesh>(
+				mesh_path,
+				texture_name.string(),
+				std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))
 			);
 		} else {
-			id_to_mesh.emplace(full_id, resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt));
+			mesh = resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt);
 		}
 
-		return id_to_mesh[full_id];
+		{
+			std::lock_guard lock(mesh_mutex);
+			id_to_mesh.emplace(full_id, mesh);
+		}
+		return mesh;
 	}
 };

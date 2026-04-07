@@ -294,8 +294,6 @@ export class Terrain: public QObject {
 		// Determine if cliff
 		compute_cliff_flags();
 
-		// Done parsing
-
 		hierarchy.tileset = tileset;
 
 		terrain_slk.load("TerrainArt/Terrain.slk");

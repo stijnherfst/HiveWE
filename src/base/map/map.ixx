@@ -366,6 +366,7 @@ export class Map: public QObject {
 		profile_reset();
 		doodads.load(terrain, info);
 		doodads.create(terrain, pathing_map);
+		glFinish(); // Ensure all GL work submitted on worker contexts is visible to the main context
 
 		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
 		profile_print();
@@ -392,6 +393,7 @@ export class Map: public QObject {
 		if (hierarchy.map_file_exists("war3mapUnits.doo")) {
 			units.load(terrain, info);
 			units.create();
+			glFinish(); // Ensure all GL work submitted on worker contexts is visible to the main context
 		}
 
 		std::println("Unit loading:\t {:>5}ms", timer.elapsed_ms());

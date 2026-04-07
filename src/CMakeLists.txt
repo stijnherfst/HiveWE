@@ -89,6 +89,7 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"custom_widgets/flow_layout.ixx"
 
 	"utilities/timer.ixx"
+	"utilities/gl_thread_pool.ixx"
 	"utilities/utilities.ixx"
 	"utilities/opengl_utilities.ixx"
 	"utilities/modification_tables.ixx" 
