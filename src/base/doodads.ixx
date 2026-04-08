@@ -344,6 +344,7 @@ export class Doodads {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them
 			// ToDo just use the numvar field from the SLKs
 			for (int i = 0; i < 20; i++) {
+				std::lock_guard lock(mesh_mutex);
 				id_to_mesh.erase(id + std::to_string(i));
 			}
 			for (auto& i : doodads) {
@@ -386,6 +387,7 @@ export class Doodads {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them
 			// ToDo just use the numvar field from the SLKs
 			for (int i = 0; i < 20; i++) {
+				std::lock_guard lock(mesh_mutex);
 				id_to_mesh.erase(id + std::to_string(i));
 			}
 			for (auto& i : doodads) {
@@ -426,8 +428,8 @@ export class Doodads {
 		std::string full_id = id + std::to_string(variation);
 		{
 			std::lock_guard lock(mesh_mutex);
-			if (id_to_mesh.contains(full_id)) {
-				return id_to_mesh[full_id];
+			if (const auto found = id_to_mesh.find(full_id); found != id_to_mesh.end()) {
+				return found->second;
 			}
 		}
 

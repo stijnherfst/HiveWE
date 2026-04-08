@@ -182,19 +182,6 @@ export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::
 	return BinaryReader(std::move(buffer));
 }
 
-// export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::string> {
-// 	const auto size = std::filesystem::file_size(path);
-// 	std::vector<u8, default_init_allocator<u8>> buffer(size);
-// 	std::ifstream stream(path, std::ios::binary);
-//
-// 	if (stream) {
-// 		stream.read(reinterpret_cast<char*>(buffer.data()), size);
-// 		return BinaryReader(std::move(buffer));
-// 	} else {
-// 		return std::unexpected("Unable to open file");
-// 	}
-// };
-
 export struct ItemSet {
 	std::vector<std::pair<int, std::string>> items;
 };
