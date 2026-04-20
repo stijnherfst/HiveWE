@@ -16,8 +16,8 @@ export enum class TerrainUndoType {
 	water
 };
 
-export class TerrainGenericAction final : public WorldCommand {
-public:
+export class TerrainGenericAction final: public WorldCommand {
+  public:
 	QRect area;
 	std::vector<Corner> old_corners;
 	std::vector<Corner> new_corners;
@@ -45,6 +45,10 @@ public:
 			ctx.terrain.update_water(area);
 		}
 
+		if (undo_type == TerrainUndoType::water) {
+			ctx.terrain.update_water(area);
+		}
+
 		ctx.terrain.update_minimap();
 		ctx.units.update_area(area, ctx.terrain);
 	}
@@ -68,6 +72,10 @@ public:
 			ctx.terrain.update_ground_heights(area);
 			ctx.terrain.update_cliff_meshes(area);
 			ctx.terrain.update_ground_textures(area);
+			ctx.terrain.update_water(area);
+		}
+
+		if (undo_type == TerrainUndoType::water) {
 			ctx.terrain.update_water(area);
 		}
 

@@ -298,7 +298,7 @@ export class Units {
 		hierarchy.map_file_write("war3mapUnits.doo", writer.buffer);
 	}
 
-	void update_area(const QRect& area, const Terrain& terrain) {
+	void update_area(const QRectF& area, const Terrain& terrain) {
 		for (auto&& i : query_area(area)) {
 			i->position.z = terrain.interpolated_height(i->position.x, i->position.y, true);
 			i->update();

@@ -98,14 +98,6 @@ void TerrainPalette::update_cell_operator_gui() {
 		QSignalBlocker blocker(ui.removeBoundary);
 		ui.removeBoundary->setChecked(is_enabled && operation == CellOperator::cell_operation::remove_boundary);
 	}
-	{
-		QSignalBlocker blocker(ui.addHole);
-		ui.addHole->setChecked(is_enabled && operation == CellOperator::cell_operation::add_hole);
-	}
-	{
-		QSignalBlocker blocker(ui.removeHole);
-		ui.removeHole->setChecked(is_enabled && operation == CellOperator::cell_operation::remove_hole);
-	}
 }
 
 void TerrainPalette::update_deformation_operator_gui() {
@@ -348,18 +340,6 @@ void TerrainPalette::setup_cell_operator() {
 	});
 	connect(ui.removeBoundary, &QPushButton::clicked, [&]() {
 		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::remove_boundary;
-		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
-		brush.activate_operator(brush.cell_operator);
-		update_operator_gui();
-	});
-	connect(ui.addHole, &QPushButton::clicked, [&]() {
-		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::add_hole;
-		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
-		brush.activate_operator(brush.cell_operator);
-		update_operator_gui();
-	});
-	connect(ui.removeHole, &QPushButton::clicked, [&]() {
-		brush.cell_operator->cell_operation_type = CellOperator::cell_operation::remove_hole;
 		brush.cell_operator->set_brush_type(TerrainOperator::brush_type::cell);
 		brush.activate_operator(brush.cell_operator);
 		update_operator_gui();

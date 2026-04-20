@@ -5,7 +5,6 @@
 #include <vector>
 #include <algorithm>
 
-// Forward declaration to avoid circular dependency
 class TerrainBrush;
 
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...
@@ -23,7 +22,7 @@ class TerrainOperator {
 	}
 
 	virtual void apply_begin(const QRect& area, int center_x, int center_y) = 0;
-	virtual void apply(const QRect& area, double frame_delta, QRect& updated_area) = 0;
+	virtual QRect apply(const QRect& area, double frame_delta) = 0;
 	virtual void apply_end() = 0;
 
 	/// This function determines whether two operators can be used simultaneously.
@@ -35,7 +34,7 @@ class TerrainOperator {
 		return is_active;
 	}
 
-	/// Changes brush type
+	/// Changes brush type (can be centered on corners or cells)
 	void set_brush_type(brush_type brush_type);
 
   protected:
@@ -60,7 +59,7 @@ class HeightOperator: public TerrainOperator {
 	HeightOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	void apply(const QRect& area, double frame_delta, QRect& updated_area) override;
+	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
 	bool can_combine_with(TerrainOperator* other) override;
 
@@ -76,7 +75,7 @@ class TextureOperator: public TerrainOperator {
 	TextureOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	void apply(const QRect& area, double frame_delta, QRect& updated_area) override;
+	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
 	bool can_combine_with(TerrainOperator* other) override;
 };
@@ -100,9 +99,14 @@ class CliffOperator: public TerrainOperator {
 	int cliff_id = 0;
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	void apply(const QRect& area, double frame_delta, QRect& updated_area) override;
+	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
 	bool can_combine_with(TerrainOperator* other) override;
+
+	void check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const;
+	void update_ramp(const int i, const int j, const int horizontal, const int vertical, QRect& area);
+	QRect apply_cliffs(const QRect& area, double frame_delta);
+	QRect apply_ramps(const QRect& area, double frame_delta);
 
   private:
 	int layer_height = 0;
@@ -117,13 +121,15 @@ class CellOperator: public TerrainOperator {
 		remove_water,
 		add_boundary,
 		remove_boundary,
+
+		// future work
 		add_hole,
 		remove_hole
 	};
 	cell_operation cell_operation_type = cell_operation::add_boundary;
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	void apply(const QRect& area, double frame_delta, QRect& updated_area) override;
+	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
 	bool can_combine_with(TerrainOperator* other) override;
 

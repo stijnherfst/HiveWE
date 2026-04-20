@@ -22,7 +22,8 @@ glm::vec2 Brush::get_position() const {
 	const bool even_height = size.y % (2 * static_cast<size_t>(size_granularity)) == 0;
 
 	glm::vec2 even = glm::floor(glm::vec2(input_handler.mouse_world) * position_granularity + 0.5f) / position_granularity;
-	glm::vec2 uneven = glm::floor(glm::vec2(input_handler.mouse_world) * position_granularity) / position_granularity + (1.f / position_granularity / 2.f);
+	glm::vec2 uneven =
+		glm::floor(glm::vec2(input_handler.mouse_world) * position_granularity) / position_granularity + (1.f / position_granularity / 2.f);
 
 	if (center_on_tile_corner) {
 		std::swap(even, uneven);

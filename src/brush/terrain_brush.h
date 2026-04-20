@@ -67,12 +67,14 @@ class TerrainBrush: public Brush {
 	/// active operators which cannot be used simultaneously
 	void activate_operator(TerrainOperator* target);
 
-  private:
-	// undo/redo stuff
-	QRect texture_height_area;
-	QRect cliff_area;
-	QRect pathing_area;
+	/// Converts a rect in pathign resoltion to a rect in terrain resolution
+	static QRect from_pathing_rect(const QRect& rect);
 
+  private:
+	/// area which was modified in the last operation in pathing map resolution
+	QRect updated_area;
+
+	// undo/redo stuff
 	std::vector<Doodad> pre_change_doodads;
 	std::map<int, Doodad> post_change_doodads;
 
@@ -84,4 +86,7 @@ class TerrainBrush: public Brush {
 	// terrain operator stuff
 	std::vector<TerrainOperator*> terrain_operators;
 	void setup_operators();
+
+	// checks if there is an active opreator
+	bool has_active_operators();
 };
