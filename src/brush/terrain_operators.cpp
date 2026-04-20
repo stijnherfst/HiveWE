@@ -22,14 +22,16 @@ void TerrainOperator::set_brush_type(brush_type brush_type) {
 }
 
 void HeightOperator::apply_begin(const QRect& area, int center_x, int center_y) {
-	deformation_height_ground = map->terrain.corners[center_x][center_y].height;
-	deformation_height_water = map->terrain.corners[center_x][center_y].water_height;
+	auto& terrain = map->terrain;
+	const size_t center_idx = terrain.ci(center_x, center_y);
+	deformation_height_ground = terrain.corner_height[center_idx];
+	deformation_height_water = terrain.corner_water_height[center_idx];
 }
 
 QRect HeightOperator::apply(const QRect& area, double frame_delta) {
-	int width = map->terrain.width;
-	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
 	const glm::vec2 position = brush->get_position();
 
 	std::vector<std::vector<float>> heights(area.width(), std::vector<float>(area.height()));
@@ -37,8 +39,9 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 
 	for (int i = area.x(); i < area.x() + area.width(); i++) {
 		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			float new_height_ground = corners[i][j].height;
-			float new_height_water = corners[i][j].water_height;
+			const size_t idx = terrain.ci(i, j);
+			float new_height_ground = terrain.corner_height[idx];
+			float new_height_water = terrain.corner_water_height[idx];
 
 			heights[i - area.x()][j - area.y()] = new_height_ground;
 			water_heights[i - area.x()][j - area.y()] = new_height_water;
@@ -93,33 +96,32 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 					};
 
 					new_height_ground = smooth_height(i, j, new_height_ground, heights, [&](int k, int l) {
-						return corners[k][l].height;
+						return terrain.corner_height[terrain.ci(k, l)];
 					});
 
 					new_height_water = smooth_height(i, j, new_height_water, water_heights, [&](int k, int l) {
-						return corners[k][l].water_height;
+						return terrain.corner_water_height[terrain.ci(k, l)];
 					});
 					break;
 				}
 			}
 
-			// ToDo why 15.98?
 			if (brush->deform_ground) {
-				corners[i][j].height = std::clamp(new_height_ground, -16.f, 15.98f);
+				terrain.corner_height[idx] = std::clamp(new_height_ground, Terrain::min_ground_height, Terrain::max_ground_height);
 			}
 
 			if (brush->deform_water) {
-				corners[i][j].water_height = std::clamp(new_height_water, -16.f, 15.98f);
+				terrain.corner_water_height[idx] = std::clamp(new_height_water, Terrain::min_ground_height, Terrain::max_ground_height);
 			}
 		}
 	}
 
 	if (brush->deform_ground) {
-		map->terrain.update_ground_heights(area);
+		terrain.update_ground_heights(area);
 	}
 
 	if (brush->deform_water) {
-		map->terrain.update_water(area.adjusted(0, 0, 1, 1));
+		terrain.update_water(area.adjusted(0, 0, 1, 1));
 	}
 
 	QRect modified_area = QRect(area.x() * 4, area.y() * 4, area.width() * 4, area.height() * 4);
@@ -149,14 +151,14 @@ void TextureOperator::apply_begin(const QRect& area, int center_x, int center_y)
 }
 
 QRect TextureOperator::apply(const QRect& area, double frame_delta) {
-	int width = map->terrain.width;
-	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
 	const glm::vec2 position = brush->get_position();
 
 	// get the tile texture id, do nothing if doesn't exist
-	auto it = map->terrain.ground_texture_to_id.find(tile_id);
-	if (it == map->terrain.ground_texture_to_id.end()) {
+	auto it = terrain.ground_texture_to_id.find(tile_id);
+	if (it == terrain.ground_texture_to_id.end()) {
 		return QRect();
 	}
 	const int id = it->second;
@@ -168,13 +170,15 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 				continue;
 			}
 
-			if (id == map->terrain.blight_texture) {
+			const size_t idx = terrain.ci(i, j);
+
+			if (id == terrain.blight_texture) {
 				// Blight shouldn't be set when there is a cliff near
 				bool cliff_near = false;
 				for (int k = -1; k <= 1; k++) {
 					for (int l = -1; l <= 1; l++) {
 						if (i + k >= 0 && i + k <= width && j + l >= 0 && j + l <= height) {
-							cliff_near = cliff_near || corners[i + k][j + l].cliff;
+							cliff_near = cliff_near || terrain.corner_cliff[terrain.ci(i + k, j + l)];
 						}
 					}
 				}
@@ -183,16 +187,16 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 					continue;
 				}
 
-				corners[i][j].blight = true;
+				terrain.corner_blight[idx] = true;
 			} else {
-				corners[i][j].blight = false;
-				corners[i][j].ground_texture = id;
-				corners[i][j].set_random_variation();
+				terrain.corner_blight[idx] = false;
+				terrain.corner_ground_texture[idx] = id;
+				terrain.corner_ground_variation[idx] = random_ground_variation();
 			}
 		}
 	}
 
-	map->terrain.update_ground_textures(area);
+	terrain.update_ground_textures(area);
 
 	// modified area (in pathing resolution)
 	QRect modified_area = QRect(area.x() * 4 - 2, area.y() * 4 - 2, area.width() * 4, area.height() * 4);
@@ -212,16 +216,15 @@ bool TextureOperator::can_combine_with(TerrainOperator* other) {
 }
 
 void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
-	auto& corners = map->terrain.corners;
-	layer_height = corners[center_x][center_y].layer_height;
+	auto& terrain = map->terrain;
+	const size_t center_idx = terrain.ci(center_x, center_y);
+	layer_height = terrain.corner_layer_height[center_idx];
+
 	switch (cliff_operation_type) {
 		case cliff_operation::shallow_water:
-			if (!corners[center_x][center_y].water) {
+			if (!terrain.corner_water[center_idx]) {
 				layer_height -= 1;
-			} else if (
-				corners[center_x][center_y].final_water_height(map->terrain.water_offset)
-				> corners[center_x][center_y].final_ground_height() + 1
-			) {
+			} else if (terrain.corner_final_water_height(center_x, center_y) > terrain.corner_final_ground_height(center_x, center_y) + 1) {
 				layer_height += 1;
 			}
 			break;
@@ -232,12 +235,9 @@ void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 			layer_height -= 2;
 			break;
 		case cliff_operation::deep_water:
-			if (!corners[center_x][center_y].water) {
+			if (!terrain.corner_water[center_idx]) {
 				layer_height -= 2;
-			} else if (
-				corners[center_x][center_y].final_water_height(map->terrain.water_offset)
-				< corners[center_x][center_y].final_ground_height() + 1
-			) {
+			} else if (terrain.corner_final_water_height(center_x, center_y) < terrain.corner_final_ground_height(center_x, center_y) + 1) {
 				layer_height -= 1;
 			}
 			break;
@@ -256,9 +256,9 @@ void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 }
 
 QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
-	int width = map->terrain.width;
-	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
 	const glm::vec2 position = brush->get_position();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
 	const glm::ivec2 pos = mouse_pos - brush->size.x / 4.f / 2.f + 1.f;
@@ -271,7 +271,9 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 				continue;
 			}
 
-			corners[i][j].layer_height = layer_height;
+			const size_t idx = terrain.ci(i, j);
+			terrain.corner_ramp[idx] = false;
+			terrain.corner_layer_height[idx] = layer_height;
 
 			switch (cliff_operation_type) {
 				case cliff_operation::lower1:
@@ -279,27 +281,26 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 				case cliff_operation::level:
 				case cliff_operation::raise1:
 				case cliff_operation::raise2:
-					if (corners[i][j].water) {
+					if (terrain.corner_water[idx]) {
 						if (brush->enforce_water_height_limits
-							&& corners[i][j].final_water_height(map->terrain.water_offset) < corners[i][j].final_ground_height()) {
-							corners[i][j].water = false;
+							&& terrain.corner_final_water_height(i, j) < terrain.corner_final_ground_height(i, j)) {
+							terrain.corner_water[idx] = false;
 						}
 					}
 					break;
 				case cliff_operation::shallow_water:
-					corners[i][j].water = true;
-					corners[i][j].water_height = corners[i][j].layer_height - 1;
+					terrain.corner_water[idx] = true;
+					terrain.corner_water_height[idx] = terrain.corner_layer_height[idx] - 1;
 					break;
 				case cliff_operation::deep_water:
-					corners[i][j].water = true;
-					corners[i][j].water_height = corners[i][j].layer_height;
+					terrain.corner_water[idx] = true;
+					terrain.corner_water_height[idx] = terrain.corner_layer_height[idx];
 					break;
 			}
 
 			check_nearby(pos.x, pos.y, i, j, expanded_area);
 		}
 	}
-	//}
 
 	// Bounds check
 	expanded_area = expanded_area.intersected({0, 0, width - 1, height - 1});
@@ -307,36 +308,37 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 	// Determine if cliff
 	for (int i = expanded_area.x(); i <= expanded_area.right(); i++) {
 		for (int j = expanded_area.y(); j <= expanded_area.bottom(); j++) {
-			Corner& bottom_left = map->terrain.corners[i][j];
-			Corner& bottom_right = map->terrain.corners[i + 1][j];
-			Corner& top_left = map->terrain.corners[i][j + 1];
-			Corner& top_right = map->terrain.corners[i + 1][j + 1];
+			const size_t bl = terrain.ci(i, j);
+			const size_t br = terrain.ci(i + 1, j);
+			const size_t tl = terrain.ci(i, j + 1);
+			const size_t tr = terrain.ci(i + 1, j + 1);
 
-			bottom_left.cliff = bottom_left.layer_height != bottom_right.layer_height || bottom_left.layer_height != top_left.layer_height
-				|| bottom_left.layer_height != top_right.layer_height;
+			terrain.corner_cliff[bl] = terrain.corner_layer_height[bl] != terrain.corner_layer_height[br]
+				|| terrain.corner_layer_height[bl] != terrain.corner_layer_height[tl]
+				|| terrain.corner_layer_height[bl] != terrain.corner_layer_height[tr];
 
 			// assign proper cliff texture
-			bottom_left.cliff_texture = cliff_id;
+			terrain.corner_cliff_texture[bl] = cliff_id;
 
 			// placing cliffs should delete blight
-			if (bottom_left.cliff) {
-				bottom_left.blight = false;
-				bottom_right.blight = false;
-				top_left.blight = false;
-				top_right.blight = false;
+			if (terrain.corner_cliff[bl]) {
+				terrain.corner_blight[bl] = false;
+				terrain.corner_blight[br] = false;
+				terrain.corner_blight[tl] = false;
+				terrain.corner_blight[tr] = false;
 			}
 		}
 	}
 
 	QRect tile_area = expanded_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
 
-	map->terrain.update_cliff_meshes(tile_area);
-	map->terrain.update_ground_textures(expanded_area);
-	map->terrain.update_ground_heights(expanded_area.adjusted(0, 0, 1, 1));
-	map->terrain.update_water(tile_area.adjusted(0, 0, 1, 1));
+	terrain.update_cliff_meshes(tile_area);
+	terrain.update_ground_textures(expanded_area);
+	terrain.update_ground_heights(expanded_area.adjusted(0, 0, 1, 1));
+	terrain.update_water(tile_area.adjusted(0, 0, 1, 1));
 
 	if (cliff_operation_type == cliff_operation::shallow_water || cliff_operation_type == cliff_operation::deep_water) {
-		map->terrain.upload_water_heights();
+		terrain.upload_water_heights();
 	}
 
 	// modified area (in pathing resolution)
@@ -345,9 +347,9 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 }
 
 QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
-	int width = map->terrain.width;
-	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
 	const glm::vec2 position = brush->get_position();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
 	const glm::ivec2 pos = mouse_pos - brush->size.x / 4.f / 2.f + 1.f;
@@ -369,9 +371,9 @@ QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
 
 	// apply the changes in viewport
 	QRect viewport_area = modified_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
-	map->terrain.update_cliff_meshes(viewport_area);
-	map->terrain.update_ground_textures(viewport_area);
-	map->terrain.update_ground_heights(viewport_area);
+	terrain.update_cliff_meshes(viewport_area);
+	terrain.update_ground_textures(viewport_area);
+	terrain.update_ground_heights(viewport_area);
 
 	// convert to pathing resolution
 	modified_area =
@@ -402,7 +404,8 @@ bool CliffOperator::can_combine_with(TerrainOperator* other) {
 
 /// Make this an iterative function instead to avoid stack overflows
 void CliffOperator::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, map->terrain.width, map->terrain.height});
+	auto& terrain = map->terrain;
+	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
 	for (int k = bounds.x(); k <= bounds.right(); k++) {
 		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
@@ -410,10 +413,11 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 				continue;
 			}
 
-			int difference = map->terrain.corners[i][j].layer_height - map->terrain.corners[k][l].layer_height;
+			int difference = terrain.corner_layer_height[terrain.ci(i, j)] - terrain.corner_layer_height[terrain.ci(k, l)];
 			if (std::abs(difference) > 2 && !brush->contains(glm::ivec2(begx + (k - i), begy + (l - k)))) {
-				map->terrain.corners[k][l].layer_height = map->terrain.corners[i][j].layer_height - std::clamp(difference, -2, 2);
-				map->terrain.corners[k][l].ramp = false;
+				terrain.corner_layer_height[terrain.ci(k, l)] =
+					terrain.corner_layer_height[terrain.ci(i, j)] - std::clamp(difference, -2, 2);
+				terrain.corner_ramp[terrain.ci(k, l)] = false;
 
 				area.setX(std::min(area.x(), k - 1));
 				area.setY(std::min(area.y(), l - 1));
@@ -428,13 +432,14 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 
 void CliffOperator::update_ramp(const int i, const int j, int horizontal, int vertical, QRect& rect) {
 	// note: this function expects that horizontal and vertical are -1, 0 or 1
-	auto& corners = map->terrain.corners;
-	int width = map->terrain.width;
-	int height = map->terrain.height;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
+	const size_t idx = terrain.ci(i, j);
 
-	int origin_level = corners[i][j].layer_height;
+	int origin_level = terrain.corner_layer_height[idx];
 	int target_level = origin_level - 1;
-	int cliff_tex = corners[i][j].cliff_texture;
+	int cliff_tex = terrain.corner_cliff_texture[idx];
 
 	bool allow_ramp_horizontal = horizontal != 0;
 	bool allow_ramp_vertical = vertical != 0;
@@ -442,7 +447,7 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 
 	// lambda which checks if a corner is valid to place a ramp
 	auto valid = [&](int x, int y) {
-		return x >= 0 && x < width && y >= 0 && y < height && corners[x][y].layer_height == target_level;
+		return x >= 0 && x < width && y >= 0 && y < height && terrain.corner_layer_height[terrain.ci(x, y)] == target_level;
 	};
 
 	// lambda to check ramp placement in a given direction, returns bool
@@ -460,20 +465,23 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 		}
 
 		// check perpendicular neighbours - if they are higher, the ramp cannot be placed
-		if (corners[i + dir_y][j + dir_x].layer_height > origin_level || corners[i - dir_y][j - dir_x].layer_height > origin_level) {
+		if (terrain.corner_layer_height[terrain.ci(i + dir_y, j + dir_x)] > origin_level
+			|| terrain.corner_layer_height[terrain.ci(i - dir_y, j - dir_x)] > origin_level) {
 			return false;
 		}
 
 		// it is illegal to place a ramp right next to the cliff edge which contains
 		// ONLY the ramp in the opposite direction (horizontal vs vertical)
 		for (int side : {-1, 1}) {
-			if (corners[i][j + side].ramp
-				&& (!corners[i + dir_x][j + side + dir_y].ramp || !corners[i + 2 * dir_x][j + side + 2 * dir_y].ramp)) {
+			if (terrain.corner_ramp[terrain.ci(i, j + side)]
+				&& (!terrain.corner_ramp[terrain.ci(i + dir_x, j + side + dir_y)]
+					|| !terrain.corner_ramp[terrain.ci(i + 2 * dir_x, j + side + 2 * dir_y)])) {
 				return false;
 			}
 
-			if (corners[i + side][j].ramp
-				&& (!corners[i + side + dir_x][j + dir_y].ramp || !corners[i + side + 2 * dir_x][j + 2 * dir_y].ramp)) {
+			if (terrain.corner_ramp[terrain.ci(i + side, j)]
+				&& (!terrain.corner_ramp[terrain.ci(i + side + dir_x, j + dir_y)]
+					|| !terrain.corner_ramp[terrain.ci(i + side + 2 * dir_x, j + 2 * dir_y)])) {
 				return false;
 			}
 		}
@@ -503,49 +511,53 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 	// place valid ramps
 	if (allow_ramp_horizontal) {
 		for (int step = 0; step <= 2; ++step) {
-			corners[i + step * horizontal][j].ramp = true;
-			corners[i + step * horizontal][j].cliff_texture = cliff_tex;
+			terrain.corner_ramp[terrain.ci(i + step * horizontal, j)] = true;
+			terrain.corner_cliff_texture[terrain.ci(i + step * horizontal, j)] = cliff_tex;
 		}
 	}
 
 	if (allow_ramp_vertical) {
 		for (int step = 0; step <= 2; ++step) {
-			corners[i][j + step * vertical].ramp = true;
-			corners[i][j + step * vertical].cliff_texture = cliff_tex;
+			terrain.corner_ramp[terrain.ci(i, j + step * vertical)] = true;
+			terrain.corner_cliff_texture[terrain.ci(i, j + step * vertical)] = cliff_tex;
 		}
 	}
 
 	if (allow_ramp_diagonal) {
 		for (int dx = 0; dx <= 2; ++dx) {
 			for (int dy = 0; dy <= 2; ++dy) {
-				corners[i + dx * horizontal][j + dy * vertical].ramp = true;
-				corners[i + dx * horizontal][j + dy * vertical].cliff_texture = cliff_tex;
+				terrain.corner_ramp[terrain.ci(i + dx * horizontal, j + dy * vertical)] = true;
+				terrain.corner_cliff_texture[terrain.ci(i + dx * horizontal, j + dy * vertical)] = cliff_tex;
 			}
 		}
 	}
 
 	// add missing center-piece ramp flags at all possible L-corners
 	if (allow_ramp_horizontal || allow_ramp_diagonal) {
-		if (valid(i + horizontal, j + 1) && corners[i][j].ramp && corners[i + 1][j].ramp && corners[i + 2][j].ramp && corners[i][j + 1].ramp
-			&& corners[i][j + 2].ramp) {
-			corners[i + horizontal][j + 1].ramp = true;
+		if (valid(i + horizontal, j + 1) && terrain.corner_ramp[terrain.ci(i, j)] && terrain.corner_ramp[terrain.ci(i + 1, j)]
+			&& terrain.corner_ramp[terrain.ci(i + 2, j)] && terrain.corner_ramp[terrain.ci(i, j + 1)]
+			&& terrain.corner_ramp[terrain.ci(i, j + 2)]) {
+			terrain.corner_ramp[terrain.ci(i + horizontal, j + 1)] = true;
 		}
 
-		if (valid(i + horizontal, j - 1) && corners[i][j].ramp && corners[i + 1][j].ramp && corners[i + 2][j].ramp && corners[i][j - 1].ramp
-			&& corners[i][j - 2].ramp) {
-			corners[i + horizontal][j - 1].ramp = true;
+		if (valid(i + horizontal, j - 1) && terrain.corner_ramp[terrain.ci(i, j)] && terrain.corner_ramp[terrain.ci(i + 1, j)]
+			&& terrain.corner_ramp[terrain.ci(i + 2, j)] && terrain.corner_ramp[terrain.ci(i, j - 1)]
+			&& terrain.corner_ramp[terrain.ci(i, j - 2)]) {
+			terrain.corner_ramp[terrain.ci(i + horizontal, j - 1)] = true;
 		}
 	}
 
 	if (allow_ramp_vertical || allow_ramp_diagonal) {
-		if (valid(i + 1, j + vertical) && corners[i][j].ramp && corners[i][j + 1].ramp && corners[i][j + 2].ramp && corners[i + 1][j].ramp
-			&& corners[i + 2][j].ramp) {
-			corners[i + 1][j + vertical].ramp = true;
+		if (valid(i + 1, j + vertical) && terrain.corner_ramp[terrain.ci(i, j)] && terrain.corner_ramp[terrain.ci(i, j + 1)]
+			&& terrain.corner_ramp[terrain.ci(i, j + 2)] && terrain.corner_ramp[terrain.ci(i + 1, j)]
+			&& terrain.corner_ramp[terrain.ci(i + 2, j)]) {
+			terrain.corner_ramp[terrain.ci(i + 1, j + vertical)] = true;
 		}
 
-		if (valid(i - 1, j + vertical) && corners[i][j].ramp && corners[i][j + 1].ramp && corners[i][j + 2].ramp && corners[i - 1][j].ramp
-			&& corners[i - 2][j].ramp) {
-			corners[i - 1][j + vertical].ramp = true;
+		if (valid(i - 1, j + vertical) && terrain.corner_ramp[terrain.ci(i, j)] && terrain.corner_ramp[terrain.ci(i, j + 1)]
+			&& terrain.corner_ramp[terrain.ci(i, j + 2)] && terrain.corner_ramp[terrain.ci(i - 1, j)]
+			&& terrain.corner_ramp[terrain.ci(i - 2, j)]) {
+			terrain.corner_ramp[terrain.ci(i - 1, j + vertical)] = true;
 		}
 	}
 
@@ -559,15 +571,17 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 }
 
 void CellOperator::apply_begin(const QRect& area, int center_x, int center_y) {
-	Corner& corner = map->terrain.corners[center_x][center_y];
-	int terrain_height = corner.layer_height - 2 + corner.height;
+	auto& terrain = map->terrain;
+	const size_t center_idx = terrain.ci(center_x, center_y);
+	int layer_height = terrain.corner_layer_height[center_idx];
+	float terrain_height = layer_height - 2 + terrain.corner_height[center_idx];
 	water_height = terrain_height + CellOperator::WATER_GROUND_ZERO + CellOperator::WATER_HEIGHT;
 }
 
 QRect CellOperator::apply(const QRect& area, double frame_delta) {
-	int width = map->terrain.width;
-	int height = map->terrain.height;
-	auto& corners = map->terrain.corners;
+	auto& terrain = map->terrain;
+	const int width = terrain.width;
+	const int height = terrain.height;
 	const glm::vec2 position = brush->get_position();
 
 	bool edits_water = cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water;
@@ -584,25 +598,27 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 				continue;
 			}
 
+			const size_t id = terrain.ci(i, j);
+
 			// (i, j) is the bottom-left corner here
 			if (cell_operation_type == cell_operation::add_water) {
-				if (!corners[i][j].water) {
-					corners[i][j].water = true;
-					corners[i][j].water_height = water_height;
+				if (!terrain.corner_water[id]) {
+					terrain.corner_water[id] = true;
+					terrain.corner_water_height[id] = water_height;
 				} else {
 					// if the water is not visible (below the ground), we want to incerase it's height
-					int terrain_height = corners[i][j].layer_height - 2 + corners[i][j].height;
-					if (corners[i][j].water_height <= terrain_height + CellOperator::WATER_GROUND_ZERO) {
-						corners[i][j].water_height = water_height;
+					int terrain_height = terrain.corner_layer_height[id] - 2 + terrain.corner_height[id];
+					if (terrain.corner_water_height[id] <= terrain_height + CellOperator::WATER_GROUND_ZERO) {
+						terrain.corner_water_height[id] = water_height;
 					}
 				}
 			} else if (cell_operation_type == cell_operation::remove_water) {
-				corners[i][j].water = false;
-				corners[i][j].water_height = 0;
+				terrain.corner_water[id] = false;
+				terrain.corner_water_height[id] = 0;
 			} else if (cell_operation_type == cell_operation::add_boundary) {
-				corners[i][j].boundary = true;
+				terrain.corner_boundary[id] = true;
 			} else if (cell_operation_type == cell_operation::remove_boundary) {
-				corners[i][j].boundary = false;
+				terrain.corner_boundary[id] = false;
 			} else if (cell_operation_type == cell_operation::add_hole) {
 				// future work
 			} else if (cell_operation_type == cell_operation::remove_hole) {
@@ -613,7 +629,7 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 
 	// finally, re-render the water if we changed it
 	if (edits_water) {
-		map->terrain.update_water(area.adjusted(0, 0, 1, 1));
+		terrain.update_water(area.adjusted(0, 0, 1, 1));
 	}
 
 	// modified area (in pathing resolution)

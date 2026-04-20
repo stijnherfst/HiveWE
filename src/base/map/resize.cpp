@@ -197,7 +197,7 @@ void Map::reset_map_edge_pathing(
 			if (outside_new) {
 				pathing_map.pathing_cells_static[j * width + i] = edge_pathing;
 			} else if (outside_old) {
-				pathing_map.pathing_cells_static[j * width + i] = terrain.get_terrain_pathing(i, j);
+				pathing_map.pathing_cells_static[j * width + i] = terrain.get_terrain_pathing(i, j, true, true, true);
 			}
 		}
 	}

@@ -455,14 +455,14 @@ void TerrainPalette::create_ribbon() {
 
 	QRibbonButton* deform_ground = new QRibbonButton;
 	deform_ground->setText("Ground");
-	deform_ground->setIcon(QIcon("data/icons/ribbon/heightmap32x32.png"));
+	deform_ground->setIcon(QIcon("data/icons/ribbon/heightmap.png"));
 	deform_ground->setCheckable(true);
 	deform_ground->setChecked(brush.deform_ground);
 	deformation_section->addWidget(deform_ground);
 
 	QRibbonButton* deform_water = new QRibbonButton;
 	deform_water->setText("Water");
-	deform_water->setIcon(QIcon("data/icons/ribbon/water32x32.png"));
+	deform_water->setIcon(QIcon("data/icons/ribbon/water.png"));
 	deform_water->setCheckable(true);
 	deform_water->setChecked(brush.deform_water);
 	deformation_section->addWidget(deform_water);
