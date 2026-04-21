@@ -17,7 +17,7 @@ class TerrainOperator {
 		cell
 	};
 
-	TerrainOperator(TerrainBrush* brush, brush_type brush_type) : brush(brush) {
+	TerrainOperator(TerrainBrush& brush, brush_type brush_type) : brush(&brush) {
 		set_brush_type(brush_type);
 	}
 
@@ -27,7 +27,7 @@ class TerrainOperator {
 
 	/// This function determines whether two operators can be used simultaneously.
 	/// For example, texture and cliff operators
-	virtual bool can_combine_with(TerrainOperator* other) = 0;
+	virtual bool can_combine_with(TerrainOperator& other) = 0;
 
 	/// Checks whether the operator is active or not
 	bool is_enabled() const {
@@ -56,12 +56,12 @@ class HeightOperator: public TerrainOperator {
 	};
 	deformation deformation_type = deformation::raise;
 
-	HeightOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::corner) {}
+	HeightOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
-	bool can_combine_with(TerrainOperator* other) override;
+	bool can_combine_with(TerrainOperator& other) override;
 
   private:
 	float deformation_height_ground;
@@ -72,17 +72,17 @@ class TextureOperator: public TerrainOperator {
   public:
 	std::string tile_id;
 
-	TextureOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::corner) {}
+	TextureOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
-	bool can_combine_with(TerrainOperator* other) override;
+	bool can_combine_with(TerrainOperator& other) override;
 };
 
 class CliffOperator: public TerrainOperator {
   public:
-	CliffOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::corner) {}
+	CliffOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
 
 	enum class cliff_operation {
 		lower2,
@@ -101,7 +101,7 @@ class CliffOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
-	bool can_combine_with(TerrainOperator* other) override;
+	bool can_combine_with(TerrainOperator& other) override;
 
 	void check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const;
 	void update_ramp(const int i, const int j, const int horizontal, const int vertical, QRect& area);
@@ -114,7 +114,7 @@ class CliffOperator: public TerrainOperator {
 
 class CellOperator: public TerrainOperator {
   public:
-	CellOperator(TerrainBrush* brush) : TerrainOperator(brush, brush_type::cell) {}
+	CellOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::cell) {}
 
 	enum class cell_operation {
 		add_water,
@@ -131,7 +131,7 @@ class CellOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end() override;
-	bool can_combine_with(TerrainOperator* other) override;
+	bool can_combine_with(TerrainOperator& other) override;
 
   private:
 	/// Water "ground zero" level in wc3

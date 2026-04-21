@@ -3,19 +3,15 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <array>
+#include <functional>
 
 #include "brush.h"
+#include "terrain_operators.h"
 
 import Doodad;
 import Terrain;
 import TerrainUndo;
-
-// Forward declarations
-class TerrainOperator;
-class HeightOperator;
-class TextureOperator;
-class CliffOperator;
-class CellOperator;
 
 class TerrainBrush: public Brush {
 	// Friend declarations for terrain operators
@@ -45,8 +41,6 @@ class TerrainBrush: public Brush {
 	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
 	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
 
-	void check_nearby(int begx, int begy, int i, int j, QRect& area) const;
-
 	void apply_begin() override;
 	void apply(double frame_delta) override;
 	void apply_end() override;
@@ -55,20 +49,26 @@ class TerrainBrush: public Brush {
 	void add_pathing_undo(const QRect& area);
 
 	// all terrain operators
-	CliffOperator* cliff_operator = nullptr;
-	HeightOperator* height_operator = nullptr;
-	TextureOperator* texture_operator = nullptr;
-	CellOperator* cell_operator = nullptr;
+	CliffOperator cliff_operator;
+	HeightOperator height_operator;
+	TextureOperator texture_operator;
+	CellOperator cell_operator;
 
 	/// Deactivates the specified operator
-	void deactivate_operator(TerrainOperator* target);
+	void deactivate_operator(TerrainOperator& target);
 
 	/// Activates the target terrain operator. Also disables all
 	/// active operators which cannot be used simultaneously
-	void activate_operator(TerrainOperator* target);
+	void activate_operator(TerrainOperator& target);
 
-	/// Converts a rect in pathign resoltion to a rect in terrain resolution
+	/// Returns the unclipped top-left corner of the brush area in terrain coordinates
+	glm::ivec2 get_unclipped_pos() const;
+
+	/// Converts a rect in pathing resoltion to a rect in terrain resolution
 	static QRect from_pathing_rect(const QRect& rect);
+
+	/// Converts a rect in terrain resolution to a rect in pathing resolution
+	static QRect to_pathing_rect(const QRect& rect);
 
   private:
 	/// area which was modified in the last operation in pathing map resolution
@@ -83,10 +83,8 @@ class TerrainBrush: public Brush {
 	int old_corners_height = 0;
 	std::vector<uint8_t> old_pathing_cells_static;
 
-	// terrain operator stuff
-	std::vector<TerrainOperator*> terrain_operators;
-	void setup_operators();
+	std::array<std::reference_wrapper<TerrainOperator>, 4> terrain_operators;
 
-	// checks if there is an active opreator
+	// checks if there is an active operator
 	bool has_active_operators();
 };

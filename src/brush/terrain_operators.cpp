@@ -32,21 +32,22 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	const glm::vec2 position = brush->get_position();
+	const glm::ivec2 pos = brush->get_unclipped_pos();
 
-	std::vector<std::vector<float>> heights(area.width(), std::vector<float>(area.height()));
-	std::vector<std::vector<float>> water_heights(area.width(), std::vector<float>(area.height()));
+	const int area_h = area.height();
+	std::vector<float> heights(area.width() * area_h);
+	std::vector<float> water_heights(area.width() * area_h);
 
-	for (int i = area.x(); i < area.x() + area.width(); i++) {
-		for (int j = area.y(); j < area.y() + area.height(); j++) {
+	for (int j = area.y(); j < area.y() + area.height(); j++) {
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			const size_t idx = terrain.ci(i, j);
 			float new_height_ground = terrain.corner_height[idx];
 			float new_height_water = terrain.corner_water_height[idx];
 
-			heights[i - area.x()][j - area.y()] = new_height_ground;
-			water_heights[i - area.x()][j - area.y()] = new_height_water;
+			heights[(i - area.x()) * area_h + (j - area.y())] = new_height_ground;
+			water_heights[(i - area.x()) * area_h + (j - area.y())] = new_height_water;
 
-			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
 			const int center_x = area.x() + area.width() * 0.5f;
@@ -85,7 +86,7 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 								if ((k < i || l < j) && k <= i &&
 									// The checks below are required because the code is just wrong (area is too small so we cant convolute a cell from at the edges of the area)
 									k - area.x() >= 0 && l - area.y() >= 0 && k < area.right() + 1 && l < area.bottom() + 1) {
-									accumulate += height_vector[k - area.x()][l - area.y()];
+									accumulate += height_vector[(k - area.x()) * area_h + (l - area.y())];
 								} else {
 									accumulate += get_corner_height(k, l);
 								}
@@ -95,13 +96,18 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 						return 0.8f * current_height + 0.2f * (accumulate / (acum_area.width() * acum_area.height() - 1));
 					};
 
-					new_height_ground = smooth_height(i, j, new_height_ground, heights, [&](int k, int l) {
-						return terrain.corner_height[terrain.ci(k, l)];
-					});
+					if (brush->deform_ground) {
+						new_height_ground = smooth_height(i, j, new_height_ground, heights, [&](int k, int l) {
+							return terrain.corner_height[terrain.ci(k, l)];
+						});
+					}
 
-					new_height_water = smooth_height(i, j, new_height_water, water_heights, [&](int k, int l) {
-						return terrain.corner_water_height[terrain.ci(k, l)];
-					});
+					if (brush->deform_water) {
+						new_height_water = smooth_height(i, j, new_height_water, water_heights, [&](int k, int l) {
+							return terrain.corner_water_height[terrain.ci(k, l)];
+						});
+					}
+
 					break;
 				}
 			}
@@ -124,7 +130,7 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 		terrain.update_water(area.adjusted(0, 0, 1, 1));
 	}
 
-	QRect modified_area = QRect(area.x() * 4, area.y() * 4, area.width() * 4, area.height() * 4);
+	QRect modified_area = TerrainBrush::to_pathing_rect(area);
 	return modified_area;
 }
 
@@ -140,7 +146,7 @@ void HeightOperator::apply_end() {
 	}
 }
 
-bool HeightOperator::can_combine_with(TerrainOperator* other) {
+bool HeightOperator::can_combine_with(TerrainOperator& other) {
 	// height operator is incompatible with every other operator
 	// (vanilla WE behaviour)
 	return false;
@@ -154,19 +160,14 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	const glm::vec2 position = brush->get_position();
+	const glm::ivec2 pos = brush->get_unclipped_pos();
 
-	// get the tile texture id, do nothing if doesn't exist
-	auto it = terrain.ground_texture_to_id.find(tile_id);
-	if (it == terrain.ground_texture_to_id.end()) {
-		return QRect();
-	}
-	const int id = it->second;
+	const int id = terrain.ground_texture_to_id.at(tile_id);
 
 	// Update textures
-	for (int i = area.x(); i < area.x() + area.width(); i++) {
-		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+	for (int j = area.y(); j < area.y() + area.height(); j++) {
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
 
@@ -199,7 +200,7 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 	terrain.update_ground_textures(area);
 
 	// modified area (in pathing resolution)
-	QRect modified_area = QRect(area.x() * 4 - 2, area.y() * 4 - 2, area.width() * 4, area.height() * 4);
+	QRect modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, -2, -2);
 	return modified_area;
 }
 
@@ -207,9 +208,9 @@ void TextureOperator::apply_end() {
 	brush->add_terrain_undo(TerrainBrush::from_pathing_rect(brush->updated_area), TerrainUndoType::texture);
 }
 
-bool TextureOperator::can_combine_with(TerrainOperator* other) {
+bool TextureOperator::can_combine_with(TerrainOperator& other) {
 	// texture operator can be combined with cliff operator
-	if (dynamic_cast<CliffOperator*>(other)) {
+	if (dynamic_cast<CliffOperator*>(&other)) {
 		return true;
 	}
 	return false;
@@ -259,15 +260,14 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	const glm::vec2 position = brush->get_position();
+	const glm::ivec2 pos = brush->get_unclipped_pos();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
-	const glm::ivec2 pos = mouse_pos - brush->size.x / 4.f / 2.f + 1.f;
 
 	QRect expanded_area = QRect(area.x() - 1, area.y() - 1, area.width() + 1, area.height() + 1).intersected({0, 0, width - 1, height - 1});
 
-	for (int i = area.x(); i < area.x() + area.width(); i++) {
-		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+	for (int j = area.y(); j < area.y() + area.height(); j++) {
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
 
@@ -306,8 +306,8 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 	expanded_area = expanded_area.intersected({0, 0, width - 1, height - 1});
 
 	// Determine if cliff
-	for (int i = expanded_area.x(); i <= expanded_area.right(); i++) {
-		for (int j = expanded_area.y(); j <= expanded_area.bottom(); j++) {
+	for (size_t i = expanded_area.x(); i <= static_cast<size_t>(expanded_area.right()); i++) {
+		for (size_t j = expanded_area.y(); j <= static_cast<size_t>(expanded_area.bottom()); j++) {
 			const size_t bl = terrain.ci(i, j);
 			const size_t br = terrain.ci(i + 1, j);
 			const size_t tl = terrain.ci(i, j + 1);
@@ -342,7 +342,7 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 	}
 
 	// modified area (in pathing resolution)
-	QRect modified_area = QRect(expanded_area.x() * 4, expanded_area.y() * 4, expanded_area.width() * 4, expanded_area.height() * 4);
+	QRect modified_area = TerrainBrush::to_pathing_rect(expanded_area);
 	return modified_area;
 }
 
@@ -350,15 +350,14 @@ QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	const glm::vec2 position = brush->get_position();
+	const glm::ivec2 pos = brush->get_unclipped_pos();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
-	const glm::ivec2 pos = mouse_pos - brush->size.x / 4.f / 2.f + 1.f;
 
 	QRect modified_area = area;
 
-	for (int i = area.x(); i < area.x() + area.width(); i++) {
-		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+	for (int j = area.y(); j < area.y() + area.height(); j++) {
+		for (int i = area.x(); i < area.x() + area.width(); i++) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
 
@@ -376,8 +375,7 @@ QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
 	terrain.update_ground_heights(viewport_area);
 
 	// convert to pathing resolution
-	modified_area =
-		QRect(modified_area.x() * 4 - 4, modified_area.y() * 4 - 4, modified_area.width() * 4 + 4, modified_area.height() * 4 + 4);
+	modified_area = TerrainBrush::to_pathing_rect(modified_area).adjusted(-4, -4, 0, 0);
 
 	return modified_area;
 }
@@ -394,9 +392,9 @@ void CliffOperator::apply_end() {
 	brush->add_terrain_undo(TerrainBrush::from_pathing_rect(brush->updated_area), TerrainUndoType::cliff);
 }
 
-bool CliffOperator::can_combine_with(TerrainOperator* other) {
+bool CliffOperator::can_combine_with(TerrainOperator& other) {
 	// cliff operator can be combined with texture operator
-	if (dynamic_cast<TextureOperator*>(other)) {
+	if (dynamic_cast<TextureOperator*>(&other)) {
 		return true;
 	}
 	return false;
@@ -407,8 +405,8 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 	auto& terrain = map->terrain;
 	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
-	for (int k = bounds.x(); k <= bounds.right(); k++) {
-		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+		for (int k = bounds.x(); k <= bounds.right(); k++) {
 			if (k == 0 && l == 0) {
 				continue;
 			}
@@ -582,14 +580,14 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	const glm::vec2 position = brush->get_position();
+	const glm::ivec2 pos = brush->get_unclipped_pos();
 
 	bool edits_water = cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water;
 
 	// note: cell operator brush targets cells, not corners
 	for (int i = area.x(); i < area.x() + area.width(); i++) {
 		for (int j = area.y(); j < area.y() + area.height(); j++) {
-			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(glm::ivec2(position) + 1, 0))) {
+			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
 
@@ -635,9 +633,9 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 	// modified area (in pathing resolution)
 	QRect modified_area;
 	if (brush->center_on_tile_corner) {
-		modified_area = QRect(area.x() * 4 - 2, area.y() * 4 - 2, area.width() * 4, area.height() * 4);
+		modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, -2, -2);
 	} else {
-		modified_area = QRect(area.x() * 4, area.y() * 4, area.width() * 4, area.height() * 4);
+		modified_area = TerrainBrush::to_pathing_rect(area);
 	}
 	return modified_area;
 }
@@ -654,6 +652,6 @@ void CellOperator::apply_end() {
 	}
 }
 
-bool CellOperator::can_combine_with(TerrainOperator* other) {
+bool CellOperator::can_combine_with(TerrainOperator& other) {
 	return false;
 }

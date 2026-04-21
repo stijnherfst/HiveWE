@@ -9,40 +9,32 @@ import PathingUndo;
 import TerrainUndo;
 import Camera;
 
-TerrainBrush::TerrainBrush() : Brush() {
+TerrainBrush::TerrainBrush() :
+	Brush(),
+	cliff_operator(*this),
+	height_operator(*this),
+	texture_operator(*this),
+	cell_operator(*this),
+	terrain_operators({height_operator, texture_operator, cliff_operator, cell_operator}) {
 	position_granularity = 1.f;
 	size_granularity = 4;
 	center_on_tile_corner = true;
 
-	setup_operators();
 	set_size(size);
 }
 
-void TerrainBrush::setup_operators() {
-	height_operator = new HeightOperator(this);
-	texture_operator = new TextureOperator(this);
-	cliff_operator = new CliffOperator(this);
-	cell_operator = new CellOperator(this);
-
-	terrain_operators = {height_operator, texture_operator, cliff_operator, cell_operator};
+void TerrainBrush::deactivate_operator(TerrainOperator& target) {
+	target.is_active = false;
 }
 
-void TerrainBrush::deactivate_operator(TerrainOperator* target) {
-	if (target) {
-		target->is_active = false;
-	}
-}
+void TerrainBrush::activate_operator(TerrainOperator& target) {
+	target.is_active = true;
+	center_on_tile_corner = target.center_on_tile_corner;
 
-void TerrainBrush::activate_operator(TerrainOperator* target) {
-	if (target) {
-		target->is_active = true;
-		center_on_tile_corner = target->center_on_tile_corner;
-
-		// deactivate incompatible operators
-		for (auto* op : terrain_operators) {
-			if (op != target && !target->can_combine_with(op)) {
-				op->is_active = false;
-			}
+	// deactivate incompatible operators
+	for (TerrainOperator& op : terrain_operators) {
+		if (&op != &target && !target.can_combine_with(op)) {
+			op.is_active = false;
 		}
 	}
 }
@@ -115,8 +107,8 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 }
 
 bool TerrainBrush::has_active_operators() {
-	for (TerrainOperator* op : terrain_operators) {
-		if (op->is_enabled()) {
+	for (TerrainOperator& op : terrain_operators) {
+		if (op.is_enabled()) {
 			return true;
 		}
 	}
@@ -134,8 +126,7 @@ void TerrainBrush::apply_begin() {
 	const int width = terrain.width;
 	const int height = terrain.height;
 
-	const glm::ivec2 pos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
-												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
+	const glm::ivec2 pos = get_unclipped_pos();
 	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
 	updated_area = QRect();
 
@@ -155,9 +146,9 @@ void TerrainBrush::apply_begin() {
 	old_pathing_cells_static = map->pathing_map.pathing_cells_static;
 
 	// apply all active operators
-	for (TerrainOperator* op : terrain_operators) {
-		if (op->is_enabled()) {
-			op->apply_begin(area, center_x, center_y);
+	for (TerrainOperator& op : terrain_operators) {
+		if (op.is_enabled()) {
+			op.apply_begin(area, center_x, center_y);
 		}
 	}
 }
@@ -171,10 +162,8 @@ void TerrainBrush::apply(double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
-	bool active_operator = false;
 
-	const glm::ivec2 pos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
-												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
+	const glm::ivec2 pos = get_unclipped_pos();
 
 	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
 	QRect affected_area = QRect();
@@ -184,11 +173,10 @@ void TerrainBrush::apply(double frame_delta) {
 	}
 
 	// apply all active operators
-	for (TerrainOperator* op : terrain_operators) {
-		if (op->is_active) {
+	for (TerrainOperator& op : terrain_operators) {
+		if (op.is_active) {
 			affected_area =
-				affected_area.united(op->apply(area, frame_delta)).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
-			active_operator = true;
+				affected_area.united(op.apply(area, frame_delta)).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
 		}
 	}
 
@@ -206,7 +194,7 @@ void TerrainBrush::apply(double frame_delta) {
 
 	map->pathing_map.upload_static_pathing();
 
-	if (height_operator->is_active || cliff_operator->is_active) {
+	if (height_operator.is_active || cliff_operator.is_active) {
 		QRectF object_area =
 			QRectF(updated_area.x() / 4.f, updated_area.y() / 4.f, updated_area.width() / 4.f, updated_area.height() / 4.f);
 
@@ -241,9 +229,9 @@ void TerrainBrush::apply_end() {
 	}
 
 	// apply all active operators
-	for (TerrainOperator* op : terrain_operators) {
-		if (op->is_active) {
-			op->apply_end();
+	for (TerrainOperator& op : terrain_operators) {
+		if (op.is_active) {
+			op.apply_end();
 		}
 	}
 
@@ -314,13 +302,24 @@ void TerrainBrush::add_pathing_undo(const QRect& area) {
 	map->world_undo.add_undo_action(std::move(undo_action));
 }
 
+glm::ivec2 TerrainBrush::get_unclipped_pos() const {
+	const glm::vec2 fpos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
+												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
+	return glm::ivec2(glm::floor(fpos));
+}
+
 /// Converts a rect in pathing resolution to a rect in terrain corner resolution
 QRect TerrainBrush::from_pathing_rect(const QRect& rect) {
-	int x = static_cast<int>(rect.x() / 4.f);
-	int y = static_cast<int>(rect.y() / 4.f);
-	int right = static_cast<int>(std::ceil((rect.x() + rect.width()) / 4.f));
-	int bottom = static_cast<int>(std::ceil((rect.y() + rect.height()) / 4.f));
+	int x = rect.x() / 4;
+	int y = rect.y() / 4;
+	int right = (rect.x() + rect.width() + 3) / 4;
+	int bottom = (rect.y() + rect.height() + 3) / 4;
 	int width = right - x;
 	int height = bottom - y;
 	return QRect(x, y, width, height);
+}
+
+/// Converts a rect in terrain resolution to a rect in pathing resolution
+QRect TerrainBrush::to_pathing_rect(const QRect& rect) {
+	return QRect(rect.x() * 4, rect.y() * 4, rect.width() * 4, rect.height() * 4);
 }
