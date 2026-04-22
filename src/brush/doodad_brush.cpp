@@ -24,7 +24,7 @@ import <glm/gtc/quaternion.hpp>;
 DoodadBrush::DoodadBrush() : Brush() {
 	position_granularity = 2.f;
 	size_granularity = 2;
-	center_on_tile_corner = false;
+	brush_type = Brush::Type::cell;
 
 	click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt).value();
 	click_helper_skeleton = SkeletalModelInstance(click_helper->mdx);

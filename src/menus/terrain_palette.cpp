@@ -81,7 +81,7 @@ void TerrainPalette::update_cell_operator_gui() {
 	ui.cellCheckbox->setChecked(is_enabled);
 
 	// update cell operation buttons
-	auto operation = brush.cell_operator.cell_operation_type;
+	auto operation = brush.cell_operator.get_operation_type();
 	{
 		QSignalBlocker blocker(ui.addWater);
 		ui.addWater->setChecked(is_enabled && operation == CellOperator::cell_operation::add_water);
@@ -321,26 +321,22 @@ void TerrainPalette::setup_cell_operator() {
 
 	// cell operation choice
 	connect(ui.addWater, &QPushButton::clicked, [&]() {
-		brush.cell_operator.cell_operation_type = CellOperator::cell_operation::add_water;
-		brush.cell_operator.set_brush_type(TerrainOperator::brush_type::corner);
+		brush.cell_operator.set_operation_type(CellOperator::cell_operation::add_water);
 		brush.activate_operator(brush.cell_operator);
 		update_operator_gui();
 	});
 	connect(ui.removeWater, &QPushButton::clicked, [&]() {
-		brush.cell_operator.cell_operation_type = CellOperator::cell_operation::remove_water;
-		brush.cell_operator.set_brush_type(TerrainOperator::brush_type::corner);
+		brush.cell_operator.set_operation_type(CellOperator::cell_operation::remove_water);
 		brush.activate_operator(brush.cell_operator);
 		update_operator_gui();
 	});
 	connect(ui.addBoundary, &QPushButton::clicked, [&]() {
-		brush.cell_operator.cell_operation_type = CellOperator::cell_operation::add_boundary;
-		brush.cell_operator.set_brush_type(TerrainOperator::brush_type::cell);
+		brush.cell_operator.set_operation_type(CellOperator::cell_operation::add_boundary);
 		brush.activate_operator(brush.cell_operator);
 		update_operator_gui();
 	});
 	connect(ui.removeBoundary, &QPushButton::clicked, [&]() {
-		brush.cell_operator.cell_operation_type = CellOperator::cell_operation::remove_boundary;
-		brush.cell_operator.set_brush_type(TerrainOperator::brush_type::cell);
+		brush.cell_operator.set_operation_type(CellOperator::cell_operation::remove_boundary);
 		brush.activate_operator(brush.cell_operator);
 		update_operator_gui();
 	});

@@ -6,24 +6,20 @@
 #include <algorithm>
 
 class TerrainBrush;
+struct WorldEditContext;
 
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...
 class TerrainOperator {
 	friend class TerrainBrush;
 
   public:
-	enum class brush_type {
-		corner,
-		cell
-	};
-
-	TerrainOperator(TerrainBrush& brush, brush_type brush_type) : brush(&brush) {
-		set_brush_type(brush_type);
+	TerrainOperator(TerrainBrush& brush, Brush::Type type) : brush(&brush) {
+		set_brush_type(type);
 	}
 
 	virtual void apply_begin(const QRect& area, int center_x, int center_y) = 0;
 	virtual QRect apply(const QRect& area, double frame_delta) = 0;
-	virtual void apply_end() = 0;
+	virtual void apply_end(WorldEditContext& ctx, const QRect& area) = 0;
 
 	/// This function determines whether two operators can be used simultaneously.
 	/// For example, texture and cliff operators
@@ -35,14 +31,14 @@ class TerrainOperator {
 	}
 
 	/// Changes brush type (can be centered on corners or cells)
-	void set_brush_type(brush_type brush_type);
+	void set_brush_type(Brush::Type type);
 
   protected:
 	TerrainBrush* brush;
 
   private:
 	bool is_active = false;
-	bool center_on_tile_corner;
+	Brush::Type brush_type;
 };
 
 class HeightOperator: public TerrainOperator {
@@ -56,11 +52,11 @@ class HeightOperator: public TerrainOperator {
 	};
 	deformation deformation_type = deformation::raise;
 
-	HeightOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
+	HeightOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end() override;
+	void apply_end(WorldEditContext& ctx, const QRect& area) override;
 	bool can_combine_with(TerrainOperator& other) override;
 
   private:
@@ -72,17 +68,17 @@ class TextureOperator: public TerrainOperator {
   public:
 	std::string tile_id;
 
-	TextureOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
+	TextureOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::corner) {}
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end() override;
+	void apply_end(WorldEditContext& ctx, const QRect& area) override;
 	bool can_combine_with(TerrainOperator& other) override;
 };
 
 class CliffOperator: public TerrainOperator {
   public:
-	CliffOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::corner) {}
+	CliffOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::corner) {}
 
 	enum class cliff_operation {
 		lower2,
@@ -100,7 +96,7 @@ class CliffOperator: public TerrainOperator {
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end() override;
+	void apply_end(WorldEditContext& ctx, const QRect& area) override;
 	bool can_combine_with(TerrainOperator& other) override;
 
 	void check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const;
@@ -114,7 +110,7 @@ class CliffOperator: public TerrainOperator {
 
 class CellOperator: public TerrainOperator {
   public:
-	CellOperator(TerrainBrush& brush) : TerrainOperator(brush, brush_type::cell) {}
+	CellOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::cell) {}
 
 	enum class cell_operation {
 		add_water,
@@ -126,12 +122,14 @@ class CellOperator: public TerrainOperator {
 		add_hole,
 		remove_hole
 	};
-	cell_operation cell_operation_type = cell_operation::add_boundary;
 
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end() override;
+	void apply_end(WorldEditContext& ctx, const QRect& area) override;
 	bool can_combine_with(TerrainOperator& other) override;
+
+	void set_operation_type(cell_operation operation);
+	cell_operation get_operation_type();
 
   private:
 	/// Water "ground zero" level in wc3
@@ -141,4 +139,5 @@ class CellOperator: public TerrainOperator {
 	static constexpr float WATER_HEIGHT = 0.25f;
 
 	float water_height;
+	cell_operation cell_operation_type = cell_operation::add_boundary;
 };

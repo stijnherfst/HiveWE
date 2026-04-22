@@ -7,17 +7,14 @@ import Terrain;
 import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
+import WorldUndoManager;
 import Camera;
 
-void TerrainOperator::set_brush_type(brush_type brush_type) {
-	if (brush_type == brush_type::cell) {
-		center_on_tile_corner = false;
-	} else if (brush_type == brush_type::corner) {
-		center_on_tile_corner = true;
-	}
+void TerrainOperator::set_brush_type(Brush::Type type) {
+	brush_type = type;
 
 	if (is_active) {
-		brush->center_on_tile_corner = center_on_tile_corner;
+		brush->brush_type = type;
 	}
 }
 
@@ -50,6 +47,7 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
 				continue;
 			}
+
 			const int center_x = area.x() + area.width() * 0.5f;
 			const int center_y = area.y() + area.height() * 0.5f;
 
@@ -127,22 +125,22 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 	}
 
 	if (brush->deform_water) {
-		terrain.update_water(area.adjusted(0, 0, 1, 1));
+		terrain.update_water(area.adjusted(0, 0, 1, 1).intersected({0, 0, width, height}));
 	}
 
-	QRect modified_area = TerrainBrush::to_pathing_rect(area);
+	QRect modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, 2, 2);
 	return modified_area;
 }
 
-void HeightOperator::apply_end() {
-	QRect area_terrain = TerrainBrush::from_pathing_rect(brush->updated_area);
+void HeightOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
+	QRect area_terrain = TerrainBrush::from_pathing_rect(area);
 
 	if (brush->deform_ground) {
-		brush->add_terrain_undo(area_terrain, TerrainUndoType::height);
+		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::height);
 	}
 
 	if (brush->deform_water) {
-		brush->add_terrain_undo(area_terrain, TerrainUndoType::water);
+		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::water);
 	}
 }
 
@@ -204,8 +202,9 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 	return modified_area;
 }
 
-void TextureOperator::apply_end() {
-	brush->add_terrain_undo(TerrainBrush::from_pathing_rect(brush->updated_area), TerrainUndoType::texture);
+void TextureOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
+	const QRect area_terrain = TerrainBrush::from_pathing_rect(area);
+	brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::texture);
 }
 
 bool TextureOperator::can_combine_with(TerrainOperator& other) {
@@ -388,8 +387,8 @@ QRect CliffOperator::apply(const QRect& area, double frame_delta) {
 	}
 }
 
-void CliffOperator::apply_end() {
-	brush->add_terrain_undo(TerrainBrush::from_pathing_rect(brush->updated_area), TerrainUndoType::cliff);
+void CliffOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
+	brush->add_terrain_undo(ctx, TerrainBrush::from_pathing_rect(area), TerrainUndoType::cliff);
 }
 
 bool CliffOperator::can_combine_with(TerrainOperator& other) {
@@ -627,12 +626,12 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 
 	// finally, re-render the water if we changed it
 	if (edits_water) {
-		terrain.update_water(area.adjusted(0, 0, 1, 1));
+		terrain.update_water(area.adjusted(0, 0, 1, 1).intersected({0, 0, width, height}));
 	}
 
 	// modified area (in pathing resolution)
 	QRect modified_area;
-	if (brush->center_on_tile_corner) {
+	if (brush->brush_type == Brush::Type::corner) {
 		modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, -2, -2);
 	} else {
 		modified_area = TerrainBrush::to_pathing_rect(area);
@@ -640,18 +639,31 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 	return modified_area;
 }
 
-void CellOperator::apply_end() {
-	QRect area_terrain = TerrainBrush::from_pathing_rect(brush->updated_area);
+void CellOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
+	QRect area_terrain = TerrainBrush::from_pathing_rect(area);
 
 	if (cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water) {
-		brush->add_terrain_undo(area_terrain, TerrainUndoType::water);
+		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::water);
 	} else if (cell_operation_type == cell_operation::add_boundary || cell_operation_type == cell_operation::remove_boundary) {
-		brush->add_terrain_undo(area_terrain, TerrainUndoType::texture);
+		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::texture);
 	} else if (cell_operation_type == cell_operation::add_hole || cell_operation_type == cell_operation::remove_hole) {
-		brush->add_terrain_undo(area_terrain, TerrainUndoType::cliff);
+		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::cliff);
 	}
 }
 
 bool CellOperator::can_combine_with(TerrainOperator& other) {
 	return false;
+}
+
+void CellOperator::set_operation_type(cell_operation operation) {
+	cell_operation_type = operation;
+	if (operation == cell_operation::add_boundary || operation == cell_operation::remove_boundary) {
+		set_brush_type(Brush::Type::cell);
+	} else {
+		set_brush_type(Brush::Type::corner);
+	}
+}
+
+CellOperator::cell_operation CellOperator::get_operation_type() {
+	return cell_operation_type;
 }

@@ -1184,7 +1184,12 @@ export class Terrain: public QObject {
 		// map pathing cell to corner
 		const size_t cx = i / 4;
 		const size_t cy = j / 4;
+
 		const size_t bl_idx = ci(cx, cy);
+		const size_t br_idx = ci(cx + 1, cy);
+		const size_t tl_idx = ci(cx, cy + 1);
+		const size_t tr_idx = ci(cx + 1, cy + 1);
+
 		uint8_t mask = 0;
 
 		// take terrain texture into account (from the closest corner)
@@ -1197,8 +1202,17 @@ export class Terrain: public QObject {
 		}
 
 		// cliffs are unbuildable and unwalkable
-		if (cliff_pathing && corner_cliff[bl_idx]) {
-			mask |= PathingMap::unbuildable | PathingMap::unwalkable;
+		if (cliff_pathing) {
+			// cell is considered a cliff if the bottom left corner is a cliff, or if
+			// one of the top/right neighbours is BOTH a cliff and a ramp
+			bool is_cliff = corner_cliff[bl_idx] || (corner_cliff[br_idx] && corner_ramp[br_idx])
+				|| (corner_cliff[tl_idx] && corner_ramp[tl_idx]) || (corner_cliff[tr_idx] && corner_ramp[tr_idx]);
+
+			// check if its a full ramp
+			bool is_ramp = corner_ramp[bl_idx] && corner_ramp[br_idx] && corner_ramp[tl_idx] && corner_ramp[tr_idx];
+			if (is_cliff && !is_ramp) {
+				mask |= PathingMap::unbuildable | PathingMap::unwalkable;
+			}
 		}
 
 		// take blight into account

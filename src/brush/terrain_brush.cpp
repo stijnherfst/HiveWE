@@ -18,7 +18,7 @@ TerrainBrush::TerrainBrush() :
 	terrain_operators({height_operator, texture_operator, cliff_operator, cell_operator}) {
 	position_granularity = 1.f;
 	size_granularity = 4;
-	center_on_tile_corner = true;
+	brush_type = Brush::Type::corner;
 
 	set_size(size);
 }
@@ -29,7 +29,7 @@ void TerrainBrush::deactivate_operator(TerrainOperator& target) {
 
 void TerrainBrush::activate_operator(TerrainOperator& target) {
 	target.is_active = true;
-	center_on_tile_corner = target.center_on_tile_corner;
+	brush_type = target.brush_type;
 
 	// deactivate incompatible operators
 	for (TerrainOperator& op : terrain_operators) {
@@ -228,10 +228,18 @@ void TerrainBrush::apply_end() {
 		return;
 	}
 
+	WorldEditContext ctx {
+		.terrain = map->terrain,
+		.units = map->units,
+		.doodads = map->doodads,
+		.brush = this,
+		.pathing_map = map->pathing_map,
+	};
+
 	// apply all active operators
 	for (TerrainOperator& op : terrain_operators) {
 		if (op.is_active) {
-			op.apply_end();
+			op.apply_end(ctx, updated_area);
 		}
 	}
 
@@ -246,13 +254,13 @@ void TerrainBrush::apply_end() {
 		map->world_undo.add_undo_action(std::move(undo));
 	}
 
-	add_pathing_undo(updated_area);
+	add_pathing_undo(ctx, updated_area);
 
 	map->terrain.update_minimap();
 }
 
 /// Adds the undo to the current undo group
-void TerrainBrush::add_terrain_undo(const QRect& area, TerrainUndoType type) {
+void TerrainBrush::add_terrain_undo(WorldEditContext& ctx, const QRect& area, TerrainUndoType type) {
 	auto undo_action = std::make_unique<TerrainGenericAction>();
 
 	undo_action->area = area;
@@ -270,18 +278,18 @@ void TerrainBrush::add_terrain_undo(const QRect& area, TerrainUndoType type) {
 	undo_action->new_corners.reserve(area.width() * area.height());
 	for (int j = area.top(); j <= area.bottom(); j++) {
 		for (int i = area.left(); i <= area.right(); i++) {
-			undo_action->new_corners.push_back(map->terrain.get_corner(i, j));
+			undo_action->new_corners.push_back(ctx.terrain.get_corner(i, j));
 		}
 	}
 
 	map->world_undo.add_undo_action(std::move(undo_action));
 }
 
-void TerrainBrush::add_pathing_undo(const QRect& area) {
+void TerrainBrush::add_pathing_undo(WorldEditContext& ctx, const QRect& area) {
 	auto undo_action = std::make_unique<PathingMapAction>();
 
 	undo_action->area = area;
-	const auto width = map->pathing_map.width;
+	const auto width = ctx.pathing_map.width;
 
 	// Copy old corners
 	undo_action->old_pathing.reserve(area.width() * area.height());
@@ -295,7 +303,7 @@ void TerrainBrush::add_pathing_undo(const QRect& area) {
 	undo_action->new_pathing.reserve(area.width() * area.height());
 	for (int j = area.top(); j <= area.bottom(); j++) {
 		for (int i = area.left(); i <= area.right(); i++) {
-			undo_action->new_pathing.push_back(map->pathing_map.pathing_cells_static[j * width + i]);
+			undo_action->new_pathing.push_back(ctx.pathing_map.pathing_cells_static[j * width + i]);
 		}
 	}
 
@@ -303,8 +311,8 @@ void TerrainBrush::add_pathing_undo(const QRect& area) {
 }
 
 glm::ivec2 TerrainBrush::get_unclipped_pos() const {
-	const glm::vec2 fpos = center_on_tile_corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
-												 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
+	const glm::vec2 fpos = brush_type == Brush::Type::corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
+															 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
 	return glm::ivec2(glm::floor(fpos));
 }
 
@@ -314,9 +322,10 @@ QRect TerrainBrush::from_pathing_rect(const QRect& rect) {
 	int y = rect.y() / 4;
 	int right = (rect.x() + rect.width() + 3) / 4;
 	int bottom = (rect.y() + rect.height() + 3) / 4;
-	int width = right - x;
-	int height = bottom - y;
-	return QRect(x, y, width, height);
+	int width = right - x + 1;
+	int height = bottom - y + 1;
+	QRect result(x, y, width, height);
+	return result;
 }
 
 /// Converts a rect in terrain resolution to a rect in pathing resolution

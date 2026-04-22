@@ -11,7 +11,7 @@ import Camera;
 PathingBrush::PathingBrush() : Brush() {
 	position_granularity = 4.f;
 	size_granularity = 1;
-	center_on_tile_corner = false;
+	brush_type = Brush::Type::cell;
 }
 
 void PathingBrush::apply_begin() {
