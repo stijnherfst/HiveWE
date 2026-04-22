@@ -33,10 +33,24 @@ void TerrainBrush::activate_operator(TerrainOperator& target) {
 
 	// deactivate incompatible operators
 	for (TerrainOperator& op : terrain_operators) {
-		if (&op != &target && !target.can_combine_with(op)) {
+		if (&op != &target && !can_combine(target, op)) {
 			op.is_active = false;
 		}
 	}
+}
+
+bool TerrainBrush::can_combine(const TerrainOperator& a, const TerrainOperator& b) const {
+	using TI = std::type_index;
+	using Pair = std::pair<TI, TI>;
+
+	// pairs of operator types that are allowed to be active simultaneously
+	static const std::array compatible = {
+		Pair {typeid(TextureOperator), typeid(CliffOperator)},
+	};
+
+	return std::ranges::any_of(compatible, [ta = TI(typeid(a)), tb = TI(typeid(b))](const Pair& p) {
+		return (p.first == ta && p.second == tb) || (p.first == tb && p.second == ta);
+	});
 }
 
 void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {

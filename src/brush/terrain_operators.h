@@ -6,6 +6,7 @@
 #include <algorithm>
 
 class TerrainBrush;
+class Terrain;
 struct WorldEditContext;
 
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...
@@ -20,10 +21,6 @@ class TerrainOperator {
 	virtual void apply_begin(const QRect& area, int center_x, int center_y) = 0;
 	virtual QRect apply(const QRect& area, double frame_delta) = 0;
 	virtual void apply_end(WorldEditContext& ctx, const QRect& area) = 0;
-
-	/// This function determines whether two operators can be used simultaneously.
-	/// For example, texture and cliff operators
-	virtual bool can_combine_with(TerrainOperator& other) = 0;
 
 	/// Checks whether the operator is active or not
 	bool is_enabled() const {
@@ -57,7 +54,6 @@ class HeightOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const QRect& area) override;
-	bool can_combine_with(TerrainOperator& other) override;
 
   private:
 	float deformation_height_ground;
@@ -73,7 +69,6 @@ class TextureOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const QRect& area) override;
-	bool can_combine_with(TerrainOperator& other) override;
 };
 
 class CliffOperator: public TerrainOperator {
@@ -97,7 +92,6 @@ class CliffOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const QRect& area) override;
-	bool can_combine_with(TerrainOperator& other) override;
 
 	void check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const;
 	void update_ramp(const int i, const int j, const int horizontal, const int vertical, QRect& area);
@@ -126,7 +120,6 @@ class CellOperator: public TerrainOperator {
 	void apply_begin(const QRect& area, int center_x, int center_y) override;
 	QRect apply(const QRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const QRect& area) override;
-	bool can_combine_with(TerrainOperator& other) override;
 
 	void set_operation_type(cell_operation operation);
 	cell_operation get_operation_type();
@@ -137,6 +130,9 @@ class CellOperator: public TerrainOperator {
 
 	/// Starting water level when using Add Water tool
 	static constexpr float WATER_HEIGHT = 0.25f;
+
+	/// Returns true if the water is above the ground
+	bool water_above_ground(int corner_id) const;
 
 	float water_height;
 	cell_operation cell_operation_type = cell_operation::add_boundary;

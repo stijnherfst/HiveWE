@@ -144,12 +144,6 @@ void HeightOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
 	}
 }
 
-bool HeightOperator::can_combine_with(TerrainOperator& other) {
-	// height operator is incompatible with every other operator
-	// (vanilla WE behaviour)
-	return false;
-}
-
 void TextureOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 	// nothing to do here, texture operator is simple
 }
@@ -205,14 +199,6 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 void TextureOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
 	const QRect area_terrain = TerrainBrush::from_pathing_rect(area);
 	brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::texture);
-}
-
-bool TextureOperator::can_combine_with(TerrainOperator& other) {
-	// texture operator can be combined with cliff operator
-	if (dynamic_cast<CliffOperator*>(&other)) {
-		return true;
-	}
-	return false;
 }
 
 void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
@@ -391,14 +377,6 @@ void CliffOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
 	brush->add_terrain_undo(ctx, TerrainBrush::from_pathing_rect(area), TerrainUndoType::cliff);
 }
 
-bool CliffOperator::can_combine_with(TerrainOperator& other) {
-	// cliff operator can be combined with texture operator
-	if (dynamic_cast<TextureOperator*>(&other)) {
-		return true;
-	}
-	return false;
-}
-
 /// Make this an iterative function instead to avoid stack overflows
 void CliffOperator::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
 	auto& terrain = map->terrain;
@@ -570,9 +548,14 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 void CellOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
-	int layer_height = terrain.corner_layer_height[center_idx];
-	float terrain_height = layer_height - 2 + terrain.corner_height[center_idx];
-	water_height = terrain_height + CellOperator::WATER_GROUND_ZERO + CellOperator::WATER_HEIGHT;
+
+	if (water_above_ground(center_idx)) {
+		water_height = terrain.corner_water_height[center_idx];
+	} else {
+		int layer_height = terrain.corner_layer_height[center_idx];
+		float terrain_height = layer_height - 2 + terrain.corner_height[center_idx];
+		water_height = terrain_height + CellOperator::WATER_GROUND_ZERO + CellOperator::WATER_HEIGHT;
+	}
 }
 
 QRect CellOperator::apply(const QRect& area, double frame_delta) {
@@ -604,8 +587,7 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 					terrain.corner_water_height[id] = water_height;
 				} else {
 					// if the water is not visible (below the ground), we want to incerase it's height
-					int terrain_height = terrain.corner_layer_height[id] - 2 + terrain.corner_height[id];
-					if (terrain.corner_water_height[id] <= terrain_height + CellOperator::WATER_GROUND_ZERO) {
+					if (!water_above_ground(id)) {
 						terrain.corner_water_height[id] = water_height;
 					}
 				}
@@ -651,8 +633,10 @@ void CellOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
 	}
 }
 
-bool CellOperator::can_combine_with(TerrainOperator& other) {
-	return false;
+bool CellOperator::water_above_ground(int corner_id) const {
+	auto& terrain = map->terrain;
+	return terrain.corner_water_height[corner_id]
+		> terrain.corner_layer_height[corner_id] - 2 + terrain.corner_height[corner_id] + CellOperator::WATER_GROUND_ZERO;
 }
 
 void CellOperator::set_operation_type(cell_operation operation) {

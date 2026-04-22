@@ -62,6 +62,9 @@ class TerrainBrush: public Brush {
 	/// active operators which cannot be used simultaneously
 	void activate_operator(TerrainOperator& target);
 
+	/// Returns true if two terrain operators are allowed to be active simultaneously
+	bool can_combine(const TerrainOperator& a, const TerrainOperator& b) const;
+
 	/// Returns the unclipped top-left corner of the brush area in terrain coordinates
 	glm::ivec2 get_unclipped_pos() const;
 
@@ -72,7 +75,7 @@ class TerrainBrush: public Brush {
 	static QRect to_pathing_rect(const QRect& rect);
 
   private:
-	/// area which was modified in the last operation in pathing map resolution
+	/// Area which was modified in the last operation in pathing map resolution
 	QRect updated_area;
 
 	// undo/redo stuff

@@ -1178,6 +1178,55 @@ export class Terrain: public QObject {
 		update_ground_exists(ramp_area);
 	}
 
+	/// Returns true if the cell with bottom-left corner cx, cy is part of a ramp
+	bool is_cliff_ramp(size_t cx, size_t cy) {
+		const size_t bl_idx = ci(cx, cy);
+
+		// returns true if corner (k, l) is a ramp and has at least one
+		// ramp neighbour with a strictly higher layer height.
+		auto ramp_has_higher_neighbor = [&](const int k, const int l) -> bool {
+			if (k < 0 || k >= width || l < 0 || l >= height) {
+				return false;
+			}
+
+			const size_t idx = ci(k, l);
+			if (!corner_ramp[idx]) {
+				return false;
+			}
+
+			const size_t h = corner_layer_height[idx];
+			if (k > 0 && corner_ramp[idx - 1] && corner_layer_height[idx - 1] > h) {
+				return true;
+			}
+
+			if (k < width - 1 && corner_ramp[idx + 1] && corner_layer_height[idx + 1] > h) {
+				return true;
+			}
+
+			if (l > 0 && corner_ramp[idx - width] && corner_layer_height[idx - width] > h) {
+				return true;
+			}
+
+			if (l < height - 1 && corner_ramp[idx + width] && corner_layer_height[idx + width] > h) {
+				return true;
+			}
+
+			return false;
+		};
+
+		// convert to signed int for bounds checks inside ramp_has_higher_neighbor
+		const int icx = static_cast<int>(cx);
+		const int icy = static_cast<int>(cy);
+
+		const bool has_at_least_2_ramps =
+			corner_ramp[ci(icx, icy)] + corner_ramp[ci(icx + 1, icy)] + corner_ramp[ci(icx, icy + 1)] + corner_ramp[ci(icx + 1, icy + 1)]
+			>= 2;
+
+		return has_at_least_2_ramps
+			&& (ramp_has_higher_neighbor(icx, icy) || ramp_has_higher_neighbor(icx + 1, icy) || ramp_has_higher_neighbor(icx, icy + 1)
+				|| ramp_has_higher_neighbor(icx + 1, icy + 1));
+	}
+
 	/// Computes the terrain pathing flags for the target cell on the **PATHING** map
 	/// Takes cliffs, blight, water, terrain textures and boundaries into account
 	uint8_t get_terrain_pathing(size_t i, size_t j, bool tile_pathing, bool cliff_pathing, bool water_pathing) {
@@ -1186,9 +1235,6 @@ export class Terrain: public QObject {
 		const size_t cy = j / 4;
 
 		const size_t bl_idx = ci(cx, cy);
-		const size_t br_idx = ci(cx + 1, cy);
-		const size_t tl_idx = ci(cx, cy + 1);
-		const size_t tr_idx = ci(cx + 1, cy + 1);
 
 		uint8_t mask = 0;
 
@@ -1203,13 +1249,12 @@ export class Terrain: public QObject {
 
 		// cliffs are unbuildable and unwalkable
 		if (cliff_pathing) {
-			// cell is considered a cliff if the bottom left corner is a cliff, or if
-			// one of the top/right neighbours is BOTH a cliff and a ramp
-			bool is_cliff = corner_cliff[bl_idx] || (corner_cliff[br_idx] && corner_ramp[br_idx])
-				|| (corner_cliff[tl_idx] && corner_ramp[tl_idx]) || (corner_cliff[tr_idx] && corner_ramp[tr_idx]);
+			const bool is_cliff = corner_cliff[bl_idx] || is_cliff_ramp(cx, cy);
 
 			// check if its a full ramp
-			bool is_ramp = corner_ramp[bl_idx] && corner_ramp[br_idx] && corner_ramp[tl_idx] && corner_ramp[tr_idx];
+			const bool is_ramp =
+				corner_ramp[ci(cx, cy)] && corner_ramp[ci(cx + 1, cy)] && corner_ramp[ci(cx, cy + 1)] && corner_ramp[ci(cx + 1, cy + 1)];
+
 			if (is_cliff && !is_ramp) {
 				mask |= PathingMap::unbuildable | PathingMap::unwalkable;
 			}
