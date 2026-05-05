@@ -1,16 +1,15 @@
 module;
 
-#include <QRectF>
-
 export module DoodadsUndo;
 
 import std;
 import Doodad;
 import WorldUndoManager;
+import Rects;
 
 // Undo/redo structures
-export class DoodadAddAction final : public WorldCommand {
-public:
+export class DoodadAddAction final: public WorldCommand {
+  public:
 	std::vector<Doodad> doodads;
 
 	void undo(WorldEditContext& ctx) override {
@@ -24,8 +23,8 @@ public:
 	}
 };
 
-export class DoodadDeleteAction final : public WorldCommand {
-public:
+export class DoodadDeleteAction final: public WorldCommand {
+  public:
 	std::vector<Doodad> doodads;
 
 	void undo(WorldEditContext& ctx) override {
@@ -47,13 +46,13 @@ public:
 	}
 };
 
-export class DoodadStateAction final : public WorldCommand {
-public:
+export class DoodadStateAction final: public WorldCommand {
+  public:
 	std::vector<Doodad> old_doodads;
 	std::vector<Doodad> new_doodads;
 
 	void undo(WorldEditContext& ctx) override {
-		QRect pathing_area;
+		PathingRect pathing_area;
 		for (const auto& i : old_doodads) {
 			for (auto& j : ctx.doodads.doodads) {
 				if (i.creation_number == j.creation_number) {
@@ -67,7 +66,7 @@ public:
 	}
 
 	void redo(WorldEditContext& ctx) override {
-		QRect pathing_area;
+		PathingRect pathing_area;
 		for (const auto& i : new_doodads) {
 			for (auto& j : ctx.doodads.doodads) {
 				if (i.creation_number == j.creation_number) {

@@ -3,6 +3,7 @@
 #include <QKeyEvent>
 
 import std;
+import Rects;
 import Hierarchy;
 import SLK;
 import Texture;

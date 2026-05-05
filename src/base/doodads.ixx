@@ -1,12 +1,12 @@
 module;
 
-#include <QRectF>
 #include <tracy/Tracy.hpp>
 
 export module Doodads;
 
 import std;
 import std.compat;
+import Rects;
 import GLThreadPool;
 import Terrain;
 import Doodad;
@@ -229,7 +229,7 @@ export class Doodads {
 		pathing_map.upload_dynamic_pathing();
 
 		// Update terrain exists
-		update_special_doodad_pathing(QRect(0, 0, terrain.width, terrain.height), terrain);
+		update_special_doodad_pathing(TerrainRect(0, 0, terrain.width, terrain.height), terrain);
 	}
 
 	// Will assign a creation number
@@ -292,7 +292,7 @@ export class Doodads {
 		});
 	}
 
-	std::vector<Doodad*> query_area(const QRectF& area) {
+	std::vector<Doodad*> query_area(const TerrainRectF& area) {
 		std::vector<Doodad*> result;
 
 		for (auto&& i : doodads) {
@@ -306,8 +306,8 @@ export class Doodads {
 	/// Returns an AABB in pathing map tiles (4x4 per whole tile) surrounding the doodads accounting for their pathing maps
 	template<class Container>
 		requires DoodadLike<typename Container::value_type>
-	QRect get_pathing_bounding_box(const Container& doodads) const {
-		QRect pathing_area;
+	PathingRect get_pathing_bounding_box(const Container& doodads) const {
+		PathingRect pathing_area;
 		for (const auto& i : doodads) {
 			pathing_area |= as_doodad(i).get_pathing_bounding_box();
 		}
@@ -317,18 +317,18 @@ export class Doodads {
 	template<class Container>
 		requires DoodadLike<typename Container::value_type>
 	void update_doodad_pathing(const Container& doodads, PathingMap& pathing_map) {
-		const QRect update_pathing_area = get_pathing_bounding_box(doodads);
+		const PathingRect update_pathing_area = get_pathing_bounding_box(doodads);
 		update_doodad_pathing(update_pathing_area, pathing_map);
 	}
 
 	/// The input area should be in pathing map tiles.
-	void update_doodad_pathing(const QRect& area, PathingMap& pathing_map) {
+	void update_doodad_pathing(const PathingRect& area, PathingMap& pathing_map) {
 		pathing_map.dynamic_clear_area(area);
 
-		const QRectF doodad_area = QRect(area.left() / 4.f, area.top() / 4.f, area.width() / 4.f, area.height() / 4.f);
+		const TerrainRectF doodad_area = area.to_terrain_f();
 		// Arbitrarily extend it to find doodads that blit into the space we just cleared
 		// Will break if there is a doodad with a pathing map bigger than this
-		const QRectF new_area = doodad_area.adjusted(-8, -8, 8, 8);
+		const TerrainRectF new_area = doodad_area.adjusted(-8, -8, 8, 8);
 		const auto doodads_to_blit = query_area(new_area);
 		for (const auto& i : doodads_to_blit) {
 			if (!i->pathing) {
@@ -340,8 +340,8 @@ export class Doodads {
 	}
 
 	/// The input area should be in whole tile fractions (of 128 WC3 units).
-	void update_special_doodad_pathing(const QRectF& area, Terrain& terrain) const {
-		QRectF new_area = area.adjusted(-6.f, -6.f, 6.f, 6.f);
+	void update_special_doodad_pathing(const TerrainRectF& area, Terrain& terrain) const {
+		TerrainRectF new_area = area.adjusted(-6.f, -6.f, 6.f, 6.f);
 		new_area = new_area.intersected({0, 0, static_cast<float>(terrain.width), static_cast<float>(terrain.height)});
 
 		for (int i = new_area.left(); i < new_area.right(); i++) {
@@ -375,7 +375,7 @@ export class Doodads {
 			}
 		}
 
-		terrain.update_ground_exists(area.toRect());
+		terrain.update_ground_exists(area.toTerrainRect());
 	}
 
 	void process_doodad_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {

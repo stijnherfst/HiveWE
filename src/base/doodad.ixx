@@ -1,10 +1,9 @@
 module;
 
-#include <QRectF>
-
 export module Doodad;
 
 import std;
+import Rects;
 import SkinnedMesh;
 import PathingTexture;
 import SkeletalModelInstance;
@@ -133,7 +132,7 @@ export struct Doodad {
 	}
 
 	[[nodiscard]]
-	QRect get_pathing_bounding_box() const {
+	PathingRect get_pathing_bounding_box() const {
 		if (!pathing) {
 			return {};
 		}
@@ -143,7 +142,7 @@ export struct Doodad {
 		const int rotated_height = rotation % 180 ? pathing->height : pathing->width;
 		const int x = position.x * 4 - rotated_width / 2;
 		const int y = position.y * 4 - rotated_height / 2;
-		return QRect {x, y, rotated_width, rotated_height};
+		return PathingRect {x, y, rotated_width, rotated_height};
 	}
 
 	static glm::vec2 acceptable_position(

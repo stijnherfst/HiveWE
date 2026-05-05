@@ -98,6 +98,7 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 
 	"utilities/no_init_allocator.ixx"
 	"utilities/math_operations.ixx"
+	"utilities/rects.ixx"
 	
 	"test.ixx"
 	"object_editor/ability_list_editor.ixx"

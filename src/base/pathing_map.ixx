@@ -1,11 +1,12 @@
 module;
 
-#include <QRect>
+#include <cstdint>
 #include <glad/glad.h>
 
 export module PathingMap;
 
 import std;
+import Rects;
 import BinaryReader;
 import BinaryWriter;
 import PathingTexture;
@@ -109,8 +110,8 @@ export class PathingMap {
 
 	/// Clears an area with zeroes.
 	/// Expects input in pathing tiles.
-	void dynamic_clear_area(const QRect& area) {
-		const QRect t = area.intersected({0, 0, width, height});
+	void dynamic_clear_area(const PathingRect& area) {
+		const PathingRect t = area.intersected({0, 0, width, height});
 		// +1 because of a Qt quirk of .bottom() and .right()
 		for (int j = t.top(); j < t.bottom() + 1; j++) {
 			for (int i = t.left(); i < t.right() + 1; i++) {

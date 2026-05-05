@@ -1,14 +1,13 @@
 #pragma once
 
-#include <QRect>
-
 #include <cstdint>
 #include <vector>
 
 #include "brush.h"
+import Rects;
 
-class PathingBrush : public Brush {
-public:
+class PathingBrush: public Brush {
+  public:
 	enum class Operation {
 		replace,
 		add,
@@ -19,7 +18,7 @@ public:
 
 	Operation operation = Operation::replace;
 
-	QRect applied_area;
+	PathingRect applied_area;
 
 	PathingBrush();
 
@@ -27,8 +26,8 @@ public:
 	void apply(double frame_delta) override;
 	void apply_end() override;
 
-	void add_pathing_undo(const QRect& area);
+	void add_pathing_undo(const PathingRect& area);
 
-private:
+  private:
 	std::vector<uint8_t> old_pathing_cells_static;
 };
