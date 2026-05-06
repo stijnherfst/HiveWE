@@ -4,7 +4,6 @@
 
 layout (location = 2) uniform bool render_lighting;
 layout (location = 3) uniform vec3 light_direction;
-layout (location = 5) uniform int layer_index;
 
 struct LayerTextureIds {
 	uint albedo;
@@ -40,6 +39,7 @@ in vec2 UV;
 in vec3 Normal;
 in vec4 vertexColor;
 in vec3 team_color;
+flat in int layer_index;
 
 out vec4 color;
 

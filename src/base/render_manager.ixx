@@ -7,6 +7,7 @@ export module RenderManager;
 import std;
 import types;
 import SkinnedMesh;
+import SkinnedMeshGlobals;
 import Shader;
 import SkeletalModelInstance;
 import ResourceManager;
@@ -17,13 +18,20 @@ import Utilities;
 import Globals;
 import Units;
 import SLK;
+import UnorderedMap;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 import Doodads;
+import Doodad;
 
 export class RenderManager {
-  public:
+	struct PerMeshOffsets {
+		uint32_t instance_offset;
+		uint32_t bone_offset;
+		uint32_t layer_color_offset;
+	};
+
 	struct SkinnedInstance {
 		SkinnedMesh* mesh;
 		uint32_t instance_id;
@@ -47,12 +55,20 @@ export class RenderManager {
 	int window_width;
 	int window_height;
 
+  public:
 	RenderManager() {
-		skinned_mesh_shader_sd = resource_manager.load<Shader>({"data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag"}).value();
-		skinned_mesh_shader_hd = resource_manager.load<Shader>({"data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag"}).value();
-		colored_skinned_shader = resource_manager.load<Shader>(
-			{"data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag"}
-		).value();
+		skinned_mesh_globals.init_gl();
+
+		skinned_mesh_shader_sd =
+			resource_manager.load<Shader>({"data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag"}).value();
+		skinned_mesh_shader_hd =
+			resource_manager.load<Shader>({"data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag"}).value();
+		colored_skinned_shader =
+			resource_manager
+				.load<Shader>(
+					{"data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag"}
+				)
+				.value();
 
 		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt).value();
 
@@ -103,7 +119,7 @@ export class RenderManager {
 
 		if (skinned_mesh.has_transparent_layers) {
 			skinned_transparent_instances.push_back(
-				RenderManager::SkinnedInstance {
+				SkinnedInstance {
 					.mesh = &skinned_mesh,
 					.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
 					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
@@ -128,32 +144,102 @@ export class RenderManager {
 			queue_render(*click_helper, i, glm::vec3(1.f), 0);
 		}
 
-		for (const auto& i : skinned_meshes) {
-			i->upload_render_data();
+		// Build merged per-frame staging arrays across all meshes.
+		hive::unordered_map<const SkinnedMesh*, PerMeshOffsets> mesh_offsets;
+		mesh_offsets.reserve(skinned_meshes.size());
+
+		std::vector<glm::mat4> staging_instance;
+		std::vector<uint32_t> staging_team_color;
+		std::vector<glm::mat4> staging_bones;
+		std::vector<glm::vec4> staging_layer_colors;
+
+		for (auto* mesh : skinned_meshes) {
+			if (!mesh->has_mesh) {
+				continue;
+			}
+			mesh->make_textures_resident();
+
+			PerMeshOffsets o;
+			o.instance_offset = static_cast<uint32_t>(staging_instance.size());
+			o.bone_offset = static_cast<uint32_t>(staging_bones.size());
+			o.layer_color_offset = static_cast<uint32_t>(staging_layer_colors.size());
+			mesh_offsets[mesh] = o;
+
+			staging_instance.insert(staging_instance.end(), mesh->render_jobs.begin(), mesh->render_jobs.end());
+			staging_team_color
+				.insert(staging_team_color.end(), mesh->render_team_color_indexes.begin(), mesh->render_team_color_indexes.end());
+
+			const size_t bone_count = mesh->mdx->bones.size();
+			for (size_t k = 0; k < mesh->render_jobs.size(); k++) {
+				staging_bones.insert(
+					staging_bones.end(),
+					mesh->skeletons[k]->world_matrices.begin(),
+					mesh->skeletons[k]->world_matrices.begin() + bone_count
+				);
+
+				for (const auto& g : mesh->geosets) {
+					glm::vec3 c = mesh->render_colors[k];
+					float vis = 1.0f;
+					if (g.geoset_anim && mesh->skeletons[k]->sequence_index >= 0) {
+						c *= mesh->skeletons[k]->get_geoset_animation_color(*g.geoset_anim);
+						vis = mesh->skeletons[k]->get_geoset_animation_visiblity(*g.geoset_anim);
+					}
+					for (auto& l : mesh->mdx->materials[g.material_id].layers) {
+						float lv = mesh->skeletons[k]->sequence_index >= 0 ? mesh->skeletons[k]->get_layer_visiblity(l) : 1.0f;
+						staging_layer_colors.emplace_back(c, lv * vis);
+					}
+				}
+			}
 		}
 
-		// Render opaque meshes
-		// These don't have to be sorted and can thus be drawn instanced (one draw call per type of mesh)
+		auto& g = skinned_mesh_globals;
+
+		// Single upload per per-frame SSBO.
+		if (!staging_instance.empty()) {
+			glNamedBufferData(g.instance_ssbo, staging_instance.size() * sizeof(glm::mat4), staging_instance.data(), GL_DYNAMIC_DRAW);
+		}
+		if (!staging_team_color.empty()) {
+			glNamedBufferData(
+				g.instance_team_color_index_ssbo,
+				staging_team_color.size() * sizeof(uint32_t),
+				staging_team_color.data(),
+				GL_DYNAMIC_DRAW
+			);
+		}
+		if (!staging_bones.empty()) {
+			glNamedBufferData(g.bone_matrices_ssbo, staging_bones.size() * sizeof(glm::mat4), staging_bones.data(), GL_DYNAMIC_DRAW);
+		}
+		if (!staging_layer_colors.empty()) {
+			glNamedBufferData(
+				g.layer_colors_ssbo,
+				staging_layer_colors.size() * sizeof(glm::vec4),
+				staging_layer_colors.data(),
+				GL_DYNAMIC_DRAW
+			);
+		}
+
+		glBindVertexArray(g.vao);
+		g.bind_static_ssbos();
+		g.bind_per_frame_ssbos();
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
+
+		// OPAQUE PASS — collapse multi-draw across meshes within each draw-state group.
 		skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
+		glUniform1i(2, render_lighting ? 1 : 0);
 		glBlendFunc(GL_ONE, GL_ZERO);
-
-		for (const auto& i : skinned_meshes) {
-			i->render_opaque(false, render_lighting);
-		}
+		render_opaque(false, mesh_offsets);
 
 		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
+		glUniform1i(2, render_lighting ? 1 : 0);
+		render_opaque(true, mesh_offsets);
 
-		for (const auto& i : skinned_meshes) {
-			i->render_opaque(true, render_lighting);
-		}
-
-		// Render transparent meshes
-		std::ranges::sort(skinned_transparent_instances, [](auto& left, auto& right) {
-			return left.distance > right.distance;
+		// TRANSPARENT PASS — distance-sorted, coalesce adjacent same-state.
+		std::ranges::sort(skinned_transparent_instances, [](auto& l, auto& r) {
+			return l.distance > r.distance;
 		});
 		glEnable(GL_BLEND);
 		glDepthMask(false);
@@ -161,26 +247,21 @@ export class RenderManager {
 		skinned_mesh_shader_sd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
-
-		for (const auto& i : skinned_transparent_instances) {
-			i.mesh->render_transparent(i.instance_id, false, render_lighting);
-		}
+		glUniform1i(2, render_lighting ? 1 : 0);
+		render_transparent(false, mesh_offsets, staging_layer_colors);
 
 		skinned_mesh_shader_hd->use();
 		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
+		glUniform1i(2, render_lighting ? 1 : 0);
+		render_transparent(true, mesh_offsets, staging_layer_colors);
 
-		for (const auto& i : skinned_transparent_instances) {
-			i.mesh->render_transparent(i.instance_id, true, render_lighting);
-		}
-
-		glBindVertexArray(old_vao);
 		glDepthMask(true);
+		glBindVertexArray(old_vao);
 
-		for (const auto& i : skinned_meshes) {
-			i->clear_render_data();
+		for (auto* m : skinned_meshes) {
+			m->clear_render_data();
 		}
-
 		click_helper_instances.clear();
 		skinned_meshes.clear();
 		skinned_transparent_instances.clear();
@@ -310,5 +391,244 @@ export class RenderManager {
 		} else {
 			return {};
 		}
+	}
+
+  private:
+	void render_opaque(const bool render_hd, const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets) const {
+		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> commands;
+		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
+
+		for (const auto* mesh : skinned_meshes) {
+			if (!mesh->has_mesh) {
+				continue;
+			}
+			const auto it = mesh_offsets.find(mesh);
+			if (it == mesh_offsets.end()) {
+				continue;
+			}
+			const auto& off = it->second;
+
+			const auto& entries = render_hd ? mesh->opaque_entries_hd : mesh->opaque_entries_sd;
+			if (entries.empty()) {
+				continue;
+			}
+			const GLuint instance_count = static_cast<GLuint>(mesh->render_jobs.size());
+			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
+			const uint32_t skip_count = static_cast<uint32_t>(mesh->skip_count);
+
+			for (const auto& e : entries) {
+				commands.push_back({
+					.count = e.count,
+					.instanceCount = instance_count,
+					.firstIndex = e.first_index,
+					.baseVertex = e.base_vertex,
+					.baseInstance = 0,
+				});
+				SkinnedMeshGlobals::DrawInfo di {};
+				di.instance_offset = off.instance_offset;
+				di.bone_offset = off.bone_offset;
+				di.bone_count = bone_count;
+				di.layer_color_offset = off.layer_color_offset;
+				di.layer_skip_count = skip_count;
+				di.layer_index_global = e.layer_index_global;
+				di.layer_index_local = e.layer_index_local;
+				draw_infos.push_back(di);
+			}
+		}
+
+		if (commands.empty()) {
+			return;
+		}
+
+		// Sort (commands, draw_infos) jointly by DrawState. We don't have DrawState in the command,
+		// build a parallel states[] vector while populating.
+		std::vector<SkinnedMesh::DrawState> states;
+		states.reserve(commands.size());
+		{
+			size_t idx = 0;
+			for (auto* mesh : skinned_meshes) {
+				if (!mesh->has_mesh) {
+					continue;
+				}
+				if (mesh_offsets.find(mesh) == mesh_offsets.end()) {
+					continue;
+				}
+				const auto& entries = render_hd ? mesh->opaque_entries_hd : mesh->opaque_entries_sd;
+				for (const auto& e : entries) {
+					(void)idx;
+					states.push_back(e.state);
+					idx++;
+				}
+			}
+		}
+
+		std::vector<size_t> perm(commands.size());
+		std::iota(perm.begin(), perm.end(), 0u);
+		std::ranges::sort(perm, [&](const size_t a, const size_t b) {
+			return states[a] < states[b];
+		});
+
+		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> sorted_commands(commands.size());
+		std::vector<SkinnedMeshGlobals::DrawInfo> sorted_infos(commands.size());
+		std::vector<SkinnedMesh::DrawState> sorted_states(commands.size());
+		for (size_t i = 0; i < perm.size(); i++) {
+			sorted_commands[i] = commands[perm[i]];
+			sorted_infos[i] = draw_infos[perm[i]];
+			sorted_states[i] = states[perm[i]];
+		}
+
+		auto& g = skinned_mesh_globals;
+		glNamedBufferData(
+			g.indirect_buffer,
+			sorted_commands.size() * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand),
+			sorted_commands.data(),
+			GL_DYNAMIC_DRAW
+		);
+		glNamedBufferData(
+			g.draw_infos_ssbo,
+			sorted_infos.size() * sizeof(SkinnedMeshGlobals::DrawInfo),
+			sorted_infos.data(),
+			GL_DYNAMIC_DRAW
+		);
+		// glNamedBufferData orphans the buffer object, so we must rebind for it to be visible at the binding point.
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, g.draw_infos_ssbo);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
+
+		size_t groups = 0;
+
+		size_t group_start = 0;
+		while (group_start < sorted_commands.size()) {
+			size_t group_end = group_start + 1;
+			while (group_end < sorted_commands.size() && sorted_states[group_end] == sorted_states[group_start]) {
+				group_end++;
+			}
+			groups += 1;
+			const auto& s = sorted_states[group_start];
+			glBlendFunc(s.src_factor, s.dst_factor);
+			if (s.cull_face) {
+				glEnable(GL_CULL_FACE);
+			} else {
+				glDisable(GL_CULL_FACE);
+			}
+			if (s.depth_test) {
+				glEnable(GL_DEPTH_TEST);
+			} else {
+				glDisable(GL_DEPTH_TEST);
+			}
+			glDepthMask(s.depth_mask);
+
+			glUniform1ui(8, static_cast<GLuint>(group_start));
+			glMultiDrawElementsIndirect(
+				GL_TRIANGLES,
+				GL_UNSIGNED_SHORT,
+				reinterpret_cast<void*>(group_start * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand)),
+				static_cast<GLsizei>(group_end - group_start),
+				0
+			);
+			group_start = group_end;
+		}
+		// std::println("opaque commands {}, groups {}", sorted_commands.size(), groups);
+	}
+
+	void render_transparent(
+		const bool render_hd,
+		const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets,
+		const std::vector<glm::vec4>& staging_layer_colors
+	) const {
+		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> commands;
+		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
+		std::vector<SkinnedMesh::DrawState> states;
+
+		for (const auto& inst : skinned_transparent_instances) {
+			SkinnedMesh* mesh = inst.mesh;
+			const auto it = mesh_offsets.find(mesh);
+			if (it == mesh_offsets.end()) {
+				continue;
+			}
+			const auto& [instance_offset, bone_offset, layer_color_offset] = it->second;
+
+			const auto& entries = render_hd ? mesh->transparent_entries_hd : mesh->transparent_entries_sd;
+			if (entries.empty()) {
+				continue;
+			}
+			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
+			const uint32_t skip_count = static_cast<uint32_t>(mesh->skip_count);
+			const uint32_t instance_id = inst.instance_id;
+
+			for (const auto& e : entries) {
+				const size_t color_idx = layer_color_offset + instance_id * skip_count + e.layer_index_local;
+				if (color_idx < staging_layer_colors.size() && staging_layer_colors[color_idx].a <= 0.01f) {
+					continue;
+				}
+				commands.push_back({
+					.count = e.count,
+					.instanceCount = 1u,
+					.firstIndex = e.first_index,
+					.baseVertex = e.base_vertex,
+					.baseInstance = 0,
+				});
+				SkinnedMeshGlobals::DrawInfo di {};
+				di.instance_offset = instance_offset + instance_id;
+				di.bone_offset = bone_offset + instance_id * bone_count;
+				di.bone_count = bone_count;
+				di.layer_color_offset = layer_color_offset + instance_id * skip_count;
+				di.layer_skip_count = skip_count;
+				di.layer_index_global = e.layer_index_global;
+				di.layer_index_local = e.layer_index_local;
+				draw_infos.push_back(di);
+				states.push_back(e.state);
+			}
+		}
+
+		if (commands.empty()) {
+			return;
+		}
+
+		auto& g = skinned_mesh_globals;
+		glNamedBufferData(
+			g.indirect_buffer,
+			commands.size() * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand),
+			commands.data(),
+			GL_DYNAMIC_DRAW
+		);
+		glNamedBufferData(g.draw_infos_ssbo, draw_infos.size() * sizeof(SkinnedMeshGlobals::DrawInfo), draw_infos.data(), GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, g.draw_infos_ssbo);
+		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
+
+		// Walk in order (distance-sorted) and coalesce only adjacent same-state runs.
+		size_t groups = 0;
+		size_t group_start = 0;
+		while (group_start < commands.size()) {
+			size_t group_end = group_start + 1;
+			while (group_end < commands.size() && states[group_end] == states[group_start]) {
+				group_end++;
+			}
+
+			groups += 1;
+
+			const auto& s = states[group_start];
+			glBlendFunc(s.src_factor, s.dst_factor);
+			if (s.cull_face) {
+				glEnable(GL_CULL_FACE);
+			} else {
+				glDisable(GL_CULL_FACE);
+			}
+			if (s.depth_test) {
+				glEnable(GL_DEPTH_TEST);
+			} else {
+				glDisable(GL_DEPTH_TEST);
+			}
+
+			glUniform1ui(8, static_cast<GLuint>(group_start));
+			glMultiDrawElementsIndirect(
+				GL_TRIANGLES,
+				GL_UNSIGNED_SHORT,
+				reinterpret_cast<void*>(group_start * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand)),
+				static_cast<GLsizei>(group_end - group_start),
+				0
+			);
+			group_start = group_end;
+		}
+		// std::println("transparent commands {}, groups {}", commands.size(), groups);
 	}
 };

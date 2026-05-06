@@ -98,7 +98,7 @@ export class Map: public QObject {
 
 		hierarchy.map_directory = path;
 		filesystem_path = fs::absolute(path) / "";
-		name = (*--(--filesystem_path.end())).string();
+		name = (--(--filesystem_path.end()))->string();
 
 		// ToDo So for the game data files we should actually load from _balance/custom_v0.w3mod/Units, _balance/custom_v1.w3mod/Units, _balance/melee_v0.w3mod/units or /Units depending on the Game Data set and Game Data Versions
 		// Maybe just ignore RoC so we only need to choose between _balance/custom_v1.w3mod/Units and /Units

@@ -11,6 +11,8 @@ import Map;
 import <soil2/SOIL2.h>;
 import MapGlobal;
 import WorldUndoManager;
+import SkinnedMeshGlobals;
+import ResourceManager;
 import "pathing_palette.h";
 import "object_editor/object_editor.h";
 import "model_editor/model_editor.h";
@@ -244,6 +246,8 @@ void HiveWE::load_folder() {
 	window_handler.close_all();
 	ui.widget->makeCurrent();
 	delete map;
+	resource_manager.clear();
+	skinned_mesh_globals.reset();
 	map = new Map();
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
@@ -310,13 +314,14 @@ void HiveWE::load_mpq() {
 
 	// Load map
 	window_handler.close_all();
+	ui.widget->makeCurrent();
 	delete map;
+	resource_manager.clear();
+	skinned_mesh_globals.reset();
 	map = new Map();
+	map->load(final_directory);
 
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-
-	ui.widget->makeCurrent();
-	map->load(final_directory);
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }

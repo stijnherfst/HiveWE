@@ -1,10 +1,9 @@
 #version 450 core
 
+#extension GL_ARB_shader_draw_parameters : require
+
 layout (location = 0) uniform mat4 VP;
-layout (location = 4) uniform int layer_skip_count;
-layout (location = 5) uniform int layer_index;
-layout (location = 6) uniform uint bone_count;
-layout (location = 7) uniform int instanceID;
+layout (location = 8) uniform uint draw_info_base;
 
 layout(std430, binding = 0) buffer layoutName {
     vec4 layer_colors[];
@@ -38,10 +37,26 @@ layout(std430, binding = 8) buffer layoutName8 {
 	uint team_color_indexes[];
 };
 
+struct DrawInfo {
+	uint instance_offset;
+	uint bone_offset;
+	uint bone_count;
+	uint layer_color_offset;
+	uint layer_skip_count;
+	uint layer_index_global;
+	uint layer_index_local;
+	uint _pad;
+};
+
+layout(std430, binding = 12) buffer DrawInfos {
+	DrawInfo draw_infos[];
+};
+
 out vec2 UV;
 out vec3 Normal;
 out vec4 vertexColor;
 out vec3 team_color;
+flat out int layer_index;
 
 const vec3 team_colors[28] = {
 	vec3(1.000, 0.012, 0.012),
@@ -99,31 +114,29 @@ vec3 unpack_uvec2_to_vec3(const uvec2 v, const float extent) {
 	return vec3(xf, yf, zf);
 }
 
-mat4 fetchMatrix(int instance_id, uint bone_index) {
-	return bone_matrices[instance_id * bone_count + bone_index];
-}
-
 void main() {
-	// In instanced draws we set instanceID to -1 so we always pick gl_InstanceID
-	// In non-instanced draws gl_InstanceID will be 0
-	const int instance_id = max(instanceID, gl_InstanceID);
+	DrawInfo info = draw_infos[draw_info_base + uint(gl_DrawIDARB)];
+	const int instance_id = gl_InstanceID;
+	const uint instance_idx = info.instance_offset + uint(instance_id);
 
-	const mat4 b0 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x000000FF));
-	const mat4 b1 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x0000FF00) >> 8);
-	const mat4 b2 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0x00FF0000) >> 16);
-	const mat4 b3 = fetchMatrix(instance_id, uint(skins[gl_VertexID].x & 0xFF000000) >> 24);
-	const float w0 = (skins[gl_VertexID].y & 0x000000FF) / 255.f;
-	const float w1 = ((skins[gl_VertexID].y & 0x0000FF00) >> 8) / 255.f;
-	const float w2 = ((skins[gl_VertexID].y & 0x00FF0000) >> 16) / 255.f;
-	const float w3 = ((skins[gl_VertexID].y & 0xFF000000) >> 24) / 255.f;
+	const uvec2 skin = skins[gl_VertexID];
+	const mat4 b0 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.x & 0x000000FFu)];
+	const mat4 b1 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0x0000FF00u) >> 8)];
+	const mat4 b2 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0x00FF0000u) >> 16)];
+	const mat4 b3 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0xFF000000u) >> 24)];
+	const float w0 = (skin.y & 0x000000FFu) / 255.f;
+	const float w1 = ((skin.y & 0x0000FF00u) >> 8) / 255.f;
+	const float w2 = ((skin.y & 0x00FF0000u) >> 16) / 255.f;
+	const float w3 = ((skin.y & 0xFF000000u) >> 24) / 255.f;
 	const mat4 skin_matrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 
 	const vec3 vertex = unpack_uvec2_to_vec3(vertices[gl_VertexID], 8192.f);
 
-	gl_Position = VP * instance_matrices[instance_id] * skin_matrix * vec4(vertex, 1.f);
+	gl_Position = VP * instance_matrices[instance_idx] * skin_matrix * vec4(vertex, 1.f);
 
 	UV = unpackSnorm2x16(uvs[gl_VertexID]) * 8.f - 1.f;
 	Normal = oct_to_float32x3(unpackSnorm2x16(normals[gl_VertexID]));
-	vertexColor = layer_colors[instance_id * layer_skip_count + layer_index];
-	team_color = team_colors[team_color_indexes[instance_id]];
+	vertexColor = layer_colors[info.layer_color_offset + uint(instance_id) * info.layer_skip_count + info.layer_index_local];
+	team_color = team_colors[team_color_indexes[instance_idx]];
+	layer_index = int(info.layer_index_global);
 }

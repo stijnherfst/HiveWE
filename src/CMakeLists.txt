@@ -56,8 +56,9 @@ target_sources(HiveWE PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"resources/qicon_resource.ixx"
 	"resources/editable_mesh.ixx"
 	"resources/skinned_mesh/render_node.ixx"
-	"resources/skinned_mesh/skeletal_model_instance.ixx" 
-	"resources/skinned_mesh.ixx" 
+	"resources/skinned_mesh/skeletal_model_instance.ixx"
+	"resources/skinned_mesh.ixx"
+	"resources/skinned_mesh_globals.ixx"
 
 	"models/tree/ability_tree_model.ixx"
 	"models/tree/base_tree_model.ixx"
