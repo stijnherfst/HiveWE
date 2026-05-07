@@ -1,10 +1,11 @@
 module;
-#include <QRect>
-#include <QRectF>
 
 export module Rects;
+import <QRect>;
+import <QRectF>;
 
 export class PathingRect;
+export class TerrainRectF;
 
 export class TerrainRect: public QRect {
   public:
@@ -19,6 +20,10 @@ export class TerrainRect: public QRect {
 
 	TerrainRect adjusted(int dx1, int dy1, int dx2, int dy2) const {
 		return TerrainRect(QRect::adjusted(dx1, dy1, dx2, dy2));
+	}
+
+	TerrainRect united(const QRect& r) const {
+		return TerrainRect(QRect::united(r));
 	}
 
 	/// Converts the TerrainRect into PathingRect. The conversion is lossless.
@@ -40,7 +45,11 @@ export class TerrainRectF: public QRectF {
 		return TerrainRectF(QRectF::intersected(r));
 	}
 
-	TerrainRect toTerrainRect() const;
+	TerrainRectF united(const QRectF& r) const {
+		return TerrainRectF(QRectF::united(r));
+	}
+
+	TerrainRect to_terrain_rect() const;
 };
 
 export class PathingRect: public QRect {
@@ -86,6 +95,6 @@ inline TerrainRectF PathingRect::to_terrain_f() const {
 	return TerrainRectF(x() / 4.0, y() / 4.0, width() / 4.0, height() / 4.0);
 }
 
-inline TerrainRect TerrainRectF::toTerrainRect() const {
+inline TerrainRect TerrainRectF::to_terrain_rect() const {
 	return TerrainRect(QRectF::toRect());
 }

@@ -375,7 +375,7 @@ export class Doodads {
 			}
 		}
 
-		terrain.update_ground_exists(area.toTerrainRect());
+		terrain.update_ground_exists(area.to_terrain_rect());
 	}
 
 	void process_doodad_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {

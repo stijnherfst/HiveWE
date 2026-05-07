@@ -1,12 +1,17 @@
 #pragma once
 
 #include <QObject>
+
+#include <set>
+#include <unordered_set>
+#include <string>
+#include <vector>
+#include <memory>
 #include "brush.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-import std;
 import PathingTexture;
 import DoodadsUndo;
 import Doodad;

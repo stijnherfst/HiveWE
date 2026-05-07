@@ -2,13 +2,13 @@
 #include "terrain_operators.h"
 
 import std;
-import Rects;
 import MapGlobal;
 import Terrain;
 import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
 import Camera;
+import Rects;
 
 TerrainBrush::TerrainBrush() :
 	Brush(),

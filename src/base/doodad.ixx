@@ -1,5 +1,7 @@
 module;
 
+#include <QRectF>
+
 export module Doodad;
 
 import std;

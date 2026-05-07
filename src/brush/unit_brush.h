@@ -19,7 +19,7 @@ import PathingTexture;
 import UnitsUndo;
 import SkeletalModelInstance;
 
-class UnitBrush: public Brush {
+class UnitBrush : public Brush {
 	std::string id;
 
 	std::shared_ptr<SkinnedMesh> mesh;
