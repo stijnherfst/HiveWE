@@ -140,7 +140,7 @@ export class Hierarchy {
 		fs::copy_file(source, map_directory / destination, fs::copy_options::overwrite_existing);
 	}
 
-	void map_file_write(const fs::path& path, const std::vector<u8>& data) const {
+	void map_file_write(const fs::path& path, const std::span<const u8> data) const {
 		std::ofstream outfile(map_directory / path, std::ios::binary);
 
 		if (!outfile) {

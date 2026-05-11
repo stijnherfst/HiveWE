@@ -50,6 +50,7 @@
     "tbb",
     "unordered-dense",
     "qscintilla",
-    "tracy"
+    "tracy",
+    "doctest"
   ]
 }

@@ -14,7 +14,7 @@ namespace fs = std::filesystem;
 
 constexpr int mod_table_write_version = 3;
 
-void load_modification_table(BinaryReader& reader, const uint32_t version, slk::SLK& slk, const slk::SLK& meta_slk, const bool modification, const bool optional_ints) {
+export void load_modification_table(BinaryReader& reader, const uint32_t version, slk::SLK& slk, const slk::SLK& meta_slk, const bool modification, const bool optional_ints) {
 	const uint32_t objects = reader.read<uint32_t>();
 	for (size_t i = 0; i < objects; i++) {
 		const std::string original_id = reader.read_string(4);
@@ -44,7 +44,7 @@ void load_modification_table(BinaryReader& reader, const uint32_t version, slk::
 				if (data_pointer != 0) {
 					column_header += static_cast<char>('a' + data_pointer - 1);
 				}
-				if (meta_slk.data<std::string_view>("repeat", modification_id) == "1") {
+				if (meta_slk.data<std::string_view>("repeat", modification_id) != "0") {
 					column_header += std::to_string(level_variation);
 				}
 			}
@@ -94,7 +94,7 @@ export void load_modification_file(const std::string_view file_name, slk::SLK& b
 
 // The idea of SLKs and mod files is quite bad, but I can deal with them
 // The way they are implemented is horrible though
-void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const slk::SLK& meta_slk, const bool custom, const bool optional_ints, const bool skin) {
+export void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, const slk::SLK& meta_slk, const bool custom, const bool optional_ints, const bool skin) {
 	BinaryWriter sub_writer;
 
 	size_t count = 0;

@@ -24,7 +24,7 @@
       }
     },
     {
-      "name": "debug",
+      "name": "Debug",
       "inherits": "default",
       "displayName": "Debug",
       "cacheVariables": {
@@ -32,7 +32,7 @@
       }
     },
     {
-      "name": "relwithdebinfo",
+      "name": "RelWithDebInfo",
       "inherits": "default",
       "displayName": "RelWithDebInfo",
       "cacheVariables": {
@@ -40,7 +40,7 @@
       }
     },
     {
-      "name": "releasetracing",
+      "name": "ReleaseTracing",
       "inherits": "default",
       "displayName": "ReleaseTracing",
       "cacheVariables": {
@@ -53,7 +53,7 @@
       }
     },
     {
-      "name": "release",
+      "name": "Release",
       "inherits": "default",
       "displayName": "Release",
       "cacheVariables": {
@@ -67,18 +67,36 @@
   "buildPresets": [
     {
       "name": "Debug",
-      "configurePreset": "debug",
+      "configurePreset": "Debug",
       "configuration": "Debug"
     },
     {
       "name": "RelWithDebInfoTracing",
-      "configurePreset": "releasetracing",
+      "configurePreset": "ReleaseTracing",
       "configuration": "RelWithDebInfo"
     },
     {
       "name": "Release",
-      "configurePreset": "release",
+      "configurePreset": "Release",
       "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "Debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "Release",
+      "configurePreset": "Release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }

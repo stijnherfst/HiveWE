@@ -298,7 +298,7 @@ namespace slk {
 		// column_header should be lowercase
 		// If you have both an integer row index and the string row name then use the overload that takes string_view as it will do a index->name conversion internally
 		template<typename T = std::string>
-		T data(const std::string_view column_header, size_t row) const {
+		T data(const std::string_view column_header, const size_t row) const {
 			if (row >= index_to_row.size()) {
 				throw;
 			}
@@ -308,7 +308,7 @@ namespace slk {
 
 		// Gets the data by first checking the shadow table and then checking the base table
 		template<typename T = std::string>
-		T data(size_t column, size_t row) const {
+		T data(const size_t column, const size_t row) const {
 			if (row >= index_to_row.size()) {
 				throw;
 			}
@@ -323,7 +323,7 @@ namespace slk {
 		// Merges the base data of the files
 		// Shadow data is not merged
 		// Any unknown columns are appended
-		void merge(const slk::SLK& slk) {
+		void merge(const SLK& slk) {
 			for (const auto& [header, index] : slk.column_headers) {
 				if (!column_headers.contains(header)) {
 					add_column(header);
@@ -423,6 +423,14 @@ namespace slk {
 					}
 				}
 			}
+		}
+
+		void add_row(const std::string_view row_header) {
+			assert(!base_data.contains(row_header));
+
+			size_t index = row_headers.size();
+			row_headers.emplace(row_header, index);
+			index_to_row[index] = row_header;
 		}
 
 		/// Copies the row with header row_header to a new line with the new header as new_row_header
