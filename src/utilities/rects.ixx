@@ -49,7 +49,11 @@ export class TerrainRectF: public QRectF {
 		return TerrainRectF(QRectF::united(r));
 	}
 
-	TerrainRect to_terrain_rect() const;
+	/// Converts the terrain rect to its integer version. The coordinates in the
+	/// returned rectangle are rounded to the nearest integer.
+	TerrainRect to_terrain_rect() const {
+		return TerrainRect(QRectF::toRect());
+	}
 };
 
 export class PathingRect: public QRect {
@@ -73,28 +77,20 @@ export class PathingRect: public QRect {
 
 	/// Converts the PathingRect to TerrainRect. Returns a minimum rect in
 	/// terrain resolution which completely covers the pathing rect
-	TerrainRect to_terrain() const;
+	TerrainRect to_terrain() const {
+		int left = x() / 4;
+		int top = y() / 4;
+		int right = (x() + width() + 3) / 4;
+		int bottom = (y() + height() + 3) / 4;
+		return TerrainRect(left, top, right - left + 1, bottom - top + 1);
+	}
 
 	/// Converts the PathingRect to TerrainRectF by dividing coordinates by 4. The conversion is lossless.
-	TerrainRectF to_terrain_f() const;
+	TerrainRectF to_terrain_f() const {
+		return TerrainRectF(x() / 4.0, y() / 4.0, width() / 4.0, height() / 4.0);
+	}
 };
 
 inline PathingRect TerrainRect::to_pathing() const {
 	return PathingRect(x() * 4, y() * 4, width() * 4, height() * 4);
-}
-
-inline TerrainRect PathingRect::to_terrain() const {
-	int left = x() / 4;
-	int top = y() / 4;
-	int right = (x() + width() + 3) / 4;
-	int bottom = (y() + height() + 3) / 4;
-	return TerrainRect(left, top, right - left + 1, bottom - top + 1);
-}
-
-inline TerrainRectF PathingRect::to_terrain_f() const {
-	return TerrainRectF(x() / 4.0, y() / 4.0, width() / 4.0, height() / 4.0);
-}
-
-inline TerrainRect TerrainRectF::to_terrain_rect() const {
-	return TerrainRect(QRectF::toRect());
 }
