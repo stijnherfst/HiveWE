@@ -453,7 +453,7 @@ export class Terrain: public QObject {
 		// Prepare and create GPU buffers
 		setup_GPU_buffers();
 
-		// Ground texture handle buffer (only needed during initial creation)
+		// Ground texture handle buffer
 		glCreateBuffers(1, &ground_texture_handle_buffer);
 		glNamedBufferStorage(
 			ground_texture_handle_buffer,
@@ -722,6 +722,8 @@ export class Terrain: public QObject {
 									  .value());
 		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 
+		glDeleteBuffers(1, &ground_texture_handle_buffer);
+		glCreateBuffers(1, &ground_texture_handle_buffer);
 		glNamedBufferStorage(
 			ground_texture_handle_buffer,
 			gpu_ground_texture_handles.size() * sizeof(GLuint64),
