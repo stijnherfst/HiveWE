@@ -216,8 +216,37 @@ HiveWE::HiveWE(QWidget* parent)
 
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+	connect(&map->terrain, &Terrain::tileset_changed, [&]() {
+		const auto palette = window_handler.get_open<TerrainPalette>();
+		if (palette) {
+			palette.value()->refresh();
+		}
+	});
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
+}
+
+void HiveWE::load_map(const fs::path& directory) {
+	window_handler.close_all();
+	ui.widget->makeCurrent();
+
+	delete map;
+	resource_manager.clear();
+	skinned_mesh_globals.reset();
+	map = new Map();
+
+	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
+	connect(&map->terrain, &Terrain::tileset_changed, [&]() {
+		const auto palette = window_handler.get_open<TerrainPalette>();
+		if (palette) {
+			palette.value()->refresh();
+		}
+	});
+
+	map->load(directory);
+
+	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
+	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::load_folder() {
@@ -243,22 +272,10 @@ void HiveWE::load_folder() {
 	QMessageBox* loading_box = new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
 	loading_box->show();
 
-	window_handler.close_all();
-	ui.widget->makeCurrent();
-	delete map;
-	resource_manager.clear();
-	skinned_mesh_globals.reset();
-	map = new Map();
-
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-
-	map->load(directory);
+	load_map(directory);
 
 	loading_box->close();
 	delete loading_box;
-
-	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 /// Load MPQ will extract all files from the archive in a user specified location
@@ -312,18 +329,7 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	// Load map
-	window_handler.close_all();
-	ui.widget->makeCurrent();
-	delete map;
-	resource_manager.clear();
-	skinned_mesh_globals.reset();
-	map = new Map();
-	map->load(final_directory);
-
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
+	load_map(final_directory);
 }
 
 void HiveWE::save() {

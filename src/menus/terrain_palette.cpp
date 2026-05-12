@@ -21,8 +21,10 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 
-	// generate terrain/cliff texture buttons, and a blight button
-	create_terrain_buttons();
+	ui.flowLayout_placeholder->addLayout(textures_layout);
+	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
+
+	refresh();
 
 	// ribbon
 	create_ribbon();
@@ -41,6 +43,13 @@ TerrainPalette::~TerrainPalette() {
 	map->brush = nullptr;
 	delete change_mode_parent;
 	delete change_mode_this;
+}
+
+void TerrainPalette::refresh() {
+	create_terrain_buttons();
+	if (std::ranges::find(map->terrain.tileset_ids, brush.texture_operator.tile_id) == map->terrain.tileset_ids.end()) {
+		brush.texture_operator.tile_id = map->terrain.tileset_ids.front();
+	}
 }
 
 bool TerrainPalette::event(QEvent* e) {
@@ -74,14 +83,15 @@ void TerrainPalette::update_operator_gui() {
 }
 
 void TerrainPalette::update_cell_operator_gui() {
-	bool is_enabled = brush.cell_operator.is_enabled();
+	const bool is_enabled = brush.cell_operator.is_enabled();
 
 	// update checkbox state (disable events for the change)
-	QSignalBlocker blocker(ui.cellCheckbox);
-	ui.cellCheckbox->setChecked(is_enabled);
-
+	{
+		QSignalBlocker blocker(ui.cellCheckbox);
+		ui.cellCheckbox->setChecked(is_enabled);
+	}
 	// update cell operation buttons
-	auto operation = brush.cell_operator.get_operation_type();
+	const auto operation = brush.cell_operator.get_operation_type();
 	{
 		QSignalBlocker blocker(ui.addWater);
 		ui.addWater->setChecked(is_enabled && operation == CellOperator::cell_operation::add_water);
@@ -101,14 +111,15 @@ void TerrainPalette::update_cell_operator_gui() {
 }
 
 void TerrainPalette::update_deformation_operator_gui() {
-	bool is_enabled = brush.height_operator.is_enabled();
+	const bool is_enabled = brush.height_operator.is_enabled();
 
 	// update checkbox state (disable events for the change)
-	QSignalBlocker blocker(ui.deformationCheckbox);
-	ui.deformationCheckbox->setChecked(is_enabled);
-
+	{
+		QSignalBlocker blocker(ui.deformationCheckbox);
+		ui.deformationCheckbox->setChecked(is_enabled);
+	}
 	// update height change operation buttons
-	auto deformation = brush.height_operator.deformation_type;
+	const auto deformation = brush.height_operator.deformation_type;
 	{
 		QSignalBlocker blocker(ui.terrainRaise);
 		ui.terrainRaise->setChecked(is_enabled && deformation == HeightOperator::deformation::raise);
@@ -132,14 +143,15 @@ void TerrainPalette::update_deformation_operator_gui() {
 }
 
 void TerrainPalette::update_cliff_operator_gui() {
-	bool is_enabled = brush.cliff_operator.is_enabled();
+	const bool is_enabled = brush.cliff_operator.is_enabled();
 
 	// update checkbox state (disable events for the change)
-	QSignalBlocker blocker(ui.cliffCheckbox);
-	ui.cliffCheckbox->setChecked(is_enabled);
-
+	{
+		QSignalBlocker blocker(ui.cliffCheckbox);
+		ui.cliffCheckbox->setChecked(is_enabled);
+	}
 	// update which cliff button is selected
-	int cliff_id = brush.cliff_operator.cliff_id;
+	const int cliff_id = brush.cliff_operator.cliff_id;
 	for (auto* button : cliff_group->buttons()) {
 		QSignalBlocker blocker(button);
 		if (button->property("cliffID").toInt() == cliff_id) {
@@ -150,7 +162,7 @@ void TerrainPalette::update_cliff_operator_gui() {
 	}
 
 	// update which operation is selected (i.e. ramp, level, deep water...)
-	auto operation = brush.cliff_operator.cliff_operation_type;
+	const auto operation = brush.cliff_operator.cliff_operation_type;
 	{
 		QSignalBlocker blocker(ui.cliffLower2);
 		ui.cliffLower2->setChecked(is_enabled && operation == CliffOperator::cliff_operation::lower2);
@@ -186,14 +198,15 @@ void TerrainPalette::update_cliff_operator_gui() {
 }
 
 void TerrainPalette::update_texture_operator_gui() {
-	bool is_enabled = brush.texture_operator.is_enabled();
+	const bool is_enabled = brush.texture_operator.is_enabled();
 
 	// update checkbox state (disable events for the change)
-	QSignalBlocker blocker(ui.textureCheckbox);
-	ui.textureCheckbox->setChecked(is_enabled);
-
+	{
+		QSignalBlocker blocker(ui.textureCheckbox);
+		ui.textureCheckbox->setChecked(is_enabled);
+	}
 	// update which texture button is selected
-	QString tile_id = QString::fromStdString(brush.texture_operator.tile_id);
+	const QString tile_id = QString::fromStdString(brush.texture_operator.tile_id);
 	for (auto* button : textures_group->buttons()) {
 		QSignalBlocker blocker(button);
 		if (button->property("tileID").toString() == tile_id) {
@@ -540,9 +553,10 @@ void TerrainPalette::setup_brush_menu() {
 	});
 }
 
+/// Idempotent
 void TerrainPalette::create_terrain_buttons() {
-	ui.flowLayout_placeholder->addLayout(textures_layout);
-	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
+	textures_layout->clear();
+	cliff_layout->clear();
 
 	// allow button groups to have no buttons checked
 	textures_group->setExclusive(false);

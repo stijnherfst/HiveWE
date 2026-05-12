@@ -14,8 +14,10 @@ class TerrainPalette: public Palette {
 	Q_OBJECT
 
   public:
-	TerrainPalette(QWidget* parent = nullptr);
-	~TerrainPalette();
+	explicit TerrainPalette(QWidget* parent = nullptr);
+	~TerrainPalette() override;
+
+	void refresh();
 
   private:
 	bool event(QEvent* e) override;

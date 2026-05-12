@@ -1,5 +1,9 @@
 #pragma once
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 #include <QMainWindow>
 #include <QFileDialog>
 #include <QSettings>
@@ -27,6 +31,8 @@ class HiveWE : public QMainWindow {
 
 public:
 	explicit HiveWE(QWidget* parent = nullptr);
+
+	void load_map(const fs::path& directory);
 
 	void load_folder();
 	void load_mpq();

@@ -37,7 +37,7 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
-	slk::SLK& slk = map->terrain.terrain_slk;
+	const slk::SLK& slk = map->terrain.terrain_slk;
 	for (const auto&i : map->terrain.tileset_ids) {
 		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i)).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
@@ -217,7 +217,7 @@ void TileSetter::save_tiles() {
 			from_to_id[i] =  found - to_ids.begin();
 		} else {
 			TilePicker replace_dialog(this, { from_id }, to_ids);
-			connect(&replace_dialog, &TilePicker::tile_chosen, [&](std::string id, const std::string& to_id) {
+			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string& id, const std::string& to_id) {
 				const auto tile_found = std::ranges::find(to_ids, to_id);
 				from_to_id[i] = tile_found - to_ids.begin();
 			});

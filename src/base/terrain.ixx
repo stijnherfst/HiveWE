@@ -735,6 +735,7 @@ export class Terrain: public QObject {
 		}
 
 		update_ground_textures({0, 0, width, height});
+		emit tileset_changed();
 	}
 
 	/// The texture of the tile point which is influenced by its surroundings.
@@ -1180,7 +1181,7 @@ export class Terrain: public QObject {
 
 	/// Computes the terrain pathing flags for the target cell on the **PATHING** map
 	/// Takes cliffs, blight, water, terrain textures and boundaries into account
-	uint8_t get_terrain_pathing(size_t i, size_t j, bool tile_pathing, bool cliff_pathing, bool water_pathing) {
+	uint8_t get_terrain_pathing(const size_t i, const size_t j, const bool tile_pathing, const bool cliff_pathing, const bool water_pathing) {
 		// map pathing cell to corner
 		const size_t cx = i / 4;
 		const size_t cy = j / 4;
@@ -1472,6 +1473,7 @@ export class Terrain: public QObject {
 
   signals:
 	void minimap_changed(Texture minimap);
+	void tileset_changed();
 };
 
 #include "terrain.moc"

@@ -26,11 +26,20 @@ export class WindowHandler : public QObject {
 			T* window = new T(parent);
 			windows.emplace_back(typeid(T).name(), dynamic_cast<QWidget*>(window));
 			connect(window, &T::destroyed, [this, window] {
-				const auto found = std::find_if(windows.begin(), windows.end(), [&](const auto& item) { return item.second == window; });
-				windows.erase(found);
+				std::erase_if(windows, [&](const auto& item) { return item.second == window; });
 			});
 			created = true;
 			return window;
+		}
+	}
+
+	template <typename T>
+	std::optional<T*> get_open() {
+		const auto found = std::find_if(windows.begin(), windows.end(), [&](const auto& item) { return item.first == typeid(T).name(); });
+		if (found != windows.end()) {
+			return dynamic_cast<T*>(found->second);
+		} else {
+			return std::nullopt;
 		}
 	}
 
