@@ -2,6 +2,7 @@
 #include "terrain_operators.h"
 
 import std;
+import Rects;
 import MapGlobal;
 import Terrain;
 import DoodadsUndo;
@@ -18,14 +19,14 @@ void TerrainOperator::set_brush_type(Brush::Type type) {
 	}
 }
 
-void HeightOperator::apply_begin(const QRect& area, int center_x, int center_y) {
+void HeightOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 	deformation_height_ground = terrain.corner_height[center_idx];
 	deformation_height_water = terrain.corner_water_height[center_idx];
 }
 
-QRect HeightOperator::apply(const QRect& area, double frame_delta) {
+PathingRect HeightOperator::apply(const TerrainRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -77,7 +78,7 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 					auto smooth_height = [&](int i, int j, float current_height, auto height_vector, auto get_corner_height) {
 						float accumulate = 0;
 
-						QRect acum_area = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, width, height});
+						TerrainRect acum_area = TerrainRect(i - 1, j - 1, 3, 3).intersected({0, 0, width, height});
 
 						for (int k = acum_area.x(); k < acum_area.right() + 1; k++) {
 							for (int l = acum_area.y(); l < acum_area.bottom() + 1; l++) {
@@ -128,12 +129,12 @@ QRect HeightOperator::apply(const QRect& area, double frame_delta) {
 		terrain.update_water(area.adjusted(0, 0, 1, 1).intersected({0, 0, width, height}));
 	}
 
-	QRect modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, 2, 2);
-	return modified_area;
+	// return the modified area (in pathing resolution)
+	return area.to_pathing().adjusted(-2, -2, 2, 2);
 }
 
-void HeightOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
-	QRect area_terrain = TerrainBrush::from_pathing_rect(area);
+void HeightOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
+	TerrainRect area_terrain = area.to_terrain();
 
 	if (brush->deform_ground) {
 		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::height);
@@ -144,11 +145,11 @@ void HeightOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
 	}
 }
 
-void TextureOperator::apply_begin(const QRect& area, int center_x, int center_y) {
+void TextureOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
 	// nothing to do here, texture operator is simple
 }
 
-QRect TextureOperator::apply(const QRect& area, double frame_delta) {
+PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -192,16 +193,15 @@ QRect TextureOperator::apply(const QRect& area, double frame_delta) {
 	terrain.update_ground_textures(area);
 
 	// modified area (in pathing resolution)
-	QRect modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, -2, -2);
+	PathingRect modified_area = area.to_pathing().adjusted(-2, -2, -2, -2);
 	return modified_area;
 }
 
-void TextureOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
-	const QRect area_terrain = TerrainBrush::from_pathing_rect(area);
-	brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::texture);
+void TextureOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
+	brush->add_terrain_undo(ctx, area.to_terrain(), TerrainUndoType::texture);
 }
 
-void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
+void CliffOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 	layer_height = terrain.corner_layer_height[center_idx];
@@ -241,14 +241,15 @@ void CliffOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 	layer_height = std::clamp(layer_height, 0, 15);
 }
 
-QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
+PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
 	const glm::ivec2 pos = brush->get_unclipped_pos();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
 
-	QRect expanded_area = QRect(area.x() - 1, area.y() - 1, area.width() + 1, area.height() + 1).intersected({0, 0, width - 1, height - 1});
+	TerrainRect expanded_area =
+		TerrainRect(area.x() - 1, area.y() - 1, area.width() + 1, area.height() + 1).intersected({0, 0, width - 1, height - 1});
 
 	for (int j = area.y(); j < area.y() + area.height(); j++) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
@@ -315,7 +316,7 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 		}
 	}
 
-	QRect tile_area = expanded_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
+	TerrainRect tile_area = expanded_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
 
 	terrain.update_cliff_meshes(tile_area);
 	terrain.update_ground_textures(expanded_area);
@@ -327,18 +328,17 @@ QRect CliffOperator::apply_cliffs(const QRect& area, double frame_delta) {
 	}
 
 	// modified area (in pathing resolution)
-	QRect modified_area = TerrainBrush::to_pathing_rect(expanded_area);
-	return modified_area;
+	return expanded_area.to_pathing();
 }
 
-QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
+PathingRect CliffOperator::apply_ramps(const TerrainRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
 	const glm::ivec2 pos = brush->get_unclipped_pos();
 	const glm::vec3 mouse_pos = input_handler.mouse_world;
 
-	QRect modified_area = area;
+	TerrainRect modified_area = area;
 
 	for (int j = area.y(); j < area.y() + area.height(); j++) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
@@ -354,18 +354,16 @@ QRect CliffOperator::apply_ramps(const QRect& area, double frame_delta) {
 	}
 
 	// apply the changes in viewport
-	QRect viewport_area = modified_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
+	TerrainRect viewport_area = modified_area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
 	terrain.update_cliff_meshes(viewport_area);
 	terrain.update_ground_textures(viewport_area);
 	terrain.update_ground_heights(viewport_area);
 
 	// convert to pathing resolution
-	modified_area = TerrainBrush::to_pathing_rect(modified_area).adjusted(-4, -4, 0, 0);
-
-	return modified_area;
+	return modified_area.to_pathing().adjusted(-4, -4, 0, 0);
 }
 
-QRect CliffOperator::apply(const QRect& area, double frame_delta) {
+PathingRect CliffOperator::apply(const TerrainRect& area, double frame_delta) {
 	if (cliff_operation_type == cliff_operation::ramp) {
 		return apply_ramps(area, frame_delta);
 	} else {
@@ -373,14 +371,14 @@ QRect CliffOperator::apply(const QRect& area, double frame_delta) {
 	}
 }
 
-void CliffOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
-	brush->add_terrain_undo(ctx, TerrainBrush::from_pathing_rect(area), TerrainUndoType::cliff);
+void CliffOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
+	brush->add_terrain_undo(ctx, area.to_terrain(), TerrainUndoType::cliff);
 }
 
 /// Make this an iterative function instead to avoid stack overflows
-void CliffOperator::check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const {
+void CliffOperator::check_nearby(const int begx, const int begy, const int i, const int j, TerrainRect& area) const {
 	auto& terrain = map->terrain;
-	QRect bounds = QRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
+	TerrainRect bounds = TerrainRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
 	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
@@ -405,7 +403,7 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 	}
 }
 
-void CliffOperator::update_ramp(const int i, const int j, int horizontal, int vertical, QRect& rect) {
+void CliffOperator::update_ramp(const int i, const int j, int horizontal, int vertical, TerrainRect& rect) {
 	// note: this function expects that horizontal and vertical are -1, 0 or 1
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
@@ -545,7 +543,7 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 	);
 }
 
-void CellOperator::apply_begin(const QRect& area, int center_x, int center_y) {
+void CellOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 
@@ -558,7 +556,7 @@ void CellOperator::apply_begin(const QRect& area, int center_x, int center_y) {
 	}
 }
 
-QRect CellOperator::apply(const QRect& area, double frame_delta) {
+PathingRect CellOperator::apply(const TerrainRect& area, double frame_delta) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -611,18 +609,16 @@ QRect CellOperator::apply(const QRect& area, double frame_delta) {
 		terrain.update_water(area.adjusted(0, 0, 1, 1).intersected({0, 0, width, height}));
 	}
 
-	// modified area (in pathing resolution)
-	QRect modified_area;
+	// return modified area (in pathing resolution)
 	if (brush->brush_type == Brush::Type::corner) {
-		modified_area = TerrainBrush::to_pathing_rect(area).adjusted(-2, -2, -2, -2);
+		return area.to_pathing().adjusted(-2, -2, -2, -2);
 	} else {
-		modified_area = TerrainBrush::to_pathing_rect(area);
+		return area.to_pathing();
 	}
-	return modified_area;
 }
 
-void CellOperator::apply_end(WorldEditContext& ctx, const QRect& area) {
-	QRect area_terrain = TerrainBrush::from_pathing_rect(area);
+void CellOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
+	TerrainRect area_terrain = area.to_terrain();
 
 	if (cell_operation_type == cell_operation::remove_water || cell_operation_type == cell_operation::add_water) {
 		brush->add_terrain_undo(ctx, area_terrain, TerrainUndoType::water);

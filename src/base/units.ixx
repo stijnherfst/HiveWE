@@ -1,6 +1,5 @@
 module;
 
-#include <QRect>
 #include <absl/strings/str_split.h>
 #include <tracy/Tracy.hpp>
 
@@ -18,6 +17,7 @@ import ResourceManager;
 import Hierarchy;
 import Globals;
 import Terrain;
+import Rects;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 
@@ -298,7 +298,7 @@ export class Units {
 		hierarchy.map_file_write("war3mapUnits.doo", writer.buffer);
 	}
 
-	void update_area(const QRectF& area, const Terrain& terrain) {
+	void update_area(const TerrainRectF& area, const Terrain& terrain) {
 		for (auto&& i : query_area(area)) {
 			i->position.z = terrain.interpolated_height(i->position.x, i->position.y, true);
 			i->update();
@@ -399,7 +399,7 @@ export class Units {
 	}
 
 	[[nodiscard]]
-	std::vector<Unit*> query_area(const QRectF& area) {
+	std::vector<Unit*> query_area(const TerrainRectF& area) {
 		std::vector<Unit*> result;
 
 		for (auto& i : units) {

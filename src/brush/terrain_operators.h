@@ -1,12 +1,9 @@
 #pragma once
 
-#include <QRect>
-#include <string>
-#include <vector>
-#include <algorithm>
-
 class TerrainBrush;
 class Terrain;
+class TerrainRect;
+class PathingRect;
 struct WorldEditContext;
 
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...
@@ -18,9 +15,9 @@ class TerrainOperator {
 		set_brush_type(type);
 	}
 
-	virtual void apply_begin(const QRect& area, int center_x, int center_y) = 0;
-	virtual QRect apply(const QRect& area, double frame_delta) = 0;
-	virtual void apply_end(WorldEditContext& ctx, const QRect& area) = 0;
+	virtual void apply_begin(const TerrainRect& area, int center_x, int center_y) = 0;
+	virtual PathingRect apply(const TerrainRect& area, double frame_delta) = 0;
+	virtual void apply_end(WorldEditContext& ctx, const PathingRect& area) = 0;
 
 	/// Checks whether the operator is active or not
 	bool is_enabled() const {
@@ -51,9 +48,9 @@ class HeightOperator: public TerrainOperator {
 
 	HeightOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::corner) {}
 
-	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end(WorldEditContext& ctx, const QRect& area) override;
+	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
+	PathingRect apply(const TerrainRect& area, double frame_delta) override;
+	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
 
   private:
 	float deformation_height_ground;
@@ -66,9 +63,9 @@ class TextureOperator: public TerrainOperator {
 
 	TextureOperator(TerrainBrush& brush) : TerrainOperator(brush, Brush::Type::corner) {}
 
-	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end(WorldEditContext& ctx, const QRect& area) override;
+	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
+	PathingRect apply(const TerrainRect& area, double frame_delta) override;
+	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
 };
 
 class CliffOperator: public TerrainOperator {
@@ -89,14 +86,14 @@ class CliffOperator: public TerrainOperator {
 
 	int cliff_id = 0;
 
-	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end(WorldEditContext& ctx, const QRect& area) override;
+	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
+	PathingRect apply(const TerrainRect& area, double frame_delta) override;
+	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
 
-	void check_nearby(const int begx, const int begy, const int i, const int j, QRect& area) const;
-	void update_ramp(const int i, const int j, const int horizontal, const int vertical, QRect& area);
-	QRect apply_cliffs(const QRect& area, double frame_delta);
-	QRect apply_ramps(const QRect& area, double frame_delta);
+	void check_nearby(const int begx, const int begy, const int i, const int j, TerrainRect& area) const;
+	void update_ramp(const int i, const int j, const int horizontal, const int vertical, TerrainRect& area);
+	PathingRect apply_cliffs(const TerrainRect& area, double frame_delta);
+	PathingRect apply_ramps(const TerrainRect& area, double frame_delta);
 
   private:
 	int layer_height = 0;
@@ -117,9 +114,9 @@ class CellOperator: public TerrainOperator {
 		remove_hole
 	};
 
-	void apply_begin(const QRect& area, int center_x, int center_y) override;
-	QRect apply(const QRect& area, double frame_delta) override;
-	void apply_end(WorldEditContext& ctx, const QRect& area) override;
+	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
+	PathingRect apply(const TerrainRect& area, double frame_delta) override;
+	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
 
 	void set_operation_type(cell_operation operation);
 	cell_operation get_operation_type();

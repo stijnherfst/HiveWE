@@ -1,13 +1,13 @@
 module;
 
 #include <QObject>
-#include <QRect>
 
 #include <brush.h>
 
 export module Terrain;
 
 import std;
+import Rects;
 import GroundTexture;
 import Texture;
 import BinaryReader;
@@ -935,7 +935,7 @@ export class Terrain: public QObject {
 		glNamedBufferSubData(water_height_buffer, 0, corner_water_height.size() * sizeof(float), corner_water_height.data());
 	}
 
-	void update_ground_heights(const QRect& area) {
+	void update_ground_heights(const TerrainRect& area) {
 		// Set base ground heights for all corners in area
 		for (int j = area.y(); j < area.y() + area.height(); j++) {
 			for (int i = area.x(); i < area.x() + area.width(); i++) {
@@ -946,7 +946,7 @@ export class Terrain: public QObject {
 
 		// For each ramp entrance tile overlapping the area, set base + 0.5 for corners at the base level.
 		// Uses assignment so corners shared by multiple ramp tiles are written idempotently.
-		const QRect tile_area = area.adjusted(-1, -1, 0, 0).intersected({0, 0, width - 1, height - 1});
+		const TerrainRect tile_area = area.adjusted(-1, -1, 0, 0).intersected({0, 0, width - 1, height - 1});
 		for (int j = tile_area.y(); j < tile_area.y() + tile_area.height(); j++) {
 			for (int i = tile_area.x(); i < tile_area.x() + tile_area.width(); i++) {
 				const size_t bl = ci(i, j);
@@ -986,8 +986,8 @@ export class Terrain: public QObject {
 
 	/// Updates the ground texture variation information and uploads it to the GPU
 	/// Make sure update_cliff_meshes() is up to date on the target area
-	void update_ground_textures(const QRect& area) {
-		const QRect update_area = area.adjusted(-2, -2, 2, 2).intersected({0, 0, width, height});
+	void update_ground_textures(const TerrainRect& area) {
+		const TerrainRect update_area = area.adjusted(-2, -2, 2, 2).intersected({0, 0, width, height});
 
 		const int x0 = update_area.x();
 		const int y0 = update_area.y();
@@ -1034,8 +1034,8 @@ export class Terrain: public QObject {
 		upload_ground_texture();
 	}
 
-	void update_ground_exists(const QRect& area) {
-		const QRect update_area = area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
+	void update_ground_exists(const TerrainRect& area) {
+		const TerrainRect update_area = area.adjusted(-1, -1, 1, 1).intersected({0, 0, width - 1, height - 1});
 
 		for (int j = update_area.top(); j <= update_area.bottom(); j++) {
 			for (int i = update_area.left(); i <= update_area.right(); i++) {
@@ -1049,7 +1049,7 @@ export class Terrain: public QObject {
 	}
 
 	/// Updates and uploads the water data for the GPU
-	void update_water(const QRect& area) {
+	void update_water(const TerrainRect& area) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			for (int j = area.y(); j < area.y() + area.height(); j++) {
 				const size_t idx = ci(i, j);
@@ -1061,7 +1061,7 @@ export class Terrain: public QObject {
 	}
 
 	/// Updates the cliff and ramp meshes for an area
-	void update_cliff_meshes(const QRect& area) {
+	void update_cliff_meshes(const TerrainRect& area) {
 		// Remove all existing cliff meshes in area
 		std::erase_if(cliffs, [&](const glm::ivec3& p) {
 			return area.contains(p.x, p.y);
@@ -1073,7 +1073,7 @@ export class Terrain: public QObject {
 			}
 		}
 
-		QRect ramp_area = area.adjusted(-2, -2, 2, 2).intersected({0, 0, width, height});
+		TerrainRect ramp_area = area.adjusted(-2, -2, 2, 2).intersected({0, 0, width, height});
 
 		// Add new cliff meshes
 		for (int i = ramp_area.x(); i < ramp_area.right(); i++) {

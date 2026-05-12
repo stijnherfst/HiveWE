@@ -18,10 +18,10 @@ import Doodad;
 import SkinnedMesh;
 import SkeletalModelInstance;
 
-class DoodadBrush : public Brush {
+class DoodadBrush: public Brush {
 	Q_OBJECT
 
-	std::set<int> possible_variations = { 0 };
+	std::set<int> possible_variations = {0};
 	int get_random_variation();
 
 	int variation = 0;
@@ -103,7 +103,7 @@ class DoodadBrush : public Brush {
 	void start_action(Action new_action);
 	void end_action();
 
-public slots:
+  public slots:
 	// Angle in radians
 	void set_selection_angle(float angle);
 	void set_selection_absolute_height(float height);
@@ -112,7 +112,7 @@ public slots:
 
 	void unselect_id(std::string_view id) override;
 
-signals:
+  signals:
 	void angle_changed();
 	void scale_changed();
 	void position_changed();

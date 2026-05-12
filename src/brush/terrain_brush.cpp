@@ -8,6 +8,7 @@ import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
 import Camera;
+import Rects;
 
 TerrainBrush::TerrainBrush() :
 	Brush(),
@@ -141,8 +142,8 @@ void TerrainBrush::apply_begin() {
 	const int height = terrain.height;
 
 	const glm::ivec2 pos = get_unclipped_pos();
-	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
-	updated_area = QRect();
+	TerrainRect area = TerrainRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
+	updated_area = PathingRect();
 
 	const int center_x = area.x() + area.width() * 0.5f;
 	const int center_y = area.y() + area.height() * 0.5f;
@@ -179,8 +180,8 @@ void TerrainBrush::apply(double frame_delta) {
 
 	const glm::ivec2 pos = get_unclipped_pos();
 
-	QRect area = QRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
-	QRect affected_area = QRect();
+	TerrainRect area = TerrainRect(pos.x, pos.y, size.x / 4.f, size.y / 4.f).intersected({0, 0, width, height});
+	PathingRect affected_area = PathingRect();
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -209,8 +210,7 @@ void TerrainBrush::apply(double frame_delta) {
 	map->pathing_map.upload_static_pathing();
 
 	if (height_operator.is_active || cliff_operator.is_active) {
-		QRectF object_area =
-			QRectF(updated_area.x() / 4.f, updated_area.y() / 4.f, updated_area.width() / 4.f, updated_area.height() / 4.f);
+		TerrainRectF object_area = updated_area.to_terrain_f();
 
 		if (change_doodad_heights) {
 			for (auto&& i : map->doodads.doodads) {
@@ -274,7 +274,7 @@ void TerrainBrush::apply_end() {
 }
 
 /// Adds the undo to the current undo group
-void TerrainBrush::add_terrain_undo(WorldEditContext& ctx, const QRect& area, TerrainUndoType type) {
+void TerrainBrush::add_terrain_undo(WorldEditContext& ctx, const TerrainRect& area, TerrainUndoType type) {
 	auto undo_action = std::make_unique<TerrainGenericAction>();
 
 	undo_action->area = area;
@@ -299,7 +299,7 @@ void TerrainBrush::add_terrain_undo(WorldEditContext& ctx, const QRect& area, Te
 	map->world_undo.add_undo_action(std::move(undo_action));
 }
 
-void TerrainBrush::add_pathing_undo(WorldEditContext& ctx, const QRect& area) {
+void TerrainBrush::add_pathing_undo(WorldEditContext& ctx, const PathingRect& area) {
 	auto undo_action = std::make_unique<PathingMapAction>();
 
 	undo_action->area = area;
@@ -328,21 +328,4 @@ glm::ivec2 TerrainBrush::get_unclipped_pos() const {
 	const glm::vec2 fpos = brush_type == Brush::Type::corner ? glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 1.f
 															 : glm::vec2(input_handler.mouse_world) - size.x / 4.f / 2.f + 0.5f;
 	return glm::ivec2(glm::floor(fpos));
-}
-
-/// Converts a rect in pathing resolution to a rect in terrain corner resolution
-QRect TerrainBrush::from_pathing_rect(const QRect& rect) {
-	int x = rect.x() / 4;
-	int y = rect.y() / 4;
-	int right = (rect.x() + rect.width() + 3) / 4;
-	int bottom = (rect.y() + rect.height() + 3) / 4;
-	int width = right - x + 1;
-	int height = bottom - y + 1;
-	QRect result(x, y, width, height);
-	return result;
-}
-
-/// Converts a rect in terrain resolution to a rect in pathing resolution
-QRect TerrainBrush::to_pathing_rect(const QRect& rect) {
-	return QRect(rect.x() * 4, rect.y() * 4, rect.width() * 4, rect.height() * 4);
 }

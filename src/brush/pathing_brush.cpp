@@ -1,7 +1,5 @@
 #include "pathing_brush.h"
 
-#include <QRect>
-
 import std;
 import <glm/glm.hpp>;
 import MapGlobal;
@@ -19,7 +17,7 @@ void PathingBrush::apply_begin() {
 	const int x = pos.x;
 	const int y = pos.y;
 
-	applied_area = QRect(x, y, size.x, size.y).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
+	applied_area = PathingRect(x, y, size.x, size.y).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
 
 	map->world_undo.new_undo_group();
 	old_pathing_cells_static = map->pathing_map.pathing_cells_static;
@@ -27,7 +25,7 @@ void PathingBrush::apply_begin() {
 
 void PathingBrush::apply(double frame_delta) {
 	const glm::ivec2 pos = glm::vec2(input_handler.mouse_world) * 4.f - size.x / 2.f + 0.5f;
-	const QRect area = QRect(pos.x, pos.y, size.x, size.y).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
+	const PathingRect area = PathingRect(pos.x, pos.y, size.x, size.y).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
 
 	if (area.width() <= 0 || area.height() <= 0) {
 		return;
@@ -66,7 +64,7 @@ void PathingBrush::apply_end() {
 	add_pathing_undo(applied_area);
 }
 
-void PathingBrush::add_pathing_undo(const QRect& area) {
+void PathingBrush::add_pathing_undo(const PathingRect& area) {
 	auto undo_action = std::make_unique<PathingMapAction>();
 
 	undo_action->area = area;

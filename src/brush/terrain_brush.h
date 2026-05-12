@@ -1,11 +1,5 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <vector>
-#include <array>
-#include <functional>
-
 #include "brush.h"
 #include "terrain_operators.h"
 
@@ -13,6 +7,7 @@ import Doodad;
 import Terrain;
 import TerrainUndo;
 import WorldUndoManager;
+import Rects;
 
 class TerrainBrush: public Brush {
 	// Friend declarations for terrain operators
@@ -46,8 +41,8 @@ class TerrainBrush: public Brush {
 	void apply(double frame_delta) override;
 	void apply_end() override;
 
-	void add_terrain_undo(WorldEditContext& ctx, const QRect& area, TerrainUndoType type);
-	void add_pathing_undo(WorldEditContext& ctx, const QRect& area);
+	void add_terrain_undo(WorldEditContext& ctx, const TerrainRect& area, TerrainUndoType type);
+	void add_pathing_undo(WorldEditContext& ctx, const PathingRect& area);
 
 	// all terrain operators
 	CliffOperator cliff_operator;
@@ -68,15 +63,9 @@ class TerrainBrush: public Brush {
 	/// Returns the unclipped top-left corner of the brush area in terrain coordinates
 	glm::ivec2 get_unclipped_pos() const;
 
-	/// Converts a rect in pathing resoltion to a rect in terrain resolution
-	static QRect from_pathing_rect(const QRect& rect);
-
-	/// Converts a rect in terrain resolution to a rect in pathing resolution
-	static QRect to_pathing_rect(const QRect& rect);
-
   private:
 	/// Area which was modified in the last operation in pathing map resolution
-	QRect updated_area;
+	PathingRect updated_area;
 
 	// undo/redo stuff
 	std::vector<Doodad> pre_change_doodads;

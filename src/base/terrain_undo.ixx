@@ -1,13 +1,12 @@
 module;
 
-#include <QRect>
-
 export module TerrainUndo;
 
 import std;
 import Terrain;
 import Units;
 import WorldUndoManager;
+import Rects;
 
 export enum class TerrainUndoType {
 	texture,
@@ -18,7 +17,7 @@ export enum class TerrainUndoType {
 
 export class TerrainGenericAction final: public WorldCommand {
   public:
-	QRect area;
+	TerrainRect area;
 	std::vector<Corner> old_corners;
 	std::vector<Corner> new_corners;
 	TerrainUndoType undo_type;
