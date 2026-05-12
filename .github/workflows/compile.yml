@@ -38,7 +38,7 @@ jobs:
 
       - name: Configure CMake
         run: >
-          cmake --preset release 
+          cmake --preset Release 
           -DVCPKG_TARGET_TRIPLET=x64-windows 
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
