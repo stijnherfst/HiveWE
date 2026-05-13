@@ -4,6 +4,7 @@ import std;
 import SLK;
 import PathingMap;
 import Hierarchy;
+import UnorderedMap;
 
 export class TerrainTexture {
   public:
@@ -59,6 +60,11 @@ export class MapData {
 		return hierarchy.map_directory / "hiveWE";
 	}
 
+	/// Returns the path to the terrain pathing override file inside the map directory
+	static std::filesystem::path terrain_pathing_file() {
+		return hive_data_folder() / "terrain_pathing.json";
+	}
+
 	/// Returns a pointer to the terrain texture with the given ID, or nullptr if not found
 	const TerrainTexture* terrain_texture(const std::string& id) const {
 		const auto it = m_terrain_textures.find(id);
@@ -78,12 +84,12 @@ export class MapData {
 	}
 
 	/// Returns all terrain textures
-	const std::unordered_map<std::string, TerrainTexture>& terrain_textures() const {
+	const hive::unordered_map<std::string, TerrainTexture>& terrain_textures() const {
 		return m_terrain_textures;
 	}
 
 	/// Returns all cliff types
-	const std::unordered_map<std::string, CliffType>& cliff_types() const {
+	const hive::unordered_map<std::string, CliffType>& cliff_types() const {
 		return m_cliff_types;
 	}
 
@@ -96,14 +102,9 @@ export class MapData {
 	}
 
   private:
-	/// Returns the path to the terrain pathing override file inside the map directory
-	static std::filesystem::path terrain_pathing_file() {
-		return hive_data_folder() / "terrain_pathing.json";
-	}
-
 	/// All avilible terrain textures and cliff types in the game
-	std::unordered_map<std::string, TerrainTexture> m_terrain_textures;
-	std::unordered_map<std::string, CliffType> m_cliff_types;
+	hive::unordered_map<std::string, TerrainTexture> m_terrain_textures;
+	hive::unordered_map<std::string, CliffType> m_cliff_types;
 
 	/// Loads terrain and cliff .slk files and the terrain_pathing_file.
 	void load_terrain_data();

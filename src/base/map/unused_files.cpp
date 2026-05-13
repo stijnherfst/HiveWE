@@ -111,27 +111,16 @@ std::vector<FileUsage> Map::get_file_usage() const {
 
 	std::unordered_set<std::string> files;
 
-	const fs::path hive_folder_name = MapData::hive_data_folder().filename();
-	for (auto it = fs::recursive_directory_iterator(filesystem_path); it != fs::end(it); ++it) {
-		// skip hiveWE folder which contains editor data only
-		if (it->is_directory()) {
-			if (it->path().lexically_relative(filesystem_path) == hive_folder_name) {
-				it.disable_recursion_pending();
+	for (const auto& i : fs::recursive_directory_iterator(filesystem_path)) {
+		if (i.is_regular_file()) {
+			const auto new_path = i.path();
+			std::string path = new_path.lexically_relative(filesystem_path).string();
+			std::string file_name = i.path().filename().string();
+			if (imports.blacklist.contains(file_name)) {
+				continue;
 			}
-			continue;
+			files.emplace(normalize_path(path));
 		}
-
-		if (!it->is_regular_file()) {
-			continue;
-		}
-
-		const auto new_path = it->path();
-		std::string path = new_path.lexically_relative(filesystem_path).string();
-		std::string file_name = new_path.filename().string();
-		if (imports.blacklist.contains(file_name)) {
-			continue;
-		}
-		files.emplace(normalize_path(path));
 	}
 
 	std::string script_file_name;
