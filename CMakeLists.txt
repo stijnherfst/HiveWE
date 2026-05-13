@@ -100,7 +100,13 @@ target_compile_definitions(HiveWE_lib PUBLIC
 )
 
 if(TRACY_ENABLE)
+	target_link_libraries(HiveWE_lib PUBLIC Tracy::TracyClient)
 	target_compile_definitions(HiveWE_lib PUBLIC TRACY_ENABLE)
+else()
+	# Headers must still resolve so `#include <tracy/Tracy.hpp>` (with no-op
+	# macros) compiles
+	target_include_directories(HiveWE_lib PUBLIC
+		$<TARGET_PROPERTY:Tracy::TracyClient,INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 if(TRACY_NO_EXIT)
@@ -132,11 +138,13 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # vcpkg's tracy port installs the Debug DLL under debug/bin/Debug/ (extra
 # subfolder), which VCPKG_APPLOCAL_DEPS doesn't pick up. Copy it manually using
 # the imported target's known location.
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-	"$<TARGET_FILE:Tracy::TracyClient>"
-	"$<TARGET_FILE_DIR:HiveWE>"
-)
+if(TRACY_ENABLE)
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E copy_if_different
+		"$<TARGET_FILE:Tracy::TracyClient>"
+		"$<TARGET_FILE_DIR:HiveWE>"
+	)
+endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
