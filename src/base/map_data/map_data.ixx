@@ -105,7 +105,7 @@ export class MapData {
 	std::unordered_map<std::string, TerrainTexture> m_terrain_textures;
 	std::unordered_map<std::string, CliffType> m_cliff_types;
 
-	/// Loads terrain.slk file. Reads pathing and footstep flags for every terrain texture
+	/// Loads terrain and cliff .slk files and the terrain_pathing_file.
 	void load_terrain_data();
 
 	/// Saves the user defined terrain pathing as a .json. This is a HiveWE exclusive feature.
