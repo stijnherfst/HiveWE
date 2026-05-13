@@ -37,14 +37,14 @@ export class Hierarchy {
 	}
 
 	bool open_casc(const fs::path& directory) {
-		QSettings settings;
+		const QSettings settings;
 		ptr = settings.value("flavour", "Retail").toString() == "PTR";
 		hd = settings.value("hd", "False").toString() == "True";
 		teen = settings.value("teen", "False").toString() == "True";
 
 		warcraft_directory = directory;
 
-		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
+		const bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
 		root_directory = warcraft_directory / (ptr ? "_ptr_" : "_retail_");
 
 		if (open) {

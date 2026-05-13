@@ -2,11 +2,10 @@ export module BinaryWriter;
 
 import std;
 import types;
-import no_init_allocator;
 
 export class BinaryWriter {
   public:
-	std::vector<u8, default_init_allocator<u8>> buffer;
+	std::vector<u8> buffer;
 
 	template <typename T = void, typename U>
 	void write(U value) {

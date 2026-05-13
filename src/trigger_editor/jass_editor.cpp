@@ -252,13 +252,13 @@ JassEditor::JassEditor(QWidget* parent) : QsciScintilla(parent), lexer(this), ap
 
 	// NOTE@Daniel:
 	// I hadn't noticed that this wasn't a QString before I finished JassTokenizer
-	const std::vector<uint8_t, default_init_allocator<uint8_t>> common_data = hierarchy.open_file("Scripts/common.j").value().buffer;
+	const std::vector<uint8_t> common_data = hierarchy.open_file("Scripts/common.j").value().buffer;
 	QString common_script(QByteArray(reinterpret_cast<char const*>(common_data.data()), static_cast<int>(common_data.size())));
 
-	const std::vector<uint8_t, default_init_allocator<uint8_t>> blizzard_data = hierarchy.open_file("Scripts/blizzard.j").value().buffer;
+	const std::vector<uint8_t> blizzard_data = hierarchy.open_file("Scripts/blizzard.j").value().buffer;
 	QString blizzard_script(QByteArray(reinterpret_cast<char const*>(blizzard_data.data()), static_cast<int>(blizzard_data.size())));
 
-	const std::vector<uint8_t, default_init_allocator<uint8_t>> cheat_data = hierarchy.open_file("Scripts/cheats.j").value().buffer;
+	const std::vector<uint8_t> cheat_data = hierarchy.open_file("Scripts/cheats.j").value().buffer;
 	QString cheat_script(QByteArray(reinterpret_cast<char const*>(cheat_data.data()), static_cast<int>(cheat_data.size())));
 
 	// TODO@Daniel:

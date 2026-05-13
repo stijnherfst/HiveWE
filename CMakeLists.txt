@@ -31,6 +31,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(unofficial-qscintilla CONFIG REQUIRED)
 find_package(tracy CONFIG REQUIRED)
+find_package(Whiteoutlib CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -84,8 +85,11 @@ target_link_libraries(HiveWE_lib PUBLIC
 	nlohmann_json::nlohmann_json
 	unofficial::qscintilla::qscintilla
 	${BULLET_LIBRARIES}
-	Tracy::TracyClient
+	Whiteoutlib::whiteout_lib
+	Whiteoutlib::whiteout_casc
 )
+
+#target_link_libraries(main PRIVATE Whiteoutlib::whiteout_lib Whiteoutlib::whiteout_strict_flags)
 
 target_compile_options(HiveWE_lib PUBLIC
 	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /sdl /diagnostics:caret /permissive->

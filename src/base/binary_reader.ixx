@@ -2,14 +2,13 @@ export module BinaryReader;
 
 import std;
 import types;
-import no_init_allocator;
 
 export class BinaryReader {
   public:
-	std::vector<u8, default_init_allocator<u8>> buffer;
+	std::vector<u8> buffer;
 	unsigned long long int position = 0;
 
-	explicit BinaryReader(std::vector<u8, default_init_allocator<u8>> buffer)
+	explicit BinaryReader(std::vector<u8> buffer)
 		: buffer(std::move(buffer)) {
 	}
 

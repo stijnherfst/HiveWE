@@ -51,6 +51,7 @@
     "unordered-dense",
     "qscintilla",
     "tracy",
-    "doctest"
+    "doctest",
+    "whiteoutlib"
   ]
 }

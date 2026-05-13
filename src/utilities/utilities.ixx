@@ -170,13 +170,13 @@ export auto read_file(const fs::path& path) -> std::expected<BinaryReader, std::
 
 	// Handle empty files gracefully
 	if (size == 0) {
-		return BinaryReader(std::vector<u8, default_init_allocator<u8>> {});
+		return BinaryReader(std::vector<u8> {});
 	}
 
 	// Rewind to beginning
 	stream.seekg(0, std::ios::beg);
 
-	std::vector<u8, default_init_allocator<u8>> buffer(size);
+	std::vector<u8> buffer(size);
 
 	// Use the stream buffer directly for maximum throughput
 	if (!stream.read(reinterpret_cast<char*>(buffer.data()), size)) {
