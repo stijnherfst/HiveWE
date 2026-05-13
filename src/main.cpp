@@ -102,17 +102,7 @@ int main(int argc, char* argv[]) {
 
 	a.setStyleSheet(QLatin1String(file.readAll()));
 
-	const auto casc_future = std::async(std::launch::async, [&]() {
-		fs::path directory = find_warcraft_directory();
-
-		while (!hierarchy.open_casc(directory)) {
-			directory = QFileDialog::getExistingDirectory(nullptr, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
-			if (directory == "") {
-				exit(EXIT_SUCCESS);
-			}
-		}
-		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
-
+	const auto load_files = [] {
 		// Place common.j and blizzard.j in the data folder. Required by JassHelper
 		BinaryReader common = hierarchy.open_file("scripts/common.j").value();
 		std::ofstream output("data/tools/common.j");
@@ -127,13 +117,37 @@ int main(int argc, char* argv[]) {
 
 		world_edit_data.substitute(world_edit_game_strings, "WorldEditStrings");
 		world_edit_data.substitute(world_edit_strings, "WorldEditStrings");
+	};
+
+	bool is_casc_open = false;
+	const auto casc_future = std::async(std::launch::async, [&]() {
+		const fs::path directory = find_warcraft_directory();
+
+		is_casc_open = hierarchy.open_casc(directory);
+		if (is_casc_open) {
+			load_files();
+		}
 	});
 
 	gl_thread_pool.init(8);
 
-	HiveWE w;
-
 	casc_future.wait();
+
+	if (!is_casc_open) {
+		fs::path directory = find_warcraft_directory();
+
+		while (!hierarchy.open_casc(directory)) {
+			directory = QFileDialog::getExistingDirectory(nullptr, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+			if (directory == "") {
+				exit(EXIT_SUCCESS);
+			}
+		}
+		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
+
+		load_files();
+	}
+
+	HiveWE w;
 
 	std::println("Application start: {}ms", start_timer.elapsed_ms());
 
