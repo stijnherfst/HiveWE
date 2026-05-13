@@ -17,7 +17,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
-find_package(BZip2 REQUIRED)
+find_package(BZip2 REQUIRED) # Required by Stormlib
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
@@ -84,7 +84,6 @@ target_link_libraries(HiveWE_lib PUBLIC
 	nlohmann_json::nlohmann_json
 	unofficial::qscintilla::qscintilla
 	${BULLET_LIBRARIES}
-	Tracy::TracyClient
 )
 
 target_compile_options(HiveWE_lib PUBLIC
