@@ -13,6 +13,7 @@ import BinaryReader;
 import GameCameras;
 import Imports;
 import MapInfo;
+import MapData;
 import Doodad;
 import Sounds;
 import Regions;
@@ -69,6 +70,7 @@ export class Map: public QObject {
 	Sounds sounds;
 	GameplayConstants gameplay_constants;
 	ShadowMap shadow_map;
+	MapData map_data;
 	WorldUndoManager world_undo;
 	Brush* brush = nullptr;
 	Physics physics;
@@ -364,11 +366,16 @@ export class Map: public QObject {
 		std::println("Trigger loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
+		// Map data
+		map_data.load();
+		std::println("MapData loading: {:>5}ms", timer.elapsed_ms());
+		timer.reset();
+
 		gameplay_constants.load();
 
 		info.load();
 		profile_reset();
-		terrain.load(physics);
+		terrain.load(physics, map_data);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		profile_print();
@@ -479,7 +486,6 @@ export class Map: public QObject {
 		if (hierarchy.map_file_exists("war3map.w3s")) {
 			sounds.load();
 		}
-
 		std::println("Misc loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
@@ -606,6 +612,7 @@ export class Map: public QObject {
 		}
 
 		pathing_map.save();
+		map_data.save();
 		terrain.save();
 		shadow_map.save();
 

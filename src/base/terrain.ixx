@@ -28,6 +28,7 @@ import "glm/gtc/matrix_transform.hpp";
 import "glm/gtc/quaternion.hpp";
 import "bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h";
 import "btBulletDynamicsCommon.h";
+import MapData;
 
 using namespace std::literals::string_literals;
 
@@ -122,7 +123,7 @@ export class Terrain: public QObject {
 	GLuint ground_height_buffer;
 	GLuint cliff_level_buffer;
 	GLuint water_height_buffer;
-	GLuint ground_texture_handle_buffer;
+	GLuint ground_texture_handle_buffer = 0;
 	GLuint ground_texture_data_buffer;
 	GLuint ground_exists_buffer;
 	GLuint water_exists_buffer;
@@ -135,7 +136,10 @@ export class Terrain: public QObject {
 	static constexpr int max_layer_height = 15;
 
 	char tileset;
+	/// Ids of terrain textures used by the terrain
 	std::vector<std::string> tileset_ids;
+
+	/// Ids of cliff types used by the terrain
 	std::vector<std::string> cliffset_ids;
 
 	/// In corners, not tiles
@@ -146,7 +150,7 @@ export class Terrain: public QObject {
 	glm::vec2 offset;
 
 	hive::unordered_map<std::string, int> ground_texture_to_id;
-	hive::unordered_map<std::string, TilePathingg> pathing_options;
+	//hive::unordered_map<std::string, TilePathingg> pathing_options;
 
 	// SoA corner data — indexed as ci(x, y) = y * width + x
 	std::vector<float> corner_height;
@@ -241,9 +245,6 @@ export class Terrain: public QObject {
 	int variation_size = 64;
 	int blight_texture;
 
-	slk::SLK terrain_slk;
-	slk::SLK cliff_slk;
-
 	// Cliffs
 	std::vector<glm::ivec3> cliffs;
 	hive::unordered_map<std::string, uint8_t> path_to_cliff;
@@ -254,7 +255,7 @@ export class Terrain: public QObject {
 	std::vector<std::shared_ptr<CliffMesh>> cliff_meshes;
 	std::vector<std::shared_ptr<Texture>> cliff_textures;
 
-	GLuint cliff_texture_array;
+	GLuint cliff_texture_array = 0;
 
 	int cliff_texture_size = 256;
 
@@ -293,7 +294,7 @@ export class Terrain: public QObject {
 		//delete collision_shape;
 	}
 
-	bool load(const Physics& physics) {
+	bool load(const Physics& physics, const MapData& map_data) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3e").value();
 
 		const std::string magic_number = reader.read_string(4);
@@ -358,19 +359,17 @@ export class Terrain: public QObject {
 			corner_layer_height[i] = misc & 0b0000'1111;
 		}
 
-		create(physics);
+		create(physics, map_data);
 
 		return true;
 	}
 
-	void create(const Physics& physics) {
+	void create(const Physics& physics, const MapData& map_data) {
 		// Determine if cliff
 		compute_cliff_flags();
 
 		hierarchy.tileset = tileset;
 
-		terrain_slk.load("TerrainArt/Terrain.slk");
-		cliff_slk.load("TerrainArt/CliffTypes.slk");
 		const slk::SLK water_slk("TerrainArt/Water.slk");
 
 		// Water Textures and Colours
@@ -426,71 +425,11 @@ export class Terrain: public QObject {
 			cliff_variations.emplace(cliffs_variation_slk.index_to_row.at(i), cliffs_variation_slk.data<int>("variations", i));
 		}
 
-		// Ground textures
-		for (const auto& tile_id : tileset_ids) {
-			ground_textures.push_back(
-				resource_manager.load<GroundTexture>(terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id)).value()
-			);
-			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
-			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
-		}
-		blight_texture = static_cast<int>(ground_textures.size());
-		ground_texture_to_id.emplace("blight", blight_texture);
-		ground_textures.push_back(
-			resource_manager.load<GroundTexture>(world_edit_data.data("TileSets", std::string(1, tileset), 1)).value()
-		);
-		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
-
-		// Cliff Textures
-		for (const auto& cliff_id : cliffset_ids) {
-			cliff_textures.push_back(
-				resource_manager.load<Texture>(cliff_slk.data("texdir", cliff_id) + "/" + cliff_slk.data("texfile", cliff_id)).value()
-			);
-			cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
-			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data<std::string_view>("groundtile", cliff_id)]);
-		}
+		// Ground and cliff textures
+		reload_ground_textures(map_data);
 
 		// Prepare and create GPU buffers
 		setup_GPU_buffers();
-
-		// Ground texture handle buffer
-		glCreateBuffers(1, &ground_texture_handle_buffer);
-		glNamedBufferStorage(
-			ground_texture_handle_buffer,
-			gpu_ground_texture_handles.size() * sizeof(GLuint64),
-			gpu_ground_texture_handles.data(),
-			GL_DYNAMIC_STORAGE_BIT
-		);
-
-		// Cliff
-		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
-		glTextureStorage3D(
-			cliff_texture_array,
-			log2(cliff_texture_size) + 1,
-			GL_RGBA8,
-			cliff_texture_size,
-			cliff_texture_size,
-			cliff_textures.size()
-		);
-		glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		int sub = 0;
-		for (const auto& i : cliff_textures) {
-			glTextureSubImage3D(
-				cliff_texture_array,
-				0,
-				0,
-				0,
-				sub,
-				i->width,
-				i->height,
-				1,
-				i->channels == 4 ? GL_RGBA : GL_RGB,
-				GL_UNSIGNED_BYTE,
-				i->data.data()
-			);
-			sub += 1;
-		}
-		glGenerateTextureMipmap(cliff_texture_array);
 
 		// Water textures
 		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
@@ -686,8 +625,55 @@ export class Terrain: public QObject {
 		glDepthMask(true);
 	}
 
-	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old) {
+	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old, const MapData& map_data) {
+		// update ground and cliff times, the game supports up to 15 cliff textures
+		std::vector<std::string> old_tileset_ids = tileset_ids;
 		tileset_ids = new_tileset_ids;
+
+		std::vector<std::string> old_cliffset = cliffset_ids;
+		cliffset_ids.clear();
+
+		for (const auto& tile_id : tileset_ids) {
+			const auto& texture = *map_data.terrain_texture(tile_id);
+			if (texture.cliff_type_id && cliffset_ids.size() < 14) {
+				cliffset_ids.push_back(*texture.cliff_type_id);
+			}
+		}
+
+		// cliff type mapping
+		std::vector<int> cliff_mapping(old_cliffset.size());
+		for (size_t i = 0; i < old_cliffset.size(); ++i) {
+			const auto it = std::ranges::find(cliffset_ids, old_cliffset[i]);
+			if (it != cliffset_ids.end()) {
+				// direct match found
+				cliff_mapping[i] = static_cast<int>(std::distance(cliffset_ids.begin(), it));
+			} else {
+				// cliff type was removed - try to find a substitute using new_to_old
+				int fallback = 0;
+
+				// first, get the underlying texture of the deleted cliff tile
+				const CliffType& old_cliff = *map_data.cliff_type(old_cliffset[i]);
+				const auto old_it = std::ranges::find(old_tileset_ids, old_cliff.ground_tile);
+
+				if (old_it != old_tileset_ids.end()) {
+					const size_t old_index = std::distance(old_tileset_ids.begin(), old_it);
+
+					// check if the replacement (from new_to_old) is a cliff tile
+					const std::string& new_id = tileset_ids[new_to_old[old_index]];
+					const TerrainTexture& texture = *map_data.terrain_texture(new_id);
+
+					if (texture.cliff_type_id) {
+						// the replacement really is a cliff tile, we will use it instead
+						const auto cliff_it = std::ranges::find(cliffset_ids, *texture.cliff_type_id);
+						if (cliff_it != cliffset_ids.end()) {
+							fallback = static_cast<int>(std::distance(cliffset_ids.begin(), cliff_it));
+						}
+					}
+				}
+
+				cliff_mapping[i] = fallback;
+			}
+		}
 
 		// Blight
 		new_to_old.push_back(new_tileset_ids.size());
@@ -697,44 +683,11 @@ export class Terrain: public QObject {
 			ground_texture = new_to_old[ground_texture];
 		}
 
-		// Reload tile textures
-		ground_textures.clear(); // ToDo Clear them after loading new ones?
-		ground_texture_to_id.clear();
-		gpu_ground_texture_handles.clear();
-
-		for (const auto& tile_id : tileset_ids) {
-			ground_textures.push_back(resource_manager
-										  .load<GroundTexture>(
-											  terrain_slk.data("dir", tile_id) + "/" + terrain_slk.data("file", tile_id)
-											  + (hierarchy.hd ? "_diffuse.dds" : ".dds")
-										  )
-										  .value());
-			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
-			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+		for (auto& cliff_texture : corner_cliff_texture) {
+			cliff_texture = cliff_mapping[cliff_texture];
 		}
-		blight_texture = static_cast<int>(ground_textures.size());
-		ground_texture_to_id.emplace("blight", blight_texture);
-		ground_textures.push_back(resource_manager
-									  .load<GroundTexture>(
-										  world_edit_data.data("TileSets", std::string(1, tileset), 1)
-										  + (hierarchy.hd ? "_diffuse.dds" : ".dds")
-									  )
-									  .value());
-		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 
-		glDeleteBuffers(1, &ground_texture_handle_buffer);
-		glCreateBuffers(1, &ground_texture_handle_buffer);
-		glNamedBufferStorage(
-			ground_texture_handle_buffer,
-			gpu_ground_texture_handles.size() * sizeof(GLuint64),
-			gpu_ground_texture_handles.data(),
-			GL_DYNAMIC_STORAGE_BIT
-		);
-
-		cliff_to_ground_texture.clear();
-		for (const auto& cliff_id : cliffset_ids) {
-			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff_slk.data("groundtile", cliff_id)]);
-		}
+		reload_ground_textures(map_data);
 
 		update_ground_textures({0, 0, width, height});
 		emit tileset_changed();
@@ -1183,7 +1136,14 @@ export class Terrain: public QObject {
 
 	/// Computes the terrain pathing flags for the target cell on the **PATHING** map
 	/// Takes cliffs, blight, water, terrain textures and boundaries into account
-	uint8_t get_terrain_pathing(const size_t i, const size_t j, const bool tile_pathing, const bool cliff_pathing, const bool water_pathing) {
+	uint8_t get_terrain_pathing(
+		const size_t i,
+		const size_t j,
+		const bool tile_pathing,
+		const bool cliff_pathing,
+		const bool water_pathing,
+		const MapData& map_data
+	) {
 		// map pathing cell to corner
 		const size_t cx = i / 4;
 		const size_t cy = j / 4;
@@ -1198,7 +1158,8 @@ export class Terrain: public QObject {
 		const size_t closest_idx = ci(x, y);
 
 		if (tile_pathing) {
-			mask = pathing_options[tileset_ids[corner_ground_texture[closest_idx]]].mask();
+			const std::string& tile_id = tileset_ids[corner_ground_texture[closest_idx]];
+			mask = map_data.terrain_texture(tile_id)->get_tile_pathing();
 		}
 
 		// cliffs are unbuildable and unwalkable
@@ -1390,6 +1351,83 @@ export class Terrain: public QObject {
 		corner_cliff = std::move(new_cliff);
 		corner_romp = std::move(new_romp);
 		corner_special_doodad = std::move(new_special_doodad);
+	}
+
+	void reload_ground_textures(const MapData& map_data) {
+		ground_textures.clear(); // ToDo Clear them after loading new ones?
+		ground_texture_to_id.clear();
+		gpu_ground_texture_handles.clear();
+
+		for (const auto& tile_id : tileset_ids) {
+			const auto& texture = *map_data.terrain_texture(tile_id);
+			ground_textures.push_back(
+				resource_manager.load<GroundTexture>(texture.file_path + (hierarchy.hd ? "_diffuse.dds" : ".dds")).value()
+			);
+			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
+			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+		}
+		blight_texture = static_cast<int>(ground_textures.size());
+		ground_texture_to_id.emplace("blight", blight_texture);
+		ground_textures.push_back(resource_manager
+									  .load<GroundTexture>(
+										  world_edit_data.data("TileSets", std::string(1, tileset), 1)
+										  + (hierarchy.hd ? "_diffuse.dds" : ".dds")
+									  )
+									  .value());
+		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+
+		glDeleteBuffers(1, &ground_texture_handle_buffer);
+		glCreateBuffers(1, &ground_texture_handle_buffer);
+		glNamedBufferStorage(
+			ground_texture_handle_buffer,
+			gpu_ground_texture_handles.size() * sizeof(GLuint64),
+			gpu_ground_texture_handles.data(),
+			GL_DYNAMIC_STORAGE_BIT
+		);
+
+		cliff_to_ground_texture.clear();
+		for (const auto& cliff_id : cliffset_ids) {
+			const auto& cliff = *map_data.cliff_type(cliff_id);
+			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff.ground_tile]);
+		}
+
+		cliff_textures.clear();
+		cliff_texture_size = 256;
+		for (const auto& cliff_id : cliffset_ids) {
+			const auto& cliff = *map_data.cliff_type(cliff_id);
+			cliff_textures.push_back(resource_manager.load<Texture>(cliff.file_path).value());
+			cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
+		}
+
+		glDeleteTextures(1, &cliff_texture_array);
+		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
+		glTextureStorage3D(
+			cliff_texture_array,
+			log2(cliff_texture_size) + 1,
+			GL_RGBA8,
+			cliff_texture_size,
+			cliff_texture_size,
+			cliff_textures.size()
+		);
+		glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		int sub = 0;
+		for (const auto& i : cliff_textures) {
+			glTextureSubImage3D(
+				cliff_texture_array,
+				0,
+				0,
+				0,
+				sub,
+				i->width,
+				i->height,
+				1,
+				i->channels == 4 ? GL_RGBA : GL_RGB,
+				GL_UNSIGNED_BYTE,
+				i->data.data()
+			);
+			sub += 1;
+		}
+		glGenerateTextureMipmap(cliff_texture_array);
 	}
 
 	void re_render(Physics& physics) {

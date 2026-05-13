@@ -16,6 +16,8 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/gameplay_constants.ixx"
 	"base/imports.ixx"
 	"base/map_info.ixx"
+	"base/map_data/map_data.ixx"
+	"base/map_data/terrain_textures.cpp"
 	"base/pathing_map.ixx"
 	"base/regions.ixx"
 	"base/camera.ixx"
