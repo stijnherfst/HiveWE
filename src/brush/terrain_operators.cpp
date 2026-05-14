@@ -377,15 +377,11 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 	auto& terrain = map->terrain;
 	TerrainRect bounds = TerrainRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
-	// assign proper cliff texture to all corners in the 3x3 neighbourhood
 	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
+			// assign proper cliff texture to all corners in the 3x3 neighbourhood
 			terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_id;
-		}
-	}
 
-	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-		for (int k = bounds.x(); k <= bounds.right(); k++) {
 			if (k == 0 && l == 0) {
 				continue;
 			}
