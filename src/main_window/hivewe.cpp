@@ -246,7 +246,7 @@ void HiveWE::load_map(const fs::path& directory) {
 	map->load(directory);
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::load_folder() {
@@ -360,7 +360,7 @@ void HiveWE::save_as() {
 		map->save(file_name / map->name);
 	}
 
-	setWindowTitle("HiveWE 0.10 - " + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::export_mpq() {
