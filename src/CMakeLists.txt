@@ -166,6 +166,7 @@ target_sources(HiveWE_lib PRIVATE
 
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"
+	"object_editor/model_grid_glwidget.cpp"
 	"object_editor/object_editor.cpp"
 	"object_editor/global_search.cpp"
 

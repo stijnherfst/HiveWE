@@ -52,6 +52,25 @@ namespace casc {
 			handle = nullptr;
 		}
 
+		std::vector<std::string> find_files(const std::string& path) const {
+			std::vector<std::string> files;
+
+			CASC_FIND_DATA data;
+			const HANDLE found = CascFindFirstFile(handle, path.c_str(), &data, L"");
+
+			if (found == INVALID_HANDLE_VALUE) {
+				return {};
+			}
+
+			files.push_back(data.szFileName);
+
+			while (CascFindNextFile(found, &data)) {
+				files.push_back(data.szFileName);
+			}
+
+			return files;
+		}
+
 		[[nodiscard]] std::expected<BinaryReader, std::string> open_file(const fs::path& path) const {
 			HANDLE file_handle = nullptr;
 			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file_handle);

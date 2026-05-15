@@ -620,7 +620,7 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 	dialog->resize(530, 512);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
-	ModelView* view = new ModelView;
+	ModelView* view = new ModelView();
 	view->setObjectName("modelView");
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);

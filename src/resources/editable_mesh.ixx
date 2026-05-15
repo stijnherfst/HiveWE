@@ -33,15 +33,15 @@ export class EditableMesh: public Resource {
 	std::vector<MeshEntry> geosets;
 	bool has_mesh; // ToDo remove when added support for meshless
 
-	GLuint vao;
-	GLuint vertex_buffer;
-	GLuint uv_buffer;
-	GLuint normal_buffer;
-	GLuint tangent_buffer;
-	GLuint weight_buffer;
-	GLuint index_buffer;
-	GLuint layer_alpha;
-	GLuint geoset_color;
+	GLuint vao = 0;
+	GLuint vertex_buffer = 0;
+	GLuint uv_buffer = 0;
+	GLuint normal_buffer = 0;
+	GLuint tangent_buffer = 0;
+	GLuint weight_buffer = 0;
+	GLuint index_buffer = 0;
+	GLuint layer_alpha = 0;
+	GLuint geoset_color = 0;
 
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 
