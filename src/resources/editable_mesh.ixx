@@ -46,7 +46,7 @@ export class EditableMesh: public Resource {
 
 	std::vector<std::shared_ptr<GPUTexture>> textures;
 
-	ParticleEmitter2Renderer particle_renderer;
+	mutable ParticleEmitter2Renderer particle_renderer;
 
 	static constexpr const char* name = "EditableMesh";
 
@@ -271,13 +271,24 @@ export class EditableMesh: public Resource {
 		glDeleteBuffers(1, &geoset_color);
 	}
 
-	void render(
+	void render_opaque(
+		const bool render_hd,
 		const int team_color_index,
 		const SkeletalModelInstance& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3 light_direction
 	) const {
-		render_opaque(false, team_color_index, skeleton, projection_view, light_direction);
+		render_pass(true, render_hd, team_color_index, skeleton, projection_view, light_direction);
+	}
+
+	void render_transparent(
+		const bool render_hd,
+		const int team_color_index,
+		const SkeletalModelInstance& skeleton,
+		const glm::mat4& projection_view,
+		const glm::vec3 light_direction
+	) const {
+		render_pass(false, render_hd, team_color_index, skeleton, projection_view, light_direction);
 	}
 
 	void render_particles(
@@ -291,7 +302,8 @@ export class EditableMesh: public Resource {
 	}
 
   private:
-	void render_opaque(
+	void render_pass(
+		const bool opaque_pass,
 		const bool render_hd,
 		const int team_color_index,
 		const SkeletalModelInstance& skeleton,
@@ -301,52 +313,53 @@ export class EditableMesh: public Resource {
 		if (!has_mesh) {
 			return;
 		}
-		glm::mat4 M = glm::mat4(1.f);
-		glm::mat4 MVP = projection_view * M;
 
 		glBindVertexArray(vao);
 
-		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
+		glUniformMatrix4fv(0, 1, false, &projection_view[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
-		glUniformMatrix4fv(4, 1, false, &M[0][0]);
-		glUniform1i(6, mdx->bones.size());
 		glUniform1i(9, team_color_index);
 		glUniformMatrix4fv(11, mdx->bones.size(), false, &skeleton.world_matrices[0][0][0]);
 
-		for (const auto& i : geosets) {
-			const auto& layers = mdx->materials[i.material_id].layers;
-
-			if (layers[0].blend_mode != 0 && layers[0].blend_mode != 1) {
+		for (const auto& geoset_entry : geosets) {
+			const auto& layers = mdx->materials[geoset_entry.material_id].layers;
+			const bool geoset_is_opaque = (layers[0].blend_mode == 0 || layers[0].blend_mode == 1);
+			if (geoset_is_opaque != opaque_pass) {
 				continue;
 			}
 
 			glm::vec3 geoset_color(1.f);
 			float geoset_anim_visibility = 1.0f;
-			if (i.geoset_anim && skeleton.sequence_index >= 0) {
-				geoset_color = skeleton.get_geoset_animation_color(*i.geoset_anim);
-				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
+			if (geoset_entry.geoset_anim && skeleton.sequence_index >= 0) {
+				geoset_color = skeleton.get_geoset_animation_color(*geoset_entry.geoset_anim);
+				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*geoset_entry.geoset_anim);
 			}
 
-			for (const auto& j : layers) {
-				if (j.hd != render_hd) {
+			for (const auto& layer : layers) {
+				if (layer.hd != render_hd) {
 					continue;
 				}
 
 				float layer_visibility = 1.0f;
 				if (skeleton.sequence_index >= 0) {
-					layer_visibility = skeleton.get_layer_visiblity(j);
+					layer_visibility = skeleton.get_layer_visiblity(layer);
 				}
 
-				const glm::vec4 layer_color = glm::vec4(geoset_color, layer_visibility * geoset_anim_visibility);
+				const float final_alpha = layer_visibility * geoset_anim_visibility;
+				if (!opaque_pass && final_alpha <= 0.01f) {
+					continue;
+				}
 
-				glUniform1f(1, j.blend_mode == 1 ? 0.75f : 0.01f);
-				glUniform1i(2, !(j.shading_flags & 0x1));
+				const glm::vec4 layer_color = glm::vec4(geoset_color, final_alpha);
+
+				glUniform1f(1, layer.blend_mode == 1 ? 0.75f : 0.01f);
+				glUniform1i(2, !(layer.shading_flags & 0x1));
 				glUniform4fv(8, 1, &layer_color[0]);
-				const bool is_team_color =
-					(mdx->textures[j.textures[0].id].replaceable_id == 1 || mdx->textures[j.textures[0].id].replaceable_id == 2);
-				glUniform1i(10, is_team_color);
 
-				switch (j.blend_mode) {
+				const uint32_t replaceable = mdx->textures[layer.textures[0].id].replaceable_id;
+				glUniform1i(10, replaceable == 1 || replaceable == 2);
+
+				switch (layer.blend_mode) {
 					case 0:
 					case 1:
 						glBlendFunc(GL_ONE, GL_ZERO);
@@ -355,8 +368,6 @@ export class EditableMesh: public Resource {
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 						break;
 					case 3:
-						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-						break;
 					case 4:
 						glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 						break;
@@ -368,34 +379,35 @@ export class EditableMesh: public Resource {
 						break;
 				}
 
-				if (j.shading_flags & 0x10) {
+				if (layer.shading_flags & 0x10) {
 					glDisable(GL_CULL_FACE);
 				} else {
 					glEnable(GL_CULL_FACE);
 				}
-
-				if (j.shading_flags & 0x40) {
+				if (layer.shading_flags & 0x40) {
 					glDisable(GL_DEPTH_TEST);
 				} else {
 					glEnable(GL_DEPTH_TEST);
 				}
-
-				if (j.shading_flags & 0x80) {
-					glDepthMask(false);
-				} else {
-					glDepthMask(true);
+				if (opaque_pass) {
+					glDepthMask(!(layer.shading_flags & 0x80));
 				}
 
-				for (size_t texture_slot = 0; texture_slot < j.textures.size(); texture_slot++) {
-					glBindTextureUnit(texture_slot, textures[j.textures[texture_slot].id]->id);
+				// SD path: just albedo (slot 0). HD path: albedo/normal/orm/emissive/team_color (slots 0..4).
+				// For HD layers with fewer than 5 textures, fall back to albedo so we don't read stale state.
+				const size_t slot_count = render_hd ? 5 : 1;
+				const uint32_t fallback_tex_id = layer.textures[0].id;
+				for (size_t slot = 0; slot < slot_count; slot++) {
+					const uint32_t tex_id = slot < layer.textures.size() ? layer.textures[slot].id : fallback_tex_id;
+					glBindTextureUnit(static_cast<GLuint>(slot), textures[tex_id]->id);
 				}
 
 				glDrawElementsBaseVertex(
 					GL_TRIANGLES,
-					i.indices,
+					geoset_entry.indices,
 					GL_UNSIGNED_SHORT,
-					reinterpret_cast<void*>(i.base_index * sizeof(uint16_t)),
-					i.base_vertex
+					reinterpret_cast<void*>(static_cast<uintptr_t>(geoset_entry.base_index) * sizeof(uint16_t)),
+					geoset_entry.base_vertex
 				);
 			}
 		}

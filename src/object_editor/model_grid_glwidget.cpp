@@ -87,7 +87,8 @@ void ModelGridGLWidget::initializeGL() {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	shader = resource_manager.load<Shader>({"data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag"}).value();
+	shader_sd = resource_manager.load<Shader>({"data/shaders/editable_mesh_sd.vert", "data/shaders/editable_mesh_sd.frag"}).value();
+	shader_hd = resource_manager.load<Shader>({"data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag"}).value();
 
 	elapsed_timer.start();
 }
@@ -122,6 +123,7 @@ void ModelGridGLWidget::paintGL() {
 	glBindVertexArray(vao);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_SCISSOR_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	const int view_top = scroll_offset_y;
 	const int view_bottom = scroll_offset_y + height();
@@ -166,8 +168,24 @@ void ModelGridGLWidget::paintGL() {
 			const glm::mat4 proj = glm::perspective(glm::radians(k_fov_deg), 1.f, k_near, k_far);
 			const glm::mat4 pv = proj * view;
 
-			shader->use();
-			cell.mesh->render(0, cell.skeleton, pv, dir);
+			glEnable(GL_BLEND);
+			glDepthMask(true);
+			glEnable(GL_DEPTH_TEST);
+
+			shader_sd->use();
+			cell.mesh->render_opaque(false, 1, cell.skeleton, pv, dir);
+			shader_hd->use();
+			cell.mesh->render_opaque(true, 1, cell.skeleton, pv, dir);
+
+			glEnable(GL_BLEND);
+			glDepthMask(false);
+
+			shader_sd->use();
+			cell.mesh->render_transparent(false, 1, cell.skeleton, pv, dir);
+			shader_hd->use();
+			cell.mesh->render_transparent(true, 1, cell.skeleton, pv, dir);
+
+			glDepthMask(true);
 
 			const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
 			const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));

@@ -87,7 +87,8 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	std::vector<PreviewCell> all_cells;
 	std::vector<int> visible_indices;
 	std::vector<LayoutRow> layout;
-	std::shared_ptr<Shader> shader;
+	std::shared_ptr<Shader> shader_sd;
+	std::shared_ptr<Shader> shader_hd;
 	GLuint vao = 0;
 
 	int cell_size = 128;

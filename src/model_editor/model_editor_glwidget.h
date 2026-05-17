@@ -41,7 +41,8 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 	std::shared_ptr<mdx::MDX> mdx;
 	std::shared_ptr<EditableMesh> mesh;
 	SkeletalModelInstance skeleton;
-	std::shared_ptr<Shader> shader;
+	std::shared_ptr<Shader> shader_sd;
+	std::shared_ptr<Shader> shader_hd;
 
 	int64_t optimization_file_size_reduction = 0;
 	float optimization_file_size_reduction_percent = 0.f;

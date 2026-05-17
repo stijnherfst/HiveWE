@@ -392,7 +392,7 @@ export class SkinnedMesh: public Resource {
 				layer_ids.push_back(e);
 
 				LayerParams p {};
-				p.alpha_test = layer.blend_mode == 0 ? 0.01f : layer.blend_mode == 1 ? 0.75f : 0.01f;
+				p.alpha_test = layer.blend_mode == 1 ? 0.75f : 0.01f;
 				p.layer_lit = (layer.shading_flags & 0x1) ? 0u : 1u;
 				const uint32_t replaceable_id = mdx->textures[layer.textures[0].id].replaceable_id;
 				p.is_team_color = (replaceable_id == 1 || replaceable_id == 2) ? 1u : 0u;

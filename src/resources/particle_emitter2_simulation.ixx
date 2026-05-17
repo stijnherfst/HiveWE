@@ -40,8 +40,7 @@ export class ParticleEmitter2Simulation {
 			const mdx::ParticleEmitter2& e = mdx.emitters2[i];
 
 			const float capacity_f = std::ceil(1.15f * e.emission_rate * e.life_span);
-			std::println("capacity: {}", capacity_f);
-			size_t capacity = capacity_f > 0.f ? static_cast<size_t>(capacity_f) : 0u;
+			const size_t capacity = capacity_f > 0.f ? static_cast<size_t>(capacity_f) : 0u;
 
 			EmitterPool& pool = pools[i];
 			pool.positions.assign(capacity, glm::vec3(0.f));

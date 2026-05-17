@@ -7,13 +7,12 @@ layout (location = 3) in vec4 vTangent;
 layout (location = 4) in uvec2 vSkin;
 
 layout (location = 0) uniform mat4 MVP;
-layout (location = 3) uniform vec3 light_direction;
 layout (location = 8) uniform vec4 layer_color;
 layout (location = 9) uniform int team_color_index;
-layout (location = 11) uniform mat4 bones[217];
+layout (location = 11) uniform mat4 bones[217]; // max 200 because the shader compiler issues an error when going higher
 
 out vec2 UV;
-out vec3 tangent_light_direction;
+out vec3 Normal;
 out vec4 vertexColor;
 out vec3 team_color;
 
@@ -57,18 +56,12 @@ void main() {
 	const float w1 = ((vSkin.y & 0x0000FF00u) >> 8) / 255.f;
 	const float w2 = ((vSkin.y & 0x00FF0000u) >> 16) / 255.f;
 	const float w3 = ((vSkin.y & 0xFF000000u) >> 24) / 255.f;
-	const mat4 skin_matrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
+	const mat4 skinMatrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 
-	gl_Position = MVP * skin_matrix * vec4(vPosition, 1.f);
-
-	mat3 model = mat3(skin_matrix);
-	vec3 T = normalize(model * vTangent.xyz);
-	vec3 N = normalize(model * vNormal);
-	vec3 B = cross(N, T) * vTangent.w;
-	mat3 TBN = transpose(mat3(T, B, N));
+	gl_Position = MVP * skinMatrix * vec4(vPosition, 1.f);
 
 	UV = vUV;
-	tangent_light_direction = normalize(TBN * light_direction);
+	Normal = vNormal;
 	vertexColor = layer_color;
 	team_color = team_colors[team_color_index];
 }

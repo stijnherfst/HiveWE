@@ -1,32 +1,39 @@
 #version 450 core
 
-layout (binding = 0) uniform sampler2D diffuse;
+layout (binding = 0) uniform sampler2D albedo;
+layout (binding = 1) uniform sampler2D normal_map;
+layout (binding = 2) uniform sampler2D orm;
+layout (binding = 3) uniform sampler2D emissive;
+layout (binding = 4) uniform sampler2D team_color_texture;
 
 layout (location = 1) uniform float alpha_test;
 layout (location = 2) uniform bool show_lighting;
-layout (location = 3) uniform vec3 light_direction;
-layout (location = 10) uniform bool is_team_color;
 
 in vec2 UV;
-in vec3 Normal;
+in vec3 tangent_light_direction;
 in vec4 vertexColor;
 in vec3 team_color;
 
 out vec4 color;
 
 void main() {
-	if (is_team_color) {
-		color = vec4(team_color * texture(diffuse, UV).r, 1.f) * vertexColor;
-	} else {
-		color = texture(diffuse, UV) * vertexColor;
-	}
+	color = texture(albedo, UV) * vertexColor;
 
 	if (vertexColor.a == 0.0 || color.a < alpha_test) {
 		discard;
 	}
 
 	if (show_lighting) {
-		float contribution = (dot(Normal, -light_direction) + 1.f) * 0.5f;
-		color.rgb *= clamp(contribution, 0.f, 1.f);
+		vec3 emissive_texel = texture(emissive, UV).rgb;
+		vec4 orm_texel = texture(orm, UV);
+		vec3 tc_texel = texture(team_color_texture, UV).rgb;
+		color.rgb = (color.rgb * (1 - orm_texel.w) + color.rgb * tc_texel.r * team_color * orm_texel.w);
+
+		vec2 normal_texel = texture(normal_map, UV).xy * 2.0 - 1.0;
+		vec3 N = vec3(normal_texel, sqrt(max(0.0, 1.0 - dot(normal_texel, normal_texel))));
+
+		float lambert = clamp(dot(N, -tangent_light_direction), 0.f, 1.f);
+		color.rgb *= clamp(lambert + 0.1, 0.f, 1.f);
+		color.rgb += emissive_texel;
 	}
 }
