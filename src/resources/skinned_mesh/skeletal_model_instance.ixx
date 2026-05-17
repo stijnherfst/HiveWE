@@ -29,6 +29,50 @@ struct CurrentKeyFrame {
 	int right = 0;
 };
 
+// Recognized tokens for sequence selection. Names with substrings not in this set are ignored
+// when tokenizing a sequence name; the request side substitutes "stand" for unrecognized substrings.
+static constexpr std::array<std::string_view, 64> sequence_tokens = {
+	"alternate",   "alternateex", "attack",  "berserk", "birth",     "chain",   "channel", "cinematic",
+	"complete",    "critical",    "death",   "decay",   "defend",    "dissipate", "drain", "eattree",
+	"entangle",    "fast",        "fifth",   "fill",    "fire",      "first",   "five",    "flail",
+	"flesh",       "four",        "fourth",  "gold",    "hit",       "large",   "left",    "light",
+	"looping",     "lumber",      "medium",  "moderate", "morph",    "off",     "one",     "portrait",
+	"puke",        "ready",       "right",   "second",  "severe",    "sleep",   "slam",    "small",
+	"spiked",      "spell",       "spin",    "stand",   "swim",      "talk",    "third",   "three",
+	"throw",       "two",         "turn",    "upgrade", "victory",   "walk",    "work",    "wounded",
+};
+
+static bool is_recognized_sequence_token(const std::string_view token) {
+	return std::ranges::find(sequence_tokens, token) != sequence_tokens.end();
+}
+
+// Splits `name` on whitespace (lowercased). Unrecognized substrings are dropped, or replaced by "stand"
+// when `replace_unrecognized` is true (used for the request side, per the selection spec).
+static std::vector<std::string> tokenize_sequence_name(const std::string_view name, const bool replace_unrecognized) {
+	std::vector<std::string> tokens;
+	size_t i = 0;
+	while (i < name.size()) {
+		while (i < name.size() && std::isspace(static_cast<unsigned char>(name[i]))) {
+			i++;
+		}
+		const size_t start = i;
+		while (i < name.size() && !std::isspace(static_cast<unsigned char>(name[i]))) {
+			i++;
+		}
+		if (start == i) {
+			break;
+		}
+		std::string token(name.substr(start, i - start));
+		std::ranges::transform(token, token.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (is_recognized_sequence_token(token)) {
+			tokens.push_back(std::move(token));
+		} else if (replace_unrecognized) {
+			tokens.emplace_back("stand");
+		}
+	}
+	return tokens;
+}
+
 export class SkeletalModelInstance {
   public:
 	std::shared_ptr<mdx::MDX> model;
@@ -45,7 +89,6 @@ export class SkeletalModelInstance {
 	ParticleEmitter2Simulation particles;
 	bool sequence_just_started = true;
 
-	// Used in set_sequence(string)
 	std::vector<std::string> required_animation_names;
 
 	SkeletalModelInstance() = default;
@@ -236,34 +279,126 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	/// Set sequence by name according to required animation names
-	/// Currently only used to set a stand animation
-	/// NOTE: This is not proper behaviour (as documented under https://lep.nrw/jassbot/doc/SetUnitAnimation)
-	///       Current behaviour will use the first animation matching all names, if any, starting with sequence_name
-	///       thus we will not get the idle animations cycling
+	/// Set sequence by name, matching the WC3 (Reforged) token-based selection rules.
+	///
+	/// The request is split into whitespace-delimited substrings; unrecognized substrings are
+	/// replaced by "stand". Each animation in the model is tokenized the same way, but
+	/// unrecognized substrings are dropped. For every candidate we count tokens that match the
+	/// request (order-insensitive) and tokens that do not. The best match is the animation with
+	/// the most matches; ties are broken by fewest non-matches. Among remaining ties one is
+	/// picked at random, weighted by the per-sequence Rarity (uniform when all rarities are 0).
+	///
+	/// Special case: if the request has at least two recognized tokens and the first is
+	/// "cinematic", we first try an exact full-string (case-insensitive) name match before
+	/// falling back to the standard tokenized selection.
 	void set_sequence(const std::string& sequence_name) {
-		std::string lowercase_sequence_name = sequence_name;
 		const auto& sequences = model->sequences;
-		to_lowercase(lowercase_sequence_name);
-		for (size_t i = 0; i < sequences.size(); i++) {
-			std::string anim_name = to_lowercase_copy(sequences[i].name);
+		if (sequences.empty()) {
+			return;
+		}
 
-			if (!anim_name.starts_with(lowercase_sequence_name)) {
-				continue;
+		// Cinematic special-case: arg with 2+ recognized tokens whose first recognized token is
+		// "cinematic" attempts a full-string match before falling back to tokenized selection.
+		const auto recognized_request = tokenize_sequence_name(sequence_name, false);
+		if (recognized_request.size() >= 2 && recognized_request.front() == "cinematic") {
+			const std::string lower_request = to_lowercase_copy(sequence_name);
+			for (size_t i = 0; i < sequences.size(); i++) {
+				if (to_lowercase_copy(sequences[i].name) == lower_request) {
+					set_sequence(static_cast<int>(i));
+					return;
+				}
 			}
+		}
 
-			bool valid = true;
-			for (auto& req_anim_name : required_animation_names) {
-				if (!anim_name.contains(req_anim_name)) {
-					valid = false;
+		std::vector<std::string> request_tokens = tokenize_sequence_name(sequence_name, true);
+		if (request_tokens.empty()) {
+			request_tokens.emplace_back("stand");
+		}
+
+		struct Candidate {
+			int index;
+			int matches;
+			int mismatches;
+			float rarity;
+		};
+		std::vector<Candidate> candidates;
+		candidates.reserve(sequences.size());
+
+		for (size_t i = 0; i < sequences.size(); i++) {
+			const std::string lower_name = to_lowercase_copy(sequences[i].name);
+
+			bool meets_required = true;
+			for (const auto& req : required_animation_names) {
+				if (!lower_name.contains(req)) {
+					meets_required = false;
 					break;
 				}
 			}
-			if (valid) {
-				set_sequence(static_cast<int>(i));
-				break;
+			if (!meets_required) {
+				continue;
+			}
+
+			const auto anim_tokens = tokenize_sequence_name(lower_name, false);
+
+			int matches = 0;
+			int mismatches = 0;
+			for (const auto& tok : anim_tokens) {
+				if (std::ranges::find(request_tokens, tok) != request_tokens.end()) {
+					matches++;
+				} else {
+					mismatches++;
+				}
+			}
+
+			candidates.push_back({static_cast<int>(i), matches, mismatches, sequences[i].rarity});
+		}
+
+		if (candidates.empty()) {
+			return;
+		}
+
+		int best_matches = -1;
+		int best_mismatches = std::numeric_limits<int>::max();
+		for (const auto& c : candidates) {
+			if (c.matches > best_matches || (c.matches == best_matches && c.mismatches < best_mismatches)) {
+				best_matches = c.matches;
+				best_mismatches = c.mismatches;
 			}
 		}
+
+		std::vector<Candidate> winners;
+		for (const auto& c : candidates) {
+			if (c.matches == best_matches && c.mismatches == best_mismatches) {
+				winners.push_back(c);
+			}
+		}
+
+		int chosen = winners.front().index;
+		if (winners.size() > 1) {
+			static thread_local std::mt19937 rng{std::random_device{}()};
+
+			float total_weight = 0.f;
+			for (const auto& w : winners) {
+				total_weight += w.rarity;
+			}
+
+			if (total_weight > 0.f) {
+				std::uniform_real_distribution<float> dist(0.f, total_weight);
+				float roll = dist(rng);
+				for (const auto& w : winners) {
+					roll -= w.rarity;
+					if (roll <= 0.f) {
+						chosen = w.index;
+						break;
+					}
+				}
+			} else {
+				std::uniform_int_distribution<size_t> dist(0, winners.size() - 1);
+				chosen = winners[dist(rng)].index;
+			}
+		}
+
+		set_sequence(chosen);
 	}
 
 	template<typename T>
