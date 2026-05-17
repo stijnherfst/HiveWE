@@ -164,6 +164,9 @@ void ModelEditorGLWidget::paintGL() {
 
 		ImGui::Text(std::format("Vertices: {}", vertices).c_str());
 		ImGui::Text(std::format("Triangles: {}", triangles).c_str());
+
+		const auto& e = mesh->mdx->extent;
+		ImGui::Text(std::format("Extents:\n\tmin: x {} y {} z {}\n\tmax: x {} y {} z {}", e.minimum.x, e.minimum.y, e.minimum.z, e.maximum.x, e.maximum.y, e.maximum.z).c_str());
 	}
 	ImGui::End();
 

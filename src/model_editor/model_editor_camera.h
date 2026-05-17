@@ -20,8 +20,8 @@ struct ModelEditorCamera {
 
 	float fov = 70.f;
 	float aspect_ratio = 16.f / 9.f;
-	float draw_distance_close = 0.05f;
-	float draw_distance_far = 2000.f;
+	float draw_distance_close = 0.1f;
+	float draw_distance_far = 20'000.f;
 	float fov_rad = (glm::pi<double>() / 180.f) * static_cast<double>(fov); // Need radians
 	float tan_height = 2.f * glm::tan(fov_rad * 0.5f);
 

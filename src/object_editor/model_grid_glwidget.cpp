@@ -301,13 +301,26 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) {
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
 		cell.skeleton = SkeletalModelInstance(cell.mdx);
 
+		// WC3's set_sequence tiebreaker can land on a zero-token name like "nothing" instead of a
+		// recognized one like "Birth"; that's correct in-game but makes a dull thumbnail.
+		if (cell.skeleton.sequence_index >= 0 &&
+			!SkeletalModelInstance::sequence_name_has_recognized_token(
+				cell.mdx->sequences[cell.skeleton.sequence_index].name)) {
+			for (size_t i = 0; i < cell.mdx->sequences.size(); ++i) {
+				if (SkeletalModelInstance::sequence_name_has_recognized_token(cell.mdx->sequences[i].name)) {
+					cell.skeleton.set_sequence(static_cast<int>(i));
+					break;
+				}
+			}
+		}
+
 		if (cell.mdx->sequences.empty() || cell.skeleton.sequence_index < 0) {
 			cell.fit_distance = 200.f;
 			cell.fit_position = glm::vec3(0.f);
 		} else {
 			const auto& extent = cell.mdx->sequences[cell.skeleton.sequence_index].extent;
 			const glm::vec3 size = extent.maximum - extent.minimum;
-			const float radius = glm::length(size) * 0.5f * 1.1f;
+			const float radius = glm::length(size) * 0.5f;
 			const float fov_rad = glm::radians(k_fov_deg);
 			cell.fit_distance = radius / std::sin(fov_rad * 0.5f);
 			cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);

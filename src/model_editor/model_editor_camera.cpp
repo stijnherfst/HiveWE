@@ -61,7 +61,7 @@ void ModelEditorCamera::mouse_move_event(QMouseEvent* event, const InputHandler&
 }
 
 void ModelEditorCamera::mouse_scroll_event(QWheelEvent* event) {
-	distance = std::clamp(distance * std::pow(0.999f, static_cast<float>(event->angleDelta().y())), 0.001f, 1000.f);
+	distance = std::clamp(distance * std::pow(0.999f, static_cast<float>(event->angleDelta().y())), draw_distance_close, draw_distance_far);
 	update(0);
 }
 

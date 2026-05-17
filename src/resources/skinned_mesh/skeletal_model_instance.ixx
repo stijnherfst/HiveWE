@@ -77,7 +77,9 @@ export class SkeletalModelInstance {
   public:
 	std::shared_ptr<mdx::MDX> model;
 
+	// Todo, with validate() we ensure all MDXs have at least one sequence, so this could be a size_t
 	int sequence_index = 0; // can be -1 if not animating
+	// Todo can this be negative?
 	int current_frame = 0;
 
 	glm::mat4 matrix = glm::mat4(1.f);
@@ -292,6 +294,13 @@ export class SkeletalModelInstance {
 			calculate_sequence_extents(i.KP2W);
 			calculate_sequence_extents(i.KP2V);
 		}
+	}
+
+	// True if `name` contains at least one WC3-recognized animation token. Lets callers filter
+	// out sequences like "nothing" that the set_sequence tiebreaker may otherwise pick over a
+	// recognized-but-mismatched name (e.g. "Birth" when asking for "stand").
+	static bool sequence_name_has_recognized_token(const std::string_view name) {
+		return !tokenize_sequence_name(name, false).empty();
 	}
 
 	/// Set sequence by name, matching the WC3 (Reforged) token-based selection rules.
