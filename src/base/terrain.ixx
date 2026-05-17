@@ -1360,9 +1360,7 @@ export class Terrain: public QObject {
 
 		for (const auto& tile_id : tileset_ids) {
 			const auto& texture = *map_data.terrain_texture(tile_id);
-			ground_textures.push_back(
-				resource_manager.load<GroundTexture>(texture.file_path + (hierarchy.hd ? "_diffuse.dds" : ".dds")).value()
-			);
+			ground_textures.push_back(resource_manager.load<GroundTexture>(texture.file_path).value());
 			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
 			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 		}

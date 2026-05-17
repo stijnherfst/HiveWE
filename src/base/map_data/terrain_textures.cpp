@@ -27,7 +27,7 @@ void MapData::load_terrain_data() {
 		cliff.name = cliff_slk.data("name", cliff_id);
 		cliff.cliff_model_dir = cliff_slk.data("cliffmodeldir", cliff_id);
 		cliff.ramp_model_dir = cliff_slk.data("rampmodeldir", cliff_id);
-		cliff.file_path = std::format("{}/{}", cliff_slk.data("texdir", cliff_id), cliff_slk.data("texfile", cliff_id));
+		cliff.file_path = std::format("{}/{}.dds", cliff_slk.data("texdir", cliff_id), cliff_slk.data("texfile", cliff_id));
 		cliff.ground_tile = cliff_slk.data("groundtile", cliff_id);
 		m_cliff_types.emplace(cliff_id, std::move(cliff));
 	}
@@ -37,7 +37,7 @@ void MapData::load_terrain_data() {
 		TerrainTexture texture;
 		texture.id = tile_id;
 		texture.name = terrain_slk.data("comment", tile_id);
-		texture.file_path = std::format("{}/{}", terrain_slk.data("dir", tile_id), terrain_slk.data("file", tile_id));
+		texture.file_path = std::format("{}/{}.dds", terrain_slk.data("dir", tile_id), terrain_slk.data("file", tile_id));
 		texture.base_pathing = (!terrain_slk.data<bool>("buildable", tile_id) ? PathingMap::Flags::unbuildable : 0)
 			| (!terrain_slk.data<bool>("walkable", tile_id) ? PathingMap::Flags::unwalkable : 0)
 			| (!terrain_slk.data<bool>("flyable", tile_id) ? PathingMap::Flags::unflyable : 0);
