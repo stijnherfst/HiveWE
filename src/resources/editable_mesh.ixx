@@ -6,6 +6,7 @@ import ResourceManager;
 import GPUTexture;
 import Shader;
 import SkeletalModelInstance;
+import ParticleEmitter2Renderer;
 import Hierarchy;
 import BinaryReader;
 import <glm/glm.hpp>;
@@ -44,6 +45,8 @@ export class EditableMesh: public Resource {
 	GLuint geoset_color = 0;
 
 	std::vector<std::shared_ptr<GPUTexture>> textures;
+
+	ParticleEmitter2Renderer particle_renderer;
 
 	static constexpr const char* name = "EditableMesh";
 
@@ -253,6 +256,8 @@ export class EditableMesh: public Resource {
 
 		glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
 		glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
+
+		particle_renderer.init();
 	}
 
 	virtual ~EditableMesh() {
@@ -273,6 +278,16 @@ export class EditableMesh: public Resource {
 		const glm::vec3 light_direction
 	) const {
 		render_opaque(false, team_color_index, skeleton, projection_view, light_direction);
+	}
+
+	void render_particles(
+		const SkeletalModelInstance& skeleton,
+		const glm::mat4& projection_view,
+		const glm::vec3& camera_right,
+		const glm::vec3& camera_up,
+		const glm::vec3& camera_forward
+	) const {
+		particle_renderer.render(*mdx, textures, skeleton, projection_view, camera_right, camera_up, camera_forward);
 	}
 
   private:

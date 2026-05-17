@@ -481,7 +481,7 @@ namespace mdx {
 	all particles would move with equal speed, modified downward by gravity setting
 	as an acceleration ).
 	*/
-	struct ParticleEmitter2 {
+	export struct ParticleEmitter2 {
 		Node node;
 		float speed;
 		float variation;

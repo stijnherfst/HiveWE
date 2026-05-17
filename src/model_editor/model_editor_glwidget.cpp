@@ -82,6 +82,8 @@ void ModelEditorGLWidget::paintGL() {
 	shader->use();
 	mesh->render(0, skeleton, camera.projection_view, camera.direction);
 
+	mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
+
 	glEnable(GL_BLEND);
 
 	glBindVertexArray(0);

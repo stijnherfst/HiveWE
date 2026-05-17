@@ -11,6 +11,7 @@ import Utilities;
 import MathOperations;
 import RenderNode;
 import MDX;
+import ParticleEmitter2Simulation;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
@@ -41,22 +42,20 @@ export class SkeletalModelInstance {
 	std::vector<RenderNode> render_nodes;
 	std::vector<glm::mat4> world_matrices;
 
+	ParticleEmitter2Simulation particles;
+	bool sequence_just_started = true;
+
 	// Used in set_sequence(string)
 	std::vector<std::string> required_animation_names;
 
 	SkeletalModelInstance() = default;
-	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string> &&required_animation_names = {})
-		: model(model), required_animation_names(required_animation_names) {
-		const size_t node_count = model->bones.size() +
-							model->lights.size() +
-							model->help_bones.size() +
-							model->attachments.size() +
-							model->emitters1.size() +
-							model->emitters2.size() +
-							model->ribbons.size() +
-							model->event_objects.size() +
-							model->collision_shapes.size() +
-							model->corn_emitters.size();
+
+	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string>&& required_animation_names = {}) :
+		model(model),
+		required_animation_names(required_animation_names) {
+		const size_t node_count = model->bones.size() + model->lights.size() + model->help_bones.size() + model->attachments.size()
+			+ model->emitters1.size() + model->emitters2.size() + model->ribbons.size() + model->event_objects.size()
+			+ model->collision_shapes.size() + model->corn_emitters.size();
 
 		// ToDo: for each camera: add camera source node to renderNodes
 		render_nodes.resize(node_count);
@@ -72,6 +71,8 @@ export class SkeletalModelInstance {
 		});
 
 		current_keyframes.resize(model->unique_tracks);
+
+		particles.init(*model);
 
 		set_sequence("stand");
 	}
@@ -92,14 +93,18 @@ export class SkeletalModelInstance {
 
 		// Advance current frame
 		const mdx::Sequence& sequence = model->sequences[sequence_index];
+		const int frame_before_advance = current_frame;
 		//if (sequence.flags & mdx::Sequence::non_looping) {
 		//	current_frame = std::min<int>(current_frame + delta * 1000.0, sequence.end_frame);
 		//} else {
-			current_frame += delta * 1000.0;
-			if (current_frame > sequence.end_frame) {
-				current_frame = sequence.start_frame;
-			}
+		current_frame += delta * 1000.0;
+		if (current_frame > sequence.end_frame) {
+			current_frame = sequence.start_frame;
+		}
 		//}
+
+		const bool sequence_wrapped = sequence_just_started || (current_frame < frame_before_advance);
+		sequence_just_started = false;
 
 		for (const auto& i : render_nodes) {
 			advance_keyframes(i.node->KGTR);
@@ -120,9 +125,43 @@ export class SkeletalModelInstance {
 		}
 
 		update_nodes();
+		update_particle_emitters2(delta, sequence_wrapped);
 	}
 
-void update_nodes() {
+	void update_particle_emitters2(const double delta, const bool sequence_wrapped) {
+		for (size_t i = 0; i < model->emitters2.size(); ++i) {
+			const mdx::ParticleEmitter2& e = model->emitters2[i];
+			if (e.node.id == -1) {
+				continue;
+			}
+
+			ParticleEmitter2Simulation::EmitterFrameParams p {};
+			p.emission_rate = interpolate_keyframes(e.KP2E, e.emission_rate);
+			p.speed = interpolate_keyframes(e.KP2S, e.speed);
+			p.variation = interpolate_keyframes(e.KP2R, e.variation);
+			p.latitude = glm::radians(interpolate_keyframes(e.KP2L, e.latitude));
+			p.gravity = interpolate_keyframes(e.KP2G, e.gravity);
+			p.width = interpolate_keyframes(e.KP2W, e.width);
+			p.length = interpolate_keyframes(e.KP2N, e.length);
+			// MDX authoring convention: a KP2V track that exists but has no keyframes in the
+			// current sequence's range means the emitter is hidden for that sequence — animators
+			// only place visibility keyframes in sequences where the emitter should appear.
+			if (e.KP2V.id != -1 && current_keyframes[e.KP2V.id].start == -1) {
+				p.visibility = 0.f;
+			} else {
+				p.visibility = interpolate_keyframes(e.KP2V, 1.0f);
+			}
+			// world_matrices[node.id] is built in skinning convention (no pivot offset
+			// when the node is at rest), so append the pivot translation to recover
+			// the emitter's actual world position.
+			p.world_matrix = world_matrices[e.node.id] * glm::translate(glm::mat4(1.f), model->pivots[e.node.id]);
+			p.sequence_just_wrapped = sequence_wrapped;
+
+			particles.update_emitter(i, delta, e, p);
+		}
+	}
+
+	void update_nodes() {
 		assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
 		const glm::mat3 inverse_model_rotation = glm::transpose(
@@ -176,6 +215,7 @@ void update_nodes() {
 	void set_sequence(const int sequence_index) {
 		this->sequence_index = sequence_index;
 		current_frame = model->sequences[sequence_index].start_frame;
+		sequence_just_started = true;
 
 		for (const auto& i : render_nodes) {
 			calculate_sequence_extents(i.node->KGTR);
@@ -225,8 +265,8 @@ void update_nodes() {
 			}
 		}
 	}
-	
-	template <typename T>
+
+	template<typename T>
 	void calculate_sequence_extents(const mdx::TrackHeader<T>& header) {
 		if (header.id == -1) {
 			return;
@@ -272,8 +312,7 @@ void update_nodes() {
 		}
 	}
 
-
-	template <typename T>
+	template<typename T>
 	void advance_keyframes(const mdx::TrackHeader<T>& header) {
 		if (header.id == -1) {
 			return;
@@ -287,7 +326,9 @@ void update_nodes() {
 			if (local_sequence_end == 0) {
 				local_current_frame = 0;
 			} else {
-				local_current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % local_sequence_end;
+				local_current_frame =
+					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+					% local_sequence_end;
 			}
 		}
 
@@ -349,7 +390,7 @@ void update_nodes() {
 		return interpolate_keyframes(layer.KMTA, layer.alpha);
 	}
 
-	template <typename T>
+	template<typename T>
 	T interpolate_keyframes(const mdx::TrackHeader<T>& header, const T& default_value) const {
 		if (header.id == -1) {
 			return default_value;
@@ -368,7 +409,9 @@ void update_nodes() {
 			if (local_sequence_end == 0) {
 				local_current_frame = 0;
 			} else {
-				local_current_frame = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() % local_sequence_end;
+				local_current_frame =
+					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
+					% local_sequence_end;
 			}
 		}
 

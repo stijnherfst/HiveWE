@@ -121,7 +121,6 @@ void ModelGridGLWidget::paintGL() {
 
 	glBindVertexArray(vao);
 	glEnable(GL_DEPTH_TEST);
-	shader->use();
 	glEnable(GL_SCISSOR_TEST);
 
 	const int view_top = scroll_offset_y;
@@ -167,7 +166,12 @@ void ModelGridGLWidget::paintGL() {
 			const glm::mat4 proj = glm::perspective(glm::radians(k_fov_deg), 1.f, k_near, k_far);
 			const glm::mat4 pv = proj * view;
 
+			shader->use();
 			cell.mesh->render(0, cell.skeleton, pv, dir);
+
+			const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
+			const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));
+			cell.mesh->render_particles(cell.skeleton, pv, camera_right, camera_up, dir);
 		}
 	}
 

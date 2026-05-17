@@ -55,6 +55,8 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"resources/pathing_texture.ixx"
 	"resources/qicon_resource.ixx"
 	"resources/editable_mesh.ixx"
+	"resources/particle_emitter2_simulation.ixx"
+	"resources/particle_emitter2_renderer.ixx"
 	"resources/skinned_mesh/render_node.ixx"
 	"resources/skinned_mesh/skeletal_model_instance.ixx"
 	"resources/skinned_mesh.ixx"
