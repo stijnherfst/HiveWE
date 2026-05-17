@@ -167,6 +167,17 @@ export class SkeletalModelInstance {
 			}
 		}
 
+		for (const auto& i : model->emitters2) {
+			advance_keyframes(i.KP2S);
+			advance_keyframes(i.KP2R);
+			advance_keyframes(i.KP2L);
+			advance_keyframes(i.KP2G);
+			advance_keyframes(i.KP2E);
+			advance_keyframes(i.KP2N);
+			advance_keyframes(i.KP2W);
+			advance_keyframes(i.KP2V);
+		}
+
 		update_nodes();
 		update_particle_emitters2(delta, sequence_wrapped);
 	}
@@ -186,14 +197,7 @@ export class SkeletalModelInstance {
 			p.gravity = interpolate_keyframes(e.KP2G, e.gravity);
 			p.width = interpolate_keyframes(e.KP2W, e.width);
 			p.length = interpolate_keyframes(e.KP2N, e.length);
-			// MDX authoring convention: a KP2V track that exists but has no keyframes in the
-			// current sequence's range means the emitter is hidden for that sequence — animators
-			// only place visibility keyframes in sequences where the emitter should appear.
-			if (e.KP2V.id != -1 && current_keyframes[e.KP2V.id].start == -1) {
-				p.visibility = 0.f;
-			} else {
-				p.visibility = interpolate_keyframes(e.KP2V, 1.0f);
-			}
+			p.visibility = interpolate_keyframes(e.KP2V, 1.0f);
 			// world_matrices[node.id] is built in skinning convention (no pivot offset
 			// when the node is at rest), so append the pivot translation to recover
 			// the emitter's actual world position.
@@ -276,6 +280,17 @@ export class SkeletalModelInstance {
 				calculate_sequence_extents(j.KMTA);
 				// Add more when required
 			}
+		}
+
+		for (const auto& i : model->emitters2) {
+			calculate_sequence_extents(i.KP2S);
+			calculate_sequence_extents(i.KP2R);
+			calculate_sequence_extents(i.KP2L);
+			calculate_sequence_extents(i.KP2G);
+			calculate_sequence_extents(i.KP2E);
+			calculate_sequence_extents(i.KP2N);
+			calculate_sequence_extents(i.KP2W);
+			calculate_sequence_extents(i.KP2V);
 		}
 	}
 

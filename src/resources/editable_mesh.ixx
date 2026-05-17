@@ -32,7 +32,6 @@ export class EditableMesh: public Resource {
 	std::shared_ptr<mdx::MDX> mdx;
 
 	std::vector<MeshEntry> geosets;
-	bool has_mesh; // ToDo remove when added support for meshless
 
 	GLuint vao = 0;
 	GLuint vertex_buffer = 0;
@@ -61,11 +60,6 @@ export class EditableMesh: public Resource {
 
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
-
-		has_mesh = mdx->geosets.size();
-		if (!has_mesh) {
-			return;
-		}
 
 		// Calculate required space
 		for (const auto& i : mdx->geosets) {
@@ -310,7 +304,7 @@ export class EditableMesh: public Resource {
 		const glm::mat4& projection_view,
 		const glm::vec3 light_direction
 	) const {
-		if (!has_mesh) {
+		if (mdx->geosets.empty()) {
 			return;
 		}
 

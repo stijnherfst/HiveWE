@@ -133,6 +133,41 @@ namespace mdx {
 			extent.bounds_radius = std::max(extent.bounds_radius, geoset.extent.bounds_radius);
 		}
 
+		for (const auto& emitter : emitters2) {
+			if (emitter.node.id == -1 || emitter.node.id >= static_cast<int>(pivots.size())) {
+				continue;
+			}
+
+			const float life_span = std::max(0.f, emitter.life_span);
+			const float max_speed = std::abs(emitter.speed) * (1.f + std::max(0.f, emitter.variation));
+			const float max_travel = max_speed * life_span;
+
+			const float max_scale = std::max({
+				std::abs(emitter.segment_scaling.x),
+				std::abs(emitter.segment_scaling.y),
+				std::abs(emitter.segment_scaling.z),
+			});
+
+			const float gravity_offset = 0.5f * std::abs(emitter.gravity) * life_span * life_span;
+
+			const float half_width = std::abs(emitter.width) * 0.5f;
+			const float half_length = std::abs(emitter.length) * 0.5f;
+
+			const float r = max_travel + max_scale;
+			const glm::vec3 spread(r + half_width, r + half_length, r + gravity_offset);
+
+			const glm::vec3& pivot = pivots[emitter.node.id];
+			const glm::vec3 emitter_min = pivot - spread;
+			const glm::vec3 emitter_max = pivot + spread;
+
+			extent.minimum = glm::min(extent.minimum, emitter_min);
+			extent.maximum = glm::max(extent.maximum, emitter_max);
+			extent.bounds_radius = std::max(
+				extent.bounds_radius,
+				std::max(glm::length(emitter_min), glm::length(emitter_max))
+			);
+		}
+
 		for (auto& sequence : sequences) {
 			// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement
 			sequence.extent = extent;
