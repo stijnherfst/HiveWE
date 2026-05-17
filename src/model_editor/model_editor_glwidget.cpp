@@ -50,6 +50,7 @@ void ModelEditorGLWidget::initializeGL() {
 
 	mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
 	skeleton = SkeletalModelInstance(mdx);
+	SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
 	recenter_camera();
 
 	shader_sd = resource_manager.load<Shader>({ "data/shaders/editable_mesh_sd.vert", "data/shaders/editable_mesh_sd.frag" }).value();
@@ -150,6 +151,7 @@ void ModelEditorGLWidget::paintGL() {
 			const auto mdx = std::make_shared<mdx::MDX>(reader);
 			mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
 			skeleton = SkeletalModelInstance(mdx);
+			SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
 			recenter_camera();
 		}
 

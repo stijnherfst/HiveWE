@@ -301,18 +301,7 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) {
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
 		cell.skeleton = SkeletalModelInstance(cell.mdx);
 
-		// WC3's set_sequence tiebreaker can land on a zero-token name like "nothing" instead of a
-		// recognized one like "Birth"; that's correct in-game but makes a dull thumbnail.
-		if (cell.skeleton.sequence_index >= 0 &&
-			!SkeletalModelInstance::sequence_name_has_recognized_token(
-				cell.mdx->sequences[cell.skeleton.sequence_index].name)) {
-			for (size_t i = 0; i < cell.mdx->sequences.size(); ++i) {
-				if (SkeletalModelInstance::sequence_name_has_recognized_token(cell.mdx->sequences[i].name)) {
-					cell.skeleton.set_sequence(static_cast<int>(i));
-					break;
-				}
-			}
-		}
+		SkeletalModelInstance::pick_preview_sequence(cell.skeleton, *cell.mdx);
 
 		if (cell.mdx->sequences.empty() || cell.skeleton.sequence_index < 0) {
 			cell.fit_distance = 200.f;

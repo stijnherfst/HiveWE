@@ -39,7 +39,13 @@ export class ParticleEmitter2Simulation {
 		for (size_t i = 0; i < mdx.emitters2.size(); ++i) {
 			const mdx::ParticleEmitter2& e = mdx.emitters2[i];
 
-			const float capacity_f = std::ceil(1.15f * e.emission_rate * e.life_span);
+			float peak_rate = e.emission_rate;
+			// Emmission rate can be animated so need to take the max of all tracks.
+			for (const auto& t : e.KP2E.tracks) {
+				peak_rate = std::max(peak_rate, t.value);
+			}
+
+			const float capacity_f = std::ceil(1.15f * peak_rate * e.life_span);
 			const size_t capacity = capacity_f > 0.f ? static_cast<size_t>(capacity_f) : 0u;
 
 			EmitterPool& pool = pools[i];
