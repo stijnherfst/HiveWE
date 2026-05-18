@@ -1,0 +1,83 @@
+// Minimal v1000 MDL fixture.
+// Adds the v1000 deltas on top of the v900 fixture: layer-level Fresnel tracks
+// (KFC3/KFCA/KFTC) and EmissiveGain (KMTE) - these fields were added when v1000
+// introduced PBR layers in the SD pipeline too.
+Version {
+	FormatVersion 1000,
+}
+Model "minimal_v1000" {
+	NumGeosets 1,
+	NumBones 1,
+	BlendTime 150,
+	MinimumExtent { -10, -10, 0 },
+	MaximumExtent {  10,  10, 20 },
+}
+Sequences 1 {
+	Anim "Stand" {
+		Interval { 0, 1000 },
+		MinimumExtent { -10, -10, 0 },
+		MaximumExtent {  10,  10, 20 },
+		BoundsRadius 14.142,
+	}
+}
+Textures 1 {
+	Bitmap {
+		Image "Textures/Stone.blp",
+		WrapWidth,
+		WrapHeight,
+	}
+}
+Materials 1 {
+	Material {
+		Layer {
+			FilterMode None,
+			static TextureID 0,
+			static Alpha 1,
+			static EmissiveGain 0.75,
+			FresnelColor 2 {
+				Linear,
+				0:    { 1, 0.5, 0 },
+				1000: { 0, 0.5, 1 },
+			}
+			static FresnelAlpha 0.4,
+			static FresnelTeamColor 0.2,
+		}
+	}
+}
+Geoset {
+	Vertices 3 {
+		{ -10, -10, 0 },
+		{  10, -10, 0 },
+		{   0,  10, 0 },
+	}
+	Normals 3 {
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+	}
+	TVertices 3 {
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0.5, 0 },
+	}
+	Faces 1 3 {
+		Triangles {
+			{ 0, 1, 2 },
+		}
+	}
+	MinimumExtent { -10, -10, 0 },
+	MaximumExtent {  10,  10, 0 },
+	BoundsRadius 14.142,
+	MaterialID 0,
+	SelectionGroup 0,
+	LevelOfDetail 0,
+	Name "TrianglePBR",
+}
+Bone "Root" {
+	ObjectId 0,
+	GeosetId 0,
+	GeosetAnimId None,
+}
+PivotPoints 1 {
+	{ 0, 0, 0 },
+}

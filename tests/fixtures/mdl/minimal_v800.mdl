@@ -1,0 +1,277 @@
+// Minimal v800 MDL fixture.
+// Each section appears exactly once. Single triangle geometry
+Version {
+	FormatVersion 800,
+}
+Model "minimal_v800" {
+	NumGeosets 1,
+	NumGeosetAnims 1,
+	NumHelpers 1,
+	NumLights 1,
+	NumBones 1,
+	NumAttachments 1,
+	NumParticleEmitters 1,
+	NumParticleEmitters2 1,
+	NumRibbonEmitters 1,
+	NumEvents 1,
+	BlendTime 150,
+	MinimumExtent { -10, -10, 0 },
+	MaximumExtent {  10,  10, 20 },
+}
+Sequences 1 {
+	Anim "Stand" {
+		Interval { 0, 1000 },
+		MoveSpeed 100,
+		Rarity 1,
+		MinimumExtent { -10, -10, 0 },
+		MaximumExtent {  10,  10, 20 },
+		BoundsRadius 14.142,
+	}
+}
+GlobalSequences 1 {
+	Duration 2000,
+}
+Textures 1 {
+	Bitmap {
+		Image "Textures/Stone.blp",
+		WrapWidth,
+		WrapHeight,
+	}
+}
+Materials 1 {
+	Material {
+		Layer {
+			FilterMode Blend,
+			TwoSided,
+			Unshaded,
+			static TextureID 0,
+			static Alpha 1,
+			TVertexAnimId 0,
+		}
+		Layer {
+			FilterMode Additive,
+			Unfogged,
+			static TextureID 0,
+			Alpha 2 {
+				Linear,
+				GlobalSeqId 0,
+				0: 1,
+				1000: 0,
+			}
+		}
+	}
+}
+TextureAnims 1 {
+	TVertexAnim {
+		Translation 2 {
+			Linear,
+			GlobalSeqId 0,
+			0:    { 0, 0, 0 },
+			1000: { 1, 1, 0 },
+		}
+	}
+}
+Geoset {
+	Vertices 3 {
+		{ -10, -10, 0 },
+		{  10, -10, 0 },
+		{   0,  10, 0 },
+	}
+	Normals 3 {
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+	}
+	TVertices 3 {
+		{ 0, 1 },
+		{ 1, 1 },
+		{ 0.5, 0 },
+	}
+	VertexGroup {
+		0,
+		0,
+		0,
+	}
+	Faces 1 3 {
+		Triangles {
+			{ 0, 1, 2 },
+		}
+	}
+	Groups 1 1 {
+		Matrices { 0 },
+	}
+	MinimumExtent { -10, -10, 0 },
+	MaximumExtent {  10,  10, 0 },
+	BoundsRadius 14.142,
+	Anim {
+		MinimumExtent { -10, -10, 0 },
+		MaximumExtent {  10,  10, 0 },
+		BoundsRadius 14.142,
+	}
+	MaterialID 0,
+	SelectionGroup 0,
+	LevelOfDetail 0,
+	Name "Triangle",
+}
+GeosetAnim {
+	GeosetId 0,
+	Alpha 2 {
+		Linear,
+		0: 1,
+		1000: 0.5,
+	}
+	static Color { 1, 0.5, 0.25 },
+}
+Bone "Root" {
+	ObjectId 0,
+	GeosetId 0,
+	GeosetAnimId 0,
+	Translation 2 {
+		Linear,
+		0:    { 0, 0, 0 },
+		1000: { 0, 0, 5 },
+	}
+}
+Helper "HelperA" {
+	ObjectId 1,
+	Parent 0,
+}
+Light "Lamp" {
+	ObjectId 2,
+	Parent 0,
+	Omnidirectional,
+	static AttenuationStart 80,
+	static AttenuationEnd 200,
+	static Color { 1, 1, 1 },
+	static Intensity 5,
+	static AmbColor { 0.2, 0.2, 0.2 },
+	static AmbIntensity 1,
+}
+Attachment "HandRef" {
+	ObjectId 3,
+	Parent 0,
+	AttachmentID 0,
+	Path "Splat\\Attach.mdl",
+	Visibility 2 {
+		DontInterp,
+		0:    1,
+		1000: 0,
+	}
+}
+PivotPoints 4 {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 10 },
+	{ 0, 0, 5 },
+}
+ParticleEmitter "Emitter1" {
+	ObjectId 4,
+	Parent 0,
+	EmitterUsesMdl,
+	static EmissionRate 10,
+	static Gravity 0,
+	static Longitude 0,
+	static Latitude 0,
+	Particle {
+		static LifeSpan 1,
+		static InitVelocity 100,
+		Path "Models\\Dummy.mdl",
+	}
+}
+ParticleEmitter2 "Sparkles" {
+	ObjectId 5,
+	Parent 0,
+	Squirt,
+	static Speed 50,
+	static Variation 0.5,
+	static Latitude 30,
+	static Gravity 0,
+	LifeSpan 1.5,
+	static EmissionRate 20,
+	static Width 5,
+	static Length 5,
+	Additive,
+	Rows 1,
+	Columns 1,
+	Head,
+	TailLength 1,
+	Time 0.5,
+	SegmentColor {
+		Color { 1, 1, 1 },
+		Color { 0.5, 0.5, 0.5 },
+		Color { 0, 0, 0 },
+	},
+	Alpha { 255, 200, 0 },
+	ParticleScaling { 1, 2, 3 },
+	LifeSpanUVAnim { 0, 0, 1 },
+	DecayUVAnim { 0, 0, 1 },
+	TailUVAnim { 0, 0, 1 },
+	TailDecayUVAnim { 0, 0, 1 },
+	TextureID 0,
+}
+RibbonEmitter "Trail" {
+	ObjectId 6,
+	Parent 0,
+	static HeightAbove 1,
+	static HeightBelow 1,
+	static Alpha 1,
+	static Color { 1, 0, 0 },
+	LifeSpan 2,
+	EmissionRate 30,
+	Rows 1,
+	Columns 1,
+	MaterialID 0,
+}
+EventObject "SNDxFOO0" {
+	ObjectId 7,
+	Parent 0,
+	EventTrack 1 {
+		500,
+	}
+}
+CollisionShape "BoxCollision" {
+	ObjectId 8,
+	Parent 0,
+	Box,
+	Vertices 2 {
+		{ -5, -5, 0 },
+		{  5,  5, 10 },
+	}
+}
+CollisionShape "PlaneCollision" {
+	ObjectId 9,
+	Parent 0,
+	Plane,
+	Vertices 2 {
+		{ -5, -5, 0 },
+		{  5,  5, 0 },
+	}
+}
+CollisionShape "SphereCollision" {
+	ObjectId 10,
+	Parent 0,
+	Sphere,
+	Vertices 1 {
+		{ 0, 0, 5 },
+	}
+	BoundsRadius 5,
+}
+CollisionShape "CylinderCollision" {
+	ObjectId 11,
+	Parent 0,
+	Cylinder,
+	Vertices 2 {
+		{ 0, 0, 0 },
+		{ 0, 0, 10 },
+	}
+	BoundsRadius 3,
+}
+Camera "MainCam" {
+	Position { 0, -50, 20 },
+	FieldOfView 0.95,
+	FarClip 5000,
+	NearClip 1,
+	Target {
+		Position { 0, 0, 10 },
+	}
+}
