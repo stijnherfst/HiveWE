@@ -577,7 +577,16 @@ namespace mdx {
 			const size_t camera_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
-			writer.write_vector(camera.data);
+			writer.write_c_string_padded(camera.name, 80);
+			writer.write<glm::vec3>(camera.position);
+			writer.write<float>(camera.field_of_view);
+			writer.write<float>(camera.far_clip);
+			writer.write<float>(camera.near_clip);
+			writer.write<glm::vec3>(camera.target_position);
+
+			camera.KCTR.save(TrackTag::KCTR, writer);
+			camera.KCRL.save(TrackTag::KCRL, writer);
+			camera.KTTR.save(TrackTag::KTTR, writer);
 
 			const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - camera_index);
 			std::memcpy(writer.buffer.data() + camera_index, &temporary, 4);
@@ -612,7 +621,9 @@ namespace mdx {
 			const size_t texture_animation_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
-			writer.write_vector(texture_animation.data);
+			texture_animation.KTAT.save(TrackTag::KTAT, writer);
+			texture_animation.KTAR.save(TrackTag::KTAR, writer);
+			texture_animation.KTAS.save(TrackTag::KTAS, writer);
 
 			const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - texture_animation_index);
 			std::memcpy(writer.buffer.data() + texture_animation_index, &temporary, 4);

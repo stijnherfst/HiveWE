@@ -645,11 +645,22 @@ namespace mdx {
 	};
 
 	struct Camera {
-		std::vector<uint8_t> data; // Just store it so we can save it again
+		std::string name;
+		glm::vec3 position;
+		float field_of_view;
+		float far_clip;
+		float near_clip;
+		glm::vec3 target_position;
+
+		TrackHeader<glm::vec3> KCTR; // Translation
+		TrackHeader<float> KCRL;     // Roll
+		TrackHeader<glm::vec3> KTTR; // Target translation
 	};
 
 	struct TextureAnimation {
-		std::vector<uint8_t> data; // Just store it so we can save it again
+		TrackHeader<glm::vec3> KTAT; // Translation
+		TrackHeader<glm::quat> KTAR; // Rotation
+		TrackHeader<glm::vec3> KTAS; // Scaling
 	};
 
 	export class MDX {
@@ -837,6 +848,18 @@ namespace mdx {
 				F(i.KRCO);
 				F(i.KRTX);
 				F(i.KRVS);
+			}
+
+			for (auto& i : cameras) {
+				F(i.KCTR);
+				F(i.KTTR);
+				F(i.KCRL);
+			}
+
+			for (auto& i : texture_animations) {
+				F(i.KTAT);
+				F(i.KTAR);
+				F(i.KTAS);
 			}
 		}
 	};
