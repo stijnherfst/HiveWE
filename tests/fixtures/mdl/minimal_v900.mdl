@@ -1,7 +1,3 @@
-// Minimal v900 MDL fixture.
-// Adds the v900 deltas on top of the v800 fixture: HD material (Shader_HD_DefaultUnit
-// with the canonical 6 single-texture Layer blocks), Tangents + SkinWeights on the
-// geoset, and a BindPose block.
 Version {
 	FormatVersion 900,
 }
@@ -11,13 +7,13 @@ Model "minimal_v900" {
 	NumAttachments 1,
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
-	MaximumExtent {  10,  10, 20 },
+	MaximumExtent { 10, 10, 20 },
 }
 Sequences 1 {
 	Anim "Stand" {
 		Interval { 0, 1000 },
 		MinimumExtent { -10, -10, 0 },
-		MaximumExtent {  10,  10, 20 },
+		MaximumExtent { 10, 10, 20 },
 		BoundsRadius 14.142,
 	}
 }
@@ -82,8 +78,8 @@ Materials 1 {
 Geoset {
 	Vertices 3 {
 		{ -10, -10, 0 },
-		{  10, -10, 0 },
-		{   0,  10, 0 },
+		{ 10, -10, 0 },
+		{ 0, 10, 0 },
 	}
 	Normals 3 {
 		{ 0, 0, 1 },
@@ -111,7 +107,7 @@ Geoset {
 		}
 	}
 	MinimumExtent { -10, -10, 0 },
-	MaximumExtent {  10,  10, 0 },
+	MaximumExtent { 10, 10, 0 },
 	BoundsRadius 14.142,
 	MaterialID 0,
 	SelectionGroup 0,

@@ -441,7 +441,7 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		}
 		base.deduplicate_textures().deduplicate_materials().deduplicate_geosets().calculate_extents();
 
-		auto writer = base.save();
+		auto writer = base.to_mdx();
 		std::ofstream outfile(file_name, std::ios::binary | std::ios::out);
 
 		if (!outfile) {

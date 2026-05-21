@@ -711,9 +711,9 @@ namespace mdx {
 		}
 
 		[[nodiscard]]
-		BinaryWriter save() const;
+		BinaryWriter to_mdx(uint32_t version = LATEST_MDX_VERSION) const;
 
-		std::string to_mdl();
+		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION);
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		void validate();

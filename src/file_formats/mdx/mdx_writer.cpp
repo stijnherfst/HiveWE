@@ -6,7 +6,7 @@ import <glm/glm.hpp>;
 namespace fs = std::filesystem;
 
 namespace mdx {
-	void write_GEOS(BinaryWriter& writer, const MDX& mdx) {
+	void write_GEOS(BinaryWriter& writer, const MDX& mdx, const uint32_t version) {
 		if (mdx.geosets.empty()) {
 			return;
 		}
@@ -57,8 +57,10 @@ namespace mdx {
 			writer.write<uint32_t>(geoset.selection_group);
 			writer.write<uint32_t>(geoset.selection_flags);
 
-			writer.write<uint32_t>(geoset.lod);
-			writer.write_c_string_padded(geoset.lod_name, 80);
+			if (version > 800) {
+				writer.write<uint32_t>(geoset.lod);
+				writer.write_c_string_padded(geoset.lod_name, 80);
+			}
 
 			geoset.extent.save(writer);
 			writer.write<uint32_t>(geoset.sequence_extents.size());
@@ -92,7 +94,45 @@ namespace mdx {
 		std::memcpy(writer.buffer.data() + inclusive_index, &temporary, 4);
 	}
 
-	void write_MTLS(BinaryWriter& writer, const MDX& mdx) {
+	// Writes one pre-v1100 (v800/v900/v1000) Layer entry.
+	// For v900/v1000 HD materials the caller emits N entries (one per LayerTexture),
+	// each sharing the parent Layer's properties; only the first entry carries the
+	// layer-level animation tracks.
+	void write_MTLS_layer_pre_v1100(BinaryWriter& writer, const Layer& layer, uint32_t version, uint32_t texture_id, uint32_t texture_slot, bool emit_layer_tracks) {
+		const size_t layer_index = writer.buffer.size();
+		writer.write<uint32_t>(0);
+
+		writer.write<uint32_t>(layer.blend_mode);
+		writer.write<uint32_t>(layer.shading_flags);
+		writer.write<uint32_t>(texture_id);
+		writer.write<uint32_t>(layer.texture_animation_id);
+		writer.write<uint32_t>(layer.coord_id);
+		writer.write<float>(layer.alpha);
+
+		if (version > 800) {
+			writer.write<float>(layer.emissive_gain);
+			writer.write<glm::vec3>(layer.fresnel_color);
+			writer.write<float>(layer.fresnel_opacity);
+			writer.write<float>(layer.fresnel_team_color);
+		}
+
+		if (texture_slot < layer.textures.size()) {
+			layer.textures[texture_slot].KMTF.save(TrackTag::KMTF, writer);
+		}
+
+		if (emit_layer_tracks) {
+			layer.KMTA.save(TrackTag::KMTA, writer);
+			layer.KMTE.save(TrackTag::KMTE, writer);
+			layer.KFC3.save(TrackTag::KFC3, writer);
+			layer.KFCA.save(TrackTag::KFCA, writer);
+			layer.KFTC.save(TrackTag::KFTC, writer);
+		}
+
+		const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - layer_index);
+		std::memcpy(writer.buffer.data() + layer_index, &temporary, 4);
+	}
+
+	void write_MTLS(BinaryWriter& writer, const MDX& mdx, uint32_t version) {
 		if (mdx.materials.empty()) {
 			return;
 		}
@@ -109,44 +149,81 @@ namespace mdx {
 
 			writer.write<uint32_t>(material.priority_plane);
 			writer.write<uint32_t>(material.flags);
-			writer.write_string("LAYS");
-			writer.write<uint32_t>(material.layers.size());
 
-			for (const auto& layer : material.layers) {
-				// Write temporary zero, remember location
-				const size_t layer_index = writer.buffer.size();
-				writer.write<uint32_t>(0);
-
-				writer.write<uint32_t>(layer.blend_mode);
-				writer.write<uint32_t>(layer.shading_flags);
-				writer.write<uint32_t>(0); // texture_id irrelevant when writing V1100
-				writer.write<uint32_t>(layer.texture_animation_id);
-				writer.write<uint32_t>(layer.coord_id);
-				writer.write<float>(layer.alpha);
-
-				writer.write<float>(layer.emissive_gain);
-				writer.write<glm::vec3>(layer.fresnel_color);
-				writer.write<float>(layer.fresnel_opacity);
-				writer.write<float>(layer.fresnel_team_color);
-
-				writer.write<uint32_t>(layer.hd);
-				writer.write<uint32_t>(layer.textures.size());
-
-				for (size_t i = 0; i < layer.textures.size(); i++) {
-					writer.write<uint32_t>(layer.textures[i].id);
-					writer.write<uint32_t>(i);
-					layer.textures[i].KMTF.save(TrackTag::KMTF, writer);
-				}
-
-				layer.KMTA.save(TrackTag::KMTA, writer);
-				layer.KMTE.save(TrackTag::KMTE, writer);
-				layer.KFC3.save(TrackTag::KFC3, writer);
-				layer.KFCA.save(TrackTag::KFCA, writer);
-				layer.KFTC.save(TrackTag::KFTC, writer);
-
-				const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - layer_index);
-				std::memcpy(writer.buffer.data() + layer_index, &temporary, 4);
+			// v900/v1000: 80-byte shader name string; non-empty marks the material as HD
+			if (version == 900 || version == 1000) {
+				const bool is_hd = !material.layers.empty() && material.layers[0].hd;
+				writer.write_c_string_padded(is_hd ? "Shader_HD_DefaultUnit" : "", 80);
 			}
+
+			writer.write_string("LAYS");
+
+			if (version < 1100) {
+				const bool is_hd_pre_v1100 = (version == 900 || version == 1000)
+					&& !material.layers.empty() && material.layers[0].hd;
+
+				if (is_hd_pre_v1100) {
+					// HD pre-v1100: our single merged Layer fans out to one MDX layer entry per texture slot.
+					uint32_t total_entries = 0;
+					for (const auto& layer : material.layers) {
+						total_entries += static_cast<uint32_t>(std::max<size_t>(layer.textures.size(), 1));
+					}
+					writer.write<uint32_t>(total_entries);
+
+					for (const auto& layer : material.layers) {
+						const size_t slot_count = std::max<size_t>(layer.textures.size(), 1);
+						for (size_t slot = 0; slot < slot_count; slot++) {
+							const uint32_t tex_id = slot < layer.textures.size() ? layer.textures[slot].id : 0u;
+							write_MTLS_layer_pre_v1100(writer, layer, version, tex_id, static_cast<uint32_t>(slot), slot == 0);
+						}
+					}
+				} else {
+					writer.write<uint32_t>(material.layers.size());
+					for (const auto& layer : material.layers) {
+						const uint32_t tex_id = layer.textures.empty() ? 0u : layer.textures[0].id;
+						write_MTLS_layer_pre_v1100(writer, layer, version, tex_id, 0, true);
+					}
+				}
+			} else {
+				writer.write<uint32_t>(material.layers.size());
+
+				for (const auto& layer : material.layers) {
+					// Write temporary zero, remember location
+					const size_t layer_index = writer.buffer.size();
+					writer.write<uint32_t>(0);
+
+					writer.write<uint32_t>(layer.blend_mode);
+					writer.write<uint32_t>(layer.shading_flags);
+					writer.write<uint32_t>(0); // texture_id irrelevant when writing V1100+
+					writer.write<uint32_t>(layer.texture_animation_id);
+					writer.write<uint32_t>(layer.coord_id);
+					writer.write<float>(layer.alpha);
+
+					writer.write<float>(layer.emissive_gain);
+					writer.write<glm::vec3>(layer.fresnel_color);
+					writer.write<float>(layer.fresnel_opacity);
+					writer.write<float>(layer.fresnel_team_color);
+
+					writer.write<uint32_t>(layer.hd);
+					writer.write<uint32_t>(layer.textures.size());
+
+					for (size_t i = 0; i < layer.textures.size(); i++) {
+						writer.write<uint32_t>(layer.textures[i].id);
+						writer.write<uint32_t>(i);
+						layer.textures[i].KMTF.save(TrackTag::KMTF, writer);
+					}
+
+					layer.KMTA.save(TrackTag::KMTA, writer);
+					layer.KMTE.save(TrackTag::KMTE, writer);
+					layer.KFC3.save(TrackTag::KFC3, writer);
+					layer.KFCA.save(TrackTag::KFCA, writer);
+					layer.KFTC.save(TrackTag::KFTC, writer);
+
+					const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - layer_index);
+					std::memcpy(writer.buffer.data() + layer_index, &temporary, 4);
+				}
+			}
+
 			const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - material_index);
 			std::memcpy(writer.buffer.data() + material_index, &temporary, 4);
 		}
@@ -246,7 +323,7 @@ namespace mdx {
 		}
 	}
 
-	void write_LITE(BinaryWriter& writer, const MDX& mdx) {
+	void write_LITE(BinaryWriter& writer, const MDX& mdx, const uint32_t version) {
 		if (mdx.lights.empty()) {
 			return;
 		}
@@ -269,7 +346,9 @@ namespace mdx {
 			writer.write<float>(light.intensity);
 			writer.write<glm::vec3>(light.ambient_color);
 			writer.write<float>(light.ambient_intensity);
-			writer.write<float>(light.shadow_intensity);
+			if (version >= 1200) {
+				writer.write<float>(light.shadow_intensity);
+			}
 
 			light.KLAS.save(TrackTag::KLAS, writer);
 			light.KLAE.save(TrackTag::KLAE, writer);
@@ -645,12 +724,12 @@ namespace mdx {
 		}
 	}
 
-	BinaryWriter MDX::save() const {
+	BinaryWriter MDX::to_mdx(const uint32_t version) const {
 		BinaryWriter writer;
 		writer.write_string("MDLX");
 		writer.write(ChunkTag::VERS);
 		writer.write<uint32_t>(4);
-		writer.write<uint32_t>(LATEST_MDX_VERSION);
+		writer.write<uint32_t>(version);
 
 		writer.write(ChunkTag::MODL);
 		writer.write<uint32_t>(372);
@@ -660,13 +739,13 @@ namespace mdx {
 		writer.write<uint32_t>(blend_time);
 
 		write_SEQS(writer, *this);
-		write_MTLS(writer, *this);
+		write_MTLS(writer, *this, version);
 		write_TEXS(writer, *this);
-		write_GEOS(writer, *this);
+		write_GEOS(writer, *this, version);
 		write_GEOA(writer, *this);
 		write_BONE(writer, *this);
 		write_GLBS(writer, *this);
-		write_LITE(writer, *this);
+		write_LITE(writer, *this, version);
 		write_HELP(writer, *this);
 		write_ATCH(writer, *this);
 		write_PIVT(writer, *this);

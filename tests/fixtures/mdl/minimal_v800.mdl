@@ -1,5 +1,3 @@
-// Minimal v800 MDL fixture.
-// Each section appears exactly once. Single triangle geometry
 Version {
 	FormatVersion 800,
 }
@@ -16,7 +14,7 @@ Model "minimal_v800" {
 	NumEvents 1,
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
-	MaximumExtent {  10,  10, 20 },
+	MaximumExtent { 10, 10, 20 },
 }
 Sequences 1 {
 	Anim "Stand" {
@@ -24,7 +22,7 @@ Sequences 1 {
 		MoveSpeed 100,
 		Rarity 1,
 		MinimumExtent { -10, -10, 0 },
-		MaximumExtent {  10,  10, 20 },
+		MaximumExtent { 10, 10, 20 },
 		BoundsRadius 14.142,
 	}
 }
@@ -42,11 +40,11 @@ Materials 1 {
 	Material {
 		Layer {
 			FilterMode Blend,
-			TwoSided,
 			Unshaded,
+			TwoSided,
+			TVertexAnimId 0,
 			static TextureID 0,
 			static Alpha 1,
-			TVertexAnimId 0,
 		}
 		Layer {
 			FilterMode Additive,
@@ -66,7 +64,7 @@ TextureAnims 1 {
 		Translation 2 {
 			Linear,
 			GlobalSeqId 0,
-			0:    { 0, 0, 0 },
+			0: { 0, 0, 0 },
 			1000: { 1, 1, 0 },
 		}
 	}
@@ -74,8 +72,8 @@ TextureAnims 1 {
 Geoset {
 	Vertices 3 {
 		{ -10, -10, 0 },
-		{  10, -10, 0 },
-		{   0,  10, 0 },
+		{ 10, -10, 0 },
+		{ 0, 10, 0 },
 	}
 	Normals 3 {
 		{ 0, 0, 1 },
@@ -101,17 +99,16 @@ Geoset {
 		Matrices { 0 },
 	}
 	MinimumExtent { -10, -10, 0 },
-	MaximumExtent {  10,  10, 0 },
+	MaximumExtent { 10, 10, 0 },
 	BoundsRadius 14.142,
 	Anim {
 		MinimumExtent { -10, -10, 0 },
-		MaximumExtent {  10,  10, 0 },
+		MaximumExtent { 10, 10, 0 },
 		BoundsRadius 14.142,
 	}
 	MaterialID 0,
 	SelectionGroup 0,
 	LevelOfDetail 0,
-	Name "Triangle",
 }
 GeosetAnim {
 	GeosetId 0,
@@ -124,28 +121,28 @@ GeosetAnim {
 }
 Bone "Root" {
 	ObjectId 0,
-	GeosetId 0,
-	GeosetAnimId 0,
 	Translation 2 {
 		Linear,
-		0:    { 0, 0, 0 },
+		0: { 0, 0, 0 },
 		1000: { 0, 0, 5 },
 	}
+	GeosetId 0,
+	GeosetAnimId 0,
 }
 Helper "HelperA" {
-	ObjectId 1,
+	ObjectId 2,
 	Parent 0,
 }
 Light "Lamp" {
-	ObjectId 2,
+	ObjectId 1,
 	Parent 0,
 	Omnidirectional,
 	static AttenuationStart 80,
 	static AttenuationEnd 200,
-	static Color { 1, 1, 1 },
 	static Intensity 5,
-	static AmbColor { 0.2, 0.2, 0.2 },
+	static Color { 1, 1, 1 },
 	static AmbIntensity 1,
+	static AmbColor { 0.2, 0.2, 0.2 },
 }
 Attachment "HandRef" {
 	ObjectId 3,
@@ -154,15 +151,23 @@ Attachment "HandRef" {
 	Path "Splat\\Attach.mdl",
 	Visibility 2 {
 		DontInterp,
-		0:    1,
+		0: 1,
 		1000: 0,
 	}
 }
-PivotPoints 4 {
-	{ 0, 0, 0 },
+PivotPoints 12 {
 	{ 0, 0, 0 },
 	{ 0, 0, 10 },
+	{ 0, 0, 0 },
 	{ 0, 0, 5 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
 }
 ParticleEmitter "Emitter1" {
 	ObjectId 4,
@@ -200,7 +205,7 @@ ParticleEmitter2 "Sparkles" {
 		Color { 1, 1, 1 },
 		Color { 0.5, 0.5, 0.5 },
 		Color { 0, 0, 0 },
-	},
+	}
 	Alpha { 255, 200, 0 },
 	ParticleScaling { 1, 2, 3 },
 	LifeSpanUVAnim { 0, 0, 1 },
@@ -217,6 +222,7 @@ RibbonEmitter "Trail" {
 	static Alpha 1,
 	static Color { 1, 0, 0 },
 	LifeSpan 2,
+	static Visibility 1,
 	EmissionRate 30,
 	Rows 1,
 	Columns 1,
@@ -235,7 +241,7 @@ CollisionShape "BoxCollision" {
 	Box,
 	Vertices 2 {
 		{ -5, -5, 0 },
-		{  5,  5, 10 },
+		{ 5, 5, 10 },
 	}
 }
 CollisionShape "PlaneCollision" {
@@ -244,7 +250,7 @@ CollisionShape "PlaneCollision" {
 	Plane,
 	Vertices 2 {
 		{ -5, -5, 0 },
-		{  5,  5, 0 },
+		{ 5, 5, 0 },
 	}
 }
 CollisionShape "SphereCollision" {

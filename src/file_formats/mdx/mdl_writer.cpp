@@ -99,7 +99,7 @@ namespace mdx {
 			write_track_body(track_header, name);
 		}
 
-		void write_node(const Node& node) {
+		void write_node(const Node& node, const bool is_particle_emitter_1 = false) {
 			write_line("ObjectId {},", node.id);
 			if (node.parent_id != -1) {
 				write_line("Parent {},", node.parent_id);
@@ -130,10 +130,20 @@ namespace mdx {
 				write_line("CameraAnchored,");
 			}
 			if (node.flags & Node::Flags::unshaded) {
-				write_line("Unshaded,");
+				if (is_particle_emitter_1) {
+					// Blizzard reused flag, context-sensitive
+					write_line("EmitterUsesMdl,");
+				} else {
+					write_line("Unshaded,");
+				}
 			}
 			if (node.flags & Node::Flags::sort_primitives_far_z) {
-				write_line("SortPrimsFarZ,");
+				if (is_particle_emitter_1) {
+					// Blizzard reused flag, context-sensitive
+					write_line("EmitterUsesTGA,");
+				} else {
+					write_line("SortPrimsFarZ,");
+				}
 			}
 			if (node.flags & Node::Flags::line_emitter) {
 				write_line("LineEmitter,");
@@ -240,8 +250,11 @@ namespace mdx {
 		}
 	}
 
-	static void write_layer_extra_tracks(MDLWriter& mdl, const Layer& layer) {
+	static void write_layer_extra_tracks(MDLWriter& mdl, const Layer& layer, const uint32_t version) {
 		mdl.write_track(layer.KMTA, "Alpha", layer.alpha);
+		if (version < 1000) {
+			return;
+		}
 		if (!layer.KMTE.tracks.empty() || layer.emissive_gain != 0.f) {
 			mdl.write_track(layer.KMTE, "EmissiveGain", layer.emissive_gain);
 		}
@@ -256,7 +269,7 @@ namespace mdx {
 		}
 	}
 
-	std::string MDX::to_mdl() {
+	std::string MDX::to_mdl(const uint32_t version) {
 		MDLWriter mdl;
 
 		mdl.start_group("Version", [&]() {
@@ -371,14 +384,20 @@ namespace mdx {
 
 						const bool is_hd = !material.layers.empty() && material.layers[0].hd;
 
-						if (is_hd) {
+						if (is_hd && version >= 900) {
 							mdl.write_line("Shader \"Shader_HD_DefaultUnit\",");
 						}
 
-						for (const auto& layer : material.layers) {
-							// Pre-v1100 HD materials are stored as a single Layer with multiple LayerTextures.
-							// We expand each LayerTexture into its own MDL `Layer { }` block.
-							if (layer.hd && layer.textures.size() > 1) {
+						for (size_t layer_idx = 0; layer_idx < material.layers.size(); layer_idx++) {
+							const auto& layer = material.layers[layer_idx];
+							// HD secondary slots (whether stored as one Layer with N LayerTextures
+							// from binary, or as N consecutive Layer blocks from MDL parse) are
+							// abbreviated to just a TextureID.
+							const bool secondary_hd_block = is_hd && layer_idx > 0 && version >= 900;
+
+							if (layer.hd && layer.textures.size() > 1 && version >= 900) {
+								// Single Layer carrying N LayerTextures: fan out into N MDL blocks,
+								// first one carries all properties, the rest carry only TextureID.
 								for (size_t tex_index = 0; tex_index < layer.textures.size(); tex_index++) {
 									const auto& slot = layer.textures[tex_index];
 									mdl.start_group("Layer", [&]() {
@@ -394,25 +413,29 @@ namespace mdx {
 										}
 										mdl.write_track(slot.KMTF, "TextureID", slot.id);
 										if (tex_index == 0) {
-											write_layer_extra_tracks(mdl, layer);
+											write_layer_extra_tracks(mdl, layer, version);
 										}
 									});
 								}
 							} else {
 								mdl.start_group("Layer", [&]() {
-									mdl.write_line("FilterMode {},", material_filter_mode(layer.blend_mode));
-									write_layer_shading_flags(mdl, layer);
-									if (layer.texture_animation_id != 0xFFFFFFFF) {
-										mdl.write_line("TVertexAnimId {},", layer.texture_animation_id);
-									}
-									if (layer.coord_id != 0) {
-										mdl.write_line("CoordId {},", layer.coord_id);
+									if (!secondary_hd_block) {
+										mdl.write_line("FilterMode {},", material_filter_mode(layer.blend_mode));
+										write_layer_shading_flags(mdl, layer);
+										if (layer.texture_animation_id != 0xFFFFFFFF) {
+											mdl.write_line("TVertexAnimId {},", layer.texture_animation_id);
+										}
+										if (layer.coord_id != 0) {
+											mdl.write_line("CoordId {},", layer.coord_id);
+										}
 									}
 									if (!layer.textures.empty()) {
 										const auto& slot = layer.textures[0];
 										mdl.write_track(slot.KMTF, "TextureID", slot.id);
 									}
-									write_layer_extra_tracks(mdl, layer);
+									if (!secondary_hd_block) {
+										write_layer_extra_tracks(mdl, layer, version);
+									}
 								});
 							}
 						}
@@ -461,7 +484,7 @@ namespace mdx {
 					});
 				}
 
-				if (!geoset.tangents.empty()) {
+				if (!geoset.tangents.empty() && version >= 900) {
 					mdl.start_group(std::format("Tangents {}", geoset.tangents.size()), [&]() {
 						for (const auto& tangent : geoset.tangents) {
 							mdl.write_line("{{ {}, {}, {}, {} }},", tangent.x, tangent.y, tangent.z, tangent.w);
@@ -469,7 +492,7 @@ namespace mdx {
 					});
 				}
 
-				if (!geoset.skin.empty()) {
+				if (!geoset.skin.empty() && version >= 900) {
 					mdl.start_group(std::format("SkinWeights {}", geoset.skin.size() / 8), [&]() {
 						for (size_t i = 0; i < geoset.skin.size() / 8; i++) {
 							mdl.write_line(
@@ -566,6 +589,9 @@ namespace mdx {
 				} else {
 					mdl.write_line("GeosetId {},", geoset_anim.geoset_id);
 				}
+				if (geoset_anim.flags & 0x1) {
+					mdl.write_line("DropShadow,");
+				}
 				if (!geoset_anim.KGAO.tracks.empty() || geoset_anim.alpha != 1.f) {
 					mdl.write_track(geoset_anim.KGAO, "Alpha", geoset_anim.alpha);
 				}
@@ -648,7 +674,7 @@ namespace mdx {
 
 		for (const auto& emitter : emitters1) {
 			mdl.start_group(std::format("ParticleEmitter \"{}\"", emitter.node.name), [&]() {
-				mdl.write_node(emitter.node);
+				mdl.write_node(emitter.node, true);
 				mdl.write_track(emitter.KPEE, "EmissionRate", emitter.emission_rate);
 				mdl.write_track(emitter.KPEG, "Gravity", emitter.gravity);
 				mdl.write_track(emitter.KPLN, "Longitude", emitter.longitude);
@@ -846,7 +872,12 @@ namespace mdx {
 				mdl.write_line("FarClip {},", camera.far_clip);
 				mdl.write_line("NearClip {},", camera.near_clip);
 				mdl.start_group("Target", [&]() {
-					mdl.write_line("Position {{ {}, {}, {} }},", camera.target_position.x, camera.target_position.y, camera.target_position.z);
+					mdl.write_line(
+						"Position {{ {}, {}, {} }},",
+						camera.target_position.x,
+						camera.target_position.y,
+						camera.target_position.z
+					);
 					if (!camera.KTTR.tracks.empty()) {
 						mdl.write_track_body(camera.KTTR, "Translation");
 					}
@@ -854,7 +885,7 @@ namespace mdx {
 			});
 		}
 
-		if (!bind_poses.empty()) {
+		if (!bind_poses.empty() && version >= 900) {
 			mdl.start_group("BindPose", [&]() {
 				const size_t matrix_count = bind_poses.size() / 12;
 				mdl.start_group(std::format("Matrices {}", matrix_count), [&]() {

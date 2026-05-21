@@ -95,7 +95,7 @@ namespace mdx {
 		// These older versions encoded HD materials by having a layer for each PBR material
 		// We combine these into the new format
 		if (is_hd) {
-			Layer layer;
+			Layer layer{};
 			layer.hd = is_hd;
 
 			for (size_t i = 0; i < layers_count; i++) {
@@ -153,7 +153,7 @@ namespace mdx {
 			for (size_t i = 0; i < layers_count; i++) {
 				const size_t reader_pos = reader.position;
 				const uint32_t size = reader.read<uint32_t>();
-				Layer layer;
+				Layer layer{};
 				layer.hd = is_hd;
 				layer.blend_mode = reader.read<uint32_t>();
 				layer.shading_flags = reader.read<uint32_t>();
@@ -202,7 +202,7 @@ namespace mdx {
 		const uint32_t layers_count = reader.read<uint32_t>();
 		for (size_t i = 0; i < layers_count; i++) {
 			const size_t reader_pos = reader.position;
-			Layer layer;
+			Layer layer{};
 			const uint32_t size = reader.read<uint32_t>();
 			layer.blend_mode = reader.read<uint32_t>();
 			layer.shading_flags = reader.read<uint32_t>();
@@ -450,7 +450,7 @@ namespace mdx {
 			emitter.gravity = reader.read<float>();
 			emitter.longitude = reader.read<float>();
 			emitter.latitude = reader.read<float>();
-			emitter.path = reader.read_string(256);
+			emitter.path = reader.read_string(260);
 			emitter.reserved = reader.read<uint32_t>();
 			emitter.life_span = reader.read<float>();
 			emitter.speed = reader.read<float>();

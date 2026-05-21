@@ -1112,9 +1112,9 @@ namespace mdx {
 			}
 			OUTCOME_TRY(auto kw, r.consume());
 			if (kw.text == "EmitterUsesMdl") {
-				// stored as node flag bit elsewhere — for now no-op; round-trips via Node flags
+				e.node.flags |= 0x8000;
 			} else if (kw.text == "EmitterUsesTga") {
-				// same
+				e.node.flags |= 0x10000;
 			} else if (kw.text == "EmissionRate") {
 				if (is_static) {
 					OUTCOME_TRY(e.emission_rate, r.consume_f32());
