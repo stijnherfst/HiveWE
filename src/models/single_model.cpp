@@ -617,7 +617,7 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 
 	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
-	dialog->resize(530, 512);
+	dialog->resize(1280, 720);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
 	ModelView* view = new ModelView();

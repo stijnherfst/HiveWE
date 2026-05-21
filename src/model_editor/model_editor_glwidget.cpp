@@ -131,28 +131,28 @@ void ModelEditorGLWidget::paintGL() {
 			QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
 		}
 
-		if (ImGui::Button("Open Model")) {
-			const QSettings settings;
-
-			const QString file_name = QFileDialog::getOpenFileName(this, "Open Model File",
-															 settings.value("openDirectory", QDir::current().path()).toString(),
-															 "MDX (*.mdx *.MDX)");
+		if (ImGui::Button("Save to MDX")) {
+			const QString file_name = QFileDialog::getSaveFileName(this, "Save MDX", QStandardPaths::writableLocation(QStandardPaths::TempLocation), "MDX (*.mdx *.MDX)");
 
 			if (file_name == "") {
 				return;
 			}
 
 			const fs::path path = file_name.toStdString();
-			if (path.extension() != ".mdx" && path.extension() != ".MDX") {
-				throw;
-			}
 
-			BinaryReader reader = hierarchy.open_file(path).value();
-			const auto mdx = std::make_shared<mdx::MDX>(reader);
-			mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
-			skeleton = SkeletalModelInstance(mdx);
-			SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
-			recenter_camera();
+			const auto mdx_data = mdx->to_mdx();
+			std::ofstream file(path);
+			if (!file) {
+				ImGui::OpenPopup("Error");
+				ImGui::SetNextWindowSize(ImVec2(400, 100));
+				ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
+				ImGui::Text("Error saving MDX file");
+				ImGui::Text("Could not open file for writing");
+				ImGui::EndPopup();
+				return;
+			}
+			file.write(reinterpret_cast<const char*>(mdx_data.buffer.data()), mdx_data.buffer.size());
+			file.close();
 		}
 
 		ImGui::Text(std::format("name: {}", mesh->mdx->name).c_str());

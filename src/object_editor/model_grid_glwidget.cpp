@@ -241,6 +241,11 @@ void ModelGridGLWidget::mousePressEvent(QMouseEvent* event) {
 		}
 		const int cell_idx = visible_indices[row.visible_offset + col];
 		emit clicked(all_cells[cell_idx].path);
+
+		if (event->type() == QEvent::MouseButtonDblClick) {
+			emit double_clicked(all_cells[cell_idx].path);
+		}
+
 		return;
 	}
 }
@@ -279,7 +284,7 @@ void ModelGridGLWidget::set_search(const QString& query) {
 	update();
 }
 
-void ModelGridGLWidget::set_categories(std::bitset<static_cast<size_t>(ModelCategory::Count)> mask) {
+void ModelGridGLWidget::set_categories(const std::bitset<static_cast<size_t>(ModelCategory::Count)> mask) {
 	if (mask == category_mask) {
 		return;
 	}
@@ -290,7 +295,7 @@ void ModelGridGLWidget::set_categories(std::bitset<static_cast<size_t>(ModelCate
 	update();
 }
 
-void ModelGridGLWidget::load_cell(PreviewCell& cell) {
+void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 	auto reader = hierarchy.open_file(cell.path);
 	if (!reader) {
 		cell.load_failed = true;

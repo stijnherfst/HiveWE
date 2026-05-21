@@ -58,6 +58,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 
   signals:
 	void clicked(const std::filesystem::path& path);
+	void double_clicked(const std::filesystem::path& path);
 	void scroll_changed(int offset);
 	void content_height_changed(int total_px);
 
@@ -102,7 +103,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	QElapsedTimer elapsed_timer;
 	double delta = 0.0;
 
-	void load_cell(PreviewCell& cell);
+	void load_cell(PreviewCell& cell) const;
 	void rebuild_layout();
 	int content_height_px() const;
 	int max_scroll_offset() const;

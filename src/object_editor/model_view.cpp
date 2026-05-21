@@ -133,6 +133,10 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 		finalPath->setText(QString::fromStdString(p.string()));
 	});
 
+	connect(grid, &ModelGridGLWidget::double_clicked, this, [this](const fs::path& p) {
+		emit doubleClicked(p);
+	});
+
 	connect(search, &QLineEdit::textChanged, grid, &ModelGridGLWidget::set_search);
 
 	auto update_categories = [grid, category_boxes]() {
