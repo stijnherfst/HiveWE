@@ -23,6 +23,7 @@ import Globals;
 import Camera;
 import UnorderedMap;
 import Tileset;
+import MapInfo;
 import "glad/glad.h";
 import "glm/glm.hpp";
 import "glm/gtc/matrix_transform.hpp";
@@ -115,6 +116,7 @@ export class Terrain: public QObject {
 	GLuint water_exists_buffer;
 
 	TilesetData* tilesets;
+	MapInfo* map_info;
 
   public:
 	static constexpr float min_ground_height = -16.f;
@@ -281,9 +283,10 @@ export class Terrain: public QObject {
 		//delete collision_shape;
 	}
 
-	bool load(const Physics& physics, TilesetData& tilesets) {
+	bool load(const Physics& physics, TilesetData& tilesets, MapInfo& map_info) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3e").value();
 		this->tilesets = &tilesets;
+		this->map_info = &map_info;
 
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "W3E!") {
@@ -358,19 +361,13 @@ export class Terrain: public QObject {
 
 		hierarchy.tileset = tileset_id;
 		const Tileset* tileset = tilesets->tileset(tileset_id);
-		if (tileset) {
-			water_offset = tileset->water_offset;
-			water_textures_nr = tileset->water_textures_nr;
-			animation_rate = tileset->water_animation_rate;
-
-			shallow_color_min = tileset->shallow_color_min;
-			shallow_color_max = tileset->shallow_color_max;
-
-			deep_color_min = tileset->deep_color_min;
-			deep_color_max = tileset->deep_color_max;
-		} else {
+		if (!tileset) {
 			std::cout << "Error loading tileset: Unknown tileset '" << tileset_id << "'" << std::endl;
 		}
+
+		water_offset = tileset->water_offset;
+		water_textures_nr = tileset->water_textures_nr;
+		animation_rate = tileset->water_animation_rate;
 
 		// Cliff Meshes
 		slk::SLK cliffs_variation_slk("data/warcraft/Cliffs.slk", true);
@@ -559,7 +556,16 @@ export class Terrain: public QObject {
 		}
 	}
 
-	void render_water() const {
+	void render_water() {
+		const Tileset& tileset = *tilesets->tileset(tileset_id);
+		const glm::vec4 water_tint = glm::vec4(map_info->water_color) / 255.0f;
+
+		shallow_color_min = tileset.shallow_color_min * water_tint;
+		shallow_color_max = tileset.shallow_color_max * water_tint;
+
+		deep_color_min = tileset.deep_color_min * water_tint;
+		deep_color_max = tileset.deep_color_max * water_tint;
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDepthMask(false);

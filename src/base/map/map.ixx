@@ -375,7 +375,7 @@ export class Map: public QObject {
 
 		info.load();
 		profile_reset();
-		terrain.load(physics, tilesets);
+		terrain.load(physics, tilesets, info);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		profile_print();

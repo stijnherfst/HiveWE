@@ -78,7 +78,7 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.fogColor->setColor(QColor(map->info.fog_color.r, map->info.fog_color.g, map->info.fog_color.b));
 
 	ui.waterTinting->setChecked(map->info.water_tinting);
-	ui.waterColor->setColor(QColor(map->info.water_color.r, map->info.water_color.g, map->info.water_color.b));
+	ui.waterColor->setColor(QColor(map->info.water_color.r, map->info.water_color.g, map->info.water_color.b, map->info.water_color.a));
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
 

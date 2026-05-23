@@ -730,6 +730,12 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 		const std::string ambient_night = string_replaced(tileset->night_ambience, "\\", "/");
 		script.call("SetAmbientNightSound", "\"" + ambient_night + "\"");
 
+		// call SetWaterBaseColor( 255, 128, 128, 255 )
+		if (map_info.water_tinting) {
+			script
+				.call("SetWaterBaseColor", map_info.water_color.r, map_info.water_color.g, map_info.water_color.b, map_info.water_color.a);
+		}
+
 		script.call("SetMapMusic", "\"Music\"", true, 0);
 		script.call("InitSounds");
 		script.call("CreateRegions");
