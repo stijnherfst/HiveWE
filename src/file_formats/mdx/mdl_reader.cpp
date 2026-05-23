@@ -55,23 +55,6 @@ namespace mdx {
 				continue;
 			}
 
-			// TODO does MDL allow for block comments?
-			if (c == '/' && pos + 1 < source.size() && source[pos + 1] == '*') {
-				const uint32_t start_line = line;
-				pos += 2;
-				while (pos + 1 < source.size() && !(source[pos] == '*' && source[pos + 1] == '/')) {
-					if (source[pos] == '\n') {
-						line += 1;
-					}
-					pos += 1;
-				}
-				if (pos + 1 >= source.size()) {
-					return failure(std::format("Unterminated block comment starting at line {}", start_line));
-				}
-				pos += 2;
-				continue;
-			}
-
 			if (c == '"') {
 				const uint32_t start_line = line;
 				const size_t start = pos;

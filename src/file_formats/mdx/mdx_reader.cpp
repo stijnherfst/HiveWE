@@ -127,7 +127,7 @@ namespace mdx {
 				layer.fresnel_team_color = reader.read<float>();
 
 				while (reader.position < reader_pos + size) {
-					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+					const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 					if (tag == TrackTag::KMTF) {
 						layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTA) {
@@ -174,7 +174,7 @@ namespace mdx {
 				}
 
 				while (reader.position < reader_pos + size) {
-					TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+					const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 					if (tag == TrackTag::KMTF) {
 						layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
 					} else if (tag == TrackTag::KMTA) {
@@ -223,7 +223,7 @@ namespace mdx {
 				layer_texture.id = reader.read<uint32_t>();
 				uint32_t slot = reader.read<uint32_t>(); // always a garbage value?
 
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KMTF) {
 					layer_texture.KMTF = TrackHeader<uint32_t>(reader, unique_tracks++);
 				} else {
@@ -233,7 +233,7 @@ namespace mdx {
 			}
 
 			while (reader.position < reader_pos + size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KMTA) {
 					layer.KMTA = TrackHeader<float>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KMTE) {
@@ -309,7 +309,7 @@ namespace mdx {
 			animation.geoset_id = reader.read<uint32_t>();
 
 			while (reader.position < reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KGAO) {
 					animation.KGAO = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KGAC) {
@@ -376,7 +376,7 @@ namespace mdx {
 			}
 
 			while (reader.position < node_reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KLAS) {
 					light.KLAS = TrackHeader<uint32_t>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KLAE) {
@@ -420,7 +420,7 @@ namespace mdx {
 			attachment.reserved = reader.read<uint32_t>();
 			attachment.attachment_id = reader.read<uint32_t>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				attachment.KATV = TrackHeader<float>(reader, mdx.unique_tracks++);
 				if (tag != TrackTag::KATV) {
 					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
@@ -431,9 +431,7 @@ namespace mdx {
 	}
 
 	void read_PIVT(BinaryReader& reader, MDX& mdx) {
-		const size_t reader_pos = reader.position;
 		const uint32_t size = reader.read<uint32_t>();
-
 		mdx.pivots = reader.read_vector<glm::vec3>(size / 12);
 	}
 
@@ -455,7 +453,7 @@ namespace mdx {
 			emitter.life_span = reader.read<float>();
 			emitter.speed = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KPEE) {
 					emitter.KPEE = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KPEG) {
@@ -520,7 +518,7 @@ namespace mdx {
 			emitter2.replaceable_id = reader.read<uint32_t>();
 
 			while (reader.position < node_reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KP2S) {
 					emitter2.KP2S = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KP2R) {
@@ -566,7 +564,7 @@ namespace mdx {
 			emitter.material_id = reader.read<uint32_t>();
 			emitter.gravity = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KRHA) {
 					emitter.KRHA = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KRHB) {
@@ -671,7 +669,7 @@ namespace mdx {
 			camera.target_position = reader.read<glm::vec3>();
 
 			while (reader.position < entry_start + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KCTR) {
 					camera.KCTR = TrackHeader<glm::vec3>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KCRL) {
@@ -702,7 +700,7 @@ namespace mdx {
 
 			TextureAnimation animation;
 			while (reader.position < entry_start + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KTAT) {
 					animation.KTAT = TrackHeader<glm::vec3>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KTAR) {
