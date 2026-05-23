@@ -7,6 +7,7 @@ module Triggers;
 
 import std;
 import INI;
+
 namespace fs = std::filesystem;
 
 void generate_global_variables(
@@ -683,7 +684,7 @@ void generate_ally_priorities(MapScriptWriter& script, const MapInfo& map_info) 
 	});
 }
 
-void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInfo& map_info) {
+void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInfo& map_info, const TilesetData& tilesets) {
 	script.function("main", [&]() {
 		script.call(
 			"SetCameraBounds",
@@ -700,17 +701,31 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 			std::to_string(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)"
 		);
 
-		const std::string terrain_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
-		const std::string unit_lights = string_replaced(world_edit_data.data("TerrainLights", ""s + terrain.tileset), "\\", "/");
+		const Tileset* tileset = tilesets.tileset(terrain.tileset_id);
+		const Tileset* light_tileset = tilesets.tileset(map_info.custom_light_tileset);
+
+		// safety check
+		if (!tileset) {
+			std::cout << "Unknown tileset '" << terrain.tileset_id << "'" << std::endl;
+			return;
+		}
+
+		// custom_light_tileset is set to 0 if the "Use Custom Lightning" is unchecked
+		if (!light_tileset) {
+			light_tileset = tileset;
+		}
+
+		const std::string terrain_lights = string_replaced(light_tileset->terrain_dnc, "\\", "/");
+		const std::string unit_lights = string_replaced(light_tileset->unit_dnc, "\\", "/");
 		script.call("SetDayNightModels", "\"" + terrain_lights + "\"", "\"" + unit_lights + "\"");
 
-		const std::string sound_environment = string_replaced(world_edit_data.data("SoundEnvironment", ""s + terrain.tileset), "\\", "/");
+		const std::string sound_environment = string_replaced(tileset->sound_environment, "\\", "/");
 		script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
-		const std::string ambient_day = string_replaced(world_edit_data.data("DayAmbience", ""s + terrain.tileset), "\\", "/");
+		const std::string ambient_day = string_replaced(tileset->day_ambience, "\\", "/");
 		script.call("SetAmbientDaySound", "\"" + ambient_day + "\"");
 
-		const std::string ambient_night = string_replaced(world_edit_data.data("NightAmbience", ""s + terrain.tileset), "\\", "/");
+		const std::string ambient_night = string_replaced(tileset->night_ambience, "\\", "/");
 		script.call("SetAmbientNightSound", "\"" + ambient_night + "\"");
 
 		script.call("SetMapMusic", "\"Music\"", true, 0);
@@ -773,6 +788,7 @@ std::expected<void, std::string> Triggers::generate_map_script(
 	const Sounds& sounds,
 	const Regions& regions,
 	const GameCameras& cameras,
+	const TilesetData& tilesets,
 	ScriptMode mode
 ) const {
 	std::unordered_map<std::string, std::string> unit_variables; // creation_number, unit_id
@@ -841,7 +857,7 @@ std::expected<void, std::string> Triggers::generate_map_script(
 	generate_players(script_writer, map_info);
 	generate_custom_teams(script_writer, map_info);
 	generate_ally_priorities(script_writer, map_info);
-	generate_main(script_writer, terrain, map_info);
+	generate_main(script_writer, terrain, map_info, tilesets);
 	generate_map_configuration(script_writer, terrain, units, map_info);
 
 	fs::path path = QDir::tempPath().toStdString() + "/input.lua";

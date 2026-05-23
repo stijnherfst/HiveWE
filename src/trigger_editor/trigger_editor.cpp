@@ -87,9 +87,17 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 		if (map->info.lua) {
 			mode = ScriptMode::lua;
 		}
-		const auto result =
-			map->triggers
-				.generate_map_script(map->terrain, map->units, map->doodads, map->info, map->sounds, map->regions, map->cameras, mode);
+		const auto result = map->triggers.generate_map_script(
+			map->terrain,
+			map->units,
+			map->doodads,
+			map->info,
+			map->sounds,
+			map->regions,
+			map->cameras,
+			map->tilesets,
+			mode
+		);
 
 		if (!result) {
 			compile_output->setPlainText(QString::fromStdString(result.error()));
@@ -211,10 +219,9 @@ void TriggerEditor::item_clicked(const QModelIndex& index) {
 		splitter->setStretchFactor(1, 7);
 		dock_tab->setWidget(splitter);
 	} else if (item->type == Classifier::variable) {
-		TriggerVariable& variable =
-			*std::ranges::find_if(map->triggers.variables, [item](const TriggerVariable& i) {
-				return i.id == item->id;
-			});
+		TriggerVariable& variable = *std::ranges::find_if(map->triggers.variables, [item](const TriggerVariable& i) {
+			return i.id == item->id;
+		});
 
 		dock_tab->setWindowTitle(QString::fromStdString(variable.name));
 		dock_tab->setObjectName(QString::number(variable.id));
@@ -257,10 +264,9 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 		if (trigger_id == map_header_id) {
 			map->triggers.global_jass_comment = comments->toPlainText().toStdString();
 		} else {
-			Trigger& trigger =
-				*std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
-					return trigger.id == trigger_id;
-				});
+			Trigger& trigger = *std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
+				return trigger.id == trigger_id;
+			});
 
 			trigger.description = comments->toPlainText().toStdString();
 		}
@@ -272,10 +278,9 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 		if (trigger_id == map_header_id) {
 			map->triggers.global_jass = jass_editor->text().toStdString();
 		} else {
-			Trigger& trigger =
-				*std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
-					return trigger.id == trigger_id;
-				});
+			Trigger& trigger = *std::ranges::find_if(map->triggers.triggers, [trigger_id](const Trigger& trigger) {
+				return trigger.id == trigger_id;
+			});
 
 			trigger.custom_text = jass_editor->text().toStdString();
 		}
@@ -284,10 +289,9 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 	// Variable editor
 	auto var_editor = tab->findChild<VariableEditor*>("var_editor");
 	if (var_editor) {
-		TriggerVariable& variable =
-			*std::ranges::find_if(map->triggers.variables, [trigger_id](const TriggerVariable& i) {
-				return i.id == trigger_id;
-			});
+		TriggerVariable& variable = *std::ranges::find_if(map->triggers.variables, [trigger_id](const TriggerVariable& i) {
+			return i.id == trigger_id;
+		});
 
 		variable.name = var_editor->ui.name->text().toStdString();
 		variable.type = var_editor->ui.type->text().toStdString();

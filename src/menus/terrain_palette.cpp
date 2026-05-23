@@ -4,10 +4,11 @@
 import MapGlobal;
 
 import std;
-import MapData;
+import Tileset;
 import Texture;
 import OpenGLUtilities;
 import ResourceManager;
+import Globals;
 
 TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -564,7 +565,7 @@ void TerrainPalette::create_terrain_buttons() {
 
 	// Ground Tiles
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto& texture = *map->map_data.terrain_texture(i);
+		const auto& texture = *map->tilesets.terrain_texture(i);
 		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -575,9 +576,10 @@ void TerrainPalette::create_terrain_buttons() {
 
 		// check if we are dealing with a cliff tile - if so, add it to cliff operator
 		if (texture.cliff_type_id) {
+			const CliffType* cliff_type = map->tilesets.cliff_type(texture.cliff_type_id.value());
 			const auto& cliffset = map->terrain.cliffset_ids;
 			const int index = std::ranges::find(cliffset, *texture.cliff_type_id) - cliffset.begin();
-			button = terrain_button(icon, "cliffID", QString::number(index), QString::fromUtf8(texture.name));
+			button = terrain_button(icon, "cliffID", QString::number(index), QString::fromUtf8(cliff_type->name));
 			cliff_layout->addWidget(button);
 			cliff_group->addButton(button);
 		}
@@ -588,7 +590,8 @@ void TerrainPalette::create_terrain_buttons() {
 	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.dds").value();
 	const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
-	QPushButton* blight_button = terrain_button(icon, "tileID", "blight", "Blight");
+	QPushButton* blight_button =
+		terrain_button(icon, "tileID", "blight", QString::fromUtf8(world_edit_strings.data("WorldEditStrings", "WESTRING_BLIGHT")));
 	textures_layout->addWidget(blight_button);
 	textures_group->addButton(blight_button);
 }

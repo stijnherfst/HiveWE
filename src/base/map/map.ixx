@@ -13,7 +13,7 @@ import BinaryReader;
 import GameCameras;
 import Imports;
 import MapInfo;
-import MapData;
+import Tileset;
 import Doodad;
 import Sounds;
 import Regions;
@@ -70,7 +70,7 @@ export class Map: public QObject {
 	Sounds sounds;
 	GameplayConstants gameplay_constants;
 	ShadowMap shadow_map;
-	MapData map_data;
+	TilesetData tilesets;
 	WorldUndoManager world_undo;
 	Brush* brush = nullptr;
 	Physics physics;
@@ -367,15 +367,15 @@ export class Map: public QObject {
 		timer.reset();
 
 		// Map data
-		map_data.load();
-		std::println("MapData loading: {:>5}ms", timer.elapsed_ms());
+		tilesets.load();
+		std::println("Tilesets loading: {:>5}ms", timer.elapsed_ms());
 		timer.reset();
 
 		gameplay_constants.load();
 
 		info.load();
 		profile_reset();
-		terrain.load(physics, map_data);
+		terrain.load(physics, tilesets);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		profile_print();
@@ -612,7 +612,7 @@ export class Map: public QObject {
 		}
 
 		pathing_map.save();
-		map_data.save();
+		tilesets.save();
 		terrain.save();
 		shadow_map.save();
 
@@ -636,7 +636,7 @@ export class Map: public QObject {
 		save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true, false);
 		save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
-		info.save(terrain.tileset);
+		info.save(terrain.tileset_id);
 		trigger_strings.save();
 		triggers.save();
 		triggers.save_scripts();
@@ -645,7 +645,7 @@ export class Map: public QObject {
 			mode = ScriptMode::lua;
 		}
 
-		const auto result = triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, mode);
+		const auto result = triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, tilesets, mode);
 		if (!result.has_value()) {
 			QMessageBox::information(
 				nullptr,

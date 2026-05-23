@@ -16,7 +16,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	ui.flowlayout_placeholder_2->addLayout(to_layout);
 
 	for (const auto& i : from_ids) {
-		const auto& texture = *map->map_data.terrain_texture(i);
+		const auto& texture = *map->tilesets.terrain_texture(i);
 		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -33,7 +33,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	}
 
 	for (const auto& i : to_ids) {
-		const auto& texture = *map->map_data.terrain_texture(i);
+		const auto& texture = *map->tilesets.terrain_texture(i);
 		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 

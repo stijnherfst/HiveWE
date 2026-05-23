@@ -202,7 +202,7 @@ void TerrainBrush::apply(double frame_delta) {
 	for (size_t i = affected_area.x(); i <= affected_area.right(); i++) {
 		for (size_t j = affected_area.y(); j <= affected_area.bottom(); j++) {
 			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] &= ~0b01001110;
-			uint8_t mask = map->terrain.get_terrain_pathing(i, j, apply_tile_pathing, apply_cliff_pathing, apply_water_pathing, map->map_data);
+			uint8_t mask = map->terrain.get_terrain_pathing(i, j, apply_tile_pathing, apply_cliff_pathing, apply_water_pathing);
 			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] |= mask;
 		}
 	}

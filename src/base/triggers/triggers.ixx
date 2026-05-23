@@ -15,6 +15,7 @@ import MapInfo;
 import BinaryReader;
 import BinaryWriter;
 import INI;
+import Tileset;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
@@ -179,7 +180,6 @@ struct MapScriptWriter {
 		} else {
 			write_ln("end");
 		}
-
 	}
 
 	template<typename T>
@@ -429,8 +429,7 @@ export class Triggers {
   private:
 	std::string get_type(const std::string_view function_name, size_t parameter) const;
 
-	std::string
-	convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const;
+	std::string convert_gui_to_jass(const Trigger& trigger, std::vector<std::string>& map_initializations, ScriptMode mode) const;
 
 	std::string resolve_parameter(
 		const TriggerParameter& parameter,
@@ -581,11 +580,11 @@ export class Triggers {
 		}
 
 		const uint32_t version = reader.read<uint32_t>();
-		if (version == 0x80000004)
+		if (version == 0x80000004) {
 			load_version_31(reader, version);
-		else if (version == 4 || version == 7)
+		} else if (version == 4 || version == 7) {
 			load_version_pre31(reader, version);
-		else {
+		} else {
 			std::println("Unknown WTG format! Trying 1.31 loader");
 			load_version_31(reader, version);
 		}
@@ -940,7 +939,8 @@ export class Triggers {
 	}
 
 	/// Returns compile output which could contain errors or general information
-	[[nodiscard]] std::expected<void, std::string> generate_map_script(
+	[[nodiscard]]
+	std::expected<void, std::string> generate_map_script(
 		const Terrain& terrain,
 		const Units& units,
 		const Doodads& doodads,
@@ -948,6 +948,7 @@ export class Triggers {
 		const Sounds& sounds,
 		const Regions& regions,
 		const GameCameras& cameras,
+		const TilesetData& tilesets,
 		ScriptMode mode
 	) const;
 };

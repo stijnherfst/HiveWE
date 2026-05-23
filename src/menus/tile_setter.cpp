@@ -9,7 +9,7 @@ import ResourceManager;
 import OpenGLUtilities;
 import MapGlobal;
 import Globals;
-import MapData;
+import Tileset;
 import Texture;
 import <glm/glm.hpp>;
 
@@ -38,7 +38,7 @@ TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto& texture = *map->map_data.terrain_texture(i);
+		const auto& texture = *map->tilesets.terrain_texture(i);
 		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -55,9 +55,8 @@ TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 	}
 
 	// add tilesets and cliff base tiles group
-	for (const auto& [key, value] : world_edit_data.section("TileSets")) {
-		//		const std::string tileset_key = split(value, ',').front();
-		ui.tileset->addItem(QString::fromStdString(value[0]), QString::fromStdString(key));
+	for (const auto& [key, tileset] : map->tilesets.tilesets()) {
+		ui.tileset->addItem(QString::fromStdString(tileset.name), QString(QChar(key)));
 	}
 	ui.tileset->addItem("Cliff Base Tiles", "c");
 
@@ -114,7 +113,7 @@ void TileSetter::update_available_tiles() const {
 
 	const std::string tileset = ui.tileset->currentData().toString().toStdString();
 
-	for (const auto& [key, texture] : map->map_data.terrain_textures()) {
+	for (const auto& [key, texture] : map->tilesets.terrain_textures()) {
 		if (key.front() != tileset.front()) {
 			continue;
 		}
@@ -144,8 +143,8 @@ void TileSetter::existing_tile_clicked(QAbstractButton* button) const {
 
 	// dissalow removal of cliff tiles from the base tileset
 	const std::string tile_id = button->property("tileID").toString().toStdString();
-	const auto& texture = *map->map_data.terrain_texture(tile_id);
-	ui.selectedRemove->setEnabled(!texture.cliff_type_id || tile_id[0] != map->terrain.tileset);
+	const auto& texture = *map->tilesets.terrain_texture(tile_id);
+	ui.selectedRemove->setEnabled(!texture.cliff_type_id || tile_id[0] != map->terrain.tileset_id);
 }
 
 void TileSetter::available_tile_clicked(const QAbstractButton* button) const {
@@ -217,6 +216,6 @@ void TileSetter::save_tiles() {
 		}
 	}
 
-	map->terrain.change_tileset(to_ids, from_to_id, map->map_data);
+	map->terrain.change_tileset(to_ids, from_to_id);
 	close();
 }

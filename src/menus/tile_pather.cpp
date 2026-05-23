@@ -5,7 +5,7 @@ import OpenGLUtilities;
 import Texture;
 import MapGlobal;
 import PathingMap;
-import MapData;
+import Tileset;
 import ResourceManager;
 import <glad/glad.h>;
 
@@ -18,14 +18,14 @@ TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	ui.flowlayout_placeholder->addLayout(selected_layout);
 
 	for (const auto& i : map->terrain.tileset_ids) {
-		const uint8_t pathing = map->map_data.terrain_texture(i)->get_tile_pathing();
+		const uint8_t pathing = map->tilesets.terrain_texture(i)->get_tile_pathing();
 		pathing_options[i].unwalkable = pathing & PathingMap::Flags::unwalkable;
 		pathing_options[i].unflyable = pathing & PathingMap::Flags::unflyable;
 		pathing_options[i].unbuildable = pathing & PathingMap::Flags::unbuildable;
 	}
 
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto& texture = *map->map_data.terrain_texture(i);
+		const auto& texture = *map->tilesets.terrain_texture(i);
 		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
@@ -100,10 +100,10 @@ void TilePather::changed_tile(QAbstractButton* button) {
 
 void TilePather::save_tiles() {
 	for (const auto& [tile_id, options] : pathing_options) {
-		// Save override pathing back to map_data and "reset it" if it is the same as base-game pathing
+		// Save override pathing back to tilesets and "reset it" if it is the same as base-game pathing
 		const uint8_t mask = (options.unwalkable ? PathingMap::Flags::unwalkable : 0)
 			| (options.unflyable ? PathingMap::Flags::unflyable : 0) | (options.unbuildable ? PathingMap::Flags::unbuildable : 0);
-		TerrainTexture* texture = map->map_data.terrain_texture(tile_id);
+		TerrainTexture* texture = map->tilesets.terrain_texture(tile_id);
 		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
 
 		if (!options.apply_retroactively) {

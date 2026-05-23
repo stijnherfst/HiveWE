@@ -4,7 +4,7 @@ import std;
 import types;
 import BinaryWriter;
 import Hierarchy;
-import MapData;
+import Paths;
 
 namespace fs = std::filesystem;
 
@@ -51,7 +51,7 @@ export class Imports {
 		"war3mapPreview.tga",
 
 		// HiveWE editor files
-		MapData::terrain_pathing_file().filename().string(),
+		paths::terrain_pathing_file(hierarchy.map_directory).filename().string(),
 	};
 
 	/// Requires the filesystem_path for the map to make the saved paths lexically relative

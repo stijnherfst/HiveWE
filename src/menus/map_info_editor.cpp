@@ -8,6 +8,7 @@ import SLK;
 import Utilities;
 import MapGlobal;
 import Globals;
+import Tileset;
 
 namespace fs = std::filesystem;
 
@@ -111,10 +112,10 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	);
 
 	// Custom Lighting
-	for (const auto& [key, value] : world_edit_data.section("TileSets")) {
-		ui.customLightingCombo->addItem(QString::fromStdString(value[0]), key.front());
+	for (const auto& [key, tileset] : map->tilesets.tilesets()) {
+		ui.customLightingCombo->addItem(QString::fromStdString(tileset.name), QChar(key));
 
-		if (key == std::string(&map->info.custom_light_tileset, 1)) {
+		if (key == map->info.custom_light_tileset) {
 			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);
 		}
 	}
