@@ -101,10 +101,10 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	environment_sounds_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
-	for (size_t i = 1; i < environment_sounds_slk.rows(); i++) {
+	for (const auto& [row_key, i] : environment_sounds_slk.row_headers) {
 		ui.customSoundCombo->addItem(
 			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)),
-			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i))
+			QString::fromUtf8(row_key)
 		);
 	}
 	ui.customSoundCombo->setCurrentText(
