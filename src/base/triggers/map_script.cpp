@@ -719,7 +719,9 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 		const std::string unit_lights = string_replaced(light_tileset->unit_dnc, "\\", "/");
 		script.call("SetDayNightModels", "\"" + terrain_lights + "\"", "\"" + unit_lights + "\"");
 
-		const std::string sound_environment = string_replaced(tileset->sound_environment, "\\", "/");
+		const std::string sound_environment = map_info.custom_sound_environment.empty()
+			? string_replaced(tileset->sound_environment, "\\", "/")
+			: map_info.custom_sound_environment;
 		script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
 		const std::string ambient_day = string_replaced(tileset->day_ambience, "\\", "/");
