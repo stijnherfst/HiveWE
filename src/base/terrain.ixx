@@ -253,11 +253,6 @@ export class Terrain: public QObject {
 	static constexpr float deep_level = 64.f / 128.f;
 	static constexpr float max_depth = 72.f / 128.f;
 
-	glm::vec4 shallow_color_min;
-	glm::vec4 shallow_color_max;
-	glm::vec4 deep_color_min;
-	glm::vec4 deep_color_max;
-
 	float water_offset;
 	int water_textures_nr;
 	int animation_rate;
@@ -556,15 +551,15 @@ export class Terrain: public QObject {
 		}
 	}
 
-	void render_water() {
+	void render_water() const {
 		const Tileset& tileset = *tilesets->tileset(tileset_id);
 		const glm::vec4 water_tint = glm::vec4(map_info->water_color) / 255.0f;
 
-		shallow_color_min = tileset.shallow_color_min * water_tint;
-		shallow_color_max = tileset.shallow_color_max * water_tint;
+		glm::vec4 shallow_color_min = tileset.shallow_color_min * water_tint;
+		glm::vec4 shallow_color_max = tileset.shallow_color_max * water_tint;
 
-		deep_color_min = tileset.deep_color_min * water_tint;
-		deep_color_max = tileset.deep_color_max * water_tint;
+		glm::vec4 deep_color_min = tileset.deep_color_min * water_tint;
+		glm::vec4 deep_color_max = tileset.deep_color_max * water_tint;
 
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
