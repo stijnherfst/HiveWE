@@ -114,7 +114,7 @@ export class Terrain: public QObject {
 	GLuint ground_exists_buffer;
 	GLuint water_exists_buffer;
 
-	TilesetData tilesets;
+	TilesetData* tilesets;
 
   public:
 	static constexpr float min_ground_height = -16.f;
@@ -281,9 +281,9 @@ export class Terrain: public QObject {
 		//delete collision_shape;
 	}
 
-	bool load(const Physics& physics, const TilesetData& tilesets) {
+	bool load(const Physics& physics, TilesetData& tilesets) {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3e").value();
-		this->tilesets = tilesets;
+		this->tilesets = &tilesets;
 
 		const std::string magic_number = reader.read_string(4);
 		if (magic_number != "W3E!") {
@@ -357,7 +357,7 @@ export class Terrain: public QObject {
 		compute_cliff_flags();
 
 		hierarchy.tileset = tileset_id;
-		const Tileset* tileset = tilesets.tileset(tileset_id);
+		const Tileset* tileset = tilesets->tileset(tileset_id);
 		if (tileset) {
 			water_offset = tileset->water_offset;
 			water_textures_nr = tileset->water_textures_nr;
@@ -596,7 +596,7 @@ export class Terrain: public QObject {
 		cliffset_ids.clear();
 
 		for (const auto& tile_id : tileset_ids) {
-			const auto& texture = *tilesets.terrain_texture(tile_id);
+			const auto& texture = *tilesets->terrain_texture(tile_id);
 			if (texture.cliff_type_id && cliffset_ids.size() < 14) {
 				cliffset_ids.push_back(*texture.cliff_type_id);
 			}
@@ -614,7 +614,7 @@ export class Terrain: public QObject {
 				int fallback = 0;
 
 				// first, get the underlying texture of the deleted cliff tile
-				const CliffType& old_cliff = *tilesets.cliff_type(old_cliffset[i]);
+				const CliffType& old_cliff = *tilesets->cliff_type(old_cliffset[i]);
 				const auto old_it = std::ranges::find(old_tileset_ids, old_cliff.ground_tile);
 
 				if (old_it != old_tileset_ids.end()) {
@@ -622,7 +622,7 @@ export class Terrain: public QObject {
 
 					// check if the replacement (from new_to_old) is a cliff tile
 					const std::string& new_id = tileset_ids[new_to_old[old_index]];
-					const TerrainTexture& texture = *tilesets.terrain_texture(new_id);
+					const TerrainTexture& texture = *tilesets->terrain_texture(new_id);
 
 					if (texture.cliff_type_id) {
 						// the replacement really is a cliff tile, we will use it instead
@@ -1115,7 +1115,7 @@ export class Terrain: public QObject {
 
 		if (tile_pathing) {
 			const std::string& tile_id = tileset_ids[corner_ground_texture[closest_idx]];
-			mask = tilesets.terrain_texture(tile_id)->get_tile_pathing();
+			mask = tilesets->terrain_texture(tile_id)->get_tile_pathing();
 		}
 
 		// cliffs are unbuildable and unwalkable
@@ -1314,10 +1314,10 @@ export class Terrain: public QObject {
 		ground_texture_to_id.clear();
 		gpu_ground_texture_handles.clear();
 
-		const Tileset* tileset = tilesets.tileset(tileset_id);
+		const Tileset* tileset = tilesets->tileset(tileset_id);
 
 		for (const auto& tile_id : tileset_ids) {
-			const auto& texture = *tilesets.terrain_texture(tile_id);
+			const auto& texture = *tilesets->terrain_texture(tile_id);
 			ground_textures.push_back(resource_manager.load<GroundTexture>(texture.file_path).value());
 			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
 			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
@@ -1338,14 +1338,14 @@ export class Terrain: public QObject {
 
 		cliff_to_ground_texture.clear();
 		for (const auto& cliff_id : cliffset_ids) {
-			const auto& cliff = *tilesets.cliff_type(cliff_id);
+			const auto& cliff = *tilesets->cliff_type(cliff_id);
 			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff.ground_tile]);
 		}
 
 		cliff_textures.clear();
 		cliff_texture_size = 256;
 		for (const auto& cliff_id : cliffset_ids) {
-			const auto& cliff = *tilesets.cliff_type(cliff_id);
+			const auto& cliff = *tilesets->cliff_type(cliff_id);
 			cliff_textures.push_back(resource_manager.load<Texture>(cliff.file_path).value());
 			cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		}
