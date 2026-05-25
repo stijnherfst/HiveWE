@@ -444,7 +444,6 @@ namespace mdx {
 			writer.write<float>(emitter.longitude);
 			writer.write<float>(emitter.latitude);
 			writer.write_c_string_padded(emitter.path, 260);
-			writer.write<uint32_t>(emitter.reserved);
 			writer.write<float>(emitter.life_span);
 			writer.write<float>(emitter.speed);
 

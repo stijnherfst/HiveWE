@@ -449,7 +449,6 @@ namespace mdx {
 			emitter.longitude = reader.read<float>();
 			emitter.latitude = reader.read<float>();
 			emitter.path = reader.read_string(260);
-			emitter.reserved = reader.read<uint32_t>();
 			emitter.life_span = reader.read<float>();
 			emitter.speed = reader.read<float>();
 			while (reader.position < node_reader_pos + inclusive_size) {

@@ -438,7 +438,6 @@ namespace mdx {
 		float longitude;
 		float latitude;
 		std::string path;
-		int reserved; // ToDo mine meaning, same as Attachment's reserved?
 		float life_span;
 		float speed;
 

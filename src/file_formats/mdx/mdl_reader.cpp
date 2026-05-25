@@ -1079,7 +1079,6 @@ namespace mdx {
 		e.node.id = -1;
 		e.node.parent_id = -1;
 		e.node.flags = Node::Flags::emitter;
-		e.reserved = 0;
 		OUTCOME_TRY(e.node.name, r.consume_quoted_string());
 		TRY(r.consume("{"));
 		while (!r.peek_is("}")) {

@@ -617,8 +617,13 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 
 	QDialog* dialog = new QDialog(editor, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
-	dialog->resize(1280, 720);
+	dialog->resize(1200, 720);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
+
+	// Force native window, otherwise ModelView causes switch to OpenGL-capable
+	// surface which unmaps the window and shows white flash.
+	dialog->setAttribute(Qt::WA_NativeWindow);
+	(void)dialog->winId();
 
 	ModelView* view = new ModelView();
 	view->setObjectName("modelView");

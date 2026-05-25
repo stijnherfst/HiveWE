@@ -10,7 +10,6 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMenuBar>
-#include <QSizePolicy>
 
 #include <DockAreaTitleBar.h>
 #include <DockAreaTabBar.h>
@@ -54,14 +53,13 @@ class CCustomComponentsFactory: public ads::CDockComponentsFactory {
 };
 
 ModelEditor::ModelEditor(QWidget* parent) : QMainWindow(parent) {
-	// setWindowTitle("Model Editor");
-	setWindowTitle("");
+	setWindowTitle("Model Editor");
 	setAttribute(Qt::WA_DeleteOnClose);
-	resize(1200, 800);
+	resize(1280, 800);
 
-	setWindowFlag(Qt::ExpandedClientAreaHint, true);
-	setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
-	setAttribute(Qt::WA_LayoutOnEntireRect, true);
+	// setWindowFlag(Qt::ExpandedClientAreaHint, true);
+	// setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
+	// setAttribute(Qt::WA_LayoutOnEntireRect, true);
 
 	dock_manager = new ads::CDockManager;
 	dock_manager->setStyleSheet("");
@@ -112,20 +110,26 @@ void ModelEditor::open_file() {
 void ModelEditor::browse_models(ads::CDockAreaWidget* parent) {
 	QDialog* dialog = new QDialog(parent, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 	dialog->setAttribute(Qt::WA_DeleteOnClose);
-	dialog->resize(1280, 720);
+	dialog->resize(1200, 720);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
-	ModelView* view = new ModelView();
+	// Force native window, otherwise ModelView causes switch to OpenGL-capable
+	// surface which unmaps the window and shows white flash.
+	dialog->setAttribute(Qt::WA_NativeWindow);
+	(void)dialog->winId();
+
+	ModelView* view = new ModelView(dialog);
 
 	QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
 	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	connect(view, &ModelView::doubleClicked, dialog, &QDialog::accept);
 
-	connect(dialog, &QDialog::accepted, [=] {
+	connect(dialog, &QDialog::accepted, [this, view, parent] {
 		const auto result = this->open_model(view->current_model_path().toStdString(), false);
 		if (!result.has_value()) {
 			QMessageBox::information(this, "Opening model failed", result.error().c_str());
+			return;
 		}
 		dock_manager->addDockWidget(ads::CenterDockWidgetArea, result.value(), parent);
 	});
