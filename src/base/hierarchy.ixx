@@ -17,6 +17,15 @@ namespace fs = std::filesystem;
 
 export class Hierarchy {
   public:
+	enum FileSource {
+		none = 0,
+		overrides = 1 << 0,
+		imports = 1 << 1,
+		local_files = 1 << 2,
+		casc = 1 << 3,
+		all = overrides | imports | local_files | casc
+	};
+
 	char tileset = 'L';
 	std::string locale = "enus";
 	casc::CASC game_data;
@@ -29,11 +38,11 @@ export class Hierarchy {
 	bool ptr = false;
 	bool hd = true;
 	bool teen = false;
-	bool local_files = true;
+	bool allow_local_files = true;
 
 	Hierarchy() {
 		QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
-		local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
+		allow_local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
 	}
 
 	bool open_casc(const fs::path& directory) {
@@ -54,53 +63,69 @@ export class Hierarchy {
 	}
 
 	[[nodiscard]]
-	auto open_file(const fs::path& path) const -> std::expected<BinaryReader, std::string> {
-		const std::string path_str = path.string();
+	/// Loads the file in the following order:
+	/// 1. Editor overrides (data/overrides folder)
+	/// 2. Map imports
+	/// 3. Local files (if enabled)
+	/// 4. Game casc archive (handles sd, hd and teen modes)
+	auto open_file(const fs::path& path, const FileSource sources = FileSource::all) const -> std::expected<BinaryReader, std::string> {
+		const auto path_str = path.generic_string();
 
-		#define TRY_OPEN(expr)                \
-				if (auto file = (expr); file) {   \
-				return file;                   \
-				}
+		auto add_prefix = [&](std::string_view prefix) {
+			return std::string(prefix) + path_str;
+		};
 
-		TRY_OPEN(read_file("data/overrides" / path));
+#define TRY_OPEN(expr) \
+	if (auto file = (expr); file) { \
+		return file; \
+	}
 
-		if (local_files) {
+		if (sources & FileSource::overrides) {
+			TRY_OPEN(read_file(fs::path("data/overrides") / path));
+		}
+
+		if (sources & FileSource::imports) {
+			if (hd && teen) {
+				TRY_OPEN(map_file_read(add_prefix("_hd.w3mod:_teen.w3mod:")));
+			}
+
+			if (hd) {
+				TRY_OPEN(map_file_read(add_prefix("_hd.w3mod:")));
+			}
+
+			TRY_OPEN(map_file_read(path));
+		}
+
+		if (sources & FileSource::local_files && allow_local_files) {
 			TRY_OPEN(read_file(root_directory / path));
 		}
 
-		if (hd && teen) {
-			TRY_OPEN(map_file_read("_hd.w3mod:_teen.w3mod:" + path_str));
+		if (sources & FileSource::casc) {
+			if (hd) {
+				TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
+			}
+
+			if (hd && teen) {
+				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_hd.w3mod:_teen.w3mod:")));
+			}
+
+			if (hd) {
+				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_hd.w3mod:")));
+			}
+
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
+
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)));
+
+			if (teen) {
+				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_teen.w3mod:")));
+			}
+
+			TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:")));
+
+			TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_deprecated.w3mod:")));
 		}
-
-		if (hd) {
-			TRY_OPEN(map_file_read("_hd.w3mod:" + path_str));
-		}
-
-		TRY_OPEN(map_file_read(path));
-
-		if (hd) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
-		}
-
-		if (hd && teen) {
-			TRY_OPEN(game_data.open_file("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path_str));
-		}
-
-		if (hd) {
-			TRY_OPEN(game_data.open_file("war3.w3mod:_hd.w3mod:"s + path_str));
-		}
-
-		TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
-		TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)));
-
-		if (teen) {
-			TRY_OPEN(game_data.open_file("war3.w3mod:_teen.w3mod:"s + path_str));
-		}
-
-		TRY_OPEN(game_data.open_file("war3.w3mod:"s + path_str));
-		TRY_OPEN(game_data.open_file("war3.w3mod:_deprecated.w3mod:"s + path_str));
-
-		#undef TRY_OPEN
+#undef TRY_OPEN
 
 		if (aliases.exists(path_str)) {
 			return open_file(aliases.alias(path_str));
@@ -116,16 +141,14 @@ export class Hierarchy {
 
 		const auto path_str = path.string();
 
-		return fs::exists("data/overrides" / path) || (local_files && fs::exists(root_directory / path))
-			|| (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path_str))
-			|| (hd && map_file_exists("_hd.w3mod:" + path_str)) || map_file_exists(path)
-			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str))
+		return fs::exists("data/overrides" / path) || (allow_local_files && fs::exists(root_directory / path))
+			|| (hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path_str)) || (hd && map_file_exists("_hd.w3mod:" + path_str))
+			|| map_file_exists(path) || (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str))
 			|| (hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path_str))
 			|| (hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path_str))
 			|| game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str)
 			|| game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str))
-			|| (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path_str))
-			|| game_data.file_exists("war3.w3mod:"s + path_str)
+			|| (teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path_str)) || game_data.file_exists("war3.w3mod:"s + path_str)
 			|| game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path_str)
 			|| (aliases.exists(path_str) ? file_exists(aliases.alias(path_str)) : false);
 	}
@@ -162,5 +185,42 @@ export class Hierarchy {
 		fs::rename(map_directory / original, map_directory / renamed);
 	}
 };
+
+using U = std::underlying_type_t<Hierarchy::FileSource>;
+
+export constexpr Hierarchy::FileSource operator|(Hierarchy::FileSource a, Hierarchy::FileSource b) {
+	using U = std::underlying_type_t<Hierarchy::FileSource>;
+	return static_cast<Hierarchy::FileSource>(static_cast<U>(a) | static_cast<U>(b));
+}
+
+export constexpr Hierarchy::FileSource operator&(Hierarchy::FileSource a, Hierarchy::FileSource b) {
+	using U = std::underlying_type_t<Hierarchy::FileSource>;
+	return static_cast<Hierarchy::FileSource>(static_cast<U>(a) & static_cast<U>(b));
+}
+
+export constexpr Hierarchy::FileSource operator^(Hierarchy::FileSource a, Hierarchy::FileSource b) {
+	using U = std::underlying_type_t<Hierarchy::FileSource>;
+	return static_cast<Hierarchy::FileSource>(static_cast<U>(a) ^ static_cast<U>(b));
+}
+
+export constexpr Hierarchy::FileSource operator~(Hierarchy::FileSource a) {
+	using U = std::underlying_type_t<Hierarchy::FileSource>;
+	return static_cast<Hierarchy::FileSource>(~static_cast<U>(a));
+}
+
+export constexpr Hierarchy::FileSource& operator|=(Hierarchy::FileSource& a, Hierarchy::FileSource b) {
+	a = a | b;
+	return a;
+}
+
+export constexpr Hierarchy::FileSource& operator&=(Hierarchy::FileSource& a, Hierarchy::FileSource b) {
+	a = a & b;
+	return a;
+}
+
+export constexpr Hierarchy::FileSource& operator^=(Hierarchy::FileSource& a, Hierarchy::FileSource b) {
+	a = a ^ b;
+	return a;
+}
 
 export inline Hierarchy hierarchy;

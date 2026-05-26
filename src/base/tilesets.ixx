@@ -171,9 +171,10 @@ export class TilesetData {
 		// load .slk files
 		// the game does not let the map change those, so we will load them directly from casc
 		// or from the game folder if local data is enabled
-		terrain_slk.load("TerrainArt/Terrain.slk", false);
-		cliff_slk.load("TerrainArt/CliffTypes.slk", false);
-		water_slk.load("TerrainArt/Water.slk", false);
+		Hierarchy::FileSource flags = Hierarchy::FileSource::overrides | Hierarchy::FileSource::local_files | Hierarchy::FileSource::casc;
+		terrain_slk.load_hierarchy("TerrainArt/Terrain.slk", flags);
+		cliff_slk.load_hierarchy("TerrainArt/CliffTypes.slk", flags);
+		water_slk.load_hierarchy("TerrainArt/Water.slk", flags);
 
 		// load the names for terrain textures and cliffs
 		cliff_slk.substitute(world_edit_strings, "WorldEditStrings");

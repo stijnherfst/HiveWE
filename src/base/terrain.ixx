@@ -365,7 +365,9 @@ export class Terrain: public QObject {
 		animation_rate = tileset->water_animation_rate;
 
 		// Cliff Meshes
-		slk::SLK cliffs_variation_slk("data/warcraft/Cliffs.slk", true);
+		slk::SLK cliffs_variation_slk;
+		cliffs_variation_slk.load_local("data/warcraft/Cliffs.slk");
+
 		for (size_t i = 0; i < cliffs_variation_slk.rows(); i++) {
 			for (int j = 0; j < cliffs_variation_slk.data<int>("variations", i) + 1; j++) {
 				std::string file_name =
