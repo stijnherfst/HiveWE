@@ -556,7 +556,7 @@ namespace mdx {
 		TRY(r.consume("Layer"));
 		TRY(r.consume("{"));
 		Layer layer {};
-		layer.hd = is_hd;
+		layer.shader = is_hd ? ShaderType::HD : ShaderType::SD;
 		layer.texture_animation_id = 0xFFFFFFFFu;
 		layer.alpha = 1.f;
 		LayerTexture slot {};
@@ -983,16 +983,16 @@ namespace mdx {
 			} else if (kw.text == "AttenuationStart") {
 				if (is_static) {
 					OUTCOME_TRY(auto v, r.consume_u32());
-					light.attenuation_start = static_cast<int>(v);
+					light.attenuation_start = static_cast<float>(v);
 				} else {
-					OUTCOME_TRY(light.KLAS, r.parse_animated_track<uint32_t>(mdx.unique_tracks));
+					OUTCOME_TRY(light.KLAS, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
 			} else if (kw.text == "AttenuationEnd") {
 				if (is_static) {
 					OUTCOME_TRY(auto v, r.consume_u32());
-					light.attenuation_end = static_cast<int>(v);
+					light.attenuation_end = static_cast<float>(v);
 				} else {
-					OUTCOME_TRY(light.KLAE, r.parse_animated_track<uint32_t>(mdx.unique_tracks));
+					OUTCOME_TRY(light.KLAE, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
 			} else if (kw.text == "Intensity") {
 				if (is_static) {

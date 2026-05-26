@@ -100,7 +100,7 @@ namespace mdx {
 		// We combine these into the new format
 		if (is_hd) {
 			Layer layer{};
-			layer.hd = is_hd;
+			layer.shader = ShaderType::HD;
 
 			for (size_t i = 0; i < layers_count; i++) {
 				const size_t reader_pos = reader.position;
@@ -111,6 +111,7 @@ namespace mdx {
 					reader.advance(8);
 					LayerTexture layer_texture;
 					layer_texture.id = reader.read<uint32_t>();
+					layer_texture.slot = static_cast<uint32_t>(layer.textures.size());
 					layer.textures.push_back(layer_texture);
 
 					reader.advance(size - 16);
@@ -126,9 +127,11 @@ namespace mdx {
 				layer.alpha = reader.read<float>();
 
 				layer.emissive_gain = reader.read<float>();
-				layer.fresnel_color = reader.read<glm::vec3>();
-				layer.fresnel_opacity = reader.read<float>();
-				layer.fresnel_team_color = reader.read<float>();
+				if (version > 900) {
+					layer.fresnel_color = reader.read<glm::vec3>();
+					layer.fresnel_opacity = reader.read<float>();
+					layer.fresnel_team_color = reader.read<float>();
+				}
 
 				while (reader.position < reader_pos + size) {
 					const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
@@ -158,7 +161,7 @@ namespace mdx {
 				const size_t reader_pos = reader.position;
 				const uint32_t size = reader.read<uint32_t>();
 				Layer layer{};
-				layer.hd = is_hd;
+				layer.shader = ShaderType::SD;
 				layer.blend_mode = reader.read<uint32_t>();
 				layer.shading_flags = reader.read<uint32_t>();
 
@@ -172,6 +175,8 @@ namespace mdx {
 
 				if (version > 800) {
 					layer.emissive_gain = reader.read<float>();
+				}
+				if (version > 900) {
 					layer.fresnel_color = reader.read<glm::vec3>();
 					layer.fresnel_opacity = reader.read<float>();
 					layer.fresnel_team_color = reader.read<float>();
@@ -220,12 +225,12 @@ namespace mdx {
 			layer.fresnel_opacity = reader.read<float>();
 			layer.fresnel_team_color = reader.read<float>();
 
-			layer.hd = reader.read<uint32_t>();
+			layer.shader = static_cast<ShaderType>(reader.read<uint32_t>());
 			uint32_t texs = reader.read<uint32_t>();
 			for (size_t j = 0; j < texs; j++) {
 				LayerTexture layer_texture;
 				layer_texture.id = reader.read<uint32_t>();
-				uint32_t slot = reader.read<uint32_t>(); // always a garbage value?
+				layer_texture.slot = reader.read<uint32_t>();
 
 				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KMTF) {
@@ -382,9 +387,9 @@ namespace mdx {
 			while (reader.position < node_reader_pos + inclusive_size) {
 				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KLAS) {
-					light.KLAS = TrackHeader<uint32_t>(reader, mdx.unique_tracks++);
+					light.KLAS = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KLAE) {
-					light.KLAE = TrackHeader<uint32_t>(reader, mdx.unique_tracks++);
+					light.KLAE = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KLAC) {
 					light.KLAC = TrackHeader<glm::vec3>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KLAI) {
@@ -425,8 +430,9 @@ namespace mdx {
 			attachment.attachment_id = reader.read<uint32_t>();
 			while (reader.position < node_reader_pos + inclusive_size) {
 				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
-				attachment.KATV = TrackHeader<float>(reader, mdx.unique_tracks++);
-				if (tag != TrackTag::KATV) {
+				if (tag == TrackTag::KATV) {
+					attachment.KATV = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else {
 					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
 			}
@@ -596,9 +602,9 @@ namespace mdx {
 			EventObject evt;
 			evt.node = Node(reader, mdx.unique_tracks);
 			reader.advance(4); // read KEVT
-			uint32_t count = reader.read<uint32_t>();
+			const uint32_t count = reader.read<uint32_t>();
 			evt.global_sequence_id = reader.read<int32_t>(); // signed
-			evt.times = reader.read_vector<uint32_t>(count);
+			evt.times = reader.read_vector<int32_t>(count);
 			mdx.event_objects.push_back(std::move(evt));
 		}
 	}

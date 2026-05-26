@@ -382,7 +382,7 @@ namespace mdx {
 							mdl.write_line("ConstantColor,");
 						}
 
-						const bool is_hd = !material.layers.empty() && material.layers[0].hd;
+						const bool is_hd = !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
 
 						if (is_hd && version >= 900) {
 							mdl.write_line("Shader \"Shader_HD_DefaultUnit\",");
@@ -395,7 +395,7 @@ namespace mdx {
 							// abbreviated to just a TextureID.
 							const bool secondary_hd_block = is_hd && layer_idx > 0 && version >= 900;
 
-							if (layer.hd && layer.textures.size() > 1 && version >= 900) {
+							if (layer.shader == ShaderType::HD && layer.textures.size() > 1 && version >= 900) {
 								// Single Layer carrying N LayerTextures: fan out into N MDL blocks,
 								// first one carries all properties, the rest carry only TextureID.
 								for (size_t tex_index = 0; tex_index < layer.textures.size(); tex_index++) {
@@ -637,8 +637,8 @@ namespace mdx {
 						mdl.write_line("Ambient,");
 						break;
 				}
-				mdl.write_track(light.KLAS, "AttenuationStart", static_cast<uint32_t>(light.attenuation_start));
-				mdl.write_track(light.KLAE, "AttenuationEnd", static_cast<uint32_t>(light.attenuation_end));
+				mdl.write_track(light.KLAS, "AttenuationStart", light.attenuation_start);
+				mdl.write_track(light.KLAE, "AttenuationEnd", light.attenuation_end);
 				mdl.write_track(light.KLAI, "Intensity", light.intensity);
 				mdl.write_track(light.KLAC, "Color", light.color);
 				mdl.write_track(light.KLBI, "AmbIntensity", light.ambient_intensity);
