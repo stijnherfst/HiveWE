@@ -492,7 +492,6 @@ export class Doodads {
 
 		const std::string stem = mesh_path.stem().string();
 		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));
-		mesh_path.replace_extension(".mdx");
 
 		if (doodads_slk.row_headers.contains(id)) {
 			// Use base model when variation doesn't exist, only for doodads (WE/game behaviour)

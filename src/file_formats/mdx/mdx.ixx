@@ -13,6 +13,9 @@ namespace fs = std::filesystem;
 using OUTCOME_V2_NAMESPACE::failure;
 using OUTCOME_V2_NAMESPACE::result;
 
+/// All in-memory MDX (this class) colors are in BGR format
+/// In the MDX on disk format static colors are RGB and tracks are BGR
+/// In MDL everything is BGR
 namespace mdx {
 	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture {
 		{1, "ReplaceableTextures/TeamColor/TeamColor00"},

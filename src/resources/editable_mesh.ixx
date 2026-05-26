@@ -224,7 +224,19 @@ export class EditableMesh: public Resource {
 					).value());
 				}
 			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags)).value());
+				// An empty filename means no texture/pure white.
+				if (texture.file_name.empty()) {
+					textures.push_back(
+						resource_manager
+							.load<GPUTexture>("textures/white.dds", std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				} else {
+					textures.push_back(
+						resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				}
 			}
 		}
 

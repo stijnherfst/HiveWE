@@ -173,10 +173,7 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 		bool created = false;
 		const auto model_editor = window_handler.create_or_raise<ModelEditor>(nullptr, created);
 
-		auto path = fs::path(finalPath->text().toStdString());
-		path.replace_extension(".mdx");
-
-		const auto opened = model_editor->open_model(path, false);
+		const auto opened = model_editor->open_model(finalPath->text().toStdString(), false);
 		if (!opened) {
 			QMessageBox::critical(
 				this,

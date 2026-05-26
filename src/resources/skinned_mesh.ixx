@@ -108,25 +108,27 @@ export class SkinnedMesh: public Resource {
 	static constexpr const char* name = "SkinnedMesh";
 
 	explicit SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
-		if (path.extension() != ".mdx" && path.extension() != ".MDX") {
-			throw std::invalid_argument("SkinnedMesh requires .mdx file, got: " + path.string());
+		fs::path new_path = path;
+		new_path.replace_extension(".mdx");
+
+		auto reader = hierarchy.open_file(new_path);
+		if (reader) {
+			mdx = std::make_shared<mdx::MDX>(reader.value());
+		} else {
+			new_path.replace_extension(".mdl");
+			const auto reader = hierarchy.open_file(new_path).value();
+
+			const auto view = std::string_view(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+			const auto result = mdx::MDX::from_mdl(view);
+			mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 		}
 
-		BinaryReader reader = [&] {
-			ScopedTimer t(profile_casc_ns);
-			return hierarchy.open_file(path).value();
-		}();
-		this->path = path;
+		this->path = new_path;
 
 		size_t vertices = 0;
 		size_t indices = 0;
 		size_t matrices = 0;
 		size_t total_layers = 0;
-
-		{
-			ScopedTimer t(profile_parse_ns);
-			mdx = std::make_shared<mdx::MDX>(reader);
-		}
 
 		has_mesh = mdx->geosets.size();
 		if (!has_mesh) {
@@ -347,18 +349,36 @@ export class SkinnedMesh: public Resource {
 				}
 
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(
-						resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags), static_cast<int>(texture.flags)).value()
-					);
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   replaceable_id_override->second + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(
-						mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
-						std::to_string(texture.flags),
-						static_cast<int>(texture.flags)
-					).value());
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				}
 			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags)).value());
+				// An empty filename means no texture/pure white.
+				if (texture.file_name.empty()) {
+					textures.push_back(
+						resource_manager
+							.load<GPUTexture>("textures/white.dds", std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				} else {
+					textures.push_back(
+						resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				}
 			}
 		}
 

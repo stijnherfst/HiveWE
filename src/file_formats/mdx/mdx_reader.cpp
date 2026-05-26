@@ -5,6 +5,10 @@ import BinaryReader;
 import <glm/glm.hpp>;
 
 namespace mdx {
+	glm::vec3 rgb_to_bgr(const glm::vec3 rgb) {
+		return glm::vec3(rgb.b, rgb.g, rgb.r);
+	}
+
 	void read_GEOS(BinaryReader& reader, MDX& mdx) {
 		const uint32_t size = reader.read<uint32_t>();
 		uint32_t total_size = 0;
@@ -305,7 +309,7 @@ namespace mdx {
 			GeosetAnimation animation;
 			animation.alpha = reader.read<float>();
 			animation.flags = reader.read<uint32_t>();
-			animation.color = reader.read<glm::vec3>();
+			animation.color = rgb_to_bgr(reader.read<glm::vec3>());
 			animation.geoset_id = reader.read<uint32_t>();
 
 			while (reader.position < reader_pos + inclusive_size) {

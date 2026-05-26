@@ -32,14 +32,12 @@ struct CurrentKeyFrame {
 // Recognized tokens for sequence selection. Names with substrings not in this set are ignored
 // when tokenizing a sequence name; the request side substitutes "stand" for unrecognized substrings.
 static constexpr std::array<std::string_view, 64> sequence_tokens = {
-	"alternate",   "alternateex", "attack",  "berserk", "birth",     "chain",   "channel", "cinematic",
-	"complete",    "critical",    "death",   "decay",   "defend",    "dissipate", "drain", "eattree",
-	"entangle",    "fast",        "fifth",   "fill",    "fire",      "first",   "five",    "flail",
-	"flesh",       "four",        "fourth",  "gold",    "hit",       "large",   "left",    "light",
-	"looping",     "lumber",      "medium",  "moderate", "morph",    "off",     "one",     "portrait",
-	"puke",        "ready",       "right",   "second",  "severe",    "sleep",   "slam",    "small",
-	"spiked",      "spell",       "spin",    "stand",   "swim",      "talk",    "third",   "three",
-	"throw",       "two",         "turn",    "upgrade", "victory",   "walk",    "work",    "wounded",
+	"alternate", "alternateex", "attack",	 "berserk", "birth",   "chain",	   "channel",  "cinematic", "complete", "critical", "death",
+	"decay",	 "defend",		"dissipate", "drain",	"eattree", "entangle", "fast",	   "fifth",		"fill",		"fire",		"first",
+	"five",		 "flail",		"flesh",	 "four",	"fourth",  "gold",	   "hit",	   "large",		"left",		"light",	"looping",
+	"lumber",	 "medium",		"moderate",	 "morph",	"off",	   "one",	   "portrait", "puke",		"ready",	"right",	"second",
+	"severe",	 "sleep",		"slam",		 "small",	"spiked",  "spell",	   "spin",	   "stand",		"swim",		"talk",		"third",
+	"three",	 "throw",		"two",		 "turn",	"upgrade", "victory",  "walk",	   "work",		"wounded",
 };
 
 static bool is_recognized_sequence_token(const std::string_view token) {
@@ -63,7 +61,9 @@ static std::vector<std::string> tokenize_sequence_name(const std::string_view na
 			break;
 		}
 		std::string token(name.substr(start, i - start));
-		std::ranges::transform(token, token.begin(), [](unsigned char c) { return std::tolower(c); });
+		std::ranges::transform(token, token.begin(), [](unsigned char c) {
+			return std::tolower(c);
+		});
 		if (is_recognized_sequence_token(token)) {
 			tokens.push_back(std::move(token));
 		} else if (replace_unrecognized) {
@@ -395,6 +395,7 @@ export class SkeletalModelInstance {
 			int mismatches;
 			float rarity;
 		};
+
 		std::vector<Candidate> candidates;
 		candidates.reserve(sequences.size());
 
@@ -449,7 +450,7 @@ export class SkeletalModelInstance {
 
 		int chosen = winners.front().index;
 		if (winners.size() > 1) {
-			static thread_local std::mt19937 rng{std::random_device{}()};
+			static thread_local std::mt19937 rng {std::random_device {}()};
 
 			float total_weight = 0.f;
 			for (const auto& w : winners) {
@@ -584,11 +585,8 @@ export class SkeletalModelInstance {
 
 	// Returns RGB instead of BGR as Blizzard used internally
 	glm::vec3 get_geoset_animation_color(const mdx::GeosetAnimation& animation) const {
-		// bgr to rgb
-		const auto animation_color = glm::vec3(animation.color.b, animation.color.g, animation.color.r);
-		const auto interpolated_color = interpolate_keyframes<glm::vec3>(animation.KGAC, animation_color);
-		// rgb to bgr
-		return glm::vec3(interpolated_color.b, interpolated_color.g, interpolated_color.r);
+		const auto color = interpolate_keyframes<glm::vec3>(animation.KGAC, animation.color);
+		return {color.b, color.g, color.r};
 	}
 
 	float get_geoset_animation_visiblity(const mdx::GeosetAnimation& animation) const {

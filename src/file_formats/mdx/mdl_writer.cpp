@@ -20,7 +20,7 @@ namespace mdx {
 		}
 
 		template<typename T>
-		void write_track_body(const TrackHeader<T>& track_header, std::string name) {
+		void write_track_body(const TrackHeader<T>& track_header, const std::string_view name) {
 			start_group(std::format("{} {}", name, track_header.tracks.size()), [&]() {
 				switch (track_header.interpolation_type) {
 					case InterpolationType::none:
@@ -74,7 +74,7 @@ namespace mdx {
 
 		/// Emit a track that has a static fallback (used for emitter fields, material layer fields).
 		template<typename T>
-		void write_track(const TrackHeader<T>& track_header, std::string name, T static_value) {
+		void write_track(const TrackHeader<T>& track_header, const std::string_view name, const T static_value) {
 			if (track_header.tracks.empty()) {
 				if constexpr (std::is_same_v<T, glm::vec2>) {
 					write_line("static {} {{ {}, {} }},", name, static_value.x, static_value.y);
@@ -605,8 +605,6 @@ namespace mdx {
 			mdl.start_group(std::format("Bone \"{}\"", bone.node.name), [&]() {
 				mdl.write_node(bone.node);
 				if (bone.geoset_id == -1) {
-					mdl.write_line("GeosetId None,");
-				} else if (bone.geoset_id == -2) {
 					mdl.write_line("GeosetId Multiple,");
 				} else {
 					mdl.write_line("GeosetId {},", bone.geoset_id);
