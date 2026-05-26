@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 
 export class Hierarchy {
   public:
-	enum FileSource {
+	enum class FileSource {
 		none = 0,
 		overrides = 1 << 0,
 		imports = 1 << 1,
@@ -39,6 +39,9 @@ export class Hierarchy {
 	bool hd = true;
 	bool teen = false;
 	bool allow_local_files = true;
+
+	friend constexpr FileSource operator&(FileSource a, FileSource b);
+	friend constexpr FileSource operator|(FileSource a, FileSource b);
 
 	Hierarchy() {
 		QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
@@ -62,6 +65,11 @@ export class Hierarchy {
 		return open;
 	}
 
+	constexpr bool has_flag(Hierarchy::FileSource value, Hierarchy::FileSource flag) const {
+		using U = std::underlying_type_t<Hierarchy::FileSource>;
+		return (static_cast<U>(value) & static_cast<U>(flag)) != 0;
+	}
+
 	[[nodiscard]]
 	/// Loads the file in the following order:
 	/// 1. Editor overrides (data/overrides folder)
@@ -80,11 +88,11 @@ export class Hierarchy {
 		return file; \
 	}
 
-		if (sources & FileSource::overrides) {
+		if (has_flag(sources, FileSource::overrides)) {
 			TRY_OPEN(read_file(fs::path("data/overrides") / path));
 		}
 
-		if (sources & FileSource::imports) {
+		if (has_flag(sources, FileSource::imports)) {
 			if (hd && teen) {
 				TRY_OPEN(map_file_read(add_prefix("_hd.w3mod:_teen.w3mod:")));
 			}
@@ -96,11 +104,11 @@ export class Hierarchy {
 			TRY_OPEN(map_file_read(path));
 		}
 
-		if (sources & FileSource::local_files && allow_local_files) {
+		if (has_flag(sources, FileSource::local_files) && allow_local_files) {
 			TRY_OPEN(read_file(root_directory / path));
 		}
 
-		if (sources & FileSource::casc) {
+		if (has_flag(sources, FileSource::casc)) {
 			if (hd) {
 				TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
 			}
