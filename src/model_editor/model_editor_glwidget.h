@@ -24,7 +24,7 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 	double delta = 0.0;
 
 	ModelEditorGLWidget() = delete;
-	explicit ModelEditorGLWidget(QWidget* parent, std::shared_ptr<mdx::MDX> model);
+	explicit ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& model);
 	~ModelEditorGLWidget() = default;
 
 	void initializeGL() override;

@@ -33,9 +33,17 @@ export class CliffMesh : public Resource {
 		}
 
 		auto reader = hierarchy.open_file(path).value();
-		const mdx::MDX model = mdx::MDX(reader);
+		mdx::MDX mdx = mdx::MDX(reader);
 
-		const auto set = model.geosets.front();
+		if (!mdx.is_valid()) {
+			throw std::runtime_error(
+				std::format("Mesh {} has severe errors and cannot be rendered. Check them in the model editor.", path.string())
+			);
+		}
+
+		mdx.fix_up();
+
+		const auto set = mdx.geosets.front();
 
 		glCreateBuffers(1, &vertex_buffer);
 		glNamedBufferData(vertex_buffer, static_cast<int>(set.vertices.size() * sizeof(glm::vec3)), set.vertices.data(), GL_STATIC_DRAW);

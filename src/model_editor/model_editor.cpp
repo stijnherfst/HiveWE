@@ -167,6 +167,8 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 		return std::unexpected("Unsupported file type");
 	}
 
+	mdx->fix_up();
+
 	auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx);
 
 	auto* dock_tab = dock_manager->createDockWidget("");

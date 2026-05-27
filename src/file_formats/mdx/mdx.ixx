@@ -748,7 +748,14 @@ namespace mdx {
 		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION);
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
-		void validate();
+		/// Whether the model contains hard errors that make it unable to be rendered
+		bool is_valid();
+
+		/// Fixes errors in models that the game tolerates
+		void fix_up();
+
+		/// Returns a list of model errors
+		std::vector<std::string> validate();
 
 		void merge_with(const MDX& mdx, const glm::mat4& transform);
 

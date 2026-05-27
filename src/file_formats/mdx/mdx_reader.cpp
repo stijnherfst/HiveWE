@@ -824,7 +824,5 @@ namespace mdx {
 					reader.advance(reader.read<uint32_t>());
 			}
 		}
-
-		validate();
 	}
 }

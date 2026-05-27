@@ -5,7 +5,34 @@ module MDX;
 import std;
 
 namespace mdx {
-	void MDX::validate() {
+
+	bool MDX::is_valid() {
+		bool is_valid = true;
+
+		for_each_node([&](const Node& node) {
+			if (node.id < 0) {
+				is_valid = false;
+			}
+		});
+
+		return is_valid;
+	}
+
+	/// Returns a list of model errors
+	std::vector<std::string> MDX::validate() {
+		std::vector<std::string> errors;
+
+		for_each_node([&](const Node& node) {
+			if (node.id < 0) {
+				errors.push_back(std::format("Error: MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id));
+			}
+		});
+
+		return errors;
+	}
+
+	/// Fixes errors in models that the game tolerates
+	void MDX::fix_up() {
 		// Remove geoset animations that reference non-existing geosets
 		for (size_t i = animations.size(); i-- > 0;) {
 			if (animations[i].geoset_id >= geosets.size()) {
@@ -13,20 +40,12 @@ namespace mdx {
 			}
 		}
 
-		size_t node_count = bones.size() +
-							lights.size() +
-							help_bones.size() +
-							attachments.size() +
-							emitters1.size() +
-							emitters2.size() +
-							ribbons.size() +
-							event_objects.size() +
-							collision_shapes.size() +
-							corn_emitters.size();
+		size_t node_count = bones.size() + lights.size() + help_bones.size() + attachments.size() + emitters1.size() + emitters2.size()
+			+ ribbons.size() + event_objects.size() + collision_shapes.size() + corn_emitters.size();
 
 		// If there are no bones we have to add one to prevent crashing and stuff.
 		if (bones.empty()) {
-			Bone bone{};
+			Bone bone {};
 			bone.node.parent_id = -1;
 			bone.node.id = node_count++;
 			bones.push_back(bone);
@@ -48,16 +67,18 @@ namespace mdx {
 		//⠀⠀⠀⠀⠁⠇⠡⠩⡫⢿⣝⡻⡮⣒⢽⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 		//————————————————————————————————————
 		if (sequences.empty()) {
-			sequences.push_back(Sequence {
-				.name = "stand",
-				.start_frame = 0,
-				.end_frame = 0,
-				.movespeed = 0.f,
-				.flags = Sequence::Flags::looping,
-				.rarity = 0.f,
-				.sync_point = 0,
-				.extent = extent
-			});
+			sequences.push_back(
+				Sequence {
+					.name = "stand",
+					.start_frame = 0,
+					.end_frame = 0,
+					.movespeed = 0.f,
+					.flags = Sequence::Flags::looping,
+					.rarity = 0.f,
+					.sync_point = 0,
+					.extent = extent
+				}
+			);
 		}
 
 		// Can't have zero-sized extents unless you're rendering nothing!
@@ -83,11 +104,7 @@ namespace mdx {
 		// Compact node IDs
 		std::vector<int> IDs;
 		IDs.reserve(node_count);
-		for_each_node([&](mdx::Node& node) {
-			if (node.id < 0) {
-				std::println("Error: MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id);
-				return;
-			}
+		for_each_node([&](const Node& node) {
 			IDs.push_back(node.id);
 		});
 
@@ -98,10 +115,6 @@ namespace mdx {
 		}
 
 		for_each_node([&](mdx::Node& node) {
-			if (node.id == -1) {
-				std::println("Error: Invalid node \"{}\" with ID -1", node.name);
-				return;
-			}
 			node.id = remapping[node.id];
 			if (node.parent_id != -1) {
 				node.parent_id = remapping[node.parent_id];
@@ -124,14 +137,26 @@ namespace mdx {
 				same = same && i.vertices.size() == i.vertex_groups.size();
 
 				if (!same) {
-					std::println("One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nvertex_groups: {}", i.vertices.size(), i.uv_sets.front().size(), i.normals.size(), i.vertex_groups.size());
+					std::println(
+						"One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nvertex_groups: {}",
+						i.vertices.size(),
+						i.uv_sets.front().size(),
+						i.normals.size(),
+						i.vertex_groups.size()
+					);
 					return;
 				}
 			} else {
 				same = same && i.vertices.size() == i.skin.size() / 8;
 
 				if (!same) {
-					std::println("One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nskin weights: {}", i.vertices.size(), i.uv_sets.front().size(), i.normals.size(), i.skin.size() / 8);
+					std::println(
+						"One or more of these are inequal.\nvertices: {}\nuv_sets: {}\nnormals: {}\nskin weights: {}",
+						i.vertices.size(),
+						i.uv_sets.front().size(),
+						i.normals.size(),
+						i.skin.size() / 8
+					);
 					return;
 				}
 			}
@@ -144,7 +169,7 @@ namespace mdx {
 			}
 		}
 
-		// Fix vertex groups that reference non existent matrix groups
+		// Fix vertex groups that reference non-existent matrix groups
 		for (auto& i : geosets) {
 			// RMS seems to output -1 here sometimes ;(
 			if (i.lod == std::numeric_limits<uint32_t>::max()) {

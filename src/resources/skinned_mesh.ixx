@@ -123,6 +123,14 @@ export class SkinnedMesh: public Resource {
 			mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 		}
 
+		if (!mdx->is_valid()) {
+			throw std::runtime_error(
+				std::format("Mesh {} has severe errors and cannot be rendered. Check them in the model editor.", path.string())
+			);
+		}
+
+		mdx->fix_up();
+
 		this->path = new_path;
 
 		size_t vertices = 0;

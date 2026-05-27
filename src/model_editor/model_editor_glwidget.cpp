@@ -24,7 +24,7 @@ namespace fs = std::filesystem;
 InputHandler my_input_handler;
 mdx::MDX::OptimizationStats stats;
 
-ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, std::shared_ptr<mdx::MDX> mdx) : QOpenGLWidget(parent), mdx(mdx) {
+ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& mdx) : QOpenGLWidget(parent), mdx(mdx) {
 	makeCurrent();
 
 	setMouseTracking(true);
@@ -304,11 +304,19 @@ void ModelEditorGLWidget::wheelEvent(QWheelEvent* event) {
 }
 
 void ModelEditorGLWidget::recenter_camera() {
-	// Fit mesh extents AABB into screen
+	// Fit mesh extents AABB into screen. Some sequences (spell missiles, etc.) ship with the
+	// sentinel extent (min = +FLT_MAX, max = -FLT_MAX); using that directly would compute
+	// length() as +inf and push the camera to infinity. Fall back to bounds_radius, or a
+	// hardcoded default if that's also missing.
 	const auto& extent = mesh->mdx->sequences[skeleton.sequence_index].extent;
-	const glm::vec3 size = extent.maximum - extent.minimum;
-	const float radius = length(size) * 0.5f * 1.1f;
-	const float dist = radius / std::sin(camera.fov_rad * 0.5f);
-	camera.distance = dist;
-	camera.position.z = extent.minimum.z + size.z / 2.f;
+	float radius;
+	if (extent.minimum.x <= extent.maximum.x) {
+		const glm::vec3 size = extent.maximum - extent.minimum;
+		radius = length(size) * 0.5f * 1.1f;
+		camera.position.z = extent.minimum.z + size.z / 2.f;
+	} else {
+		radius = (extent.bounds_radius > 0.f ? extent.bounds_radius : 200.f) * 1.1f;
+		camera.position.z = 0.f;
+	}
+	camera.distance = radius / std::sin(camera.fov_rad * 0.5f);
 }
