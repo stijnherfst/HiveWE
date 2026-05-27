@@ -65,13 +65,9 @@ TEST_CASE("MDL round-trip: minimal_v1000.mdl") {
 	roundtrip_fixture_mdx("minimal_v1000.mdl");
 }
 
-TEST_CASE("MDL round-trip: minimal_v1000.mdl") {
-	roundtrip_fixture_mdl("TwoPlanes.mdl");
-	roundtrip_fixture_mdl("TwoPlanes.mdl");
-}
-
-TEST_CASE("MDL round-trip: minimal_v1000.mdl MDX") {
-	roundtrip_fixture_mdx("TwoPlanes.mdl");
+TEST_CASE("MDL round-trip: minimal_v1100.mdl") {
+	roundtrip_fixture_mdl("minimal_v1100.mdl");
+	roundtrip_fixture_mdx("minimal_v1100.mdl");
 }
 
 // Sanity-check the version-aware MDL writer: writing a higher-version model out as
@@ -99,7 +95,7 @@ TEST_CASE("MDL writer: cross-version downgrade strips version-specific fields") 
 		CHECK(out_v900.find("FormatVersion 900,") != std::string::npos);
 		CHECK(out_v900.find("EmissiveGain") == std::string::npos);
 		CHECK(out_v900.find("FresnelColor") == std::string::npos);
-		CHECK(out_v900.find("FresnelAlpha") == std::string::npos);
+		CHECK(out_v900.find("FresnelOpacity") == std::string::npos);
 		CHECK(out_v900.find("FresnelTeamColor") == std::string::npos);
 	}
 }

@@ -1,7 +1,7 @@
 Version {
-	FormatVersion 900,
+	FormatVersion 1100,
 }
-Model "minimal_v900" {
+Model "minimal_v1100" {
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
 	MaximumExtent { 10, 10, 20 },
@@ -17,42 +17,42 @@ Sequences 1 {
 }
 Textures 6 {
 	Bitmap {
-		Image "Textures/HD_Diffuse.tif",
+		Image "Textures\HD_Diffuse.dds",
 		WrapWidth,
 		WrapHeight,
 	}
 	Bitmap {
-		Image "Textures/HD_Normal.tif",
+		Image "Textures\HD_Normal.dds",
 		WrapWidth,
 		WrapHeight,
 	}
 	Bitmap {
-		Image "Textures/HD_ORM.tif",
+		Image "Textures\HD_ORM.dds",
 		WrapWidth,
 		WrapHeight,
 	}
 	Bitmap {
-		Image "Textures/Black32.blp",
+		Image "Textures\Black32.blp",
 		WrapWidth,
 		WrapHeight,
 	}
 	Bitmap {
-		Image "ReplaceableTextures/TeamColor/TeamColor00.blp",
+		Image "ReplaceableTextures\TeamColor\TeamColor00.blp",
 		ReplaceableId 1,
 		WrapWidth,
 		WrapHeight,
 	}
 	Bitmap {
-		Image "ReplaceableTextures/EnvironmentMap.blp",
+		Image "ReplaceableTextures\EnvironmentMap.blp",
 		WrapWidth,
 		WrapHeight,
 	}
 }
 Materials 1 {
 	Material {
-		Shader "Shader_HD_DefaultUnit",
 		Layer {
-			FilterMode Transparent,
+			FilterMode None,
+			Shader "Shader_HD_DefaultUnit",
 			static TextureID 0 <= 0,
 			static TextureID 1 <= 1,
 			static TextureID 2 <= 2,
@@ -106,18 +106,11 @@ Bone "Root" {
 	GeosetId 0,
 	GeosetAnimId None,
 }
-Attachment "HandRef" {
-	ObjectId 1,
-	Parent 0,
-	AttachmentID 0,
-}
-PivotPoints 2 {
+PivotPoints 1 {
 	{ 0, 0, 0 },
-	{ 0, 0, 5 },
 }
 BindPose {
-	Matrices 2 {
+	Matrices 1 {
 		{ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 },
-		{ 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5 },
 	}
 }

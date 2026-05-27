@@ -109,7 +109,7 @@ namespace mdx {
 	/// A single keyframe. inTan/outTan only used for hermite/bezier interpolation.
 	export template<typename T>
 	struct Track {
-		int32_t frame; /// Time in milliseconds (may be negative)
+		int32_t frame; /// Signed milliseconds; negative frames occur as animation lead-in
 		T value;
 		T inTan;
 		T outTan;
@@ -128,7 +128,7 @@ namespace mdx {
 	export template<typename T>
 	struct TrackHeader {
 		InterpolationType interpolation_type = InterpolationType::none;
-		int32_t global_sequence_ID = -1; // Index into global_sequences, or -1 for sequence-bound
+		int32_t global_sequence_ID = -1; // Index into global_sequences, or -1 for the normal sequence timeline
 		std::vector<Track<T>> tracks;
 
 		int id = -1; /// Used to track each individual track for animation purposes
@@ -187,7 +187,7 @@ namespace mdx {
 	export struct LayerTexture {
 		uint32_t id; /// Index into the model's texture list
 		uint32_t slot = 0; /// PBR role (0=diffuse,1=normal,2=ORM,3=emissive,4=team color,5=env map)
-		TrackHeader<uint32_t> KMTF;
+		TrackHeader<uint32_t> KMTF; /// Animated (flipbook) texture index
 
 		bool operator==(const LayerTexture&) const = default;
 	};
@@ -196,14 +196,14 @@ namespace mdx {
 	export struct Layer {
 		/// Blend mode 0 doesn't render fully transparent layers (we choose alpha < 0.01). Seen on some Reforged bridges
 		/// Blend mode 1 doesn't render layers that are alpha < 0.75. E.g. SD tree leaf textures
-		uint32_t blend_mode; /// Filter mode (none/transparent/blend/additive/...)
+		uint32_t blend_mode; /// Filter mode: 0 None,1 Transparent,2 Blend,3 Additive,4 AddAlpha,5 Modulate,6 Modulate2x
 		uint32_t shading_flags; /// ShadingFlags bitfield
 		uint32_t texture_animation_id; /// Index into texture_animations, or -1
 		uint32_t coord_id; /// Which geoset UV set to use
-		float alpha; /// Layer opacity
+		float alpha; /// Layer opacity, default 1.0
 
-		float emissive_gain; /// Emissive intensity
-		glm::vec3 fresnel_color; /// Rim-light color
+		float emissive_gain; /// Emissive intensity, default 1.0
+		glm::vec3 fresnel_color; /// Rim-light color, default {1,1,1}
 		float fresnel_opacity; /// Rim-light strength
 		float fresnel_team_color; /// Rim-light team-color blend
 
@@ -378,9 +378,9 @@ namespace mdx {
 
 	/// Animates a geoset's overall alpha and color tint.
 	export struct GeosetAnimation {
-		float alpha;
+		float alpha; // Default 1.0
 		uint32_t flags;
-		glm::vec3 color; // Static tint, BGR not RGB
+		glm::vec3 color; // Static tint, BGR default {1,1,1}
 		uint32_t geoset_id;
 
 		TrackHeader<float> KGAO; // Alpha
@@ -402,8 +402,15 @@ namespace mdx {
 
 	export struct Material {
 		uint32_t priority_plane; // Higher draws later (over lower)
-		uint32_t flags;
+		uint32_t flags; // See Flags
 		std::vector<Layer> layers;
+
+		enum Flags {
+			constant_color = 0x1,
+			sort_primitives_near_z = 0x8,
+			sort_primitives_far_z = 0x10,
+			full_resolution = 0x20
+		};
 
 		bool operator==(const Material&) const = default;
 	};
@@ -421,9 +428,9 @@ namespace mdx {
 		int type; // omni / directional / ambient
 		float attenuation_start; // Distance where falloff begins
 		float attenuation_end; // Distance where light reaches zero
-		glm::vec3 color;
+		glm::vec3 color; // Default {1,1,1}
 		float intensity;
-		glm::vec3 ambient_color;
+		glm::vec3 ambient_color; // Default {1,1,1}
 		float ambient_intensity;
 		float shadow_intensity;
 
@@ -574,7 +581,7 @@ namespace mdx {
 
 	 Every EventObject's name is typically 8 characters. It usually starts with:
 		SPN to spawn a model file from "Splats\SpawnData.slk"
-		   - Example: illidan footprints, blood particle emitters
+		   - Example: Illidan footprints, blood particle emitters
 		SPLT to spawn a ground texture from "Splats\SplatData.slk"
 			 - Example: blood ground texture on unit death
 		FPT to spawn a footprint also from "Splats\SplatData.slk"

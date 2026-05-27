@@ -2,19 +2,10 @@ Version {
 	FormatVersion 800,
 }
 Model "minimal_v800" {
-	NumGeosets 1,
-	NumGeosetAnims 1,
-	NumHelpers 1,
-	NumLights 1,
-	NumBones 1,
-	NumAttachments 1,
-	NumParticleEmitters 1,
-	NumParticleEmitters2 1,
-	NumRibbonEmitters 1,
-	NumEvents 1,
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
 	MaximumExtent { 10, 10, 20 },
+	BoundsRadius 0,
 }
 Sequences 1 {
 	Anim "Stand" {
@@ -43,13 +34,12 @@ Materials 1 {
 			Unshaded,
 			TwoSided,
 			TVertexAnimId 0,
-			static TextureID 0,
-			static Alpha 1,
+			static TextureID 0 <= 0,
 		}
 		Layer {
 			FilterMode Additive,
 			Unfogged,
-			static TextureID 0,
+			static TextureID 0 <= 0,
 			Alpha 2 {
 				Linear,
 				GlobalSeqId 0,
@@ -148,7 +138,7 @@ Attachment "HandRef" {
 	ObjectId 3,
 	Parent 0,
 	AttachmentID 0,
-	Path "Splat\\Attach.mdl",
+	Path "Splat\Attach.mdl",
 	Visibility 2 {
 		DontInterp,
 		0: 1,
@@ -177,11 +167,9 @@ ParticleEmitter "Emitter1" {
 	static Gravity 0,
 	static Longitude 0,
 	static Latitude 0,
-	Particle {
-		static LifeSpan 1,
-		static InitVelocity 100,
-		Path "Models\\Dummy.mdl",
-	}
+	Path "Models\Dummy.mdl",
+	static LifeSpan 1,
+	static InitVelocity 100,
 }
 ParticleEmitter2 "Sparkles" {
 	ObjectId 5,
