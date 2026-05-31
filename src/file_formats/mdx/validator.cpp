@@ -5,15 +5,27 @@ module MDX;
 import std;
 
 namespace mdx {
-
 	bool MDX::is_valid() {
 		bool is_valid = true;
 
-		for_each_node([&](const Node& node) {
-			if (node.id < 0) {
-				is_valid = false;
-			}
-		});
+		const size_t node_count = bones.size() + lights.size() + help_bones.size() + attachments.size() + emitters1.size()
+			+ emitters2.size() + ribbons.size() + event_objects.size() + collision_shapes.size() + corn_emitters.size();
+
+		// Check for missing/incorrect/duplicate Node IDs
+		{
+			int64_t sum = 0;
+			int64_t sum_squared = 0;
+			for_each_node([&](const Node& node) {
+				if (node.id < 0 || node.id >= node_count) {
+					is_valid = false;
+				}
+				sum += node.id;
+				sum_squared += static_cast<int64_t>(node.id) * node.id;
+			});
+			const int64_t correct_sum = node_count * (node_count - 1) / 2;
+			const int64_t correct_sum_squared = (node_count - 1) * node_count * (2 * node_count - 1) / 6;
+			is_valid = is_valid && sum == correct_sum && sum_squared == correct_sum_squared;
+		}
 
 		return is_valid;
 	}
@@ -22,11 +34,29 @@ namespace mdx {
 	std::vector<std::string> MDX::validate() {
 		std::vector<std::string> errors;
 
+		const size_t node_count = bones.size() + lights.size() + help_bones.size() + attachments.size() + emitters1.size()
+			+ emitters2.size() + ribbons.size() + event_objects.size() + collision_shapes.size() + corn_emitters.size();
+
+		std::unordered_set<int> ids;
+
 		for_each_node([&](const Node& node) {
 			if (node.id < 0) {
-				errors.push_back(std::format("Error: MDX {} node \"{}\" has invalid ID {}", name, node.name, node.id));
+				errors.push_back(std::format("Node \"{}\" has invalid ID {}", node.name, node.id));
+			}
+			if (node.id >= node_count) {
+				errors.push_back(std::format("Node \"{}\" has ID {} which is higher than node count {}", node.name, node.id, node_count));
+			}
+			const auto [id, inserted] = ids.insert(node.id);
+			if (!inserted) {
+				errors.push_back(std::format("Node {} has duplicated ID {}", node.name, node.id));
 			}
 		});
+
+		for (const auto& [id, material] : std::ranges::enumerate_view(materials)) {
+			if (material.layers.empty()) {
+				errors.push_back(std::format("Material {} has no layers", id));
+			}
+		}
 
 		return errors;
 	}

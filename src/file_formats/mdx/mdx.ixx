@@ -745,7 +745,7 @@ namespace mdx {
 		[[nodiscard]]
 		BinaryWriter to_mdx(uint32_t version = LATEST_MDX_VERSION) const;
 
-		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION);
+		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION) const;
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
 		/// Whether the model contains hard errors that make it unable to be rendered

@@ -341,6 +341,10 @@ export class EditableMesh: public Resource {
 
 		for (const auto& geoset_entry : geosets) {
 			const auto& layers = mdx->materials[geoset_entry.material_id].layers;
+			if (layers.empty()) {
+				continue;
+			}
+
 			const bool geoset_is_opaque = (layers[0].blend_mode == 0 || layers[0].blend_mode == 1);
 			if (geoset_is_opaque != opaque_pass) {
 				continue;

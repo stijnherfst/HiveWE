@@ -106,12 +106,6 @@ export class SkeletalModelInstance {
 		render_nodes.resize(node_count);
 		world_matrices.resize(node_count);
 		model->for_each_node([&](const mdx::Node& node) {
-			// Seen it happen with Emmitter1, is this an error in the model?
-			// ToDo purge (when adding a validation layer or just crashing)
-			if (node.id == -1) {
-				return;
-			}
-
 			render_nodes[node.id] = RenderNode(node, model->pivots[node.id]);
 		});
 
@@ -187,9 +181,6 @@ export class SkeletalModelInstance {
 	void update_particle_emitters2(const double delta, const bool sequence_wrapped) {
 		for (size_t i = 0; i < model->emitters2.size(); ++i) {
 			const mdx::ParticleEmitter2& e = model->emitters2[i];
-			if (e.node.id == -1) {
-				continue;
-			}
 
 			ParticleEmitter2Simulation::EmitterFrameParams p {};
 			p.emission_rate = interpolate_keyframes(e.KP2E, e.emission_rate);
@@ -323,7 +314,9 @@ export class SkeletalModelInstance {
 		};
 		auto lower_name = [](const mdx::Sequence& s) {
 			std::string out = s.name;
-			std::ranges::transform(out, out.begin(), [](unsigned char c) { return std::tolower(c); });
+			std::ranges::transform(out, out.begin(), [](unsigned char c) {
+				return std::tolower(c);
+			});
 			return out;
 		};
 

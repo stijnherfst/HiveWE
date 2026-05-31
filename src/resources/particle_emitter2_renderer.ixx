@@ -105,9 +105,6 @@ export class ParticleEmitter2Renderer {
 
 		for (size_t i = 0; i < mdx.emitters2.size(); ++i) {
 			const mdx::ParticleEmitter2& e = mdx.emitters2[i];
-			if (e.node.id == -1) {
-				continue;
-			}
 			if (i >= skeleton.particles.pools.size()) {
 				continue;
 			}

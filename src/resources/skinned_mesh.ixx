@@ -144,6 +144,9 @@ export class SkinnedMesh: public Resource {
 		}
 
 		for (const auto& i : mdx->geosets) {
+			if (mdx->materials[i.material_id].layers.empty()) {
+				continue;
+			}
 			const auto& layer = mdx->materials[i.material_id].layers[0];
 			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
 				has_transparent_layers = true;
@@ -464,6 +467,10 @@ export class SkinnedMesh: public Resource {
 			int lay_index = 0;
 			for (const auto& g : geosets) {
 				const auto& layers = mdx->materials[g.material_id].layers;
+				if (layers.empty()) {
+					continue;
+				}
+
 				const bool geoset_is_opaque = (layers[0].blend_mode == 0 || layers[0].blend_mode == 1);
 
 				for (const auto& layer : layers) {

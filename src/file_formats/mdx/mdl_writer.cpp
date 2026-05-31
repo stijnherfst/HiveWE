@@ -251,9 +251,13 @@ namespace mdx {
 	}
 
 	// static TextureID id <= slot, when fixed; track form (no slot designator) when animated.
-	static void write_layer_texture(MDLWriter& mdl, const LayerTexture& texture) {
+	static void write_layer_texture(MDLWriter& mdl, const LayerTexture& texture, const uint32_t version) {
 		if (texture.KMTF.tracks.empty()) {
-			mdl.write_line("static TextureID {} <= {},", texture.id, texture.slot);
+			if (version >= 1100) {
+				mdl.write_line("static TextureID {} <= {},", texture.id, texture.slot);
+			} else {
+				mdl.write_line("static TextureID {},", texture.id);
+			}
 		} else {
 			mdl.write_track_body(texture.KMTF, "TextureID");
 		}
@@ -280,7 +284,7 @@ namespace mdx {
 		}
 	}
 
-	std::string MDX::to_mdl(const uint32_t version) {
+	std::string MDX::to_mdl(const uint32_t version) const {
 		MDLWriter mdl;
 
 		mdl.start_group("Version", [&]() {
@@ -397,10 +401,10 @@ namespace mdx {
 
 								if (hd_slots) {
 									for (const auto& texture : layer.textures) {
-										write_layer_texture(mdl, texture);
+										write_layer_texture(mdl, texture, version);
 									}
 								} else if (!layer.textures.empty()) {
-									write_layer_texture(mdl, layer.textures[0]);
+									write_layer_texture(mdl, layer.textures[0], version);
 								}
 
 								write_layer_extra_tracks(mdl, layer, version);
