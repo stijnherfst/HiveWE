@@ -26,7 +26,7 @@ namespace {
 		const char* label;
 	};
 
-	constexpr GameCategorySource k_game_sources[] = {
+	constexpr GameCategorySource game_sources[] = {
 		{ModelCategory::Abilities, "war3.w3mod:abilities/*.mdx", "Abilities"},
 		{ModelCategory::Buildings, "war3.w3mod:buildings/*.mdx", "Buildings"},
 		{ModelCategory::Doodads, "war3.w3mod:doodads/*.mdx", "Doodads"},
@@ -36,7 +36,7 @@ namespace {
 		{ModelCategory::Units, "war3.w3mod:units/*.mdx", "Units"},
 	};
 
-	constexpr std::string_view k_war3_prefix = "war3.w3mod:";
+	constexpr std::string_view war3_prefix = "war3.w3mod:";
 } // namespace
 
 ModelView::ModelView(QWidget* parent) : QWidget(parent) {
@@ -68,11 +68,11 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 		}
 	}
 
-	for (const auto& src : k_game_sources) {
+	for (const auto& src : game_sources) {
 		auto names = hierarchy.game_data.find_files(src.glob);
 		for (auto& name : names) {
-			if (name.starts_with(k_war3_prefix)) {
-				name.erase(0, k_war3_prefix.size());
+			if (name.starts_with(war3_prefix)) {
+				name.erase(0, war3_prefix.size());
 			}
 
 			std::string key = name;
@@ -96,7 +96,7 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 	QHBoxLayout* category_row = new QHBoxLayout;
 	category_row->setContentsMargins(0, 0, 0, 0);
 	std::vector<QCheckBox*> category_boxes(static_cast<size_t>(ModelCategory::Count), nullptr);
-	for (const auto& src : k_game_sources) {
+	for (const auto& src : game_sources) {
 		auto* cb = new QCheckBox(src.label);
 		cb->setChecked(true);
 		category_boxes[static_cast<size_t>(src.category)] = cb;

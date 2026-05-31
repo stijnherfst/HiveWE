@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMenuBar>
+#include <QTextEdit>
 
 #include <DockAreaTitleBar.h>
 #include <DockAreaTabBar.h>
@@ -22,6 +23,7 @@ import BinaryReader;
 import Hierarchy;
 import MDX;
 import Utilities;
+import "absl/strings/str_join.h";
 
 class CCustomComponentsFactory: public ads::CDockComponentsFactory {
   public:
@@ -167,14 +169,23 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 		return std::unexpected("Unsupported file type");
 	}
 
-	mdx->fix_up();
-
-	auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx);
-
 	auto* dock_tab = dock_manager->createDockWidget("");
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
-	dock_tab->setWidget(gl_widget);
 	dock_tab->setWindowTitle(QString::fromStdString(path.filename().string()));
+
+	if (mdx->is_valid()) {
+		mdx->fix_up();
+
+		auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx);
+		dock_tab->setWidget(gl_widget);
+	} else {
+		auto* text_edit = new QTextEdit();
+		const auto errors = mdx->validate();
+		const std::string new_errors = absl::StrJoin(errors, "\n");
+		text_edit->setText(QString::fromStdString(new_errors));
+
+		dock_tab->setWidget(text_edit);
+	}
 
 	return dock_tab;
 }
