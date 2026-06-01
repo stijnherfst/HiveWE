@@ -8,6 +8,7 @@ import SLK;
 import Utilities;
 import MapGlobal;
 import Globals;
+import Tileset;
 
 namespace fs = std::filesystem;
 
@@ -77,7 +78,7 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.fogColor->setColor(QColor(map->info.fog_color.r, map->info.fog_color.g, map->info.fog_color.b));
 
 	ui.waterTinting->setChecked(map->info.water_tinting);
-	ui.waterColor->setColor(QColor(map->info.water_color.r, map->info.water_color.g, map->info.water_color.b));
+	ui.waterColor->setColor(QColor(map->info.water_color.r, map->info.water_color.g, map->info.water_color.b, map->info.water_color.a));
 
 	ui.globalWeather->setChecked(map->info.weather_id != 0);
 
@@ -100,10 +101,10 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	environment_sounds_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 	ui.customSound->setChecked(!map->info.custom_sound_environment.empty());
-	for (size_t i = 1; i < environment_sounds_slk.rows(); i++) {
+	for (const auto& [row_key, i] : environment_sounds_slk.row_headers) {
 		ui.customSoundCombo->addItem(
 			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", i)),
-			QString::fromUtf8(environment_sounds_slk.data<std::string_view>("environmenttype", i))
+			QString::fromUtf8(row_key)
 		);
 	}
 	ui.customSoundCombo->setCurrentText(
@@ -111,10 +112,10 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	);
 
 	// Custom Lighting
-	for (const auto& [key, value] : world_edit_data.section("TileSets")) {
-		ui.customLightingCombo->addItem(QString::fromStdString(value[0]), key.front());
+	for (const auto& [key, tileset] : map->tilesets.tilesets()) {
+		ui.customLightingCombo->addItem(QString::fromStdString(tileset.name), QChar(key));
 
-		if (key == std::string(&map->info.custom_light_tileset, 1)) {
+		if (key == map->info.custom_light_tileset) {
 			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);
 		}
 	}
