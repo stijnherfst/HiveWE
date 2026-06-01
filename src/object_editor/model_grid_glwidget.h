@@ -18,14 +18,14 @@ import Shader;
 import <glm/glm.hpp>;
 
 enum class ModelCategory {
-	Abilities,
+	Map,
+	Units,
 	Buildings,
+	Abilities,
 	Doodads,
 	Environment,
 	Objects,
 	SharedModels,
-	Units,
-	Map,
 	Count
 };
 
@@ -46,6 +46,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
 
+	bool event(QEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 
@@ -73,6 +74,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 		glm::vec3 fit_position{ 0.f, 0.f, 0.f };
 		bool loaded = false;
 		bool load_failed = false;
+		std::string load_error_message;
 	};
 
 	struct LayoutRow {

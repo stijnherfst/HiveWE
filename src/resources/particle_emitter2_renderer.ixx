@@ -131,7 +131,6 @@ export class ParticleEmitter2Renderer {
 				shader->use();
 				glBindVertexArray(vao);
 				glUniformMatrix4fv(0, 1, GL_FALSE, &projection_view[0][0]);
-				glEnable(GL_BLEND);
 				glDepthMask(GL_FALSE);
 				glDisable(GL_CULL_FACE);
 				any_drawn = true;

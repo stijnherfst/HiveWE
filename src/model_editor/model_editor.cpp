@@ -144,27 +144,31 @@ void ModelEditor::browse_models(ads::CDockAreaWidget* parent) {
 }
 
 std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::path& path, const bool local_file) const {
+	const auto result = [&] {
+		if (local_file) {
+			return read_file(path);
+		} else {
+			return hierarchy.open_file(path);
+		}
+	}();
+
+	if (!result.has_value()) {
+		return std::unexpected(result.error());
+	}
+
+	auto file = result.value();
+
 	std::shared_ptr<mdx::MDX> mdx;
+
 	if (path.extension() == ".mdl" || path.extension() == ".MDL") {
-		const auto file = read_text_file(path);
-		auto result = mdx::MDX::from_mdl(file);
+		const auto view = std::string_view(reinterpret_cast<const char*>(file.buffer.data()), file.buffer.size());
+		const auto result = mdx::MDX::from_mdl(view);
 		if (!result.has_value()) {
 			return std::unexpected(result.error());
 		}
 		mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 	} else if (path.extension() == ".mdx" || path.extension() == ".MDX") {
-		auto result = [&] {
-			if (local_file) {
-				return read_file(path);
-			} else {
-				return hierarchy.open_file(path);
-			}
-		}();
-
-		if (!result.has_value()) {
-			return std::unexpected(result.error());
-		}
-		mdx = std::make_shared<mdx::MDX>(result.value());
+		mdx = std::make_shared<mdx::MDX>(file);
 	} else {
 		return std::unexpected("Unsupported file type");
 	}
@@ -174,8 +178,6 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 	dock_tab->setWindowTitle(QString::fromStdString(path.filename().string()));
 
 	if (mdx->is_valid()) {
-		mdx->fix_up();
-
 		auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx);
 		dock_tab->setWidget(gl_widget);
 	} else {

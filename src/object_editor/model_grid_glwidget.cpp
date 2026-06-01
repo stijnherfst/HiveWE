@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 
 namespace {
 	constexpr float k_fov_deg = 50.f;
-	constexpr float k_near = 0.05f;
-	constexpr float k_far = 2000.f;
+	constexpr float k_near = 0.1f;
+	constexpr float k_far = 20'000.f;
 
 	const char* category_label(const ModelCategory c) {
 		switch (c) {
@@ -349,13 +349,31 @@ void ModelGridGLWidget::set_categories(const std::bitset<static_cast<size_t>(Mod
 }
 
 void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
-	auto reader = hierarchy.open_file(cell.path);
+	const auto reader = hierarchy.open_file(cell.path);
 	if (!reader) {
 		cell.load_failed = true;
+		cell.load_error_message = reader.error();
 		return;
 	}
+
+	auto file = reader.value();
+
 	try {
-		cell.mdx = std::make_shared<mdx::MDX>(reader.value());
+		if (cell.path.extension() == ".mdx") {
+			cell.mdx = std::make_shared<mdx::MDX>(file);
+		} else {
+			const auto view = std::string_view(reinterpret_cast<const char*>(file.buffer.data()), file.buffer.size());
+			const auto result = mdx::MDX::from_mdl(view);
+
+			if (!result) {
+				cell.load_failed = true;
+				cell.load_error_message = result.error();
+				return;
+			}
+
+			cell.mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
+		}
+
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
 		cell.skeleton = SkeletalModelInstance(cell.mdx);
 

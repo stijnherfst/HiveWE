@@ -43,29 +43,30 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 	std::vector<ModelEntry> entries;
 	std::unordered_set<std::string> map_keys;
 
-	if (!hierarchy.map_directory.empty() && fs::exists(hierarchy.map_directory)) {
-		std::error_code ec;
-		for (const auto& it : fs::recursive_directory_iterator(hierarchy.map_directory, ec)) {
-			if (ec) {
-				break;
-			}
-			if (!it.is_regular_file()) {
-				continue;
-			}
-			const auto& p = it.path();
-			if (p.extension() != ".mdx") {
-				continue;
-			}
-			const auto stem = p.stem().string();
-			if (stem.ends_with("_portrait")) {
-				continue;
-			}
-			std::string rel = p.lexically_relative(hierarchy.map_directory).string();
-			normalize_path_to_forward_slash(rel);
-
-			map_keys.insert(to_lowercase_copy(rel));
-			entries.push_back(ModelEntry {fs::path(std::move(rel)), ModelCategory::Map});
+	std::error_code ec;
+	for (const auto& entry : fs::recursive_directory_iterator(hierarchy.map_directory, ec)) {
+		if (ec) {
+			break;
 		}
+		
+		if (!entry.is_regular_file()) {
+			continue;
+		}
+
+		const auto& path = entry.path();
+		if (path.extension() != ".mdx" && path.extension() != ".mdl") {
+			continue;
+		}
+
+		if (path.stem().string().ends_with("_portrait")) {
+			continue;
+		}
+
+		std::string rel = path.lexically_relative(hierarchy.map_directory).string();
+		normalize_path_to_forward_slash(rel);
+
+		map_keys.insert(to_lowercase_copy(rel));
+		entries.push_back(ModelEntry {fs::path(std::move(rel)), ModelCategory::Map});
 	}
 
 	for (const auto& src : game_sources) {

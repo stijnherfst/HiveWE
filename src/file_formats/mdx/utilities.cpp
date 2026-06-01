@@ -120,8 +120,8 @@ namespace mdx {
 				geoset.extent.maximum = glm::max(geoset.extent.maximum, i);
 			}
 
-			geoset.extent.bounds_radius =
-				std::max(glm::distance(glm::vec3(0.0), geoset.extent.minimum), glm::distance(glm::vec3(0.0), geoset.extent.maximum));
+			// The bounding sphere is centered on the AABB; its radius is the AABB half-diagonal.
+			geoset.extent.bounds_radius = glm::length((geoset.extent.maximum - geoset.extent.minimum) * 0.5f);
 
 			for (auto& extent : geoset.sequence_extents) {
 				// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement
@@ -130,7 +130,6 @@ namespace mdx {
 
 			extent.minimum = glm::min(extent.minimum, geoset.extent.minimum);
 			extent.maximum = glm::max(extent.maximum, geoset.extent.maximum);
-			extent.bounds_radius = std::max(extent.bounds_radius, geoset.extent.bounds_radius);
 		}
 
 		for (const auto& emitter : emitters2) {
@@ -158,11 +157,9 @@ namespace mdx {
 
 			extent.minimum = glm::min(extent.minimum, emitter_min);
 			extent.maximum = glm::max(extent.maximum, emitter_max);
-			extent.bounds_radius = std::max(
-				extent.bounds_radius,
-				std::max(glm::length(emitter_min), glm::length(emitter_max))
-			);
 		}
+
+		extent.bounds_radius = glm::length((extent.maximum - extent.minimum) * 0.5f);
 
 		for (auto& sequence : sequences) {
 			// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement

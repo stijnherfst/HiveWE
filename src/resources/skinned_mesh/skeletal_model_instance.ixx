@@ -201,7 +201,10 @@ export class SkeletalModelInstance {
 		}
 	}
 
-	void update_nodes() {
+	// apply_billboard rotates billboarded nodes to face the camera. Pass false to get a stable,
+	// camera-independent pose (used by calculate_animated_extents, which must not depend on the
+	// global camera and wants geometry bounds, not sprite orientation).
+	void update_nodes(const bool apply_billboard = true) {
 		assert(sequence_index >= 0 && sequence_index < model->sequences.size());
 
 		const glm::mat3 inverse_model_rotation = glm::transpose(
@@ -220,7 +223,7 @@ export class SkeletalModelInstance {
 			const glm::vec3 scale = interpolate_keyframes(node.node->KGSC, SCALE_IDENTITY);
 
 			glm::quat final_rotation = rotation;
-			if (node.billboarded) {
+			if (apply_billboard && node.billboarded) {
 				const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(camera.view_inverse);
 				const glm::mat3 inverse_camera_world = glm::mat3(cam_world[2], cam_world[0], cam_world[1]);
 
@@ -554,7 +557,7 @@ export class SkeletalModelInstance {
 		// Scan till we find two tracks
 		while (header.tracks[current.right].frame < local_current_frame) {
 			current.left = current.right;
-			current.right++;
+			current.right += 1;
 
 			// Reached last keyframe
 			if (current.right > current.end) {
@@ -661,3 +664,204 @@ export class SkeletalModelInstance {
 		return interpolate(floor_value, floor_out_tan, ceil_in_tan, ceil_value, t, static_cast<int>(header.interpolation_type));
 	}
 };
+
+// Number of evenly spaced interior samples inserted between consecutive keyframes. Linear tracks
+// only need the keyframes themselves, but hermite/bezier curves can overshoot between them.
+static constexpr int extent_subdivisions = 4;
+// Safety cap on samples per sequence so a densely keyframed long animation can't explode the cost.
+static constexpr size_t max_extent_samples = 256;
+
+// Builds the sorted, deduped list of frames to sample within [start_frame, end_frame]: every node
+// translation/rotation/scale keyframe in range, the sequence start/end, and a few interior samples
+// between consecutive candidates. Only node tracks move geometry, so material/emitter/geoset-anim
+// tracks are ignored here.
+static std::vector<int> build_sample_frames(mdx::MDX& model, const mdx::Sequence& sequence) {
+	const int start = static_cast<int>(sequence.start_frame);
+	const int end = static_cast<int>(sequence.end_frame);
+
+	std::vector<int> frames;
+	frames.push_back(start);
+	frames.push_back(end);
+
+	const auto add_track_frames = [&](const auto& header) {
+		for (const auto& track : header.tracks) {
+			if (track.frame >= start && track.frame <= end) {
+				frames.push_back(track.frame);
+			}
+		}
+	};
+
+	model.for_each_node([&](const mdx::Node& node) {
+		add_track_frames(node.KGTR);
+		add_track_frames(node.KGRT);
+		add_track_frames(node.KGSC);
+	});
+
+	std::ranges::sort(frames);
+	frames.erase(std::ranges::unique(frames).begin(), frames.end());
+
+	// Subdivide the gaps between consecutive keyframes to catch curve overshoot.
+	std::vector<int> samples;
+	for (size_t i = 0; i + 1 < frames.size(); i++) {
+		samples.push_back(frames[i]);
+		const int gap = frames[i + 1] - frames[i];
+		for (int j = 1; j <= extent_subdivisions; j++) {
+			const int interior = frames[i] + gap * j / (extent_subdivisions + 1);
+			if (interior > frames[i] && interior < frames[i + 1]) {
+				samples.push_back(interior);
+			}
+		}
+	}
+	samples.push_back(frames.back());
+
+	std::ranges::sort(samples);
+	samples.erase(std::ranges::unique(samples).begin(), samples.end());
+
+	if (samples.size() > max_extent_samples) {
+		std::vector<int> trimmed;
+		trimmed.reserve(max_extent_samples);
+		for (size_t i = 0; i < max_extent_samples; i++) {
+			trimmed.push_back(samples[i * (samples.size() - 1) / (max_extent_samples - 1)]);
+		}
+		trimmed.erase(std::ranges::unique(trimmed).begin(), trimmed.end());
+		samples = std::move(trimmed);
+	}
+
+	return samples;
+}
+
+// Computes per-sequence and overall model extents that account for skeletal animation
+export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
+	// Seeds the rest-pose geoset/model extents and the particle emitter bounds.
+	model->calculate_extents();
+
+	if (model->sequences.empty() || model->bones.empty() || model->geosets.empty()) {
+		return;
+	}
+
+	for (auto& geoset : model->geosets) {
+		geoset.sequence_extents.resize(model->sequences.size());
+	}
+
+	// Per-geoset skin weights as (bone index, weight) pairs per vertex. HD geosets store this in
+	// geoset.skin directly; SD geosets derive it from their matrix groups.
+	std::vector<std::vector<glm::u8vec4>> geoset_skins(model->geosets.size());
+	for (size_t g = 0; g < model->geosets.size(); g++) {
+		if (model->geosets[g].skin.empty()) {
+			geoset_skins[g] = mdx::MDX::matrix_groups_as_skin_weights(model->geosets[g]);
+		}
+	}
+
+	// Geoset might be hidden
+	std::vector<const mdx::GeosetAnimation*> geoset_anim(model->geosets.size(), nullptr);
+	for (const auto& animation : model->animations) {
+		if (animation.geoset_id < model->geosets.size()) {
+			geoset_anim[animation.geoset_id] = &animation;
+		}
+	}
+
+	SkeletalModelInstance instance(model);
+
+	// Keep the emitter contribution that calculate_extents() folded into model->extent.
+	mdx::Extent model_ext = model->extent;
+
+	for (size_t s = 0; s < model->sequences.size(); s++) {
+		instance.set_sequence(static_cast<int>(s));
+		// Warm up parent matrices once (a node's parent can have a higher id, so the first pose may
+		// otherwise read stale parents).
+		instance.update_nodes(false);
+
+		// Seed from the rest pose so a sequence with no node motion still gets valid bounds.
+		mdx::Extent seq_ext;
+		seq_ext.minimum = glm::vec3(std::numeric_limits<float>::max());
+		seq_ext.maximum = glm::vec3(std::numeric_limits<float>::lowest());
+
+		std::vector<glm::vec3> geoset_min(model->geosets.size(), glm::vec3(std::numeric_limits<float>::max()));
+		std::vector<glm::vec3> geoset_max(model->geosets.size(), glm::vec3(std::numeric_limits<float>::lowest()));
+
+		for (const int frame : build_sample_frames(*model, model->sequences[s])) {
+			instance.current_frame = frame;
+			for (const auto& node : instance.render_nodes) {
+				instance.advance_keyframes(node.node->KGTR);
+				instance.advance_keyframes(node.node->KGRT);
+				instance.advance_keyframes(node.node->KGSC);
+			}
+			for (const auto& animation : model->animations) {
+				instance.advance_keyframes(animation.KGAO);
+			}
+			instance.update_nodes(false);
+
+			for (size_t g = 0; g < model->geosets.size(); g++) {
+				// Skip geosets that are (near) invisible this frame; they don't contribute to bounds.
+				if (geoset_anim[g] && instance.get_geoset_animation_visiblity(*geoset_anim[g]) < 0.01f) {
+					continue;
+				}
+
+				const mdx::Geoset& geoset = model->geosets[g];
+				const bool hd = !geoset.skin.empty();
+				const std::vector<glm::u8vec4>& sd_skin = geoset_skins[g];
+
+				for (size_t v = 0; v < geoset.vertices.size(); v++) {
+					glm::uvec4 indices(0);
+					glm::vec4 weights(0.f);
+					if (hd) {
+						const size_t base = v * 8;
+						for (int j = 0; j < 4; j++) {
+							indices[j] = geoset.skin[base + j];
+							weights[j] = geoset.skin[base + 4 + j] / 255.f;
+						}
+					} else {
+						indices = sd_skin[v * 2];
+						const glm::u8vec4 w = sd_skin[v * 2 + 1];
+						weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
+					}
+
+					glm::mat4 skin_matrix(0.f);
+					for (int j = 0; j < 4; j++) {
+						if (weights[j] > 0.f) {
+							skin_matrix += instance.world_matrices[indices[j]] * weights[j];
+						}
+					}
+
+					const glm::vec3 pos = glm::vec3(skin_matrix * glm::vec4(geoset.vertices[v], 1.f));
+					geoset_min[g] = glm::min(geoset_min[g], pos);
+					geoset_max[g] = glm::max(geoset_max[g], pos);
+				}
+			}
+		}
+
+		for (size_t g = 0; g < model->geosets.size(); g++) {
+			// Skip empty geosets and those that never accumulated a vertex this sequence (e.g. hidden
+			// the entire time); their sequence extent stays zero-initialized so it adds nothing.
+			if (model->geosets[g].vertices.empty() || geoset_min[g].x > geoset_max[g].x) {
+				continue;
+			}
+			mdx::Extent& ge = model->geosets[g].sequence_extents[s];
+			ge.minimum = geoset_min[g];
+			ge.maximum = geoset_max[g];
+			ge.bounds_radius = glm::length((ge.maximum - ge.minimum) * 0.5f);
+
+			seq_ext.minimum = glm::min(seq_ext.minimum, ge.minimum);
+			seq_ext.maximum = glm::max(seq_ext.maximum, ge.maximum);
+		}
+
+		// No geoset was ever visible this whole sequence: leave an empty (sentinel) extent and don't
+		// let it expand the model bounds.
+		if (seq_ext.minimum.x > seq_ext.maximum.x) {
+			seq_ext.bounds_radius = 0.f;
+			model->sequences[s].extent = seq_ext;
+			continue;
+		}
+
+		seq_ext.bounds_radius = glm::length((seq_ext.maximum - seq_ext.minimum) * 0.5f);
+		model->sequences[s].extent = seq_ext;
+
+		model_ext.minimum = glm::min(model_ext.minimum, seq_ext.minimum);
+		model_ext.maximum = glm::max(model_ext.maximum, seq_ext.maximum);
+	}
+
+	// The bounding sphere is centered on the AABB, so its radius can only be derived from the final
+	// merged AABB — max-merging per-sequence radii (each measured from its own center) is invalid.
+	model_ext.bounds_radius = glm::length((model_ext.maximum - model_ext.minimum) * 0.5f);
+	model->extent = model_ext;
+}
