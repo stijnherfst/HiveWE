@@ -695,6 +695,18 @@ namespace mdx {
 		TrackHeader<glm::vec3> KTAS; /// Scaling
 	};
 
+	export enum class ValidationSeverity {
+		error,   /// Corrupt data or an invalid reference, cannot render
+		severe,  /// Renders, but is visibly broken
+		warning, /// Suspicious or non-fatal
+		unused,  /// Defined but never referenced
+	};
+
+	export struct ValidationMessage {
+		ValidationSeverity severity;
+		std::string message;
+	};
+
 	export class MDX {
 	  public:
 		int unique_tracks = 0;
@@ -754,8 +766,9 @@ namespace mdx {
 		/// Fixes errors in models that the game tolerates
 		void fix_up();
 
-		/// Returns a list of model errors
-		std::vector<std::string> validate();
+		/// Returns a list of model errors and warnings. May do expensive work, for the
+		/// cheap render-path check use is_valid() instead.
+		std::vector<ValidationMessage> validate();
 
 		void merge_with(const MDX& mdx, const glm::mat4& transform);
 

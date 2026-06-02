@@ -101,7 +101,11 @@ export class ParticleEmitter2Renderer {
 			return;
 		}
 
-		bool any_drawn = false;
+		shader->use();
+		glBindVertexArray(vao);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &projection_view[0][0]);
+		glDepthMask(GL_FALSE);
+		glDisable(GL_CULL_FACE);
 
 		for (size_t i = 0; i < mdx.emitters2.size(); ++i) {
 			const mdx::ParticleEmitter2& e = mdx.emitters2[i];
@@ -127,15 +131,6 @@ export class ParticleEmitter2Renderer {
 				continue;
 			}
 
-			if (!any_drawn) {
-				shader->use();
-				glBindVertexArray(vao);
-				glUniformMatrix4fv(0, 1, GL_FALSE, &projection_view[0][0]);
-				glDepthMask(GL_FALSE);
-				glDisable(GL_CULL_FACE);
-				any_drawn = true;
-			}
-
 			ensure_capacity(scratch.size());
 			glNamedBufferSubData(vertex_buffer, 0, scratch.size() * sizeof(ParticleVertex), scratch.data());
 
@@ -147,10 +142,8 @@ export class ParticleEmitter2Renderer {
 			glDrawArrays(GL_TRIANGLES, 0, static_cast<GLsizei>(scratch.size()));
 		}
 
-		if (any_drawn) {
-			glDepthMask(GL_TRUE);
-			glEnable(GL_CULL_FACE);
-		}
+		glDepthMask(GL_TRUE);
+		glEnable(GL_CULL_FACE);
 	}
 
   private:

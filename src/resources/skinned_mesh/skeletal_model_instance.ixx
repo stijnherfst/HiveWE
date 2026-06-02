@@ -82,6 +82,11 @@ export class SkeletalModelInstance {
 	// Todo can this be negative?
 	int current_frame = 0;
 
+	// Global sequences normally animate against wall-clock time. When this is >= 0 it overrides that
+	// clock with a fixed time (ms), so global-sequence tracks can be evaluated deterministically.
+	// calculate_animated_extents uses this to sweep global motion without nondeterministic results.
+	int64_t global_sequence_time = -1;
+
 	glm::mat4 matrix = glm::mat4(1.f);
 
 	std::vector<CurrentKeyFrame> current_keyframes;
@@ -297,12 +302,13 @@ export class SkeletalModelInstance {
 		return !tokenize_sequence_name(name, false).empty();
 	}
 
-	// True if the sequence has the uninitialized-extent sentinel (BoundRadius == 0, min/max swapped
-	// to +/-FLT_MAX). Spell models like FlameStrike ship empty "stand"/"death" placeholders that
-	// match by name but have no animated content — previews should fall back to "birth".
+	// True if the sequence has the uninitialized-extent sentinel (min/max swapped to +/-FLT_MAX).
+	// Spell models like FlameStrike ship empty "stand"/"death" placeholders that match by name but
+	// have no animated content — previews should fall back to "birth". Bounds_radius alone isn't
+	// reliable: ChimaeraAcidMissile has sentinel extents AND a non-zero bounds_radius copied from
+	// the geoset.
 	static bool sequence_has_empty_extent(const mdx::Sequence& sequence) {
-		return sequence.extent.bounds_radius == 0.f
-		    && sequence.extent.minimum.x > sequence.extent.maximum.x;
+		return sequence.extent.minimum.x > sequence.extent.maximum.x;
 	}
 
 	// Adjust the skeleton's current sequence to one suited for a static/looping preview. The
@@ -518,6 +524,15 @@ export class SkeletalModelInstance {
 		}
 	}
 
+	// Time (ms) used to evaluate global-sequence tracks: wall-clock normally, or the fixed override
+	// global_sequence_time when set (used for deterministic extent sampling).
+	int64_t global_sequence_now() const {
+		if (global_sequence_time >= 0) {
+			return global_sequence_time;
+		}
+		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	}
+
 	template<typename T>
 	void advance_keyframes(const mdx::TrackHeader<T>& header) {
 		if (header.id == -1) {
@@ -532,9 +547,7 @@ export class SkeletalModelInstance {
 			if (local_sequence_end == 0) {
 				local_current_frame = 0;
 			} else {
-				local_current_frame =
-					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
-					% local_sequence_end;
+				local_current_frame = global_sequence_now() % local_sequence_end;
 			}
 		}
 
@@ -612,9 +625,7 @@ export class SkeletalModelInstance {
 			if (local_sequence_end == 0) {
 				local_current_frame = 0;
 			} else {
-				local_current_frame =
-					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()
-					% local_sequence_end;
+				local_current_frame = global_sequence_now() % local_sequence_end;
 			}
 		}
 
@@ -730,6 +741,82 @@ static std::vector<int> build_sample_frames(mdx::MDX& model, const mdx::Sequence
 	return samples;
 }
 
+// Safety cap on global-sequence phase samples so the product with the per-sequence frame samples
+// stays bounded.
+static constexpr size_t max_global_samples = 64;
+
+// Builds deterministic sample times (ms) for global-sequence-driven node tracks. Global sequences
+// animate against wall-clock time, so without pinning the phase the extents would differ on every
+// call. We sweep each global sequence's period (anchored on the keyframes of node tracks bound to it,
+// plus interior subdivisions) so the captured bounds cover the full global motion. Returns {0} when
+// no node track is driven by a global sequence (single deterministic pass, no extra cost).
+static std::vector<int64_t> build_global_sample_times(mdx::MDX& model) {
+	if (model.global_sequences.empty()) {
+		return {0};
+	}
+
+	std::vector<int64_t> times;
+	const auto add_track = [&](const auto& header) {
+		if (header.global_sequence_ID < 0 || header.global_sequence_ID >= static_cast<int>(model.global_sequences.size())) {
+			return;
+		}
+		const int period = model.global_sequences[header.global_sequence_ID];
+		if (period <= 0) {
+			return;
+		}
+		times.push_back(0);
+		times.push_back(period);
+		for (const auto& track : header.tracks) {
+			if (track.frame >= 0 && track.frame <= period) {
+				times.push_back(track.frame);
+			}
+		}
+	};
+
+	model.for_each_node([&](const mdx::Node& node) {
+		add_track(node.KGTR);
+		add_track(node.KGRT);
+		add_track(node.KGSC);
+	});
+
+	if (times.empty()) {
+		return {0};
+	}
+
+	std::ranges::sort(times);
+	times.erase(std::ranges::unique(times).begin(), times.end());
+
+	// Subdivide the gaps between consecutive keyframes to catch curve overshoot, same as the local
+	// frame sampler.
+	std::vector<int64_t> samples;
+	for (size_t i = 0; i + 1 < times.size(); i++) {
+		samples.push_back(times[i]);
+		const int64_t gap = times[i + 1] - times[i];
+		for (int j = 1; j <= extent_subdivisions; j++) {
+			const int64_t interior = times[i] + gap * j / (extent_subdivisions + 1);
+			if (interior > times[i] && interior < times[i + 1]) {
+				samples.push_back(interior);
+			}
+		}
+	}
+	samples.push_back(times.back());
+
+	std::ranges::sort(samples);
+	samples.erase(std::ranges::unique(samples).begin(), samples.end());
+
+	if (samples.size() > max_global_samples) {
+		std::vector<int64_t> trimmed;
+		trimmed.reserve(max_global_samples);
+		for (size_t i = 0; i < max_global_samples; i++) {
+			trimmed.push_back(samples[i * (samples.size() - 1) / (max_global_samples - 1)]);
+		}
+		trimmed.erase(std::ranges::unique(trimmed).begin(), trimmed.end());
+		samples = std::move(trimmed);
+	}
+
+	return samples;
+}
+
 // Computes per-sequence and overall model extents that account for skeletal animation
 export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 	// Seeds the rest-pose geoset/model extents and the particle emitter bounds.
@@ -762,11 +849,16 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 
 	SkeletalModelInstance instance(model);
 
+	// Global sequences animate against wall-clock time; pin them to a deterministic set of phases so
+	// the extents are reproducible and cover the full global motion.
+	const std::vector<int64_t> global_times = build_global_sample_times(*model);
+
 	// Keep the emitter contribution that calculate_extents() folded into model->extent.
 	mdx::Extent model_ext = model->extent;
 
 	for (size_t s = 0; s < model->sequences.size(); s++) {
 		instance.set_sequence(static_cast<int>(s));
+		instance.global_sequence_time = global_times.front();
 		// Warm up parent matrices once (a node's parent can have a higher id, so the first pose may
 		// otherwise read stale parents).
 		instance.update_nodes(false);
@@ -779,53 +871,61 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 		std::vector<glm::vec3> geoset_min(model->geosets.size(), glm::vec3(std::numeric_limits<float>::max()));
 		std::vector<glm::vec3> geoset_max(model->geosets.size(), glm::vec3(std::numeric_limits<float>::lowest()));
 
-		for (const int frame : build_sample_frames(*model, model->sequences[s])) {
-			instance.current_frame = frame;
-			for (const auto& node : instance.render_nodes) {
-				instance.advance_keyframes(node.node->KGTR);
-				instance.advance_keyframes(node.node->KGRT);
-				instance.advance_keyframes(node.node->KGSC);
-			}
-			for (const auto& animation : model->animations) {
-				instance.advance_keyframes(animation.KGAO);
-			}
-			instance.update_nodes(false);
+		const std::vector<int> frames = build_sample_frames(*model, model->sequences[s]);
 
-			for (size_t g = 0; g < model->geosets.size(); g++) {
-				// Skip geosets that are (near) invisible this frame; they don't contribute to bounds.
-				if (geoset_anim[g] && instance.get_geoset_animation_visiblity(*geoset_anim[g]) < 0.01f) {
-					continue;
+		// Outer loop over global-sequence phases, inner over local sequence frames. For models without
+		// any global-sequence node tracks global_times is {0}, so this is a single deterministic pass.
+		for (const int64_t global_time : global_times) {
+			instance.global_sequence_time = global_time;
+
+			for (const int frame : frames) {
+				instance.current_frame = frame;
+				for (const auto& node : instance.render_nodes) {
+					instance.advance_keyframes(node.node->KGTR);
+					instance.advance_keyframes(node.node->KGRT);
+					instance.advance_keyframes(node.node->KGSC);
 				}
+				for (const auto& animation : model->animations) {
+					instance.advance_keyframes(animation.KGAO);
+				}
+				instance.update_nodes(false);
 
-				const mdx::Geoset& geoset = model->geosets[g];
-				const bool hd = !geoset.skin.empty();
-				const std::vector<glm::u8vec4>& sd_skin = geoset_skins[g];
+				for (size_t g = 0; g < model->geosets.size(); g++) {
+					// Skip geosets that are (near) invisible this frame; they don't contribute to bounds.
+					if (geoset_anim[g] && instance.get_geoset_animation_visiblity(*geoset_anim[g]) < 0.01f) {
+						continue;
+					}
 
-				for (size_t v = 0; v < geoset.vertices.size(); v++) {
-					glm::uvec4 indices(0);
-					glm::vec4 weights(0.f);
-					if (hd) {
-						const size_t base = v * 8;
+					const mdx::Geoset& geoset = model->geosets[g];
+					const bool hd = !geoset.skin.empty();
+					const std::vector<glm::u8vec4>& sd_skin = geoset_skins[g];
+
+					for (size_t v = 0; v < geoset.vertices.size(); v++) {
+						glm::uvec4 indices(0);
+						glm::vec4 weights(0.f);
+						if (hd) {
+							const size_t base = v * 8;
+							for (int j = 0; j < 4; j++) {
+								indices[j] = geoset.skin[base + j];
+								weights[j] = geoset.skin[base + 4 + j] / 255.f;
+							}
+						} else {
+							indices = sd_skin[v * 2];
+							const glm::u8vec4 w = sd_skin[v * 2 + 1];
+							weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
+						}
+
+						glm::mat4 skin_matrix(0.f);
 						for (int j = 0; j < 4; j++) {
-							indices[j] = geoset.skin[base + j];
-							weights[j] = geoset.skin[base + 4 + j] / 255.f;
+							if (weights[j] > 0.f) {
+								skin_matrix += instance.world_matrices[indices[j]] * weights[j];
+							}
 						}
-					} else {
-						indices = sd_skin[v * 2];
-						const glm::u8vec4 w = sd_skin[v * 2 + 1];
-						weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
-					}
 
-					glm::mat4 skin_matrix(0.f);
-					for (int j = 0; j < 4; j++) {
-						if (weights[j] > 0.f) {
-							skin_matrix += instance.world_matrices[indices[j]] * weights[j];
-						}
+						const glm::vec3 pos = glm::vec3(skin_matrix * glm::vec4(geoset.vertices[v], 1.f));
+						geoset_min[g] = glm::min(geoset_min[g], pos);
+						geoset_max[g] = glm::max(geoset_max[g], pos);
 					}
-
-					const glm::vec3 pos = glm::vec3(skin_matrix * glm::vec4(geoset.vertices[v], 1.f));
-					geoset_min[g] = glm::min(geoset_min[g], pos);
-					geoset_max[g] = glm::max(geoset_max[g], pos);
 				}
 			}
 		}

@@ -34,12 +34,12 @@ Materials 1 {
 			Unshaded,
 			TwoSided,
 			TVertexAnimId 0,
-			static TextureID 0 <= 0,
+			static TextureID 0,
 		}
 		Layer {
 			FilterMode Additive,
 			Unfogged,
-			static TextureID 0 <= 0,
+			static TextureID 0,
 			Alpha 2 {
 				Linear,
 				GlobalSeqId 0,

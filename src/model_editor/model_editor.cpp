@@ -177,14 +177,29 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 	dock_tab->setFeature(ads::CDockWidget::DockWidgetFeature::DockWidgetDeleteOnClose, true);
 	dock_tab->setWindowTitle(QString::fromStdString(path.filename().string()));
 
+	const auto severity_prefix = [](mdx::ValidationSeverity severity) -> const char* {
+		switch (severity) {
+			case mdx::ValidationSeverity::error: return "Error: ";
+			case mdx::ValidationSeverity::severe: return "Severe: ";
+			case mdx::ValidationSeverity::warning: return "Warning: ";
+			case mdx::ValidationSeverity::unused: return "Unused: ";
+		}
+		return "";
+	};
+
 	if (mdx->is_valid()) {
-		auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx);
+		// The model renders, but validate() may still report problems to surface to the user.
+		auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx, mdx->validate());
 		dock_tab->setWidget(gl_widget);
 	} else {
 		auto* text_edit = new QTextEdit();
-		const auto errors = mdx->validate();
-		const std::string new_errors = absl::StrJoin(errors, "\n");
-		text_edit->setText(QString::fromStdString(new_errors));
+		const auto messages = mdx->validate();
+		std::vector<std::string> lines;
+		lines.reserve(messages.size());
+		for (const auto& message : messages) {
+			lines.push_back(severity_prefix(message.severity) + message.message);
+		}
+		text_edit->setText(QString::fromStdString(absl::StrJoin(lines, "\n")));
 
 		dock_tab->setWidget(text_edit);
 	}

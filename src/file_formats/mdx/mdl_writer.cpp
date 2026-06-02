@@ -251,9 +251,11 @@ namespace mdx {
 	}
 
 	// static TextureID id <= slot, when fixed; track form (no slot designator) when animated.
-	static void write_layer_texture(MDLWriter& mdl, const LayerTexture& texture, const uint32_t version) {
+	// The `<= slot` designator only applies to HD layers that bind a texture per PBR slot; SD
+	// layers bind a single texture and write the plain `static TextureID id,` form.
+	static void write_layer_texture(MDLWriter& mdl, const LayerTexture& texture, const bool with_slot) {
 		if (texture.KMTF.tracks.empty()) {
-			if (version >= 1100) {
+			if (with_slot) {
 				mdl.write_line("static TextureID {} <= {},", texture.id, texture.slot);
 			} else {
 				mdl.write_line("static TextureID {},", texture.id);
@@ -401,10 +403,10 @@ namespace mdx {
 
 								if (hd_slots) {
 									for (const auto& texture : layer.textures) {
-										write_layer_texture(mdl, texture, version);
+										write_layer_texture(mdl, texture, true);
 									}
 								} else if (!layer.textures.empty()) {
-									write_layer_texture(mdl, layer.textures[0], version);
+									write_layer_texture(mdl, layer.textures[0], false);
 								}
 
 								write_layer_extra_tracks(mdl, layer, version);

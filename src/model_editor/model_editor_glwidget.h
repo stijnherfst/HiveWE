@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include <memory>
+#include <vector>
 #include <QElapsedTimer>
 #define QT_NO_OPENGL
 #include <QObject>
@@ -24,7 +25,7 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 	double delta = 0.0;
 
 	ModelEditorGLWidget() = delete;
-	explicit ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& model);
+	explicit ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& model, std::vector<mdx::ValidationMessage> messages = {});
 	~ModelEditorGLWidget() = default;
 
 	void initializeGL() override;
@@ -39,6 +40,7 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 	void wheelEvent(QWheelEvent* event) override;
 
 	std::shared_ptr<mdx::MDX> mdx;
+	std::vector<mdx::ValidationMessage> messages;
 	std::shared_ptr<EditableMesh> mesh;
 	SkeletalModelInstance skeleton;
 	std::shared_ptr<Shader> shader_sd;

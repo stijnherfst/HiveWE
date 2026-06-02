@@ -24,7 +24,8 @@ namespace fs = std::filesystem;
 InputHandler my_input_handler;
 mdx::MDX::OptimizationStats stats;
 
-ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& mdx) : QOpenGLWidget(parent), mdx(mdx) {
+ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& mdx, std::vector<mdx::ValidationMessage> messages)
+	: QOpenGLWidget(parent), mdx(mdx), messages(std::move(messages)) {
 	makeCurrent();
 
 	setMouseTracking(true);
@@ -107,10 +108,11 @@ void ModelEditorGLWidget::paintGL() {
 	mesh->render_transparent(true, 0, skeleton, camera.projection_view, camera.direction);
 
 	glDepthMask(true);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
 
-	if (!draw_extents_box && !draw_extents_sphere) {
+	if (draw_extents_box || draw_extents_sphere) {
 		render_extents();
 	}
 
@@ -307,6 +309,22 @@ void ModelEditorGLWidget::paintGL() {
 	// 	}
 	// }
 	// ImGui::End();
+
+	if (!messages.empty()) {
+		if (ImGui::Begin("Validation")) {
+			for (const auto& message : messages) {
+				ImVec4 color;
+				switch (message.severity) {
+					case mdx::ValidationSeverity::error: color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break;
+					case mdx::ValidationSeverity::severe: color = ImVec4(1.0f, 0.55f, 0.15f, 1.0f); break;
+					case mdx::ValidationSeverity::warning: color = ImVec4(1.0f, 0.85f, 0.2f, 1.0f); break;
+					case mdx::ValidationSeverity::unused: color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f); break;
+				}
+				ImGui::TextColored(color, "%s", message.message.c_str());
+			}
+		}
+		ImGui::End();
+	}
 
 	ImGui::Render();
 	QtImGui::render(ref);
