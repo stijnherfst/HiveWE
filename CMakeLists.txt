@@ -120,6 +120,11 @@ endif()
 
 target_compile_features(HiveWE_lib PUBLIC cxx_std_23)
 
+# AUTOUIC generates ui_*.h into HiveWE_lib's private autogen, need to expose that to consumers
+target_include_directories(HiveWE_lib PUBLIC
+	"$<IF:$<BOOL:${CMAKE_CONFIGURATION_TYPES}>,${CMAKE_CURRENT_BINARY_DIR}/HiveWE_lib_autogen/include_$<CONFIG>,${CMAKE_CURRENT_BINARY_DIR}/HiveWE_lib_autogen/include>"
+)
+
 target_link_libraries(HiveWE PRIVATE HiveWE_lib)
 
 if(HIVEWE_BUILD_TESTS)
