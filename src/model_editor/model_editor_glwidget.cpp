@@ -6,6 +6,9 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDesktopServices>
+#include <QFile>
+#include <QFileSystemWatcher>
+#include <glm/gtx/component_wise.inl>
 
 #include <qt_imgui/qt_imGui.h>
 
@@ -17,6 +20,7 @@ import MDX;
 import Camera;
 import ResourceManager;
 import <imgui.h>;
+import <imgui_internal.h>;
 
 namespace fs = std::filesystem;
 
@@ -24,8 +28,20 @@ namespace fs = std::filesystem;
 InputHandler my_input_handler;
 mdx::MDX::OptimizationStats stats;
 
-ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<mdx::MDX>& mdx, std::vector<mdx::ValidationMessage> messages)
-	: QOpenGLWidget(parent), mdx(mdx), messages(std::move(messages)) {
+ModelEditorGLWidget::ModelEditorGLWidget(
+	QWidget* parent,
+	const std::shared_ptr<mdx::MDX>& mdx,
+	std::vector<mdx::ValidationMessage> messages
+) :
+	QOpenGLWidget(parent),
+	mdx(mdx),
+	messages(std::move(messages)) {
+	// Give the widget its own persistent native surface. Without this, floating the ADS dock tab
+	// reparents the QOpenGLWidget into a new top-level container, tears down/recreates its GL surface,
+	// and the viewport renders white. Mirrors the WA_NativeWindow workaround used for the model browser.
+	setAttribute(Qt::WA_NativeWindow);
+	setAttribute(Qt::WA_DontCreateNativeAncestors);
+
 	makeCurrent();
 
 	setMouseTracking(true);
@@ -35,10 +51,33 @@ ModelEditorGLWidget::ModelEditorGLWidget(QWidget* parent, const std::shared_ptr<
 	connect(this, &QOpenGLWidget::frameSwapped, [&]() {
 		update();
 	});
+
+	// Hot-reload: when the temp .mdl opened by "Edit MDL" changes on disk, queue a reload. Editors
+	// often replace the file (drops the watch), so re-add the path and reload on the next paintGL.
+	mdl_watcher = new QFileSystemWatcher(this);
+	connect(mdl_watcher, &QFileSystemWatcher::fileChanged, [this](const QString& path) {
+		reload_pending = true;
+		if (!mdl_watcher->files().contains(path) && QFile::exists(path)) {
+			mdl_watcher->addPath(path);
+		}
+	});
 }
 
 void ModelEditorGLWidget::initializeGL() {
 	ref = QtImGui::initialize(this, false);
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+	// Persist the dock layout in a dedicated file so it survives restarts and doesn't fight over the
+	// default imgui.ini in the working directory. The pointer must outlive the context, so keep the
+	// string alive for the duration of the program.
+	static const std::string ini_path =
+		(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + "/model_editor_imgui.ini").toStdString();
+	io.IniFilename = ini_path.c_str();
+
+	// Build the default floating layout only when there is no remembered layout yet.
+	build_default_layout = !fs::exists(ini_path);
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -60,6 +99,7 @@ void ModelEditorGLWidget::initializeGL() {
 	shader_hd = resource_manager.load<Shader>({"data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag"}).value();
 
 	line_shader = resource_manager.load<Shader>({"data/shaders/physics_debug.vert", "data/shaders/physics_debug.frag"}).value();
+	grid_shader = resource_manager.load<Shader>({"data/shaders/grid.vert", "data/shaders/grid.frag"}).value();
 	glGenVertexArrays(1, &line_vao);
 	glCreateBuffers(1, &line_vbo);
 }
@@ -73,12 +113,17 @@ void ModelEditorGLWidget::resizeGL(const int w, const int h) {
 
 void ModelEditorGLWidget::paintGL() {
 	makeCurrent();
-	
+
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
+	if (reload_pending) {
+		reload_pending = false;
+		reload_from_mdl();
+	}
+
 	skeleton.update_location(glm::vec3(0.f), glm::quat(), glm::vec3(1.f));
-	skeleton.update(delta);
+	skeleton.update(animation_paused ? 0.0 : delta);
 
 	camera.update(delta);
 
@@ -112,6 +157,10 @@ void ModelEditorGLWidget::paintGL() {
 
 	mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
 
+	if (draw_grid) {
+		render_grid();
+	}
+
 	if (draw_extents_box || draw_extents_sphere) {
 		render_extents();
 	}
@@ -123,211 +172,7 @@ void ModelEditorGLWidget::paintGL() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	QtImGui::newFrame(ref);
-
-	if (ImGui::Begin("General")) {
-		ImGui::Text(std::format("FPS: {:.2f}", 1.0 / delta).c_str());
-
-		if (ImGui::Button("Edit MDL")) {
-			auto mdl = mesh->mdx->to_mdl();
-
-			auto path =
-				QStandardPaths::writableLocation(QStandardPaths::TempLocation) + "/" + QString::fromStdString(mesh->mdx->name) + ".mdl";
-
-			std::ofstream file(path.toStdString());
-			file.write(mdl.data(), mdl.size());
-			file.close();
-
-			QDesktopServices::openUrl(QUrl(path, QUrl::TolerantMode));
-		}
-
-		if (ImGui::Button("Save to MDX")) {
-			const QString file_name = QFileDialog::getSaveFileName(
-				this,
-				"Save MDX",
-				QStandardPaths::writableLocation(QStandardPaths::TempLocation),
-				"MDX (*.mdx *.MDX)"
-			);
-
-			if (file_name == "") {
-				return;
-			}
-
-			const fs::path path = file_name.toStdString();
-
-			const auto mdx_data = mdx->to_mdx();
-			std::ofstream file(path);
-			if (!file) {
-				ImGui::OpenPopup("Error");
-				ImGui::SetNextWindowSize(ImVec2(400, 100));
-				ImGui::BeginPopupModal("Error", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-				ImGui::Text("Error saving MDX file");
-				ImGui::Text("Could not open file for writing");
-				ImGui::EndPopup();
-				return;
-			}
-			file.write(reinterpret_cast<const char*>(mdx_data.buffer.data()), mdx_data.buffer.size());
-			file.close();
-		}
-
-		ImGui::Text(std::format("name: {}", mesh->mdx->name).c_str());
-
-		size_t vertices = 0;
-		size_t triangles = 0;
-		for (const auto& i : mesh->mdx->geosets) {
-			vertices += i.vertices.size();
-			triangles += i.faces.size() / 3;
-		}
-
-		ImGui::Text(std::format("Vertices: {}", vertices).c_str());
-		ImGui::Text(std::format("Triangles: {}", triangles).c_str());
-
-		const auto& e = mesh->mdx->extent;
-		ImGui::Text(
-			std::format(
-				"Extents:\n\tmin: x {} y {} z {}\n\tmax: x {} y {} z {}",
-				e.minimum.x,
-				e.minimum.y,
-				e.minimum.z,
-				e.maximum.x,
-				e.maximum.y,
-				e.maximum.z
-			)
-				.c_str()
-		);
-
-		if (ImGui::Button("Recalulate Extents")) {
-			calculate_animated_extents(mdx);
-			recenter_camera();
-		}
-
-		ImGui::Text("Draw extents:");
-		ImGui::Checkbox("Box", &draw_extents_box);
-		ImGui::SameLine();
-		ImGui::Checkbox("Sphere", &draw_extents_sphere);
-	}
-	ImGui::End();
-
-	if (ImGui::Begin("Animation")) {
-		ImGui::Text("Animation");
-		ImGui::SameLine();
-		if (ImGui::BeginCombo("##combo", mesh->mdx->sequences[skeleton.sequence_index].name.c_str())) {
-			for (size_t i = 0; i < mesh->mdx->sequences.size(); i++) {
-				if (ImGui::Selectable(mesh->mdx->sequences[i].name.c_str(), i == skeleton.sequence_index)) {
-					skeleton.set_sequence(i);
-				}
-				if (i == skeleton.sequence_index) {
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-		}
-
-		ImGui::Text(std::format("Start frame: {}", mesh->mdx->sequences[skeleton.sequence_index].start_frame).c_str());
-		ImGui::Text(std::format("End frame: {}", mesh->mdx->sequences[skeleton.sequence_index].end_frame).c_str());
-		ImGui::Text(std::format("Current frame: {}", skeleton.current_frame).c_str());
-		ImGui::Text(
-			std::format("Looping: {}", mesh->mdx->sequences[skeleton.sequence_index].flags == mdx::Sequence::Flags::looping).c_str()
-		);
-	}
-	ImGui::End();
-
-	// if (ImGui::Begin("Optimizer")) {
-	// 	static float max_error = 0.0001f;
-	// 	if (ImGui::SliderFloat("Max error", &max_error, 0.0f, 0.01f, "%.5f")) {
-	// 		BinaryReader reader = hierarchy.open_file("units/human/footman/footman.mdx").value();
-	// 		auto mdx = std::make_shared<mdx::MDX>(reader);
-	// 		stats = mdx->optimize(max_error);
-	//
-	// 		const auto writer = mdx->save();
-	// 		optimization_file_size_reduction = std::ssize(reader.buffer) - std::ssize(writer.buffer);
-	// 		optimization_file_size_reduction_percent = static_cast<float>(std::ssize(writer.buffer) - std::ssize(reader.buffer)) / std::ssize(reader.buffer) * 100.f;
-	//
-	// 		mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
-	// 		skeleton = SkeletalModelInstance(mesh->mdx);
-	// 	}
-	// }
-	// ImGui::End();
-	//
-	// if (ImGui::Begin("Optimization Stats")) {
-	// 	if (optimization_file_size_reduction >= 0) {
-	// 		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Size change: %i KiB (%.2f%%) less", optimization_file_size_reduction / 1024, optimization_file_size_reduction_percent);
-	// 	} else {
-	// 		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Size change: %i KiB (%.2f%%) more", optimization_file_size_reduction / 1024, optimization_file_size_reduction_percent);
-	// 	}
-	//
-	// 	ImGui::Text("Materials removed %i", stats.materials_removed);
-	// 	ImGui::Text("Textures removed %i", stats.textures_removed);
-	//
-	// 	if (ImGui::BeginTable("Optimization Stats", 3)) {
-	// 		ImGui::TableSetupColumn("Type");
-	// 		ImGui::TableSetupColumn("Count");
-	// 		ImGui::TableSetupColumn("Removed");
-	// 		ImGui::TableHeadersRow();
-	//
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("Constant tracks");
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("%i", stats.constant_tracks);
-	// 		ImGui::TableNextColumn();
-	// 		{
-	// 			const auto percent_removed = stats.constant_tracks_removed > 0 ? static_cast<float>(stats.constant_tracks_removed) / stats.constant_tracks * 100.f : 0.f;
-	// 			ImGui::Text("%i (%.2f%%)", stats.constant_tracks_removed, percent_removed);
-	// 		}
-	//
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("Linear tracks");
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("%i", stats.linear_tracks);
-	// 		ImGui::TableNextColumn();
-	// 		{
-	// 			const auto percent_removed = stats.linear_tracks_removed > 0 ? static_cast<float>(stats.linear_tracks_removed) / stats.linear_tracks * 100.f : 0.f;
-	// 			ImGui::Text("%i (%.2f%%)", stats.linear_tracks_removed, percent_removed);
-	// 		}
-	//
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("Bezier tracks");
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("%i", stats.bezier_tracks);
-	// 		ImGui::TableNextColumn();
-	// 		{
-	// 			const auto percent_removed = stats.bezier_tracks_removed > 0 ? static_cast<float>(stats.bezier_tracks_removed) / stats.bezier_tracks * 100.f : 0.f;
-	// 			ImGui::Text("%i (%.2f%%)", stats.bezier_tracks_removed, percent_removed);
-	// 		}
-	//
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("Hermite tracks");
-	// 		ImGui::TableNextColumn();
-	// 		ImGui::Text("%i", stats.hermite_tracks);
-	// 		ImGui::TableNextColumn();
-	// 		{
-	// 			const auto percent_removed = stats.hermite_tracks_removed > 0 ? static_cast<float>(stats.hermite_tracks_removed) / stats.hermite_tracks * 100.f : 0.f;
-	// 			ImGui::Text("%i (%.2f%%)", stats.hermite_tracks_removed, percent_removed);
-	// 		}
-	//
-	// 		ImGui::EndTable();
-	// 	}
-	// }
-	// ImGui::End();
-
-	if (!messages.empty()) {
-		if (ImGui::Begin("Validation")) {
-			for (const auto& message : messages) {
-				ImVec4 color;
-				switch (message.severity) {
-					case mdx::ValidationSeverity::error: color = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); break;
-					case mdx::ValidationSeverity::severe: color = ImVec4(1.0f, 0.55f, 0.15f, 1.0f); break;
-					case mdx::ValidationSeverity::warning: color = ImVec4(1.0f, 0.85f, 0.2f, 1.0f); break;
-					case mdx::ValidationSeverity::unused: color = ImVec4(0.6f, 0.6f, 0.6f, 1.0f); break;
-				}
-				ImGui::TextColored(color, "%s", message.message.c_str());
-			}
-		}
-		ImGui::End();
-	}
-
-	ImGui::Render();
-	QtImGui::render(ref);
+	render_imgui();
 }
 
 void ModelEditorGLWidget::keyPressEvent(QKeyEvent* event) {
@@ -346,6 +191,10 @@ void ModelEditorGLWidget::mouseMoveEvent(QMouseEvent* event) {
 void ModelEditorGLWidget::mousePressEvent(QMouseEvent* event) {
 	makeCurrent();
 
+	if (ImGui::GetIO().WantCaptureMouse) {
+		return;
+	}
+
 	camera.mouse_press_event(event);
 }
 
@@ -354,6 +203,10 @@ void ModelEditorGLWidget::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void ModelEditorGLWidget::wheelEvent(QWheelEvent* event) {
+	if (ImGui::GetIO().WantCaptureMouse) {
+		return;
+	}
+
 	camera.mouse_scroll_event(event);
 }
 
@@ -452,4 +305,79 @@ void ModelEditorGLWidget::render_extents() {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 	glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lines.size()));
+}
+
+void ModelEditorGLWidget::render_grid() {
+	const auto& extent = mesh->mdx->extent;
+	float reach = 0.0f;
+	if (extent.minimum.x <= extent.maximum.x) {
+		reach = std::max({std::abs(extent.minimum.x), std::abs(extent.maximum.x), std::abs(extent.minimum.y), std::abs(extent.maximum.y)});
+	}
+	const int half = std::clamp(static_cast<int>(std::ceil(std::max(reach, 1.0f) / 128.0f)) * 128, 512, 4096);
+
+	std::vector<glm::vec3> minor;
+	std::vector<glm::vec3> major;
+	for (int c = -half; c <= half; c += 32) {
+		std::vector<glm::vec3>& lines = (c % 128 == 0) ? major : minor;
+		lines.emplace_back(static_cast<float>(c), static_cast<float>(-half), 0.0f);
+		lines.emplace_back(static_cast<float>(c), static_cast<float>(half), 0.0f);
+		lines.emplace_back(static_cast<float>(-half), static_cast<float>(c), 0.0f);
+		lines.emplace_back(static_cast<float>(half), static_cast<float>(c), 0.0f);
+	}
+
+	grid_shader->use();
+	glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+
+	glBindVertexArray(line_vao);
+	glEnable(GL_DEPTH_TEST);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, line_vbo);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+	if (!minor.empty()) {
+		glNamedBufferData(line_vbo, minor.size() * sizeof(glm::vec3), minor.data(), GL_STREAM_DRAW);
+		glUniform4f(0, 0.40f, 0.40f, 0.40f, 1.0f);
+		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(minor.size()));
+	}
+	if (!major.empty()) {
+		glNamedBufferData(line_vbo, major.size() * sizeof(glm::vec3), major.data(), GL_STREAM_DRAW);
+		glUniform4f(0, 0.62f, 0.62f, 0.68f, 1.0f);
+		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(major.size()));
+	}
+}
+
+void ModelEditorGLWidget::reload_from_mdl() {
+	if (hot_reload_path.empty()) {
+		return;
+	}
+
+	std::ifstream stream(hot_reload_path, std::ios::binary);
+	if (!stream) {
+		return;
+	}
+	const std::string data(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+
+	auto result = mdx::MDX::from_mdl(data);
+	if (!result.has_value()) {
+		messages = {{mdx::ValidationSeverity::error, "Hot reload failed to parse MDL: " + result.error()}};
+		return;
+	}
+
+	auto new_mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
+
+	std::shared_ptr<EditableMesh> new_mesh;
+	try {
+		new_mesh = std::make_shared<EditableMesh>(new_mdx, std::nullopt);
+	} catch (const std::exception& e) {
+		messages = new_mdx->validate();
+		messages.insert(messages.begin(), {mdx::ValidationSeverity::error, std::string("Hot reload could not build mesh: ") + e.what()});
+		return;
+	}
+
+	mdx = new_mdx;
+	mesh = new_mesh;
+	skeleton = SkeletalModelInstance(mdx);
+	SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
+	recenter_camera();
+	messages = mdx->validate();
 }

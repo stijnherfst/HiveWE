@@ -23,7 +23,12 @@
       ]
     },
     "glm",
-    "imgui",
+    {
+      "name": "imgui",
+      "features": [
+        "docking-experimental"
+      ]
+    },
     "libjpeg-turbo",
     {
       "name": "mimalloc",

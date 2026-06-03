@@ -50,6 +50,7 @@ private:
     void updateCursorShape(const ImGuiIO &io);
     void setCursorPos(const ImGuiIO &io);
 
+    void applyTheme();
     void renderDrawList(ImDrawData *draw_data);
     bool createFontsTexture();
     bool createDeviceObjects();

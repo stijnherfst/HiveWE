@@ -165,6 +165,7 @@ target_sources(HiveWE_lib PRIVATE
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
 	"model_editor/model_editor_glwidget.cpp"
+	"model_editor/model_editor_imgui.cpp"
 
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"
