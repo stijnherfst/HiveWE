@@ -228,12 +228,7 @@ void ModelGridGLWidget::paintGL() {
 				continue;
 			}
 
-			const auto rect = QRect {
-				c * cell_size,
-				row_y_screen,
-				cell_size,
-				cell_size
-			};
+			const auto rect = QRect {c * cell_size, row_y_screen, cell_size, cell_size};
 
 			painter.setPen(warning_text_color);
 			painter.drawText(rect, Qt::AlignCenter, "Error");
@@ -379,17 +374,11 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 
 		SkeletalModelInstance::pick_preview_sequence(cell.skeleton, *cell.mdx);
 
-		if (cell.mdx->sequences.empty() || cell.skeleton.sequence_index < 0) {
-			cell.fit_distance = 200.f;
-			cell.fit_position = glm::vec3(0.f);
-		} else {
-			const auto& extent = cell.mdx->sequences[cell.skeleton.sequence_index].extent;
-			const glm::vec3 size = extent.maximum - extent.minimum;
-			const float radius = glm::length(size) * 0.5f;
-			const float fov_rad = glm::radians(k_fov_deg);
-			cell.fit_distance = radius / std::sin(fov_rad * 0.5f);
-			cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);
-		}
+		const auto& extent =
+			cell.skeleton.sequence_index == -1 ? cell.mdx->extent : cell.mdx->sequences[cell.skeleton.sequence_index].extent;
+		const glm::vec3 size = extent.maximum - extent.minimum;
+		cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);
+		cell.fit_distance = glm::length(size) * 0.5f / std::sin(glm::radians(k_fov_deg) * 0.5f);
 		cell.loaded = true;
 	} catch (std::exception& e) {
 		cell.load_failed = true;
