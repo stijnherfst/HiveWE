@@ -355,7 +355,7 @@ void ModelEditorGLWidget::reload_from_mdl() {
 	if (!stream) {
 		return;
 	}
-	const std::string data(std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>());
+	const std::string data {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
 
 	auto result = mdx::MDX::from_mdl(data);
 	if (!result.has_value()) {
