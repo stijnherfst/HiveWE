@@ -101,7 +101,19 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.actionCreateVariable, &QAction::triggered, explorer, &TriggerExplorer::createVariable);
 	connect(ui.actionCreateComment, &QAction::triggered, explorer, &TriggerExplorer::createComment);
 
-	connect(explorer, &QTreeView::doubleClicked, this, &TriggerEditor::item_clicked);
+	connect(
+		explorer->selectionModel(),
+		&QItemSelectionModel::currentChanged,
+		this,
+		[this](const QModelIndex& current, const QModelIndex&) {
+			if (!current.isValid()) {
+				return;
+			}
+
+			item_clicked(current);
+		}
+	);
+
 	connect(explorer, &TriggerExplorer::itemAboutToBeDeleted, [&](TreeItem* item) {
 		if (auto found = dock_manager->findDockWidget(QString::number(item->id)); found) {
 			found->closeDockWidget();
