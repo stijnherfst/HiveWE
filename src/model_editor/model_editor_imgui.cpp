@@ -739,7 +739,7 @@ void ModelEditorGLWidget::render_imgui() {
 				const auto& emitter = model.emitters2[i];
 				ImGui::PushID(static_cast<int>(i));
 				if (ImGui::CollapsingHeader(std::format("{}: {}", i, emitter.node.name).c_str())) {
-					ImGui::Text("Speed: %.3f   Variation: %.3f", emitter.speed, emitter.variation);
+					ImGui::Text("Speed: %.3f   Variation: %.3f", emitter.speed, emitter.speed_variation);
 					ImGui::Text("Latitude: %.3f   Gravity: %.3f", emitter.latitude, emitter.gravity);
 					ImGui::Text("Life span: %.3f   Emission rate: %.3f", emitter.life_span, emitter.emission_rate);
 					ImGui::Text("Size: %.3f x %.3f", emitter.length, emitter.width);

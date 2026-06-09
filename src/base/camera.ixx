@@ -44,14 +44,13 @@ export struct Camera {
 	glm::vec3 up = {0, 0, 1};
 	glm::vec3 forward = {0, 1, 0};
 
-	float fov = 70.f;
+	float fov = 50.f;
 	float aspect_ratio = 16.f / 9.f;
 	float draw_distance_close = 0.05f;
 	float draw_distance_far = 2000.f;
-	float fov_rad = (glm::pi<double>() / 180.f) * static_cast<double>(fov); // Need radians
-	float tan_height = 2.f * glm::tan(fov_rad * 0.5f);
+	float tan_height = 2.f * glm::tan(glm::radians(fov) * 0.5f);
 
-	glm::mat4 projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
+	glm::mat4 projection = glm::perspective(glm::radians(fov), aspect_ratio, draw_distance_close, draw_distance_far);
 	glm::mat4 view = glm::lookAt(position - direction * distance, position, up);
 	glm::mat4 view_inverse;
 	glm::mat4 projection_view;
@@ -179,7 +178,7 @@ export struct Camera {
 			position += forward * 40.f * static_cast<float>(delta) * (distance / 30.f);
 		}
 
-		projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
+		projection = glm::perspective(glm::radians(fov), aspect_ratio, draw_distance_close, draw_distance_far);
 		view = glm::lookAt(position - direction * distance, position, up);
 		view_inverse = glm::inverse(view);
 		projection_view = projection * view;

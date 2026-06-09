@@ -190,7 +190,7 @@ export class SkeletalModelInstance {
 			ParticleEmitter2Simulation::EmitterFrameParams p {};
 			p.emission_rate = interpolate_keyframes(e.KP2E, e.emission_rate);
 			p.speed = interpolate_keyframes(e.KP2S, e.speed);
-			p.variation = interpolate_keyframes(e.KP2R, e.variation);
+			p.speed_variation = interpolate_keyframes(e.KP2R, e.speed_variation);
 			p.latitude = glm::radians(interpolate_keyframes(e.KP2L, e.latitude));
 			p.gravity = interpolate_keyframes(e.KP2G, e.gravity);
 			p.width = interpolate_keyframes(e.KP2W, e.width);

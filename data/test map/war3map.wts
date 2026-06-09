@@ -66,3 +66,9 @@ STRING 17
 Unknown
 }
 
+STRING 18
+// Doodads: D008 (emitter2_dynamic_visibility), Name (Name)
+{
+emitter2_dynamic_visibility
+}
+

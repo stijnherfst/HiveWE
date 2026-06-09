@@ -100,6 +100,9 @@ void ModelEditorGLWidget::initializeGL() {
 
 	line_shader = resource_manager.load<Shader>({"data/shaders/physics_debug.vert", "data/shaders/physics_debug.frag"}).value();
 	grid_shader = resource_manager.load<Shader>({"data/shaders/grid.vert", "data/shaders/grid.frag"}).value();
+
+	elapsed_timer.start();
+
 	glGenVertexArrays(1, &line_vao);
 	glCreateBuffers(1, &line_vbo);
 }
@@ -128,23 +131,18 @@ void ModelEditorGLWidget::paintGL() {
 	camera.update(delta);
 
 	glBindVertexArray(vao);
-	glEnable(GL_DEPTH_TEST);
-	glDepthMask(true);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// Opaque passes — depth test/write on, blend off (state restored per-layer inside render_opaque)
 	glEnable(GL_BLEND);
-	glDepthMask(true);
-	glEnable(GL_DEPTH_TEST);
 
 	shader_sd->use();
 	mesh->render_opaque(false, 0, skeleton, camera.projection_view, camera.direction);
 	shader_hd->use();
 	mesh->render_opaque(true, 0, skeleton, camera.projection_view, camera.direction);
 
-	// Transparent passes — depth write off; depth test/blend func driven per-layer inside render_transparent
-	glEnable(GL_BLEND);
+	// Opaque sets depth mask itself, transparent always off
 	glDepthMask(false);
 
 	shader_sd->use();
@@ -152,8 +150,7 @@ void ModelEditorGLWidget::paintGL() {
 	shader_hd->use();
 	mesh->render_transparent(true, 0, skeleton, camera.projection_view, camera.direction);
 
-	glDepthMask(true);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_DEPTH_TEST);
 
 	mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
 
@@ -225,7 +222,7 @@ void ModelEditorGLWidget::recenter_camera() {
 		radius = (extent.bounds_radius > 0.f ? extent.bounds_radius : 200.f) * 1.1f;
 		camera.position.z = 0.f;
 	}
-	camera.distance = radius / std::sin(camera.fov_rad * 0.5f);
+	camera.distance = radius / std::sin(glm::radians(camera.fov) * 0.5f);
 }
 
 void ModelEditorGLWidget::render_extents() {

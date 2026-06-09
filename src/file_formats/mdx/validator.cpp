@@ -41,13 +41,39 @@ namespace mdx {
 			is_valid = is_valid && sum == correct_sum && sum_squared == correct_sum_squared;
 		}
 
-		for (const auto& [id, material] : std::ranges::enumerate_view(materials)) {
+		for (const auto& material : materials) {
 			for (const auto& layer: material.layers) {
 				for (const auto& texture: layer.textures) {
 					if (texture.id >= textures.size()) {
 						is_valid = false;
 					}
 				}
+			}
+		}
+
+		for (const auto& emitter : emitters2) {
+			// HiveWE specific?
+			if (emitter.life_span < 0.0) {
+				is_valid = false;
+			}
+			// HiveWE specific?
+			if (emitter.time_middle < 0.0 || emitter.time_middle > 1.f) {
+				is_valid = false;
+			}
+			// HiveWE specific?
+			if (emitter.rows == 0 || emitter.columns == 0) {
+				is_valid = false;
+			}
+			if (emitter.texture_id >= textures.size()) {
+				is_valid = false;
+			}
+			// HiveWE specific?
+			if (emitter.squirt > 1) {
+				is_valid = false;
+			}
+			// HiveWE specific?
+			if (emitter.tail_length < 0.f) {
+				is_valid = false;
 			}
 		}
 
@@ -296,7 +322,7 @@ namespace mdx {
 
 		for (const auto& emitter : emitters2) {
 			if (emitter.texture_id >= textures.size()) {
-				warning(std::format("Particle emitter 2 \"{}\" references invalid texture id {}", emitter.node.name, emitter.texture_id));
+				error(std::format("Particle emitter 2 \"{}\" references invalid texture id {}", emitter.node.name, emitter.texture_id));
 			}
 			if (emitter.replaceable_id != 0 && !valid_replaceable_ids.contains(emitter.replaceable_id)) {
 				error(std::format("Particle emitter 2 \"{}\" has invalid replaceable id {}", emitter.node.name, emitter.replaceable_id));
@@ -304,8 +330,17 @@ namespace mdx {
 			if (emitter.time_middle < 0.f || emitter.time_middle > 1.f) {
 				severe(std::format("Particle emitter 2 \"{}\" has a time middle {} outside [0, 1]", emitter.node.name, emitter.time_middle));
 			}
+			if (emitter.life_span < 0.f) {
+				severe(std::format("Particle emitter 2 \"{}\" has a lifespan {} that is negative", emitter.node.name, emitter.life_span));
+			}
 			if (emitter.rows == 0 || emitter.columns == 0) {
 				warning(std::format("Particle emitter 2 \"{}\" has zero rows or columns", emitter.node.name));
+			}
+			if (emitter.squirt > 1) {
+				warning(std::format("Particle emitter 2 \"{}\" has squirt that is {}, should be 0 or 1", emitter.node.name, emitter.squirt));
+			}
+			if (emitter.tail_length < 0.f) {
+				warning(std::format("Particle emitter 2 \"{}\" has tail length that is {}, should be larger than 0", emitter.node.name, emitter.tail_length));
 			}
 		}
 

@@ -508,34 +508,56 @@ namespace mdx {
 	*/
 	export struct ParticleEmitter2 {
 		Node node;
-		float speed; // Initial particle velocity
-		float variation; // Random speed variation
-		float latitude; // Emission cone angle
+		/// Initial particle velocity
+		float speed;
+		/// The factor by which the speed can vary. total_speed = speed * (1.f + speed_variation * rng[-1,1])
+		float speed_variation;
+		/// Emission cone angle, rotates around Y-axis
+		float latitude;
+		/// Positive is down, negative is up
 		float gravity;
-		float life_span; // Particle lifetime
-		float emission_rate; // Particles spawned per second
-		float length; // Emitter rectangle length
-		float width; // Emitter rectangle width
+		/// Particle lifetime, always positive
+		float life_span;
+		/// Particles spawned per second, 0 or positive only!
+		float emission_rate;
+		/// Emitter rectangle length, on spawn a particle gets randomly offset along y-axis by 0.5 * length
+		float length;
+		/// Emitter rectangle width, on spawn a particle gets randomly offset along x-axis by 0.5 * width
+		float width;
 		uint32_t filter_mode; // Blend/additive/modulate/...
-		uint32_t rows; // for Textures\Clouds8x8 files
-		uint32_t columns; // Texture atlas columns
-		uint32_t head_or_tail; // Head, tail, or both particle style
+		/// Texture atlas rows, always >=1
+		uint32_t rows;
+		/// Texture atlas columns, always >=1
+		uint32_t columns;
+		/// 0 is head
+		/// 1 is tail
+		/// 2 is both
+		uint32_t head_or_tail;
+		/// Always >= 0
 		float tail_length;
-		float time_middle; // Normalized time of the middle color/scale segment
+		/// Normalized factor for when particle switches from start->middle to middle->end
+		float time_middle;
 
 		glm::vec3 start_segment_color; // Color at birth
 		glm::vec3 middle_segment_color;
 		glm::vec3 end_segment_color; // Color at death
 		glm::u8vec3 segment_alphas; // Alpha at start/middle/end
 		glm::vec3 segment_scaling; // Scale at start/middle/end
-		glm::uvec3 head_intervals; // Atlas cell range for head life stages
+		/// Atlas cell range for head life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
+		glm::uvec3 head_intervals;
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 head_decay_intervals;
+		/// Atlas cell range for tail life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 tail_intervals; // Atlas cell range for tail life stages
+		/// Atlas cell range for tail life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 tail_decay_intervals;
 		uint32_t texture_id; // Index into textures
-		uint32_t squirt; // Burst-emission mode
+		uint32_t squirt; // Burst-emission mode, 0 or 1
 		uint32_t priority_plane;
-		uint32_t replaceable_id; // for Wisp team color particles
+		uint32_t replaceable_id; // for e.g. Wisp team color particles
 
 		TrackHeader<float> KP2S; // Speed
 		TrackHeader<float> KP2R; // Variation
@@ -544,7 +566,7 @@ namespace mdx {
 		TrackHeader<float> KP2E; // Emission rate
 		TrackHeader<float> KP2N; // Length
 		TrackHeader<float> KP2W; // Width
-		TrackHeader<float> KP2V; // Visibility
+		TrackHeader<float> KP2V; // Visibility. 0 = invisible, non-zero is visible
 	};
 
 	/// Emits a continuous trailing ribbon (e.g. sword swipes) following the node.

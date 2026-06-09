@@ -496,7 +496,7 @@ namespace mdx {
 			emitter2.node = Node(reader, mdx.unique_tracks);
 
 			emitter2.speed = reader.read<float>();
-			emitter2.variation = reader.read<float>();
+			emitter2.speed_variation = reader.read<float>();
 			emitter2.latitude = reader.read<float>();
 			emitter2.gravity = reader.read<float>();
 			emitter2.life_span = reader.read<float>();

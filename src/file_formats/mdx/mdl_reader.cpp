@@ -1229,7 +1229,7 @@ namespace mdx {
 				}
 			} else if (kw.text == "Variation") {
 				if (is_static) {
-					OUTCOME_TRY(e.variation, r.consume_f32());
+					OUTCOME_TRY(e.speed_variation, r.consume_f32());
 				} else {
 					OUTCOME_TRY(e.KP2R, r.parse_animated_track<float>(mdx.unique_tracks));
 				}

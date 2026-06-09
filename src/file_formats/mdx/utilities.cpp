@@ -134,7 +134,7 @@ namespace mdx {
 
 		for (const auto& emitter : emitters2) {
 			const float life_span = std::max(0.f, emitter.life_span);
-			const float max_speed = std::abs(emitter.speed) * (1.f + std::max(0.f, emitter.variation));
+			const float max_speed = std::abs(emitter.speed) * (1.f + std::max(0.f, emitter.speed_variation));
 			const float max_travel = max_speed * life_span;
 
 			const float max_scale = std::max({

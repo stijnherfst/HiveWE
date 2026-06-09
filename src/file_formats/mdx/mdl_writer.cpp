@@ -670,7 +670,7 @@ namespace mdx {
 				}
 
 				mdl.write_track(emitter.KP2S, "Speed", emitter.speed);
-				mdl.write_track(emitter.KP2R, "Variation", emitter.variation);
+				mdl.write_track(emitter.KP2R, "Variation", emitter.speed_variation);
 				mdl.write_track(emitter.KP2L, "Latitude", emitter.latitude);
 				mdl.write_track(emitter.KP2G, "Gravity", emitter.gravity);
 				if (!emitter.KP2V.tracks.empty()) {

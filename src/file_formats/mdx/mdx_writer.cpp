@@ -486,7 +486,7 @@ namespace mdx {
 
 			emitter.node.save(writer);
 			writer.write<float>(emitter.speed);
-			writer.write<float>(emitter.variation);
+			writer.write<float>(emitter.speed_variation);
 			writer.write<float>(emitter.latitude);
 			writer.write<float>(emitter.gravity);
 			writer.write<float>(emitter.life_span);

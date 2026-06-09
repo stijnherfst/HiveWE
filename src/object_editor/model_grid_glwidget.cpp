@@ -172,22 +172,21 @@ void ModelGridGLWidget::paintGL() {
 			const glm::mat4 projection_view = projection * view;
 
 			glEnable(GL_BLEND);
-			glDepthMask(true);
-			glEnable(GL_DEPTH_TEST);
 
 			shader_sd->use();
 			cell.mesh->render_opaque(false, 1, cell.skeleton, projection_view, dir);
 			shader_hd->use();
 			cell.mesh->render_opaque(true, 1, cell.skeleton, projection_view, dir);
 
+			// Opaque sets depth mask itself, transparent always off
 			glDepthMask(false);
 
 			shader_sd->use();
 			cell.mesh->render_transparent(false, 1, cell.skeleton, projection_view, dir);
 			shader_hd->use();
 			cell.mesh->render_transparent(true, 1, cell.skeleton, projection_view, dir);
-
-			glDepthMask(true);
+			
+			glEnable(GL_DEPTH_TEST);
 
 			const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
 			const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));
