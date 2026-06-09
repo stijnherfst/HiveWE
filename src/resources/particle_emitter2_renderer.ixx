@@ -236,21 +236,7 @@ export class ParticleEmitter2Renderer {
 			const glm::vec3 rgb = glm::mix(col_a, col_b, t);
 			const float alpha = glm::mix(alpha_a, alpha_b, t);
 			const float scale = glm::mix(scale_a, scale_b, t);
-
 			const glm::vec4 color(rgb, alpha);
-
-			glm::vec3 right = camera_right;
-			glm::vec3 up = camera_up;
-
-			if ((e.node.flags & mdx::Node::xy_quad) != 0) {
-				const glm::vec3 vel_xy(velocity.x, velocity.y, 0.f);
-				const glm::vec3 perp_xy(velocity.y, -velocity.x, 0.f);
-				const float mag2 = vel_xy.x * vel_xy.x + vel_xy.y * vel_xy.y;
-				if (mag2 > kEpsilon) {
-					right = glm::normalize(perp_xy);
-					up = glm::normalize(vel_xy);
-				}
-			}
 
 			const float inv_cols = 1.f / static_cast<float>(e.columns);
 			const float inv_rows = 1.f / static_cast<float>(e.rows);
@@ -263,6 +249,23 @@ export class ParticleEmitter2Renderer {
 				const float v0u = row_idx * inv_rows;
 				const float u1 = u0 + inv_cols;
 				const float v1u = v0u + inv_rows;
+
+				glm::vec3 right = camera_right;
+				glm::vec3 up = camera_up;
+
+				// XYQuad particles lie flat in the XY plane and orient along their horizontal velocity
+				if ((e.node.flags & mdx::Node::xy_quad) != 0) {
+					const glm::vec3 vel_xy(velocity.x, velocity.y, 0.f);
+					const float mag2 = vel_xy.x * vel_xy.x + vel_xy.y * vel_xy.y;
+					if (mag2 > kEpsilon) {
+						up = glm::normalize(vel_xy);
+						right = glm::vec3(velocity.y, -velocity.x, 0.f) / std::sqrt(mag2);
+					} else {
+						// No horizontal velocity to derive a facing from.
+						right = glm::vec3(1.f, 0.f, 0.f);
+						up = glm::vec3(0.f, 1.f, 0.f);
+					}
+				}
 
 				const glm::vec3 ax = right * scale;
 				const glm::vec3 ay = up * scale;
