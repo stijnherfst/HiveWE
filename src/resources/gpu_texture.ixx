@@ -69,7 +69,7 @@ export class GPUTexture : public Resource {
 				static_cast<int>(reader.buffer.size()),
 				SOIL_LOAD_AUTO,
 				SOIL_LOAD_AUTO,
-				SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE
+				SOIL_FLAG_DDS_LOAD_DIRECT | SOIL_FLAG_SRGB_COLOR_SPACE | SOIL_FLAG_GL_MIPMAPS
 			);
 			if (id == 0) {
 				glCreateTextures(GL_TEXTURE_2D, 1, &id);
