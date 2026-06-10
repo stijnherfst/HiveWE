@@ -347,6 +347,43 @@ export class Terrain: public QObject {
 		return true;
 	}
 
+	/// Writes a flat all-grass Lordaeron Summer war3map.w3e to the current map directory.
+	static void save_blank(const int width_tiles, const int height_tiles) {
+		const std::vector<std::string> tileset_ids = { "Ldrt", "Ldro", "Ldrg", "Lrok", "Lgrs", "Lgrd" };
+		const std::vector<std::string> cliffset_ids = { "CLdi", "CLgr" };
+		const uint8_t grass_texture = std::ranges::find(tileset_ids, "Lgrs") - tileset_ids.begin();
+
+		const int width = width_tiles + 1;
+		const int height = height_tiles + 1;
+
+		BinaryWriter writer;
+		writer.write_string("W3E!");
+		writer.write(write_version);
+		writer.write('L');
+		writer.write(1);
+		writer.write<uint32_t>(tileset_ids.size());
+		writer.write_vector(tileset_ids);
+		writer.write<uint32_t>(cliffset_ids.size());
+		writer.write_vector(cliffset_ids);
+		writer.write(width);
+		writer.write(height);
+		writer.write(glm::vec2(-(width - 1) * 128.f / 2.f, -(height - 1) * 128.f / 2.f));
+
+		for (int j = 0; j < height; j++) {
+			for (int i = 0; i < width; i++) {
+				const bool map_edge = i == 0 || i == width - 1 || j == 0 || j == height - 1;
+
+				writer.write<uint16_t>(8192); // Ground height 0
+				writer.write<uint16_t>(8192 | (map_edge << 14)); // Water height 0
+				writer.write<uint16_t>(grass_texture);
+				writer.write<uint8_t>(random_ground_variation());
+				writer.write<uint8_t>((15 << 4) | 2); // No cliff texture, ground layer height 2
+			}
+		}
+
+		hierarchy.map_file_write("war3map.w3e", writer.buffer);
+	}
+
 	void create(const Physics& physics, const TilesetData& tilesets) {
 		// Determine if cliff
 		compute_cliff_flags();

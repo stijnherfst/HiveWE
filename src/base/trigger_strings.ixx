@@ -9,7 +9,7 @@ import Hierarchy;
 export class TriggerStrings {
 	std::map<std::string, std::string> strings; // ToDo change back to unordered_map?
 
-	size_t next_id;
+	size_t next_id = 0;
 
   public:
 	void load() {
@@ -47,7 +47,9 @@ export class TriggerStrings {
 				strings.emplace(key, value);
 			} else {
 				size_t found = line.find(' ') + 1;
-				next_id = std::max(next_id, found);
+				size_t id = 0;
+				std::from_chars(line.data() + found, line.data() + line.size(), id);
+				next_id = std::max(next_id, id);
 				int padsize = std::max(0, 3 - ((int)line.size() - (int)found));
 				key = "TRIGSTR_" + std::string(padsize, '0') + line.substr(found);
 			}
@@ -106,8 +108,7 @@ export class TriggerStrings {
 	void set_string(std::string& key, const std::string& value) {
 		if (key.rfind("TRIGSTR_", 0) != 0) {
 			if (key.empty() && !value.empty()) {
-				const int padsize = std::max(0, 2 - static_cast<int>(std::log10(next_id)));
-				key = "TRIGSTR_" + std::string(padsize, '0') + std::to_string(++next_id);
+				key = std::format("TRIGSTR_{:03}", ++next_id);
 				strings[key] = value;
 				std::cout << "Creating key: " << key << "  " << value << "\n";
 

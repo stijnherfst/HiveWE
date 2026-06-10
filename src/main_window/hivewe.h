@@ -33,6 +33,7 @@ public:
 
 	void load_map(const fs::path& directory);
 
+	void new_map();
 	void load_folder();
 	void load_mpq();
 	void save();

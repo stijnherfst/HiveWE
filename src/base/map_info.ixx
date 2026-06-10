@@ -5,6 +5,7 @@ import types;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
+import TriggerStrings;
 import Utilities;
 import <glm/glm.hpp>;
 
@@ -382,6 +383,108 @@ export class MapInfo {
 				}
 			}
 		}
+	}
+
+	/// For creating new maps from scratch
+	/// Camera bounds and playable size are not set here; call update_map_bounds_info once the terrain dimensions are known.
+	void load_defaults(TriggerStrings& trigger_strings) {
+		map_version = 1;
+		editor_version = write_editor_version;
+		game_version_major = write_game_version_major;
+		game_version_minor = write_game_version_minor;
+		game_version_patch = write_game_version_patch;
+		game_version_build = write_game_version_build;
+
+		name.clear();
+		author.clear();
+		description.clear();
+		suggested_players.clear();
+		trigger_strings.set_string(name, "Just another Warcraft III map");
+		trigger_strings.set_string(author, "Unknown");
+		trigger_strings.set_string(description, "Nondescript");
+		trigger_strings.set_string(suggested_players, "Any");
+
+		hide_minimap_preview = false;
+		modif_ally_priorities = false;
+		melee_map = true;
+		unknown = true;
+		masked_area_partially_visible = true;
+		fixed_player_settings = false;
+		custom_forces = false;
+		custom_techtree = false;
+		custom_abilities = false;
+		custom_upgrades = false;
+		unknown2 = true;
+		cliff_shore_waves = true;
+		rolling_shore_waves = true;
+		unknown3 = false;
+		unknown4 = false;
+		item_classification = true;
+		water_tinting = false;
+		accurate_probability_for_calculations = false;
+		custom_ability_skins = false;
+		disable_deny_icon = false;
+		force_default_zoom = false;
+		force_max_zoom = false;
+		force_min_zoom = false;
+
+		loading_screen_number = -1;
+		loading_screen_model.clear();
+		loading_screen_text.clear();
+		loading_screen_title.clear();
+		loading_screen_subtitle.clear();
+
+		game_data_set = 0;
+
+		prologue_screen_model.clear();
+		prologue_text.clear();
+		prologue_title.clear();
+		prologue_subtitle.clear();
+
+		fog_style = 0;
+		fog_start_z_height = 3000.f;
+		fog_end_z_height = 5000.f;
+		fog_density = 0.5f;
+		fog_color = { 0, 0, 0, 255 };
+
+		weather_id = 0;
+		custom_sound_environment.clear();
+		custom_light_tileset = 0;
+		water_color = { 255, 255, 255, 255 };
+
+		lua = false;
+		supported_modes = 3;
+		game_data_version = 1;
+
+		default_cam_distance = 1650;
+		max_cam_distance = 1650;
+		min_cam_distance = 1650;
+
+		players = { PlayerData {
+			.internal_number = 0,
+			.type = PlayerType::human,
+			.race = PlayerRace::human,
+			.fixed_start_position = 0,
+			.name = "",
+			.starting_position = { 0.f, 0.f },
+			.ally_low_priorities_flags = 0,
+			.ally_high_priorities_flags = 0,
+			.enemy_low_priorities_flags = 0,
+			.enemy_high_priorities_flags = 0,
+		} };
+		forces = { ForceData {
+			.allied = false,
+			.allied_victory = false,
+			.share_vision = false,
+			.share_unit_control = false,
+			.share_advanced_unit_control = false,
+			.player_masks = static_cast<int>(0xFFFFFFFF),
+			.name = "",
+		} };
+		available_upgrades.clear();
+		available_tech.clear();
+		random_unit_tables.clear();
+		random_item_tables.clear();
 	}
 
 	void save(char tileset) const {

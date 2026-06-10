@@ -163,6 +163,20 @@ export class Doodads {
 		hierarchy.map_file_write("war3map.doo", writer.buffer);
 	}
 
+	/// Writes a war3map.doo without any doodads to the current map directory.
+	/// Static because it is used to generate the files of a newly created map before any map is loaded
+	static void save_empty() {
+		BinaryWriter writer;
+		writer.write_string("W3do");
+		writer.write<uint32_t>(write_version);
+		writer.write<uint32_t>(write_subversion);
+		writer.write<uint32_t>(0); // No doodads
+		writer.write<uint32_t>(write_special_version);
+		writer.write<uint32_t>(0); // No special doodads
+
+		hierarchy.map_file_write("war3map.doo", writer.buffer);
+	}
+
 	void create(Terrain& terrain, PathingMap& pathing_map) {
 		ZoneScoped("Creating Doodads");
 		// Phase 1: Pre-load unique meshes to avoid thread pool starvation.

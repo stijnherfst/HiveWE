@@ -8,6 +8,10 @@ import MPQ;
 import Camera;
 import Globals;
 import Map;
+import MapInfo;
+import TriggerStrings;
+import Terrain;
+import Doodads;
 import <soil2/SOIL2.h>;
 import MapGlobal;
 import WorldUndoManager;
@@ -127,12 +131,13 @@ HiveWE::HiveWE(QWidget* parent)
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
+	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->new_map, &QToolButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_folder, &QPushButton::click);
 	// connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
 	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
 
-	// connect(ui.ribbon->new_map, &QAction::triggered, this, &HiveWE::load);
+	connect(ui.ribbon->new_map, &QToolButton::clicked, this, &HiveWE::new_map);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
 	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
@@ -264,6 +269,57 @@ void HiveWE::load_map(const fs::path& directory) {
 	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
+/// Immediately creates and loads a default 64x64 grassy Lordaeron Summer map.
+/// The map lives in a temporary directory until the user saves it to a location of their choosing
+void HiveWE::new_map() {
+	if (map && map->loaded) {
+		const int choice = QMessageBox::question(this, "New Map", "Do you want to save changes to the current map?", QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+
+		if (choice == QMessageBox::Cancel) {
+			return;
+		}
+
+		if (choice == QMessageBox::Yes) {
+			save();
+			if (map->is_in_temp_dir) { // The user cancelled the save dialog
+				return;
+			}
+		}
+	}
+
+	// The random part goes in the parent directory so that the map itself is named "New Map",
+	fs::path directory;
+	do {
+		directory = fs::temp_directory_path() / "HiveWE" / std::format("{:08x}", std::random_device{}()) / "New Map";
+	} while (fs::exists(directory));
+
+	std::error_code error;
+	fs::create_directories(directory, error);
+	if (error) {
+		QMessageBox::critical(this, "Creating map failed", "Failed to create a temporary directory for the new map:\n" + QString::fromStdString(error.message()));
+		return;
+	}
+
+	// Generate the minimum set of files that a map requires so that it can then be loaded like any other map
+	hierarchy.map_directory = directory;
+
+	constexpr int size_in_tiles = 64;
+	constexpr float terrain_offset = -size_in_tiles * 128.f / 2.f;
+
+	TriggerStrings trigger_strings;
+	MapInfo info;
+	info.load_defaults(trigger_strings);
+	info.update_map_bounds_info(0, 0, 0, 0, size_in_tiles + 1, size_in_tiles + 1, terrain_offset, terrain_offset);
+	info.save('L');
+	trigger_strings.save();
+	Terrain::save_blank(size_in_tiles, size_in_tiles);
+	Doodads::save_empty();
+
+	load_map(directory);
+	map->is_in_temp_dir = true;
+	setWindowTitle("HiveWE 0.11 - Untitled Map");
+}
+
 void HiveWE::load_folder() {
 	QSettings settings;
 
@@ -348,6 +404,12 @@ void HiveWE::load_mpq() {
 }
 
 void HiveWE::save() {
+	// A new map shouldn't be saved into its temporary directory; let the user pick a location instead
+	if (map->is_in_temp_dir) {
+		save_as();
+		return;
+	}
+
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 };
@@ -367,12 +429,16 @@ void HiveWE::save_as() {
 
 	emit saving_initiated();
 	if (fs::exists(file_name) && fs::equivalent(file_name, map->filesystem_path)) {
-		map->save(map->filesystem_path);
+		if (map->save(map->filesystem_path)) {
+			map->is_in_temp_dir = false;
+		}
 	} else {
 		fs::create_directories(file_name / map->name);
 
 		hierarchy.map_directory = file_name / map->name;
-		map->save(file_name / map->name);
+		if (map->save(file_name / map->name)) {
+			map->is_in_temp_dir = false;
+		}
 	}
 
 	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));

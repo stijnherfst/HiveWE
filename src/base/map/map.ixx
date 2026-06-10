@@ -57,6 +57,8 @@ export class Map: public QObject {
 
   public:
 	bool loaded = false;
+	/// The map was newly created and has not been resaved yet
+	bool is_in_temp_dir = false;
 
 	TriggerStrings trigger_strings;
 	Triggers triggers;
