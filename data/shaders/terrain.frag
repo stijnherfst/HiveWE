@@ -20,9 +20,59 @@ layout (location = 4) in vec2 world_position;
 
 layout (location = 0) out vec4 color;
 
+layout (location = 8) uniform bool show_regions;
+layout (location = 9) uniform uint region_count;
+
 layout(std430, binding = 4) buffer TextureHandles {
 	sampler2DArray textures[];
 };
+
+struct Region {
+	vec4 rect; // left, bottom, right, top
+	vec4 color; // rgb + selected flag
+};
+
+layout(std430, binding = 5) buffer RegionData {
+	Region regions[];
+};
+
+vec3 apply_regions(vec3 color, vec2 p) {
+	// The border/corner sizes must match the RegionBrush grab zones
+	const float border = 0.1;
+	const float corner = 0.20;
+	const float outline = 0.02;
+
+	for (uint i = 0u; i < region_count; i++) {
+		vec4 rect = regions[i].rect;
+		if (p.x < rect.x || p.x > rect.z || p.y < rect.y || p.y > rect.w) {
+			continue;
+		}
+
+		vec3 region_color = regions[i].color.rgb;
+		bool selected = regions[i].color.a > 0.5;
+
+		vec3 border_color = region_color;
+		if (selected) {
+			float luminance = dot(region_color, vec3(0.299, 0.587, 0.114));
+			border_color = luminance > 0.65 ? region_color * 0.45 : mix(region_color, vec3(1.0), 0.6);
+		}
+
+		// Distance to the nearest vertical/horizontal region edge
+		float dx = min(p.x - rect.x, rect.z - p.x);
+		float dy = min(p.y - rect.y, rect.w - p.y);
+
+		if (selected && dx < corner && dy < corner) {
+			bool corner_outline = dx > corner - outline || dy > corner - outline;
+			color = corner_outline ? vec3(0.0) : border_color;
+		} else if (dx < border || dy < border) {
+			color = border_color;
+		} else {
+			color = mix(color, region_color, 0.25);
+		}
+	}
+
+	return color;
+}
 
 vec4 get_fragment(uint id, vec3 uv) {
 	if (id == 0xFFFFu) {
@@ -51,6 +101,10 @@ void main() {
 
 		vec3 pathing_color = vec3((final & 2u) >> 1, (final & 4u) >> 2, (final & 8u) >> 3);
 		color.rgb = (final & 0xEu) > 0 ? mix(color.rgb, pathing_color, 0.50) : color.rgb;
+	}
+
+	if (show_regions) {
+		color.rgb = apply_regions(color.rgb, world_position);
 	}
 
 	if (render_brush) {

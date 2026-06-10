@@ -20,6 +20,7 @@ public:
 	QRibbonButton* units_visible = new QRibbonButton;
 	QRibbonButton* doodads_visible = new QRibbonButton;
 	QRibbonButton* pathing_visible = new QRibbonButton;
+	QRibbonButton* regions_visible = new QRibbonButton;
 	QRibbonButton* brush_visible = new QRibbonButton;
 	QRibbonButton* lighting_visible = new QRibbonButton;
 	QRibbonButton* water_visible = new QRibbonButton;
@@ -50,6 +51,7 @@ public:
 	QRibbonButton* doodad_palette = new QRibbonButton;
 	QRibbonButton* unit_palette = new QRibbonButton;
 	QRibbonButton* pathing_palette = new QRibbonButton;
+	QRibbonButton* region_palette = new QRibbonButton;
 
 	QToolButton* new_map = new QToolButton;
 	QToolButton* open_map_mpq = new QToolButton;

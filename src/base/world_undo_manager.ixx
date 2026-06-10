@@ -5,6 +5,7 @@ import PathingMap;
 import Units;
 import Doodads;
 import Terrain;
+import Regions;
 import "brush/brush.h";
 
 /// So we don't have to pass a global variable around
@@ -12,6 +13,7 @@ export struct WorldEditContext {
 	Terrain& terrain;
 	Units& units;
 	Doodads& doodads;
+	Regions& regions;
 	Brush* brush;
 	PathingMap& pathing_map;
 };

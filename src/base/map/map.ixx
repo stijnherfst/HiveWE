@@ -37,6 +37,7 @@ import GameplayConstants;
 import Utilities;
 import UnorderedMap;
 import "brush.h";
+import "region_brush.h";
 import <glad/glad.h>;
 import <bullet/btBulletDynamicsCommon.h>;
 import <glm/glm.hpp>;
@@ -78,6 +79,7 @@ export class Map: public QObject {
 	bool render_doodads = true;
 	bool render_units = true;
 	bool render_pathing = false;
+	bool render_regions = false;
 	bool render_brush = true;
 	bool render_lighting = true;
 	bool render_water = true;
@@ -639,6 +641,8 @@ export class Map: public QObject {
 		save_modification_file("war3map.w3q", upgrade_slk, upgrade_meta_slk, true, false);
 		save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
+		regions.save(terrain.offset.x, terrain.offset.y);
+
 		info.save(terrain.tileset);
 		trigger_strings.save();
 		triggers.save();
@@ -755,7 +759,12 @@ export class Map: public QObject {
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
-		terrain.render_ground(render_pathing, render_lighting, light_direction, brush, pathing_map);
+		if (render_regions) {
+			const auto* region_brush = dynamic_cast<RegionBrush*>(brush);
+			regions.update_render_buffer(region_brush ? &region_brush->selections : nullptr);
+		}
+
+		terrain.render_ground(render_pathing, render_lighting, light_direction, brush, pathing_map, render_regions, regions.render_buffer, regions.regions.size());
 
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
