@@ -79,10 +79,6 @@ export class Hierarchy {
 	auto open_file(const fs::path& path, const FileSource sources = FileSource::all) const -> std::expected<BinaryReader, std::string> {
 		const auto path_str = path.generic_string();
 
-		auto add_prefix = [&](std::string_view prefix) {
-			return std::string(prefix) + path_str;
-		};
-
 #define TRY_OPEN(expr) \
 	if (auto file = (expr); file) { \
 		return file; \
@@ -94,11 +90,11 @@ export class Hierarchy {
 
 		if (has_flag(sources, FileSource::imports)) {
 			if (hd && teen) {
-				TRY_OPEN(map_file_read(add_prefix("_hd.w3mod:_teen.w3mod:")));
+				TRY_OPEN(map_file_read(std::format("_hd.w3mod:_teen.w3mod:{}", path_str)));
 			}
 
 			if (hd) {
-				TRY_OPEN(map_file_read(add_prefix("_hd.w3mod:")));
+				TRY_OPEN(map_file_read(std::format("_hd.w3mod:{}", path_str)));
 			}
 
 			TRY_OPEN(map_file_read(path));
@@ -114,11 +110,11 @@ export class Hierarchy {
 			}
 
 			if (hd && teen) {
-				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_hd.w3mod:_teen.w3mod:")));
+				TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_teen.w3mod:{}", path_str)));
 			}
 
 			if (hd) {
-				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_hd.w3mod:")));
+				TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:{}", path_str)));
 			}
 
 			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
@@ -126,22 +122,24 @@ export class Hierarchy {
 			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)));
 
 			if (teen) {
-				TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_teen.w3mod:")));
+				TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_teen.w3mod:{}", path_str)));
 			}
 
-			TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:")));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:{}", path_str)));
 
-			TRY_OPEN(game_data.open_file(add_prefix("war3.w3mod:_deprecated.w3mod:")));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_deprecated.w3mod:{}", path_str)));
 		}
+
 #undef TRY_OPEN
 
 		if (aliases.exists(path_str)) {
 			return open_file(aliases.alias(path_str));
 		}
 
-		return std::unexpected(path_str + " could not be found in the hierarchy");
+		return std::unexpected(std::format("{} could not be found in the hierarchy", path_str));
 	}
 
+	[[nodiscard]]
 	bool file_exists(const fs::path& path) const {
 		if (path.empty()) {
 			return false;
