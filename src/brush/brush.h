@@ -116,5 +116,6 @@ class Brush: public QObject {
 	virtual void unselect_id(std::string_view id) {}
 
   signals:
+	void size_changed(glm::ivec2 size);
 	void selection_changed();
 };

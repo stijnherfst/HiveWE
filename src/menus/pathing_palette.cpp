@@ -70,6 +70,13 @@ PathingPalette::PathingPalette(QWidget *parent) : Palette(parent) {
 	connect(ui.brushShapeSquare, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::square); });
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() { brush.set_shape(Brush::Shape::diamond); });
 
+	connect(&brush, &Brush::size_changed, this, [&](glm::ivec2 size) {
+		const QSignalBlocker slider_blocker(ui.brushSizeSlider);
+		const QSignalBlocker spinbox_blocker(ui.brushSize);
+		ui.brushSizeSlider->setValue(size.x);
+		ui.brushSize->setValue(size.x);
+	});
+
 	connect(import_pathing, &QSmallRibbonButton::clicked, [&]() {
 		QSettings settings;
 		const QString directory = settings.value("openDirectoryPathing", QDir::current().path()).toString();

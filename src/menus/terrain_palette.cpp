@@ -552,6 +552,13 @@ void TerrainPalette::setup_brush_menu() {
 	connect(ui.brushShapeDiamond, &QPushButton::clicked, [&]() {
 		brush.set_shape(Brush::Shape::diamond);
 	});
+
+	connect(&brush, &Brush::size_changed, this, [&](glm::ivec2 size) {
+		const QSignalBlocker slider_blocker(ui.brushSizeSlider);
+		const QSignalBlocker spinbox_blocker(ui.brushSize);
+		ui.brushSizeSlider->setValue(size.x);
+		ui.brushSize->setValue(size.x);
+	});
 }
 
 /// Idempotent

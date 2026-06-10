@@ -316,5 +316,16 @@ void GLWidget::wheelEvent(QWheelEvent* event) {
 		return;
 	}
 
+	if (event->modifiers() & Qt::ShiftModifier && map->brush) {
+		// Some platforms report the delta on the x-axis when shift is held
+		const int delta = event->angleDelta().y() != 0 ? event->angleDelta().y() : event->angleDelta().x();
+		if (delta > 0) {
+			map->brush->increase_size(1);
+		} else if (delta < 0) {
+			map->brush->decrease_size(1);
+		}
+		return;
+	}
+
 	camera.mouse_scroll_event(event);
 }

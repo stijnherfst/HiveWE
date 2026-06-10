@@ -49,6 +49,7 @@ glm::vec2 Brush::get_position() const {
 void Brush::set_size(const glm::ivec2 new_size) {
 	size = glm::clamp(new_size * size_granularity, 1, 999);
 	set_shape(shape);
+	emit size_changed(size / size_granularity);
 }
 
 void Brush::set_shape(const Shape new_shape) {
