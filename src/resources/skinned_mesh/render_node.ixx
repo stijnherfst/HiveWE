@@ -20,7 +20,7 @@ export struct RenderNode {
 	bool billboardedZ;
 
 	RenderNode() = default;
-	RenderNode(const mdx::Node& node, const glm::vec3 pivot) {
+	explicit RenderNode(const mdx::Node& node, const glm::vec3 pivot) {
 		this->node = &node;
 		this->pivot = pivot;
 

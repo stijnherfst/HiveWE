@@ -471,7 +471,7 @@ export class Terrain: public QObject {
 		hierarchy.map_file_write("war3map.w3e", writer.buffer);
 	}
 
-	void render_ground(bool render_pathing, bool render_lighting, glm::vec3 light_direction, Brush* brush, PathingMap& pathing_map) const {
+	void render_ground(bool render_pathing, bool render_lighting, glm::vec3 light_direction, Brush* brush, PathingMap& pathing_map, bool render_regions, GLuint regions_buffer, int region_count) const {
 		// Render tiles
 		ground_shader->use();
 
@@ -483,6 +483,13 @@ export class Terrain: public QObject {
 		glUniform1i(3, render_lighting);
 		glUniform3fv(4, 1, &light_direction.x);
 		glUniform2i(7, width, height);
+
+		render_regions = render_regions && regions_buffer && region_count > 0;
+		glUniform1i(8, render_regions);
+		glUniform1ui(9, region_count);
+		if (render_regions) {
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, regions_buffer);
+		}
 
 		if (brush) {
 			glUniform2fv(5, 1, &brush->get_position()[0]);
@@ -530,6 +537,8 @@ export class Terrain: public QObject {
 		glUniform1i(1, render_pathing);
 		glUniform1i(2, render_lighting);
 		glUniform3fv(3, 1, &light_direction.x);
+		glUniform1i(8, render_regions);
+		glUniform1ui(9, region_count);
 		if (brush) {
 			glUniform2fv(4, 1, &brush->get_position()[0]);
 		}

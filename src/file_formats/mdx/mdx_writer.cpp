@@ -6,6 +6,11 @@ import <glm/glm.hpp>;
 namespace fs = std::filesystem;
 
 namespace mdx {
+	// In-memory static colors are BGR; on disk they are RGB. Swaps R/B (self-inverse).
+	glm::vec3 bgr_to_rgb(const glm::vec3 bgr) {
+		return glm::vec3(bgr.b, bgr.g, bgr.r);
+	}
+
 	void write_GEOS(BinaryWriter& writer, const MDX& mdx, const uint32_t version) {
 		if (mdx.geosets.empty()) {
 			return;
@@ -111,6 +116,8 @@ namespace mdx {
 
 		if (version > 800) {
 			writer.write<float>(layer.emissive_gain);
+		}
+		if (version > 900) {
 			writer.write<glm::vec3>(layer.fresnel_color);
 			writer.write<float>(layer.fresnel_opacity);
 			writer.write<float>(layer.fresnel_team_color);
@@ -152,7 +159,7 @@ namespace mdx {
 
 			// v900/v1000: 80-byte shader name string; non-empty marks the material as HD
 			if (version == 900 || version == 1000) {
-				const bool is_hd = !material.layers.empty() && material.layers[0].hd;
+				const bool is_hd = !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
 				writer.write_c_string_padded(is_hd ? "Shader_HD_DefaultUnit" : "", 80);
 			}
 
@@ -160,7 +167,7 @@ namespace mdx {
 
 			if (version < 1100) {
 				const bool is_hd_pre_v1100 = (version == 900 || version == 1000)
-					&& !material.layers.empty() && material.layers[0].hd;
+					&& !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
 
 				if (is_hd_pre_v1100) {
 					// HD pre-v1100: our single merged Layer fans out to one MDX layer entry per texture slot.
@@ -204,12 +211,12 @@ namespace mdx {
 					writer.write<float>(layer.fresnel_opacity);
 					writer.write<float>(layer.fresnel_team_color);
 
-					writer.write<uint32_t>(layer.hd);
+					writer.write<uint32_t>(static_cast<uint32_t>(layer.shader));
 					writer.write<uint32_t>(layer.textures.size());
 
 					for (size_t i = 0; i < layer.textures.size(); i++) {
 						writer.write<uint32_t>(layer.textures[i].id);
-						writer.write<uint32_t>(i);
+						writer.write<uint32_t>(layer.textures[i].slot);
 						layer.textures[i].KMTF.save(TrackTag::KMTF, writer);
 					}
 
@@ -277,7 +284,7 @@ namespace mdx {
 
 			writer.write<float>(geoset_animation.alpha);
 			writer.write<uint32_t>(geoset_animation.flags);
-			writer.write<glm::vec3>(geoset_animation.color);
+			writer.write<glm::vec3>(bgr_to_rgb(geoset_animation.color));
 			writer.write<uint32_t>(geoset_animation.geoset_id);
 
 			geoset_animation.KGAO.save(TrackTag::KGAO, writer);
@@ -444,7 +451,6 @@ namespace mdx {
 			writer.write<float>(emitter.longitude);
 			writer.write<float>(emitter.latitude);
 			writer.write_c_string_padded(emitter.path, 260);
-			writer.write<uint32_t>(emitter.reserved);
 			writer.write<float>(emitter.life_span);
 			writer.write<float>(emitter.speed);
 
@@ -480,7 +486,7 @@ namespace mdx {
 
 			emitter.node.save(writer);
 			writer.write<float>(emitter.speed);
-			writer.write<float>(emitter.variation);
+			writer.write<float>(emitter.speed_variation);
 			writer.write<float>(emitter.latitude);
 			writer.write<float>(emitter.gravity);
 			writer.write<float>(emitter.life_span);
@@ -510,6 +516,7 @@ namespace mdx {
 			writer.write<uint32_t>(emitter.priority_plane);
 			writer.write<uint32_t>(emitter.replaceable_id);
 
+			emitter.KP2S.save(TrackTag::KP2S, writer);
 			emitter.KP2R.save(TrackTag::KP2R, writer);
 			emitter.KP2L.save(TrackTag::KP2L, writer);
 			emitter.KP2G.save(TrackTag::KP2G, writer);

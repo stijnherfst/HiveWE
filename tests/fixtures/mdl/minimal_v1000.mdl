@@ -2,11 +2,10 @@ Version {
 	FormatVersion 1000,
 }
 Model "minimal_v1000" {
-	NumGeosets 1,
-	NumBones 1,
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
 	MaximumExtent { 10, 10, 20 },
+	BoundsRadius 0,
 }
 Sequences 1 {
 	Anim "Stand" {
@@ -28,14 +27,13 @@ Materials 1 {
 		Layer {
 			FilterMode None,
 			static TextureID 0,
-			static Alpha 1,
 			static EmissiveGain 0.75,
 			FresnelColor 2 {
 				Linear,
 				0: { 1, 0.5, 0 },
 				1000: { 0, 0.5, 1 },
 			}
-			static FresnelAlpha 0.4,
+			static FresnelOpacity 0.4,
 			static FresnelTeamColor 0.2,
 		}
 	}

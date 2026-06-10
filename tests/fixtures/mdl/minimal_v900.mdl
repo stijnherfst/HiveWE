@@ -2,12 +2,10 @@ Version {
 	FormatVersion 900,
 }
 Model "minimal_v900" {
-	NumGeosets 1,
-	NumBones 1,
-	NumAttachments 1,
 	BlendTime 150,
 	MinimumExtent { -10, -10, 0 },
 	MaximumExtent { 10, 10, 20 },
+	BoundsRadius 0,
 }
 Sequences 1 {
 	Anim "Stand" {
@@ -55,23 +53,12 @@ Materials 1 {
 		Shader "Shader_HD_DefaultUnit",
 		Layer {
 			FilterMode Transparent,
-			static TextureID 0,
-			static Alpha 1,
-		}
-		Layer {
-			static TextureID 1,
-		}
-		Layer {
-			static TextureID 2,
-		}
-		Layer {
-			static TextureID 3,
-		}
-		Layer {
-			static TextureID 4,
-		}
-		Layer {
-			static TextureID 5,
+			static TextureID 0 <= 0,
+			static TextureID 1 <= 1,
+			static TextureID 2 <= 2,
+			static TextureID 3 <= 3,
+			static TextureID 4 <= 4,
+			static TextureID 5 <= 5,
 		}
 	}
 }

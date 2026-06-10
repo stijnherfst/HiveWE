@@ -108,25 +108,35 @@ export class SkinnedMesh: public Resource {
 	static constexpr const char* name = "SkinnedMesh";
 
 	explicit SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
-		if (path.extension() != ".mdx" && path.extension() != ".MDX") {
-			throw std::invalid_argument("SkinnedMesh requires .mdx file, got: " + path.string());
+		fs::path new_path = path;
+		new_path.replace_extension(".mdx");
+
+		auto reader = hierarchy.open_file(new_path);
+		if (reader) {
+			mdx = std::make_shared<mdx::MDX>(reader.value());
+		} else {
+			new_path.replace_extension(".mdl");
+			const auto reader = hierarchy.open_file(new_path).value();
+
+			const auto view = std::string_view(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+			const auto result = mdx::MDX::from_mdl(view);
+			mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 		}
 
-		BinaryReader reader = [&] {
-			ScopedTimer t(profile_casc_ns);
-			return hierarchy.open_file(path).value();
-		}();
-		this->path = path;
+		if (!mdx->is_valid()) {
+			throw std::runtime_error(
+				std::format("Mesh {} has severe errors and cannot be rendered. Check them in the model editor.", path.string())
+			);
+		}
+
+		mdx->fix_up();
+
+		this->path = new_path;
 
 		size_t vertices = 0;
 		size_t indices = 0;
 		size_t matrices = 0;
 		size_t total_layers = 0;
-
-		{
-			ScopedTimer t(profile_parse_ns);
-			mdx = std::make_shared<mdx::MDX>(reader);
-		}
 
 		has_mesh = mdx->geosets.size();
 		if (!has_mesh) {
@@ -134,6 +144,9 @@ export class SkinnedMesh: public Resource {
 		}
 
 		for (const auto& i : mdx->geosets) {
+			if (mdx->materials[i.material_id].layers.empty()) {
+				continue;
+			}
 			const auto& layer = mdx->materials[i.material_id].layers[0];
 			if (layer.blend_mode != 0 && layer.blend_mode != 1) {
 				has_transparent_layers = true;
@@ -319,7 +332,7 @@ export class SkinnedMesh: public Resource {
 
 							found = true;
 
-							if (layer.hd) {
+							if (layer.shader == mdx::ShaderType::HD) {
 								switch (j) {
 									case 0:
 										suffix = "_diffuse";
@@ -347,18 +360,36 @@ export class SkinnedMesh: public Resource {
 				}
 
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(
-						resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags), static_cast<int>(texture.flags)).value()
-					);
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   replaceable_id_override->second + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(
-						mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
-						std::to_string(texture.flags),
-						static_cast<int>(texture.flags)
-					).value());
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				}
 			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags)).value());
+				// An empty filename means no texture/pure white.
+				if (texture.file_name.empty()) {
+					textures.push_back(
+						resource_manager
+							.load<GPUTexture>("textures/white.dds", std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				} else {
+					textures.push_back(
+						resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				}
 			}
 		}
 
@@ -436,6 +467,10 @@ export class SkinnedMesh: public Resource {
 			int lay_index = 0;
 			for (const auto& g : geosets) {
 				const auto& layers = mdx->materials[g.material_id].layers;
+				if (layers.empty()) {
+					continue;
+				}
+
 				const bool geoset_is_opaque = (layers[0].blend_mode == 0 || layers[0].blend_mode == 1);
 
 				for (const auto& layer : layers) {
@@ -452,8 +487,9 @@ export class SkinnedMesh: public Resource {
 					entry.layer_index_global = static_cast<uint32_t>(lay_index + layer_base);
 					entry.layer_index_local = static_cast<uint32_t>(lay_index);
 
-					auto& target = geoset_is_opaque ? (layer.hd ? opaque_entries_hd : opaque_entries_sd)
-													: (layer.hd ? transparent_entries_hd : transparent_entries_sd);
+					const bool layer_is_hd = layer.shader == mdx::ShaderType::HD;
+					auto& target = geoset_is_opaque ? (layer_is_hd ? opaque_entries_hd : opaque_entries_sd)
+													: (layer_is_hd ? transparent_entries_hd : transparent_entries_sd);
 					target.push_back(entry);
 
 					lay_index += 1;

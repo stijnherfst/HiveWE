@@ -472,8 +472,6 @@ export class Units {
 		if (mesh_path.empty()) {
 			mesh_path = items_slk.data<std::string_view>("file", id);
 		}
-		mesh_path.replace_extension(".mdx");
-
 		mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
 
 		auto result = resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt);

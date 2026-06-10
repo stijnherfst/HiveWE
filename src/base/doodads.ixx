@@ -464,7 +464,7 @@ export class Doodads {
 	}
 
 	std::shared_ptr<SkinnedMesh> get_mesh(std::string id, const int variation) {
-		std::string full_id = id + std::to_string(variation);
+		const std::string full_id = id + std::to_string(variation);
 		{
 			std::lock_guard lock(mesh_mutex);
 			if (const auto found = id_to_mesh.find(full_id); found != id_to_mesh.end()) {
@@ -472,46 +472,32 @@ export class Doodads {
 			}
 		}
 
-		fs::path mesh_path;
-		std::string variations;
-		std::string replaceable_id;
-		fs::path texture_name;
+		const bool is_doodad = doodads_slk.row_headers.contains(id);
+		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
 
-		if (doodads_slk.row_headers.contains(id)) {
-			// Is doodad
-			mesh_path = doodads_slk.data("file", id);
-			variations = doodads_slk.data("numvar", id);
-		} else {
-			mesh_path = destructibles_slk.data("file", id);
-			variations = destructibles_slk.data("numvar", id);
-
-			replaceable_id = destructibles_slk.data("texid", id);
-			texture_name = destructibles_slk.data("texfile", id);
-			texture_name.replace_extension("");
-		}
-
+		fs::path mesh_path = string_replaced(slk.data("file", id), "\\", "/");
+		const std::string variations = slk.data("numvar", id);
 		const std::string stem = mesh_path.stem().string();
-		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));
-		mesh_path.replace_extension(".mdx");
 
-		if (doodads_slk.row_headers.contains(id)) {
-			// Use base model when variation doesn't exist, only for doodads (WE/game behaviour)
-			if (!hierarchy.file_exists(mesh_path)) {
-				mesh_path.remove_filename() /= stem + ".mdx";
+		std::string custom_identifier;
+		std::optional<std::pair<int, std::string>> replaceable;
+		if (!is_doodad) {
+			const std::string replaceable_id = destructibles_slk.data("texid", id);
+			const std::string texture_name = destructibles_slk.data("texfile", id);
+			if (is_number(replaceable_id) && texture_name != "_") {
+				custom_identifier = texture_name;
+				replaceable = std::make_pair(std::stoi(replaceable_id), texture_name);
 			}
 		}
 
-		mesh_path = fs::path(string_replaced(mesh_path.string(), "\\", "/"));
+		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));
 
-		std::expected<std::shared_ptr<SkinnedMesh>, std::string> result;
-		if (is_number(replaceable_id) && texture_name != "_") {
-			result = resource_manager.load<SkinnedMesh>(
-				mesh_path,
-				texture_name.string(),
-				std::make_optional(std::make_pair(std::stoi(replaceable_id), texture_name.replace_extension("").string()))
-			);
-		} else {
-			result = resource_manager.load<SkinnedMesh>(mesh_path, "", std::nullopt);
+		auto result = resource_manager.load<SkinnedMesh>(mesh_path, custom_identifier, replaceable);
+
+		if (!result && is_doodad) {
+			// Use base model when variation doesn't exist, only for doodads (WE/game behaviour)
+			mesh_path.replace_filename(stem);
+			result = resource_manager.load<SkinnedMesh>(mesh_path, custom_identifier, replaceable);
 		}
 
 		if (!result) {

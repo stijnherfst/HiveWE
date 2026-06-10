@@ -13,6 +13,9 @@ namespace fs = std::filesystem;
 using OUTCOME_V2_NAMESPACE::failure;
 using OUTCOME_V2_NAMESPACE::result;
 
+/// All in-memory MDX (this class) colors are in BGR format
+/// In the MDX on disk format static colors are RGB and tracks are BGR
+/// In MDL everything is BGR
 namespace mdx {
 	export extern const std::unordered_map<int, std::string> replaceable_id_to_texture {
 		{1, "ReplaceableTextures/TeamColor/TeamColor00"},
@@ -103,9 +106,10 @@ namespace mdx {
 		CAMS = 'SMAC'
 	};
 
+	/// A single keyframe. inTan/outTan only used for hermite/bezier interpolation.
 	export template<typename T>
 	struct Track {
-		int32_t frame;
+		int32_t frame; /// Signed milliseconds; negative frames occur as animation lead-in
 		T value;
 		T inTan;
 		T outTan;
@@ -120,13 +124,14 @@ namespace mdx {
 		bezier = 3,
 	};
 
+	/// One animation channel: a set of keyframes plus how to interpolate them.
 	export template<typename T>
 	struct TrackHeader {
 		InterpolationType interpolation_type = InterpolationType::none;
-		int32_t global_sequence_ID = -1;
+		int32_t global_sequence_ID = -1; // Index into global_sequences, or -1 for the normal sequence timeline
 		std::vector<Track<T>> tracks;
 
-		int id = -1; // Used to track each individual track for animation purposes
+		int id = -1; /// Used to track each individual track for animation purposes
 
 		TrackHeader() = default;
 
@@ -172,36 +177,45 @@ namespace mdx {
 		bool operator==(const TrackHeader&) const = default;
 	};
 
+	/// Shading pipeline for a layer (v>=1100). On disk only SD/HD occur.
+	export enum class ShaderType: uint32_t {
+		SD = 0,
+		HD = 1,
+		SDOnHD = 2,
+	};
+
 	export struct LayerTexture {
-		uint32_t id;
-		TrackHeader<uint32_t> KMTF;
+		uint32_t id; /// Index into the model's texture list
+		uint32_t slot = 0; /// PBR role (0=diffuse,1=normal,2=ORM,3=emissive,4=team color,5=env map)
+		TrackHeader<uint32_t> KMTF; /// Animated (flipbook) texture index
 
 		bool operator==(const LayerTexture&) const = default;
 	};
 
+	/// One pass of a material: a texture (or PBR texture set) plus its blending and shading.
 	export struct Layer {
 		/// Blend mode 0 doesn't render fully transparent layers (we choose alpha < 0.01). Seen on some Reforged bridges
 		/// Blend mode 1 doesn't render layers that are alpha < 0.75. E.g. SD tree leaf textures
-		uint32_t blend_mode;
-		uint32_t shading_flags;
-		uint32_t texture_animation_id;
-		uint32_t coord_id;
-		float alpha;
+		uint32_t blend_mode; /// Filter mode: 0 None,1 Transparent,2 Blend,3 Additive,4 AddAlpha,5 Modulate,6 Modulate2x
+		uint32_t shading_flags; /// ShadingFlags bitfield
+		uint32_t texture_animation_id; /// Index into texture_animations, or -1
+		uint32_t coord_id; /// Which geoset UV set to use
+		float alpha; /// Layer opacity, default 1.0
 
-		float emissive_gain;
-		glm::vec3 fresnel_color;
-		float fresnel_opacity;
-		float fresnel_team_color;
+		float emissive_gain; /// Emissive intensity, default 1.0
+		glm::vec3 fresnel_color; /// Rim-light color, default {1,1,1}
+		float fresnel_opacity; /// Rim-light strength
+		float fresnel_team_color; /// Rim-light team-color blend
 
-		bool hd;
+		ShaderType shader; /// SD or HD shading pipeline
 
-		std::vector<LayerTexture> textures;
+		std::vector<LayerTexture> textures; /// One for SD, several (PBR slots) for HD
 
-		TrackHeader<float> KMTA;
-		TrackHeader<float> KMTE;
-		TrackHeader<glm::vec3> KFC3;
-		TrackHeader<float> KFCA;
-		TrackHeader<float> KFTC;
+		TrackHeader<float> KMTA; /// Alpha
+		TrackHeader<float> KMTE; /// Emissive gain
+		TrackHeader<glm::vec3> KFC3; /// Fresnel color
+		TrackHeader<float> KFCA; /// Fresnel alpha
+		TrackHeader<float> KFTC; /// Fresnel team color
 
 		enum ShadingFlags {
 			unshaded = 1,
@@ -229,7 +243,7 @@ namespace mdx {
 			flags = reader.read<uint32_t>();
 
 			while (reader.position < reader_pos + inclusive_size) {
-				TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
 				if (tag == TrackTag::KGTR) {
 					KGTR = TrackHeader<glm::vec3>(reader, unique_tracks++);
 				} else if (tag == TrackTag::KGRT) {
@@ -261,13 +275,13 @@ namespace mdx {
 		}
 
 		std::string name;
-		int id;
-		int parent_id;
-		int flags;
+		int id; /// Unique node id
+		int parent_id; /// Parent node id, or -1 for a root
+		int flags; /// Node type + behavior bits (see Flags)
 
-		TrackHeader<glm::vec3> KGTR;
-		TrackHeader<glm::quat> KGRT;
-		TrackHeader<glm::vec3> KGSC;
+		TrackHeader<glm::vec3> KGTR; /// Translation
+		TrackHeader<glm::quat> KGRT; /// Rotation
+		TrackHeader<glm::vec3> KGSC; /// Scaling
 
 		enum Flags {
 			dont_inherit_translation = 0x1,
@@ -285,9 +299,9 @@ namespace mdx {
 			emitter = 0x1000,
 			collision_shape = 0x2000,
 			ribbon_emitter = 0x4000,
-			// if_particle_emitter : emitter_uses_mdl,
+			/// if_particle_emitter : emitter_uses_mdl,
 			unshaded = 0x8000,
-			// if_particle_emitter : emitter_uses_tga,
+			/// if_particle_emitter : emitter_uses_tga,
 			sort_primitives_far_z = 0x10000,
 			line_emitter = 0x20000,
 			unfogged = 0x40000,
@@ -316,13 +330,14 @@ namespace mdx {
 		}
 	};
 
+	/// A named animation, defined as a time range within the global timeline.
 	export struct Sequence {
 		std::string name;
-		uint32_t start_frame;
-		uint32_t end_frame;
-		float movespeed;
-		uint32_t flags;
-		float rarity;
+		uint32_t start_frame; /// Interval start (ms)
+		uint32_t end_frame; /// Interval end (ms)
+		float movespeed; /// Movement speed this animation is tuned for
+		uint32_t flags; /// looping / non_looping
+		float rarity; /// Random-pick weight among variants
 		uint32_t sync_point;
 		Extent extent;
 
@@ -335,12 +350,12 @@ namespace mdx {
 	export struct Geoset {
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normals;
-		std::vector<uint32_t> face_type_groups;
-		std::vector<uint32_t> face_groups;
-		std::vector<uint16_t> faces;
-		std::vector<uint8_t> vertex_groups;
-		std::vector<uint32_t> matrix_groups;
-		std::vector<uint32_t> matrix_indices;
+		std::vector<uint32_t> face_type_groups; /// Primitive type per group (4 = triangles)
+		std::vector<uint32_t> face_groups; /// Index count per group
+		std::vector<uint16_t> faces; /// Vertex indices
+		std::vector<uint8_t> vertex_groups; /// Per-vertex matrix-group index (SD skinning)
+		std::vector<uint32_t> matrix_groups; /// Bone count per matrix group
+		std::vector<uint32_t> matrix_indices; /// Flattened bone indices for the groups
 
 		uint32_t material_id;
 		uint32_t selection_group;
@@ -361,20 +376,21 @@ namespace mdx {
 		std::vector<std::vector<glm::vec2>> uv_sets;
 	};
 
+	/// Animates a geoset's overall alpha and color tint.
 	export struct GeosetAnimation {
-		float alpha;
+		float alpha; // Default 1.0
 		uint32_t flags;
-		glm::vec3 color; // BGR, not RGB
+		glm::vec3 color; // Static tint, BGR default {1,1,1}
 		uint32_t geoset_id;
 
-		TrackHeader<float> KGAO;
-		TrackHeader<glm::vec3> KGAC;
+		TrackHeader<float> KGAO; // Alpha
+		TrackHeader<glm::vec3> KGAC; // Color
 	};
 
 	export struct Texture {
-		uint32_t replaceable_id;
-		fs::path file_name;
-		uint32_t flags;
+		uint32_t replaceable_id; // Non-zero = engine-supplied texture (team color/glow/...)
+		fs::path file_name; // Used when replaceable_id == 0
+		uint32_t flags; // Wrap width/height
 
 		enum Flags {
 			wrap_width = 1,
@@ -385,70 +401,79 @@ namespace mdx {
 	};
 
 	export struct Material {
-		uint32_t priority_plane;
-		uint32_t flags;
+		uint32_t priority_plane; // Higher draws later (over lower)
+		uint32_t flags; // See Flags
 		std::vector<Layer> layers;
+
+		enum Flags {
+			constant_color = 0x1,
+			sort_primitives_near_z = 0x8,
+			sort_primitives_far_z = 0x10,
+			full_resolution = 0x20
+		};
 
 		bool operator==(const Material&) const = default;
 	};
 
+	/// A skeletal bone; can be tied to a geoset and a geoset animation.
 	struct Bone {
 		Node node;
-		int32_t geoset_id;
-		int32_t geoset_animation_id;
+		int32_t geoset_id; // Geoset it deforms, or -1
+		int32_t geoset_animation_id; // Geoset animation it uses, or -1
 	};
 
+	/// A dynamic light (omni/directional/ambient) attached to a node.
 	struct Light {
 		Node node;
-		int type;
-		int attenuation_start;
-		int attenuation_end;
-		glm::vec3 color;
+		int type; // omni / directional / ambient
+		float attenuation_start; // Distance where falloff begins
+		float attenuation_end; // Distance where light reaches zero
+		glm::vec3 color; // Default {1,1,1}
 		float intensity;
-		glm::vec3 ambient_color;
+		glm::vec3 ambient_color; // Default {1,1,1}
 		float ambient_intensity;
 		float shadow_intensity;
 
-		TrackHeader<uint32_t> KLAS;
-		TrackHeader<uint32_t> KLAE;
-		TrackHeader<glm::vec3> KLAC;
-		TrackHeader<float> KLAI;
-		TrackHeader<float> KLBI;
-		TrackHeader<glm::vec3> KLBC;
-		TrackHeader<float> KLAV;
+		TrackHeader<float> KLAS; // Attenuation start
+		TrackHeader<float> KLAE; // Attenuation end
+		TrackHeader<glm::vec3> KLAC; // Color
+		TrackHeader<float> KLAI; // Intensity
+		TrackHeader<float> KLBI; // Ambient intensity
+		TrackHeader<glm::vec3> KLBC; // Ambient color
+		TrackHeader<float> KLAV; // Visibility
 	};
 
+	// An attachment point (e.g. weapon/overhead/origin) where other models can be hung.
 	struct Attachment {
 		Node node;
 		std::string path; // Reference to Undead, NE, or Naga birth anim
 		int reserved; // ToDo mine meaning of reserved from Game.dll, likely strlen
 		int attachment_id;
 
-		TrackHeader<float> KATV;
+		TrackHeader<float> KATV; // Visibility
 	};
 
-	// Dragon/bird death bone emitter; usually emit MDLs based
-	// on "path" string, but has a setting to emit TGAs from
-	// path also (In practice EmitterUsesTGA setting is almost
-	// never used, in favor of ParticleEmitter2).
+	/// Dragon/bird death bone emitter; usually emit MDLs based
+	/// on "path" string, but has a setting to emit TGAs from
+	/// path also (In practice EmitterUsesTGA setting is almost
+	/// never used, in favor of ParticleEmitter2).
 	struct ParticleEmitter1 {
 		Node node;
-		float emission_rate;
+		float emission_rate; // Particles spawned per second
 		float gravity;
-		float longitude;
-		float latitude;
-		std::string path;
-		int reserved; // ToDo mine meaning, same as Attachment's reserved?
-		float life_span;
-		float speed;
+		float longitude; // Horizontal spread angle
+		float latitude; // Vertical spread angle
+		std::string path; // Model (or TGA) to spawn as a particle
+		float life_span; // Particle lifetime
+		float speed; // Initial particle velocity
 
-		TrackHeader<float> KPEE;
-		TrackHeader<float> KPEG;
-		TrackHeader<float> KPLN;
-		TrackHeader<float> KPLT;
-		TrackHeader<float> KPEL;
-		TrackHeader<float> KPES;
-		TrackHeader<float> KPEV;
+		TrackHeader<float> KPEE; // Emission rate
+		TrackHeader<float> KPEG; // Gravity
+		TrackHeader<float> KPLN; // Longitude
+		TrackHeader<float> KPLT; // Latitude
+		TrackHeader<float> KPEL; // Lifespan
+		TrackHeader<float> KPES; // Speed
+		TrackHeader<float> KPEV; // Visibility
 	};
 
 	/*
@@ -483,65 +508,88 @@ namespace mdx {
 	*/
 	export struct ParticleEmitter2 {
 		Node node;
+		/// Initial particle velocity
 		float speed;
-		float variation;
+		/// The factor by which the speed can vary. total_speed = speed * (1.f + speed_variation * rng[-1,1])
+		float speed_variation;
+		/// Emission cone angle, rotates around Y-axis
 		float latitude;
+		/// Positive is down, negative is up
 		float gravity;
+		/// Particle lifetime, always positive
 		float life_span;
+		/// Particles spawned per second, 0 or positive only!
 		float emission_rate;
+		/// Emitter rectangle length, on spawn a particle gets randomly offset along y-axis by 0.5 * length
 		float length;
+		/// Emitter rectangle width, on spawn a particle gets randomly offset along x-axis by 0.5 * width
 		float width;
-		uint32_t filter_mode;
-		uint32_t rows; // for Textures\Clouds8x8 files
+		uint32_t filter_mode; // Blend/additive/modulate/...
+		/// Texture atlas rows, always >=1
+		uint32_t rows;
+		/// Texture atlas columns, always >=1
 		uint32_t columns;
+		/// 0 is head
+		/// 1 is tail
+		/// 2 is both
 		uint32_t head_or_tail;
+		/// Always >= 0
 		float tail_length;
+		/// Normalized factor for when particle switches from start->middle to middle->end
 		float time_middle;
 
-		glm::vec3 start_segment_color;
+		glm::vec3 start_segment_color; // Color at birth
 		glm::vec3 middle_segment_color;
-		glm::vec3 end_segment_color;
-		glm::u8vec3 segment_alphas;
-		glm::vec3 segment_scaling;
+		glm::vec3 end_segment_color; // Color at death
+		glm::u8vec3 segment_alphas; // Alpha at start/middle/end
+		glm::vec3 segment_scaling; // Scale at start/middle/end
+		/// Atlas cell range for head life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 head_intervals;
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 head_decay_intervals;
-		glm::uvec3 tail_intervals;
+		/// Atlas cell range for tail life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
+		glm::uvec3 tail_intervals; // Atlas cell range for tail life stages
+		/// Atlas cell range for tail life stages
+		/// x (start) <=> y (end), z (repeat >= 0 where z == 0 should behave as z == 1
 		glm::uvec3 tail_decay_intervals;
-		uint32_t texture_id;
-		uint32_t squirt;
+		uint32_t texture_id; // Index into textures
+		uint32_t squirt; // Burst-emission mode, 0 or 1
 		uint32_t priority_plane;
-		uint32_t replaceable_id; // for Wisp team color particles
+		uint32_t replaceable_id; // for e.g. Wisp team color particles
 
-		TrackHeader<float> KP2S;
-		TrackHeader<float> KP2R;
-		TrackHeader<float> KP2L;
-		TrackHeader<float> KP2G;
-		TrackHeader<float> KP2E;
-		TrackHeader<float> KP2N;
-		TrackHeader<float> KP2W;
-		TrackHeader<float> KP2V;
+		TrackHeader<float> KP2S; // Speed
+		TrackHeader<float> KP2R; // Variation
+		TrackHeader<float> KP2L; // Latitude
+		TrackHeader<float> KP2G; // Gravity
+		TrackHeader<float> KP2E; // Emission rate
+		TrackHeader<float> KP2N; // Length
+		TrackHeader<float> KP2W; // Width
+		TrackHeader<float> KP2V; // Visibility. 0 = invisible, non-zero is visible
 	};
 
+	/// Emits a continuous trailing ribbon (e.g. sword swipes) following the node.
 	struct RibbonEmitter {
 		Node node;
-		float height_above;
-		float height_below;
+		float height_above; // Ribbon extent above the node
+		float height_below; // Ribbon extent below the node
 		float alpha;
 		glm::vec3 color;
-		float life_span;
+		float life_span; // How long each ribbon segment persists
 		uint32_t texture_slot;
-		uint32_t emission_rate;
+		uint32_t emission_rate; // Segments spawned per second
 		uint32_t rows;
 		uint32_t columns;
 		uint32_t material_id; // note: not a texture id, avoids need for filtermode field like PE2
 		float gravity;
 
-		TrackHeader<float> KRHA;
-		TrackHeader<float> KRHB;
-		TrackHeader<float> KRAL;
-		TrackHeader<glm::vec3> KRCO;
-		TrackHeader<uint32_t> KRTX;
-		TrackHeader<float> KRVS;
+		TrackHeader<float> KRHA; // Height above
+		TrackHeader<float> KRHB; // Height below
+		TrackHeader<float> KRAL; // Alpha
+		TrackHeader<glm::vec3> KRCO; // Color
+		TrackHeader<uint32_t> KRTX; // Texture slot
+		TrackHeader<float> KRVS; // Visibility
 	};
 
 	/*
@@ -555,7 +603,7 @@ namespace mdx {
 
 	 Every EventObject's name is typically 8 characters. It usually starts with:
 		SPN to spawn a model file from "Splats\SpawnData.slk"
-		   - Example: illidan footprints, blood particle emitters
+		   - Example: Illidan footprints, blood particle emitters
 		SPLT to spawn a ground texture from "Splats\SplatData.slk"
 			 - Example: blood ground texture on unit death
 		FPT to spawn a footprint also from "Splats\SplatData.slk"
@@ -596,7 +644,7 @@ namespace mdx {
 	struct EventObject {
 		Node node;
 		int global_sequence_id; // signed, -1 to specify "none"
-		std::vector<uint32_t> times;
+		std::vector<int32_t> times; // Frame times (ms) at which the event fires
 	};
 
 	/*
@@ -629,38 +677,56 @@ namespace mdx {
 		};
 
 		Node node;
-		Shape type;
-		glm::vec3 vertices[2]; // sometimes only 1 is used
-		float radius; // used for sphere/cylinder
+		Shape type; /// Box/Plane/Sphere/Cylinder
+		glm::vec3 vertices[2]; /// sometimes only 1 is used
+		float radius; /// used for sphere/cylinder
 	};
 
+	/// FaceFX facial-animation effect: a target node and an effect file path.
+	/// Afaik the FaceFX format for Warcraft III has not been researched/modified
 	struct FaceFX {
-		std::string name;
-		fs::path path;
+		std::string name; /// Target node name
+		fs::path path; /// FaceFX effect file
 	};
 
+	/// PopcornFX emitter. We keep its payload opaque and re-emit it verbatim.
+	/// The debug leak that happened accidentally in 2025 revealed the info needed to reverse engineer PopcornFX
 	struct CornEmitter {
 		Node node;
-		std::vector<uint8_t> data; // Just store it so we can save it again
+		std::vector<uint8_t> data; /// Just store it so we can save it again
 	};
 
+	/// A camera with a position, look-at target, and lens settings.
 	struct Camera {
 		std::string name;
 		glm::vec3 position;
-		float field_of_view;
+		float field_of_view; /// Radians
 		float far_clip;
 		float near_clip;
-		glm::vec3 target_position;
+		glm::vec3 target_position; /// Look-at point
 
-		TrackHeader<glm::vec3> KCTR; // Translation
-		TrackHeader<float> KCRL;     // Roll
-		TrackHeader<glm::vec3> KTTR; // Target translation
+		TrackHeader<glm::vec3> KCTR; /// Translation
+		TrackHeader<float> KCRL; /// Roll
+		TrackHeader<glm::vec3> KTTR; /// Target translation
 	};
 
+	/// Animates a layer's UV transform (scroll/rotate/scale of texture coordinates).
 	struct TextureAnimation {
-		TrackHeader<glm::vec3> KTAT; // Translation
-		TrackHeader<glm::quat> KTAR; // Rotation
-		TrackHeader<glm::vec3> KTAS; // Scaling
+		TrackHeader<glm::vec3> KTAT; /// Translation
+		TrackHeader<glm::quat> KTAR; /// Rotation
+		TrackHeader<glm::vec3> KTAS; /// Scaling
+	};
+
+	export enum class ValidationSeverity {
+		error,   /// Corrupt data or an invalid reference, cannot render
+		severe,  /// Renders, but is visibly broken
+		warning, /// Suspicious or non-fatal
+		unused,  /// Defined but never referenced
+	};
+
+	export struct ValidationMessage {
+		ValidationSeverity severity;
+		std::string message;
 	};
 
 	export class MDX {
@@ -671,9 +737,9 @@ namespace mdx {
 
 		uint32_t version = LATEST_MDX_VERSION;
 		std::string name;
-		std::string animation_filename;
+		std::string animation_filename; /// External animation file, usually empty
 		Extent extent;
-		uint32_t blend_time;
+		uint32_t blend_time; /// Animation cross-fade time (ms)
 
 		std::string face_target;
 		std::string face_path;
@@ -713,10 +779,18 @@ namespace mdx {
 		[[nodiscard]]
 		BinaryWriter to_mdx(uint32_t version = LATEST_MDX_VERSION) const;
 
-		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION);
+		std::string to_mdl(uint32_t version = LATEST_MDX_VERSION) const;
 		static result<MDX, std::string> from_mdl(std::string_view mdl);
 
-		void validate();
+		/// Whether the model contains hard errors that make it unable to be rendered
+		bool is_valid();
+
+		/// Fixes errors in models that the game tolerates
+		void fix_up();
+
+		/// Returns a list of model errors and warnings. May do expensive work, for the
+		/// cheap render-path check use is_valid() instead.
+		std::vector<ValidationMessage> validate();
 
 		void merge_with(const MDX& mdx, const glm::mat4& transform);
 
@@ -865,8 +939,8 @@ namespace mdx {
 	};
 } // namespace mdx
 
-// All our hashes
-// C++ really needs a derive macro for this
+/// All our hashes
+/// C++ really needs a derive macro for this
 template<typename T>
 void hash_combine(std::size_t& seed, const T& v) {
 	seed ^= std::hash<T> {}(v) + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
@@ -877,7 +951,7 @@ struct hash_vector {
 	std::size_t operator()(const std::vector<T>& vec) const {
 		std::size_t h = 0;
 		for (const auto& item : vec) {
-			hash_combine(h, item); // assumes std::hash<T> is defined
+			hash_combine(h, item); /// assumes std::hash<T> is defined
 		}
 		return h;
 	}
@@ -925,6 +999,7 @@ namespace std {
 		std::size_t operator()(const mdx::LayerTexture& lt) const {
 			std::size_t h = 0;
 			hash_combine(h, lt.id);
+			hash_combine(h, lt.slot);
 			hash_combine(h, lt.KMTF);
 			return h;
 		}
@@ -943,7 +1018,7 @@ namespace std {
 			hash_combine(h, l.fresnel_color);
 			hash_combine(h, l.fresnel_opacity);
 			hash_combine(h, l.fresnel_team_color);
-			hash_combine(h, l.hd);
+			hash_combine(h, static_cast<uint32_t>(l.shader));
 			for (const auto& texture : l.textures) {
 				hash_combine(h, texture);
 			}

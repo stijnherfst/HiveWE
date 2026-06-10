@@ -54,6 +54,12 @@ export class EditableMesh: public Resource {
 	explicit EditableMesh(std::shared_ptr<mdx::MDX> mdx, std::optional<std::pair<int, std::string>> replaceable_id_override) {
 		this->mdx = mdx;
 
+		if (!mdx->is_valid()) {
+			throw std::runtime_error("Mesh has severe errors and cannot be rendered. Check them in the model editor.");
+		}
+
+		mdx->fix_up();
+
 		size_t vertices = 0;
 		size_t indices = 0;
 		size_t matrices = 0;
@@ -185,7 +191,7 @@ export class EditableMesh: public Resource {
 
 							found = true;
 
-							if (layer.hd) {
+							if (layer.shader == mdx::ShaderType::HD) {
 								switch (j) {
 									case 0:
 										suffix = "_diffuse";
@@ -213,18 +219,36 @@ export class EditableMesh: public Resource {
 				}
 
 				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(
-						resource_manager.load<GPUTexture>(replaceable_id_override->second + suffix, std::to_string(texture.flags), static_cast<int>(texture.flags)).value()
-					);
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   replaceable_id_override->second + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				} else {
-					textures.push_back(resource_manager.load<GPUTexture>(
-						mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
-						std::to_string(texture.flags),
-						static_cast<int>(texture.flags)
-					).value());
+					textures.push_back(resource_manager
+										   .load<GPUTexture>(
+											   mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
+											   std::to_string(texture.flags),
+											   static_cast<int>(texture.flags)
+										   )
+										   .value());
 				}
 			} else {
-				textures.push_back(resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags)).value());
+				// An empty filename means no texture/pure white.
+				if (texture.file_name.empty()) {
+					textures.push_back(
+						resource_manager
+							.load<GPUTexture>("textures/white.dds", std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				} else {
+					textures.push_back(
+						resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags))
+							.value()
+					);
+				}
 			}
 		}
 
@@ -317,6 +341,10 @@ export class EditableMesh: public Resource {
 
 		for (const auto& geoset_entry : geosets) {
 			const auto& layers = mdx->materials[geoset_entry.material_id].layers;
+			if (layers.empty()) {
+				continue;
+			}
+
 			const bool geoset_is_opaque = (layers[0].blend_mode == 0 || layers[0].blend_mode == 1);
 			if (geoset_is_opaque != opaque_pass) {
 				continue;
@@ -330,7 +358,7 @@ export class EditableMesh: public Resource {
 			}
 
 			for (const auto& layer : layers) {
-				if (layer.hd != render_hd) {
+				if ((layer.shader == mdx::ShaderType::HD) != render_hd) {
 					continue;
 				}
 

@@ -1,10 +1,74 @@
-﻿STRING 1
+﻿STRING 6
+// Doodads: D000 (geoset_animation_color_animation), Name (Name)
 {
-Player 1
+geoset_animation_color_animation
 }
 
-STRING 2
+STRING 7
+// Doodads: D001 (material_no_texture), Name (Name)
 {
-Force 1
+material_no_texture
+}
+
+STRING 8
+// Doodads: D002 (geoset_dynamic_alpha), Name (Name)
+{
+geoset_dynamic_alpha
+}
+
+STRING 9
+// Doodads: D003 (geoset_dynamic_color), Name (Name)
+{
+geoset_dynamic_color
+}
+
+STRING 10
+// Doodads: D004 (geoset_layer_dynamic_alpha), Name (Name)
+{
+geoset_layer_dynamic_alpha
+}
+
+STRING 11
+// Doodads: D005 (layer_dynamic_alpha), Name (Name)
+{
+layer_dynamic_alpha
+}
+
+STRING 12
+// Doodads: D006 (alpha_plane_blue), Name (Name)
+{
+alpha_plane_blue
+}
+
+STRING 13
+// Doodads: D007 (material_no_layer), Name (Name)
+{
+material_no_layer
+}
+
+STRING 14
+{
+HiveWE Test Map
+}
+
+STRING 15
+{
+Any
+}
+
+STRING 16
+{
+Nondescript
+}
+
+STRING 17
+{
+Unknown
+}
+
+STRING 18
+// Doodads: D008 (emitter2_dynamic_visibility), Name (Name)
+{
+emitter2_dynamic_visibility
 }
 

@@ -16,6 +16,7 @@ import SkinnedMesh;
 import SkeletalModelInstance;
 import Globals;
 import MapGlobal;
+import Rects;
 import <glad/glad.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;

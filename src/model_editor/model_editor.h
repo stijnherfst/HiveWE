@@ -19,7 +19,11 @@ class ModelEditor : public QMainWindow {
 public:
 	explicit ModelEditor(QWidget* parent = nullptr);
 
-	[[nodiscard]] std::expected<void, std::string> open_model(const fs::path& path, bool local_file) const;
+	void open_file();
+	/// Parent specifies which dock area widget the model will open in
+	void browse_models(ads::CDockAreaWidget* parent);
+
+	[[nodiscard]] std::expected<ads::CDockWidget*, std::string> open_model(const fs::path& path, bool local_file) const;
 
 
 	void keyPressEvent(QKeyEvent* event) override {

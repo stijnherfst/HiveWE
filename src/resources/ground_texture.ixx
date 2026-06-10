@@ -46,20 +46,36 @@ export class GroundTexture : public Resource {
 			})
 			.value();
 
-		int width;
-		int height;
-		int channels;
-		uint8_t* data;
+		int width = 0;
+		int height = 0;
+		int channels = 0;
+
+		std::vector<uint8_t> blp_data;
+		uint8_t* soil_data = nullptr;
+		// To avoid intermediate memcpy
+		const uint8_t* pixels = nullptr;
 
 		if (new_path.extension() == ".blp") {
-			data = blp::load(reader, width, height, channels);
+			auto image = blp::load(reader);
+			if (!image) {
+				throw std::runtime_error(std::format("Failed to load ground texture {}: {}", new_path.string(), image.error()));
+			}
+			width = image->width;
+			height = image->height;
+			channels = image->channels;
+			blp_data = std::move(image->data);
+			pixels = blp_data.data();
 		} else {
-			data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
+			soil_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
+			if (soil_data == nullptr) {
+				throw std::runtime_error(std::format("Failed to decode ground texture {}", new_path.string()));
+			}
+			pixels = soil_data;
 		}
 
 		tile_size = std::max(height * 0.25f, 1.f);
 		extended = (width == height * 2);
-		int lods = log2(tile_size) + 1;
+		const int lods = log2(tile_size) + 1;
 
 		const int format = channels == 3 ? GL_RGB : GL_RGBA;
 		const int bit_format = channels == 3 ? GL_RGB8 : GL_RGBA8;
@@ -73,15 +89,17 @@ export class GroundTexture : public Resource {
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 		for (int y = 0; y < 4; y++) {
 			for (int x = 0; x < 4; x++) {
-				glTextureSubImage3D(id, 0, 0, 0, y * 4 + x, tile_size, tile_size, 1, format, GL_UNSIGNED_BYTE, data + (y * tile_size * width + x * tile_size) * channels);
+				glTextureSubImage3D(id, 0, 0, 0, y * 4 + x, tile_size, tile_size, 1, format, GL_UNSIGNED_BYTE, pixels + (y * tile_size * width + x * tile_size) * channels);
 
 				if (extended) {
-					glTextureSubImage3D(id, 0, 0, 0, y * 4 + x + 16, tile_size, tile_size, 1, format, GL_UNSIGNED_BYTE, data + (y * tile_size * width + (x + 4) * tile_size) * channels);
+					glTextureSubImage3D(id, 0, 0, 0, y * 4 + x + 16, tile_size, tile_size, 1, format, GL_UNSIGNED_BYTE, pixels + (y * tile_size * width + (x + 4) * tile_size) * channels);
 				}
 			}
 		}
-		delete data;
 		glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+		free(soil_data);
+
 		glGenerateTextureMipmap(id);
 
 		glGetTextureSubImage(id, lods - 1, 0, 0, 0, 1, 1, 1, format, GL_FLOAT, 16, &minimap_color);

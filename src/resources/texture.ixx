@@ -2,6 +2,9 @@ module;
 
 #include <vector>
 #include <filesystem>
+#include <format>
+#include <stdexcept>
+#include <utility>
 
 export module Texture;
 
@@ -47,14 +50,22 @@ export class Texture : public Resource {
 			})
 			.value();
 
-		uint8_t* image_data;
-
 		if (new_path.extension() == ".blp") {
-			image_data = blp::load(reader, width, height, channels);
+			auto image = blp::load(reader);
+			if (!image) {
+				throw std::runtime_error(std::format("Failed to load texture {}: {}", new_path.string(), image.error()));
+			}
+			width = image->width;
+			height = image->height;
+			channels = image->channels;
+			data = std::move(image->data);
 		} else {
-			image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
+			uint8_t* image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
+			if (image_data == nullptr) {
+				throw std::runtime_error(std::format("Failed to decode texture {}", new_path.string()));
+			}
+			data = std::vector<uint8_t>(image_data, image_data + static_cast<size_t>(width) * height * channels);
+			free(image_data);
 		}
-		data = std::vector<uint8_t>(image_data, image_data + width * height * channels);
-		delete image_data;
 	}
 };

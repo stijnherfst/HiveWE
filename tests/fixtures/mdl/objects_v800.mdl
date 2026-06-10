@@ -1,0 +1,101 @@
+Version {
+	FormatVersion 800,
+}
+Model "objects" {
+	BlendTime 150,
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Sequences 1 {
+	Anim "Stand" {
+		Interval { 0, 1000 },
+	}
+}
+Textures 1 {
+	Bitmap {
+		Image "Textures/white.blp",
+	}
+}
+Materials 1 {
+	Material {
+		Layer {
+			FilterMode None,
+			static TextureID 0,
+		}
+	}
+}
+Geoset {
+	Vertices 3 {
+		{ 0, 0, 0 },
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+	}
+	Normals 3 {
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+	}
+	TVertices 3 {
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 0, 1 },
+	}
+	VertexGroup {
+		0,
+		0,
+		0,
+	}
+	Faces 1 3 {
+		Triangles {
+			{ 0, 1, 2 },
+		}
+	}
+	Groups 1 1 {
+		Matrices { 0 },
+	}
+	Anim {
+		MinimumExtent { -1, -1, 0 },
+		MaximumExtent { 1, 1, 1 },
+	}
+	MaterialID 0,
+}
+Bone "Root" {
+	ObjectId 0,
+}
+Light "Lamp" {
+	ObjectId 1,
+	Parent 0,
+	Omnidirectional,
+	static AttenuationStart 200,
+	static AttenuationEnd 50,
+}
+Attachment "Ref" {
+	ObjectId 2,
+	Parent 0,
+	AttachmentID 0,
+	Path "foo.txt",
+}
+ParticleEmitter "Emit" {
+	ObjectId 3,
+	Parent 0,
+	EmitterUsesMdl,
+	static EmissionRate 1,
+	static LifeSpan 1,
+	static InitVelocity 1,
+	Path "foo.bar",
+}
+PivotPoints 4 {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+}
+Camera "Cam" {
+	Position { 0, 0, 0 },
+	FieldOfView 0.9,
+	FarClip 50,
+	NearClip 100,
+	Target {
+		Position { 0, 0, 0 },
+	}
+}

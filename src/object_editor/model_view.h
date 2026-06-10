@@ -1,5 +1,9 @@
 #pragma once
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -15,4 +19,7 @@ public:
 
 	QString current_model_path();
 	void set_current_model_path(const QString& path);
+
+signals:
+	void doubleClicked(const fs::path& path);
 };

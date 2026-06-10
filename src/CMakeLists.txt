@@ -31,6 +31,7 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/units_undo.ixx"
 	"base/pathing_undo.ixx"
 	"base/doodads_undo.ixx"
+	"base/regions_undo.ixx"
 	"base/units.ixx"
 	"base/terrain.ixx"
 
@@ -121,6 +122,7 @@ target_sources(HiveWE_lib PRIVATE
 	"brush/brush.cpp"
 	"brush/doodad_brush.cpp"
 	"brush/pathing_brush.cpp"
+	"brush/region_brush.cpp"
 	"brush/terrain_brush.cpp"
 	"brush/terrain_operators.cpp"
 	"brush/unit_brush.cpp"
@@ -139,6 +141,7 @@ target_sources(HiveWE_lib PRIVATE
 	"menus/minimap.cpp"
 	"menus/palette.cpp"
 	"menus/pathing_palette.cpp"
+	"menus/region_palette.cpp"
 	"menus/settings_editor.cpp"
 	"menus/terrain_palette.cpp"
 	"menus/unit_palette.cpp"
@@ -167,6 +170,7 @@ target_sources(HiveWE_lib PRIVATE
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
 	"model_editor/model_editor_glwidget.cpp"
+	"model_editor/model_editor_imgui.cpp"
 
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"

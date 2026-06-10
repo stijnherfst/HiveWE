@@ -14,6 +14,7 @@ import WorldUndoManager;
 import SkinnedMeshGlobals;
 import ResourceManager;
 import "pathing_palette.h";
+import "region_palette.h";
 import "object_editor/object_editor.h";
 import "model_editor/model_editor.h";
 import "tile_setter.h";
@@ -57,6 +58,7 @@ HiveWE::HiveWE(QWidget* parent)
 			.terrain = map->terrain,
 			.units = map->units,
 			.doodads = map->doodads,
+			.regions = map->regions,
 			.brush = map->brush,
 			.pathing_map = map->pathing_map,
 		};
@@ -73,6 +75,7 @@ HiveWE::HiveWE(QWidget* parent)
 			.terrain = map->terrain,
 			.units = map->units,
 			.doodads = map->doodads,
+			.regions = map->regions,
 			.brush = map->brush,
 			.pathing_map = map->pathing_map,
 		};
@@ -86,6 +89,7 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
 	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
 	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map->render_pathing = checked; });
+	connect(ui.ribbon->regions_visible, &QPushButton::toggled, [](bool checked) { map->render_regions = checked; });
 	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) { map->render_brush = checked; });
 	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map->render_lighting = checked; });
 	connect(ui.ribbon->water_visible, &QPushButton::toggled, [](bool checked) { map->render_water = checked; });
@@ -97,6 +101,7 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(new QShortcut(Qt::CTRL | Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_P, this), &QShortcut::activated, ui.ribbon->pathing_visible, &QPushButton::click);
+	connect(new QShortcut(Qt::CTRL | Qt::Key_R, this), &QShortcut::activated, ui.ribbon->regions_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_L, this), &QShortcut::activated, ui.ribbon->lighting_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_W, this), &QShortcut::activated, ui.ribbon->water_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_I, this), &QShortcut::activated, ui.ribbon->click_helpers_visible, &QPushButton::click);
@@ -177,6 +182,16 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
 		ui.ribbon->pathing_visible->setChecked(true);
 		open_palette<PathingPalette>();
+	});
+
+	connect(new QShortcut(QKeySequence(Qt::Key_R), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
+		ui.ribbon->regions_visible->setChecked(true);
+		open_palette<RegionPalette>();
+	});
+
+	connect(ui.ribbon->region_palette, &QRibbonButton::clicked, [this]() {
+		ui.ribbon->regions_visible->setChecked(true);
+		open_palette<RegionPalette>();
 	});
 
 	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {

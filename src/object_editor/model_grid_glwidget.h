@@ -18,14 +18,14 @@ import Shader;
 import <glm/glm.hpp>;
 
 enum class ModelCategory {
-	Abilities,
+	Map,
+	Units,
 	Buildings,
+	Abilities,
 	Doodads,
 	Environment,
 	Objects,
 	SharedModels,
-	Units,
-	Map,
 	Count
 };
 
@@ -46,6 +46,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	void resizeGL(int w, int h) override;
 	void paintGL() override;
 
+	bool event(QEvent* event) override;
 	void mousePressEvent(QMouseEvent* event) override;
 	void wheelEvent(QWheelEvent* event) override;
 
@@ -58,6 +59,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 
   signals:
 	void clicked(const std::filesystem::path& path);
+	void double_clicked(const std::filesystem::path& path);
 	void scroll_changed(int offset);
 	void content_height_changed(int total_px);
 
@@ -72,6 +74,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 		glm::vec3 fit_position{ 0.f, 0.f, 0.f };
 		bool loaded = false;
 		bool load_failed = false;
+		std::string load_error_message;
 	};
 
 	struct LayoutRow {
@@ -102,7 +105,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	QElapsedTimer elapsed_timer;
 	double delta = 0.0;
 
-	void load_cell(PreviewCell& cell);
+	void load_cell(PreviewCell& cell) const;
 	void rebuild_layout();
 	int content_height_px() const;
 	int max_scroll_offset() const;

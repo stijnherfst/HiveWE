@@ -247,6 +247,7 @@ void TerrainBrush::apply_end() {
 		.terrain = map->terrain,
 		.units = map->units,
 		.doodads = map->doodads,
+		.regions = map->regions,
 		.brush = this,
 		.pathing_map = map->pathing_map,
 	};

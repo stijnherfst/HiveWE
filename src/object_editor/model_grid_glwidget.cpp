@@ -1,7 +1,10 @@
 #include "model_grid_glwidget.h"
 
+#include <QHelpEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QStyle>
+#include <QToolTip>
 #include <QWheelEvent>
 
 import std;
@@ -14,8 +17,8 @@ namespace fs = std::filesystem;
 
 namespace {
 	constexpr float k_fov_deg = 50.f;
-	constexpr float k_near = 0.05f;
-	constexpr float k_far = 2000.f;
+	constexpr float k_near = 0.1f;
+	constexpr float k_far = 20'000.f;
 
 	const char* category_label(const ModelCategory c) {
 		switch (c) {
@@ -165,31 +168,29 @@ void ModelGridGLWidget::paintGL() {
 			const glm::vec3 up = {0, 0, 1};
 			const glm::vec3 eye = cell.fit_position - dir * cell.fit_distance;
 			const glm::mat4 view = glm::lookAt(eye, cell.fit_position, up);
-			const glm::mat4 proj = glm::perspective(glm::radians(k_fov_deg), 1.f, k_near, k_far);
-			const glm::mat4 pv = proj * view;
+			const glm::mat4 projection = glm::perspective(glm::radians(k_fov_deg), 1.f, k_near, k_far);
+			const glm::mat4 projection_view = projection * view;
 
 			glEnable(GL_BLEND);
-			glDepthMask(true);
-			glEnable(GL_DEPTH_TEST);
 
 			shader_sd->use();
-			cell.mesh->render_opaque(false, 1, cell.skeleton, pv, dir);
+			cell.mesh->render_opaque(false, 1, cell.skeleton, projection_view, dir);
 			shader_hd->use();
-			cell.mesh->render_opaque(true, 1, cell.skeleton, pv, dir);
+			cell.mesh->render_opaque(true, 1, cell.skeleton, projection_view, dir);
 
-			glEnable(GL_BLEND);
+			// Opaque sets depth mask itself, transparent always off
 			glDepthMask(false);
 
 			shader_sd->use();
-			cell.mesh->render_transparent(false, 1, cell.skeleton, pv, dir);
+			cell.mesh->render_transparent(false, 1, cell.skeleton, projection_view, dir);
 			shader_hd->use();
-			cell.mesh->render_transparent(true, 1, cell.skeleton, pv, dir);
-
-			glDepthMask(true);
+			cell.mesh->render_transparent(true, 1, cell.skeleton, projection_view, dir);
+			
+			glEnable(GL_DEPTH_TEST);
 
 			const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
 			const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));
-			cell.mesh->render_particles(cell.skeleton, pv, camera_right, camera_up, dir);
+			cell.mesh->render_particles(cell.skeleton, projection_view, camera_right, camera_up, dir);
 		}
 	}
 
@@ -201,24 +202,70 @@ void ModelGridGLWidget::paintGL() {
 	header_font.setBold(true);
 	header_font.setPointSizeF(header_font.pointSizeF() + 15.0);
 	painter.setFont(header_font);
+	constexpr QColor warning_text_color = QColorConstants::DarkRed;
 	const QColor text_color = palette().color(QPalette::WindowText);
 	const QColor sep_color = palette().color(QPalette::Mid);
 
 	for (const auto& row : layout) {
-		if (row.kind != LayoutRow::Kind::Header) {
-			continue;
-		}
 		if (row.y_top + row.height <= view_top || row.y_top >= view_bottom) {
 			continue;
 		}
-		const int y = row.y_top - scroll_offset_y;
-		const QRect r(20, y, width() - 16, row.height);
-		painter.setPen(text_color);
-		painter.drawText(r, Qt::AlignVCenter | Qt::AlignLeft, QString::fromUtf8(category_label(row.category)));
-		painter.setPen(sep_color);
-		painter.drawLine(0, y + row.height - 1, width(), y + row.height - 1);
+		const int row_y_screen = row.y_top - scroll_offset_y;
+
+		if (row.kind == LayoutRow::Kind::Header) {
+			const QRect r(20, row_y_screen, width() - 16, row.height);
+			painter.setPen(text_color);
+			painter.drawText(r, Qt::AlignVCenter | Qt::AlignLeft, QString::fromUtf8(category_label(row.category)));
+			painter.setPen(sep_color);
+			painter.drawLine(0, row_y_screen + row.height - 1, width(), row_y_screen + row.height - 1);
+			continue;
+		}
+
+		for (int c = 0; c < row.visible_count; ++c) {
+			const int cell_idx = visible_indices[row.visible_offset + c];
+			if (!all_cells[cell_idx].load_failed) {
+				continue;
+			}
+
+			const auto rect = QRect {c * cell_size, row_y_screen, cell_size, cell_size};
+
+			painter.setPen(warning_text_color);
+			painter.drawText(rect, Qt::AlignCenter, "Error");
+		}
 	}
 	painter.end();
+}
+
+bool ModelGridGLWidget::event(QEvent* event) {
+	if (event->type() == QEvent::ToolTip) {
+		const auto* help = dynamic_cast<QHelpEvent*>(event);
+		const int x = help->pos().x();
+		const int y = help->pos().y() + scroll_offset_y;
+
+		for (const auto& row : layout) {
+			if (y < row.y_top || y >= row.y_top + row.height) {
+				continue;
+			}
+			if (row.kind != LayoutRow::Kind::Cells) {
+				break;
+			}
+			const int col = x / cell_size;
+			if (col < 0 || col >= row.visible_count) {
+				break;
+			}
+			const int cell_idx = visible_indices[row.visible_offset + col];
+			const auto& cell = all_cells[cell_idx];
+			if (cell.load_failed && !cell.load_error_message.empty()) {
+				QToolTip::showText(help->globalPos(), QString::fromStdString(cell.load_error_message), this);
+				return true;
+			}
+			break;
+		}
+		QToolTip::hideText();
+		event->ignore();
+		return true;
+	}
+	return QOpenGLWidget::event(event);
 }
 
 void ModelGridGLWidget::mousePressEvent(QMouseEvent* event) {
@@ -241,6 +288,11 @@ void ModelGridGLWidget::mousePressEvent(QMouseEvent* event) {
 		}
 		const int cell_idx = visible_indices[row.visible_offset + col];
 		emit clicked(all_cells[cell_idx].path);
+
+		if (event->type() == QEvent::MouseButtonDblClick) {
+			emit double_clicked(all_cells[cell_idx].path);
+		}
+
 		return;
 	}
 }
@@ -279,7 +331,7 @@ void ModelGridGLWidget::set_search(const QString& query) {
 	update();
 }
 
-void ModelGridGLWidget::set_categories(std::bitset<static_cast<size_t>(ModelCategory::Count)> mask) {
+void ModelGridGLWidget::set_categories(const std::bitset<static_cast<size_t>(ModelCategory::Count)> mask) {
 	if (mask == category_mask) {
 		return;
 	}
@@ -290,33 +342,46 @@ void ModelGridGLWidget::set_categories(std::bitset<static_cast<size_t>(ModelCate
 	update();
 }
 
-void ModelGridGLWidget::load_cell(PreviewCell& cell) {
-	auto reader = hierarchy.open_file(cell.path);
+void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
+	const auto reader = hierarchy.open_file(cell.path);
 	if (!reader) {
 		cell.load_failed = true;
+		cell.load_error_message = reader.error();
 		return;
 	}
+
+	auto file = reader.value();
+
 	try {
-		cell.mdx = std::make_shared<mdx::MDX>(reader.value());
+		if (cell.path.extension() == ".mdx") {
+			cell.mdx = std::make_shared<mdx::MDX>(file);
+		} else {
+			const auto view = std::string_view(reinterpret_cast<const char*>(file.buffer.data()), file.buffer.size());
+			const auto result = mdx::MDX::from_mdl(view);
+
+			if (!result) {
+				cell.load_failed = true;
+				cell.load_error_message = result.error();
+				return;
+			}
+
+			cell.mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
+		}
+
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
 		cell.skeleton = SkeletalModelInstance(cell.mdx);
 
 		SkeletalModelInstance::pick_preview_sequence(cell.skeleton, *cell.mdx);
 
-		if (cell.mdx->sequences.empty() || cell.skeleton.sequence_index < 0) {
-			cell.fit_distance = 200.f;
-			cell.fit_position = glm::vec3(0.f);
-		} else {
-			const auto& extent = cell.mdx->sequences[cell.skeleton.sequence_index].extent;
-			const glm::vec3 size = extent.maximum - extent.minimum;
-			const float radius = glm::length(size) * 0.5f;
-			const float fov_rad = glm::radians(k_fov_deg);
-			cell.fit_distance = radius / std::sin(fov_rad * 0.5f);
-			cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);
-		}
+		const auto& extent =
+			cell.skeleton.sequence_index == -1 ? cell.mdx->extent : cell.mdx->sequences[cell.skeleton.sequence_index].extent;
+		const glm::vec3 size = extent.maximum - extent.minimum;
+		cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);
+		cell.fit_distance = glm::length(size) * 0.5f / std::sin(glm::radians(k_fov_deg) * 0.5f);
 		cell.loaded = true;
-	} catch (...) {
+	} catch (std::exception& e) {
 		cell.load_failed = true;
+		cell.load_error_message = e.what();
 	}
 }
 

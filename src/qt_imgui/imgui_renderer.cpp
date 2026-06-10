@@ -1,6 +1,7 @@
 #include "imgui_renderer.h"
 
 #include <QDateTime>
+#include <QFile>
 #include <QGuiApplication>
 #include <QMouseEvent>
 #include <QClipboard>
@@ -66,11 +67,100 @@ QByteArray g_currentClipboardText;
 
 } // namespace
 
+void ImGuiRenderer::applyTheme() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImVec4* colors = style.Colors;
+
+    // Spacing & rounding for a softer, modern look
+    style.WindowPadding     = ImVec2(8.0f, 8.0f);
+    style.FramePadding      = ImVec2(8.0f, 4.0f);
+    style.ItemSpacing       = ImVec2(8.0f, 6.0f);
+    style.ItemInnerSpacing  = ImVec2(6.0f, 6.0f);
+    style.IndentSpacing     = 22.0f;
+    style.ScrollbarSize     = 14.0f;
+    style.GrabMinSize       = 12.0f;
+
+    style.WindowBorderSize  = 1.0f;
+    style.ChildBorderSize   = 1.0f;
+    style.PopupBorderSize   = 1.0f;
+    style.FrameBorderSize   = 0.0f;
+    style.TabBorderSize     = 0.0f;
+
+    style.WindowRounding    = 6.0f;
+    style.ChildRounding     = 6.0f;
+    style.FrameRounding     = 4.0f;
+    style.PopupRounding     = 4.0f;
+    style.ScrollbarRounding = 9.0f;
+    style.GrabRounding      = 4.0f;
+    style.TabRounding       = 4.0f;
+
+    style.WindowTitleAlign  = ImVec2(0.5f, 0.5f);
+
+    // Theme based on the HiveWE scroll mascot: an azure-blue to teal/cyan gradient
+    // with warm brown accents (the eyes/eyebrows).
+    const ImVec4 blue       = ImVec4(0.12f, 0.63f, 0.91f, 1.00f); // scroll top
+    const ImVec4 blueBright = ImVec4(0.22f, 0.73f, 1.00f, 1.00f);
+    const ImVec4 teal       = ImVec4(0.09f, 0.80f, 0.69f, 1.00f); // scroll bottom
+    const ImVec4 tealDeep   = ImVec4(0.08f, 0.55f, 0.49f, 1.00f);
+    const ImVec4 brown      = ImVec4(0.42f, 0.25f, 0.08f, 1.00f); // eyes
+
+    colors[ImGuiCol_Text]                  = ImVec4(0.90f, 0.94f, 0.96f, 1.00f);
+    colors[ImGuiCol_TextDisabled]          = ImVec4(0.45f, 0.54f, 0.57f, 1.00f);
+    colors[ImGuiCol_WindowBg]              = ImVec4(0.07f, 0.10f, 0.12f, 1.00f);
+    colors[ImGuiCol_ChildBg]               = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_PopupBg]               = ImVec4(0.08f, 0.12f, 0.14f, 0.98f);
+    colors[ImGuiCol_Border]                = ImVec4(0.16f, 0.31f, 0.36f, 0.60f);
+    colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    colors[ImGuiCol_FrameBg]               = ImVec4(0.12f, 0.17f, 0.20f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.14f, 0.24f, 0.29f, 1.00f);
+    colors[ImGuiCol_FrameBgActive]         = ImVec4(0.12f, 0.30f, 0.36f, 1.00f);
+    colors[ImGuiCol_TitleBg]               = ImVec4(0.06f, 0.09f, 0.11f, 1.00f);
+    colors[ImGuiCol_TitleBgActive]         = ImVec4(0.08f, 0.20f, 0.26f, 1.00f);
+    colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.06f, 0.09f, 0.11f, 0.75f);
+    colors[ImGuiCol_MenuBarBg]             = ImVec4(0.09f, 0.13f, 0.15f, 1.00f);
+    colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.06f, 0.09f, 0.11f, 0.60f);
+    colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.16f, 0.30f, 0.34f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.18f, 0.40f, 0.44f, 1.00f);
+    colors[ImGuiCol_ScrollbarGrabActive]   = tealDeep;
+    colors[ImGuiCol_CheckMark]             = teal;
+    colors[ImGuiCol_SliderGrab]            = blue;
+    colors[ImGuiCol_SliderGrabActive]      = teal;
+    colors[ImGuiCol_Button]                = ImVec4(0.13f, 0.22f, 0.27f, 1.00f);
+    colors[ImGuiCol_ButtonHovered]         = blue;
+    colors[ImGuiCol_ButtonActive]          = teal;
+    colors[ImGuiCol_Header]                = ImVec4(0.13f, 0.24f, 0.29f, 1.00f);
+    colors[ImGuiCol_HeaderHovered]         = ImVec4(0.12f, 0.63f, 0.91f, 0.55f);
+    colors[ImGuiCol_HeaderActive]          = blue;
+    colors[ImGuiCol_Separator]             = colors[ImGuiCol_Border];
+    colors[ImGuiCol_SeparatorHovered]      = ImVec4(0.12f, 0.63f, 0.91f, 0.55f);
+    colors[ImGuiCol_SeparatorActive]       = teal;
+    colors[ImGuiCol_ResizeGrip]            = ImVec4(0.09f, 0.80f, 0.69f, 0.25f);
+    colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.09f, 0.80f, 0.69f, 0.55f);
+    colors[ImGuiCol_ResizeGripActive]      = teal;
+    colors[ImGuiCol_Tab]                   = ImVec4(0.09f, 0.14f, 0.17f, 1.00f);
+    colors[ImGuiCol_TabHovered]            = ImVec4(0.12f, 0.63f, 0.91f, 0.55f);
+    colors[ImGuiCol_TabSelected]           = ImVec4(0.10f, 0.32f, 0.40f, 1.00f);
+    colors[ImGuiCol_TabDimmed]             = ImVec4(0.07f, 0.11f, 0.13f, 1.00f);
+    colors[ImGuiCol_TabDimmedSelected]     = ImVec4(0.09f, 0.20f, 0.25f, 1.00f);
+    colors[ImGuiCol_PlotLines]             = blue;
+    colors[ImGuiCol_PlotLinesHovered]      = teal;
+    colors[ImGuiCol_PlotHistogram]         = teal;
+    colors[ImGuiCol_PlotHistogramHovered]  = blueBright;
+    colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.12f, 0.63f, 0.91f, 0.35f);
+    colors[ImGuiCol_DragDropTarget]        = ImVec4(brown.x + 0.20f, brown.y + 0.15f, brown.z + 0.08f, 0.90f); // warm brown highlight
+    colors[ImGuiCol_NavCursor]             = teal;
+    colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+    colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+    colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.00f, 0.00f, 0.00f, 0.55f);
+}
+
 void ImGuiRenderer::initialize(WindowWrapper *window) {
     m_window.reset(window);
 
     g_ctx = ImGui::CreateContext();
     ImGui::SetCurrentContext(g_ctx);
+
+    applyTheme();
 
     // Setup backend capabilities flags
     ImGuiIO &io = ImGui::GetIO();
@@ -209,6 +299,42 @@ bool ImGuiRenderer::createFontsTexture()
 
     // Build texture atlas
     ImGuiIO& io = ImGui::GetIO();
+
+    // Replace the default bitmap font with a proportional, anti-aliased UI font.
+    // Rasterize at the display's pixel ratio so text stays crisp on high-DPI screens,
+    // then scale glyphs back down so layout stays in logical units.
+    float dpr = m_window ? static_cast<float>(m_window->devicePixelRatio()) : 1.0f;
+    if (dpr < 1.0f) {
+        dpr = 1.0f;
+    }
+
+	ImFontConfig config;
+    config.OversampleH = 2;
+    config.OversampleV = 1;
+    config.PixelSnapH = false;
+
+    QString fonts_dir = QString::fromLocal8Bit(qgetenv("SystemRoot"));
+    if (fonts_dir.isEmpty()) {
+        fonts_dir = "C:/Windows";
+    }
+    fonts_dir += "/Fonts/";
+
+	const ImFont* font = nullptr;
+    for (const char* candidate : { "segoeui.ttf", "tahoma.ttf", "arial.ttf" }) {
+        const QString path = fonts_dir + candidate;
+        if (QFile::exists(path)) {
+			constexpr float font_size = 16.0f;
+			font = io.Fonts->AddFontFromFileTTF(path.toUtf8().constData(), font_size * dpr, &config);
+            break;
+        }
+    }
+    if (!font) {
+        io.Fonts->AddFontDefault();
+    } else {
+        // Font is baked at native pixels; scale glyphs back to logical units (moved from io.FontGlobalScale in 1.92).
+        ImGui::GetStyle().FontScaleMain = 1.0f / dpr;
+    }
+
     unsigned char* pixels;
     int width, height;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);   // Load as RGBA 32-bits (75% of the memory is wasted, but default font is so small) because it is more likely to be compatible with user's existing shaders. If your ImTextureId represent a higher-level concept than just a GL texture id, consider calling GetTexDataAsAlpha8() instead to save on GPU memory.

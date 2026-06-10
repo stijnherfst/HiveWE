@@ -38,24 +38,32 @@ namespace slk {
 			return {};
 		}
 
-		void load_from_buffer(std::vector<unsigned char, default_init_allocator<unsigned char>> buffer) {
+		std::expected<void, std::string> load_from_buffer(std::vector<unsigned char, default_init_allocator<unsigned char>> buffer) {
 			std::string_view view(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 
 			if (!view.starts_with("ID")) {
-				std::print("Invalid SLK file, does not contain \"ID\" as first record\n");
-				return;
+				return std::unexpected<std::string>("Does not contain \"ID\" as first record");
 			}
 
-			const auto parse_integer = [&]() {
-				size_t value;
-				size_t separator = view.find(';');
-				std::from_chars(&view[1], &view[separator], value);
-				view.remove_prefix(separator + 1);
+			const auto skip_line = [&]() {
+				const size_t newline = view.find('\n');
+				// No more newlines means end of the file, so consume all
+				view.remove_prefix(newline == std::string_view::npos ? view.size() : newline + 1);
+			};
+
+			const auto parse_integer = [&]() -> size_t {
+				size_t value = 0;
+				const size_t separator = view.find(';');
+				const size_t end = (separator == std::string_view::npos) ? view.size() : separator;
+				if (view.size() >= 2 && end >= 1) {
+					std::from_chars(view.data() + 1, view.data() + end, value);
+				}
+				view.remove_prefix((separator == std::string_view::npos) ? view.size() : separator + 1);
 				return value;
 			};
 
 			// Skip first ID line
-			view.remove_prefix(view.find('\n') + 1);
+			skip_line();
 
 			size_t column = 0;
 			size_t row = 0;
@@ -65,37 +73,46 @@ namespace slk {
 					case 'C':
 						view.remove_prefix(2);
 
-						if (view.front() == 'X') {
+						if (!view.empty() && view.front() == 'X') {
 							column = parse_integer() - 1;
 
-							if (view.front() == 'Y') {
+							if (!view.empty() && view.front() == 'Y') {
 								row = parse_integer() - 1;
 							}
 						} else {
 							row = parse_integer() - 1;
 
-							if (view.front() == 'X') {
+							if (!view.empty() && view.front() == 'X') {
 								column = parse_integer() - 1;
 							}
 						}
 
-						if (row == 0 && column == 0) {
-							view.remove_prefix(view.find('\n') + 1);
+						// A malformed or 0 index underflows to SIZE_MAX
+						if (column == std::string_view::npos || row == std::string_view::npos) {
+							skip_line();
 							break;
 						}
 
+						if (row == 0 && column == 0) {
+							skip_line();
+							break;
+						}
+
+						if (view.empty()) {
+							break;
+						}
 						view.remove_prefix(1);
 
 						{
 							std::string data;
 
-							if (view.front() == '\"') {
+							if (!view.empty() && view.front() == '\"') {
 								data = view.substr(1, view.find_first_of("\r\n") - 1);
 							} else {
 								data = view.substr(0, view.find_first_of("\r\n"));
 							}
 
-							if (data.back() == '\"') {
+							if (!data.empty() && data.back() == '\"') {
 								data.pop_back();
 							}
 
@@ -117,27 +134,27 @@ namespace slk {
 								base_data[index_to_row[row - 1]][index_to_column[column - 1]] = std::move(data);
 							}
 
-							view.remove_prefix(view.find('\n') + 1);
+							skip_line();
 						}
 						break;
 					case 'F':
-						if (view.front() == 'X') {
+						if (!view.empty() && view.front() == 'X') {
 							column = parse_integer() - 1;
 
-							if (view.front() == 'Y') {
+							if (!view.empty() && view.front() == 'Y') {
 								row = parse_integer() - 1;
 							}
 						} else {
 							row = parse_integer() - 1;
 
-							if (view.front() == 'X') {
+							if (!view.empty() && view.front() == 'X') {
 								column = parse_integer() - 1;
 							}
 						}
-						view.remove_prefix(view.find('\n') + 1);
+						skip_line();
 						break;
 					default:
-						view.remove_prefix(view.find_first_of('\n') + 1);
+						skip_line();
 				}
 			}
 
@@ -158,6 +175,8 @@ namespace slk {
 				i += 1;
 			}
 			row_headers.erase("");
+
+			return {};
 		}
 
 	  public:
@@ -174,28 +193,32 @@ namespace slk {
 		SLK() = default;
 
 		/// Constructs an SLK and immediately loads it from the hierarchy
-		explicit SLK(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
-			load_hierarchy(path, source);
+		explicit SLK(const fs::path& path, const bool local = false) {
+			// Rethrow the error string itself so callers (e.g. Map::load's catch) report the real
+			// cause rather than the generic std::bad_expected_access message that .value() would throw.
+			if (auto result = load_hierarchy(path, local); !result) {
+				throw std::runtime_error(result.error());
+			}
 		}
 
 		/// Loads an SLK file from the hierarchy using the specified source flags (overrides, imports, local files, casc)
-		void load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
+		std::expected<void, std::string> load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
 			auto res = hierarchy.open_file(path, source);
 			if (!res) {
 				throw std::runtime_error(res.error());
 			}
 
-			load_from_buffer(std::move(res->buffer));
+			return load_from_buffer(std::move(res->buffer));
 		}
 
 		/// Loads an SLK file from the disk. The path is relative to the editor executable
-		void load_local(const fs::path& path) {
+		std::expected<void, std::string> load_local(const fs::path& path) {
 			auto res = read_file(path);
 			if (!res) {
 				throw std::runtime_error(res.error());
 			}
 
-			load_from_buffer(std::move(res->buffer));
+			return load_from_buffer(std::move(res->buffer));
 		}
 
 		void build_meta_map() {

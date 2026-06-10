@@ -11,29 +11,48 @@ namespace fs = std::filesystem;
 void parse_all_mdx() {
 	std::vector<fs::path> paths;
 
-	for (const auto i : fs::recursive_directory_iterator("D:/Warcraft/WC3/Assets")) {
+	for (const auto i : fs::recursive_directory_iterator("D:/Warcraft/2.0/war3.w3mod")) {
 		if (i.is_regular_file() && (i.path().extension() == ".mdx" || i.path().extension() == ".MDX")) {
 			paths.push_back(i.path());
 		}
 	}
 
-	auto min = glm::vec3(99999.f, 99999.f, 99999.f);
-	auto max = glm::vec3(-99999.f, -99999.f, -99999.f);
+	for (const auto i : fs::recursive_directory_iterator("C:/stack/Projects/HiveWE/HiveWE/hive_models")) {
+		if (i.is_regular_file() && (i.path().extension() == ".mdx" || i.path().extension() == ".MDX")) {
+			paths.push_back(i.path());
+		}
+	}
 
+	size_t outside_range = 0;
+	size_t rows = 0;
+	size_t columns = 0;
+	std::atomic<uint64_t> checked(0);
 	std::for_each(std::execution::seq, paths.begin(), paths.end(), [&](const fs::path& path) {
 		auto buffer = read_file(path).value();
 		const auto mdx = mdx::MDX(buffer);
-		
-		//min = glm::min(min, mdx.extent.minimum);
-		//max = glm::max(min, mdx.extent.maximum);
 
-		//std::println("x: {} y: {} z: {}", (max - min).x, (max - min).y, (max - min).z);
+		checked.fetch_add(1);
 
-		//min = mdx.extent.minimum / 128.f;
-		//max = mdx.extent.maximum / 128.f;
+		for (const auto& emitter : mdx.emitters2) {
+			// rows += emitter.rows;
+			// if (emitter.rows == 0 || emitter.rows > 10) {
+			// 	std::println("Value of {}", emitter.rows);
+			// 	outside_range += 1;
+			// }
+			// columns += emitter.columns;
+			// if (emitter.columns == 0 || emitter.columns > 10) {
+			// 	std::println("Value of {}", emitter.rows);
+			// 	outside_range += 1;
+			// }
 
-		//std::println("x: {} y: {} z: {} path: {}", (max - min).x, (max - min).y, (max - min).z, path.string());
+			if (emitter.tail_length < 0.0f) {
+				std::println("Value of {}", emitter.tail_length);
+				outside_range += 1;
+			}
+		}
 	});
+	std::println("Outside range {}, checked {}, {}% odd", outside_range, checked.load(), static_cast<float>(outside_range) / checked.load() * 100.f);
+	// std::println("Rows avg {}, Cols avg {}", static_cast<float>(rows) / checked.load(), static_cast<float>(columns) / checked.load());
 }
 
 export void execute_tests() {

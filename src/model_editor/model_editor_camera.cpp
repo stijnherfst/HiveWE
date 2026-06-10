@@ -28,7 +28,7 @@ void ModelEditorCamera::update(double delta) {
 	// The vector that is perpendicular to the up vector, thus points forward
 	forward = glm::cross(X, up);
 
-	projection = glm::perspective(fov, aspect_ratio, draw_distance_close, draw_distance_far);
+	projection = glm::perspective(glm::radians(fov), aspect_ratio, draw_distance_close, draw_distance_far);
 	view = glm::lookAt(position - direction * distance, position, up);
 	projection_view = projection * view;
 

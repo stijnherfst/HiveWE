@@ -21,7 +21,6 @@ namespace fs = std::filesystem;
 import QRibbon;
 import WindowHandler;
 import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 import "palette.h";
 import "minimap.h";

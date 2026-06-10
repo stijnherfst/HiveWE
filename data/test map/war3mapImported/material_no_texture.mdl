@@ -1,0 +1,86 @@
+Version {
+	FormatVersion 1200,
+}
+Model "TwoPlanes" {
+	BlendTime 0,
+	MinimumExtent { -50, -50, 0 },
+	MaximumExtent { 50, 50, 5 },
+	BoundsRadius 70.88724,
+}
+Sequences 1 {
+	Anim "stand" {
+		Interval { 100, 100 },
+		MinimumExtent { -50, -50, 0 },
+		MaximumExtent { 50, 50, 5 },
+		BoundsRadius 70.88724,
+	}
+}
+Textures 1 {
+	Bitmap {
+		Image "",
+	}
+}
+Materials 1 {
+	Material {
+		Layer {
+			FilterMode Blend,
+			Unshaded,
+			TwoSided,
+			static TextureID 0,
+			static Alpha 1,
+		}
+	}
+}
+Geoset {
+	Vertices 4 {
+		{ -64, 0, 0 },
+		{ 64, 0, 0 },
+		{ 64, 0, 128 },
+		{ -64, 0, 128 },
+	}
+	Normals 4 {
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+	}
+	TVertices 4 {
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 1, 1 },
+		{ 0, 1 },
+	}
+	VertexGroup {
+		0,
+		0,
+		0,
+		0,
+	}
+	Faces 1 6 {
+		Triangles {
+			{ 0, 1, 2, 0, 2, 3 },
+		}
+	}
+	Groups 1 1 {
+		Matrices { 0 },
+	}
+	MinimumExtent { -50, -50, 0 },
+	MaximumExtent { 50, 50, 0 },
+	BoundsRadius 70.71068,
+	MaterialID 0,
+	SelectionGroup 0,
+	LevelOfDetail 0,
+}
+GeosetAnim {
+	GeosetId 0,
+	static Alpha 0.25,
+	static Color { 0, 0, 1 },
+}
+Bone "RootBone" {
+	ObjectId 0,
+	GeosetId 0,
+	GeosetAnimId None,
+}
+PivotPoints 1 {
+	{ 0, 0, 0 },
+}

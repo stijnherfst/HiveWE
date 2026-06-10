@@ -72,7 +72,7 @@ namespace mdx {
 		// texture_animations.append_range(new_mdx.texture_animations);
 
 		// Just to be sure
-		validate();
+		fix_up();
 	}
 
 	/// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
@@ -89,12 +89,16 @@ namespace mdx {
 			glm::uvec4 indices(0);
 			glm::uvec4 weightss(0);
 
-			const int weight = 255 / bone_count;
-			for (size_t j = 0; j < bone_count; j++) {
-				indices[j] = geoset.matrix_indices[bone_offset + j];
-				weightss[j] = weight;
+			if (bone_count > 0) {
+				const int weight = 255 / bone_count;
+				for (size_t j = 0; j < bone_count; j++) {
+					if (bone_offset + j < geoset.matrix_indices.size()) {
+						indices[j] = geoset.matrix_indices[bone_offset + j];
+					}
+					weightss[j] = weight;
+				}
+				weightss[0] += 255 % bone_count;
 			}
-			weightss[0] += 255 % bone_count;
 
 			groups.push_back(indices);
 			weights.push_back(weightss);
@@ -104,8 +108,13 @@ namespace mdx {
 		std::vector<glm::u8vec4> skin_weights;
 		skin_weights.reserve(groups.size() * 2);
 		for (const auto& vertex_group : geoset.vertex_groups) {
-			skin_weights.push_back(groups[vertex_group]);
-			skin_weights.push_back(weights[vertex_group]);
+			if (vertex_group < groups.size()) {
+				skin_weights.push_back(groups[vertex_group]);
+				skin_weights.push_back(weights[vertex_group]);
+			} else {
+				skin_weights.push_back(glm::u8vec4(0));
+				skin_weights.push_back(glm::u8vec4(0));
+			}
 		}
 
 		return skin_weights;
@@ -120,8 +129,8 @@ namespace mdx {
 				geoset.extent.maximum = glm::max(geoset.extent.maximum, i);
 			}
 
-			geoset.extent.bounds_radius =
-				std::max(glm::distance(glm::vec3(0.0), geoset.extent.minimum), glm::distance(glm::vec3(0.0), geoset.extent.maximum));
+			// The bounding sphere is centered on the AABB; its radius is the AABB half-diagonal.
+			geoset.extent.bounds_radius = glm::length((geoset.extent.maximum - geoset.extent.minimum) * 0.5f);
 
 			for (auto& extent : geoset.sequence_extents) {
 				// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement
@@ -130,16 +139,11 @@ namespace mdx {
 
 			extent.minimum = glm::min(extent.minimum, geoset.extent.minimum);
 			extent.maximum = glm::max(extent.maximum, geoset.extent.maximum);
-			extent.bounds_radius = std::max(extent.bounds_radius, geoset.extent.bounds_radius);
 		}
 
 		for (const auto& emitter : emitters2) {
-			if (emitter.node.id == -1 || emitter.node.id >= static_cast<int>(pivots.size())) {
-				continue;
-			}
-
 			const float life_span = std::max(0.f, emitter.life_span);
-			const float max_speed = std::abs(emitter.speed) * (1.f + std::max(0.f, emitter.variation));
+			const float max_speed = std::abs(emitter.speed) * (1.f + std::max(0.f, emitter.speed_variation));
 			const float max_travel = max_speed * life_span;
 
 			const float max_scale = std::max({
@@ -162,11 +166,9 @@ namespace mdx {
 
 			extent.minimum = glm::min(extent.minimum, emitter_min);
 			extent.maximum = glm::max(extent.maximum, emitter_max);
-			extent.bounds_radius = std::max(
-				extent.bounds_radius,
-				std::max(glm::length(emitter_min), glm::length(emitter_max))
-			);
 		}
+
+		extent.bounds_radius = glm::length((extent.maximum - extent.minimum) * 0.5f);
 
 		for (auto& sequence : sequences) {
 			// Wrong because we should capture the min/max of the entire animation but that's kind of a pain to implement

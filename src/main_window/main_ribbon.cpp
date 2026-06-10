@@ -54,6 +54,10 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	pathing_palette->setText("Pathing");
 	palette_section->addWidget(pathing_palette);
 
+	region_palette->setIcon(QIcon("data/icons/ribbon/sizebounds.png"));
+	region_palette->setText("Regions");
+	palette_section->addWidget(region_palette);
+
 
 
 	//view_history->setIcon(QIcon("data/icons/ribbon/description.png"));
@@ -112,6 +116,11 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	pathing_visible->setText("Pathing");
 	pathing_visible->setCheckable(true);
 	visible_section->addWidget(pathing_visible);
+
+	regions_visible->setIcon(QIcon("data/icons/ribbon/sizebounds.png"));
+	regions_visible->setText("Regions");
+	regions_visible->setCheckable(true);
+	visible_section->addWidget(regions_visible);
 	
 	brush_visible->setIcon(QIcon("data/icons/ribbon/brush.png"));
 	brush_visible->setText("Brush");

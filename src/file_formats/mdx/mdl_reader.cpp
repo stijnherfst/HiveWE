@@ -55,32 +55,12 @@ namespace mdx {
 				continue;
 			}
 
-			// TODO does MDL allow for block comments?
-			if (c == '/' && pos + 1 < source.size() && source[pos + 1] == '*') {
-				const uint32_t start_line = line;
-				pos += 2;
-				while (pos + 1 < source.size() && !(source[pos] == '*' && source[pos + 1] == '/')) {
-					if (source[pos] == '\n') {
-						line += 1;
-					}
-					pos += 1;
-				}
-				if (pos + 1 >= source.size()) {
-					return failure(std::format("Unterminated block comment starting at line {}", start_line));
-				}
-				pos += 2;
-				continue;
-			}
-
 			if (c == '"') {
 				const uint32_t start_line = line;
 				const size_t start = pos;
 				pos += 1;
+				// Strings have no escape sequences, a backslash is literal and only the closing quote ends the string.
 				while (pos < source.size() && source[pos] != '"') {
-					if (source[pos] == '\\' && pos + 1 < source.size()) {
-						pos += 2;
-						continue;
-					}
 					if (source[pos] == '\n') {
 						line += 1;
 					}
@@ -573,11 +553,11 @@ namespace mdx {
 		TRY(r.consume("Layer"));
 		TRY(r.consume("{"));
 		Layer layer {};
-		layer.hd = is_hd;
+		layer.shader = is_hd ? ShaderType::HD : ShaderType::SD;
 		layer.texture_animation_id = 0xFFFFFFFFu;
 		layer.alpha = 1.f;
-		LayerTexture slot {};
-		slot.id = 0;
+		layer.emissive_gain = 1.f;
+		layer.fresnel_color = glm::vec3(1.f);
 
 		while (!r.peek_is("}")) {
 			bool is_static = false;
@@ -587,7 +567,13 @@ namespace mdx {
 			}
 			OUTCOME_TRY(auto kw, r.consume());
 
-			if (kw.text == "FilterMode") {
+			if (kw.text == "Shader") {
+				// Per-layer HD shader name (v1100+). Material-level Shader is handled by the caller.
+				OUTCOME_TRY(auto shader_name, r.consume_quoted_string());
+				if (!shader_name.empty()) {
+					layer.shader = ShaderType::HD;
+				}
+			} else if (kw.text == "FilterMode") {
 				OUTCOME_TRY(auto mode_tok, r.consume());
 				const uint32_t fm = parse_material_filter_mode(mode_tok.text);
 				if (fm == 0xFFFFFFFFu) {
@@ -611,11 +597,17 @@ namespace mdx {
 			} else if (kw.text == "CoordId") {
 				OUTCOME_TRY(layer.coord_id, r.consume_u32());
 			} else if (kw.text == "TextureID") {
+				LayerTexture texture {};
 				if (is_static) {
-					OUTCOME_TRY(slot.id, r.consume_u32());
+					OUTCOME_TRY(texture.id, r.consume_u32());
+					if (r.peek_is("<=")) {
+						TRY(r.consume("<="));
+						OUTCOME_TRY(texture.slot, r.consume_u32());
+					}
 				} else {
-					OUTCOME_TRY(slot.KMTF, r.parse_animated_track<uint32_t>(unique_tracks));
+					OUTCOME_TRY(texture.KMTF, r.parse_animated_track<uint32_t>(unique_tracks));
 				}
+				layer.textures.push_back(std::move(texture));
 			} else if (kw.text == "Alpha") {
 				if (is_static) {
 					OUTCOME_TRY(layer.alpha, r.consume_f32());
@@ -634,7 +626,7 @@ namespace mdx {
 				} else {
 					OUTCOME_TRY(layer.KFC3, r.parse_animated_track<glm::vec3>(unique_tracks));
 				}
-			} else if (kw.text == "FresnelAlpha") {
+			} else if (kw.text == "FresnelOpacity") {
 				if (is_static) {
 					OUTCOME_TRY(layer.fresnel_opacity, r.consume_f32());
 				} else {
@@ -651,7 +643,9 @@ namespace mdx {
 			}
 		}
 		TRY(r.consume("}"));
-		layer.textures.push_back(std::move(slot));
+		if (layer.textures.empty()) {
+			layer.textures.push_back(LayerTexture {});
+		}
 		material.layers.push_back(std::move(layer));
 		return outcome::success();
 	}
@@ -675,7 +669,16 @@ namespace mdx {
 					OUTCOME_TRY(material.priority_plane, r.consume_u32());
 				} else if (r.peek_is("ConstantColor")) {
 					TRY(r.consume("ConstantColor"));
-					material.flags |= 0x1;
+					material.flags |= Material::Flags::constant_color;
+				} else if (r.peek_is("SortPrimsNearZ")) {
+					TRY(r.consume("SortPrimsNearZ"));
+					material.flags |= Material::Flags::sort_primitives_near_z;
+				} else if (r.peek_is("SortPrimsFarZ")) {
+					TRY(r.consume("SortPrimsFarZ"));
+					material.flags |= Material::Flags::sort_primitives_far_z;
+				} else if (r.peek_is("FullResolution")) {
+					TRY(r.consume("FullResolution"));
+					material.flags |= Material::Flags::full_resolution;
 				} else if (r.peek_is("Layer")) {
 					OUTCOME_TRY(parse_layer(r, material, mdx.unique_tracks, is_hd));
 				} else {
@@ -1000,16 +1003,16 @@ namespace mdx {
 			} else if (kw.text == "AttenuationStart") {
 				if (is_static) {
 					OUTCOME_TRY(auto v, r.consume_u32());
-					light.attenuation_start = static_cast<int>(v);
+					light.attenuation_start = static_cast<float>(v);
 				} else {
-					OUTCOME_TRY(light.KLAS, r.parse_animated_track<uint32_t>(mdx.unique_tracks));
+					OUTCOME_TRY(light.KLAS, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
 			} else if (kw.text == "AttenuationEnd") {
 				if (is_static) {
 					OUTCOME_TRY(auto v, r.consume_u32());
-					light.attenuation_end = static_cast<int>(v);
+					light.attenuation_end = static_cast<float>(v);
 				} else {
-					OUTCOME_TRY(light.KLAE, r.parse_animated_track<uint32_t>(mdx.unique_tracks));
+					OUTCOME_TRY(light.KLAE, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
 			} else if (kw.text == "Intensity") {
 				if (is_static) {
@@ -1096,7 +1099,6 @@ namespace mdx {
 		e.node.id = -1;
 		e.node.parent_id = -1;
 		e.node.flags = Node::Flags::emitter;
-		e.reserved = 0;
 		OUTCOME_TRY(e.node.name, r.consume_quoted_string());
 		TRY(r.consume("{"));
 		while (!r.peek_is("}")) {
@@ -1141,34 +1143,20 @@ namespace mdx {
 				}
 			} else if (kw.text == "Visibility") {
 				OUTCOME_TRY(e.KPEV, r.parse_animated_track<float>(mdx.unique_tracks));
-			} else if (kw.text == "Particle") {
-				TRY(r.consume("{"));
-				while (!r.peek_is("}")) {
-					bool pstatic = false;
-					if (r.peek_is("static")) {
-						TRY(r.consume("static"));
-						pstatic = true;
-					}
-					OUTCOME_TRY(auto pkw, r.consume());
-					if (pkw.text == "LifeSpan") {
-						if (pstatic) {
-							OUTCOME_TRY(e.life_span, r.consume_f32());
-						} else {
-							OUTCOME_TRY(e.KPEL, r.parse_animated_track<float>(mdx.unique_tracks));
-						}
-					} else if (pkw.text == "InitVelocity") {
-						if (pstatic) {
-							OUTCOME_TRY(e.speed, r.consume_f32());
-						} else {
-							OUTCOME_TRY(e.KPES, r.parse_animated_track<float>(mdx.unique_tracks));
-						}
-					} else if (pkw.text == "Path") {
-						OUTCOME_TRY(e.path, r.consume_quoted_string());
-					} else {
-						return failure(std::format("ParticleEmitter Particle: unknown field '{}' at line {}", pkw.text, pkw.line));
-					}
+			} else if (kw.text == "LifeSpan") {
+				if (is_static) {
+					OUTCOME_TRY(e.life_span, r.consume_f32());
+				} else {
+					OUTCOME_TRY(e.KPEL, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
-				TRY(r.consume("}"));
+			} else if (kw.text == "InitVelocity") {
+				if (is_static) {
+					OUTCOME_TRY(e.speed, r.consume_f32());
+				} else {
+					OUTCOME_TRY(e.KPES, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "Path") {
+				OUTCOME_TRY(e.path, r.consume_quoted_string());
 			} else {
 				return failure(std::format("ParticleEmitter: unknown field '{}' at line {}", kw.text, kw.line));
 			}
@@ -1241,7 +1229,7 @@ namespace mdx {
 				}
 			} else if (kw.text == "Variation") {
 				if (is_static) {
-					OUTCOME_TRY(e.variation, r.consume_f32());
+					OUTCOME_TRY(e.speed_variation, r.consume_f32());
 				} else {
 					OUTCOME_TRY(e.KP2R, r.parse_animated_track<float>(mdx.unique_tracks));
 				}
@@ -1576,7 +1564,7 @@ namespace mdx {
 	}
 
 	static outcome::result<void, std::string> parse_corn(MDLReader& r, MDX& mdx) {
-		TRY(r.consume("CornEmitter"));
+		TRY(r.consume("ParticleEmitterPopcorn"));
 		CornEmitter c {};
 		c.node.id = -1;
 		c.node.parent_id = -1;
@@ -1589,7 +1577,7 @@ namespace mdx {
 				continue;
 			}
 			const auto& tok = r.peek();
-			return failure(std::format("CornEmitter: unknown field '{}' at line {}", tok.text, tok.line));
+			return failure(std::format("ParticleEmitterPopcorn: unknown field '{}' at line {}", tok.text, tok.line));
 		}
 		TRY(r.consume("}"));
 		mdx.corn_emitters.push_back(std::move(c));
@@ -1649,7 +1637,7 @@ namespace mdx {
 				OUTCOME_TRY(parse_bind_pose(reader, mdx));
 			} else if (kw.text == "FaceFX") {
 				OUTCOME_TRY(parse_facefx(reader, mdx));
-			} else if (kw.text == "CornEmitter") {
+			} else if (kw.text == "ParticleEmitterPopcorn") {
 				OUTCOME_TRY(parse_corn(reader, mdx));
 			} else {
 				return failure(std::format("Unknown top-level section '{}' at line {}", kw.text, kw.line));

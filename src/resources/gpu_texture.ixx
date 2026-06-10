@@ -52,24 +52,18 @@ export class GPUTexture : public Resource {
 		}();
 
 		if (new_path.extension() == ".blp") {
-			int width;
-			int height;
-			int channels;
-			const u8* data = [&] {
-				ScopedTimer t(profile_parse_ns);
-				return blp::load(reader, width, height, channels);
-			}();
+			const auto image = blp::load(reader);
 
-			{
-				ScopedTimer t(profile_gl_ns);
+			if (image) {
 				glCreateTextures(GL_TEXTURE_2D, 1, &id);
-				glTextureStorage2D(id, std::log2(std::max(width, height)) + 1, GL_RGBA8, width, height);
-				glTextureSubImage2D(id, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+				glTextureStorage2D(id, std::log2(std::max(image->width, image->height)) + 1, GL_RGBA8, image->width, image->height);
+				glTextureSubImage2D(id, 0, 0, 0, image->width, image->height, GL_RGBA, GL_UNSIGNED_BYTE, image->data.data());
 				glGenerateTextureMipmap(id);
+			} else {
+				glCreateTextures(GL_TEXTURE_2D, 1, &id);
+				std::println("Error loading BLP texture {}: {}", path.string(), image.error());
 			}
-			delete data;
 		} else {
-			ScopedTimer t(profile_parse_ns); // SOIL does both decode and upload internally
 			id = SOIL_load_OGL_texture_from_memory(
 				reader.buffer.data(),
 				static_cast<int>(reader.buffer.size()),
@@ -83,16 +77,13 @@ export class GPUTexture : public Resource {
 			}
 		}
 
-		{
-			ScopedTimer t(profile_gl_ns);
-			glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTextureParameteri(id, GL_TEXTURE_WRAP_S, (flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
-			glTextureParameteri(id, GL_TEXTURE_WRAP_T, (flags & 2) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		glTextureParameteri(id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTextureParameteri(id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTextureParameteri(id, GL_TEXTURE_WRAP_S, (flags & 1) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
+		glTextureParameteri(id, GL_TEXTURE_WRAP_T, (flags & 2) ? GL_REPEAT : GL_CLAMP_TO_EDGE);
 
-			// Make resident later on the rendering context
-			bindless_handle = glGetTextureHandleARB(id);
-		}
+		// Make resident later on the rendering context
+		bindless_handle = glGetTextureHandleARB(id);
 	}
 
 	virtual ~GPUTexture() {

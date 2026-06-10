@@ -5,6 +5,7 @@ add_executable(HiveWE_tests
 	modification_tables_test.cpp
 	binary_writer_test.cpp
 	mdl_reader_test.cpp
+	validator_test.cpp
 )
 
 target_link_libraries(HiveWE_tests PRIVATE
