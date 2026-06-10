@@ -92,7 +92,7 @@ PathingRect HeightOperator::apply(const TerrainRect& area, double frame_delta) {
 							}
 						}
 						accumulate -= current_height;
-						return 0.8f * current_height + 0.2f * (accumulate / (acum_area.width() * acum_area.height() - 1));
+						return 0.97f * current_height + 0.03f * (accumulate / (acum_area.width() * acum_area.height() - 1));
 					};
 
 					if (brush->deform_ground) {
