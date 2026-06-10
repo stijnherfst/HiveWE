@@ -193,16 +193,17 @@ namespace slk {
 		SLK() = default;
 
 		/// Constructs an SLK and immediately loads it from the hierarchy
-		explicit SLK(const fs::path& path, const bool local = false) {
+		explicit SLK(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
 			// Rethrow the error string itself so callers (e.g. Map::load's catch) report the real
 			// cause rather than the generic std::bad_expected_access message that .value() would throw.
-			if (auto result = load_hierarchy(path, local); !result) {
+			if (auto result = load_hierarchy(path, source); !result) {
 				throw std::runtime_error(result.error());
 			}
 		}
 
 		/// Loads an SLK file from the hierarchy using the specified source flags (overrides, imports, local files, casc)
-		std::expected<void, std::string> load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
+		std::expected<void, std::string>
+		load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
 			auto res = hierarchy.open_file(path, source);
 			if (!res) {
 				throw std::runtime_error(res.error());
