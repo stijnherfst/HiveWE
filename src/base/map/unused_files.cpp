@@ -22,10 +22,15 @@ std::vector<FileUsage> Map::get_file_usage() const {
 
 	const auto normalize_path = [&](const std::string& path) {
 		auto path_copy = path;
-		if (path_copy.ends_with(".mdl")) {
-			path_copy = path.substr(0, path.size() - 4) + ".mdx";
-		}
+		// CASC lookup is case-insensitive
+		std::ranges::transform(path_copy, path_copy.begin(), [](const unsigned char c) {
+			return static_cast<char>(std::tolower(c));
+		});
 		normalize_path_to_forward_slash(path_copy);
+		// Game first checks .mdx, then .mdx so we normalize to .mdx
+		if (path_copy.ends_with(".mdl")) {
+			path_copy = path_copy.substr(0, path_copy.size() - 4) + ".mdx";
+		}
 		return path_copy;
 	};
 
@@ -109,7 +114,12 @@ std::vector<FileUsage> Map::get_file_usage() const {
 		resources[path].insert(values.begin(), values.end());
 	}
 
-	std::unordered_set<std::string> files;
+	struct FileEntry {
+		std::string path;
+		u64 size;
+	};
+
+	hive::unordered_map<std::string, FileEntry> files;
 
 	for (const auto& i : fs::recursive_directory_iterator(filesystem_path)) {
 		if (i.is_regular_file()) {
@@ -119,7 +129,8 @@ std::vector<FileUsage> Map::get_file_usage() const {
 			if (imports.blacklist.contains(file_name)) {
 				continue;
 			}
-			files.emplace(normalize_path(path));
+			normalize_path_to_forward_slash(path);
+			files.emplace(normalize_path(path), FileEntry {path, i.file_size()});
 		}
 	}
 
@@ -137,18 +148,35 @@ std::vector<FileUsage> Map::get_file_usage() const {
 	} else {
 		const auto a = binary.value();
 		map_script = std::string(a.buffer.begin(), a.buffer.end());
+		std::ranges::transform(map_script, map_script.begin(), [](const unsigned char c) {
+			return static_cast<char>(std::tolower(c));
+		});
 	}
 
 	std::vector<FileUsage> result;
 	result.reserve(files.size());
-	for (const auto& file : files) {
+	for (const auto& [key, entry] : files) {
 		FileUsage usage;
-		usage.path = file;
-		if (resources.contains(file)) {
-			usage.used_by = resources.at(file);
-		} else if (!map_script.empty() && map_script.contains(file)) {
+		usage.path = entry.path;
+		usage.size = entry.size;
+
+		auto lowercase_path = entry.path;
+		std::ranges::transform(lowercase_path, lowercase_path.begin(), [](const unsigned char c) {
+			return static_cast<char>(std::tolower(c));
+		});
+
+		if (resources.contains(key)) {
+			usage.used_by = resources.at(key);
+		} else if (!map_script.empty() && (map_script.contains(lowercase_path) || map_script.contains(key))) {
 			usage.used_by.emplace("map script");
 		}
+
+		// Game overrides may or may not be used. Hard to say
+		if (usage.used_by.empty()
+			&& (key.starts_with("terrainart/") || key.starts_with("replaceabletextures/") || hierarchy.game_file_exists(entry.path))) {
+			usage.used_by.emplace("game override");
+		}
+
 		result.push_back(std::move(usage));
 	}
 

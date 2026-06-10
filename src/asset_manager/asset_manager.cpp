@@ -27,6 +27,7 @@ namespace fs = std::filesystem;
 static constexpr int IsUnusedRole = Qt::UserRole; // bool, on file items
 static constexpr int ObjectIdRole = Qt::UserRole + 1; // QString, on child items
 static constexpr int CategoryRole = Qt::UserRole + 2; // int, on child items (-1 = not an object)
+static constexpr int SizeRole = Qt::UserRole + 3; // qulonglong (bytes), on size items
 
 QIcon get_file_icon(const std::string& path) {
 	static const QIcon model_icon = QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView);
@@ -79,6 +80,9 @@ ObjectInfo resolve_used_by_id(const std::string& id) {
 	}
 	if (id == "map script") {
 		return {"Map Script", QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView), -1};
+	}
+	if (id == "game override") {
+		return {"Overrides a game asset", QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon), -1};
 	}
 	// MDX transitive reference (path contains a slash)
 	if (id.contains('/')) {
@@ -152,11 +156,40 @@ ObjectInfo resolve_used_by_id(const std::string& id) {
 }
 
 bool AssetFilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) const {
-	// Sort the Usages column numerically
+	// Sort the Size column by raw byte count
 	if (left.column() == 1) {
+		return left.data(SizeRole).toULongLong() < right.data(SizeRole).toULongLong();
+	}
+	// Sort the Usages column numerically
+	if (left.column() == 2) {
 		return left.data(Qt::DisplayRole).toInt() < right.data(Qt::DisplayRole).toInt();
 	}
 	return QSortFilterProxyModel::lessThan(left, right);
+}
+
+void AssetFilterModel::set_show_used(const bool show) {
+	beginFilterChange();
+	show_used = show;
+	endFilterChange();
+}
+
+void AssetFilterModel::set_show_unused(const bool show) {
+	beginFilterChange();
+	show_unused = show;
+	endFilterChange();
+}
+
+bool AssetFilterModel::filterAcceptsRow(const int source_row, const QModelIndex& source_parent) const {
+	if (!show_used || !show_unused) {
+		// For child rows check the parent file item, since recursive filtering would
+		// otherwise resurface a hidden file whose children match the text filter
+		const QModelIndex file_index = source_parent.isValid() ? source_parent : sourceModel()->index(source_row, 0, source_parent);
+		const bool is_unused = file_index.data(IsUnusedRole).toBool();
+		if ((!show_used && !is_unused) || (!show_unused && is_unused)) {
+			return false;
+		}
+	}
+	return QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
 }
 
 AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
@@ -182,12 +215,37 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	info_button->setPixmap(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation).pixmap(QSize(16, 16)));
 	info_button->setToolTip(
 		"Usage count detection is not perfect and can show files as being unused even if they're actually used.\n"
-		"It has difficulty detecting game overrides or files used in the game code if they're not using forward slashes.\n"
+		"Files that override a game asset are detected and shown as \"Overrides a game asset\".\n"
+		"It has difficulty detecting files used in the game code if they're not using forward slashes.\n"
 		"Be careful deleting them based only on the \"Usages\" number!"
 	);
 	search_bar->addWidget(info_button);
 
 	layout->addLayout(search_bar);
+
+	auto* action_bar = new QHBoxLayout;
+	show_used_box = new QCheckBox("Show Used", this);
+	show_used_box->setChecked(true);
+	action_bar->addWidget(show_used_box);
+
+	show_unused_box = new QCheckBox("Show Unused", this);
+	show_unused_box->setChecked(true);
+	action_bar->addWidget(show_unused_box);
+
+	action_bar->addStretch();
+
+	select_all_unused_box = new QCheckBox("Select All Unused", this);
+	action_bar->addWidget(select_all_unused_box);
+
+	delete_button = new QPushButton("Delete checked", this);
+	delete_button->setIcon(QApplication::style()->standardIcon(QStyle::SP_TrashIcon));
+	delete_button->setEnabled(false);
+	action_bar->addWidget(delete_button);
+
+	layout->addLayout(action_bar);
+
+	status_label = new QLabel(this);
+	layout->addWidget(status_label);
 
 	model = new QStandardItemModel(this);
 	model->setHorizontalHeaderLabels({"File"});
@@ -203,16 +261,18 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	tree_view->setUniformRowHeights(true);
 	tree_view->setContextMenuPolicy(Qt::CustomContextMenu);
 	tree_view->setSortingEnabled(true);
-	tree_view->sortByColumn(1, Qt::AscendingOrder);
+	tree_view->sortByColumn(2, Qt::AscendingOrder);
 	tree_view->header()->setStretchLastSection(false);
 
 	layout->addWidget(tree_view);
 
-	status_label = new QLabel(this);
-	layout->addWidget(status_label);
-
 	connect(search_edit, &QLineEdit::textChanged, filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(refresh_button, &QPushButton::clicked, this, &AssetManager::refresh);
+	connect(select_all_unused_box, &QCheckBox::toggled, this, &AssetManager::set_unused_checked);
+	connect(show_used_box, &QCheckBox::toggled, filter_model, &AssetFilterModel::set_show_used);
+	connect(show_unused_box, &QCheckBox::toggled, filter_model, &AssetFilterModel::set_show_unused);
+	connect(delete_button, &QPushButton::clicked, this, &AssetManager::delete_checked);
+	connect(model, &QStandardItemModel::itemChanged, this, &AssetManager::update_delete_button);
 
 	// When objects are deleted in the Object Editor, remove their references from the tree.
 	// We use rowsAboutToBeRemoved so the SLK index_to_row mapping is still intact.
@@ -236,11 +296,17 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	show();
 }
 
-void AssetManager::refresh() const {
+void AssetManager::refresh() {
 	model->clear();
-	model->setHorizontalHeaderLabels({"File", "Usages"});
+	model->setHorizontalHeaderLabels({"File", "Size", "Usages"});
 	tree_view->header()->setSectionResizeMode(0, QHeaderView::Stretch);
 	tree_view->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+	tree_view->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+
+	{
+		const QSignalBlocker blocker(select_all_unused_box);
+		select_all_unused_box->setChecked(false);
+	}
 
 	auto results = map->get_file_usage();
 
@@ -254,13 +320,19 @@ void AssetManager::refresh() const {
 		return a.path < b.path;
 	});
 
-	for (const auto& [path, used_by] : results) {
+	for (const auto& [path, size, used_by] : results) {
 		const bool is_unused = used_by.empty();
 
 		auto* file_item = new QStandardItem(QString::fromStdString(path));
 		file_item->setEditable(false);
+		file_item->setCheckable(true);
 		file_item->setData(is_unused, IsUnusedRole);
 		file_item->setIcon(get_file_icon(path));
+
+		auto* size_item = new QStandardItem(locale().formattedDataSize(static_cast<qint64>(size)));
+		size_item->setEditable(false);
+		size_item->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
+		size_item->setData(size, SizeRole);
 
 		auto* count_item = new QStandardItem(QString::number(used_by.size()));
 		count_item->setEditable(false);
@@ -269,6 +341,7 @@ void AssetManager::refresh() const {
 		if (is_unused) {
 			constexpr QColor orange(200, 120, 0);
 			file_item->setForeground(orange);
+			size_item->setForeground(orange);
 			count_item->setForeground(orange);
 		}
 
@@ -286,21 +359,103 @@ void AssetManager::refresh() const {
 			file_item->appendRow(child_item);
 		}
 
-		model->appendRow({file_item, count_item});
+		model->appendRow({file_item, size_item, count_item});
 	}
 
 	update_status();
+	update_delete_button();
 }
 
 void AssetManager::update_status() const {
 	const size_t total = static_cast<size_t>(model->rowCount());
 	size_t unused = 0;
+	qulonglong savings = 0;
 	for (int i = 0; i < model->rowCount(); i++) {
 		if (model->item(i)->data(IsUnusedRole).toBool()) {
 			unused += 1;
+			savings += model->item(i, 1)->data(SizeRole).toULongLong();
 		}
 	}
-	status_label->setText(QString("%1 unused · %2 total").arg(unused).arg(total));
+	status_label->setText(QString("%1 unused · %2 total · %3 can be saved by deleting unused files")
+							  .arg(unused)
+							  .arg(total)
+							  .arg(locale().formattedDataSize(static_cast<qint64>(savings))));
+}
+
+void AssetManager::update_delete_button() const {
+	int count = 0;
+	qulonglong total_size = 0;
+	for (int i = 0; i < model->rowCount(); i++) {
+		if (model->item(i)->checkState() == Qt::Checked) {
+			count += 1;
+			total_size += model->item(i, 1)->data(SizeRole).toULongLong();
+		}
+	}
+	delete_button->setText(
+		count > 0 ? QString("Delete checked (%1, %2)").arg(count).arg(locale().formattedDataSize(static_cast<qint64>(total_size)))
+				  : "Delete checked"
+	);
+	delete_button->setEnabled(count > 0);
+}
+
+void AssetManager::set_unused_checked(const bool checked) const {
+	// Only affect unused rows that pass the current filters
+	for (int i = 0; i < filter_model->rowCount(); i++) {
+		const QModelIndex source_index = filter_model->mapToSource(filter_model->index(i, 0));
+		QStandardItem* item = model->itemFromIndex(source_index);
+		if (item && item->data(IsUnusedRole).toBool()) {
+			item->setCheckState(checked ? Qt::Checked : Qt::Unchecked);
+		}
+	}
+}
+
+void AssetManager::delete_checked() {
+	std::vector<QStandardItem*> checked;
+	qulonglong total_size = 0;
+	bool any_used = false;
+	for (int i = 0; i < model->rowCount(); i++) {
+		QStandardItem* item = model->item(i);
+		if (item->checkState() == Qt::Checked) {
+			checked.push_back(item);
+			total_size += model->item(i, 1)->data(SizeRole).toULongLong();
+			any_used |= !item->data(IsUnusedRole).toBool();
+		}
+	}
+
+	if (checked.empty()) {
+		return;
+	}
+
+	QString message =
+		QString("Delete %1 file(s) (%2)?").arg(checked.size()).arg(locale().formattedDataSize(static_cast<qint64>(total_size)));
+	message += "\n\nAre you sure? Detecting unused resources can be inaccurate.";
+	if (any_used) {
+		message += "\nWarning: some of the checked files are in use or override a game asset!";
+	}
+	const int answer = QMessageBox::question(this, "Delete files", message, QMessageBox::Yes | QMessageBox::No);
+	if (answer != QMessageBox::Yes) {
+		return;
+	}
+
+	QStringList failures;
+	// Iterate in reverse so row removals don't shift the rows of items still to be removed
+	for (const auto& item : checked | std::views::reverse) {
+		const QString path_str = item->text();
+		std::error_code ec;
+		fs::remove(map->filesystem_path / path_str.toStdString(), ec);
+		if (ec) {
+			failures.append(QString("%1: %2").arg(path_str, QString::fromStdString(ec.message())));
+			continue;
+		}
+		model->removeRow(item->row());
+	}
+
+	if (!failures.empty()) {
+		QMessageBox::warning(this, "Delete failed", "Could not delete the following files:\n" + failures.join('\n'));
+	}
+
+	update_status();
+	update_delete_button();
 }
 
 void AssetManager::remove_object_references(const std::string& id) {
@@ -329,7 +484,10 @@ void AssetManager::remove_object_references(const std::string& id) {
 		const int new_count = file_item->rowCount();
 		const bool is_now_unused = (new_count == 0);
 
-		if (QStandardItem* count_item = model->item(row, 1)) {
+		if (QStandardItem* size_item = model->item(row, 1)) {
+			size_item->setData(is_now_unused ? QVariant(QBrush(orange)) : QVariant(), Qt::ForegroundRole);
+		}
+		if (QStandardItem* count_item = model->item(row, 2)) {
 			count_item->setText(QString::number(new_count));
 			count_item->setData(is_now_unused ? QVariant(QBrush(orange)) : QVariant(), Qt::ForegroundRole);
 		}

@@ -48,7 +48,8 @@ namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
 
 export struct FileUsage {
-	std::string path;
+	std::string path; // original on-disk relative path (forward slashes, original case)
+	u64 size = 0;
 	std::unordered_set<std::string> used_by; // empty = unused
 };
 
