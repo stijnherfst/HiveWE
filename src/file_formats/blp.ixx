@@ -92,12 +92,13 @@ namespace blp {
 								image.data[j * 4 + 3] = alpha[j];
 								break;
 							case 4: {
-								u8 byte = alpha[j / 2];
-								image.data[j * 4 + 3] = j % 2 ? byte >> 4 : byte & 0b00001111;
+								const u8 byte = alpha[j / 2];
+								image.data[j * 4 + 3] = (j % 2 ? byte >> 4 : byte & 0b00001111) * 17;
 								break;
 							}
 							case 1:
-								image.data[j * 4 + 3] = alpha[j / 8] & (1 << (j % 8));
+								const bool bit = alpha[j / 8] & (1 << (j % 8));
+								image.data[j * 4 + 3] = bit ? 255 : 0;
 								break;
 						}
 					}
