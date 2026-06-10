@@ -303,9 +303,6 @@ PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_de
 				|| terrain.corner_layer_height[bl] != terrain.corner_layer_height[tl]
 				|| terrain.corner_layer_height[bl] != terrain.corner_layer_height[tr];
 
-			// assign proper cliff texture
-			terrain.corner_cliff_texture[bl] = cliff_id;
-
 			// placing cliffs should delete blight
 			if (terrain.corner_cliff[bl]) {
 				terrain.corner_blight[bl] = false;
@@ -382,6 +379,9 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 
 	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
+			// assign proper cliff texture to all corners in the 3x3 neighbourhood
+			terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_id;
+
 			if (k == 0 && l == 0) {
 				continue;
 			}

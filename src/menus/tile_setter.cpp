@@ -9,11 +9,11 @@ import ResourceManager;
 import OpenGLUtilities;
 import MapGlobal;
 import Globals;
-import SLK;
+import Tileset;
 import Texture;
 import <glm/glm.hpp>;
 
-TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
+TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -37,33 +37,28 @@ TileSetter::TileSetter(QWidget *parent) : QDialog(parent) {
 	ui.flowlayout_placeholder_1->addLayout(selected_layout);
 	ui.flowlayout_placeholder_2->addLayout(available_layout);
 
-	const slk::SLK& slk = map->terrain.terrain_slk;
-	for (const auto&i : map->terrain.tileset_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i)).value();
+	for (const auto& i : map->terrain.tileset_ids) {
+		const auto& texture = *map->tilesets.terrain_texture(i);
+		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-
-		// QListWidgetItem* item = new QListWidgetItem;
-		// // item->setFlags(item->flags() | Qt::ItemIsDragEnabled | Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-		// item->setIcon(icon);
-		// item->setText(QString::fromStdString(slk.data("comment", i)));
-		// widget_list->addItem(item);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
 		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
+		button->setIconSize({64, 64});
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(texture.name));
 
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
 	}
 
-	for (const auto&[key, value] : world_edit_data.section("TileSets")) {
-//		const std::string tileset_key = split(value, ',').front();
-		ui.tileset->addItem(QString::fromStdString(value[0]), QString::fromStdString(key));
+	// add tilesets and cliff base tiles group
+	for (const auto& [key, tileset] : map->tilesets.tilesets()) {
+		ui.tileset->addItem(QString::fromStdString(tileset.name), QString(QChar(key)));
 	}
+	ui.tileset->addItem("Cliff Base Tiles", "c");
 
 	update_available_tiles();
 
@@ -87,7 +82,7 @@ void TileSetter::add_tile() const {
 	QPushButton* button = new QPushButton;
 	button->setIcon(available_button->icon());
 	button->setFixedSize(64, 64);
-	button->setIconSize({ 64, 64 });
+	button->setIconSize({64, 64});
 	button->setCheckable(true);
 	button->setProperty("tileID", available_button->property("tileID"));
 	button->setProperty("tileName", available_button->property("tileName"));
@@ -118,22 +113,21 @@ void TileSetter::update_available_tiles() const {
 
 	const std::string tileset = ui.tileset->currentData().toString().toStdString();
 
-	const slk::SLK& slk = map->terrain.terrain_slk;
-	for (auto&&[key, value] : map->terrain.terrain_slk.row_headers) {
+	for (const auto& [key, texture] : map->tilesets.terrain_textures()) {
 		if (key.front() != tileset.front()) {
 			continue;
 		}
 
-		const auto image = resource_manager.load<Texture>(slk.data("dir", key) + "\\" + slk.data("file", key)).value();
+		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
 		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
+		button->setIconSize({64, 64});
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(key));
-		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", key)));
+		button->setProperty("tileName", QString::fromUtf8(texture.name));
 
 		available_layout->addWidget(button);
 		available_group->addButton(button);
@@ -147,13 +141,10 @@ void TileSetter::existing_tile_clicked(QAbstractButton* button) const {
 	ui.selectedShiftLeft->setEnabled(index != 0);
 	ui.selectedShiftRight->setEnabled(index != selected_layout->count() - 1);
 
-	// Check if cliff tile
+	// dissalow removal of cliff tiles from the base tileset
 	const std::string tile_id = button->property("tileID").toString().toStdString();
-	auto& cliff_tiles = map->terrain.cliff_to_ground_texture;
-	if (map->terrain.ground_texture_to_id.contains(tile_id)) {
-		const auto is_cliff_tile = std::ranges::find(cliff_tiles, map->terrain.ground_texture_to_id[tile_id]);
-		ui.selectedRemove->setEnabled(is_cliff_tile == cliff_tiles.end());
-	}
+	const auto& texture = *map->tilesets.terrain_texture(tile_id);
+	ui.selectedRemove->setEnabled(!texture.cliff_type_id || tile_id[0] != map->terrain.tileset_id);
 }
 
 void TileSetter::available_tile_clicked(const QAbstractButton* button) const {
@@ -161,7 +152,7 @@ void TileSetter::available_tile_clicked(const QAbstractButton* button) const {
 
 	// Check if tile was already in existing/modified tileset
 	bool tile_already_added = false;
-	for (const auto&i : selected_group->buttons()) {
+	for (const auto& i : selected_group->buttons()) {
 		if (i->property("tileID") == button->property("tileID")) {
 			tile_already_added = true;
 		}
@@ -204,7 +195,7 @@ void TileSetter::shift_right() const {
 
 void TileSetter::save_tiles() {
 	std::vector<std::string> to_ids;
-	for (const auto&j : selected_layout->items()) {
+	for (const auto& j : selected_layout->items()) {
 		to_ids.push_back(j->widget()->property("tileID").toString().toStdString());
 	}
 
@@ -214,9 +205,9 @@ void TileSetter::save_tiles() {
 
 		const auto found = std::ranges::find(to_ids, from_id);
 		if (found != to_ids.end()) {
-			from_to_id[i] =  found - to_ids.begin();
+			from_to_id[i] = found - to_ids.begin();
 		} else {
-			TilePicker replace_dialog(this, { from_id }, to_ids);
+			TilePicker replace_dialog(this, {from_id}, to_ids);
 			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string& id, const std::string& to_id) {
 				const auto tile_found = std::ranges::find(to_ids, to_id);
 				from_to_id[i] = tile_found - to_ids.begin();
@@ -225,6 +216,6 @@ void TileSetter::save_tiles() {
 		}
 	}
 
-	map->terrain.change_tileset(to_ids, from_to_id);
+	map->terrain.change_tileset(to_ids, from_to_id, map->tilesets);
 	close();
 }

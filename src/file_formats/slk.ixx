@@ -6,6 +6,7 @@ import BinaryReader;
 import Utilities;
 import INI;
 import UnorderedMap;
+import no_init_allocator;
 import "absl/strings/str_split.h";
 import "absl/strings/str_join.h";
 
@@ -37,38 +38,7 @@ namespace slk {
 			return {};
 		}
 
-	  public:
-		hive::unordered_map<size_t, std::string> index_to_row;
-		hive::unordered_map<size_t, std::string> index_to_column;
-		hive::unordered_map<std::string, size_t> row_headers;
-		hive::unordered_map<std::string, size_t> column_headers;
-		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> base_data;
-		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> shadow_data;
-
-		// The following map is only used in meta SLKs and maps the field (+unit/ability ID) to a meta ID
-		hive::unordered_map<std::string, std::string> meta_map;
-
-		SLK() = default;
-
-		explicit SLK(const fs::path& path, const bool local = false) {
-			// Rethrow the error string itself so callers (e.g. Map::load's catch) report the real
-			// cause rather than the generic std::bad_expected_access message that .value() would throw.
-			if (auto result = load(path, local); !result) {
-				throw std::runtime_error(result.error());
-			}
-		}
-
-		std::expected<void, std::string> load(const fs::path& path, const bool local = false) {
-			const auto buffer = [&] {
-				if (local) {
-					auto res = read_file(path);
-					return std::move(res.value().buffer);
-				} else {
-					auto res = hierarchy.open_file(path);
-					return std::move(res.value().buffer);
-				}
-			}();
-
+		std::expected<void, std::string> load_from_buffer(std::vector<unsigned char, default_init_allocator<unsigned char>> buffer) {
 			std::string_view view(reinterpret_cast<const char*>(buffer.data()), buffer.size());
 
 			if (!view.starts_with("ID")) {
@@ -209,6 +179,49 @@ namespace slk {
 			return {};
 		}
 
+	  public:
+		hive::unordered_map<size_t, std::string> index_to_row;
+		hive::unordered_map<size_t, std::string> index_to_column;
+		hive::unordered_map<std::string, size_t> row_headers;
+		hive::unordered_map<std::string, size_t> column_headers;
+		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> base_data;
+		hive::unordered_map<std::string, hive::unordered_map<std::string, std::string>> shadow_data;
+
+		// The following map is only used in meta SLKs and maps the field (+unit/ability ID) to a meta ID
+		hive::unordered_map<std::string, std::string> meta_map;
+
+		SLK() = default;
+
+		/// Constructs an SLK and immediately loads it from the hierarchy
+		explicit SLK(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
+			// Rethrow the error string itself so callers (e.g. Map::load's catch) report the real
+			// cause rather than the generic std::bad_expected_access message that .value() would throw.
+			if (auto result = load_hierarchy(path, source); !result) {
+				throw std::runtime_error(result.error());
+			}
+		}
+
+		/// Loads an SLK file from the hierarchy using the specified source flags (overrides, imports, local files, casc)
+		std::expected<void, std::string>
+		load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
+			auto res = hierarchy.open_file(path, source);
+			if (!res) {
+				return std::unexpected(res.error());
+			}
+
+			return load_from_buffer(std::move(res->buffer));
+		}
+
+		/// Loads an SLK file from the disk. The path is relative to the editor executable
+		std::expected<void, std::string> load_local(const fs::path& path) {
+			auto res = read_file(path);
+			if (!res) {
+				return std::unexpected(res.error());
+			}
+
+			return load_from_buffer(std::move(res->buffer));
+		}
+
 		void build_meta_map() {
 			// Check if we are a meta_slk
 			if (!column_headers.contains("field")) {
@@ -240,7 +253,8 @@ namespace slk {
 		/// To map a field in a data SLK (race, pathTex, moveSpeed, etc.) to the field ID in the meta SLK.
 		/// The ID of the unit/doodad/ability needs to be supplied as some fields can only be resolved that way (useSpecific for abilities).
 		[[nodiscard]]
-		std::optional<std::string_view> field_to_meta_id(const SLK& meta_slk, const std::string_view field_name, const std::string_view id) const {
+		std::optional<std::string_view>
+		field_to_meta_id(const SLK& meta_slk, const std::string_view field_name, const std::string_view id) const {
 			// First check raw field name. They can sometimes have numbers already (effect1, mod2, etc.)
 			if (const auto found_field = meta_slk.meta_map.find(field_name); found_field != meta_slk.meta_map.end()) {
 				return found_field->second;

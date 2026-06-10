@@ -15,34 +15,35 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	ui.flowlayout_placeholder_1->addLayout(from_layout);
 	ui.flowlayout_placeholder_2->addLayout(to_layout);
 
-	const slk::SLK& slk = map->terrain.terrain_slk;
-	for (const auto& i :from_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i)).value();
+	for (const auto& i : from_ids) {
+		const auto& texture = *map->tilesets.terrain_texture(i);
+		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
 		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
+		button->setIconSize({64, 64});
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(texture.name));
 
 		from_layout->addWidget(button);
 		from_group->addButton(button);
 	}
 
-	for (const auto& i :to_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i)).value();
+	for (const auto& i : to_ids) {
+		const auto& texture = *map->tilesets.terrain_texture(i);
+		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
 		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
+		button->setIconSize({64, 64});
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(texture.name));
 
 		to_layout->addWidget(button);
 		to_group->addButton(button);
@@ -53,7 +54,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePicker::completed);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
-	
+
 	connect(from_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
 	});

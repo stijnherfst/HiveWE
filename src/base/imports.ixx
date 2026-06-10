@@ -4,6 +4,7 @@ import std;
 import types;
 import BinaryWriter;
 import Hierarchy;
+import Paths;
 
 namespace fs = std::filesystem;
 
@@ -11,7 +12,6 @@ namespace fs = std::filesystem;
 // That's why we write the file at save time
 export class Imports {
   public:
-
 	const std::unordered_set<std::string> blacklist = {
 		"conversation.json",
 		"war3mapUnits.doo",
@@ -49,6 +49,9 @@ export class Imports {
 		"war3mapSkin.w3t",
 		"war3mapSkin.w3u",
 		"war3mapPreview.tga",
+
+		// HiveWE editor files
+		paths::terrain_pathing_file(hierarchy.map_directory).filename().string(),
 	};
 
 	/// Requires the filesystem_path for the map to make the saved paths lexically relative

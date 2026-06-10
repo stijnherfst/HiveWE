@@ -8,11 +8,11 @@ export module ColorButton;
 
 import <glm/glm.hpp>;
 
-export class ColorButton : public QPushButton {
+export class ColorButton: public QPushButton {
 	Q_OBJECT
+
   public:
-	explicit ColorButton(QWidget* parent)
-		: QPushButton(parent) {
+	explicit ColorButton(QWidget* parent) : QPushButton(parent) {
 		connect(this, &QPushButton::clicked, this, &ColorButton::changeColor);
 	}
 
@@ -22,7 +22,9 @@ export class ColorButton : public QPushButton {
 		int delta = color.red() * 0.299 + color.green() * 0.587 + color.blue() * 0.114;
 		QColor text_color = QColor((255 - delta < 105) ? Qt::black : Qt::white);
 
-		setStyleSheet("border-color: " + color.name() + "; " + QString("background-color: ") + color.name() + "; color: " + text_color.name());
+		setStyleSheet(
+			"border-color: " + color.name() + "; " + QString("background-color: ") + color.name() + "; color: " + text_color.name()
+		);
 	}
 
 	const QColor& getColor() {
@@ -30,14 +32,20 @@ export class ColorButton : public QPushButton {
 	}
 
 	glm::vec4 get_glm_color() const {
-		return { color.red(), color.green(), color.blue(), color.alpha() };
+		return {color.red(), color.green(), color.blue(), color.alpha()};
 	}
 
   public slots:
+
 	void changeColor() {
-		QColor newColor = QColorDialog::getColor(color, parentWidget());
-		if (newColor != color) {
-			setColor(newColor);
+		QColorDialog dialog(color, parentWidget());
+		dialog.setOption(QColorDialog::ShowAlphaChannel, true);
+
+		if (dialog.exec() == QDialog::Accepted) {
+			QColor newColor = dialog.currentColor();
+			if (newColor != color) {
+				setColor(newColor);
+			}
 		}
 	}
 

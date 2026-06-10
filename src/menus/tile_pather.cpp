@@ -4,11 +4,12 @@ import std;
 import OpenGLUtilities;
 import Texture;
 import MapGlobal;
-import SLK;
+import PathingMap;
+import Tileset;
 import ResourceManager;
 import <glad/glad.h>;
 
-TilePather::TilePather(QWidget *parent) : QDialog(parent) {
+TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -16,24 +17,25 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
 
-	for (const auto& [tile_id, options] :map->terrain.pathing_options) {
-		pathing_options[tile_id].unwalkable = options.unwalkable;
-		pathing_options[tile_id].unflyable = options.unflyable;
-		pathing_options[tile_id].unbuildable = options.unbuildable;
+	for (const auto& i : map->terrain.tileset_ids) {
+		const uint8_t pathing = map->tilesets.terrain_texture(i)->get_tile_pathing();
+		pathing_options[i].unwalkable = pathing & PathingMap::Flags::unwalkable;
+		pathing_options[i].unflyable = pathing & PathingMap::Flags::unflyable;
+		pathing_options[i].unbuildable = pathing & PathingMap::Flags::unbuildable;
 	}
 
-	const slk::SLK& slk = map->terrain.terrain_slk;
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto image = resource_manager.load<Texture>(slk.data("dir", i) + "\\" + slk.data("file", i)).value();
+		const auto& texture = *map->tilesets.terrain_texture(i);
+		const auto image = resource_manager.load<Texture>(texture.file_path).value();
 		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
 
 		QPushButton* button = new QPushButton;
 		button->setIcon(icon);
 		button->setFixedSize(64, 64);
-		button->setIconSize({ 64, 64 });
+		button->setIconSize({64, 64});
 		button->setCheckable(true);
 		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromUtf8(slk.data<std::string_view>("comment", i)));
+		button->setProperty("tileName", QString::fromUtf8(texture.name));
 
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
@@ -47,15 +49,29 @@ TilePather::TilePather(QWidget *parent) : QDialog(parent) {
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePather::save_tiles);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-	connect(ui.unwalkable, &QPushButton::clicked, [&](bool checked) { pathing_options[current_tile].unwalkable = checked; });
-	connect(ui.unflyable, &QPushButton::clicked, [&](bool checked) { pathing_options[current_tile].unflyable = checked; });
-	connect(ui.unbuildable, &QPushButton::clicked, [&](bool checked) { pathing_options[current_tile].unbuildable = checked; });
+	connect(ui.unwalkable, &QPushButton::clicked, [&](bool checked) {
+		pathing_options[current_tile].unwalkable = checked;
+	});
+	connect(ui.unflyable, &QPushButton::clicked, [&](bool checked) {
+		pathing_options[current_tile].unflyable = checked;
+	});
+	connect(ui.unbuildable, &QPushButton::clicked, [&](bool checked) {
+		pathing_options[current_tile].unbuildable = checked;
+	});
 
-	connect(ui.replaceType, &QPushButton::clicked, [&]() { pathing_options[current_tile].operation = PathingOptions::Operation::replace; });
-	connect(ui.addType, &QPushButton::clicked, [&]() { pathing_options[current_tile].operation = PathingOptions::Operation::add; });
-	connect(ui.removeType, &QPushButton::clicked, [&]() { pathing_options[current_tile].operation = PathingOptions::Operation::remove; });
+	connect(ui.replaceType, &QPushButton::clicked, [&]() {
+		pathing_options[current_tile].operation = PathingOptions::Operation::replace;
+	});
+	connect(ui.addType, &QPushButton::clicked, [&]() {
+		pathing_options[current_tile].operation = PathingOptions::Operation::add;
+	});
+	connect(ui.removeType, &QPushButton::clicked, [&]() {
+		pathing_options[current_tile].operation = PathingOptions::Operation::remove;
+	});
 
-	connect(ui.applyRetroactively, &QCheckBox::clicked, [&](bool checked) { pathing_options[current_tile].apply_retroactively = checked; });
+	connect(ui.applyRetroactively, &QCheckBox::clicked, [&](bool checked) {
+		pathing_options[current_tile].apply_retroactively = checked;
+	});
 }
 
 void TilePather::changed_tile(QAbstractButton* button) {
@@ -70,38 +86,28 @@ void TilePather::changed_tile(QAbstractButton* button) {
 	ui.applyRetroactively->setChecked(pathing_options[current_tile].apply_retroactively);
 
 	switch (pathing_options[current_tile].operation) {
-	case PathingOptions::Operation::replace:
-		ui.replaceType->setChecked(true);
-		break;
-	case PathingOptions::Operation::add:
-		ui.addType->setChecked(true);
-		break;
-	case PathingOptions::Operation::remove:
-		ui.removeType->setChecked(true);
-		break;
+		case PathingOptions::Operation::replace:
+			ui.replaceType->setChecked(true);
+			break;
+		case PathingOptions::Operation::add:
+			ui.addType->setChecked(true);
+			break;
+		case PathingOptions::Operation::remove:
+			ui.removeType->setChecked(true);
+			break;
 	}
 }
 
 void TilePather::save_tiles() {
-	for (const auto& [tile_id, options] :pathing_options) {
-		// Save state
-		map->terrain.pathing_options[tile_id].unwalkable = options.unwalkable;
-		map->terrain.pathing_options[tile_id].unflyable = options.unflyable;
-		map->terrain.pathing_options[tile_id].unbuildable = options.unbuildable;
+	for (const auto& [tile_id, options] : pathing_options) {
+		// Save override pathing back to tilesets and "reset it" if it is the same as base-game pathing
+		const uint8_t mask = (options.unwalkable ? PathingMap::Flags::unwalkable : 0)
+			| (options.unflyable ? PathingMap::Flags::unflyable : 0) | (options.unbuildable ? PathingMap::Flags::unbuildable : 0);
+		TerrainTexture* texture = map->tilesets.terrain_texture(tile_id);
+		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
 
 		if (!options.apply_retroactively) {
 			continue;
-		}
-
-		uint8_t mask = 0;
-		if (options.unwalkable) {
-			mask |= 0b00000010;
-		}
-		if (options.unflyable) {
-			mask |= 0b00000100;
-		}
-		if (options.unbuildable) {
-			mask |= 0b00001000;
 		}
 
 		const int id = map->terrain.ground_texture_to_id.at(tile_id);
@@ -122,16 +128,17 @@ void TilePather::save_tiles() {
 						uint8_t byte_cell = map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x];
 
 						switch (options.operation) {
-						case PathingOptions::Operation::replace:
-							byte_cell &= ~0b00001110;
-							byte_cell |= mask;
-							break;
-						case PathingOptions::Operation::add:
-							byte_cell |= mask;
-							break;
-						case PathingOptions::Operation::remove:
-							byte_cell &= ~mask;
-							break;
+							case PathingOptions::Operation::replace:
+								byte_cell &=
+									~(PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
+								byte_cell |= mask;
+								break;
+							case PathingOptions::Operation::add:
+								byte_cell |= mask;
+								break;
+							case PathingOptions::Operation::remove:
+								byte_cell &= ~mask;
+								break;
 						}
 
 						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] = byte_cell;
@@ -141,7 +148,17 @@ void TilePather::save_tiles() {
 		}
 	}
 
-	glTextureSubImage2D(map->pathing_map.texture_static, 0, 0, 0, map->pathing_map.width, map->pathing_map.height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, map->pathing_map.pathing_cells_static.data());
+	glTextureSubImage2D(
+		map->pathing_map.texture_static,
+		0,
+		0,
+		0,
+		map->pathing_map.width,
+		map->pathing_map.height,
+		GL_RED_INTEGER,
+		GL_UNSIGNED_BYTE,
+		map->pathing_map.pathing_cells_static.data()
+	);
 
 	close();
 }
