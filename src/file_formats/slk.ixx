@@ -206,7 +206,7 @@ namespace slk {
 		load_hierarchy(const fs::path& path, const Hierarchy::FileSource source = Hierarchy::FileSource::all) {
 			auto res = hierarchy.open_file(path, source);
 			if (!res) {
-				throw std::runtime_error(res.error());
+				return std::unexpected(res.error());
 			}
 
 			return load_from_buffer(std::move(res->buffer));
@@ -216,7 +216,7 @@ namespace slk {
 		std::expected<void, std::string> load_local(const fs::path& path) {
 			auto res = read_file(path);
 			if (!res) {
-				throw std::runtime_error(res.error());
+				return std::unexpected(res.error());
 			}
 
 			return load_from_buffer(std::move(res->buffer));
