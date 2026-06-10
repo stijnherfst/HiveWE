@@ -16,13 +16,14 @@ import "glm/glm.hpp";
 
 export class TerrainTexture {
   public:
-	/// String ID of the terrain texture. E.g. 'Ldrt'
 	std::string id;
 
 	/// Display name of the terrain texture. E.g. "Dark Grass"
+	/// Takes editor localisation into account
 	std::string name;
 
-	/// Texture file path. Handles both classic and reforged graphics
+	/// Texture file path
+	/// Handles both classic and reforged graphics
 	std::string file_path;
 
 	/// Base game pathing flags for the terrain texture
@@ -42,61 +43,54 @@ export class TerrainTexture {
 
 export class CliffType {
   public:
-	/// String id of the cliff. E.g. 'CLdi'
 	std::string id;
 
-	/// Display name of the cliff type.
+	/// Display name of the cliff type
+	/// Takes editor localisation into account
 	std::string name;
 
 	/// String id of the ground tile underneath the cliff
 	std::string ground_tile;
 
-	/// File path of the cliff texture. Handles both classic and reforged graphics
+	/// File path of the cliff texture
+	/// Handles both classic and reforged graphics
 	std::string file_path;
 
-	/// Folder containing the cliff models. Either "Cliffs" or "CityCliffs"
+	/// Folder containing the cliff models
+	/// Either "Cliffs" or "CityCliffs"
 	std::string cliff_model_dir;
 
-	/// Folder containing the ramp models. Either "CliffTrans" or "CityCliffTrans"
+	/// Folder containing the ramp models
+	/// Either "CliffTrans" or "CityCliffTrans"
 	std::string ramp_model_dir;
 };
 
 export class Tileset {
   public:
-	/// Single char id of the tileset. E.g. 'L' for Lordaeron Summer
 	char id;
 
 	/// Name of the tileset
+	/// Takes editor localisation into account
 	std::string name;
 
-	/// Path to the blight texture used by the tilesets. Handles both classic and reforged graphics
+	/// Path to the blight texture used by the tilesets
+	/// Handles both classic and reforged graphics
 	std::string blight_texture;
 
-	/// Terrain DNC path. Uses Lordaeron Summer DNC by default
 	std::string terrain_dnc = "Environment/DNC/DNCLordaeron/DNCLordaeronTerrain/DNCLordaeronTerrain.mdl";
-
-	/// Unit DNC path. Uses Lordaeron Summer DNC by default
 	std::string unit_dnc = "Environment/DNC/DNCLordaeron/DNCLordaeronUnit/DNCLordaeronUnit.mdl";
 
-	/// Day ambience sound
-	std::string day_ambience;
-
-	/// Night ambience sound
-	std::string night_ambience;
-
-	/// Default sound environment for the tileset
+	std::string day_ambience_sound;
+	std::string night_ambience_sound;
 	std::string sound_environment;
 
-	/// Water ID. E.g. LSha
 	std::string water_id;
 
-	/// List of terrain textures used by the tileset
 	std::vector<std::string> terrain_textures;
 
 	/// Partial path to the water texture used by the tileset
 	std::string water_texture;
 
-	// Water data
 	float water_offset;
 	int water_textures_nr;
 	int water_animation_rate;
@@ -223,7 +217,7 @@ export class TilesetData {
 	}
 
   private:
-	/// All available terrain textures and cliff types in the game
+	// All available terrain textures and cliff types in the game
 	hive::unordered_map<std::string, TerrainTexture> terrain_texture_map;
 	hive::unordered_map<std::string, CliffType> cliff_type_map;
 	hive::unordered_map<char, Tileset> tileset_map;
@@ -343,11 +337,11 @@ export class TilesetData {
 		};
 
 		load_string("DayAmbience", [](auto& tileset, const auto& val) {
-			tileset.day_ambience = val;
+			tileset.day_ambience_sound = val;
 		});
 
 		load_string("NightAmbience", [](auto& tileset, const auto& val) {
-			tileset.night_ambience = val;
+			tileset.night_ambience_sound = val;
 		});
 
 		load_string("SoundEnvironment", [](auto& tileset, const auto& val) {
@@ -362,7 +356,7 @@ export class TilesetData {
 			tileset.unit_dnc = val;
 		});
 
-		// link terrain textures to their
+		// link terrain textures to their tileset
 		for (const auto& [tile_id, texture] : terrain_texture_map) {
 			const char tileset_key = tile_id.front();
 			if (auto it = tileset_map.find(tileset_key); it != tileset_map.end()) {

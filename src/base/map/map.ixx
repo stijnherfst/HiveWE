@@ -375,7 +375,7 @@ export class Map: public QObject {
 
 		info.load();
 		profile_reset();
-		terrain.load(physics, tilesets, info);
+		terrain.load(physics, tilesets);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
 		profile_print();
@@ -781,14 +781,14 @@ export class Map: public QObject {
 
 		render_manager.render(render_lighting, light_direction);
 		if (render_water) {
-			terrain.render_water();
+			terrain.render_water(info, tilesets);
 		}
 
 		// physics.dynamicsWorld->debugDrawWorld();
 		// physics.draw->render();
 	}
 
-	/// Resizes the entire map by expanding/shirnking it from all sides
+	/// Resizes the entire map by expanding/shrinking it from all sides
 	/// Handles terrain, pathing map, shadow map and preplaced objects
 	/// Also, as per vanilla WE behaviour, clears the entire world undo stack
 	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom);

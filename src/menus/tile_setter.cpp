@@ -216,6 +216,6 @@ void TileSetter::save_tiles() {
 		}
 	}
 
-	map->terrain.change_tileset(to_ids, from_to_id);
+	map->terrain.change_tileset(to_ids, from_to_id, map->tilesets);
 	close();
 }

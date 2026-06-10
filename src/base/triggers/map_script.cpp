@@ -724,10 +724,10 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 			: map_info.custom_sound_environment;
 		script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
-		const std::string ambient_day = string_replaced(tileset->day_ambience, "\\", "/");
+		const std::string ambient_day = string_replaced(tileset->day_ambience_sound, "\\", "/");
 		script.call("SetAmbientDaySound", "\"" + ambient_day + "\"");
 
-		const std::string ambient_night = string_replaced(tileset->night_ambience, "\\", "/");
+		const std::string ambient_night = string_replaced(tileset->night_ambience_sound, "\\", "/");
 		script.call("SetAmbientNightSound", "\"" + ambient_night + "\"");
 
 		if (map_info.water_tinting) {
