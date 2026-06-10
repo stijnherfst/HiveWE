@@ -369,8 +369,8 @@ export class Terrain: public QObject {
 
 		hierarchy.tileset = tileset;
 
-		terrain_slk.load("TerrainArt/Terrain.slk");
-		cliff_slk.load("TerrainArt/CliffTypes.slk");
+		terrain_slk.load("TerrainArt/Terrain.slk").value();
+		cliff_slk.load("TerrainArt/CliffTypes.slk").value();
 		const slk::SLK water_slk("TerrainArt/Water.slk");
 
 		// Water Textures and Colours

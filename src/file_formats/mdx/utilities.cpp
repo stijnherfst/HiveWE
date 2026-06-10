@@ -89,12 +89,16 @@ namespace mdx {
 			glm::uvec4 indices(0);
 			glm::uvec4 weightss(0);
 
-			const int weight = 255 / bone_count;
-			for (size_t j = 0; j < bone_count; j++) {
-				indices[j] = geoset.matrix_indices[bone_offset + j];
-				weightss[j] = weight;
+			if (bone_count > 0) {
+				const int weight = 255 / bone_count;
+				for (size_t j = 0; j < bone_count; j++) {
+					if (bone_offset + j < geoset.matrix_indices.size()) {
+						indices[j] = geoset.matrix_indices[bone_offset + j];
+					}
+					weightss[j] = weight;
+				}
+				weightss[0] += 255 % bone_count;
 			}
-			weightss[0] += 255 % bone_count;
 
 			groups.push_back(indices);
 			weights.push_back(weightss);
@@ -104,8 +108,13 @@ namespace mdx {
 		std::vector<glm::u8vec4> skin_weights;
 		skin_weights.reserve(groups.size() * 2);
 		for (const auto& vertex_group : geoset.vertex_groups) {
-			skin_weights.push_back(groups[vertex_group]);
-			skin_weights.push_back(weights[vertex_group]);
+			if (vertex_group < groups.size()) {
+				skin_weights.push_back(groups[vertex_group]);
+				skin_weights.push_back(weights[vertex_group]);
+			} else {
+				skin_weights.push_back(glm::u8vec4(0));
+				skin_weights.push_back(glm::u8vec4(0));
+			}
 		}
 
 		return skin_weights;

@@ -327,13 +327,23 @@ export class Map: public QObject {
 			buff_slk.merge(campaign_ability_strings_ini, buff_meta_slk);
 		});
 
-		units_future.get();
-		abilities_future.get();
-		items_future.get();
-		doodads_future.get();
-		destructibles_future.get();
-		upgrade_future.get();
-		buff_future.get();
+		try {
+			units_future.get();
+			abilities_future.get();
+			items_future.get();
+			doodads_future.get();
+			destructibles_future.get();
+			upgrade_future.get();
+			buff_future.get();
+		} catch (const std::exception& e) {
+			std::println("Error loading game data: {}", e.what());
+			QMessageBox::critical(
+				nullptr,
+				"Map loading error",
+				QString::fromStdString(std::format("Failed to load game data files:\n{}", e.what()))
+			);
+			return;
+		}
 
 		units_table = new TableModel(&units_slk, &units_meta_slk, &trigger_strings);
 		items_table = new TableModel(&items_slk, &items_meta_slk, &trigger_strings);
@@ -704,7 +714,11 @@ export class Map: public QObject {
 				return;
 			} // ToDo handle starting locations
 
-			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
+			if (i.skeleton.sequence_index == -1) {
+				return;
+			}
+
+			mdx::Extent& extent = i.mesh->mdx->sequences.at(i.skeleton.sequence_index).extent;
 			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
@@ -719,7 +733,11 @@ export class Map: public QObject {
 
 		// Animate doodads
 		std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](Doodad& i) {
-			mdx::Extent& extent = i.mesh->mdx->sequences[i.skeleton.sequence_index].extent;
+			if (i.skeleton.sequence_index == -1) {
+				return;
+			}
+
+			mdx::Extent& extent = i.mesh->mdx->sequences.at(i.skeleton.sequence_index).extent;
 			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
