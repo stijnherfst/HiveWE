@@ -6,6 +6,7 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"base/map/map.ixx"
 	"base/map/resize.cpp"
 	"base/map/unused_files.cpp"
+	"base/map/protection.ixx"
 	"base/binary_reader.ixx"
 	"base/doodad.ixx"
 	"base/doodads.ixx"
@@ -138,6 +139,8 @@ target_sources(HiveWE_lib PRIVATE
 
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"
+	"menus/map_protection_dialog.cpp"
+	"menus/map_protection_dialog.h"
 	"menus/minimap.cpp"
 	"menus/palette.cpp"
 	"menus/pathing_palette.cpp"

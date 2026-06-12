@@ -38,7 +38,7 @@ public:
 	void load_mpq();
 	void save();
 	void save_as();
-	void export_mpq();
+	void export_map();
 	void play_test();
 
 private:
