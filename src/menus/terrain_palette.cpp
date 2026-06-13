@@ -595,11 +595,8 @@ void TerrainPalette::create_terrain_buttons() {
 	// add blight texture to the texture painter tool
 	// this is a small divergence from vanilla WE
 	const Tileset* tileset = map->tilesets.tileset(map->terrain.tileset_id);
-	const auto image = resource_manager.load<Texture>(tileset->blight_texture).value();
-	const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-
 	TextureButton* blight_button = terrain_button(nullptr);
-	blight_button->setIcon(icon);
+	blight_button->create_blight_icon(tileset);
 	blight_button->setToolTip(QString::fromStdString(world_edit_strings.data("WorldEditStrings", "WESTRING_BLIGHT")));
 
 	textures_layout->addWidget(blight_button);

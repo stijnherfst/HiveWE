@@ -24,12 +24,33 @@ export class TextureButton: public QPushButton {
 		return tex != nullptr;
 	}
 
-	void create_icon(bool pathing_hint, bool cliff_hint, std::optional<uint8_t> pathing_override = std::nullopt) {
+	void create_blight_icon(const Tileset* tileset) {
+		if (!tileset) {
+			return;
+		}
+
+		const auto image = resource_manager.load<Texture>(tileset->blight_texture).value();
+		create_icon_from_image(image, false, false);
+	}
+
+	void create_icon(const bool pathing_hint, const bool cliff_hint, const std::optional<uint8_t> pathing_override = std::nullopt) {
 		if (!hasTexture()) {
 			return;
 		}
 
 		const auto image = resource_manager.load<Texture>(tex->file_path).value();
+		create_icon_from_image(image, pathing_hint, cliff_hint, pathing_override);
+	}
+
+  private:
+	const TerrainTexture* tex;
+
+	void create_icon_from_image(
+		const std::shared_ptr<Texture>& image,
+		const bool pathing_hint,
+		const bool cliff_hint,
+		const std::optional<uint8_t> pathing_override = std::nullopt
+	) {
 		const QImage temp_image = QImage(image->data.data(), image->width, image->height, QImage::Format::Format_RGBA8888);
 
 		// take the first "variation" from the ground tile
@@ -74,9 +95,6 @@ export class TextureButton: public QPushButton {
 
 		setIcon(icon);
 	}
-
-  private:
-	const TerrainTexture* tex;
 };
 
 export class CliffButton: public TextureButton {
