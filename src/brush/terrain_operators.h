@@ -66,6 +66,10 @@ class TextureOperator: public TerrainOperator {
 	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
 	PathingRect apply(const TerrainRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
+
+  private:
+	/// index of the terrain texture being painted on the terrain
+	int tile_index;
 };
 
 class CliffOperator: public TerrainOperator {
@@ -84,7 +88,7 @@ class CliffOperator: public TerrainOperator {
 	};
 	cliff_operation cliff_operation_type = cliff_operation::raise1;
 
-	int cliff_id = 0;
+	std::string cliff_id;
 
 	void apply_begin(const TerrainRect& area, int center_x, int center_y) override;
 	PathingRect apply(const TerrainRect& area, double frame_delta) override;
@@ -96,6 +100,8 @@ class CliffOperator: public TerrainOperator {
 	PathingRect apply_ramps(const TerrainRect& area, double frame_delta);
 
   private:
+	/// index of the cliff being used
+	int cliff_index;
 	int layer_height = 0;
 };
 

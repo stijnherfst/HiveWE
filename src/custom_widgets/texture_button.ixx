@@ -78,3 +78,23 @@ export class TextureButton: public QPushButton {
   private:
 	const TerrainTexture* tex;
 };
+
+export class CliffButton: public TextureButton {
+  public:
+	explicit CliffButton(const CliffType* cliff_type, const TerrainTexture* terr_tex, QWidget* parent = nullptr) :
+		TextureButton(terr_tex, parent),
+		clf(cliff_type) {}
+
+	[[nodiscard]]
+	const CliffType* cliff() const {
+		return clf;
+	}
+
+	[[nodiscard]]
+	bool hasCliff() const {
+		return clf != nullptr;
+	}
+
+  private:
+	const CliffType* clf;
+};

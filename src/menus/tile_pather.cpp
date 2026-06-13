@@ -110,7 +110,7 @@ void TilePather::save_tiles() {
 			continue;
 		}
 
-		const int id = map->terrain.ground_texture_to_id.at(tile_id);
+		const int id = map->terrain.ground_texture_to_id(tile_id);
 		for (int i = 0; i < map->terrain.width; i++) {
 			for (int j = 0; j < map->terrain.height; j++) {
 				if (map->terrain.real_tile_texture(i, j) != id) {

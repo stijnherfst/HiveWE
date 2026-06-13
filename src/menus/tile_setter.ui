@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>580</width>
+    <width>610</width>
     <height>461</height>
    </rect>
   </property>
@@ -52,6 +52,12 @@
      </property>
      <item>
       <widget class="QComboBox" name="baseTileset">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="toolTip">
         <string>Available tilesets.</string>
        </property>
@@ -109,6 +115,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
@@ -123,7 +132,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>566</width>
+        <width>598</width>
         <height>52</height>
        </rect>
       </property>
@@ -257,6 +266,9 @@
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::NoFrame</enum>
+     </property>
      <property name="horizontalScrollBarPolicy">
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
@@ -271,7 +283,7 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>566</width>
+        <width>598</width>
         <height>52</height>
        </rect>
       </property>
