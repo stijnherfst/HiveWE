@@ -292,30 +292,30 @@ void TileSetter::shift_right() const {
 }
 
 void TileSetter::save_tiles() {
-	std::vector<std::string> to_ids;
+	std::vector<std::string> new_terrain_textures;
 	for (const auto& item : selected_layout->items()) {
 		const auto* btn = static_cast<const TextureButton*>(item->widget());
-		to_ids.push_back(btn->texture()->id);
+		new_terrain_textures.push_back(btn->texture()->id);
 	}
 
 	from_to_id.resize(map->terrain.tileset_ids.size());
 	for (size_t i = 0; i < map->terrain.tileset_ids.size(); i++) {
 		const std::string from_id = map->terrain.tileset_ids[i];
 
-		const auto found = std::ranges::find(to_ids, from_id);
-		if (found != to_ids.end()) {
-			from_to_id[i] = found - to_ids.begin();
+		const auto found = std::ranges::find(new_terrain_textures, from_id);
+		if (found != new_terrain_textures.end()) {
+			from_to_id[i] = found - new_terrain_textures.begin();
 		} else {
-			TilePicker replace_dialog(this, {from_id}, to_ids);
+			TilePicker replace_dialog(this, {from_id}, new_terrain_textures);
 			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string& id, const std::string& to_id) {
-				const auto tile_found = std::ranges::find(to_ids, to_id);
-				from_to_id[i] = tile_found - to_ids.begin();
+				const auto tile_found = std::ranges::find(new_terrain_textures, to_id);
+				from_to_id[i] = tile_found - new_terrain_textures.begin();
 			});
 			replace_dialog.exec();
 		}
 	}
 
 	const char new_tileset = ui.baseTileset->currentData().toString().toStdString()[0];
-	map->terrain.change_tileset(to_ids, from_to_id, new_tileset, map->tilesets,  map->info);
+	map->terrain.change_tileset(new_terrain_textures, from_to_id, new_tileset, map->tilesets, map->info);
 	close();
 }

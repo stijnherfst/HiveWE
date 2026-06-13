@@ -52,10 +52,11 @@ export class Imports {
 
 		// HiveWE editor files
 		paths::terrain_pathing_file(hierarchy.map_directory).filename().string(),
+		paths::map_info_extras_file(hierarchy.map_directory).filename().string(),
 	};
 
 	/// Requires the filesystem_path for the map to make the saved paths lexically relative
-	void save(fs::path filesystem_path) const {
+	void save(const fs::path& filesystem_path) const {
 		BinaryWriter writer;
 
 		writer.write<u32>(1);

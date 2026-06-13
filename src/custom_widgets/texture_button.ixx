@@ -24,7 +24,7 @@ export class TextureButton: public QPushButton {
 		return tex != nullptr;
 	}
 
-	void create_icon(bool pathing_hint, bool cliff_hint) {
+	void create_icon(bool pathing_hint, bool cliff_hint, std::optional<uint8_t> pathing_override = std::nullopt) {
 		if (!hasTexture()) {
 			return;
 		}
@@ -42,7 +42,7 @@ export class TextureButton: public QPushButton {
 		// add hints - the coloured corners depicting terrain texture's pathing
 		// or if the terrain texture has a matching cliff texture
 		if (pathing_hint) {
-			const uint8_t pathing = tex->get_tile_pathing();
+			const uint8_t pathing = pathing_override.value_or(tex->get_tile_pathing());
 			const bool unwalkable = pathing & PathingMap::Flags::unwalkable;
 			const bool unbuildable = pathing & PathingMap::Flags::unbuildable;
 			const bool unflyable = pathing & PathingMap::Flags::unflyable;

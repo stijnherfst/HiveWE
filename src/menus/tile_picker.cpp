@@ -61,13 +61,15 @@ TextureButton* TilePicker::create_tex_button(const TerrainTexture* tex) {
 }
 
 void TilePicker::update_gui() const {
-	if (const auto from = dynamic_cast<TextureButton*>(from_group->checkedButton()); from && from->hasTexture()) {
+	const TextureButton* from = dynamic_cast<TextureButton*>(from_group->checkedButton());
+	if (from && from->hasTexture()) {
 		ui.selectedTileLabel->setText("Tile: " + QString::fromStdString(from->texture()->name));
 	} else {
 		ui.selectedTileLabel->setText("Tile:");
 	}
 
-	if (const auto to = dynamic_cast<TextureButton*>(to_group->checkedButton()); to && to->hasTexture()) {
+	const TextureButton* to = dynamic_cast<TextureButton*>(to_group->checkedButton());
+	if (to && to->hasTexture()) {
 		ui.replacingTileLabel->setText("Tile: " + QString::fromStdString(to->texture()->name));
 	} else {
 		ui.replacingTileLabel->setText("Tile:");
@@ -75,8 +77,10 @@ void TilePicker::update_gui() const {
 }
 
 void TilePicker::completed() {
-	const std::string from_tile = from_group->checkedButton()->property("tileID").toString().toStdString();
-	const std::string to_tile = to_group->checkedButton()->property("tileID").toString().toStdString();
+	const TextureButton* from = dynamic_cast<TextureButton*>(from_group->checkedButton());
+	const TextureButton* to = dynamic_cast<TextureButton*>(to_group->checkedButton());
+	const std::string from_tile = from->texture()->id;
+	const std::string to_tile = to->texture()->id;
 	emit tile_chosen(from_tile, to_tile);
 	close();
 }

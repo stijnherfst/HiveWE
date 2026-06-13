@@ -652,8 +652,8 @@ export class Map: public QObject {
 		save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
 		regions.save(terrain.offset.x, terrain.offset.y);
+	info.save(terrain.tileset_id);
 
-		info.save(terrain.tileset_id);
 		trigger_strings.save();
 		triggers.save();
 		triggers.save_scripts();
@@ -774,7 +774,16 @@ export class Map: public QObject {
 			regions.update_render_buffer(region_brush ? &region_brush->selections : nullptr);
 		}
 
-		terrain.render_ground(render_pathing, render_lighting, light_direction, brush, pathing_map, render_regions, regions.render_buffer, regions.regions.size());
+		terrain.render_ground(
+			render_pathing,
+			render_lighting,
+			light_direction,
+			brush,
+			pathing_map,
+			render_regions,
+			regions.render_buffer,
+			regions.regions.size()
+		);
 
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
