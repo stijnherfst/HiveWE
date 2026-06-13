@@ -45,6 +45,7 @@ import MDX;
 import BinaryWriter;
 import BinaryReader;
 import Hierarchy;
+import Tileset;
 
 namespace fs = std::filesystem;
 
@@ -56,8 +57,8 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 	map->brush = &brush;
 
 	ui.tileset->addItem("All Tilesets", '*');
-	for (const auto& [key, value] : world_edit_data.section("TileSets")) {
-		ui.tileset->addItem(QString::fromStdString(value.front()), key.front());
+	for (const auto& [key, value] : map->tilesets.tilesets()) {
+		ui.tileset->addItem(QString::fromStdString(value.name), key);
 	}
 
 	for (const auto& [key, value] : world_edit_data.section("DoodadCategories")) {

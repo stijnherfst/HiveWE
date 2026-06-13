@@ -43,10 +43,7 @@ TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 			continue;
 		}
 
-		const auto image = resource_manager.load<Texture>(texture->file_path).value();
-		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-
-		TextureButton* button = create_tex_button(icon, texture);
+		TextureButton* button = create_tex_button(texture);
 
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
@@ -109,9 +106,9 @@ void TileSetter::set_scroll_view_height(QScrollArea* scroll_area, const FlowLayo
 	scroll_area->setFixedHeight(height);
 }
 
-TextureButton* TileSetter::create_tex_button(const QIcon& icon, const TerrainTexture* tex) {
+TextureButton* TileSetter::create_tex_button(const TerrainTexture* tex) {
 	TextureButton* button = new TextureButton(tex, this);
-	button->setIcon(icon);
+	button->create_icon(true, true);
 	button->setFixedSize(64, 64);
 	button->setIconSize({64, 64});
 	button->setCheckable(true);
@@ -213,9 +210,7 @@ void TileSetter::reset_to_default() {
 			continue;
 		}
 
-		const auto image = resource_manager.load<Texture>(tex->file_path).value();
-		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-		TextureButton* button = create_tex_button(icon, tex);
+		TextureButton* button = create_tex_button(tex);
 		selected_layout->addWidget(button);
 		selected_group->addButton(button);
 	}
@@ -230,7 +225,7 @@ void TileSetter::add_tile() {
 	}
 
 	const auto* available_tex = static_cast<TextureButton*>(available_button);
-	TextureButton* button = create_tex_button(available_button->icon(), available_tex->texture());
+	TextureButton* button = create_tex_button(available_tex->texture());
 
 	selected_layout->addWidget(button);
 	selected_group->addButton(button);
@@ -263,10 +258,7 @@ void TileSetter::update_available_tiles() {
 			continue;
 		}
 
-		const auto image = resource_manager.load<Texture>(texture.file_path).value();
-		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-
-		TextureButton* button = create_tex_button(icon, &texture);
+		TextureButton* button = create_tex_button(&texture);
 		available_layout->addWidget(button);
 		available_group->addButton(button);
 	}

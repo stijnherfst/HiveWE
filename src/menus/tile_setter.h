@@ -27,7 +27,7 @@ class TileSetter: public QDialog {
 	void reset_to_default();
 	void update_gui() const;
 	void set_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout) const;
-	TextureButton* create_tex_button(const QIcon& icon, const TerrainTexture* tex);
+	TextureButton* create_tex_button(const TerrainTexture* tex);
 
 	Ui::TileSetter ui;
 
