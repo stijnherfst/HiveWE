@@ -111,15 +111,21 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 		QString::fromUtf8(environment_sounds_slk.data<std::string_view>("displaytext", map->info.custom_sound_environment))
 	);
 
-	// Custom Lighting
+	// Custom Lighting and Ambiance
 	for (const auto& [key, tileset] : map->tilesets.tilesets()) {
 		ui.customLightingCombo->addItem(QString::fromStdString(tileset.name), QChar(key));
+		ui.customAmbianceCombo->addItem(QString::fromStdString(tileset.name), QChar(key));
 
 		if (key == map->info.custom_light_tileset) {
 			ui.customLightingCombo->setCurrentIndex(ui.customLightingCombo->count() - 1);
 		}
+
+		if (key == map->info.custom_ambience_tileset) {
+			ui.customAmbianceCombo->setCurrentIndex(ui.customAmbianceCombo->count() - 1);
+		}
 	}
 	ui.customLighting->setChecked(map->info.custom_light_tileset != 0);
+	ui.customAmbiance->setChecked(map->info.custom_ambience_tileset != 0);
 
 	ui.itemClassification->setChecked(map->info.item_classification);
 	ui.gameDataSet->setCurrentIndex(map->info.game_data_set);
@@ -252,6 +258,13 @@ bool MapInfoEditor::save() const {
 		map->info.custom_light_tileset = 0;
 	} else {
 		map->info.custom_light_tileset = ui.customLightingCombo->currentData().toChar().toLatin1();
+	}
+
+	// Custom Ambiance
+	if (!ui.customAmbiance->isChecked()) {
+		map->info.custom_ambience_tileset = 0;
+	} else {
+		map->info.custom_ambience_tileset = ui.customAmbianceCombo->currentData().toChar().toLatin1();
 	}
 
 	map->info.water_tinting = ui.waterTinting->isChecked();

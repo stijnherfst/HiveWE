@@ -109,6 +109,10 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
         "object_editor/ability_list_editor.ixx"
 )
 
+target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES BASE_DIRS ${CMAKE_BINARY_DIR}/generated FILES
+        ${HIVEWE_VERSION_MODULE}
+)
+
 target_sources(HiveWE PRIVATE
         "main.cpp"
         "main_window/hivewe.rc"

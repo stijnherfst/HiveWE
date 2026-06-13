@@ -253,7 +253,7 @@ export class TilesetData {
 						it->second.override_pathing = entry["pathing"].get<uint8_t>();
 					}
 				}
-			} catch (const nlohmann::json::exception& e) {
+			} catch (const std::exception& e) {
 				// throw an error message if the json is corrupted or failed to load for some reason
 				QMessageBox::critical(
 					nullptr,

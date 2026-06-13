@@ -12,6 +12,7 @@ import Hierarchy;
 import TriggerStrings;
 import Utilities;
 import Paths;
+import HiveWEVersion;
 import <nlohmann/json.hpp>;
 import <glm/glm.hpp>;
 
@@ -178,20 +179,19 @@ export class MapInfo {
 	static constexpr int write_game_version_build = 22978;
 
 	// hiveWE specific data
-	std::string hive_editor_version;
-	std::string hive_editor_commit;
-	char custom_ambience_sound;
+	hive::Version hive_editor_version;
+	char custom_ambience_tileset;
 
 	void load() {
 		load_w3i();
 		load_hive();
 	}
 
-	void save(char tileset) const {
-		// update hiveWE editor version
-		hive_editor_version = "test";
-		hive_editor_commit = "zomby";
+	void update_hive_version() {
+		hive_editor_version = hive::version;
+	}
 
+	void save(char tileset) const {
 		// save data
 		save_w3i(tileset);
 		save_hive();
@@ -336,15 +336,21 @@ export class MapInfo {
 
   private:
 	void save_hive() const {
-		nlohmann::json root = nlohmann::json::array();
+		nlohmann::json root;
 
-		// save data to json
-		root["hive_editor_version"] = hive_editor_version;
-		root["hive_editor_commit"] = hive_editor_commit;
-		root["custom_ambience_sound"] = static_cast<unsigned char>(custom_ambience_sound);
+		// save version
+		root["hive_editor_version"] = {
+			{"major", hive_editor_version.major},
+			{"minor", hive_editor_version.minor},
+			{"patch", hive_editor_version.patch},
+			{"commit", hive_editor_version.commit},
+			{"state", hive_editor_version.state}
+		};
+
+		root["custom_ambience_sound"] = static_cast<uint8_t>(custom_ambience_tileset);
 
 		// dump, also create parent directory if it doesn't exist
-		const auto pathing_file = paths::terrain_pathing_file(hierarchy.map_directory);
+		const auto pathing_file = paths::map_info_extras_file(hierarchy.map_directory);
 		std::filesystem::create_directories(pathing_file.parent_path());
 		std::ofstream file(pathing_file);
 		if (file) {
@@ -493,22 +499,30 @@ export class MapInfo {
 	}
 
 	void load_hive() {
-		if (std::ifstream file(paths::terrain_pathing_file(hierarchy.map_directory)); file.is_open()) {
+		if (std::ifstream file(paths::map_info_extras_file(hierarchy.map_directory)); file.is_open()) {
 			try {
 				const nlohmann::json root = nlohmann::json::parse(file);
 
-				// load hive specific map info
-				hive_editor_version = root.value("hive_editor_version", std::string {});
-				hive_editor_commit = root.value("hive_editor_commit", std::string {});
-				custom_ambience_sound = static_cast<char>(root.value("custom_ambience_sound", 0));
+				// load version
+				const auto it = root.find("hive_editor_version");
+				const nlohmann::json& v = it != root.end() && it->is_object() ? *it : nlohmann::json::object();
 
-			} catch (const nlohmann::json::exception& e) {
+				hive_editor_version.major = v.value("major", 0);
+				hive_editor_version.minor = v.value("minor", 0);
+				hive_editor_version.patch = v.value("patch", 0);
+				hive_editor_version.commit = v.value("commit", "");
+				hive_editor_version.state = v.value("state", "");
+
+				// load data
+				custom_ambience_tileset = static_cast<char>(root.value("custom_ambience_sound", 0));
+
+			} catch (const std::exception& e) {
 				// throw an error message if the json is corrupted or failed to load for some reason
 				QMessageBox::critical(
 					nullptr,
 					"Error loading map info",
 					QString("Failed to load %1:\n%2")
-						.arg(paths::terrain_pathing_file(hierarchy.map_directory).string().c_str())
+						.arg(paths::map_info_extras_file(hierarchy.map_directory).string().c_str())
 						.arg(e.what())
 				);
 			}
