@@ -22,10 +22,19 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 
-	ui.flowLayout_placeholder->addLayout(textures_layout);
-	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
+	ui.terrainTexScrollAreaContent->setLayout(textures_layout);
+	ui.cliffScrollAreaContent->setLayout(cliff_layout);
 
 	refresh();
+
+	// set scroll view minimum and maximum counts
+	// requires flow layout to be populated with buttons
+	const int min_cliff_height = get_scroll_view_height(ui.cliffScrollArea, cliff_layout, 1);
+	const int max_cliff_height = get_scroll_view_height(ui.cliffScrollArea, cliff_layout, 2);
+	const int min_tex_height = get_scroll_view_height(ui.terrainTexScrollArea, textures_layout, 3);
+	ui.cliffScrollArea->setMinimumHeight(min_cliff_height);
+	ui.cliffScrollArea->setMaximumHeight(max_cliff_height);
+	ui.terrainTexScrollArea->setMinimumHeight(min_tex_height);
 
 	// ribbon
 	create_ribbon();
@@ -81,6 +90,17 @@ void TerrainPalette::update_operator_gui() {
 	update_cliff_operator_gui();
 	update_deformation_operator_gui();
 	update_cell_operator_gui();
+}
+
+int TerrainPalette::get_scroll_view_height(const QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const {
+	int rowHeight = 48;
+	const auto items = layout->items();
+	if (!items.isEmpty()) {
+		rowHeight = items.first()->widget()->sizeHint().height();
+	}
+
+	return rows * rowHeight + std::max(1, rows - 1) * layout->vertical_spacing() + layout->contentsMargins().top()
+		+ layout->contentsMargins().bottom() + scroll_area->frameWidth() * 2;
 }
 
 void TerrainPalette::update_cell_operator_gui() {
@@ -569,7 +589,6 @@ void TerrainPalette::create_terrain_buttons() {
 	// allow button groups to have no buttons checked
 	textures_group->setExclusive(false);
 	cliff_group->setExclusive(false);
-	const auto& cliffset = map->terrain.cliffset_ids;
 
 	// Ground Tiles
 	for (const auto& i : map->terrain.tileset_ids) {
@@ -584,7 +603,6 @@ void TerrainPalette::create_terrain_buttons() {
 			if (texture->cliff_type_id) {
 				const CliffType* cliff_type = map->tilesets.cliff_type(texture->cliff_type_id.value());
 
-				//const int index = std::ranges::find(cliffset, *texture.cliff_type_id) - cliffset.begin();
 				button = cliff_button(cliff_type, texture);
 				cliff_layout->addWidget(button);
 				cliff_group->addButton(button);

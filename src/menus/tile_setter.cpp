@@ -64,11 +64,16 @@ TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 		ui.baseTileset->setCurrentIndex(index);
 	}
 
-	set_scroll_view_height(ui.currentScrollArea, selected_layout);
-	set_scroll_view_height(ui.availableScrollArea, available_layout);
-
 	update_available_tiles();
 	update_gui();
+
+	const int current_min_height = get_scroll_view_height(ui.currentScrollArea, selected_layout, 3);
+	ui.currentScrollArea->setMinimumHeight(current_min_height);
+
+	const int available_min_height = get_scroll_view_height(ui.availableScrollArea, available_layout, 2);
+	const int available_max_height = get_scroll_view_height(ui.availableScrollArea, available_layout, 3);
+	ui.availableScrollArea->setMinimumHeight(available_min_height);
+	ui.availableScrollArea->setMaximumHeight(available_max_height);
 
 	connect(ui.tileset, &QComboBox::currentTextChanged, this, &TileSetter::update_available_tiles);
 	connect(ui.resetTileset, &QPushButton::clicked, this, &TileSetter::reset_to_default);
@@ -89,21 +94,15 @@ TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 	show();
 }
 
-/// computes the scroll area height so it shows limited number of rows before scrollbar appears
-void TileSetter::set_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout) const {
+int TileSetter::get_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const {
 	int rowHeight = 64;
-
 	const auto items = layout->items();
 	if (!items.isEmpty()) {
 		rowHeight = items.first()->sizeHint().height();
 	}
 
-	constexpr int rows = 2;
-
-	const int height = rows * rowHeight + (rows - 1) * layout->vertical_spacing() + layout->contentsMargins().top()
+	return rows * rowHeight + std::max(1, rows - 1) * layout->vertical_spacing() + layout->contentsMargins().top()
 		+ layout->contentsMargins().bottom() + scroll_area->frameWidth() * 2;
-
-	scroll_area->setFixedHeight(height);
 }
 
 TextureButton* TileSetter::create_tex_button(const TerrainTexture* tex) {

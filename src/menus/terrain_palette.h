@@ -3,6 +3,7 @@
 #include "ui_terrain_palette.h"
 
 #include <QDialog>
+#include <QScrollArea>
 
 #include "palette.h"
 #include "terrain_brush.h"
@@ -49,8 +50,7 @@ class TerrainPalette: public Palette {
 	void create_terrain_buttons();
 	TextureButton* terrain_button(const TerrainTexture* tex);
 	CliffButton* cliff_button(const CliffType* cliff, const TerrainTexture* tex);
-
-	//QPushButton* terrain_button(const QIcon& icon, const char* propertyName, const QVariant& propertyValue, const QString& tileName);
+	int get_scroll_view_height(const QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const;
 
 	// cliff
 	void update_cliff_operator_gui();

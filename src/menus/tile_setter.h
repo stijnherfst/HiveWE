@@ -26,7 +26,7 @@ class TileSetter: public QDialog {
 	void save_tiles();
 	void reset_to_default();
 	void update_gui() const;
-	void set_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout) const;
+	int get_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const;
 	TextureButton* create_tex_button(const TerrainTexture* tex);
 
 	Ui::TileSetter ui;
