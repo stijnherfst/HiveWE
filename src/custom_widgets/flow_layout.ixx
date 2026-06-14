@@ -29,6 +29,11 @@ export class FlowLayout: public QLayout {
 
 	void addItem(QLayoutItem* item) override {
 		item_list.append(item);
+
+		invalidate();
+		if (QWidget* pw = parentWidget()) {
+			pw->updateGeometry();
+		}
 	}
 
 	void insert_widget(const int index, QWidget* widget) {
@@ -116,15 +121,7 @@ export class FlowLayout: public QLayout {
 
 	[[nodiscard]]
 	QSize sizeHint() const override {
-		// two rows
-		int width = 0;
-
-		for (const auto* item : item_list) {
-			width += item->sizeHint().width();
-		}
-		width /= 2;
-
-		return QSize(width, heightForWidth(width));
+		return minimumSize();
 	}
 
 	// QSize minimumSize() const {
@@ -163,6 +160,7 @@ export class FlowLayout: public QLayout {
 			delete i;
 		}
 		item_list.clear();
+		invalidate();
 	}
 
 	// int do_layout(const QRect &rect, const bool test_only) const {
@@ -227,7 +225,7 @@ export class FlowLayout: public QLayout {
 			}
 
 			int next_x = x + hint_width + space_x;
-			if (next_x - space_x >= effective_rect.x() + effective_rect.width() && line_height > 0) {
+			if (next_x - space_x > effective_rect.right() && line_height > 0) {
 				x = effective_rect.x();
 				y = y + line_height + space_y;
 				next_x = x + hint_width + space_x;

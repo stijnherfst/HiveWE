@@ -14,7 +14,6 @@ TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	show();
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
 
@@ -42,18 +41,20 @@ TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePather::save_tiles);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-	connect(ui.unwalkable, &QPushButton::clicked, [&](bool checked) {
+	connect(ui.unwalkable, &QPushButton::clicked, [&](const bool checked) {
 		pathing_options[selected_button->texture()->id].unwalkable = checked;
 		update_selected_icon();
 	});
-	connect(ui.unflyable, &QPushButton::clicked, [&](bool checked) {
+	connect(ui.unflyable, &QPushButton::clicked, [&](const bool checked) {
 		pathing_options[selected_button->texture()->id].unflyable = checked;
 		update_selected_icon();
 	});
-	connect(ui.unbuildable, &QPushButton::clicked, [&](bool checked) {
+	connect(ui.unbuildable, &QPushButton::clicked, [&](const bool checked) {
 		pathing_options[selected_button->texture()->id].unbuildable = checked;
 		update_selected_icon();
 	});
+
+	show();
 }
 
 uint8_t TilePather::get_mask(const PathingOptions& options) const {
