@@ -1396,9 +1396,10 @@ export class Terrain: public QObject {
 		);
 
 		cliff_to_ground_texture.clear();
+		int next_id = 0;
 		for (const auto& cliff_id : cliffset_ids) {
 			const auto& cliff = *tilesets.cliff_type(cliff_id);
-			cliff_type_to_id_map.emplace(cliff_id, static_cast<int>(cliff_type_to_id_map.size()));
+			cliff_type_to_id_map.emplace(cliff_id, next_id++);
 			cliff_to_ground_texture.push_back(ground_texture_to_id_map[cliff.ground_tile]);
 		}
 
