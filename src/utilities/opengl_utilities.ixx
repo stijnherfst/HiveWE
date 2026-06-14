@@ -26,44 +26,22 @@ export class Shapes {
 	GLuint vertex_buffer;
 	GLuint index_buffer;
 
-	const std::vector<glm::vec2> quad_vertices = {
-		{ 1, 1 },
-		{ 0, 1 },
-		{ 0, 0 },
-		{ 1, 0 }
-	};
+	const std::vector<glm::vec2> quad_vertices = {{1, 1}, {0, 1}, {0, 0}, {1, 0}};
 
-	const std::vector<glm::uvec3> quad_indices = {
-		{ 0, 1, 2 },
-		{ 2, 3, 0 }
-	};
+	const std::vector<glm::uvec3> quad_indices = {{0, 1, 2}, {2, 3, 0}};
 };
 
 export inline Shapes shapes;
 
-/// Convert a Tground texture into an QIcon with two states
-export QIcon ground_texture_to_icon(uint8_t* data, const int width, const int height) {
-	QImage temp_image = QImage(data, width, height, QImage::Format::Format_RGBA8888);
-	const int size = height / 4;
-
-	auto pix = QPixmap::fromImage(temp_image.copy(0, 0, size, size));
-
-	QIcon icon;
-	icon.addPixmap(pix, QIcon::Normal, QIcon::Off);
-
-	QPainter painter(&pix);
-	painter.fillRect(0, 0, size, size, QColor(255, 255, 0, 64));
-	painter.end();
-
-	icon.addPixmap(pix, QIcon::Normal, QIcon::On);
-
-	return icon;
-}
-
 /// Loads a texture from the hierarchy and returns an icon
 export QIcon texture_to_icon(const fs::path& path) {
 	const auto tex = resource_manager.load<Texture>(path).value();
-	const QImage temp_image = QImage(tex->data.data(), tex->width, tex->height, tex->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888);
+	const QImage temp_image = QImage(
+		tex->data.data(),
+		tex->width,
+		tex->height,
+		tex->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888
+	);
 	const auto pix = QPixmap::fromImage(temp_image);
 	return QIcon(pix);
-};
+}

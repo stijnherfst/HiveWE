@@ -1,3 +1,7 @@
+module;
+
+#include <QMessageBox>
+
 export module MapInfo;
 
 import std;
@@ -7,6 +11,9 @@ import BinaryWriter;
 import Hierarchy;
 import TriggerStrings;
 import Utilities;
+import Paths;
+import HiveWEVersion;
+import <nlohmann/json.hpp>;
 import <glm/glm.hpp>;
 
 export enum class PlayerType {
@@ -171,7 +178,358 @@ export class MapInfo {
 	static constexpr int write_game_version_patch = 3;
 	static constexpr int write_game_version_build = 22978;
 
+	// hiveWE specific data
+	hive::Version hive_editor_version;
+	char custom_ambience_tileset;
+
 	void load() {
+		load_w3i();
+		load_hive();
+	}
+
+	void update_hive_version() {
+		hive_editor_version = hive::version;
+	}
+
+	void save(char tileset) const {
+		// save data
+		save_w3i(tileset);
+		save_hive();
+	}
+
+	/// For creating new maps from scratch
+	/// Camera bounds and playable size are not set here; call update_map_bounds_info once the terrain dimensions are known.
+	void load_defaults(TriggerStrings& trigger_strings) {
+		map_version = 1;
+		editor_version = write_editor_version;
+		game_version_major = write_game_version_major;
+		game_version_minor = write_game_version_minor;
+		game_version_patch = write_game_version_patch;
+		game_version_build = write_game_version_build;
+
+		name.clear();
+		author.clear();
+		description.clear();
+		suggested_players.clear();
+		trigger_strings.set_string(name, "Just another Warcraft III map");
+		trigger_strings.set_string(author, "Unknown");
+		trigger_strings.set_string(description, "Nondescript");
+		trigger_strings.set_string(suggested_players, "Any");
+
+		hide_minimap_preview = false;
+		modif_ally_priorities = false;
+		melee_map = true;
+		unknown = true;
+		masked_area_partially_visible = true;
+		fixed_player_settings = false;
+		custom_forces = false;
+		custom_techtree = false;
+		custom_abilities = false;
+		custom_upgrades = false;
+		unknown2 = true;
+		cliff_shore_waves = true;
+		rolling_shore_waves = true;
+		unknown3 = false;
+		unknown4 = false;
+		item_classification = true;
+		water_tinting = false;
+		accurate_probability_for_calculations = false;
+		custom_ability_skins = false;
+		disable_deny_icon = false;
+		force_default_zoom = false;
+		force_max_zoom = false;
+		force_min_zoom = false;
+
+		loading_screen_number = -1;
+		loading_screen_model.clear();
+		loading_screen_text.clear();
+		loading_screen_title.clear();
+		loading_screen_subtitle.clear();
+
+		game_data_set = 0;
+
+		prologue_screen_model.clear();
+		prologue_text.clear();
+		prologue_title.clear();
+		prologue_subtitle.clear();
+
+		fog_style = 0;
+		fog_start_z_height = 3000.f;
+		fog_end_z_height = 5000.f;
+		fog_density = 0.5f;
+		fog_color = {0, 0, 0, 255};
+
+		weather_id = 0;
+		custom_sound_environment.clear();
+		custom_light_tileset = 0;
+		water_color = {255, 255, 255, 255};
+
+		lua = false;
+		supported_modes = 3;
+		game_data_version = 1;
+
+		default_cam_distance = 1650;
+		max_cam_distance = 1650;
+		min_cam_distance = 1650;
+
+		players = {PlayerData {
+			.internal_number = 0,
+			.type = PlayerType::human,
+			.race = PlayerRace::human,
+			.fixed_start_position = 0,
+			.name = "",
+			.starting_position = {0.f, 0.f},
+			.ally_low_priorities_flags = 0,
+			.ally_high_priorities_flags = 0,
+			.enemy_low_priorities_flags = 0,
+			.enemy_high_priorities_flags = 0,
+		}};
+		forces = {ForceData {
+			.allied = false,
+			.allied_victory = false,
+			.share_vision = false,
+			.share_unit_control = false,
+			.share_advanced_unit_control = false,
+			.player_masks = static_cast<int>(0xFFFFFFFF),
+			.name = "",
+		}};
+		available_upgrades.clear();
+		available_tech.clear();
+		random_unit_tables.clear();
+		random_item_tables.clear();
+	}
+
+	void update_map_bounds_info(
+		int unplayable_left,
+		int unplayable_right,
+		int unplayable_top,
+		int unplayable_bottom,
+		int terrain_width,
+		int terrain_height,
+		float terrain_offset_x,
+		float terrain_offset_y
+	) {
+		// update unplayable area in map info
+		camera_complements[0] = unplayable_left;
+		camera_complements[1] = unplayable_right;
+		camera_complements[2] = unplayable_bottom;
+		camera_complements[3] = unplayable_top;
+
+		// update playable map area
+		playable_width = terrain_width - 1 - camera_complements[0] - camera_complements[1];
+		playable_height = terrain_height - 1 - camera_complements[2] - camera_complements[3];
+
+		// compute camera bounds based on complements and terrain offset
+		// these bounds are used in the generated JASS script
+		camera_left_bottom.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
+
+		camera_right_top.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_left_top.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
+		camera_left_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
+
+		camera_right_bottom.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
+		camera_right_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
+	}
+
+  private:
+	void save_hive() const {
+		nlohmann::json root;
+
+		// save version
+		root["hive_editor_version"] = {
+			{"major", hive_editor_version.major},
+			{"minor", hive_editor_version.minor},
+			{"patch", hive_editor_version.patch},
+			{"commit", hive_editor_version.commit},
+			{"state", hive_editor_version.state}
+		};
+
+		root["custom_ambience_sound"] = static_cast<uint8_t>(custom_ambience_tileset);
+
+		// dump, also create parent directory if it doesn't exist
+		const auto pathing_file = paths::map_info_extras_file(hierarchy.map_directory);
+		std::filesystem::create_directories(pathing_file.parent_path());
+		std::ofstream file(pathing_file);
+		if (file) {
+			file << root.dump(1, '\t') << '\n';
+		} else {
+			QMessageBox::critical(nullptr, "Error saving map data", QString("Failed to save %1").arg(pathing_file.string().c_str()));
+		}
+	}
+
+	void save_w3i(char tileset) const {
+		BinaryWriter writer;
+
+		writer.write(write_version);
+		writer.write(map_version);
+		writer.write(write_editor_version);
+		writer.write(write_game_version_major);
+		writer.write(write_game_version_minor);
+		writer.write(write_game_version_patch);
+		writer.write(write_game_version_build);
+		writer.write_c_string(name);
+		writer.write_c_string(author);
+		writer.write_c_string(description);
+		writer.write_c_string(suggested_players);
+
+		writer.write(camera_left_bottom);
+		writer.write(camera_right_top);
+		writer.write(camera_left_top);
+		writer.write(camera_right_bottom);
+
+		writer.write(camera_complements);
+
+		writer.write(playable_width);
+		writer.write(playable_height);
+
+		const int flags = hide_minimap_preview * 0x0001 | modif_ally_priorities * 0x0002 | melee_map * 0x0004 | unknown * 0x0008
+			| masked_area_partially_visible * 0x0010 | fixed_player_settings * 0x0020 | custom_forces * 0x0040 | custom_techtree * 0x0080
+			| custom_abilities * 0x0100 | custom_upgrades * 0x0200 | unknown2 * 0x0400 | cliff_shore_waves * 0x0800
+			| rolling_shore_waves * 0x1000 | unknown3 * 0x2000 | unknown4 * 0x4000 | item_classification * 0x8000 | water_tinting * 0x10000
+			| accurate_probability_for_calculations * 0x20000 | custom_ability_skins * 0x40000 | disable_deny_icon * 0x80000
+			| force_default_zoom * 0x100000 | force_max_zoom * 0x200000 | force_min_zoom * 0x400000;
+
+		writer.write(flags);
+
+		writer.write(tileset);
+
+		writer.write(loading_screen_number);
+		writer.write_c_string(loading_screen_model);
+		writer.write_c_string(loading_screen_text);
+		writer.write_c_string(loading_screen_title);
+		writer.write_c_string(loading_screen_subtitle);
+
+		writer.write(game_data_set);
+
+		writer.write_c_string(prologue_screen_model);
+		writer.write_c_string(prologue_text);
+		writer.write_c_string(prologue_title);
+		writer.write_c_string(prologue_subtitle);
+
+		writer.write(fog_style);
+		writer.write(fog_start_z_height);
+		writer.write(fog_end_z_height);
+		writer.write(fog_density);
+		writer.write(fog_color);
+
+		writer.write(weather_id);
+		writer.write_c_string(custom_sound_environment);
+		writer.write(custom_light_tileset);
+		writer.write(water_color);
+
+		writer.write((uint32_t)lua);
+
+		writer.write(supported_modes);
+		writer.write(game_data_version);
+
+		writer.write(default_cam_distance);
+		writer.write(max_cam_distance);
+		writer.write(min_cam_distance);
+
+		writer.write<uint32_t>(players.size());
+		for (const auto& i : players) {
+			writer.write(i.internal_number);
+			writer.write(static_cast<int>(i.type) + 1);
+			writer.write(static_cast<int>(i.race));
+			writer.write(i.fixed_start_position);
+			writer.write_c_string(i.name);
+			writer.write(i.starting_position);
+			writer.write(i.ally_low_priorities_flags);
+			writer.write(i.ally_high_priorities_flags);
+			writer.write(i.enemy_low_priorities_flags);
+			writer.write(i.enemy_high_priorities_flags);
+		}
+
+		writer.write<uint32_t>(forces.size());
+		for (const auto& i : forces) {
+			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100
+				| i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
+			writer.write(force_flags);
+
+			writer.write(i.player_masks);
+			writer.write_c_string(i.name);
+		}
+
+		writer.write<uint32_t>(available_upgrades.size());
+		for (const auto& i : available_upgrades) {
+			writer.write(i.player_flags);
+			writer.write_string(i.id);
+			writer.write(i.level);
+			writer.write(i.availability);
+		}
+
+		writer.write<uint32_t>(available_tech.size());
+		for (const auto& i : available_tech) {
+			writer.write(i.player_flags);
+			writer.write_string(i.id);
+		}
+
+		writer.write<uint32_t>(random_unit_tables.size());
+		for (const auto& i : random_unit_tables) {
+			writer.write(i.creation_number);
+			writer.write_c_string(i.name);
+			writer.write_vector(i.positions);
+
+			writer.write<uint32_t>(i.lines.size());
+			for (const auto& j : i.lines) {
+				writer.write(j.chance);
+				writer.write_vector(j.ids);
+			}
+		}
+
+		writer.write<uint32_t>(random_item_tables.size());
+		for (const auto& i : random_item_tables) {
+			writer.write(i.creation_number);
+			writer.write_c_string(i.name);
+
+			writer.write<uint32_t>(i.item_sets.size());
+			for (const auto& j : i.item_sets) {
+				writer.write<uint32_t>(j.items.size());
+				for (const auto& [chance, id] : j.items) {
+					writer.write(chance);
+					writer.write_string(id);
+				}
+			}
+		}
+
+		hierarchy.map_file_write("war3map.w3i", writer.buffer);
+	}
+
+	void load_hive() {
+		if (std::ifstream file(paths::map_info_extras_file(hierarchy.map_directory)); file.is_open()) {
+			try {
+				const nlohmann::json root = nlohmann::json::parse(file);
+
+				// load version
+				const auto it = root.find("hive_editor_version");
+				const nlohmann::json& v = it != root.end() && it->is_object() ? *it : nlohmann::json::object();
+
+				hive_editor_version.major = v.value("major", 0);
+				hive_editor_version.minor = v.value("minor", 0);
+				hive_editor_version.patch = v.value("patch", 0);
+				hive_editor_version.commit = v.value("commit", "");
+				hive_editor_version.state = v.value("state", "");
+
+				// load data
+				custom_ambience_tileset = static_cast<char>(root.value("custom_ambience_sound", 0));
+
+			} catch (const std::exception& e) {
+				// throw an error message if the json is corrupted or failed to load for some reason
+				QMessageBox::critical(
+					nullptr,
+					"Error loading map info",
+					QString("Failed to load %1:\n%2")
+						.arg(paths::map_info_extras_file(hierarchy.map_directory).string().c_str())
+						.arg(e.what())
+				);
+			}
+		}
+	}
+
+	void load_w3i() {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3i").value();
 
 		const int version = reader.read<uint32_t>();
@@ -383,280 +741,5 @@ export class MapInfo {
 				}
 			}
 		}
-	}
-
-	/// For creating new maps from scratch
-	/// Camera bounds and playable size are not set here; call update_map_bounds_info once the terrain dimensions are known.
-	void load_defaults(TriggerStrings& trigger_strings) {
-		map_version = 1;
-		editor_version = write_editor_version;
-		game_version_major = write_game_version_major;
-		game_version_minor = write_game_version_minor;
-		game_version_patch = write_game_version_patch;
-		game_version_build = write_game_version_build;
-
-		name.clear();
-		author.clear();
-		description.clear();
-		suggested_players.clear();
-		trigger_strings.set_string(name, "Just another Warcraft III map");
-		trigger_strings.set_string(author, "Unknown");
-		trigger_strings.set_string(description, "Nondescript");
-		trigger_strings.set_string(suggested_players, "Any");
-
-		hide_minimap_preview = false;
-		modif_ally_priorities = false;
-		melee_map = true;
-		unknown = true;
-		masked_area_partially_visible = true;
-		fixed_player_settings = false;
-		custom_forces = false;
-		custom_techtree = false;
-		custom_abilities = false;
-		custom_upgrades = false;
-		unknown2 = true;
-		cliff_shore_waves = true;
-		rolling_shore_waves = true;
-		unknown3 = false;
-		unknown4 = false;
-		item_classification = true;
-		water_tinting = false;
-		accurate_probability_for_calculations = false;
-		custom_ability_skins = false;
-		disable_deny_icon = false;
-		force_default_zoom = false;
-		force_max_zoom = false;
-		force_min_zoom = false;
-
-		loading_screen_number = -1;
-		loading_screen_model.clear();
-		loading_screen_text.clear();
-		loading_screen_title.clear();
-		loading_screen_subtitle.clear();
-
-		game_data_set = 0;
-
-		prologue_screen_model.clear();
-		prologue_text.clear();
-		prologue_title.clear();
-		prologue_subtitle.clear();
-
-		fog_style = 0;
-		fog_start_z_height = 3000.f;
-		fog_end_z_height = 5000.f;
-		fog_density = 0.5f;
-		fog_color = { 0, 0, 0, 255 };
-
-		weather_id = 0;
-		custom_sound_environment.clear();
-		custom_light_tileset = 0;
-		water_color = { 255, 255, 255, 255 };
-
-		lua = false;
-		supported_modes = 3;
-		game_data_version = 1;
-
-		default_cam_distance = 1650;
-		max_cam_distance = 1650;
-		min_cam_distance = 1650;
-
-		players = { PlayerData {
-			.internal_number = 0,
-			.type = PlayerType::human,
-			.race = PlayerRace::human,
-			.fixed_start_position = 0,
-			.name = "",
-			.starting_position = { 0.f, 0.f },
-			.ally_low_priorities_flags = 0,
-			.ally_high_priorities_flags = 0,
-			.enemy_low_priorities_flags = 0,
-			.enemy_high_priorities_flags = 0,
-		} };
-		forces = { ForceData {
-			.allied = false,
-			.allied_victory = false,
-			.share_vision = false,
-			.share_unit_control = false,
-			.share_advanced_unit_control = false,
-			.player_masks = static_cast<int>(0xFFFFFFFF),
-			.name = "",
-		} };
-		available_upgrades.clear();
-		available_tech.clear();
-		random_unit_tables.clear();
-		random_item_tables.clear();
-	}
-
-	void save(char tileset) const {
-		BinaryWriter writer;
-
-		writer.write(write_version);
-		writer.write(map_version);
-		writer.write(write_editor_version);
-		writer.write(write_game_version_major);
-		writer.write(write_game_version_minor);
-		writer.write(write_game_version_patch);
-		writer.write(write_game_version_build);
-		writer.write_c_string(name);
-		writer.write_c_string(author);
-		writer.write_c_string(description);
-		writer.write_c_string(suggested_players);
-
-		writer.write(camera_left_bottom);
-		writer.write(camera_right_top);
-		writer.write(camera_left_top);
-		writer.write(camera_right_bottom);
-
-		writer.write(camera_complements);
-
-		writer.write(playable_width);
-		writer.write(playable_height);
-
-		const int flags = hide_minimap_preview * 0x0001 | modif_ally_priorities * 0x0002 | melee_map * 0x0004 | unknown * 0x0008
-			| masked_area_partially_visible * 0x0010 | fixed_player_settings * 0x0020 | custom_forces * 0x0040 | custom_techtree * 0x0080
-			| custom_abilities * 0x0100 | custom_upgrades * 0x0200 | unknown2 * 0x0400 | cliff_shore_waves * 0x0800
-			| rolling_shore_waves * 0x1000 | unknown3 * 0x2000 | unknown4 * 0x4000 | item_classification * 0x8000 | water_tinting * 0x10000
-			| accurate_probability_for_calculations * 0x20000 | custom_ability_skins * 0x40000 | disable_deny_icon * 0x80000
-			| force_default_zoom * 0x100000 | force_max_zoom * 0x200000 | force_min_zoom * 0x400000;
-
-		writer.write(flags);
-
-		writer.write(tileset);
-
-		writer.write(loading_screen_number);
-		writer.write_c_string(loading_screen_model);
-		writer.write_c_string(loading_screen_text);
-		writer.write_c_string(loading_screen_title);
-		writer.write_c_string(loading_screen_subtitle);
-
-		writer.write(game_data_set);
-
-		writer.write_c_string(prologue_screen_model);
-		writer.write_c_string(prologue_text);
-		writer.write_c_string(prologue_title);
-		writer.write_c_string(prologue_subtitle);
-
-		writer.write(fog_style);
-		writer.write(fog_start_z_height);
-		writer.write(fog_end_z_height);
-		writer.write(fog_density);
-		writer.write(fog_color);
-
-		writer.write(weather_id);
-		writer.write_c_string(custom_sound_environment);
-		writer.write(custom_light_tileset);
-		writer.write(water_color);
-
-		writer.write((uint32_t)lua);
-
-		writer.write(supported_modes);
-		writer.write(game_data_version);
-
-		writer.write(default_cam_distance);
-		writer.write(max_cam_distance);
-		writer.write(min_cam_distance);
-
-		writer.write<uint32_t>(players.size());
-		for (const auto& i : players) {
-			writer.write(i.internal_number);
-			writer.write(static_cast<int>(i.type) + 1);
-			writer.write(static_cast<int>(i.race));
-			writer.write(i.fixed_start_position);
-			writer.write_c_string(i.name);
-			writer.write(i.starting_position);
-			writer.write(i.ally_low_priorities_flags);
-			writer.write(i.ally_high_priorities_flags);
-			writer.write(i.enemy_low_priorities_flags);
-			writer.write(i.enemy_high_priorities_flags);
-		}
-
-		writer.write<uint32_t>(forces.size());
-		for (const auto& i : forces) {
-			const uint32_t force_flags = i.allied * 0b00000001 | i.allied_victory * 0b00000010 | i.share_vision * 0b00000100
-				| i.share_unit_control * 0b00010000 | i.share_advanced_unit_control * 0b00100000;
-			writer.write(force_flags);
-
-			writer.write(i.player_masks);
-			writer.write_c_string(i.name);
-		}
-
-		writer.write<uint32_t>(available_upgrades.size());
-		for (const auto& i : available_upgrades) {
-			writer.write(i.player_flags);
-			writer.write_string(i.id);
-			writer.write(i.level);
-			writer.write(i.availability);
-		}
-
-		writer.write<uint32_t>(available_tech.size());
-		for (const auto& i : available_tech) {
-			writer.write(i.player_flags);
-			writer.write_string(i.id);
-		}
-
-		writer.write<uint32_t>(random_unit_tables.size());
-		for (const auto& i : random_unit_tables) {
-			writer.write(i.creation_number);
-			writer.write_c_string(i.name);
-			writer.write_vector(i.positions);
-
-			writer.write<uint32_t>(i.lines.size());
-			for (const auto& j : i.lines) {
-				writer.write(j.chance);
-				writer.write_vector(j.ids);
-			}
-		}
-
-		writer.write<uint32_t>(random_item_tables.size());
-		for (const auto& i : random_item_tables) {
-			writer.write(i.creation_number);
-			writer.write_c_string(i.name);
-
-			writer.write<uint32_t>(i.item_sets.size());
-			for (const auto& j : i.item_sets) {
-				writer.write<uint32_t>(j.items.size());
-				for (const auto& [chance, id] : j.items) {
-					writer.write(chance);
-					writer.write_string(id);
-				}
-			}
-		}
-
-		hierarchy.map_file_write("war3map.w3i", writer.buffer);
-	}
-
-	void update_map_bounds_info(
-		int unplayable_left,
-		int unplayable_right,
-		int unplayable_top,
-		int unplayable_bottom,
-		int terrain_width,
-		int terrain_height,
-		float terrain_offset_x,
-		float terrain_offset_y
-	) {
-		// update unplayable area in map info
-		camera_complements[0] = unplayable_left;
-		camera_complements[1] = unplayable_right;
-		camera_complements[2] = unplayable_bottom;
-		camera_complements[3] = unplayable_top;
-
-		// update playable map area
-		playable_width = terrain_width - 1 - camera_complements[0] - camera_complements[1];
-		playable_height = terrain_height - 1 - camera_complements[2] - camera_complements[3];
-
-		// compute camera bounds based on complements and terrain offset
-		// these bounds are used in the generated JASS script
-		camera_left_bottom.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
-		camera_left_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
-
-		camera_right_top.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
-		camera_right_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
-
-		camera_left_top.x = (camera_complements[0] + 4) * 128.f + terrain_offset_x;
-		camera_left_top.y = (terrain_height - 1 - camera_complements[3] - 2) * 128.f + terrain_offset_y;
-
-		camera_right_bottom.x = (terrain_width - 1 - camera_complements[1] - 4) * 128.f + terrain_offset_x;
-		camera_right_bottom.y = (camera_complements[2] + 2) * 128.f + terrain_offset_y;
 	}
 };

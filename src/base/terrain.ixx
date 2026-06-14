@@ -115,7 +115,8 @@ export class Terrain: public QObject {
 	GLuint ground_exists_buffer;
 	GLuint water_exists_buffer;
 
-	//TilesetData* tilesets;
+	hive::unordered_map<std::string, int> ground_texture_to_id_map;
+	hive::unordered_map<std::string, int> cliff_type_to_id_map;
 
   public:
 	static constexpr float min_ground_height = -16.f;
@@ -138,8 +139,6 @@ export class Terrain: public QObject {
 	/// In Warcraft units (*128)
 	glm::vec2 offset;
 
-	hive::unordered_map<std::string, int> ground_texture_to_id;
-
 	// SoA corner data — indexed as ci(x, y) = y * width + x
 	std::vector<float> corner_height;
 	std::vector<float> corner_water_height;
@@ -158,6 +157,14 @@ export class Terrain: public QObject {
 	/// As cliff transitions stick out 1 tile from the cliff, the cliff flag is not set for half the `romps`
 	std::vector<uint8_t> corner_romp;
 	std::vector<uint8_t> corner_special_doodad;
+
+	int ground_texture_to_id(const std::string_view id) const {
+		return ground_texture_to_id_map.at(id);
+	}
+
+	int cliff_type_to_id(const std::string_view id) const {
+		return cliff_type_to_id_map.at(id);
+	}
 
 	size_t ci(const size_t x, const size_t y) const {
 		return y * width + x;
@@ -349,8 +356,8 @@ export class Terrain: public QObject {
 
 	/// Writes a flat all-grass Lordaeron Summer war3map.w3e to the current map directory.
 	static void save_blank(const int width_tiles, const int height_tiles) {
-		const std::vector<std::string> tileset_ids = { "Ldrt", "Ldro", "Ldrg", "Lrok", "Lgrs", "Lgrd" };
-		const std::vector<std::string> cliffset_ids = { "CLdi", "CLgr" };
+		const std::vector<std::string> tileset_ids = {"Ldrt", "Ldro", "Ldrg", "Lrok", "Lgrs", "Lgrd"};
+		const std::vector<std::string> cliffset_ids = {"CLdi", "CLgr"};
 		const uint8_t grass_texture = std::ranges::find(tileset_ids, "Lgrs") - tileset_ids.begin();
 
 		const int width = width_tiles + 1;
@@ -394,10 +401,6 @@ export class Terrain: public QObject {
 			std::cout << "Error loading tileset: Unknown tileset '" << tileset_id << "'" << std::endl;
 		}
 
-		water_offset = tileset->water_offset;
-		water_textures_nr = tileset->water_textures_nr;
-		animation_rate = tileset->water_animation_rate;
-
 		// Cliff Meshes
 		slk::SLK cliffs_variation_slk;
 		cliffs_variation_slk.load_local("data/warcraft/Cliffs.slk");
@@ -418,41 +421,11 @@ export class Terrain: public QObject {
 		// Ground and cliff textures
 		reload_ground_textures(tilesets);
 
+		// Water textures
+		reload_water_textures(tilesets);
+
 		// Prepare and create GPU buffers
 		setup_GPU_buffers();
-
-		// Water textures
-		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
-		glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
-		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		const std::string_view file_name = tileset->water_texture;
-		for (int i = 0; i < water_textures_nr; i++) {
-			// Hack to force loading of SD water textures till I implement a water shader
-			const auto hd = hierarchy.hd;
-			hierarchy.hd = false;
-			const auto texture = resource_manager.load<Texture>(std::format("{}{:02}", file_name, i)).value();
-			hierarchy.hd = hd;
-
-			if (texture->width != 128 || texture->height != 128) {
-				std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
-			}
-			glTextureSubImage3D(
-				water_texture_array,
-				0,
-				0,
-				0,
-				i,
-				texture->width,
-				texture->height,
-				1,
-				texture->channels == 4 ? GL_RGBA : GL_RGB,
-				GL_UNSIGNED_BYTE,
-				texture->data.data()
-			);
-		}
-		glGenerateTextureMipmap(water_texture_array);
 
 		ground_shader = resource_manager.load<Shader>({"data/shaders/terrain.vert", "data/shaders/terrain.frag"}).value();
 		cliff_shader = resource_manager.load<Shader>({"data/shaders/cliff.vert", "data/shaders/cliff.frag"}).value();
@@ -508,7 +481,16 @@ export class Terrain: public QObject {
 		hierarchy.map_file_write("war3map.w3e", writer.buffer);
 	}
 
-	void render_ground(bool render_pathing, bool render_lighting, glm::vec3 light_direction, Brush* brush, PathingMap& pathing_map, bool render_regions, GLuint regions_buffer, int region_count) const {
+	void render_ground(
+		bool render_pathing,
+		bool render_lighting,
+		glm::vec3 light_direction,
+		Brush* brush,
+		PathingMap& pathing_map,
+		bool render_regions,
+		GLuint regions_buffer,
+		int region_count
+	) const {
 		// Render tiles
 		ground_shader->use();
 
@@ -639,7 +621,25 @@ export class Terrain: public QObject {
 		glDepthMask(true);
 	}
 
-	void change_tileset(const std::vector<std::string>& new_tileset_ids, std::vector<int> new_to_old, const TilesetData& tilesets) {
+	void change_tileset(
+		const std::vector<std::string>& new_tileset_ids,
+		std::vector<int> new_to_old,
+		char new_tileset,
+		const TilesetData& tilesets,
+		const MapInfo& info
+	) {
+		// change base tileset if needed
+		// also, clear the resource manager cache to force the editor
+		// to reload tileset specific assets, like water textures
+		if (tileset_id != new_tileset) {
+			tileset_id = new_tileset;
+			hierarchy.tileset = new_tileset;
+			resource_manager.clear();
+			reload_water_textures(tilesets);
+			update_water({0, 0, width - 1, height - 1});
+			render_water(info, tilesets);
+		}
+
 		// update ground and cliff times, the game supports up to 15 cliff textures
 		std::vector<std::string> old_tileset_ids = tileset_ids;
 		tileset_ids = new_tileset_ids;
@@ -1369,7 +1369,8 @@ export class Terrain: public QObject {
 
 	void reload_ground_textures(const TilesetData& tilesets) {
 		ground_textures.clear(); // ToDo Clear them after loading new ones?
-		ground_texture_to_id.clear();
+		ground_texture_to_id_map.clear();
+		cliff_type_to_id_map.clear();
 		gpu_ground_texture_handles.clear();
 
 		const Tileset* tileset = tilesets.tileset(tileset_id);
@@ -1377,11 +1378,11 @@ export class Terrain: public QObject {
 		for (const auto& tile_id : tileset_ids) {
 			const auto& texture = *tilesets.terrain_texture(tile_id);
 			ground_textures.push_back(resource_manager.load<GroundTexture>(texture.file_path).value());
-			ground_texture_to_id.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
+			ground_texture_to_id_map.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
 			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 		}
 		blight_texture = static_cast<int>(ground_textures.size());
-		ground_texture_to_id.emplace("blight", blight_texture);
+		ground_texture_to_id_map.emplace("blight", blight_texture);
 		ground_textures.push_back(resource_manager.load<GroundTexture>(tileset->blight_texture).value());
 		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
 
@@ -1395,9 +1396,11 @@ export class Terrain: public QObject {
 		);
 
 		cliff_to_ground_texture.clear();
+		int next_id = 0;
 		for (const auto& cliff_id : cliffset_ids) {
 			const auto& cliff = *tilesets.cliff_type(cliff_id);
-			cliff_to_ground_texture.push_back(ground_texture_to_id[cliff.ground_tile]);
+			cliff_type_to_id_map.emplace(cliff_id, next_id++);
+			cliff_to_ground_texture.push_back(ground_texture_to_id_map[cliff.ground_tile]);
 		}
 
 		cliff_textures.clear();
@@ -1437,6 +1440,57 @@ export class Terrain: public QObject {
 			sub += 1;
 		}
 		glGenerateTextureMipmap(cliff_texture_array);
+	}
+
+	void reload_water_textures(const TilesetData& tilesets) {
+		const Tileset* tileset = tilesets.tileset(tileset_id);
+		if (!tileset) {
+			return;
+		}
+
+		water_offset = tileset->water_offset;
+		water_textures_nr = tileset->water_textures_nr;
+		animation_rate = tileset->water_animation_rate;
+
+		if (water_texture_array) {
+			glDeleteTextures(1, &water_texture_array);
+			water_texture_array = 0;
+		}
+
+		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
+		glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
+		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		const std::string_view file_name = tileset->water_texture;
+
+		for (int i = 0; i < water_textures_nr; i++) {
+			// Hack to force loading of SD water textures till I implement a water shader
+			const auto hd = hierarchy.hd;
+			hierarchy.hd = false;
+			const auto texture = resource_manager.load<Texture>(std::format("{}{:02}", file_name, i)).value();
+			hierarchy.hd = hd;
+
+			if (texture->width != 128 || texture->height != 128) {
+				std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
+			}
+
+			glTextureSubImage3D(
+				water_texture_array,
+				0,
+				0,
+				0,
+				i,
+				texture->width,
+				texture->height,
+				1,
+				texture->channels == 4 ? GL_RGBA : GL_RGB,
+				GL_UNSIGNED_BYTE,
+				texture->data.data()
+			);
+		}
+
+		glGenerateTextureMipmap(water_texture_array);
 	}
 
 	void re_render(Physics& physics) {

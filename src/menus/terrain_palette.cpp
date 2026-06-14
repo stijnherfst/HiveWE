@@ -22,10 +22,19 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 
-	ui.flowLayout_placeholder->addLayout(textures_layout);
-	ui.flowLayout_placeholder_2->addLayout(cliff_layout);
+	ui.terrainTexScrollAreaContent->setLayout(textures_layout);
+	ui.cliffScrollAreaContent->setLayout(cliff_layout);
 
 	refresh();
+
+	// set scroll view minimum and maximum counts
+	// requires flow layout to be populated with buttons
+	const int min_cliff_height = get_scroll_view_height(ui.cliffScrollArea, cliff_layout, 1);
+	const int max_cliff_height = get_scroll_view_height(ui.cliffScrollArea, cliff_layout, 2);
+	const int min_tex_height = get_scroll_view_height(ui.terrainTexScrollArea, textures_layout, 3);
+	ui.cliffScrollArea->setMinimumHeight(min_cliff_height);
+	ui.cliffScrollArea->setMaximumHeight(max_cliff_height);
+	ui.terrainTexScrollArea->setMinimumHeight(min_tex_height);
 
 	// ribbon
 	create_ribbon();
@@ -81,6 +90,17 @@ void TerrainPalette::update_operator_gui() {
 	update_cliff_operator_gui();
 	update_deformation_operator_gui();
 	update_cell_operator_gui();
+}
+
+int TerrainPalette::get_scroll_view_height(const QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const {
+	int rowHeight = 48;
+	const auto items = layout->items();
+	if (!items.isEmpty()) {
+		rowHeight = items.first()->widget()->sizeHint().height();
+	}
+
+	return rows * rowHeight + std::max(1, rows - 1) * layout->vertical_spacing() + layout->contentsMargins().top()
+		+ layout->contentsMargins().bottom() + scroll_area->frameWidth() * 2;
 }
 
 void TerrainPalette::update_cell_operator_gui() {
@@ -151,15 +171,14 @@ void TerrainPalette::update_cliff_operator_gui() {
 		QSignalBlocker blocker(ui.cliffCheckbox);
 		ui.cliffCheckbox->setChecked(is_enabled);
 	}
+
 	// update which cliff button is selected
-	const int cliff_id = brush.cliff_operator.cliff_id;
 	for (auto* button : cliff_group->buttons()) {
 		QSignalBlocker blocker(button);
-		if (button->property("cliffID").toInt() == cliff_id) {
-			button->setChecked(is_enabled);
-		} else {
-			button->setChecked(false);
-		}
+
+		const CliffButton* cliff_button = static_cast<CliffButton*>(button);
+
+		button->setChecked(is_enabled && cliff_button->cliff()->id == brush.cliff_operator.cliff_id);
 	}
 
 	// update which operation is selected (i.e. ramp, level, deep water...)
@@ -207,14 +226,13 @@ void TerrainPalette::update_texture_operator_gui() {
 		ui.textureCheckbox->setChecked(is_enabled);
 	}
 	// update which texture button is selected
-	const QString tile_id = QString::fromStdString(brush.texture_operator.tile_id);
 	for (auto* button : textures_group->buttons()) {
 		QSignalBlocker blocker(button);
-		if (button->property("tileID").toString() == tile_id) {
-			button->setChecked(is_enabled);
-		} else {
-			button->setChecked(false);
-		}
+
+		const TextureButton* tex_button = static_cast<TextureButton*>(button);
+		const std::string_view button_id = tex_button->hasTexture() ? std::string_view(tex_button->texture()->id) : "blight";
+
+		button->setChecked(is_enabled && button_id == brush.texture_operator.tile_id);
 	}
 }
 
@@ -234,7 +252,8 @@ void TerrainPalette::setup_texture_operator() {
 	// and then select the proper ground texture
 	connect(textures_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		// set the correct texture (blight included)
-		brush.texture_operator.tile_id = button->property("tileID").toString().toStdString();
+		const auto tex_button = dynamic_cast<TextureButton*>(button);
+		brush.texture_operator.tile_id = tex_button->hasTexture() ? tex_button->texture()->id : "blight";
 
 		// enable the operator
 		// note that TerrainBrush will automatically deactivate all incompatible operators
@@ -263,7 +282,8 @@ void TerrainPalette::setup_cliff_operator() {
 	connect(cliff_group, QOverload<QAbstractButton*>::of(&QButtonGroup::buttonClicked), [&](QAbstractButton* button) {
 		// update operator value and activate it
 		// note that terrain brush will automatically deactivate all incompatible operators
-		brush.cliff_operator.cliff_id = button->property("cliffID").toInt();
+		const auto cliff_button = dynamic_cast<CliffButton*>(button);
+		brush.cliff_operator.cliff_id = cliff_button->cliff()->id;
 		brush.activate_operator(brush.cliff_operator);
 		update_operator_gui();
 	});
@@ -572,46 +592,57 @@ void TerrainPalette::create_terrain_buttons() {
 
 	// Ground Tiles
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto& texture = *map->tilesets.terrain_texture(i);
-		const auto image = resource_manager.load<Texture>(texture.file_path).value();
-		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
+		const TerrainTexture* texture = map->tilesets.terrain_texture(i);
+		if (texture) {
+			TextureButton* button = terrain_button(texture);
 
-		QPushButton* button = terrain_button(icon, "tileID", QString::fromStdString(i), QString::fromUtf8(texture.name));
+			textures_layout->addWidget(button);
+			textures_group->addButton(button);
 
-		textures_layout->addWidget(button);
-		textures_group->addButton(button);
+			// check if we are dealing with a cliff tile - if so, add it to cliff operator
+			if (texture->cliff_type_id) {
+				const CliffType* cliff_type = map->tilesets.cliff_type(texture->cliff_type_id.value());
 
-		// check if we are dealing with a cliff tile - if so, add it to cliff operator
-		if (texture.cliff_type_id) {
-			const CliffType* cliff_type = map->tilesets.cliff_type(texture.cliff_type_id.value());
-			const auto& cliffset = map->terrain.cliffset_ids;
-			const int index = std::ranges::find(cliffset, *texture.cliff_type_id) - cliffset.begin();
-			button = terrain_button(icon, "cliffID", QString::number(index), QString::fromUtf8(cliff_type->name));
-			cliff_layout->addWidget(button);
-			cliff_group->addButton(button);
+				button = cliff_button(cliff_type, texture);
+				cliff_layout->addWidget(button);
+				cliff_group->addButton(button);
+			}
 		}
 	}
 
 	// add blight texture to the texture painter tool
 	// this is a small divergence from vanilla WE
-	const auto image = resource_manager.load<Texture>("TerrainArt/Blight/Ashen_Blight.dds").value();
-	const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
+	const Tileset* tileset = map->tilesets.tileset(map->terrain.tileset_id);
+	TextureButton* blight_button = terrain_button(nullptr);
+	blight_button->create_blight_icon(tileset);
+	blight_button->setToolTip(QString::fromStdString(world_edit_strings.data("WorldEditStrings", "WESTRING_BLIGHT")));
 
-	QPushButton* blight_button =
-		terrain_button(icon, "tileID", "blight", QString::fromUtf8(world_edit_strings.data("WorldEditStrings", "WESTRING_BLIGHT")));
 	textures_layout->addWidget(blight_button);
 	textures_group->addButton(blight_button);
 }
 
-QPushButton*
-TerrainPalette::terrain_button(const QIcon& icon, const char* propertyName, const QVariant& propertyValue, const QString& tileName) {
-	QPushButton* button = new QPushButton;
-	button->setIcon(icon);
+TextureButton* TerrainPalette::terrain_button(const TerrainTexture* tex) {
+	TextureButton* button = new TextureButton(tex, this);
 	button->setFixedSize(48, 48);
 	button->setIconSize({48, 48});
 	button->setCheckable(true);
-	button->setProperty(propertyName, propertyValue);
-	button->setProperty("tileName", tileName);
-	button->setToolTip(tileName);
+
+	// blight is not actually a terrain texture, but we treat is as such
+	// in that case, tex is nullptr
+	if (tex) {
+		button->create_icon(true, false);
+		button->setToolTip(QString::fromStdString(tex->name));
+	}
+
+	return button;
+}
+
+CliffButton* TerrainPalette::cliff_button(const CliffType* cliff, const TerrainTexture* tex) {
+	CliffButton* button = new CliffButton(cliff, tex, this);
+	button->create_icon(false, false);
+	button->setFixedSize(48, 48);
+	button->setIconSize({48, 48});
+	button->setCheckable(true);
+	button->setToolTip(QString::fromStdString(cliff->name));
 	return button;
 }

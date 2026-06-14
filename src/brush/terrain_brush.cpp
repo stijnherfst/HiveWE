@@ -9,6 +9,7 @@ import PathingUndo;
 import TerrainUndo;
 import Camera;
 import Rects;
+import PathingMap;
 
 TerrainBrush::TerrainBrush() :
 	Brush(),
@@ -122,7 +123,7 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 }
 
 bool TerrainBrush::has_active_operators() {
-	for (TerrainOperator& op : terrain_operators) {
+	for (const TerrainOperator& op : terrain_operators) {
 		if (op.is_enabled()) {
 			return true;
 		}
@@ -174,7 +175,7 @@ void TerrainBrush::apply(double frame_delta) {
 		return;
 	}
 
-	auto& terrain = map->terrain;
+	const auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
 
@@ -199,12 +200,17 @@ void TerrainBrush::apply(double frame_delta) {
 	updated_area = updated_area.united(affected_area);
 
 	// apply pathing
-	for (size_t i = affected_area.x(); i <= affected_area.right(); i++) {
-		for (size_t j = affected_area.y(); j <= affected_area.bottom(); j++) {
-			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] &= ~0b01001110;
+	static constexpr uint8_t clear_mask =
+		~(PathingMap::Flags::unbuildable | PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::blight
+		  | PathingMap::Flags::water | PathingMap::Flags::amphibious);
+
+	for (int i = affected_area.x(); i <= affected_area.right(); i++) {
+		for (int j = affected_area.y(); j <= affected_area.bottom(); j++) {
+			const int index = j * map->pathing_map.width + i;
+			map->pathing_map.pathing_cells_static[index] &= clear_mask;
 			uint8_t mask =
 				map->terrain.get_terrain_pathing(i, j, apply_tile_pathing, apply_cliff_pathing, apply_water_pathing, map->tilesets);
-			map->pathing_map.pathing_cells_static[j * map->pathing_map.width + i] |= mask;
+			map->pathing_map.pathing_cells_static[index] |= mask;
 		}
 	}
 

@@ -201,7 +201,7 @@ export class TilesetData {
 			root.push_back({{"id", id}, {"pathing", texture.override_pathing.value()}});
 		}
 
-		// dump, also create parent directory if it doesnt exist
+		// dump, also create parent directory if it doesn't exist
 		const auto pathing_file = paths::terrain_pathing_file(hierarchy.map_directory);
 		std::filesystem::create_directories(pathing_file.parent_path());
 		std::ofstream file(pathing_file);
@@ -253,8 +253,8 @@ export class TilesetData {
 						it->second.override_pathing = entry["pathing"].get<uint8_t>();
 					}
 				}
-			} catch (const nlohmann::json::exception& e) {
-				// throw and error message if the json is corrupted or failed to load for some reason
+			} catch (const std::exception& e) {
+				// throw an error message if the json is corrupted or failed to load for some reason
 				QMessageBox::critical(
 					nullptr,
 					"Error loading terrain pathing",

@@ -1,0 +1,23 @@
+export module HiveWEVersion;
+
+import std;
+
+export namespace hive {
+
+struct Version {
+    int major;
+    int minor;
+    int patch;
+    std::string commit;
+    std::string state;
+};
+
+inline constexpr Version version {
+    @HIVEWE_VERSION_MAJOR@,
+    @HIVEWE_VERSION_MINOR@,
+    @HIVEWE_VERSION_PATCH@,
+    "@HIVEWE_GIT_SHA@",
+    "@HIVEWE_GIT_DIRTY@"
+};
+
+}

@@ -14,7 +14,7 @@ export class ResourceManager {
 	std::mutex mutex;
 	hive::unordered_map<std::string, std::shared_future<std::expected<std::shared_ptr<Resource>, std::string>>> resources;
 
-	template <typename T, typename... Args>
+	template<typename T, typename... Args>
 	std::expected<std::shared_ptr<T>, std::string> load_impl(const std::string& key, Args&&... args) {
 		std::unique_lock lock(mutex);
 
@@ -52,14 +52,14 @@ export class ResourceManager {
   public:
 	/// Loads and caches a resource until clear() is called.
 	/// Thread-safe: concurrent loads of the same key construct the resource exactly once.
-	template <typename T, typename... Args>
+	template<typename T, typename... Args>
 	std::expected<std::shared_ptr<T>, std::string> load(const fs::path& path, const std::string& custom_identifier = "", Args... args) {
 		static_assert(std::is_base_of_v<Resource, T>, "T must inherit from Resource");
 		const std::string key = path.string() + T::name + custom_identifier;
 		return load_impl<T>(key, path, std::forward<Args>(args)...);
 	}
 
-	template <typename T>
+	template<typename T>
 	std::expected<std::shared_ptr<T>, std::string> load(const std::initializer_list<fs::path> paths) {
 		static_assert(std::is_base_of_v<Resource, T>, "T must inherit from Resource");
 
