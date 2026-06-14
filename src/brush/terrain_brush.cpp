@@ -202,7 +202,7 @@ void TerrainBrush::apply(double frame_delta) {
 	// apply pathing
 	static constexpr uint8_t clear_mask =
 		~(PathingMap::Flags::unbuildable | PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::blight
-		  | PathingMap::Flags::water);
+		  | PathingMap::Flags::water | PathingMap::Flags::amphibious);
 
 	for (int i = affected_area.x(); i <= affected_area.right(); i++) {
 		for (int j = affected_area.y(); j <= affected_area.bottom(); j++) {
