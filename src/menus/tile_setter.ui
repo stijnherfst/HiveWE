@@ -82,7 +82,7 @@
      <item>
       <widget class="QPushButton" name="resetTileset">
        <property name="toolTip">
-        <string>Removes the selected tile from the tleset.</string>
+        <string>Reset to the original tileset, removing all custom terrain textures.</string>
        </property>
        <property name="text">
         <string>Reset Tileset</string>
