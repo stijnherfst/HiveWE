@@ -141,7 +141,11 @@ target_sources(HiveWE_lib PRIVATE
 
 
         "menus/doodad_palette.cpp"
-        "menus/map_info_editor.cpp"
+        "menus/map_info_editor/map_info_editor.cpp"
+        "menus/map_info_editor/description.cpp"
+        "menus/map_info_editor/loading_screen.cpp"
+        "menus/map_info_editor/options.cpp"
+        "menus/map_info_editor/map_size.cpp"
         "menus/minimap.cpp"
         "menus/palette.cpp"
         "menus/pathing_palette.cpp"
