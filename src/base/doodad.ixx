@@ -8,7 +8,7 @@ import std;
 import Rects;
 import SkinnedMesh;
 import PathingTexture;
-import SkeletalModelInstance;
+import Skeleton;
 import Terrain;
 import SLK;
 import Globals;
@@ -41,7 +41,7 @@ export struct Doodad {
 	int creation_number;
 
 	// Auxiliary data
-	SkeletalModelInstance skeleton;
+	Skeleton skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color = glm::vec3(1.f);
@@ -51,7 +51,7 @@ export struct Doodad {
 		this->skin_id = id;
 		this->mesh = mesh;
 
-		skeleton = SkeletalModelInstance(mesh->mdx);
+		skeleton = Skeleton(mesh->mdx);
 		// Get pathing map
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -215,7 +215,7 @@ export struct SpecialDoodad {
 	glm::vec3 old_position;
 
 	// Auxiliary data
-	SkeletalModelInstance skeleton;
+	Skeleton skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 
@@ -223,7 +223,7 @@ export struct SpecialDoodad {
 		this->id = id;
 		this->mesh = mesh;
 
-		skeleton = SkeletalModelInstance(mesh->mdx);
+		skeleton = Skeleton(mesh->mdx);
 
 		pathing.reset();
 		const auto path = doodads_slk.data<std::string_view>("pathtex", id);

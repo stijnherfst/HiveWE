@@ -9,7 +9,7 @@ import types;
 import SkinnedMesh;
 import SkinnedMeshGlobals;
 import Shader;
-import SkeletalModelInstance;
+import Skeleton;
 import ResourceManager;
 import Timer;
 import MDX;
@@ -46,7 +46,7 @@ export class RenderManager {
 	std::vector<SkinnedInstance> skinned_transparent_instances;
 
 	std::shared_ptr<SkinnedMesh> click_helper;
-	std::vector<SkeletalModelInstance> click_helper_instances;
+	std::vector<Skeleton> click_helper_instances;
 
 	GLuint color_buffer;
 	GLuint depth_buffer;
@@ -94,7 +94,7 @@ export class RenderManager {
 	}
 
 	void
-	queue_render(SkinnedMesh& skinned_mesh, const SkeletalModelInstance& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
+	queue_render(SkinnedMesh& skinned_mesh, const Skeleton& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
 		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
 
 		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, skeleton.matrix)) {
@@ -113,7 +113,7 @@ export class RenderManager {
 
 		// Register for transparent drawing
 		// If the mesh contains transparent parts then those need to be sorted and drawn on top/after all the opaque parts
-		if (!skinned_mesh.has_mesh) {
+		if (skinned_mesh.geosets.empty()) {
 			return;
 		}
 
@@ -130,7 +130,7 @@ export class RenderManager {
 
 	// Renders a click helper (little purple checkered box), kinda inefficient but couldn't be bothered writing a whole new rendering path
 	void queue_click_helper(const glm::mat4& model) {
-		auto a = SkeletalModelInstance(click_helper->mdx);
+		auto a = Skeleton(click_helper->mdx);
 		a.matrix = model;
 		a.update(0.016f);
 		click_helper_instances.push_back(a);
@@ -154,7 +154,7 @@ export class RenderManager {
 		std::vector<glm::vec4> staging_layer_colors;
 
 		for (auto* mesh : skinned_meshes) {
-			if (!mesh->has_mesh) {
+			if (mesh->geosets.empty()) {
 				continue;
 			}
 			mesh->make_textures_resident();
@@ -370,7 +370,7 @@ export class RenderManager {
 				doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
 
 				if (use_click_helper) {
-					auto a = SkeletalModelInstance(click_helper->mdx);
+					auto a = Skeleton(click_helper->mdx);
 					a.matrix = doodad.skeleton.matrix;
 					a.update(0.016f);
 					click_helper->render_color_coded(a, i + 1);
@@ -399,7 +399,7 @@ export class RenderManager {
 		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
 
 		for (const auto* mesh : skinned_meshes) {
-			if (!mesh->has_mesh) {
+			if (mesh->geosets.empty()) {
 				continue;
 			}
 			const auto it = mesh_offsets.find(mesh);
@@ -446,8 +446,8 @@ export class RenderManager {
 		states.reserve(commands.size());
 		{
 			size_t idx = 0;
-			for (auto* mesh : skinned_meshes) {
-				if (!mesh->has_mesh) {
+			for (const auto* mesh : skinned_meshes) {
+				if (mesh->geosets.empty()) {
 					continue;
 				}
 				if (mesh_offsets.find(mesh) == mesh_offsets.end()) {

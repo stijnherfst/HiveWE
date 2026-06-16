@@ -3,7 +3,7 @@ module;
 #include <cassert>
 #include <chrono>
 
-export module SkeletalModelInstance;
+export module Skeleton;
 
 import std;
 import Camera;
@@ -73,7 +73,7 @@ static std::vector<std::string> tokenize_sequence_name(const std::string_view na
 	return tokens;
 }
 
-export class SkeletalModelInstance {
+export class Skeleton {
   public:
 	std::shared_ptr<mdx::MDX> model;
 
@@ -98,9 +98,9 @@ export class SkeletalModelInstance {
 
 	std::vector<std::string> required_animation_names;
 
-	SkeletalModelInstance() = default;
+	Skeleton() = default;
 
-	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string>&& required_animation_names = {}) :
+	explicit Skeleton(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string>&& required_animation_names = {}) :
 		model(model),
 		required_animation_names(required_animation_names) {
 		const size_t node_count = model->bones.size() + model->lights.size() + model->help_bones.size() + model->attachments.size()
@@ -316,7 +316,7 @@ export class SkeletalModelInstance {
 	// "stand" sequence its random tiebreaker can land on a "death" sequence whose Visibility
 	// track holds the emitters at 0 which is an empty thumbnail. We want to keep a suitable stand and
 	// otherwise prefer a Birth-named sequence, otherwise any suitable sequence, otherwise leave it.
-	static void pick_preview_sequence(SkeletalModelInstance& skeleton, const mdx::MDX& mdx) {
+	static void pick_preview_sequence(Skeleton& skeleton, const mdx::MDX& mdx) {
 		auto suitable = [&](size_t i) {
 			const auto& s = mdx.sequences[i];
 			return sequence_name_has_recognized_token(s.name) && !sequence_has_empty_extent(s);
@@ -847,7 +847,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 		}
 	}
 
-	SkeletalModelInstance instance(model);
+	Skeleton instance(model);
 
 	// Global sequences animate against wall-clock time; pin them to a deterministic set of phases so
 	// the extents are reproducible and cover the full global motion.

@@ -12,7 +12,7 @@
 #include <QOpenGLWidget>
 
 import EditableMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import MDX;
 import Shader;
 import <glm/glm.hpp>;
@@ -69,7 +69,7 @@ class ModelGridGLWidget : public QOpenGLWidget {
 		ModelCategory category;
 		std::shared_ptr<mdx::MDX> mdx;
 		std::shared_ptr<EditableMesh> mesh;
-		SkeletalModelInstance skeleton;
+		Skeleton skeleton;
 		float fit_distance = 0.f;
 		glm::vec3 fit_position{ 0.f, 0.f, 0.f };
 		bool loaded = false;

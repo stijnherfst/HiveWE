@@ -16,7 +16,7 @@ import PathingTexture;
 import DoodadsUndo;
 import Doodad;
 import SkinnedMesh;
-import SkeletalModelInstance;
+import Skeleton;
 
 class DoodadBrush: public Brush {
 	Q_OBJECT
@@ -28,7 +28,7 @@ class DoodadBrush: public Brush {
 
 	Doodad doodad;
 	std::shared_ptr<SkinnedMesh> click_helper;
-	SkeletalModelInstance click_helper_skeleton;
+	Skeleton click_helper_skeleton;
 
   public:
 	Doodad::State state = Doodad::State::visible_solid;

@@ -5,7 +5,7 @@ import MDX;
 import ResourceManager;
 import GPUTexture;
 import Shader;
-import SkeletalModelInstance;
+import Skeleton;
 import ParticleEmitter2Renderer;
 import Hierarchy;
 import BinaryReader;
@@ -292,7 +292,7 @@ export class EditableMesh: public Resource {
 	void render_opaque(
 		const bool render_hd,
 		const int team_color_index,
-		const SkeletalModelInstance& skeleton,
+		const Skeleton& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3 light_direction
 	) const {
@@ -302,7 +302,7 @@ export class EditableMesh: public Resource {
 	void render_transparent(
 		const bool render_hd,
 		const int team_color_index,
-		const SkeletalModelInstance& skeleton,
+		const Skeleton& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3 light_direction
 	) const {
@@ -310,7 +310,7 @@ export class EditableMesh: public Resource {
 	}
 
 	void render_particles(
-		const SkeletalModelInstance& skeleton,
+		const Skeleton& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3& camera_right,
 		const glm::vec3& camera_up,
@@ -324,7 +324,7 @@ export class EditableMesh: public Resource {
 		const bool opaque_pass,
 		const bool render_hd,
 		const int team_color_index,
-		const SkeletalModelInstance& skeleton,
+		const Skeleton& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3 light_direction
 	) const {

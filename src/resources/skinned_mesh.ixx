@@ -1,16 +1,17 @@
 export module SkinnedMesh;
 
 import std;
-import MDX;
 import BinaryReader;
-import ResourceManager;
-import GPUTexture;
-import Shader;
-import Hierarchy;
-import Timer;
 import Camera;
-import SkeletalModelInstance;
+import GPUTexture;
+import Hierarchy;
+import MDX;
+import ParticleEmitter2Renderer;
+import ResourceManager;
+import Shader;
+import Skeleton;
 import SkinnedMeshGlobals;
+import Timer;
 import Utilities;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
@@ -37,7 +38,6 @@ export class SkinnedMesh: public Resource {
 	std::shared_ptr<mdx::MDX> mdx;
 
 	std::vector<MeshEntry> geosets;
-	bool has_mesh; // ToDo remove when added support for meshless
 	bool has_transparent_layers = false;
 
 	uint32_t instance_vertex_count = 0;
@@ -103,7 +103,7 @@ export class SkinnedMesh: public Resource {
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
 	std::vector<uint32_t> render_team_color_indexes;
-	std::vector<const SkeletalModelInstance*> skeletons;
+	std::vector<const Skeleton*> skeletons;
 
 	static constexpr const char* name = "SkinnedMesh";
 
@@ -137,11 +137,6 @@ export class SkinnedMesh: public Resource {
 		size_t indices = 0;
 		size_t matrices = 0;
 		size_t total_layers = 0;
-
-		has_mesh = mdx->geosets.size();
-		if (!has_mesh) {
-			return;
-		}
 
 		for (const auto& i : mdx->geosets) {
 			if (mdx->materials[i.material_id].layers.empty()) {
@@ -193,35 +188,32 @@ export class SkinnedMesh: public Resource {
 		std::vector<GeosetBuffers> packed_geosets;
 
 		// Pack vertices/uvs/normals
-		{
-			ScopedTimer t(profile_parse_ns);
-			for (const auto& i : mdx->geosets) {
-				if (i.lod != 0) {
-					continue;
-				}
-				GeosetBuffers buf;
-
-				if (i.skin.empty()) {
-					buf.skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
-				}
-
-				buf.vertices_snorm.reserve(i.vertices.size());
-				for (const auto& j : i.vertices) {
-					buf.vertices_snorm.push_back(pack_vec3_to_uvec2(j, 8192.f));
-				}
-
-				buf.uvs_snorm.reserve(i.uv_sets.front().size());
-				for (const auto& j : i.uv_sets.front()) {
-					buf.uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 8.f));
-				}
-
-				buf.normals_oct_snorm.reserve(i.normals.size());
-				for (const auto& normal : i.normals) {
-					buf.normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
-				}
-
-				packed_geosets.push_back(std::move(buf));
+		for (const auto& i : mdx->geosets) {
+			if (i.lod != 0) {
+				continue;
 			}
+			GeosetBuffers buf;
+
+			if (i.skin.empty()) {
+				buf.skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
+			}
+
+			buf.vertices_snorm.reserve(i.vertices.size());
+			for (const auto& j : i.vertices) {
+				buf.vertices_snorm.push_back(pack_vec3_to_uvec2(j, 8192.f));
+			}
+
+			buf.uvs_snorm.reserve(i.uv_sets.front().size());
+			for (const auto& j : i.uv_sets.front()) {
+				buf.uvs_snorm.push_back(glm::packSnorm2x16((j + 1.f) / 8.f));
+			}
+
+			buf.normals_oct_snorm.reserve(i.normals.size());
+			for (const auto& normal : i.normals) {
+				buf.normals_oct_snorm.push_back(glm::packSnorm2x16(float32x3_to_oct(normal)));
+			}
+
+			packed_geosets.push_back(std::move(buf));
 		}
 
 		// Upload
@@ -551,8 +543,8 @@ export class SkinnedMesh: public Resource {
 	}
 
 	// Color-coded picking path: one mesh, one skeleton, per-geoset draw.
-	void render_color_coded(const SkeletalModelInstance& skeleton, const int id) const {
-		if (!has_mesh) {
+	void render_color_coded(const Skeleton& skeleton, const int id) const {
+		if (geosets.empty()) {
 			return;
 		}
 

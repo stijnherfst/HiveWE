@@ -3,7 +3,7 @@ export module ParticleEmitter2Renderer;
 import std;
 import MDX;
 import ParticleEmitter2Simulation;
-import SkeletalModelInstance;
+import Skeleton;
 import GPUTexture;
 import Shader;
 import ResourceManager;
@@ -78,7 +78,7 @@ export class ParticleEmitter2Renderer {
 	void render(
 		const mdx::MDX& mdx,
 		const std::vector<std::shared_ptr<GPUTexture>>& textures,
-		const SkeletalModelInstance& skeleton,
+		const Skeleton& skeleton,
 		const glm::mat4& projection_view,
 		const glm::vec3& camera_right,
 		const glm::vec3& camera_up,

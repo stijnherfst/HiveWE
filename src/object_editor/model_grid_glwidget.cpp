@@ -369,9 +369,9 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 		}
 
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
-		cell.skeleton = SkeletalModelInstance(cell.mdx);
+		cell.skeleton = Skeleton(cell.mdx);
 
-		SkeletalModelInstance::pick_preview_sequence(cell.skeleton, *cell.mdx);
+		Skeleton::pick_preview_sequence(cell.skeleton, *cell.mdx);
 
 		const auto& extent =
 			cell.skeleton.sequence_index == -1 ? cell.mdx->extent : cell.mdx->sequences[cell.skeleton.sequence_index].extent;

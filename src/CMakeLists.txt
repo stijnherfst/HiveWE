@@ -61,7 +61,7 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"resources/particle_emitter2_simulation.ixx"
 	"resources/particle_emitter2_renderer.ixx"
 	"resources/skinned_mesh/render_node.ixx"
-	"resources/skinned_mesh/skeletal_model_instance.ixx"
+	"resources/skinned_mesh/skeleton.ixx"
 	"resources/skinned_mesh.ixx"
 	"resources/skinned_mesh_globals.ixx"
 

@@ -13,7 +13,7 @@
 #include <model_editor/model_editor_camera.h>
 
 import EditableMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import MDX;
 import Shader;
 
@@ -44,7 +44,7 @@ class ModelEditorGLWidget: public QOpenGLWidget {
 	std::shared_ptr<mdx::MDX> mdx;
 	std::vector<mdx::ValidationMessage> messages;
 	std::shared_ptr<EditableMesh> mesh;
-	SkeletalModelInstance skeleton;
+	Skeleton skeleton;
 	std::shared_ptr<Shader> shader_sd;
 	std::shared_ptr<Shader> shader_hd;
 
