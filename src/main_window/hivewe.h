@@ -9,6 +9,7 @@ namespace fs = std::filesystem;
 #include <QSettings>
 #include <QObject>
 #include <QTimer>
+#include <QFileSystemWatcher>
 #include <QGridLayout>
 #include <QLabel>
 #include <QMenu>
@@ -69,6 +70,12 @@ private:
 	void import_heightmap();
 	void save_window_state();
 	void restore_window_state();
+
+	void start_watching(const fs::path& directory);
+	void stop_watching();
+
+	QFileSystemWatcher file_watcher;
+	QTimer reload_debounce;
 
 	/// Adds the tab to the ribbon and sets the current index to this tab
 	void set_current_custom_tab(QRibbonTab* tab, QString name);

@@ -338,6 +338,8 @@ void HiveWE::load_map(const fs::path& directory) {
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));
+
+	start_watching(directory);
 }
 
 /// Immediately creates and loads a default 64x64 grassy Lordaeron Summer map.
@@ -825,5 +827,51 @@ void HiveWE::remove_custom_tab() {
 			current_custom_tab = nullptr;
 			return;
 		}
+	}
+}
+
+void HiveWE::start_watching(const fs::path& directory) {
+	stop_watching();
+
+	const QString dir = QString::fromStdString(directory.string());
+	file_watcher.addPath(dir);
+
+	// Also watch individual files so edits to e.g. war3map.w3e are caught on all platforms
+	for (const auto& entry : fs::recursive_directory_iterator(directory)) {
+		if (entry.is_regular_file()) {
+			file_watcher.addPath(QString::fromStdString(entry.path().string()));
+		}
+	}
+
+	// Debounce: wait 500ms after the last change before reloading.
+	// This prevents multiple rapid reloads when a build tool writes several files.
+	reload_debounce.setSingleShot(true);
+	reload_debounce.setInterval(500);
+
+	connect(&file_watcher, &QFileSystemWatcher::fileChanged, &reload_debounce, qOverload<>(&QTimer::start));
+	connect(&file_watcher, &QFileSystemWatcher::directoryChanged, &reload_debounce, qOverload<>(&QTimer::start));
+
+	connect(&reload_debounce, &QTimer::timeout, this, [this]() {
+		if (!map || !map->loaded) {
+			return;
+		}
+		const fs::path path = map->filesystem_path;
+		std::println("Hot reload: {}", path.string());
+		load_map(path);
+	});
+}
+
+void HiveWE::stop_watching() {
+	reload_debounce.stop();
+	disconnect(&reload_debounce, nullptr, this, nullptr);
+	disconnect(&file_watcher, nullptr, &reload_debounce, nullptr);
+
+	const QStringList files = file_watcher.files();
+	const QStringList dirs = file_watcher.directories();
+	if (!files.isEmpty()) {
+		file_watcher.removePaths(files);
+	}
+	if (!dirs.isEmpty()) {
+		file_watcher.removePaths(dirs);
 	}
 }
