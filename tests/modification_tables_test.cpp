@@ -34,3 +34,26 @@ TEST_CASE("save_modification_table data repeat") {
 
 	CHECK(loaded.data("dataa1", "Test") == "67");
 }
+
+TEST_CASE("save_modification_table gef2 no repeat") {
+	slk::SLK meta;
+	meta.add_row("gef2");
+	meta.set_shadow_data("field", "gef2", "effect2");
+	meta.set_shadow_data("repeat", "gef2", "0");
+	meta.set_shadow_data("data", "gef2", "0");
+	meta.set_shadow_data("type", "gef2", "int");
+	meta.build_meta_map();
+
+	slk::SLK data;
+	data.add_row("Test");
+	data.set_shadow_data("effect2", "Test", "67");
+
+	BinaryWriter writer;
+	save_modification_table(writer, data, meta, false, true, false);
+
+	slk::SLK loaded;
+	BinaryReader reader(writer.buffer);
+	load_modification_table(reader, mod_table_version, loaded, meta, false, true);
+
+	CHECK(loaded.data("effect2", "Test") == "67");
+}
