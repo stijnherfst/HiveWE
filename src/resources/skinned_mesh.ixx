@@ -172,10 +172,7 @@ export class SkinnedMesh: public Resource {
 		layer_base = alloc.layer_base;
 		texture_base = alloc.texture_base;
 
-		{
-			ScopedTimer t(profile_gl_ns);
-			glCreateBuffers(1, &bones_ssbo_colored);
-		}
+		glCreateBuffers(1, &bones_ssbo_colored);
 
 		// Buffer Data
 		struct GeosetBuffers {

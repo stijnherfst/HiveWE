@@ -32,7 +32,6 @@ export class GPUTexture : public Resource {
 		fs::path new_path = path;
 
 		BinaryReader reader = [&] {
-			ScopedTimer t(profile_casc_ns);
 			new_path.replace_extension(".tga");
 			return hierarchy.open_file(new_path)
 				.or_else([&](const std::string&) {
