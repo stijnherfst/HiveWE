@@ -54,10 +54,12 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		"00781e",	// Emerald (0.000, 0.471, 0.118)
 		"a56e34",	// Peanut (0.647, 0.435, 0.204)
 		// Unused (Included for completeness)
+		/*
 		"2e2d2e",	// Black (0.180, 0.176, 0.180)
 		"2e2d2e",	// Black (0.180, 0.176, 0.180)
 		"2e2d2e",	// Black (0.180, 0.176, 0.180)
 		"2e2d2e"	// Black (0.180, 0.176, 0.180)
+		*/
 	};
 
 	// Player Properties tab
@@ -150,20 +152,20 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 	}
 
 	connect(ui.buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
-		// Restoring Player 1 defaults
-		player_rows[0].name->setText("");
-		player_rows[0].name->setEnabled(true);
-
-		player_rows[0].race->setCurrentIndex(0);
-		player_rows[0].race->setEnabled(true);
-
-		player_rows[0].controller->setCurrentIndex(1);
-
-		player_rows[0].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
-		player_rows[0].fixed_start_position->setEnabled(true);
-
-		// Restoring Player 2 - 24 defaults
 		if (ui.buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole) {
+			// Restoring Player 1 defaults
+			player_rows[0].name->setText("");
+			player_rows[0].name->setEnabled(true);
+
+			player_rows[0].race->setCurrentIndex(0);
+			player_rows[0].race->setEnabled(true);
+
+			player_rows[0].controller->setCurrentIndex(1);
+
+			player_rows[0].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
+			player_rows[0].fixed_start_position->setEnabled(true);
+
+			// Restoring Player 2 - 24 defaults
 			for (int i = 1; i < 24; i++) {
 				std::string name = "Player " + std::to_string(i+1);
 				player_rows[i].name->setText(QString::fromStdString(name));
@@ -218,7 +220,7 @@ bool ScenarioInfoEditor::save() const {
 		// Controller == None ?
 		if (controller_type == 0) {
 			if (found_index != -1) {
-				map->info.players.erase(map->info.players.begin() + slot);
+				map->info.players.erase(map->info.players.begin() + found_index);
 			}
 			continue;
 		}
@@ -229,15 +231,15 @@ bool ScenarioInfoEditor::save() const {
 			auto& new_player = map->info.players.emplace_back();
 			
 			new_player.internal_number = slot;
-			new_player.type = PlayerType::human,
-			new_player.race = PlayerRace::human,
-			new_player.fixed_start_position = 0,
-			new_player.name = "",
-			new_player.starting_position = { 0.f, 0.f },
-			new_player.ally_low_priorities_flags = 0,
-			new_player.ally_high_priorities_flags = 0,
-			new_player.enemy_low_priorities_flags = 0,
-			new_player.enemy_high_priorities_flags = 0,
+			new_player.type = PlayerType::human;
+			new_player.race = PlayerRace::human;
+			new_player.fixed_start_position = 0;
+			new_player.name = "";
+			new_player.starting_position = { 0.f, 0.f };
+			new_player.ally_low_priorities_flags = 0;
+			new_player.ally_high_priorities_flags = 0;
+			new_player.enemy_low_priorities_flags = 0;
+			new_player.enemy_high_priorities_flags = 0;
 
 			found_index = map->info.players.size()-1;
 		}
@@ -287,6 +289,28 @@ bool ScenarioInfoEditor::save() const {
 
 
 void ScenarioInfoEditor::updateController(int slotIndex, int controllerTypeIndex) {
+	// Is NOT controller type Human ?
+	if (controllerTypeIndex != 1) {
+		// Is there any other controller type Human player ?
+		bool found_human = false;
+		for (int i = 0; i < 24; i++) {
+			if (player_rows[i].controller->currentIndex() == 1) {
+				found_human = true;
+				break;
+			}
+		}
+
+		if (found_human == false) {
+			player_rows[slotIndex].controller->setCurrentIndex(1);
+			player_rows[slotIndex].name->setEnabled(true);
+			player_rows[slotIndex].race->setEnabled(true);
+			player_rows[slotIndex].fixed_start_position->setEnabled(true);
+			QMessageBox::information(this, "ScenarioInfoEditor error", "At least one player must be human controlled.");
+			return;
+		}
+	}
+
+	// Is controller type None ?
 	if (controllerTypeIndex == 0) {
 		player_rows[slotIndex].name->setEnabled(false);
 		player_rows[slotIndex].race->setEnabled(false);

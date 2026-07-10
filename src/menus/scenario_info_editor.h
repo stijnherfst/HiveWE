@@ -34,6 +34,5 @@ class ScenarioInfoEditor: public QDialog {
 
   private:
 	void updateController(int slotIndex, int controllerTypeIndex);
-	void updateRace(int slotIndex, int raceTypeIndex);
     
 };
