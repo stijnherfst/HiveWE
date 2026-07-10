@@ -2,7 +2,6 @@
 
 #include <QMessageBox>
 #include <QPainter>
-#include "map_protection_dialog.h"
 #include <vector>
 #include <string>
 
