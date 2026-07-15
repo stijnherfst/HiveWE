@@ -231,7 +231,7 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 				return {};
 			case Qt::TextAlignmentRole:
 				if (index.column() > 0) {
-					return Qt::AlignRight | Qt::AlignVCenter;
+					return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
 				}
 				return {};
 			case Qt::ForegroundRole:
