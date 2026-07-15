@@ -22,7 +22,7 @@
      <item>
       <widget class="QTabWidget" name="tabs">
        <property name="currentIndex">
-        <number>2</number>
+        <number>1</number>
        </property>
        <property name="usesScrollButtons">
         <bool>false</bool>
@@ -329,13 +329,30 @@
             </widget>
            </item>
            <item row="4" column="0">
+            <widget class="QCheckBox" name="waterTinting">
+             <property name="text">
+              <string>Use Water Tinting Color</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="ColorButton" name="waterColor">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="text">
+              <string>Choose Color</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="0">
             <widget class="QLabel" name="label_13">
              <property name="text">
               <string>Game Data Set:</string>
              </property>
             </widget>
            </item>
-           <item row="4" column="1">
+           <item row="5" column="1">
             <widget class="QComboBox" name="gameDataSet">
              <item>
               <property name="text">
@@ -355,19 +372,19 @@
             </widget>
            </item>
            <item row="3" column="0">
-            <widget class="QCheckBox" name="waterTinting">
+            <widget class="QCheckBox" name="customAmbiance">
              <property name="text">
-              <string>Use Water Tinting Color</string>
+              <string>Custom Ambient Sounds</string>
              </property>
             </widget>
            </item>
            <item row="3" column="1">
-            <widget class="ColorButton" name="waterColor">
+            <widget class="QComboBox" name="customAmbianceCombo">
              <property name="enabled">
               <bool>false</bool>
              </property>
-             <property name="text">
-              <string>Choose Color</string>
+             <property name="maxVisibleItems">
+              <number>20</number>
              </property>
             </widget>
            </item>
@@ -1366,12 +1383,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>109</x>
-     <y>120</y>
+     <x>96</x>
+     <y>101</y>
     </hint>
     <hint type="destinationlabel">
-     <x>168</x>
-     <y>120</y>
+     <x>277</x>
+     <y>106</y>
     </hint>
    </hints>
   </connection>
@@ -1382,12 +1399,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>119</x>
-     <y>92</y>
+     <x>110</x>
+     <y>78</y>
     </hint>
     <hint type="destinationlabel">
-     <x>179</x>
-     <y>93</y>
+     <x>288</x>
+     <y>83</y>
     </hint>
    </hints>
   </connection>
@@ -1398,12 +1415,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>121</x>
-     <y>351</y>
+     <x>103</x>
+     <y>345</y>
     </hint>
     <hint type="destinationlabel">
-     <x>242</x>
-     <y>357</y>
+     <x>373</x>
+     <y>350</y>
     </hint>
    </hints>
   </connection>
@@ -1414,12 +1431,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>129</x>
-     <y>377</y>
+     <x>132</x>
+     <y>368</y>
     </hint>
     <hint type="destinationlabel">
-     <x>225</x>
-     <y>384</y>
+     <x>356</x>
+     <y>373</y>
     </hint>
    </hints>
   </connection>
@@ -1430,12 +1447,12 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>151</x>
-     <y>408</y>
+     <x>127</x>
+     <y>391</y>
     </hint>
     <hint type="destinationlabel">
-     <x>210</x>
-     <y>408</y>
+     <x>341</x>
+     <y>396</y>
     </hint>
    </hints>
   </connection>
@@ -1446,12 +1463,28 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>130</x>
-     <y>434</y>
+     <x>118</x>
+     <y>437</y>
     </hint>
     <hint type="destinationlabel">
      <x>218</x>
      <y>435</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>customAmbiance</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>customAmbianceCombo</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>103</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>159</x>
+     <y>412</y>
     </hint>
    </hints>
   </connection>

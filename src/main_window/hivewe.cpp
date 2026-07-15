@@ -22,7 +22,7 @@ import "region_palette.h";
 import "object_editor/object_editor.h";
 import "model_editor/model_editor.h";
 import "tile_setter.h";
-import "map_info_editor.h";
+import "map_info_editor/map_info_editor.h";
 import "terrain_palette.h";
 import "settings_editor.h";
 import "tile_pather.h";
@@ -41,8 +41,7 @@ import "asset_manager/asset_manager.h";
 
 namespace fs = std::filesystem;
 
-HiveWE::HiveWE(QWidget* parent)
-	: QMainWindow(parent) {
+HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
 
 	// Buggy as of Qt 6.9.1. Likely requires 6.9.2 or later
@@ -90,17 +89,39 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(new QShortcut(Qt::CTRL | Qt::Key_Z, this), &QShortcut::activated, ui.ribbon->undo, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_Y, this), &QShortcut::activated, ui.ribbon->redo, &QPushButton::click);
 
-	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) { map->render_units = checked; });
-	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) { map->render_doodads = checked; });
-	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) { map->render_pathing = checked; });
-	connect(ui.ribbon->regions_visible, &QPushButton::toggled, [](bool checked) { map->render_regions = checked; });
-	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) { map->render_brush = checked; });
-	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) { map->render_lighting = checked; });
-	connect(ui.ribbon->water_visible, &QPushButton::toggled, [](bool checked) { map->render_water = checked; });
-	connect(ui.ribbon->click_helpers_visible, &QPushButton::toggled, [](bool checked) { map->render_click_helpers = checked; });
-	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) { map->render_wireframe = checked; });
-	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) { map->render_debug = checked; });
-	connect(ui.ribbon->minimap_visible, &QPushButton::toggled, [&](bool checked) { (checked) ? minimap->show() : minimap->hide(); });
+	connect(ui.ribbon->units_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_units = checked;
+	});
+	connect(ui.ribbon->doodads_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_doodads = checked;
+	});
+	connect(ui.ribbon->pathing_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_pathing = checked;
+	});
+	connect(ui.ribbon->regions_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_regions = checked;
+	});
+	connect(ui.ribbon->brush_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_brush = checked;
+	});
+	connect(ui.ribbon->lighting_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_lighting = checked;
+	});
+	connect(ui.ribbon->water_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_water = checked;
+	});
+	connect(ui.ribbon->click_helpers_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_click_helpers = checked;
+	});
+	connect(ui.ribbon->wireframe_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_wireframe = checked;
+	});
+	connect(ui.ribbon->debug_visible, &QPushButton::toggled, [](bool checked) {
+		map->render_debug = checked;
+	});
+	connect(ui.ribbon->minimap_visible, &QPushButton::toggled, [&](bool checked) {
+		(checked) ? minimap->show() : minimap->hide();
+	});
 
 	connect(new QShortcut(Qt::CTRL | Qt::Key_U, this), &QShortcut::activated, ui.ribbon->units_visible, &QPushButton::click);
 	connect(new QShortcut(Qt::CTRL | Qt::Key_D, this), &QShortcut::activated, ui.ribbon->doodads_visible, &QPushButton::click);
@@ -126,16 +147,43 @@ HiveWE::HiveWE(QWidget* parent)
 		qApp->setStyleSheet(StyleSheet);
 	});
 
-	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() { camera.reset(); });
-	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this), &QShortcut::activated, ui.ribbon->reset_camera, &QPushButton::click);
+	connect(ui.ribbon->reset_camera, &QPushButton::clicked, [&]() {
+		camera.reset();
+	});
+	connect(
+		new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_C), this),
+		&QShortcut::activated,
+		ui.ribbon->reset_camera,
+		&QPushButton::click
+	);
 
 	connect(ui.ribbon->import_heightmap, &QPushButton::clicked, this, &HiveWE::import_heightmap);
 
-	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->new_map, &QToolButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_folder, &QPushButton::click);
+	connect(
+		new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_N), this, nullptr, nullptr, Qt::ApplicationShortcut),
+		&QShortcut::activated,
+		ui.ribbon->new_map,
+		&QToolButton::click
+	);
+	connect(
+		new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_O), this, nullptr, nullptr, Qt::ApplicationShortcut),
+		&QShortcut::activated,
+		ui.ribbon->open_map_folder,
+		&QPushButton::click
+	);
 	// connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_I), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->open_map_mpq, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map, &QPushButton::click);
-	connect(new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut), &QShortcut::activated, ui.ribbon->save_map_as, &QPushButton::click);
+	connect(
+		new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut),
+		&QShortcut::activated,
+		ui.ribbon->save_map,
+		&QPushButton::click
+	);
+	connect(
+		new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_S), this, nullptr, nullptr, Qt::ApplicationShortcut),
+		&QShortcut::activated,
+		ui.ribbon->save_map_as,
+		&QPushButton::click
+	);
 
 	connect(ui.ribbon->new_map, &QToolButton::clicked, this, &HiveWE::new_map);
 	connect(ui.ribbon->open_map_folder, &QPushButton::clicked, this, &HiveWE::load_folder);
@@ -144,16 +192,30 @@ HiveWE::HiveWE(QWidget* parent)
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
 	connect(ui.ribbon->export_mpq, &QPushButton::clicked, this, &HiveWE::export_mpq);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, this, &HiveWE::play_test);
-	connect(ui.ribbon->settings, &QPushButton::clicked, [&]() { new SettingsEditor(this); });
+	connect(ui.ribbon->settings, &QPushButton::clicked, [&]() {
+		new SettingsEditor(this);
+	});
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
-	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() { QApplication::exit(); });
+	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {
+		QApplication::exit();
+	});
 
-	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() { new TileSetter(this); });
-	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() { new TilePather(this); });
+	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() {
+		new TileSetter(this);
+	});
+	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() {
+		new TilePather(this);
+	});
 
-	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0); });
-	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1); });
-	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2); });
+	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [&]() {
+		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0);
+	});
+	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() {
+		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1);
+	});
+	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() {
+		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(2);
+	});
 	// connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
 	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
@@ -231,7 +293,9 @@ HiveWE::HiveWE(QWidget* parent)
 	minimap->move(10, 10);
 	minimap->show();
 
-	connect(minimap, &Minimap::clicked, [](QPointF location) { camera.position = { location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z }; });
+	connect(minimap, &Minimap::clicked, [](QPointF location) {
+		camera.position = {location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z};
+	});
 	ui.widget->makeCurrent();
 
 	map = new Map();
@@ -273,7 +337,13 @@ void HiveWE::load_map(const fs::path& directory) {
 /// The map lives in a temporary directory until the user saves it to a location of their choosing
 void HiveWE::new_map() {
 	if (map && map->loaded) {
-		const int choice = QMessageBox::question(this, "New Map", "Do you want to save changes to the current map?", QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes);
+		const int choice = QMessageBox::question(
+			this,
+			"New Map",
+			"Do you want to save changes to the current map?",
+			QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+			QMessageBox::Yes
+		);
 
 		if (choice == QMessageBox::Cancel) {
 			return;
@@ -290,13 +360,17 @@ void HiveWE::new_map() {
 	// The random part goes in the parent directory so that the map itself is named "New Map",
 	fs::path directory;
 	do {
-		directory = fs::temp_directory_path() / "HiveWE" / std::format("{:08x}", std::random_device{}()) / "New Map";
+		directory = fs::temp_directory_path() / "HiveWE" / std::format("{:08x}", std::random_device {}()) / "New Map";
 	} while (fs::exists(directory));
 
 	std::error_code error;
 	fs::create_directories(directory, error);
 	if (error) {
-		QMessageBox::critical(this, "Creating map failed", "Failed to create a temporary directory for the new map:\n" + QString::fromStdString(error.message()));
+		QMessageBox::critical(
+			this,
+			"Creating map failed",
+			"Failed to create a temporary directory for the new map:\n" + QString::fromStdString(error.message())
+		);
 		return;
 	}
 
@@ -323,9 +397,12 @@ void HiveWE::new_map() {
 void HiveWE::load_folder() {
 	QSettings settings;
 
-	QString folder_name = QFileDialog::getExistingDirectory(this, "Open Map Directory",
-															settings.value("openDirectory", QDir::current().path()).toString(),
-															QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+	QString folder_name = QFileDialog::getExistingDirectory(
+		this,
+		"Open Map Directory",
+		settings.value("openDirectory", QDir::current().path()).toString(),
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	);
 
 	if (folder_name == "") {
 		return;
@@ -336,11 +413,16 @@ void HiveWE::load_folder() {
 	fs::path directory = folder_name.toStdString();
 
 	if (!fs::exists(directory / "war3map.w3i")) {
-		QMessageBox::information(this, "Opening map failed", "Opening the map failed. Select a map that is saved in folder mode or use the Open Map (MPQ) option");
+		QMessageBox::information(
+			this,
+			"Opening map failed",
+			"Opening the map failed. Select a map that is saved in folder mode or use the Open Map (MPQ) option"
+		);
 		return;
 	}
 
-	QMessageBox* loading_box = new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
+	QMessageBox* loading_box =
+		new QMessageBox(QMessageBox::Icon::Information, "Loading Map", "Loading " + QString::fromStdString(directory.filename().string()));
 	loading_box->show();
 
 	load_map(directory);
@@ -354,9 +436,12 @@ void HiveWE::load_mpq() {
 	QSettings settings;
 
 	// Choose an MPQ
-	QString file_name = QFileDialog::getOpenFileName(this, "Open File",
-													 settings.value("openDirectory", QDir::current().path()).toString(),
-													 "Warcraft III Scenario (*.w3m *.w3x)");
+	QString file_name = QFileDialog::getOpenFileName(
+		this,
+		"Open File",
+		settings.value("openDirectory", QDir::current().path()).toString(),
+		"Warcraft III Scenario (*.w3m *.w3x)"
+	);
 
 	if (file_name.isEmpty()) {
 		return;
@@ -369,15 +454,18 @@ void HiveWE::load_mpq() {
 	mpq::MPQ mpq;
 	bool opened = mpq.open(mpq_path);
 	if (!opened) {
-		const auto message = std::format("Opening the map archive failed. It might be opened in another program.\nError Code {}", GetLastError());
+		const auto message =
+			std::format("Opening the map archive failed. It might be opened in another program.\nError Code {}", GetLastError());
 		QMessageBox::critical(this, "Opening map failed", QString::fromStdString(message));
 		return;
 	}
 
 	fs::path unpack_location = QFileDialog::getExistingDirectory(
-								   this, "Choose Unpacking Location",
+								   this,
+								   "Choose Unpacking Location",
 								   settings.value("openDirectory", QDir::current().path()).toString(),
-								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	)
 								   .toStdString();
 
 	if (unpack_location.empty()) {
@@ -389,7 +477,13 @@ void HiveWE::load_mpq() {
 	try {
 		fs::create_directory(final_directory);
 	} catch (std::filesystem::filesystem_error& e) {
-		QMessageBox::critical(this, "Error creating directory", "Failed to create the directory to unpack into with error:\n" + QString::fromStdString(e.what()), QMessageBox::StandardButton::Ok, QMessageBox::StandardButton::Ok);
+		QMessageBox::critical(
+			this,
+			"Error creating directory",
+			"Failed to create the directory to unpack into with error:\n" + QString::fromStdString(e.what()),
+			QMessageBox::StandardButton::Ok,
+			QMessageBox::StandardButton::Ok
+		);
 		return;
 	}
 
@@ -412,15 +506,18 @@ void HiveWE::save() {
 
 	emit saving_initiated();
 	map->save(map->filesystem_path);
-};
+}
 
 void HiveWE::save_as() {
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->name);
 
-	fs::path file_name = QFileDialog::getExistingDirectory(this, "Choose Save Location",
-														   settings.value("openDirectory", QDir::current().path()).toString(),
-														   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks)
+	fs::path file_name = QFileDialog::getExistingDirectory(
+							 this,
+							 "Choose Save Location",
+							 settings.value("openDirectory", QDir::current().path()).toString(),
+							 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	)
 							 .toStdString();
 
 	if (file_name.empty()) {
@@ -446,8 +543,10 @@ void HiveWE::save_as() {
 
 void HiveWE::export_mpq() {
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
-	std::wstring file_name = QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)").toStdWString();
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/"
+		+ QString::fromStdString(map->filesystem_path.filename().string());
+	std::wstring file_name =
+		QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)").toStdWString();
 
 	if (file_name.empty()) {
 		return;
@@ -458,7 +557,7 @@ void HiveWE::export_mpq() {
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 
-	uint64_t file_count = std::distance(fs::recursive_directory_iterator{ map->filesystem_path }, {});
+	uint64_t file_count = std::distance(fs::recursive_directory_iterator {map->filesystem_path}, {});
 
 	HANDLE handle;
 	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
@@ -470,7 +569,14 @@ void HiveWE::export_mpq() {
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
 		if (entry.is_regular_file()) {
-			bool success = SFileAddFileEx(handle, entry.path().c_str(), entry.path().lexically_relative(map->filesystem_path).string().c_str(), MPQ_FILE_COMPRESS, MPQ_COMPRESSION_ZLIB, MPQ_COMPRESSION_NEXT_SAME);
+			bool success = SFileAddFileEx(
+				handle,
+				entry.path().c_str(),
+				entry.path().lexically_relative(map->filesystem_path).string().c_str(),
+				MPQ_FILE_COMPRESS,
+				MPQ_COMPRESSION_ZLIB,
+				MPQ_COMPRESSION_NEXT_SAME
+			);
 			if (!success) {
 				std::println("Error {} adding file {}", GetLastError(), entry.path().string());
 			}
@@ -492,14 +598,21 @@ void HiveWE::play_test() {
 			  << "-loadfile" << QString::fromStdString(fs::canonical(map->filesystem_path).string());
 
 	QSettings settings;
-	if (settings.value("testArgs").toString() != "")
+	if (settings.value("testArgs").toString() != "") {
 		arguments << settings.value("testArgs").toString().split(' ');
+	}
 
 	warcraft->start(warcraft_path, arguments);
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
-	int choice = QMessageBox::question(this, "Do you want to quit?", "Are you sure you want to quit?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+	int choice = QMessageBox::question(
+		this,
+		"Do you want to quit?",
+		"Are you sure you want to quit?",
+		QMessageBox::Yes | QMessageBox::No,
+		QMessageBox::No
+	);
 
 	if (choice == QMessageBox::Yes) {
 		QApplication::closeAllWindows();
@@ -511,19 +624,29 @@ void HiveWE::closeEvent(QCloseEvent* event) {
 
 void HiveWE::resizeEvent(QResizeEvent* event) {
 	QMainWindow::resizeEvent(event);
-	QTimer::singleShot(0, [&] { save_window_state(); });
+	QTimer::singleShot(0, [&] {
+		save_window_state();
+	});
 }
 
 void HiveWE::moveEvent(QMoveEvent* event) {
 	QMainWindow::moveEvent(event);
-	QTimer::singleShot(0, [&] { save_window_state(); });
+	QTimer::singleShot(0, [&] {
+		save_window_state();
+	});
 }
 
 void HiveWE::switch_warcraft() {
 	QSettings settings;
 	fs::path directory;
 	do {
-		directory = QFileDialog::getExistingDirectory(this, "Select Warcraft Directory", "/home", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks).toStdWString();
+		directory = QFileDialog::getExistingDirectory(
+						this,
+						"Select Warcraft Directory",
+						"/home",
+						QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+		)
+						.toStdWString();
 		if (directory == "") {
 			directory = settings.value("warcraftDirectory").toString().toStdString();
 		}
@@ -538,7 +661,8 @@ void HiveWE::switch_warcraft() {
 void HiveWE::import_heightmap() {
 	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -16 to +16");
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->filesystem_path.filename().string());
+	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/"
+		+ QString::fromStdString(map->filesystem_path.filename().string());
 
 	QString file_name = QFileDialog::getOpenFileName(this, "Open Heightmap Image", directory);
 
@@ -552,7 +676,17 @@ void HiveWE::import_heightmap() {
 	uint8_t* image_data = SOIL_load_image(file_name.toStdString().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
 
 	if (width != map->terrain.width || height != map->terrain.height) {
-		QMessageBox::warning(this, "Incorrect Image Size", QString("Image Size: %1x%2 does not match terrain size: %3x%4").arg(QString::number(width), QString::number(height), QString::number(map->terrain.width), QString::number(map->terrain.height)));
+		QMessageBox::warning(
+			this,
+			"Incorrect Image Size",
+			QString("Image Size: %1x%2 does not match terrain size: %3x%4")
+				.arg(
+					QString::number(width),
+					QString::number(height),
+					QString::number(map->terrain.width),
+					QString::number(map->terrain.height)
+				)
+		);
 		return;
 	}
 
@@ -562,7 +696,7 @@ void HiveWE::import_heightmap() {
 		}
 	}
 
-	map->terrain.update_ground_heights({ 0, 0, width, height });
+	map->terrain.update_ground_heights({0, 0, width, height});
 	delete image_data;
 }
 

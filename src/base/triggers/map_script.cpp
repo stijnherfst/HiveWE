@@ -703,6 +703,7 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 
 		const Tileset* tileset = tilesets.tileset(terrain.tileset_id);
 		const Tileset* light_tileset = tilesets.tileset(map_info.custom_light_tileset);
+		const Tileset* ambiance_tileset = tilesets.tileset(map_info.custom_ambience_tileset);
 
 		// safety check
 		if (!tileset) {
@@ -710,9 +711,13 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 			return;
 		}
 
-		// custom_light_tileset is set to 0 if the "Use Custom Lightning" is unchecked
+		// light and ambiance tilesets are set to 0 if unused
 		if (!light_tileset) {
 			light_tileset = tileset;
+		}
+
+		if (!ambiance_tileset) {
+			ambiance_tileset = tileset;
 		}
 
 		const std::string terrain_lights = string_replaced(light_tileset->terrain_dnc, "\\", "/");
@@ -724,10 +729,10 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 			: map_info.custom_sound_environment;
 		script.call("NewSoundEnvironment", "\"" + sound_environment + "\"");
 
-		const std::string ambient_day = string_replaced(tileset->day_ambience_sound, "\\", "/");
+		const std::string ambient_day = string_replaced(ambiance_tileset->day_ambience_sound, "\\", "/");
 		script.call("SetAmbientDaySound", "\"" + ambient_day + "\"");
 
-		const std::string ambient_night = string_replaced(tileset->night_ambience_sound, "\\", "/");
+		const std::string ambient_night = string_replaced(ambiance_tileset->night_ambience_sound, "\\", "/");
 		script.call("SetAmbientNightSound", "\"" + ambient_night + "\"");
 
 		if (map_info.water_tinting) {

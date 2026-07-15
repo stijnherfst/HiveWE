@@ -19,10 +19,21 @@ class MapInfoEditor: public QDialog {
 	bool save() const;
 
   private:
+	void setup_description();
+	bool save_description() const;
+
+	void setup_loading_screen();
+	bool save_loading_screen() const;
+
+	void setup_options();
+	bool save_options() const;
+
+	void setup_map_size();
+	bool save_map_size() const;
 	void updateMapSizeGUI();
 	void adjustBounds(int deltaLeft, int deltaRight, int deltaTop, int deltaBottom);
-	void updateBoundsPreview();
-	void updateBoundsText();
+	void updateBoundsPreview() const;
+	void updateBoundsText() const;
 
 	// used for changing map size
 	glm::ivec2 oldMapBottomLeft;
