@@ -42,9 +42,9 @@ import HiveWEVersion;
 
 namespace fs = std::filesystem;
 
-static const QString k_app_title =
+static const QString hive_title =
 	QString::fromStdString(std::format("HiveWE {}.{}.{}", hive::version.major, hive::version.minor, hive::version.patch));
-static const QString k_app_title_prefix = k_app_title + " - ";
+static const QString hive_title_prefix = hive_title + " - ";
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
@@ -54,7 +54,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	// setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
 	// setAttribute(Qt::WA_LayoutOnEntireRect, true);
 	ui.setupUi(this);
-	setWindowTitle(k_app_title);
+	setWindowTitle(hive_title);
 	context = ui.widget;
 
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() {
@@ -336,7 +336,7 @@ void HiveWE::load_map(const fs::path& directory) {
 	map->load(directory);
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
-	setWindowTitle(k_app_title_prefix + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle(hive_title_prefix + QString::fromStdString(map->filesystem_path.string()));
 }
 
 /// Immediately creates and loads a default 64x64 grassy Lordaeron Summer map.
@@ -397,7 +397,7 @@ void HiveWE::new_map() {
 
 	load_map(directory);
 	map->is_in_temp_dir = true;
-	setWindowTitle(k_app_title_prefix + "Untitled Map");
+	setWindowTitle(hive_title_prefix + "Untitled Map");
 }
 
 void HiveWE::load_folder() {
@@ -544,7 +544,7 @@ void HiveWE::save_as() {
 		}
 	}
 
-	setWindowTitle(k_app_title_prefix + QString::fromStdString(map->filesystem_path.string()));
+	setWindowTitle(hive_title_prefix + QString::fromStdString(map->filesystem_path.string()));
 }
 
 void HiveWE::export_mpq() {
