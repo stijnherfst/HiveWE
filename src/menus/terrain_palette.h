@@ -3,12 +3,15 @@
 #include "ui_terrain_palette.h"
 
 #include <QDialog>
+#include <QScrollArea>
 
 #include "palette.h"
 #include "terrain_brush.h"
 
 import QRibbon;
 import FlowLayout;
+import TextureButton;
+import Tileset;
 
 class TerrainPalette: public Palette {
 	Q_OBJECT
@@ -45,7 +48,9 @@ class TerrainPalette: public Palette {
 	void update_texture_operator_gui();
 	void setup_texture_operator();
 	void create_terrain_buttons();
-	QPushButton* terrain_button(const QIcon& icon, const char* propertyName, const QVariant& propertyValue, const QString& tileName);
+	TextureButton* terrain_button(const TerrainTexture* tex);
+	CliffButton* cliff_button(const CliffType* cliff, const TerrainTexture* tex);
+	int get_scroll_view_height(const QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const;
 
 	// cliff
 	void update_cliff_operator_gui();

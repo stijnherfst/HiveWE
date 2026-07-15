@@ -8,78 +8,99 @@ module;
 export module FlowLayout;
 
 // FlowLayout is a gridlike layout that will adjust the position of the items according to screen width
-export class FlowLayout : public QLayout {
+export class FlowLayout: public QLayout {
   public:
-
-	explicit FlowLayout(QWidget* parent, int margin = -1, int h_spacing = -1, int v_spacing = -1)
-		: QLayout(parent), h_space(h_spacing), v_space(v_spacing) {
+	explicit FlowLayout(QWidget* parent, int margin = -1, int h_spacing = -1, int v_spacing = -1) :
+		QLayout(parent),
+		h_space(h_spacing),
+		v_space(v_spacing) {
 		setContentsMargins(margin, margin, margin, margin);
 	}
 
-	explicit FlowLayout(int margin = -1, int h_spacing = -1, int v_spacing = -1)
-		: h_space(h_spacing), v_space(v_spacing) {
+	explicit FlowLayout(int margin = -1, int h_spacing = -1, int v_spacing = -1) : h_space(h_spacing), v_space(v_spacing) {
 		setContentsMargins(margin, margin, margin, margin);
 	}
 
-	~FlowLayout() {
-		QLayoutItem* item;
-		while ((item = FlowLayout::takeAt(0)))
+	~FlowLayout() override {
+		while (QLayoutItem* item = FlowLayout::takeAt(0)) {
 			delete item;
+		}
 	}
 
-	void addItem(QLayoutItem* item) {
+	void addItem(QLayoutItem* item) override {
 		item_list.append(item);
+
+		invalidate();
+		if (QWidget* pw = parentWidget()) {
+			pw->updateGeometry();
+		}
 	}
 
 	void insert_widget(const int index, QWidget* widget) {
 		addWidget(widget);
-		item_list.move(indexOf(widget), index);
-	}
 
-	void move_widget(const int index, QWidget* widget) {
-		if (index >= 0 && index < count()) {
-			item_list.move(indexOf(widget), index);
-			update();
+		const int current = indexOf(widget);
+		if (current < 0) {
+			return;
 		}
+
+		const int dest = std::clamp(index, 0, count() - 1);
+		item_list.move(current, dest);
+		invalidate();
 	}
 
+	void move_widget(const int index, const QWidget* widget) {
+		const int old_index = indexOf(widget);
+		if (old_index < 0) {
+			return;
+		}
+
+		const int dest = std::clamp(index, 0, std::max(0, count() - 1));
+		item_list.move(old_index, dest);
+		invalidate();
+	}
+
+	[[nodiscard]]
 	int horizontal_spacing() const {
-		return spacing();
-		// if (h_space >= 0) {
-		//	return h_space;
-		// } else {
-		//	return smart_spacing(QStyle::PM_LayoutHorizontalSpacing);
-		// }
+		if (h_space >= 0) {
+			return h_space;
+		}
+		return smart_spacing(QStyle::PM_LayoutHorizontalSpacing);
 	}
 
+	[[nodiscard]]
 	int vertical_spacing() const {
 		if (v_space >= 0) {
 			return v_space;
-		} else {
-			return smart_spacing(QStyle::PM_LayoutVerticalSpacing);
 		}
+		return smart_spacing(QStyle::PM_LayoutVerticalSpacing);
 	}
 
-	int count() const {
+	[[nodiscard]]
+	int count() const override {
 		return item_list.size();
 	}
 
-	QLayoutItem* itemAt(const int index) const {
+	[[nodiscard]]
+	QLayoutItem* itemAt(const int index) const override {
 		return item_list.value(index);
 	}
 
-	QLayoutItem* takeAt(const int index) {
-		if (index >= 0 && index < item_list.size())
+	QLayoutItem* takeAt(const int index) override {
+		if (index >= 0 && index < item_list.size()) {
 			return item_list.takeAt(index);
-		else
+		} else {
 			return nullptr;
+		}
 	}
 
-	Qt::Orientations expandingDirections() const {
+	[[nodiscard]]
+	Qt::Orientations expandingDirections() const override {
 		return Qt::Orientations();
 	}
 
-	bool hasHeightForWidth() const {
+	[[nodiscard]]
+	bool hasHeightForWidth() const override {
 		return true;
 	}
 
@@ -87,29 +108,19 @@ export class FlowLayout : public QLayout {
 	//	const int height = do_layout(QRect(0, 0, width, 0), true);
 	//	return height;
 	// }
-
-	int heightForWidth(const int width) const {
-		const int height = do_layout(QRect(0, 0, width, 0), true, nullptr); // jpo38: set added parameter to NULL here
+	[[nodiscard]]
+	int heightForWidth(const int width) const override {
+		const int height = do_layout(QRect(0, 0, width, 0), true);
 		return height;
 	}
 
-	// void setGeometry(const QRect &rect) {
-	//	QLayout::setGeometry(rect);
-	//	do_layout(rect, false);
-	// }
-
-	void setGeometry(const QRect& rect) {
+	void setGeometry(const QRect& rect) override {
 		QLayout::setGeometry(rect);
-
-		const QSize oldSize = min_size;
-		do_layout(rect, false, &min_size);
-		if (oldSize != min_size) {
-			// force layout to consider new minimum size!
-			invalidate();
-		}
+		do_layout(rect, false);
 	}
 
-	QSize sizeHint() const {
+	[[nodiscard]]
+	QSize sizeHint() const override {
 		return minimumSize();
 	}
 
@@ -123,20 +134,33 @@ export class FlowLayout : public QLayout {
 	//	return size;
 	// }
 
-	QSize minimumSize() const {
-		return min_size;
+	[[nodiscard]]
+	QSize minimumSize() const override {
+		QSize size;
+
+		for (const auto* item : item_list) {
+			size = size.expandedTo(item->minimumSize());
+		}
+
+		const QMargins m = contentsMargins();
+		size += QSize(m.left() + m.right(), m.top() + m.bottom());
+		return size;
 	}
 
+	[[nodiscard]]
 	QList<QLayoutItem*> items() const {
 		return item_list;
 	}
 
 	void clear() {
 		for (auto&& i : item_list) {
-			i->widget()->deleteLater();
+			if (QWidget* w = i->widget()) {
+				w->deleteLater();
+			}
 			delete i;
 		}
 		item_list.clear();
+		invalidate();
 	}
 
 	// int do_layout(const QRect &rect, const bool test_only) const {
@@ -172,7 +196,7 @@ export class FlowLayout : public QLayout {
 	//	return y + lineHeight - rect.y() + bottom;
 	// }
 
-	int do_layout(const QRect& rect, const bool test_only, QSize* p_min_size) const {
+	int do_layout(const QRect& rect, const bool test_only) const {
 		int left, top, right, bottom;
 		getContentsMargins(&left, &top, &right, &bottom);
 		QRect effective_rect = rect.adjusted(+left, +top, -right, -bottom);
@@ -180,57 +204,65 @@ export class FlowLayout : public QLayout {
 		int y = effective_rect.y();
 		int line_height = 0;
 
-		// jpo38: store max X
-		int max_x = 0;
+		for (QLayoutItem* item : item_list) {
+			const QWidget* wid = item->widget();
+			if (!wid) {
+				continue;
+			}
 
-		for (auto&& item : item_list) {
-			QWidget* wid = item->widget();
+			const QSize hint = item->sizeHint();
+			const int hint_width = hint.width();
+			const int hint_height = hint.height();
+
 			int space_x = horizontal_spacing();
-			if (space_x == -1)
+			if (space_x == -1) {
 				space_x = wid->style()->layoutSpacing(QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Horizontal);
+			}
+
 			int space_y = vertical_spacing();
-			if (space_y == -1)
+			if (space_y == -1) {
 				space_y = wid->style()->layoutSpacing(QSizePolicy::PushButton, QSizePolicy::PushButton, Qt::Vertical);
-			int next_x = x + item->sizeHint().width() + space_x;
+			}
+
+			int next_x = x + hint_width + space_x;
 			if (next_x - space_x > effective_rect.right() && line_height > 0) {
 				x = effective_rect.x();
 				y = y + line_height + space_y;
-				next_x = x + item->sizeHint().width() + space_x;
+				next_x = x + hint_width + space_x;
 				line_height = 0;
 			}
 
-			if (!test_only)
-				item->setGeometry(QRect(QPoint(x, y), item->sizeHint()));
-
-			// jpo38: update max X based on current position
-			max_x = qMax(max_x, x + item->sizeHint().width() - rect.x() + left);
+			if (!test_only) {
+				item->setGeometry(QRect(QPoint(x, y), hint));
+			}
 
 			x = next_x;
-			line_height = qMax(line_height, item->sizeHint().height());
+			line_height = qMax(line_height, hint_height);
 		}
 
-		// jpo38: save height/width as max height/xidth in p_min_size is specified
 		const int height = y + line_height - rect.y() + bottom;
-		if (p_min_size) {
-			p_min_size->setHeight(height);
-			p_min_size->setWidth(max_x);
-		}
 		return height;
 	}
 
+	[[nodiscard]]
 	int smart_spacing(const QStyle::PixelMetric pm) const {
 		QObject* parent = this->parent();
 		if (!parent) {
 			return -1;
-		} else if (parent->isWidgetType()) {
-			QWidget* pw = dynamic_cast<QWidget*>(parent);
-			return pw->style()->pixelMetric(pm, nullptr, pw);
-		} else {
-			return dynamic_cast<QLayout*>(parent)->spacing();
 		}
+
+		if (parent->isWidgetType()) {
+			const QWidget* pw = qobject_cast<QWidget*>(parent);
+			return pw->style()->pixelMetric(pm, nullptr, pw);
+		}
+
+		if (const auto* layout = qobject_cast<QLayout*>(parent)) {
+			return layout->spacing();
+		}
+
+		return -1;
 	}
 
-	QSize min_size;
 	QList<QLayoutItem*> item_list;
 	int h_space;
 	int v_space;
