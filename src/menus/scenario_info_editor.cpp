@@ -2,6 +2,7 @@
 
 #include <QMessageBox>
 #include <QPainter>
+#include <cstddef>
 #include <vector>
 #include <string>
 
@@ -101,53 +102,52 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 
 	ui.playerGrid->setVerticalSpacing(0);
 
-	for (int i = 0; i < map->info.players.size(); i++) {
-		const auto& p = map->info.players[i];
+	for (const auto& player: map->info.players) {
 
-		player_rows[p.internal_number].name->setText(QString::fromUtf8(map->trigger_strings.string(p.name)));
-		player_rows[p.internal_number].name->setEnabled(true);
+		player_rows[player.internal_number].name->setText(QString::fromUtf8(map->trigger_strings.string(player.name)));
+		player_rows[player.internal_number].name->setEnabled(true);
 
-		switch (p.race) {
+		switch (player.race) {
 		case PlayerRace::human:
-			player_rows[p.internal_number].race->setCurrentIndex(0);
+			player_rows[player.internal_number].race->setCurrentIndex(0);
 			break;
 		case PlayerRace::orc:
-			player_rows[p.internal_number].race->setCurrentIndex(1);
+			player_rows[player.internal_number].race->setCurrentIndex(1);
 			break;
 		case PlayerRace::undead:
-			player_rows[p.internal_number].race->setCurrentIndex(2);
+			player_rows[player.internal_number].race->setCurrentIndex(2);
 			break;
 		case PlayerRace::night_elf:
-			player_rows[p.internal_number].race->setCurrentIndex(3);
+			player_rows[player.internal_number].race->setCurrentIndex(3);
 			break;
 		case PlayerRace::selectable:
-			player_rows[p.internal_number].race->setCurrentIndex(4);
+			player_rows[player.internal_number].race->setCurrentIndex(4);
 			break;
 		}
-		player_rows[p.internal_number].race->setEnabled(true);
+		player_rows[player.internal_number].race->setEnabled(true);
 		
 
-		switch (p.type) {
+		switch (player.type) {
 		case PlayerType::human:
-			player_rows[p.internal_number].controller->setCurrentIndex(1);
+			player_rows[player.internal_number].controller->setCurrentIndex(1);
 			break;
 		case PlayerType::computer:
-			player_rows[p.internal_number].controller->setCurrentIndex(2);
+			player_rows[player.internal_number].controller->setCurrentIndex(2);
 			break;
 		case PlayerType::neutral:
-			player_rows[p.internal_number].controller->setCurrentIndex(3);
+			player_rows[player.internal_number].controller->setCurrentIndex(3);
 			break;
 		case PlayerType::rescuable:
-			player_rows[p.internal_number].controller->setCurrentIndex(4);
+			player_rows[player.internal_number].controller->setCurrentIndex(4);
 			break;
 		}
 
 		if (p.fixed_start_position == 0) {
-			player_rows[p.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
+			player_rows[player.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
 		} else {
-			player_rows[p.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Checked);
+			player_rows[player.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Checked);
 		}
-		player_rows[p.internal_number].fixed_start_position->setEnabled(true);
+		player_rows[player.internal_number].fixed_start_position->setEnabled(true);
 	}
 
 	connect(ui.buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
@@ -204,7 +204,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 
 
 bool ScenarioInfoEditor::save() const {
-	for (int slot = 0; slot < 24; slot++) {
+	for (size_t slot = 0; slot < 24; slot++) {
 		const int controller_type = player_rows[slot].controller->currentIndex();
 
 		int found_index = -1;
@@ -288,12 +288,12 @@ bool ScenarioInfoEditor::save() const {
 
 
 void ScenarioInfoEditor::updateController(int slotIndex, int controllerTypeIndex) {
-	// Is NOT controller type Human ?
+	// Is controller type NOT Human ?
 	if (controllerTypeIndex != 1) {
-		// Is there any other controller type Human player ?
+		// Is there any other Human controller type ?
 		bool found_human = false;
-		for (int i = 0; i < 24; i++) {
-			if (player_rows[i].controller->currentIndex() == 1) {
+		for (const auto& player : player_rows) {
+			if (player.controller->currentIndex() == 1) {
 				found_human = true;
 				break;
 			}
