@@ -142,7 +142,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 			break;
 		}
 
-		if (p.fixed_start_position == 0) {
+		if (player.fixed_start_position == 0) {
 			player_rows[player.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
 		} else {
 			player_rows[player.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Checked);
