@@ -219,10 +219,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(0);
 	});
 	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [&]() {
-		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3);	// NOTE: Used to be index 1 which opened the wrong tab (Options)
+		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3);
 	});
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [&]() {
-		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1);	// NOTE: Used to be index 2 which opened the wrong tab (Size and Camera Bounds)
+		(new MapInfoEditor(this))->ui.tabs->setCurrentIndex(1);
 	});
 	// connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
