@@ -60,10 +60,19 @@ export class Hierarchy {
 		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
 		root_directory = warcraft_directory / (ptr ? "_ptr_" : "_retail_");
 
-		if (open) {
-			aliases.load(open_file("filealiases.json").value());
+		if (!open) {
+			return false;
 		}
-		return open;
+
+		for (const auto& potential_locale : {"dede", "enus", "eses", "esmx", "frfr", "itit", "kokr", "plpl", "ptbr", "ruru", "zhcn", "zhtw"}) {
+			if (game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:config.txt", potential_locale))) {
+				locale = potential_locale;
+				break;
+			}
+		}
+
+		aliases.load(open_file("filealiases.json").value());
+		return true;
 	}
 
 	constexpr bool has_flag(Hierarchy::FileSource value, Hierarchy::FileSource flag) const {
