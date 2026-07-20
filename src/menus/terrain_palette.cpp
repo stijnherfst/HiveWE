@@ -17,6 +17,8 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent) {
 	show();
 
 	brush.texture_operator.tile_id = map->terrain.tileset_ids.front();
+	brush.cliff_operator.cliff_id = map->terrain.cliffset_ids.front();
+
 	map->brush = &brush;
 
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
@@ -57,8 +59,13 @@ TerrainPalette::~TerrainPalette() {
 
 void TerrainPalette::refresh() {
 	create_terrain_buttons();
+
 	if (std::ranges::find(map->terrain.tileset_ids, brush.texture_operator.tile_id) == map->terrain.tileset_ids.end()) {
 		brush.texture_operator.tile_id = map->terrain.tileset_ids.front();
+	}
+
+	if (std::ranges::find(map->terrain.cliffset_ids, brush.cliff_operator.cliff_id) == map->terrain.cliffset_ids.end()) {
+		brush.cliff_operator.cliff_id = map->terrain.cliffset_ids.front();
 	}
 }
 

@@ -79,33 +79,36 @@ void TilePather::changed_tile(QAbstractButton* button) {
 }
 
 void TilePather::save_tiles() {
+	// set of all tiles with modified pathing
+	std::unordered_set<int> changed_ids;
+
 	for (const auto& [tile_id, options] : pathing_options) {
-		// Save override pathing back to tilesets and "reset it" if it is the same as base-game pathing
 		const uint8_t mask = get_mask(options);
 		TerrainTexture* texture = map->tilesets.terrain_texture(tile_id);
-		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
+		if (mask != texture->get_tile_pathing()) {
+			changed_ids.insert(map->terrain.ground_texture_to_id(tile_id));
+		}
 
-		const int id = map->terrain.ground_texture_to_id(tile_id);
+		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
+	}
+
+	// if one of the tiles was modified, update the pathing map
+	if (!changed_ids.empty()) {
 		for (int i = 0; i < map->terrain.width; i++) {
 			for (int j = 0; j < map->terrain.height; j++) {
-				if (map->terrain.real_tile_texture(i, j) != id) {
+				if (!changed_ids.contains(map->terrain.real_tile_texture(i, j))) {
 					continue;
 				}
 
-				const int left = std::max(i * 4 - 2, 0);
-				const int bottom = std::max(j * 4 - 2, 0);
+				const int x0 = std::max(i * 4 - 2, 0);
+				const int y0 = std::max(j * 4 - 2, 0);
+				const int x1 = std::min(i * 4 + 2, map->pathing_map.width);
+				const int y1 = std::min(j * 4 + 2, map->pathing_map.height);
 
-				const int right = std::min(i * 4 + 2, map->pathing_map.width);
-				const int top = std::min(j * 4 + 2, map->pathing_map.height);
-
-				for (int x = left; x < right; x++) {
-					for (int y = bottom; y < top; y++) {
-						uint8_t byte_cell = map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x];
-
-						byte_cell &= ~(PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
-						byte_cell |= mask;
-
-						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] = byte_cell;
+				for (int y = y0; y < y1; y++) {
+					for (int x = x0; x < x1; x++) {
+						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] =
+							map->terrain.get_terrain_pathing(x, y, true, true, true, map->tilesets);
 					}
 				}
 			}
@@ -125,7 +128,6 @@ void TilePather::save_tiles() {
 	);
 
 	emit map->terrain.tileset_changed();
-
 	close();
 }
 

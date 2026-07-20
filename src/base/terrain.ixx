@@ -629,15 +629,13 @@ export class Terrain: public QObject {
 		const MapInfo& info
 	) {
 		// change base tileset if needed
-		// also, clear the resource manager cache to force the editor
-		// to reload tileset specific assets, like water textures
 		if (tileset_id != new_tileset) {
 			tileset_id = new_tileset;
 			hierarchy.tileset = new_tileset;
+			// ToDo: this will force the editor to load correct water textures, but it won't reload other tileset specific assets
 			resource_manager.clear();
 			reload_water_textures(tilesets);
 			update_water({0, 0, width - 1, height - 1});
-			render_water(info, tilesets);
 		}
 
 		// update ground and cliff times, the game supports up to 15 cliff textures
