@@ -102,5 +102,18 @@ namespace casc {
 			}
 			return exists;
 		}
+
+		/// Whether the file's data is actually downloaded/available locally, as opposed to merely
+		/// being present in the storage index (which lists all locales regardless of what is installed).
+		bool file_exists_locally(const fs::path& path) const {
+			CASC_FIND_DATA data;
+			const HANDLE found = CascFindFirstFile(handle, path.string().c_str(), &data, L"");
+			if (found == INVALID_HANDLE_VALUE) {
+				return false;
+			}
+			const bool available = data.bFileAvailable;
+			CascFindClose(found);
+			return available;
+		}
 	};
 } // namespace casc

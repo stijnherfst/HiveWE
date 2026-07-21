@@ -65,7 +65,7 @@ export class Hierarchy {
 		}
 
 		for (const auto& potential_locale : {"dede", "enus", "eses", "esmx", "frfr", "itit", "kokr", "plpl", "ptbr", "ruru", "zhcn", "zhtw"}) {
-			if (game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:config.txt", potential_locale))) {
+			if (game_data.file_exists_locally(std::format("war3.w3mod:_locales/{}.w3mod:config.txt", potential_locale))) {
 				locale = potential_locale;
 				break;
 			}
