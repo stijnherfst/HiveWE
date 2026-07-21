@@ -25,6 +25,9 @@ public:
 
 	[[nodiscard]] std::expected<ads::CDockWidget*, std::string> open_model(const fs::path& path, bool local_file) const;
 
+	/// Opens the model and docks it as a tab in the central area.
+	[[nodiscard]] std::expected<void, std::string> open_model_docked(const fs::path& path, bool local_file) const;
+
 
 	void keyPressEvent(QKeyEvent* event) override {
 		if (event->key() == Qt::Key_Shift && !event->isAutoRepeat()) {

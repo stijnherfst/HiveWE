@@ -1,15 +1,10 @@
 #pragma once
 
-#include <cstdint>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
-#include <QAbstractItemModel>
 #include <QCheckBox>
 #include <QDialog>
 #include <QHeaderView>
-#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
@@ -17,51 +12,7 @@
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 
-/// Two-level tree of files and the objects that use them.
-class AssetTreeModel : public QAbstractItemModel {
-	Q_OBJECT
-  public:
-	struct FileNode {
-		std::string path; // original on-disk relative path (forward slashes, original case)
-		uint64_t size = 0;
-		Qt::CheckState check_state = Qt::Unchecked;
-		std::vector<std::string> used_by; // empty = unused
-	};
-
-	using QAbstractItemModel::QAbstractItemModel;
-
-	QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const override;
-	QModelIndex parent(const QModelIndex& index) const override;
-	int rowCount(const QModelIndex& parent = QModelIndex()) const override;
-	int columnCount(const QModelIndex& parent = QModelIndex()) const override;
-	QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
-	bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
-	QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-	Qt::ItemFlags flags(const QModelIndex& index) const override;
-
-	void set_files(std::vector<FileNode>&& new_files);
-	void remove_file(int row);
-	void remove_object_references(const std::string& id);
-
-	int file_count() const;
-	const FileNode& file(int row) const;
-	void set_check_state(int row, Qt::CheckState state);
-
-	struct ResolvedName {
-		QString display_name;
-		int category = -1; // matches ObjectEditor::Category, -1 = not a named object
-	};
-
-  private:
-	const ResolvedName& resolved_name(const std::string& id) const;
-	const QIcon& resolved_icon(const std::string& id) const;
-
-	std::vector<FileNode> files;
-
-	// Shared across files since the same object can use multiple files
-	mutable std::unordered_map<std::string, ResolvedName> name_cache;
-	mutable std::unordered_map<std::string, QIcon> icon_cache;
-};
+#include "asset_tree_model.h"
 
 class AssetFilterModel : public QSortFilterProxyModel {
 	Q_OBJECT
@@ -86,7 +37,7 @@ class AssetManager : public QDialog {
 	explicit AssetManager(QWidget* parent = nullptr);
 
   private:
-	void refresh();
+	void refresh() const;
 	void update_status() const;
 	void update_delete_button() const;
 	void set_unused_checked(bool checked) const;
@@ -94,6 +45,10 @@ class AssetManager : public QDialog {
 	void show_context_menu(const QPoint& pos);
 	void open_in_editor(const QModelIndex& proxy_index) const;
 	void remove_object_references(const std::string& id);
+	void show_preview(const QModelIndex& current);
+	void show_empty_preview(); // empty GL preview with a "select an asset" message
+	void clear_preview();
+	void open_selected_in_model_editor();
 
 	QLineEdit* search_edit;
 	QCheckBox* select_all_unused_box;
@@ -104,4 +59,9 @@ class AssetManager : public QDialog {
 	QLabel* status_label;
 	AssetTreeModel* model;
 	AssetFilterModel* filter_model;
+
+	QWidget* preview_host;
+	QWidget* preview_widget = nullptr;
+	QPushButton* open_model_editor_button;
+	QString current_model_path; // Relative path of the selected model, empty if selection is not a model
 };

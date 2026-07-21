@@ -1,16 +1,21 @@
 #include "asset_manager.h"
 
 #include <QApplication>
-#include <QBrush>
 #include <QSizePolicy>
-#include <QFileIconProvider>
 #include <QHBoxLayout>
 #include <QLocale>
 #include <QMenu>
 #include <QMessageBox>
+#include <QPainter>
+#include <QPixmap>
 #include <QPushButton>
+#include <QSplitter>
 #include <QStyle>
+#include <QStyledItemDelegate>
 #include <QVBoxLayout>
+
+#include "model_editor/model_editor.h"
+#include "object_editor/model_grid_glwidget.h"
 
 import std;
 import SLK;
@@ -19,367 +24,76 @@ import MapGlobal;
 import Globals;
 import TableModel;
 import ResourceManager;
-import QIconResource;
 import WindowHandler;
+import Texture;
+import AspectRatioPixmapLabel;
+import Timer;
 import "object_editor/object_editor.h";
 
 namespace fs = std::filesystem;
 
-// Custom item data roles
-static constexpr int IsUnusedRole = Qt::UserRole; // bool, on file items
-static constexpr int ObjectIdRole = Qt::UserRole + 1; // QString, on child items
-static constexpr int CategoryRole = Qt::UserRole + 2; // int, on child items (-1 = not an object)
-static constexpr int SizeRole = Qt::UserRole + 3; // qulonglong (bytes), on size items
+// Per-severity colours for the validation shorthand, matching mdx::ValidationSeverity order
+static constexpr QColor error_color(200, 40, 40);
+static constexpr QColor severe_color(200, 120, 0);
+static constexpr QColor warning_color(180, 150, 0);
+static constexpr QColor unused_severity_color(130, 130, 130);
+static constexpr QColor clean_color(40, 160, 40);
 
-static constexpr QColor unused_color(200, 120, 0);
-
-QIcon get_file_icon(const std::string& path) {
-	static const QIcon model_icon = QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView);
-	static const QIcon image_icon = QApplication::style()->standardIcon(QStyle::SP_DesktopIcon);
-	static const QIcon sound_icon = QApplication::style()->standardIcon(QStyle::SP_MediaVolume);
-	static const QIcon file_icon = QFileIconProvider().icon(QFileIconProvider::File);
-
-	std::string ext = fs::path(path).extension().string();
-	for (auto& c : ext) {
-		c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-	}
-
-	if (ext == ".mdx" || ext == ".mdl") {
-		return model_icon;
-	}
-	if (ext == ".blp" || ext == ".tga" || ext == ".dds" || ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
-		return image_icon;
-	}
-	if (ext == ".wav" || ext == ".mp3" || ext == ".flac" || ext == ".ogg") {
-		return sound_icon;
-	}
-	return file_icon;
-}
-
-QIcon get_object_icon(const TableModel* table, const std::string_view id, const std::string_view art_field) {
-	const QVariant v = table->data(id, art_field, Qt::DecorationRole);
-	if (v.isValid() && !v.isNull()) {
-		return v.value<QIcon>();
+static QColor severity_token_color(QChar letter) {
+	switch (letter.unicode()) {
+		case 'E': return error_color;
+		case 'S': return severe_color;
+		case 'W': return warning_color;
+		case 'U': return unused_severity_color;
 	}
 	return {};
 }
 
-QString get_object_name(const TableModel* table, const std::string_view id, const std::string_view name_field) {
-	const QVariant v = table->data(id, name_field, Qt::DisplayRole);
-	if (v.isValid() && !v.isNull()) {
-		return v.toString();
-	}
-	return QString::fromStdString(std::string(id));
-}
+// Draws the validation shorthand ("2E 1S 3W", "✓", "err") with each token in its severity colour.
+class ValidationDelegate : public QStyledItemDelegate {
+  public:
+	using QStyledItemDelegate::QStyledItemDelegate;
 
-AssetTreeModel::ResolvedName resolve_used_by_name(const std::string& id) {
-	if (id == "loadingscreen") {
-		return {"Loading Screen", -1};
-	}
-	if (id == "map script") {
-		return {"Map Script", -1};
-	}
-	if (id == "game override") {
-		return {"Overrides a game asset", -1};
-	}
-	// MDX transitive reference (path contains a slash)
-	if (id.contains('/')) {
-		return {QString::fromStdString(id), -1};
-	}
-	const auto display = [&](const QString& name) {
-		return name + " (" + QString::fromStdString(id) + ")";
-	};
-	if (units_slk.row_headers.contains(id)) {
-		return {display(get_object_name(units_table, id, "name")), static_cast<int>(ObjectEditor::Category::unit)};
-	}
-	if (items_slk.row_headers.contains(id)) {
-		return {display(get_object_name(items_table, id, "name")), static_cast<int>(ObjectEditor::Category::item)};
-	}
-	if (abilities_slk.row_headers.contains(id)) {
-		return {display(get_object_name(abilities_table, id, "name")), static_cast<int>(ObjectEditor::Category::ability)};
-	}
-	if (destructibles_slk.row_headers.contains(id)) {
-		return {display(get_object_name(destructibles_table, id, "name")), static_cast<int>(ObjectEditor::Category::destructible)};
-	}
-	if (doodads_slk.row_headers.contains(id)) {
-		return {display(get_object_name(doodads_table, id, "name")), static_cast<int>(ObjectEditor::Category::doodad)};
-	}
-	if (buff_slk.row_headers.contains(id)) {
-		QString name = get_object_name(buff_table, id, "editorname");
-		if (name.isEmpty() || name == QString::fromStdString(id)) {
-			name = get_object_name(buff_table, id, "bufftip");
+	void paint(QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
+		QStyleOptionViewItem opt = option;
+		initStyleOption(&opt, index);
+		const QString text = opt.text;
+		opt.text.clear();
+		// Let the style paint the background/selection, then draw the coloured tokens ourselves
+		QStyle* style = opt.widget ? opt.widget->style() : QApplication::style();
+		style->drawControl(QStyle::CE_ItemViewItem, &opt, painter, opt.widget);
+
+		if (text.isEmpty()) {
+			return;
 		}
-		return {display(name), static_cast<int>(ObjectEditor::Category::buff)};
-	}
-	if (upgrade_slk.row_headers.contains(id)) {
-		return {display(get_object_name(upgrade_table, id, "name1")), static_cast<int>(ObjectEditor::Category::upgrade)};
-	}
-	// Fallback: likely a sound name
-	return {QString::fromStdString(id), -1};
-}
 
-QIcon resolve_used_by_icon(const std::string& id) {
-	if (id == "loadingscreen") {
-		return QApplication::style()->standardIcon(QStyle::SP_DesktopIcon);
-	}
-	if (id == "map script") {
-		return QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView);
-	}
-	if (id == "game override") {
-		return QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon);
-	}
-	// MDX transitive reference (path contains a slash)
-	if (id.contains('/')) {
-		return QFileIconProvider().icon(QFileIconProvider::File);
-	}
-	// Load the category icon used by DoodadTreeModel / DestructibleTreeModel
-	const auto category_icon = [](const std::string& section, char cat) -> QIcon {
-		for (const auto& [key, value] : world_edit_data.section(section)) {
-			if (!key.empty() && key.front() == cat) {
-				return resource_manager.load<QIconResource>(value[1]).value()->icon;
+		QColor color;
+		if (text == "✓") {
+			color = clean_color;
+		} else if (text == "err") {
+			color = error_color;
+		}
+
+		const QRect rect = opt.rect.adjusted(4, 0, -4, 0);
+		painter->save();
+		painter->setFont(opt.font);
+		int x = rect.left();
+		if (!color.isValid()) {
+			// Space-separated tokens like "2E", each coloured by its trailing severity letter
+			const QStringList tokens = text.split(' ', Qt::SkipEmptyParts);
+			const int space = painter->fontMetrics().horizontalAdvance(' ');
+			for (const QString& token : tokens) {
+				painter->setPen(severity_token_color(token.back()));
+				painter->drawText(QRect(x, rect.top(), rect.width(), rect.height()), Qt::AlignVCenter | Qt::AlignLeft, token);
+				x += painter->fontMetrics().horizontalAdvance(token) + space;
 			}
+		} else {
+			painter->setPen(color);
+			painter->drawText(rect, Qt::AlignVCenter | Qt::AlignLeft, text);
 		}
-		return {};
-	};
-	if (units_slk.row_headers.contains(id)) {
-		return get_object_icon(units_table, id, "art");
+		painter->restore();
 	}
-	if (items_slk.row_headers.contains(id)) {
-		return get_object_icon(items_table, id, "art");
-	}
-	if (abilities_slk.row_headers.contains(id)) {
-		return get_object_icon(abilities_table, id, "art");
-	}
-	if (destructibles_slk.row_headers.contains(id)) {
-		const std::string_view cat = destructibles_slk.data<std::string_view>("category", id);
-		return cat.empty() ? QIcon {} : category_icon("DestructibleCategories", cat.front());
-	}
-	if (doodads_slk.row_headers.contains(id)) {
-		const std::string_view cat = doodads_slk.data<std::string_view>("category", id);
-		return cat.empty() ? QIcon {} : category_icon("DoodadCategories", cat.front());
-	}
-	if (buff_slk.row_headers.contains(id)) {
-		return get_object_icon(buff_table, id, "buffart");
-	}
-	if (upgrade_slk.row_headers.contains(id)) {
-		return get_object_icon(upgrade_table, id, "art1");
-	}
-	// Fallback: likely a sound name
-	return QApplication::style()->standardIcon(QStyle::SP_MediaVolume);
-}
-
-// File items have internalId 0, child items have the row of their parent + 1
-QModelIndex AssetTreeModel::index(const int row, const int column, const QModelIndex& parent) const {
-	if (!hasIndex(row, column, parent)) {
-		return {};
-	}
-	if (!parent.isValid()) {
-		return createIndex(row, column, quintptr(0));
-	}
-	return createIndex(row, column, quintptr(parent.row()) + 1);
-}
-
-QModelIndex AssetTreeModel::parent(const QModelIndex& index) const {
-	if (!index.isValid() || index.internalId() == 0) {
-		return {};
-	}
-	return createIndex(static_cast<int>(index.internalId() - 1), 0, quintptr(0));
-}
-
-int AssetTreeModel::rowCount(const QModelIndex& parent) const {
-	if (!parent.isValid()) {
-		return static_cast<int>(files.size());
-	}
-	if (parent.internalId() != 0 || parent.column() != 0) {
-		return 0;
-	}
-	return static_cast<int>(files[parent.row()].used_by.size());
-}
-
-int AssetTreeModel::columnCount(const QModelIndex&) const {
-	return 3;
-}
-
-QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
-	if (!index.isValid()) {
-		return {};
-	}
-
-	// Root item
-	if (index.internalId() == 0) {
-		const FileNode& node = files[index.row()];
-		switch (role) {
-			case Qt::DisplayRole:
-				switch (index.column()) {
-					case 0:
-						return QString::fromStdString(node.path);
-					case 1:
-						return QLocale().formattedDataSize(static_cast<qint64>(node.size));
-					case 2:
-						return QString::number(node.used_by.size());
-				}
-				return {};
-			case Qt::DecorationRole:
-				if (index.column() == 0) {
-					return get_file_icon(node.path);
-				}
-				return {};
-			case Qt::CheckStateRole:
-				if (index.column() == 0) {
-					return node.check_state;
-				}
-				return {};
-			case Qt::TextAlignmentRole:
-				if (index.column() > 0) {
-					return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
-				}
-				return {};
-			case Qt::ForegroundRole:
-				if (node.used_by.empty()) {
-					return QBrush(unused_color);
-				}
-				return {};
-			case IsUnusedRole:
-				return node.used_by.empty();
-			case SizeRole:
-				return node.size;
-		}
-		return {};
-	}
-
-	if (index.column() != 0) {
-		return {};
-	}
-
-	const FileNode& node = files[index.internalId() - 1];
-	const std::string& id = node.used_by[index.row()];
-	switch (role) {
-		case Qt::DisplayRole:
-			return resolved_name(id).display_name;
-		case Qt::DecorationRole: {
-			const QIcon& icon = resolved_icon(id);
-			return icon.isNull() ? QVariant() : icon;
-		}
-		case ObjectIdRole:
-			return QString::fromStdString(id);
-		case CategoryRole:
-			return resolved_name(id).category;
-	}
-	return {};
-}
-
-bool AssetTreeModel::setData(const QModelIndex& index, const QVariant& value, const int role) {
-	if (!index.isValid() || index.internalId() != 0 || index.column() != 0 || role != Qt::CheckStateRole) {
-		return false;
-	}
-	files[index.row()].check_state = static_cast<Qt::CheckState>(value.toInt());
-	emit dataChanged(index, index, {Qt::CheckStateRole});
-	return true;
-}
-
-QVariant AssetTreeModel::headerData(const int section, const Qt::Orientation orientation, const int role) const {
-	if (orientation != Qt::Horizontal || role != Qt::DisplayRole) {
-		return {};
-	}
-	switch (section) {
-		case 0:
-			return "File";
-		case 1:
-			return "Size";
-		case 2:
-			return "Usages";
-	}
-	return {};
-}
-
-Qt::ItemFlags AssetTreeModel::flags(const QModelIndex& index) const {
-	if (!index.isValid()) {
-		return Qt::NoItemFlags;
-	}
-	Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-	if (index.internalId() == 0 && index.column() == 0) {
-		flags |= Qt::ItemIsUserCheckable;
-	}
-	return flags;
-}
-
-void AssetTreeModel::set_files(std::vector<FileNode>&& new_files) {
-	beginResetModel();
-	files = std::move(new_files);
-	// Sort: unused files first, then alphabetically within each group
-	std::ranges::sort(files, [](const FileNode& a, const FileNode& b) {
-		const bool a_unused = a.used_by.empty();
-		const bool b_unused = b.used_by.empty();
-		if (a_unused != b_unused) {
-			return a_unused > b_unused;
-		}
-		return a.path < b.path;
-	});
-	name_cache.clear();
-	icon_cache.clear();
-	endResetModel();
-}
-
-void AssetTreeModel::remove_file(const int row) {
-	beginRemoveRows(QModelIndex(), row, row);
-	files.erase(files.begin() + row);
-	endRemoveRows();
-}
-
-void AssetTreeModel::remove_object_references(const std::string& id) {
-	for (int row = 0; row < static_cast<int>(files.size()); row++) {
-		FileNode& node = files[row];
-		const QModelIndex file_index = index(row, 0);
-
-		bool changed = false;
-		for (int child = static_cast<int>(node.used_by.size()) - 1; child >= 0; child--) {
-			if (node.used_by[child] == id) {
-				beginRemoveRows(file_index, child, child);
-				node.used_by.erase(node.used_by.begin() + child);
-				endRemoveRows();
-				changed = true;
-			}
-		}
-
-		if (changed) {
-			// The usage count, unused highlight and IsUnusedRole all derive from used_by
-			emit dataChanged(file_index, index(row, 2));
-		}
-	}
-}
-
-int AssetTreeModel::file_count() const {
-	return static_cast<int>(files.size());
-}
-
-const AssetTreeModel::FileNode& AssetTreeModel::file(const int row) const {
-	return files[row];
-}
-
-void AssetTreeModel::set_check_state(const int row, const Qt::CheckState state) {
-	if (files[row].check_state == state) {
-		return;
-	}
-	files[row].check_state = state;
-	const QModelIndex idx = index(row, 0);
-	emit dataChanged(idx, idx, {Qt::CheckStateRole});
-}
-
-const AssetTreeModel::ResolvedName& AssetTreeModel::resolved_name(const std::string& id) const {
-	auto found = name_cache.find(id);
-	if (found == name_cache.end()) {
-		found = name_cache.emplace(id, resolve_used_by_name(id)).first;
-	}
-	return found->second;
-}
-
-const QIcon& AssetTreeModel::resolved_icon(const std::string& id) const {
-	auto found = icon_cache.find(id);
-	if (found == icon_cache.end()) {
-		found = icon_cache.emplace(id, resolve_used_by_icon(id)).first;
-	}
-	return found->second;
-}
+};
 
 bool AssetFilterModel::lessThan(const QModelIndex& left, const QModelIndex& right) const {
 	// Sort the Size column by raw byte count
@@ -389,6 +103,10 @@ bool AssetFilterModel::lessThan(const QModelIndex& left, const QModelIndex& righ
 	// Sort the Usages column numerically
 	if (left.column() == 2) {
 		return left.data(Qt::DisplayRole).toInt() < right.data(Qt::DisplayRole).toInt();
+	}
+	// Sort the Validation column by weighted severity score
+	if (left.column() == 3) {
+		return left.data(ValidationSortRole).toInt() < right.data(ValidationSortRole).toInt();
 	}
 	return QSortFilterProxyModel::lessThan(left, right);
 }
@@ -421,9 +139,14 @@ bool AssetFilterModel::filterAcceptsRow(const int source_row, const QModelIndex&
 AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle("Asset Manager");
-	resize(600, 800);
+	resize(1200, 850);
 
 	auto* layout = new QVBoxLayout(this);
+
+	// Left side: search bar, filters, status and the file tree, stacked vertically
+	auto* left_panel = new QWidget(this);
+	auto* left_layout = new QVBoxLayout(left_panel);
+	left_layout->setContentsMargins(0, 0, 0, 0);
 
 	// Filter bar
 	auto* search_bar = new QHBoxLayout;
@@ -447,7 +170,7 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	);
 	search_bar->addWidget(info_button);
 
-	layout->addLayout(search_bar);
+	left_layout->addLayout(search_bar);
 
 	auto* action_bar = new QHBoxLayout;
 	show_used_box = new QCheckBox("Show Used", this);
@@ -468,10 +191,10 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	delete_button->setEnabled(false);
 	action_bar->addWidget(delete_button);
 
-	layout->addLayout(action_bar);
+	left_layout->addLayout(action_bar);
 
 	status_label = new QLabel(this);
-	layout->addWidget(status_label);
+	left_layout->addWidget(status_label);
 
 	model = new AssetTreeModel(this);
 
@@ -487,12 +210,43 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	tree_view->setContextMenuPolicy(Qt::CustomContextMenu);
 	tree_view->setSortingEnabled(true);
 	tree_view->sortByColumn(2, Qt::AscendingOrder);
+	tree_view->setItemDelegateForColumn(3, new ValidationDelegate(this));
 	tree_view->header()->setStretchLastSection(false);
 	tree_view->header()->setSectionResizeMode(0, QHeaderView::Stretch);
 	tree_view->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
 	tree_view->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+	tree_view->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+	left_layout->addWidget(tree_view, 1);
 
-	layout->addWidget(tree_view);
+	// Right-side live preview of the selected file
+	preview_host = new QWidget(this);
+	auto* preview_host_layout = new QVBoxLayout(preview_host);
+	preview_host_layout->setContentsMargins(0, 0, 0, 0);
+
+	// Create the OpenGL preview widget up front (with no model) so the window's OpenGL surface is
+	// established during the initial show(). Otherwise the first model click promotes the window to
+	// an OpenGL-capable surface while it is already visible, flashing the whole window white.
+	show_empty_preview();
+
+	open_model_editor_button = new QPushButton("Open in Model Editor", this);
+	open_model_editor_button->setIcon(QIcon("data/icons/ribbon/model_editor.png"));
+	open_model_editor_button->setToolTip("Open in Model Editor");
+	open_model_editor_button->hide();
+
+	auto* preview_panel = new QWidget(this);
+	auto* preview_layout = new QVBoxLayout(preview_panel);
+	preview_layout->setContentsMargins(0, 0, 0, 0);
+	preview_layout->addWidget(preview_host, 1);
+	preview_layout->addWidget(open_model_editor_button);
+
+	auto* splitter = new QSplitter(Qt::Horizontal, this);
+	splitter->addWidget(left_panel);
+	splitter->addWidget(preview_panel);
+	splitter->setStretchFactor(0, 1);
+	splitter->setStretchFactor(1, 1);
+	// Start with the preview roughly square: its width matches the available window height.
+	splitter->setSizes({520, 680});
+	layout->addWidget(splitter);
 
 	connect(search_edit, &QLineEdit::textChanged, filter_model, &QSortFilterProxyModel::setFilterFixedString);
 	connect(refresh_button, &QPushButton::clicked, this, &AssetManager::refresh);
@@ -519,12 +273,16 @@ AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
 	connect(buff_table, &QAbstractItemModel::rowsAboutToBeRemoved, this, make_removal_handler(buff_slk));
 	connect(tree_view, &QTreeView::customContextMenuRequested, this, &AssetManager::show_context_menu);
 	connect(tree_view, &QTreeView::doubleClicked, this, &AssetManager::open_in_editor);
+	connect(tree_view->selectionModel(), &QItemSelectionModel::currentChanged, this, [this](const QModelIndex& current, const QModelIndex&) {
+		show_preview(current);
+	});
+	connect(open_model_editor_button, &QPushButton::clicked, this, &AssetManager::open_selected_in_model_editor);
 
 	refresh();
 	show();
 }
 
-void AssetManager::refresh() {
+void AssetManager::refresh() const {
 	{
 		const QSignalBlocker blocker(select_all_unused_box);
 		select_all_unused_box->setChecked(false);
@@ -662,6 +420,94 @@ void AssetManager::open_in_editor(const QModelIndex& proxy_index) const {
 	bool created = false;
 	const auto* editor = window_handler.create_or_raise<ObjectEditor>(nullptr, created);
 	editor->select_id(static_cast<ObjectEditor::Category>(category), id.toStdString());
+}
+
+void AssetManager::clear_preview() {
+	delete preview_widget;
+	preview_widget = nullptr;
+	current_model_path.clear();
+	open_model_editor_button->hide();
+}
+
+void AssetManager::show_empty_preview() {
+	// An empty single-preview GL widget: keeps the window's OpenGL surface alive (no white flash on
+	// the next model click) while telling the user why the preview area is blank.
+	auto* placeholder = new ModelGridGLWidget({}, preview_host, true);
+	placeholder->set_empty_message("Select an asset to show a preview");
+	preview_widget = placeholder;
+	preview_host->layout()->addWidget(placeholder);
+}
+
+void AssetManager::show_preview(const QModelIndex& current) {
+	clear_preview();
+
+	if (!current.isValid()) {
+		show_empty_preview();
+		return;
+	}
+	const QModelIndex source_index = filter_model->mapToSource(current).siblingAtColumn(0);
+	if (source_index.parent().isValid()) {
+		show_empty_preview(); // a used-by child row, not a file
+		return;
+	}
+
+	const AssetTreeModel::FileNode& node = model->file(source_index.row());
+
+	std::string ext = fs::path(node.path).extension().string();
+	for (auto& c : ext) {
+		c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+	}
+
+	const auto set_preview = [this](QWidget* widget) {
+		preview_widget = widget;
+		preview_host->layout()->addWidget(widget);
+	};
+
+	if (ext == ".mdx" || ext == ".mdl") {
+		current_model_path = QString::fromStdString(node.path);
+		open_model_editor_button->show();
+		set_preview(new ModelGridGLWidget({ModelEntry{node.path, ModelCategory::Map}}, preview_host, true));
+		return;
+	}
+
+	if (ext == ".blp" || ext == ".tga" || ext == ".dds") {
+		auto* label = new AspectRatioPixmapLabel(preview_host);
+		label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		if (const auto tex = resource_manager.load<Texture>(node.path)) {
+			const QImage image(tex.value()->data.data(), tex.value()->width, tex.value()->height,
+							   tex.value()->channels == 3 ? QImage::Format_RGB888 : QImage::Format_RGBA8888);
+			label->setPixmap(QPixmap::fromImage(image));
+		}
+		set_preview(label);
+		return;
+	}
+
+	if (ext == ".png" || ext == ".jpg" || ext == ".jpeg") {
+		// Not handled by Texture/hierarchy decode; Qt loads these directly from disk
+		auto* label = new AspectRatioPixmapLabel(preview_host);
+		label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+		const QString full_path = QString::fromStdString((map->filesystem_path / node.path).string());
+		label->setPixmap(QPixmap(full_path));
+		set_preview(label);
+		return;
+	}
+
+	auto* label = new QLabel("No preview available", preview_host);
+	label->setAlignment(Qt::AlignCenter);
+	set_preview(label);
+}
+
+void AssetManager::open_selected_in_model_editor() {
+	if (current_model_path.isEmpty()) {
+		return;
+	}
+	bool created = false;
+	auto* model_editor = window_handler.create_or_raise<ModelEditor>(nullptr, created);
+	const auto opened = model_editor->open_model_docked(map->filesystem_path / current_model_path.toStdString(), true);
+	if (!opened) {
+		QMessageBox::critical(this, "Error opening model",
+							  QString::fromStdString(std::format("Failed to open model with: {}", opened.error())));
+	}
 }
 
 void AssetManager::show_context_menu(const QPoint& pos) {

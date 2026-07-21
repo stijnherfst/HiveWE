@@ -185,7 +185,7 @@ export class RenderManager {
 						vis = mesh->skeletons[k]->get_geoset_animation_visiblity(*g.geoset_anim);
 					}
 					for (auto& l : mesh->mdx->materials[g.material_id].layers) {
-						float lv = mesh->skeletons[k]->sequence_index >= 0 ? mesh->skeletons[k]->get_layer_visiblity(l) : 1.0f;
+						const float lv = mesh->skeletons[k]->sequence_index >= 0 ? mesh->skeletons[k]->get_layer_visiblity(l) : 1.0f;
 						staging_layer_colors.emplace_back(c, lv * vis);
 					}
 				}

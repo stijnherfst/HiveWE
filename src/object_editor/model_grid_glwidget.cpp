@@ -49,9 +49,24 @@ namespace {
 		}
 		return s;
 	}
+
+	const char* severity_prefix(const mdx::ValidationSeverity severity) {
+		switch (severity) {
+			case mdx::ValidationSeverity::error:
+				return "Error: ";
+			case mdx::ValidationSeverity::severe:
+				return "Severe: ";
+			case mdx::ValidationSeverity::warning:
+				return "Warning: ";
+			case mdx::ValidationSeverity::unused:
+				return "Unused: ";
+		}
+		return "";
+	}
 } // namespace
 
-ModelGridGLWidget::ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent) : QOpenGLWidget(parent) {
+ModelGridGLWidget::ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent, const bool single_preview)
+	: QOpenGLWidget(parent), single_preview(single_preview) {
 	all_cells.reserve(entries.size());
 	for (const auto& e : entries) {
 		PreviewCell c;
@@ -98,6 +113,9 @@ void ModelGridGLWidget::initializeGL() {
 
 void ModelGridGLWidget::resizeGL(const int w, const int h) {
 	glViewport(0, 0, w, h);
+	if (single_preview) {
+		return;
+	}
 	const int new_columns = std::max(1, w / cell_size);
 	if (new_columns != columns || layout.empty()) {
 		columns = new_columns;
@@ -118,6 +136,39 @@ void ModelGridGLWidget::paintGL() {
 	glDepthMask(true);
 	glClearColor(0.15f, 0.15f, 0.15f, 1.f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (single_preview) {
+		if (all_cells.empty()) {
+			if (!empty_message.isEmpty()) {
+				QPainter painter(this);
+				painter.setPen(palette().color(QPalette::WindowText));
+				painter.drawText(rect().adjusted(10, 10, -10, -10), Qt::AlignCenter | Qt::TextWordWrap, empty_message);
+				painter.end();
+			}
+			return;
+		}
+		auto& cell = all_cells[0];
+		if (!cell.loaded && !cell.load_failed) {
+			load_cell(cell);
+		}
+		if (cell.loaded) {
+			glBindVertexArray(vao);
+			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LEQUAL);
+			glViewport(0, 0, width(), height());
+			const float aspect = height() > 0 ? static_cast<float>(width()) / static_cast<float>(height()) : 1.f;
+			render_cell(cell, aspect);
+			glBindVertexArray(0);
+		} else if (cell.load_failed) {
+			QPainter painter(this);
+			painter.setPen(palette().color(QPalette::WindowText));
+			const QString message =
+				cell.load_error_message.empty() ? QString("Error") : QString::fromStdString(cell.load_error_message);
+			painter.drawText(rect().adjusted(10, 10, -10, -10), Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap, message);
+			painter.end();
+		}
+		return;
+	}
 
 	if (columns <= 0 || layout.empty()) {
 		return;
@@ -151,9 +202,6 @@ void ModelGridGLWidget::paintGL() {
 				continue;
 			}
 
-			cell.skeleton.update_location(glm::vec3(0.f), glm::quat(), glm::vec3(1.f));
-			cell.skeleton.update(delta);
-
 			const int cell_x_tl = c * cell_size;
 			const int cell_y_tl = row_y_screen;
 
@@ -164,33 +212,7 @@ void ModelGridGLWidget::paintGL() {
 			glScissor(gl_x, gl_y, cell_size, cell_size);
 			glClear(GL_DEPTH_BUFFER_BIT);
 
-			const glm::vec3 dir = glm::normalize(glm::vec3 {-1.f, 1.f, -0.5f});
-			const glm::vec3 up = {0, 0, 1};
-			const glm::vec3 eye = cell.fit_position - dir * cell.fit_distance;
-			const glm::mat4 view = glm::lookAt(eye, cell.fit_position, up);
-			const glm::mat4 projection = glm::perspective(glm::radians(k_fov_deg), 1.f, k_near, k_far);
-			const glm::mat4 projection_view = projection * view;
-
-			glEnable(GL_BLEND);
-
-			shader_sd->use();
-			cell.mesh->render_opaque(false, 1, cell.skeleton, projection_view, dir);
-			shader_hd->use();
-			cell.mesh->render_opaque(true, 1, cell.skeleton, projection_view, dir);
-
-			// Opaque sets depth mask itself, transparent always off
-			glDepthMask(false);
-
-			shader_sd->use();
-			cell.mesh->render_transparent(false, 1, cell.skeleton, projection_view, dir);
-			shader_hd->use();
-			cell.mesh->render_transparent(true, 1, cell.skeleton, projection_view, dir);
-			
-			glEnable(GL_DEPTH_TEST);
-
-			const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
-			const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));
-			cell.mesh->render_particles(cell.skeleton, projection_view, camera_right, camera_up, dir);
+			render_cell(cell, 1.f);
 		}
 	}
 
@@ -331,6 +353,11 @@ void ModelGridGLWidget::set_search(const QString& query) {
 	update();
 }
 
+void ModelGridGLWidget::set_empty_message(const QString& message) {
+	empty_message = message;
+	update();
+}
+
 void ModelGridGLWidget::set_categories(const std::bitset<static_cast<size_t>(ModelCategory::Count)> mask) {
 	if (mask == category_mask) {
 		return;
@@ -368,6 +395,19 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 			cell.mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 		}
 
+		if (!cell.mdx->is_valid()) {
+			// The model has severe errors and cannot be rendered; report why so the user can act on it.
+			std::string message = "This model cannot be rendered:";
+			for (const auto& validation : cell.mdx->validate()) {
+				message += '\n';
+				message += severity_prefix(validation.severity);
+				message += validation.message;
+			}
+			cell.load_failed = true;
+			cell.load_error_message = std::move(message);
+			return;
+		}
+
 		cell.mesh = std::make_shared<EditableMesh>(cell.mdx, std::nullopt);
 		cell.skeleton = Skeleton(cell.mdx);
 
@@ -377,12 +417,51 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 			cell.skeleton.sequence_index == -1 ? cell.mdx->extent : cell.mdx->sequences[cell.skeleton.sequence_index].extent;
 		const glm::vec3 size = extent.maximum - extent.minimum;
 		cell.fit_position = glm::vec3(0.f, 0.f, extent.minimum.z + size.z * 0.5f);
-		cell.fit_distance = glm::length(size) * 0.5f / std::sin(glm::radians(k_fov_deg) * 0.5f);
+		cell.fit_radius = glm::length(size) * 0.5f;
 		cell.loaded = true;
 	} catch (std::exception& e) {
 		cell.load_failed = true;
 		cell.load_error_message = e.what();
 	}
+}
+
+void ModelGridGLWidget::render_cell(PreviewCell& cell, const float aspect) const {
+	cell.skeleton.update_location(glm::vec3(0.f), glm::quat(), glm::vec3(1.f));
+	cell.skeleton.update(delta);
+
+	const glm::vec3 dir = glm::normalize(glm::vec3 {-1.f, 1.f, -0.5f});
+	constexpr glm::vec3 up = {0, 0, 1};
+	// Pull the camera back far enough that the bounding sphere fits the tighter of the vertical
+	// and horizontal field of view, so the model stays fully framed at any viewport aspect ratio.
+	constexpr float half_fov = glm::radians(k_fov_deg) * 0.5f;
+	const float horizontal_half_fov = std::atan(std::tan(half_fov) * aspect);
+	const float limiting_half_fov = std::min(half_fov, horizontal_half_fov);
+	const float fit_distance = cell.fit_radius / std::sin(limiting_half_fov);
+	const glm::vec3 eye = cell.fit_position - dir * fit_distance;
+	const glm::mat4 view = glm::lookAt(eye, cell.fit_position, up);
+	const glm::mat4 projection = glm::perspective(glm::radians(k_fov_deg), aspect, k_near, k_far);
+	const glm::mat4 projection_view = projection * view;
+
+	glEnable(GL_BLEND);
+
+	shader_sd->use();
+	cell.mesh->render_opaque(false, 1, cell.skeleton, projection_view, dir);
+	shader_hd->use();
+	cell.mesh->render_opaque(true, 1, cell.skeleton, projection_view, dir);
+
+	// Opaque sets depth mask itself, transparent always off
+	glDepthMask(false);
+
+	shader_sd->use();
+	cell.mesh->render_transparent(false, 1, cell.skeleton, projection_view, dir);
+	shader_hd->use();
+	cell.mesh->render_transparent(true, 1, cell.skeleton, projection_view, dir);
+
+	glEnable(GL_DEPTH_TEST);
+
+	const glm::vec3 camera_right = glm::normalize(glm::cross(dir, up));
+	const glm::vec3 camera_up = glm::normalize(glm::cross(camera_right, dir));
+	cell.mesh->render_particles(cell.skeleton, projection_view, camera_right, camera_up, dir);
 }
 
 void ModelGridGLWidget::rebuild_layout() {

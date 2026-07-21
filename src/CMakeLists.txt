@@ -156,6 +156,8 @@ target_sources(HiveWE_lib PRIVATE
 
 	"asset_manager/asset_manager.cpp"
 	"asset_manager/asset_manager.h"
+	"asset_manager/asset_tree_model.cpp"
+	"asset_manager/asset_tree_model.h"
 
 	"models/single_model.cpp"
 	

@@ -311,13 +311,9 @@ export class Skeleton {
 		return sequence.extent.minimum.x > sequence.extent.maximum.x;
 	}
 
-	// Adjust the skeleton's current sequence to one suited for a static/looping preview. The
-	// constructor's `set_sequence("stand")` works for unit models but for spell effects with no
-	// "stand" sequence its random tiebreaker can land on a "death" sequence whose Visibility
-	// track holds the emitters at 0 which is an empty thumbnail. We want to keep a suitable stand and
-	// otherwise prefer a Birth-named sequence, otherwise any suitable sequence, otherwise leave it.
+	// Adjust the skeleton's current sequence to one suited for a static/looping preview.
 	static void pick_preview_sequence(Skeleton& skeleton, const mdx::MDX& mdx) {
-		auto suitable = [&](size_t i) {
+		auto suitable = [&](const size_t i) {
 			const auto& s = mdx.sequences[i];
 			return sequence_name_has_recognized_token(s.name) && !sequence_has_empty_extent(s);
 		};
@@ -329,11 +325,11 @@ export class Skeleton {
 			return out;
 		};
 
-		const int current = skeleton.sequence_index;
-		const bool current_valid = current >= 0 && current < static_cast<int>(mdx.sequences.size());
-
-		if (current_valid && suitable(current) && lower_name(mdx.sequences[current]).contains("stand")) {
-			return;
+		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
+			if (suitable(i) && lower_name(mdx.sequences[i]).contains("stand")) {
+				skeleton.set_sequence(static_cast<int>(i));
+				return;
+			}
 		}
 
 		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
@@ -341,10 +337,6 @@ export class Skeleton {
 				skeleton.set_sequence(static_cast<int>(i));
 				return;
 			}
-		}
-
-		if (current_valid && suitable(current)) {
-			return;
 		}
 
 		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
