@@ -113,6 +113,20 @@ export class Skeleton {
 		model->for_each_node([&](const mdx::Node& node) {
 			render_nodes[node.id] = RenderNode(node, model->pivots[node.id]);
 		});
+		// Sort render_nodes so every parent precedes its children, so parent reads are valid
+		std::vector<int> node_depth(node_count, 0);
+		for (size_t id = 0; id < node_count; id++) {
+			int depth = 0;
+			int parent = render_nodes[id].node->parent_id;
+			while (parent != -1 && depth < static_cast<int>(node_count)) {
+				depth++;
+				parent = render_nodes[parent].node->parent_id;
+			}
+			node_depth[id] = depth;
+		}
+		std::ranges::stable_sort(render_nodes, {}, [&](const RenderNode& rn) {
+			return node_depth[rn.node->id];
+		});
 
 		current_keyframes.resize(model->unique_tracks);
 
@@ -220,8 +234,8 @@ export class Skeleton {
 			}
 		);
 
-		// Todo, node->parent_id can be higher than their current id. No ordering exists
-		// So in the loop below the parent_matrix might be empty for the first frame and an animation might be one frame behind
+		// render_nodes is sorted parent-before-child in the constructor, so world_matrices[parent_id] is
+		// always already computed when a child reads it below.
 		for (const auto& node : render_nodes) {
 			const glm::vec3 position = interpolate_keyframes(node.node->KGTR, TRANSLATION_IDENTITY);
 			const glm::quat rotation = interpolate_keyframes(node.node->KGRT, ROTATION_IDENTITY);
