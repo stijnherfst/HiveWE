@@ -8,22 +8,26 @@
 #include <vector>
 
 import FlowLayout;
+import Tileset;
+import TextureButton;
 
-class TileSetter : public QDialog {
+class TileSetter: public QDialog {
 	Q_OBJECT
 
-public:
+  public:
 	explicit TileSetter(QWidget* parent = nullptr);
 
-private:
-	void add_tile() const;
+  private:
+	void add_tile();
 	void remove_tile() const;
-	void update_available_tiles() const;
-	void existing_tile_clicked(QAbstractButton* button) const;
-	void available_tile_clicked(const QAbstractButton* button) const;
+	void update_available_tiles();
 	void shift_left() const;
 	void shift_right() const;
 	void save_tiles();
+	void reset_to_default();
+	void update_gui() const;
+	int get_scroll_view_height(QScrollArea* scroll_area, const FlowLayout* layout, const int rows) const;
+	TextureButton* create_tex_button(const TerrainTexture* tex);
 
 	Ui::TileSetter ui;
 

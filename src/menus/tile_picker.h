@@ -8,18 +8,22 @@
 #include <string>
 
 import FlowLayout;
+import TextureButton;
+import Tileset;
 
-class TilePicker : public QDialog {
+class TilePicker: public QDialog {
 	Q_OBJECT
 
-public:
+  public:
 	TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids);
 
-signals:
+  signals:
 	void tile_chosen(std::string from_id, std::string to_id);
 
-private:
+  private:
 	void completed();
+	void update_gui() const;
+	TextureButton* create_tex_button(const TerrainTexture* tex);
 
 	Ui::TilePicker ui;
 

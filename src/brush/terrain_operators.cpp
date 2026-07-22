@@ -146,7 +146,8 @@ void HeightOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
 }
 
 void TextureOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
-	// nothing to do here, texture operator is simple
+	auto& terrain = map->terrain;
+	tile_index = terrain.ground_texture_to_id(tile_id);
 }
 
 PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) {
@@ -154,8 +155,6 @@ PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) 
 	const int width = terrain.width;
 	const int height = terrain.height;
 	const glm::ivec2 pos = brush->get_unclipped_pos();
-
-	const int id = terrain.ground_texture_to_id.at(tile_id);
 
 	// Update textures
 	for (int j = area.y(); j < area.y() + area.height(); j++) {
@@ -166,7 +165,7 @@ PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) 
 
 			const size_t idx = terrain.ci(i, j);
 
-			if (id == terrain.blight_texture) {
+			if (tile_index == terrain.blight_texture) {
 				// Blight shouldn't be set when there is a cliff near
 				bool cliff_near = false;
 				for (int k = -1; k <= 1; k++) {
@@ -184,7 +183,7 @@ PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) 
 				terrain.corner_blight[idx] = true;
 			} else {
 				terrain.corner_blight[idx] = false;
-				terrain.corner_ground_texture[idx] = id;
+				terrain.corner_ground_texture[idx] = tile_index;
 				terrain.corner_ground_variation[idx] = random_ground_variation();
 			}
 		}
@@ -205,6 +204,7 @@ void CliffOperator::apply_begin(const TerrainRect& area, int center_x, int cente
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 	layer_height = terrain.corner_layer_height[center_idx];
+	cliff_index = terrain.cliff_type_to_id(cliff_id);
 
 	switch (cliff_operation_type) {
 		case cliff_operation::shallow_water:
@@ -380,7 +380,7 @@ void CliffOperator::check_nearby(const int begx, const int begy, const int i, co
 	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
 		for (int k = bounds.x(); k <= bounds.right(); k++) {
 			// assign proper cliff texture to all corners in the 3x3 neighbourhood
-			terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_id;
+			terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_index;
 
 			if (k == 0 && l == 0) {
 				continue;

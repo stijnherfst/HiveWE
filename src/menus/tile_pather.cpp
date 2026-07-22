@@ -7,13 +7,13 @@ import MapGlobal;
 import PathingMap;
 import Tileset;
 import ResourceManager;
+import Terrain;
 import <glad/glad.h>;
 
 TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
-	show();
 
 	ui.flowlayout_placeholder->addLayout(selected_layout);
 
@@ -25,20 +25,12 @@ TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	}
 
 	for (const auto& i : map->terrain.tileset_ids) {
-		const auto& texture = *map->tilesets.terrain_texture(i);
-		const auto image = resource_manager.load<Texture>(texture.file_path).value();
-		const auto icon = ground_texture_to_icon(image->data.data(), image->width, image->height);
-
-		QPushButton* button = new QPushButton;
-		button->setIcon(icon);
-		button->setFixedSize(64, 64);
-		button->setIconSize({64, 64});
-		button->setCheckable(true);
-		button->setProperty("tileID", QString::fromStdString(i));
-		button->setProperty("tileName", QString::fromUtf8(texture.name));
-
-		selected_layout->addWidget(button);
-		selected_group->addButton(button);
+		const TerrainTexture* texture = map->tilesets.terrain_texture(i);
+		if (texture) {
+			TextureButton* button = create_tex_button(texture);
+			selected_layout->addWidget(button);
+			selected_group->addButton(button);
+		}
 	}
 
 	selected_group->buttons().first()->setChecked(true);
@@ -49,99 +41,74 @@ TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePather::save_tiles);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-	connect(ui.unwalkable, &QPushButton::clicked, [&](bool checked) {
-		pathing_options[current_tile].unwalkable = checked;
+	connect(ui.unwalkable, &QPushButton::clicked, [&](const bool checked) {
+		pathing_options[selected_button->texture()->id].unwalkable = checked;
+		update_selected_icon();
 	});
-	connect(ui.unflyable, &QPushButton::clicked, [&](bool checked) {
-		pathing_options[current_tile].unflyable = checked;
+	connect(ui.unflyable, &QPushButton::clicked, [&](const bool checked) {
+		pathing_options[selected_button->texture()->id].unflyable = checked;
+		update_selected_icon();
 	});
-	connect(ui.unbuildable, &QPushButton::clicked, [&](bool checked) {
-		pathing_options[current_tile].unbuildable = checked;
-	});
-
-	connect(ui.replaceType, &QPushButton::clicked, [&]() {
-		pathing_options[current_tile].operation = PathingOptions::Operation::replace;
-	});
-	connect(ui.addType, &QPushButton::clicked, [&]() {
-		pathing_options[current_tile].operation = PathingOptions::Operation::add;
-	});
-	connect(ui.removeType, &QPushButton::clicked, [&]() {
-		pathing_options[current_tile].operation = PathingOptions::Operation::remove;
+	connect(ui.unbuildable, &QPushButton::clicked, [&](const bool checked) {
+		pathing_options[selected_button->texture()->id].unbuildable = checked;
+		update_selected_icon();
 	});
 
-	connect(ui.applyRetroactively, &QCheckBox::clicked, [&](bool checked) {
-		pathing_options[current_tile].apply_retroactively = checked;
-	});
+	show();
+}
+
+uint8_t TilePather::get_mask(const PathingOptions& options) const {
+	return (options.unwalkable ? PathingMap::Flags::unwalkable : 0) | (options.unflyable ? PathingMap::Flags::unflyable : 0)
+		| (options.unbuildable ? PathingMap::Flags::unbuildable : 0);
+}
+
+void TilePather::update_selected_icon() const {
+	const PathingOptions options = pathing_options.at(selected_button->texture()->id);
+	selected_button->create_icon(true, false, get_mask(options));
 }
 
 void TilePather::changed_tile(QAbstractButton* button) {
-	ui.selectedTileLabel->setText("Tile: " + button->property("tileName").toString());
+	TextureButton* tex_button = static_cast<TextureButton*>(button);
+	ui.selectedTileLabel->setText("Tile: " + QString::fromStdString(tex_button->texture()->name));
 
-	current_tile = button->property("tileID").toString().toStdString();
+	selected_button = tex_button;
 
-	ui.unwalkable->setChecked(pathing_options[current_tile].unwalkable);
-	ui.unflyable->setChecked(pathing_options[current_tile].unflyable);
-	ui.unbuildable->setChecked(pathing_options[current_tile].unbuildable);
-
-	ui.applyRetroactively->setChecked(pathing_options[current_tile].apply_retroactively);
-
-	switch (pathing_options[current_tile].operation) {
-		case PathingOptions::Operation::replace:
-			ui.replaceType->setChecked(true);
-			break;
-		case PathingOptions::Operation::add:
-			ui.addType->setChecked(true);
-			break;
-		case PathingOptions::Operation::remove:
-			ui.removeType->setChecked(true);
-			break;
-	}
+	ui.unwalkable->setChecked(pathing_options[selected_button->texture()->id].unwalkable);
+	ui.unflyable->setChecked(pathing_options[selected_button->texture()->id].unflyable);
+	ui.unbuildable->setChecked(pathing_options[selected_button->texture()->id].unbuildable);
 }
 
 void TilePather::save_tiles() {
-	for (const auto& [tile_id, options] : pathing_options) {
-		// Save override pathing back to tilesets and "reset it" if it is the same as base-game pathing
-		const uint8_t mask = (options.unwalkable ? PathingMap::Flags::unwalkable : 0)
-			| (options.unflyable ? PathingMap::Flags::unflyable : 0) | (options.unbuildable ? PathingMap::Flags::unbuildable : 0);
-		TerrainTexture* texture = map->tilesets.terrain_texture(tile_id);
-		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
+	// set of all tiles with modified pathing
+	std::unordered_set<int> changed_ids;
 
-		if (!options.apply_retroactively) {
-			continue;
+	for (const auto& [tile_id, options] : pathing_options) {
+		const uint8_t mask = get_mask(options);
+		TerrainTexture* texture = map->tilesets.terrain_texture(tile_id);
+		if (mask != texture->get_tile_pathing()) {
+			changed_ids.insert(map->terrain.ground_texture_to_id(tile_id));
 		}
 
-		const int id = map->terrain.ground_texture_to_id.at(tile_id);
+		texture->override_pathing = (mask != texture->base_pathing) ? std::optional<uint8_t>(mask) : std::nullopt;
+	}
+
+	// if one of the tiles was modified, update the pathing map
+	if (!changed_ids.empty()) {
 		for (int i = 0; i < map->terrain.width; i++) {
 			for (int j = 0; j < map->terrain.height; j++) {
-				if (map->terrain.real_tile_texture(i, j) != id) {
+				if (!changed_ids.contains(map->terrain.real_tile_texture(i, j))) {
 					continue;
 				}
 
-				const int left = std::max(i * 4 - 2, 0);
-				const int bottom = std::max(j * 4 - 2, 0);
+				const int x0 = std::max(i * 4 - 2, 0);
+				const int y0 = std::max(j * 4 - 2, 0);
+				const int x1 = std::min(i * 4 + 2, map->pathing_map.width);
+				const int y1 = std::min(j * 4 + 2, map->pathing_map.height);
 
-				const int right = std::min(i * 4 + 2, map->pathing_map.width);
-				const int top = std::min(j * 4 + 2, map->pathing_map.height);
-
-				for (int x = left; x < right; x++) {
-					for (int y = bottom; y < top; y++) {
-						uint8_t byte_cell = map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x];
-
-						switch (options.operation) {
-							case PathingOptions::Operation::replace:
-								byte_cell &=
-									~(PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::unbuildable);
-								byte_cell |= mask;
-								break;
-							case PathingOptions::Operation::add:
-								byte_cell |= mask;
-								break;
-							case PathingOptions::Operation::remove:
-								byte_cell &= ~mask;
-								break;
-						}
-
-						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] = byte_cell;
+				for (int y = y0; y < y1; y++) {
+					for (int x = x0; x < x1; x++) {
+						map->pathing_map.pathing_cells_static[y * map->pathing_map.width + x] =
+							map->terrain.get_terrain_pathing(x, y, true, true, true, map->tilesets);
 					}
 				}
 			}
@@ -160,5 +127,16 @@ void TilePather::save_tiles() {
 		map->pathing_map.pathing_cells_static.data()
 	);
 
+	emit map->terrain.tileset_changed();
 	close();
+}
+
+TextureButton* TilePather::create_tex_button(const TerrainTexture* tex) {
+	TextureButton* button = new TextureButton(tex, this);
+	button->create_icon(true, false);
+	button->setFixedSize(64, 64);
+	button->setIconSize({64, 64});
+	button->setCheckable(true);
+	button->setToolTip(QString::fromUtf8(tex->name));
+	return button;
 }
