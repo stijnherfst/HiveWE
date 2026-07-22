@@ -103,12 +103,32 @@ export class Hierarchy {
 			TRY_OPEN(read_file(fs::path("data/overrides") / path));
 		}
 
-		if (imports && hd && teen) {
-			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_teen.w3mod:{}", path_str)));
+		if (imports && hd) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_tilesets/{}.w3mod/{}", tileset, path_str)));
 		}
 
 		if (imports && hd) {
-			TRY_OPEN(map_file_read(std::format("_hd.w3mod:{}", path_str)));
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_locales/{}.w3mod/{}", locale, path_str)));
+		}
+
+		if (imports && hd && teen) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_teen.w3mod/{}", path_str)));
+		}
+
+		if (imports && hd) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod/{}", path_str)));
+		}
+
+		if (imports) {
+			TRY_OPEN(map_file_read(std::format("_tilesets/{}.w3mod/{}", tileset, path_str)));
+		}
+
+		if (imports) {
+			TRY_OPEN(map_file_read(std::format("_locales/{}.w3mod/{}", locale, path_str)));
+		}
+
+		if (imports && teen) {
+			TRY_OPEN(map_file_read(std::format("_teen.w3mod/{}", path_str)));
 		}
 
 		if (imports) {
@@ -116,11 +136,16 @@ export class Hierarchy {
 		}
 
 		if (local && allow_local_files) {
+			// TODO, probably also follows: tilesets, locales, teen, base.
 			TRY_OPEN(read_file(root_directory / path));
 		}
 
 		if (casc && hd) {
 			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
+		}
+
+		if (casc && hd) {
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_locales/{}.w3mod:{}", locale, path_str)));
 		}
 
 		if (casc && hd && teen) {
