@@ -64,7 +64,8 @@ export class Hierarchy {
 			return false;
 		}
 
-		for (const auto& potential_locale : {"dede", "enus", "eses", "esmx", "frfr", "itit", "kokr", "plpl", "ptbr", "ruru", "zhcn", "zhtw"}) {
+		for (const auto& potential_locale :
+			 {"dede", "enus", "eses", "esmx", "frfr", "itit", "kokr", "plpl", "ptbr", "ruru", "zhcn", "zhtw"}) {
 			if (game_data.file_exists_locally(std::format("war3.w3mod:_locales/{}.w3mod:config.txt", potential_locale))) {
 				locale = potential_locale;
 				break;
@@ -86,7 +87,11 @@ export class Hierarchy {
 	/// 2. Map imports
 	/// 3. Local files (if enabled)
 	/// 4. Game casc archive (handles sd, hd and teen modes)
-	auto open_file(const fs::path& path, const FileSource sources = FileSource::all, std::initializer_list<std::string_view> extensions = {}) const -> std::expected<BinaryReader, std::string> {
+	auto open_file(
+		const fs::path& path,
+		const FileSource sources = FileSource::all,
+		std::initializer_list<std::string_view> extensions = {}
+	) const -> std::expected<BinaryReader, std::string> {
 		const auto path_str = path.generic_string();
 
 		const bool overrides = has_flag(sources, FileSource::overrides);
@@ -202,7 +207,11 @@ export class Hierarchy {
 	}
 
 	[[nodiscard]]
-	bool file_exists(const fs::path& path, const FileSource sources = FileSource::all, std::initializer_list<std::string_view> extensions = {}) const {
+	bool file_exists(
+		const fs::path& path,
+		const FileSource sources = FileSource::all,
+		const std::initializer_list<std::string_view> extensions = {}
+	) const {
 		if (path.empty()) {
 			return false;
 		}
@@ -221,8 +230,7 @@ export class Hierarchy {
 				|| (imports && hd && map_file_exists(std::format("_hd.w3mod/{}", path_str)))
 				|| (imports && map_file_exists(std::format("_tilesets/{}.w3mod/{}", tileset, path_str)))
 				|| (imports && map_file_exists(std::format("_locales/{}.w3mod/{}", locale, path_str)))
-				|| (imports && teen && map_file_exists(std::format("_teen.w3mod/{}", path_str)))
-				|| (imports && map_file_exists(variant))
+				|| (imports && teen && map_file_exists(std::format("_teen.w3mod/{}", path_str))) || (imports && map_file_exists(variant))
 				|| (local && allow_local_files && fs::exists(root_directory / variant))
 				|| (casc && hd && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)))
 				|| (casc && hd && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:_locales/{}.w3mod:{}", locale, path_str)))

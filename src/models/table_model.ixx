@@ -212,20 +212,22 @@ export class TableModel : public QAbstractTableModel {
 					return invalid_icon->icon;
 				}
 
-				if (path_to_icon.contains(icon)) {
-					return path_to_icon.at(icon)->icon;
-				}
-
+				// Normalize to .dds for cache as loading is case/extension agnostic
 				fs::path icon_path = icon;
-				if (!hierarchy.file_exists(icon)) {
-					icon_path.replace_extension(".dds");
-					if (!hierarchy.file_exists(icon_path)) {
-						return invalid_icon->icon;
-					}
+				icon_path.replace_extension(".dds");
+				const std::string final_path = icon_path.generic_string();
+
+				if (const auto found = path_to_icon.find(final_path); found != path_to_icon.end()) {
+					return found->second->icon;
 				}
 
-				path_to_icon[icon_path.string()] = resource_manager.load<QIconResource>(icon_path).value();
-				return path_to_icon.at(icon_path.string())->icon;
+				const auto loaded_icon = resource_manager.load<QIconResource>(icon_path);
+				if (!loaded_icon) {
+					return invalid_icon->icon;
+				}
+
+				const auto& [it, inserted] = path_to_icon.emplace(final_path, std::move(loaded_icon.value()));
+				return it->second->icon;
 		}
 
 		return {};

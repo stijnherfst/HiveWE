@@ -28,7 +28,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 
 	//	//std::string art_path = values.at("art");
 	//	std::string art_path = to_lowercase_copy(values.at("art"));
-	//	art_path = fs::path(art_path).replace_extension("").string();
+	//	art_path = fs::path(art_path).replace_extension("").generic_string();
 	//	art_path = split(art_path, ',').front();
 
 	//	if (icons_map.contains(art_path)) {
@@ -49,7 +49,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 
 	//	//std::string art_path = values.at("art");
 	//	std::string art_path = to_lowercase_copy(values.at("art"));
-	//	art_path = fs::path(art_path).replace_extension("").string();
+	//	art_path = fs::path(art_path).replace_extension("").generic_string();
 	//	art_path = split(art_path, ',').front();
 
 	//	if (icons_map.contains(art_path)) {
@@ -156,6 +156,8 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	//file.write(output.data(), output.size());
 	//file.close();
 
+	invalid_icon = resource_manager.load<QIconResource>("ReplaceableTextures/WorldEditUI/DoodadPlaceholder.dds").value();
+
 	QFile file(fs::path("data/warcraft/icon_tags.json"));
 	file.open(QIODevice::ReadOnly);
 
@@ -180,7 +182,8 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 			}
 		}
 
-		std::string string_path = object["src"].toString().toStdString() + ".dds";
+		const std::string string_path = object["src"].toString().toStdString() + ".dds";
+		// HD only icons won't exist in SD mode
 		if (!hierarchy.file_exists(string_path)) {
 			continue;
 		}
@@ -188,16 +191,22 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	}
 }
 
-QVariant IconModel::data(const QModelIndex& index, int role) const {
+QVariant IconModel::data(const QModelIndex& index, const int role) const {
 	switch (role) {
 		case Qt::DecorationRole: {
-			std::string string_path = icons[index.row()].first;
+			const std::string& string_path = icons[index.row()].first;
 
-			if (icon_cache.contains(string_path)) {
-				return icon_cache.at(string_path)->icon;
+			if (const auto found = icon_cache.find(string_path); found != icon_cache.end()) {
+				return found->second->icon;
 			} else {
-				icon_cache.emplace(string_path, resource_manager.load<QIconResource>(string_path).value());
-				return icon_cache.at(string_path)->icon;
+				const auto loaded_icon = resource_manager.load<QIconResource>(string_path);
+				if (!loaded_icon) {
+					const auto [it, inserted] = icon_cache.emplace(string_path, invalid_icon);
+					return it->second->icon;
+				}
+
+				const auto [it, inserted] = icon_cache.emplace(string_path, loaded_icon.value());
+				return it->second->icon;
 			}
 		}
 		case Qt::ToolTipRole:
