@@ -831,7 +831,7 @@ export class Terrain: public QObject {
 	}
 
 	/// Constructs a minimap image with tile, cliff, and water colors. Other objects such as doodads will not be added here
-	Texture minimap_image() {
+	Texture minimap_image() const {
 		Texture new_minimap_image;
 
 		new_minimap_image.width = width;
