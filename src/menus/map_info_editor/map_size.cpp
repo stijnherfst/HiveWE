@@ -61,38 +61,12 @@ void MapInfoEditor::setup_map_size(const Terrain& terrain, const MapInfo& info) 
 	update_map_size_gui();
 }
 
-bool MapInfoEditor::save_map_size(Map& map) const {
+void MapInfoEditor::save_map_size(Map& map) const {
 	const bool changed_map_size = (new_map_bottom_left != old_map_bottom_left) || (new_map_top_right != old_map_top_right);
 	const bool changed_playable_size =
 		(new_playable_bottom_left != old_playable_bottom_left) || (new_playable_top_right != old_playable_top_right);
 
 	if (changed_map_size || changed_playable_size) {
-		const int new_width = new_map_top_right.x - new_map_bottom_left.x;
-		const int new_height = new_map_top_right.y - new_map_bottom_left.y;
-
-		const int new_playable_width = new_playable_top_right.x - new_playable_bottom_left.x;
-		const int new_playable_height = new_playable_top_right.y - new_playable_bottom_left.y;
-
-		if (new_width < 32 || new_width > 480 || new_height < 32 || new_height > 480) {
-			QMessageBox::critical(
-				const_cast<MapInfoEditor*>(this),
-				"Invalid Map Size",
-				QString("Map dimensions must be between 32 and 480.\nNew size would be: %1 x %2").arg(new_width).arg(new_height)
-			);
-			return false;
-		}
-
-		if (new_playable_width < 9 || new_playable_height < 5) {
-			QMessageBox::critical(
-				const_cast<MapInfoEditor*>(this),
-				"Invalid Playable Area",
-				QString("Playable area must be at least 9x5.\nNew playable size would be: %1 x %2")
-					.arg(new_playable_width)
-					.arg(new_playable_height)
-			);
-			return false;
-		}
-
 		// to make this simpler, we first get rid of old boundaries
 		if (changed_map_size || changed_playable_size) {
 			map.set_playable_area(0, 0, 0, 0);
@@ -116,7 +90,6 @@ bool MapInfoEditor::save_map_size(Map& map) const {
 			map.set_playable_area(unplayable_left, unplayable_right, unplayable_top, unplayable_bottom);
 		}
 	}
-	return true;
 }
 
 void MapInfoEditor::update_map_size_gui() {
@@ -327,26 +300,26 @@ void MapInfoEditor::adjust_bounds(int delta_left, int delta_right, int delta_top
 	const int playable_height = new_playable_top_right.y - new_playable_bottom_left.y;
 
 	if (playable_width < 9) {
-		const int deficit = 9 - playable_width;
-		// expand playable area on the opposite side to compensate
 		if (delta_left != 0) {
-			// left was adjusted, expand right
-			new_playable_top_right.x += deficit;
+			// left was adjusted: expand right as far as possible, then push left back for any remainder
+			new_playable_top_right.x = std::min(new_playable_bottom_left.x + 9, new_map_top_right.x);
+			new_playable_bottom_left.x = new_playable_top_right.x - 9;
 		} else if (delta_right != 0) {
-			// right was adjusted, expand left
-			new_playable_bottom_left.x -= deficit;
+			// right was adjusted: expand left as far as possible, then push right back for any remainder
+			new_playable_bottom_left.x = std::max(new_playable_top_right.x - 9, new_map_bottom_left.x);
+			new_playable_top_right.x = new_playable_bottom_left.x + 9;
 		}
 	}
 
 	if (playable_height < 5) {
-		const int deficit = 5 - playable_height;
-		// expand playable area on the opposite side to compensate
 		if (delta_bottom != 0) {
-			// bottom was adjusted, expand top
-			new_playable_top_right.y += deficit;
+			// bottom was adjusted: expand top as far as possible, then push bottom back for any remainder
+			new_playable_top_right.y = std::min(new_playable_bottom_left.y + 5, new_map_top_right.y);
+			new_playable_bottom_left.y = new_playable_top_right.y - 5;
 		} else if (delta_top != 0) {
-			// top was adjusted, expand bottom
-			new_playable_bottom_left.y -= deficit;
+			// top was adjusted: expand bottom as far as possible, then push top back for any remainder
+			new_playable_bottom_left.y = std::max(new_playable_top_right.y - 5, new_map_bottom_left.y);
+			new_playable_top_right.y = new_playable_bottom_left.y + 5;
 		}
 	}
 

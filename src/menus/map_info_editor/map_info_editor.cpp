@@ -23,10 +23,9 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	setup_map_size(map->terrain, info);
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
-		if (save()) {
-			emit accept();
-			close();
-		}
+		save();
+		emit accept();
+		close();
 	});
 
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
@@ -37,13 +36,9 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	show();
 }
 
-bool MapInfoEditor::save() const {
-	bool saved = true;
-
-	saved &= save_description(map->info, map->trigger_strings);
-	saved &= save_loading_screen(map->info, map->trigger_strings);
-	saved &= save_options(map->info);
-	saved &= save_map_size(*map);
-
-	return saved;
+void MapInfoEditor::save() const {
+	save_description(map->info, map->trigger_strings);
+	save_loading_screen(map->info, map->trigger_strings);
+	save_options(map->info);
+	save_map_size(*map);
 }

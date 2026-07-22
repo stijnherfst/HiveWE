@@ -73,7 +73,7 @@ void MapInfoEditor::setup_options(const MapInfo& info, const TilesetData& tilese
 	ui.gameDataSet->setCurrentIndex(info.game_data_set);
 }
 
-bool MapInfoEditor::save_options(MapInfo& info) const {
+void MapInfoEditor::save_options(MapInfo& info) const {
 	info.melee_map = ui.meleeMap->isChecked();
 	info.hide_minimap_preview = ui.hideMinimapPreview->isChecked();
 	info.masked_area_partially_visible = ui.maskedPartiallyVisible->isChecked();
@@ -117,5 +117,4 @@ bool MapInfoEditor::save_options(MapInfo& info) const {
 
 	info.water_tinting = ui.waterTinting->isChecked();
 	info.water_color = ui.waterColor->get_glm_color();
-	return true;
 }

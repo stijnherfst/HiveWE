@@ -44,7 +44,7 @@ void MapInfoEditor::setup_loading_screen(const MapInfo& info, const TriggerStrin
 	ui.loadingScreenText->setPlainText(QString::fromUtf8(trigger_strings.string(info.loading_screen_text)));
 }
 
-bool MapInfoEditor::save_loading_screen(MapInfo& info, TriggerStrings& trigger_strings) const {
+void MapInfoEditor::save_loading_screen(MapInfo& info, TriggerStrings& trigger_strings) const {
 	if (ui.useDefaultLoadingScreen->isChecked()) {
 		info.loading_screen_model = "";
 		info.loading_screen_number = -1;
@@ -63,5 +63,4 @@ bool MapInfoEditor::save_loading_screen(MapInfo& info, TriggerStrings& trigger_s
 	info.game_data_set = ui.gameDataSet->currentIndex();
 
 	// Prologue?
-	return true;
 }

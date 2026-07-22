@@ -21,20 +21,20 @@ class MapInfoEditor: public QDialog {
 
 	Ui::MapInfoEditor ui;
 
-	bool save() const;
+	void save() const;
 
   private:
 	void setup_description(const MapInfo& info, const TriggerStrings& trigger_strings);
-	bool save_description(MapInfo& info, TriggerStrings& trigger_strings) const;
+	void save_description(MapInfo& info, TriggerStrings& trigger_strings) const;
 
 	void setup_loading_screen(const MapInfo& info, const TriggerStrings& trigger_strings, const std::filesystem::path& filesystem_path);
-	bool save_loading_screen(MapInfo& info, TriggerStrings& trigger_strings) const;
+	void save_loading_screen(MapInfo& info, TriggerStrings& trigger_strings) const;
 
 	void setup_options(const MapInfo& info, const TilesetData& tilesets);
-	bool save_options(MapInfo& info) const;
+	void save_options(MapInfo& info) const;
 
 	void setup_map_size(const Terrain& terrain, const MapInfo& info);
-	bool save_map_size(Map& map) const;
+	void save_map_size(Map& map) const;
 	void update_map_size_gui();
 	void adjust_bounds(int delta_left, int delta_right, int delta_top, int delta_bottom);
 	void update_bounds_preview() const;

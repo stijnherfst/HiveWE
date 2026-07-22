@@ -12,10 +12,9 @@ void MapInfoEditor::setup_description(const MapInfo& info, const TriggerStrings&
 	ui.editorVersion->setText(QString::number(info.editor_version));
 }
 
-bool MapInfoEditor::save_description(MapInfo& info, TriggerStrings& trigger_strings) const {
+void MapInfoEditor::save_description(MapInfo& info, TriggerStrings& trigger_strings) const {
 	trigger_strings.set_string(info.name, ui.name->text().toStdString());
 	trigger_strings.set_string(info.author, ui.author->text().toStdString());
 	trigger_strings.set_string(info.description, ui.description->toPlainText().toStdString());
 	trigger_strings.set_string(info.suggested_players, ui.suggestedPlayers->text().toStdString());
-	return true;
 }
