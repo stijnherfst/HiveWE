@@ -36,6 +36,7 @@ public:
 	QRibbonButton* map_options = new QRibbonButton;
 	QRibbonButton* map_size_camera_bounds = new QRibbonButton;
 	QRibbonButton* gameplay_constants = new QRibbonButton;
+	QRibbonButton* map_protection = new QRibbonButton;
 
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;
@@ -59,7 +60,7 @@ public:
 
 	QToolButton* save_map = new QToolButton;
 	QToolButton* save_map_as = new QToolButton;
-	QToolButton* export_mpq = new QToolButton;
+	QToolButton* export_map = new QToolButton;
 
 	QToolButton* test_map = new QToolButton;
 	QToolButton* settings = new QToolButton;

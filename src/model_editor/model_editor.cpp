@@ -143,12 +143,21 @@ void ModelEditor::browse_models(ads::CDockAreaWidget* parent) {
 	dialog->show();
 }
 
+std::expected<void, std::string> ModelEditor::open_model_docked(const fs::path& path, const bool local_file) const {
+	auto result = open_model(path, local_file);
+	if (!result.has_value()) {
+		return std::unexpected(result.error());
+	}
+	dock_manager->addDockWidget(ads::CenterDockWidgetArea, result.value(), dock_area);
+	return {};
+}
+
 std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::path& path, const bool local_file) const {
 	const auto result = [&] {
 		if (local_file) {
 			return read_file(path);
 		} else {
-			return hierarchy.open_file(path);
+			return hierarchy.open_file(path, Hierarchy::FileSource::all, {".mdx", ".mdl"});
 		}
 	}();
 

@@ -67,7 +67,7 @@ TEST_CASE("Validator: geoset normal count mismatch") {
 
 TEST_CASE("Validator: particle emitter 2 references invalid texture id") {
 	const auto messages = validate_fixture("bad_emitter2_texture_id_v800.mdl");
-	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "invalid texture id 4"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::error, "invalid texture id 4"));
 }
 
 TEST_CASE("Validator: ribbon emitter references invalid material id") {

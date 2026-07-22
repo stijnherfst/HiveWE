@@ -60,10 +60,20 @@ export class Hierarchy {
 		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
 		root_directory = warcraft_directory / (ptr ? "_ptr_" : "_retail_");
 
-		if (open) {
-			aliases.load(open_file("filealiases.json").value());
+		if (!open) {
+			return false;
 		}
-		return open;
+
+		for (const auto& potential_locale :
+			 {"dede", "enus", "eses", "esmx", "frfr", "itit", "kokr", "plpl", "ptbr", "ruru", "zhcn", "zhtw"}) {
+			if (game_data.file_exists_locally(std::format("war3.w3mod:_locales/{}.w3mod:config.txt", potential_locale))) {
+				locale = potential_locale;
+				break;
+			}
+		}
+
+		aliases.load(open_file("filealiases.json").value());
+		return true;
 	}
 
 	constexpr bool has_flag(Hierarchy::FileSource value, Hierarchy::FileSource flag) const {
@@ -77,7 +87,11 @@ export class Hierarchy {
 	/// 2. Map imports
 	/// 3. Local files (if enabled)
 	/// 4. Game casc archive (handles sd, hd and teen modes)
-	auto open_file(const fs::path& path, const FileSource sources = FileSource::all) const -> std::expected<BinaryReader, std::string> {
+	auto open_file(
+		const fs::path& path,
+		const FileSource sources = FileSource::all,
+		std::initializer_list<std::string_view> extensions = {}
+	) const -> std::expected<BinaryReader, std::string> {
 		const auto path_str = path.generic_string();
 
 		const bool overrides = has_flag(sources, FileSource::overrides);
@@ -85,96 +99,175 @@ export class Hierarchy {
 		const bool local = has_flag(sources, FileSource::local_files);
 		const bool casc = has_flag(sources, FileSource::casc);
 
+		// The game ignores the extension it is given and instead tries a fixed set of
+		// extensions for each location before moving on to the next location.
+		std::vector<std::string> variants;
+		if (extensions.size() == 0) {
+			variants.push_back(path_str);
+		} else {
+			for (const auto& extension : extensions) {
+				fs::path variant = path;
+				variant.replace_extension(extension);
+				variants.push_back(variant.generic_string());
+			}
+		}
+
 #define TRY_OPEN(expr) \
-	if (auto file = (expr); file) { \
-		return file; \
+	for (const auto& p : variants) { \
+		if (auto file = (expr); file) { \
+			return file; \
+		} \
 	}
 
 		if (overrides) {
-			TRY_OPEN(read_file(fs::path("data/overrides") / path));
-		}
-
-		if (imports && hd && teen) {
-			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_teen.w3mod:{}", path_str)));
+			TRY_OPEN(read_file(fs::path("data/overrides") / p));
 		}
 
 		if (imports && hd) {
-			TRY_OPEN(map_file_read(std::format("_hd.w3mod:{}", path_str)));
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_tilesets/{}.w3mod/{}", tileset, p)));
+		}
+
+		if (imports && hd) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_locales/{}.w3mod/{}", locale, p)));
+		}
+
+		if (imports && hd && teen) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod:_teen.w3mod/{}", p)));
+		}
+
+		if (imports && hd) {
+			TRY_OPEN(map_file_read(std::format("_hd.w3mod/{}", p)));
 		}
 
 		if (imports) {
-			TRY_OPEN(map_file_read(path));
+			TRY_OPEN(map_file_read(std::format("_tilesets/{}.w3mod/{}", tileset, p)));
+		}
+
+		if (imports) {
+			TRY_OPEN(map_file_read(std::format("_locales/{}.w3mod/{}", locale, p)));
+		}
+
+		if (imports && teen) {
+			TRY_OPEN(map_file_read(std::format("_teen.w3mod/{}", p)));
+		}
+
+		if (imports) {
+			TRY_OPEN(map_file_read(p));
 		}
 
 		if (local && allow_local_files) {
-			TRY_OPEN(read_file(root_directory / path));
+			// TODO, probably also follows: tilesets, locales, teen, base.
+			TRY_OPEN(read_file(root_directory / p));
 		}
 
 		if (casc && hd) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, p)));
+		}
+
+		if (casc && hd) {
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_locales/{}.w3mod:{}", locale, p)));
 		}
 
 		if (casc && hd && teen) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_teen.w3mod:{}", path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:_teen.w3mod:{}", p)));
 		}
 
 		if (casc && hd) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:{}", path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_hd.w3mod:{}", p)));
 		}
 
 		if (casc) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, p)));
 		}
 
 		if (casc) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, p)));
 		}
 		if (casc && teen) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_teen.w3mod:{}", path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_teen.w3mod:{}", p)));
 		}
 
 		if (casc) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:{}", path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:{}", p)));
 		}
 
 		if (casc) {
-			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_deprecated.w3mod:{}", path_str)));
+			TRY_OPEN(game_data.open_file(std::format("war3.w3mod:_deprecated.w3mod:{}", p)));
 		}
 
 #undef TRY_OPEN
 
-		if (aliases.exists(path_str)) {
-			return open_file(aliases.alias(path_str));
+		for (const auto& p : variants) {
+			if (aliases.exists(p)) {
+				return open_file(aliases.alias(p), sources, extensions);
+			}
 		}
 
 		return std::unexpected(std::format("{} could not be found in the hierarchy", path_str));
 	}
 
 	[[nodiscard]]
-	bool file_exists(const fs::path& path, const FileSource sources = FileSource::all) const {
+	bool file_exists(
+		const fs::path& path,
+		const FileSource sources = FileSource::all,
+		const std::initializer_list<std::string_view> extensions = {}
+	) const {
 		if (path.empty()) {
 			return false;
 		}
-
-		const auto path_str = path.string();
 
 		const bool overrides = has_flag(sources, FileSource::overrides);
 		const bool imports = has_flag(sources, FileSource::imports);
 		const bool local = has_flag(sources, FileSource::local_files);
 		const bool casc = has_flag(sources, FileSource::casc);
 
-		return (overrides && fs::exists("data/overrides" / path)) || (local && allow_local_files && fs::exists(root_directory / path))
-			|| (imports && hd && teen && map_file_exists("_hd.w3mod:_teen.w3mod:" + path_str))
-			|| (imports && hd && map_file_exists("_hd.w3mod:" + path_str)) || (imports && map_file_exists(path))
-			|| (casc && hd && game_data.file_exists("war3.w3mod:_hd.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str))
-			|| (casc && hd && teen && game_data.file_exists("war3.w3mod:_hd.w3mod:_teen.w3mod:"s + path_str))
-			|| (casc && hd && game_data.file_exists("war3.w3mod:_hd.w3mod:"s + path_str))
-			|| (casc && game_data.file_exists("war3.w3mod:_tilesets/"s + tileset + ".w3mod:"s + path_str))
-			|| (casc && game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)))
-			|| (casc && teen && game_data.file_exists("war3.w3mod:_teen.w3mod:"s + path_str))
-			|| (casc && game_data.file_exists("war3.w3mod:"s + path_str))
-			|| (casc && game_data.file_exists("war3.w3mod:_deprecated.w3mod:"s + path_str))
-			|| (aliases.exists(path_str) ? file_exists(aliases.alias(path_str), sources) : false);
+		const auto variant_exists = [&](const fs::path& variant) {
+			const auto path_str = variant.generic_string();
+			return (overrides && fs::exists("data/overrides" / variant))
+				|| (imports && hd && map_file_exists(std::format("_hd.w3mod:_tilesets/{}.w3mod/{}", tileset, path_str)))
+				|| (imports && hd && map_file_exists(std::format("_hd.w3mod:_locales/{}.w3mod/{}", locale, path_str)))
+				|| (imports && hd && teen && map_file_exists(std::format("_hd.w3mod:_teen.w3mod/{}", path_str)))
+				|| (imports && hd && map_file_exists(std::format("_hd.w3mod/{}", path_str)))
+				|| (imports && map_file_exists(std::format("_tilesets/{}.w3mod/{}", tileset, path_str)))
+				|| (imports && map_file_exists(std::format("_locales/{}.w3mod/{}", locale, path_str)))
+				|| (imports && teen && map_file_exists(std::format("_teen.w3mod/{}", path_str))) || (imports && map_file_exists(variant))
+				|| (local && allow_local_files && fs::exists(root_directory / variant))
+				|| (casc && hd && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)))
+				|| (casc && hd && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:_locales/{}.w3mod:{}", locale, path_str)))
+				|| (casc && hd && teen && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:_teen.w3mod:{}", path_str)))
+				|| (casc && hd && game_data.file_exists(std::format("war3.w3mod:_hd.w3mod:{}", path_str)))
+				|| (casc && game_data.file_exists(std::format("war3.w3mod:_tilesets/{}.w3mod:{}", tileset, path_str)))
+				|| (casc && game_data.file_exists(std::format("war3.w3mod:_locales/{}.w3mod:{}", locale, path_str)))
+				|| (casc && teen && game_data.file_exists(std::format("war3.w3mod:_teen.w3mod:{}", path_str)))
+				|| (casc && game_data.file_exists(std::format("war3.w3mod:{}", path_str)))
+				|| (casc && game_data.file_exists(std::format("war3.w3mod:_deprecated.w3mod:{}", path_str)));
+		};
+
+		std::vector<fs::path> variants;
+		if (extensions.size() == 0) {
+			variants.push_back(path);
+		} else {
+			for (const auto& extension : extensions) {
+				fs::path variant = path;
+				variant.replace_extension(extension);
+				variants.push_back(variant);
+			}
+		}
+
+		for (const auto& variant : variants) {
+			if (variant_exists(variant)) {
+				return true;
+			}
+		}
+
+		for (const auto& variant : variants) {
+			const auto path_str = variant.generic_string();
+			if (aliases.exists(path_str)) {
+				return file_exists(aliases.alias(path_str), sources, extensions);
+			}
+		}
+
+		return false;
 	}
 
 	/// Whether the file exists in the game data lookup, ignoring map imports

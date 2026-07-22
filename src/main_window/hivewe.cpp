@@ -25,6 +25,9 @@ import "tile_setter.h";
 import "map_info_editor/map_info_editor.h";
 import "terrain_palette.h";
 import "settings_editor.h";
+import "map_protection_dialog.h";
+import Protection;
+import Utilities;
 import "tile_pather.h";
 import "palette.h";
 import "terrain_palette.h";
@@ -190,10 +193,14 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	connect(ui.ribbon->open_map_mpq, &QPushButton::clicked, this, &HiveWE::load_mpq);
 	connect(ui.ribbon->save_map, &QPushButton::clicked, this, &HiveWE::save);
 	connect(ui.ribbon->save_map_as, &QPushButton::clicked, this, &HiveWE::save_as);
-	connect(ui.ribbon->export_mpq, &QPushButton::clicked, this, &HiveWE::export_mpq);
+	connect(ui.ribbon->export_map, &QPushButton::clicked, this, &HiveWE::export_map);
 	connect(ui.ribbon->test_map, &QPushButton::clicked, this, &HiveWE::play_test);
 	connect(ui.ribbon->settings, &QPushButton::clicked, [&]() {
 		new SettingsEditor(this);
+	});
+	connect(ui.ribbon->map_protection, &QPushButton::clicked, [this]() {
+		MapProtectionDialog dialog(this);
+		dialog.exec();
 	});
 	connect(ui.ribbon->switch_warcraft, &QPushButton::clicked, this, &HiveWE::switch_warcraft);
 	connect(ui.ribbon->exit, &QPushButton::clicked, [&]() {
@@ -397,7 +404,7 @@ void HiveWE::new_map() {
 void HiveWE::load_folder() {
 	QSettings settings;
 
-	QString folder_name = QFileDialog::getExistingDirectory(
+	const QString folder_name = QFileDialog::getExistingDirectory(
 		this,
 		"Open Map Directory",
 		settings.value("openDirectory", QDir::current().path()).toString(),
@@ -410,7 +417,7 @@ void HiveWE::load_folder() {
 
 	settings.setValue("openDirectory", folder_name);
 
-	fs::path directory = folder_name.toStdString();
+	const fs::path directory = folder_name.toStdString();
 
 	if (!fs::exists(directory / "war3map.w3i")) {
 		QMessageBox::information(
@@ -436,7 +443,7 @@ void HiveWE::load_mpq() {
 	QSettings settings;
 
 	// Choose an MPQ
-	QString file_name = QFileDialog::getOpenFileName(
+	const QString file_name = QFileDialog::getOpenFileName(
 		this,
 		"Open File",
 		settings.value("openDirectory", QDir::current().path()).toString(),
@@ -460,13 +467,13 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	fs::path unpack_location = QFileDialog::getExistingDirectory(
-								   this,
-								   "Choose Unpacking Location",
-								   settings.value("openDirectory", QDir::current().path()).toString(),
-								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	const fs::path unpack_location = QFileDialog::getExistingDirectory(
+										 this,
+										 "Choose Unpacking Location",
+										 settings.value("openDirectory", QDir::current().path()).toString(),
+										 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
 	)
-								   .toStdString();
+										 .toStdString();
 
 	if (unpack_location.empty()) {
 		return;
@@ -487,7 +494,7 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	bool unpacked = mpq.unpack(final_directory);
+	const bool unpacked = mpq.unpack(final_directory);
 	if (!unpacked) {
 		QMessageBox::critical(this, "Unpacking failed", "There was an error unpacking the archive.");
 		std::println("{}", GetLastError());
@@ -509,16 +516,16 @@ void HiveWE::save() {
 }
 
 void HiveWE::save_as() {
-	QSettings settings;
+	const QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->name);
 
-	fs::path file_name = QFileDialog::getExistingDirectory(
-							 this,
-							 "Choose Save Location",
-							 settings.value("openDirectory", QDir::current().path()).toString(),
-							 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	const fs::path file_name = QFileDialog::getExistingDirectory(
+								   this,
+								   "Choose Save Location",
+								   settings.value("openDirectory", QDir::current().path()).toString(),
+								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
 	)
-							 .toStdString();
+								   .toStdString();
 
 	if (file_name.empty()) {
 		return;
@@ -541,26 +548,57 @@ void HiveWE::save_as() {
 	setWindowTitle("HiveWE 0.11 - " + QString::fromStdString(map->filesystem_path.string()));
 }
 
-void HiveWE::export_mpq() {
+void HiveWE::export_map() {
 	QSettings settings;
-	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/"
-		+ QString::fromStdString(map->filesystem_path.filename().string());
-	std::wstring file_name =
-		QFileDialog::getSaveFileName(this, "Export Map to MPQ", directory, "Warcraft III Scenario (*.w3x)").toStdWString();
+	const QString default_dir = settings.value("exportDirectory", QDir::current().path()).toString() + QString::fromStdString(map->name);
 
-	if (file_name.empty()) {
+	QString save_dir = QFileDialog::getSaveFileName(this, "Export Map to MPQ", default_dir, "Warcraft III Scenario (*.w3x)");
+
+	if (save_dir.isEmpty()) {
 		return;
 	}
 
-	fs::remove(file_name);
+	auto new_default_dir = fs::path(save_dir.toStdString());
+	new_default_dir.remove_filename();
+	settings.setValue("exportDirectory", QString::fromStdString(new_default_dir.string()));
+
+	if (settings.value("protection/askEachExport", true).toBool()) {
+		MapProtectionDialog dialog(this);
+		if (dialog.exec() != QDialog::Accepted) {
+			return;
+		}
+	}
+
+	QSettings protection_settings;
+	protection::ProtectionSettings protection;
+	protection.delete_editor_files = protection_settings.value("protection/removeWorldEditorFiles", true).toBool();
+	protection.remove_metadata = protection_settings.value("protection/removeMetadata", true).toBool();
+	protection.obfuscate_script = protection_settings.value("protection/obfuscateScript", false).toBool();
+	protection.junk_header_offset = protection_settings.value("protection/junkHeaderOffset", false).toBool();
+	protection.encrypt_imports = protection_settings.value("protection/encryptImports", false).toBool();
+
+	const bool omit_listfile = protection.remove_metadata;
+
+	fs::remove(save_dir.toStdString());
 
 	emit saving_initiated();
 	map->save(map->filesystem_path);
 
-	uint64_t file_count = std::distance(fs::recursive_directory_iterator {map->filesystem_path}, {});
+	const uint64_t file_count = std::distance(fs::recursive_directory_iterator {map->filesystem_path}, {});
+
+	SFILE_CREATE_MPQ create_info {};
+	create_info.cbSize = sizeof(SFILE_CREATE_MPQ);
+	create_info.dwMpqVersion = MPQ_FORMAT_VERSION_1;
+	create_info.dwStreamFlags = STREAM_PROVIDER_FLAT | BASE_PROVIDER_FILE;
+	create_info.dwFileFlags1 = omit_listfile ? 0 : MPQ_FILE_DEFAULT_INTERNAL;
+	create_info.dwFileFlags2 = protection.remove_metadata ? 0 : MPQ_FILE_DEFAULT_INTERNAL;
+	create_info.dwAttrFlags = protection.remove_metadata ? 0 : (MPQ_ATTRIBUTE_CRC32 | MPQ_ATTRIBUTE_FILETIME | MPQ_ATTRIBUTE_MD5);
+	create_info.dwSectorSize = 0x1000;
+	create_info.dwMaxFileCount = static_cast<DWORD>(file_count);
 
 	HANDLE handle;
-	bool open = SFileCreateArchive(file_name.c_str(), MPQ_CREATE_LISTFILE | MPQ_CREATE_ATTRIBUTES, file_count, &handle);
+	// Use SFileCreateArchive2 as SFileCreateArchive forces a listfile
+	const bool open = SFileCreateArchive2(save_dir.toStdWString().c_str(), &create_info, &handle);
 	if (!open) {
 		QMessageBox::critical(this, "Exporting failed", "There was an error creating the archive.");
 		std::println("{}", GetLastError());
@@ -568,22 +606,60 @@ void HiveWE::export_mpq() {
 	}
 
 	for (const auto& entry : fs::recursive_directory_iterator(map->filesystem_path)) {
-		if (entry.is_regular_file()) {
-			bool success = SFileAddFileEx(
-				handle,
-				entry.path().c_str(),
-				entry.path().lexically_relative(map->filesystem_path).string().c_str(),
-				MPQ_FILE_COMPRESS,
-				MPQ_COMPRESSION_ZLIB,
-				MPQ_COMPRESSION_NEXT_SAME
-			);
-			if (!success) {
-				std::println("Error {} adding file {}", GetLastError(), entry.path().string());
+		if (!entry.is_regular_file()) {
+			continue;
+		}
+		const fs::path relative_path = entry.path().lexically_relative(map->filesystem_path);
+
+		if (protection.delete_editor_files && protection::is_editor_file(relative_path)) {
+			continue;
+		}
+
+		if (protection.obfuscate_script && (relative_path == "war3map.j" || relative_path == "war3map.lua")) {
+			const std::string minified = protection::obfuscate_script(read_text_file(entry.path()), relative_path == "war3map.lua");
+
+			HANDLE file_handle;
+			if (!SFileCreateFile(
+					handle,
+					relative_path.string().c_str(),
+					0,
+					static_cast<DWORD>(minified.size()),
+					0,
+					MPQ_FILE_COMPRESS,
+					&file_handle
+				)
+				|| !SFileWriteFile(file_handle, minified.data(), static_cast<DWORD>(minified.size()), MPQ_COMPRESSION_ZLIB)
+				|| !SFileFinishFile(file_handle)) {
+				std::println("Error {} adding script {}", GetLastError(), relative_path.string());
 			}
+			continue;
+		}
+
+		DWORD flags = MPQ_FILE_COMPRESS;
+		if (protection.encrypt_imports && !protection::is_standard_game_file(relative_path)) {
+			// if (protection.encrypt_imports) {
+			flags |= MPQ_FILE_ENCRYPTED;
+		}
+
+		const bool success = SFileAddFileEx(
+			handle,
+			entry.path().c_str(),
+			relative_path.string().c_str(),
+			flags,
+			MPQ_COMPRESSION_ZLIB,
+			MPQ_COMPRESSION_NEXT_SAME
+		);
+		if (!success) {
+			std::println("Error {} adding file {}", GetLastError(), entry.path().string());
 		}
 	}
+
 	SFileCompactArchive(handle, nullptr, false);
 	SFileCloseArchive(handle);
+
+	if (protection.junk_header_offset && !protection::prepend_junk_header(save_dir.toStdString())) {
+		std::println("Error applying junk header offset");
+	}
 }
 
 void HiveWE::play_test() {

@@ -15,7 +15,7 @@ import BinaryWriter;
 import Hierarchy;
 import ResourceManager;
 import SkinnedMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import PathingTexture;
 import Utilities;
 import Globals;
@@ -257,7 +257,7 @@ export class Doodads {
 		doodad.scale = {1, 1, 1};
 		doodad.angle = 0;
 		doodad.creation_number = ++Doodad::auto_increment;
-		doodad.skeleton = SkeletalModelInstance(doodad.mesh->mdx);
+		doodad.skeleton = Skeleton(doodad.mesh->mdx);
 
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -405,7 +405,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+					i.skeleton = Skeleton(i.mesh->mdx);
 					i.update(terrain);
 				}
 			}
@@ -447,7 +447,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+					i.skeleton = Skeleton(i.mesh->mdx);
 					i.update(terrain);
 					i.skeleton.update(0.016f);
 				}

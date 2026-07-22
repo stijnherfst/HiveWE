@@ -47,6 +47,7 @@ std::vector<FileUsage> Map::get_file_usage() const {
 	find_references(units_slk, {"file", "portrait", "specialart", "missileart1", "missileart2", "art", "pathtex"});
 	find_references(items_slk, {"file", "art"});
 	find_references(destructibles_slk, {"file", "pathtex", "pathtexdeath"});
+	// TODO: handle doodad variations (use get_mesh machinery)
 	find_references(doodads_slk, {"file", "pathtex"});
 	find_references(abilities_slk, {"targetart", "effectart", "specialart", "art", "researchart"});
 	find_references(buff_slk, {"targetart", "missileart", "specialart", "buffart"});

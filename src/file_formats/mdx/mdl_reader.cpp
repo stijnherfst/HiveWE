@@ -403,7 +403,7 @@ namespace mdx {
 		TRY(r.consume("Version"));
 		TRY(r.consume("{"));
 		TRY(r.consume("FormatVersion"));
-		OUTCOME_TRY(auto v, r.consume_i64());
+		OUTCOME_TRY(const auto v, r.consume_i64());
 		mdx.version = static_cast<uint32_t>(v);
 		if (mdx.version != 800 && mdx.version != 900 && mdx.version != 1000 && mdx.version != 1100 && mdx.version != 1200) {
 			return failure(std::format("Unsupported FormatVersion {}", mdx.version));

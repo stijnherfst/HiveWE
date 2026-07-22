@@ -3,7 +3,7 @@ module;
 #include <cassert>
 #include <chrono>
 
-export module SkeletalModelInstance;
+export module Skeleton;
 
 import std;
 import Camera;
@@ -73,7 +73,7 @@ static std::vector<std::string> tokenize_sequence_name(const std::string_view na
 	return tokens;
 }
 
-export class SkeletalModelInstance {
+export class Skeleton {
   public:
 	std::shared_ptr<mdx::MDX> model;
 
@@ -98,9 +98,9 @@ export class SkeletalModelInstance {
 
 	std::vector<std::string> required_animation_names;
 
-	SkeletalModelInstance() = default;
+	Skeleton() = default;
 
-	explicit SkeletalModelInstance(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string>&& required_animation_names = {}) :
+	explicit Skeleton(const std::shared_ptr<mdx::MDX>& model, std::vector<std::string>&& required_animation_names = {}) :
 		model(model),
 		required_animation_names(required_animation_names) {
 		const size_t node_count = model->bones.size() + model->lights.size() + model->help_bones.size() + model->attachments.size()
@@ -311,13 +311,9 @@ export class SkeletalModelInstance {
 		return sequence.extent.minimum.x > sequence.extent.maximum.x;
 	}
 
-	// Adjust the skeleton's current sequence to one suited for a static/looping preview. The
-	// constructor's `set_sequence("stand")` works for unit models but for spell effects with no
-	// "stand" sequence its random tiebreaker can land on a "death" sequence whose Visibility
-	// track holds the emitters at 0 which is an empty thumbnail. We want to keep a suitable stand and
-	// otherwise prefer a Birth-named sequence, otherwise any suitable sequence, otherwise leave it.
-	static void pick_preview_sequence(SkeletalModelInstance& skeleton, const mdx::MDX& mdx) {
-		auto suitable = [&](size_t i) {
+	// Adjust the skeleton's current sequence to one suited for a static/looping preview.
+	static void pick_preview_sequence(Skeleton& skeleton, const mdx::MDX& mdx) {
+		auto suitable = [&](const size_t i) {
 			const auto& s = mdx.sequences[i];
 			return sequence_name_has_recognized_token(s.name) && !sequence_has_empty_extent(s);
 		};
@@ -329,11 +325,11 @@ export class SkeletalModelInstance {
 			return out;
 		};
 
-		const int current = skeleton.sequence_index;
-		const bool current_valid = current >= 0 && current < static_cast<int>(mdx.sequences.size());
-
-		if (current_valid && suitable(current) && lower_name(mdx.sequences[current]).contains("stand")) {
-			return;
+		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
+			if (suitable(i) && lower_name(mdx.sequences[i]).contains("stand")) {
+				skeleton.set_sequence(static_cast<int>(i));
+				return;
+			}
 		}
 
 		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
@@ -341,10 +337,6 @@ export class SkeletalModelInstance {
 				skeleton.set_sequence(static_cast<int>(i));
 				return;
 			}
-		}
-
-		if (current_valid && suitable(current)) {
-			return;
 		}
 
 		for (size_t i = 0; i < mdx.sequences.size(); ++i) {
@@ -847,7 +839,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 		}
 	}
 
-	SkeletalModelInstance instance(model);
+	Skeleton instance(model);
 
 	// Global sequences animate against wall-clock time; pin them to a deterministic set of phases so
 	// the extents are reproducible and cover the full global motion.

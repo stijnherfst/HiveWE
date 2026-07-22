@@ -12,7 +12,7 @@
 #include <QOpenGLWidget>
 
 import EditableMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import MDX;
 import Shader;
 import <glm/glm.hpp>;
@@ -39,7 +39,9 @@ class ModelGridGLWidget : public QOpenGLWidget {
 
   public:
 	ModelGridGLWidget() = delete;
-	explicit ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent = nullptr);
+	/// When single_preview is true the widget shows a single model filling the whole widget,
+	/// without category headers or scrolling (used as a live preview thumbnail).
+	explicit ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent = nullptr, bool single_preview = false);
 	~ModelGridGLWidget() override;
 
 	void initializeGL() override;
@@ -51,6 +53,9 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	void wheelEvent(QWheelEvent* event) override;
 
 	int cell_pixel_size() const { return cell_size; }
+
+	/// Text drawn centered when a single-preview widget has no model to show yet.
+	void set_empty_message(const QString& message);
 
   public slots:
 	void set_scroll_offset(int y);
@@ -69,8 +74,8 @@ class ModelGridGLWidget : public QOpenGLWidget {
 		ModelCategory category;
 		std::shared_ptr<mdx::MDX> mdx;
 		std::shared_ptr<EditableMesh> mesh;
-		SkeletalModelInstance skeleton;
-		float fit_distance = 0.f;
+		Skeleton skeleton;
+		float fit_radius = 0.f; // bounding-sphere radius, used to fit the model for any viewport aspect
 		glm::vec3 fit_position{ 0.f, 0.f, 0.f };
 		bool loaded = false;
 		bool load_failed = false;
@@ -98,6 +103,8 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	int header_height = 40;
 	int columns = 1;
 	int scroll_offset_y = 0;
+	bool single_preview = false;
+	QString empty_message;
 
 	std::string search_query;
 	std::bitset<static_cast<size_t>(ModelCategory::Count)> category_mask;
@@ -106,6 +113,8 @@ class ModelGridGLWidget : public QOpenGLWidget {
 	double delta = 0.0;
 
 	void load_cell(PreviewCell& cell) const;
+	// Renders one model into the current viewport; aspect is the viewport width / height.
+	void render_cell(PreviewCell& cell, float aspect) const;
 	void rebuild_layout();
 	int content_height_px() const;
 	int max_scroll_offset() const;

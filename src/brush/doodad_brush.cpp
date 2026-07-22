@@ -13,7 +13,7 @@ import OpenGLUtilities;
 import ResourceManager;
 import PathingMap;
 import SkinnedMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import Globals;
 import MapGlobal;
 import Rects;
@@ -28,7 +28,7 @@ DoodadBrush::DoodadBrush() : Brush() {
 	brush_type = Brush::Type::cell;
 
 	click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt).value();
-	click_helper_skeleton = SkeletalModelInstance(click_helper->mdx);
+	click_helper_skeleton = Skeleton(click_helper->mdx);
 }
 
 /// Gets a random variation from the possible_variation list

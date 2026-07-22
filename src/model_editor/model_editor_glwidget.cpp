@@ -91,8 +91,8 @@ void ModelEditorGLWidget::initializeGL() {
 	glBindVertexArray(vao);
 
 	mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
-	skeleton = SkeletalModelInstance(mdx);
-	SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
+	skeleton = Skeleton(mdx);
+	Skeleton::pick_preview_sequence(skeleton, *mdx);
 	recenter_camera();
 
 	shader_sd = resource_manager.load<Shader>({"data/shaders/editable_mesh_sd.vert", "data/shaders/editable_mesh_sd.frag"}).value();
@@ -373,8 +373,8 @@ void ModelEditorGLWidget::reload_from_mdl() {
 
 	mdx = new_mdx;
 	mesh = new_mesh;
-	skeleton = SkeletalModelInstance(mdx);
-	SkeletalModelInstance::pick_preview_sequence(skeleton, *mdx);
+	skeleton = Skeleton(mdx);
+	Skeleton::pick_preview_sequence(skeleton, *mdx);
 	recenter_camera();
 	messages = mdx->validate();
 }

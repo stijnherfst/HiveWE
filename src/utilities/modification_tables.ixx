@@ -37,7 +37,9 @@ export void load_modification_table(BinaryReader& reader, const uint32_t version
 			const std::string modification_id = reader.read_string(4);
 			const uint32_t type = reader.read<uint32_t>();
 
-			std::string column_header = to_lowercase_copy(meta_slk.data<std::string_view>("field", modification_id));
+			const auto field_name = meta_slk.data<std::string_view>("field", modification_id);
+
+			std::string column_header = to_lowercase_copy(field_name);
 			if (optional_ints) {
 				const uint32_t level_variation = reader.read<uint32_t>();
 				const uint32_t data_pointer = reader.read<uint32_t>();
@@ -63,10 +65,11 @@ export void load_modification_table(BinaryReader& reader, const uint32_t version
 					break;
 				default:
 					std::println("Unknown data type {} while loading modification table.", type);
+					exit(1);
 			}
 			reader.advance(4);
 
-			if (column_header == "") {
+			if (field_name.empty()) {
 				std::println("Unknown mod id: {}", modification_id);
 				continue;
 			}
@@ -134,25 +137,12 @@ export void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, c
 				continue;
 			}
 
-			int variation = 0;
-			int data_pointer = 0;
-
-			size_t nr_position = property_id.find_first_of("0123456789");
-			if (nr_position != std::string::npos) {
-				variation = std::stoi(property_id.substr(nr_position));
-			}
-
-			// If it is a data field then it will contain a data_pointer/column at the end
-			if (property_id.starts_with("data")) {
-				data_pointer = property_id[4] - 'a' + 1;
-			}
-
 			const auto meta_id2 = slk.field_to_meta_id(meta_slk, property_id, id);
 			if (!meta_id2) {
 				std::println("Meta data key not found for id {} property {}", id, property_id);
-				exit(0);
+				exit(1);
 			}
-			const std::string meta_data_key = std::string(meta_id2.value());
+			const std::string_view meta_data_key = meta_id2.value();
 
 			sub_writer.write_string(meta_data_key);
 			// There's an error in AbilityMetaData.slk where Crs1 instead uses Crs so we need to pad till 4 characters
@@ -175,6 +165,22 @@ export void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, c
 			sub_writer.write<uint32_t>(write_type);
 
 			if (optional_ints) {
+				uint32_t variation = 0;
+				uint32_t data_pointer = 0;
+
+				// If it is a data field then it will contain a data_pointer/column at the end
+				if (property_id.starts_with("data")) {
+					data_pointer = property_id[4] - 'a' + 1;
+				}
+
+				if (meta_slk.data<std::string_view>("repeat", meta_data_key) != "0") {
+					const std::string_view field_name = meta_slk.data<std::string_view>("field", meta_data_key);
+					const size_t nr_position = property_id.find_first_of("0123456789", field_name.size());
+					if (nr_position != std::string::npos) {
+						variation = std::stoi(property_id.substr(nr_position));
+					}
+				}
+
 				sub_writer.write<uint32_t>(variation);
 				sub_writer.write<uint32_t>(data_pointer);
 			}
