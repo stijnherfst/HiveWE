@@ -157,7 +157,7 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 		if (local_file) {
 			return read_file(path);
 		} else {
-			return hierarchy.open_file(path);
+			return hierarchy.open_file(path, Hierarchy::FileSource::all, {".mdx", ".mdl"});
 		}
 	}();
 

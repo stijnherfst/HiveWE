@@ -29,28 +29,14 @@ export class GPUTexture : public Resource {
 	}
 
 	explicit GPUTexture(const fs::path& path, int flags = 0) {
-		fs::path new_path = path;
+		BinaryReader reader = hierarchy.open_file(path, Hierarchy::FileSource::all, { ".dds", ".blp", ".tga" })
+			.or_else([&](const std::string&) {
+				std::println("Error loading texture {}", path.string());
+				return hierarchy.open_file("Textures/btntempw.dds");
+			})
+			.value();
 
-		BinaryReader reader = [&] {
-			new_path.replace_extension(".tga");
-			return hierarchy.open_file(new_path)
-				.or_else([&](const std::string&) {
-					new_path.replace_extension(".blp");
-					return hierarchy.open_file(new_path);
-				})
-				.or_else([&](const std::string&) {
-					new_path.replace_extension(".dds");
-					return hierarchy.open_file(new_path);
-				})
-				.or_else([&](const std::string&) {
-					std::println("Error loading texture {}", new_path.string());
-					new_path = "Textures/btntempw.dds";
-					return hierarchy.open_file(new_path);
-				})
-				.value();
-		}();
-
-		if (new_path.extension() == ".blp") {
+		if (blp::is_blp(reader)) {
 			const auto image = blp::load(reader);
 
 			if (image) {

@@ -33,24 +33,14 @@ export class Texture : public Resource {
 			new_path.replace_filename(path.stem().string() + "_diffuse");
 		}
 
-		new_path.replace_extension(".tga");
-		BinaryReader reader = hierarchy.open_file(new_path)
-			.or_else([&](const std::string&) {
-				new_path.replace_extension(".blp");
-				return hierarchy.open_file(new_path);
-			})
-			.or_else([&](const std::string&) {
-				new_path.replace_extension(".dds");
-				return hierarchy.open_file(new_path);
-			})
+		BinaryReader reader = hierarchy.open_file(new_path, Hierarchy::FileSource::all, { ".dds", ".blp", ".tga" })
 			.or_else([&](const std::string&) {
 				std::println("Error loading texture {}", new_path.string());
-				new_path = "Textures/btntempw.dds";
-				return hierarchy.open_file(new_path);
+				return hierarchy.open_file("Textures/btntempw.dds");
 			})
 			.value();
 
-		if (new_path.extension() == ".blp") {
+		if (blp::is_blp(reader)) {
 			auto image = blp::load(reader);
 			if (!image) {
 				throw std::runtime_error(std::format("Failed to load texture {}: {}", new_path.string(), image.error()));

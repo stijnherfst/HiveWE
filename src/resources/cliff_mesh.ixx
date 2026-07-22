@@ -14,7 +14,7 @@ import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
-export class CliffMesh : public Resource {
+export class CliffMesh: public Resource {
   public:
 	GLuint vertex_buffer;
 	GLuint uv_buffer;
@@ -28,12 +28,15 @@ export class CliffMesh : public Resource {
 	std::vector<glm::vec4> render_jobs;
 
 	explicit CliffMesh(const fs::path& path) {
-		if (path.extension() != ".mdx" && path.extension() != ".MDX") {
-			throw std::invalid_argument("CliffMesh requires .mdx file, got: " + path.string());
-		}
+		BinaryReader reader = hierarchy.open_file(path, Hierarchy::FileSource::all, {".mdx", ".mdl"}).value();
 
-		auto reader = hierarchy.open_file(path).value();
-		mdx::MDX mdx = mdx::MDX(reader);
+		mdx::MDX mdx;
+		if (mdx::is_mdx(reader)) {
+			mdx = mdx::MDX(reader);
+		} else {
+			const auto view = std::string_view(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
+			mdx = mdx::MDX::from_mdl(view).value();
+		}
 
 		if (!mdx.is_valid()) {
 			throw std::runtime_error(
@@ -49,7 +52,12 @@ export class CliffMesh : public Resource {
 		glNamedBufferData(vertex_buffer, static_cast<int>(set.vertices.size() * sizeof(glm::vec3)), set.vertices.data(), GL_STATIC_DRAW);
 
 		glCreateBuffers(1, &uv_buffer);
-		glNamedBufferData(uv_buffer, static_cast<int>(set.uv_sets.front().size() * sizeof(glm::vec2)), set.uv_sets.front().data(), GL_STATIC_DRAW);
+		glNamedBufferData(
+			uv_buffer,
+			static_cast<int>(set.uv_sets.front().size() * sizeof(glm::vec2)),
+			set.uv_sets.front().data(),
+			GL_STATIC_DRAW
+		);
 
 		glCreateBuffers(1, &normal_buffer);
 		glNamedBufferData(normal_buffer, static_cast<int>(set.normals.size() * sizeof(glm::vec3)), set.normals.data(), GL_STATIC_DRAW);

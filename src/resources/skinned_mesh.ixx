@@ -108,16 +108,11 @@ export class SkinnedMesh: public Resource {
 	static constexpr const char* name = "SkinnedMesh";
 
 	explicit SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {
-		fs::path new_path = path;
-		new_path.replace_extension(".mdx");
+		BinaryReader reader = hierarchy.open_file(path, Hierarchy::FileSource::all, {".mdx", ".mdl"}).value();
 
-		auto reader = hierarchy.open_file(new_path);
-		if (reader) {
-			mdx = std::make_shared<mdx::MDX>(reader.value());
+		if (mdx::is_mdx(reader)) {
+			mdx = std::make_shared<mdx::MDX>(reader);
 		} else {
-			new_path.replace_extension(".mdl");
-			const auto reader = hierarchy.open_file(new_path).value();
-
 			const auto view = std::string_view(reinterpret_cast<const char*>(reader.buffer.data()), reader.buffer.size());
 			const auto result = mdx::MDX::from_mdl(view);
 			mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
@@ -131,7 +126,7 @@ export class SkinnedMesh: public Resource {
 
 		mdx->fix_up();
 
-		this->path = new_path;
+		this->path = path;
 
 		size_t vertices = 0;
 		size_t indices = 0;

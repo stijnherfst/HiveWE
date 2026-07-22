@@ -65,8 +65,9 @@ namespace {
 	}
 } // namespace
 
-ModelGridGLWidget::ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent, const bool single_preview)
-	: QOpenGLWidget(parent), single_preview(single_preview) {
+ModelGridGLWidget::ModelGridGLWidget(const std::vector<ModelEntry>& entries, QWidget* parent, const bool single_preview) :
+	QOpenGLWidget(parent),
+	single_preview(single_preview) {
 	all_cells.reserve(entries.size());
 	for (const auto& e : entries) {
 		PreviewCell c;
@@ -162,8 +163,7 @@ void ModelGridGLWidget::paintGL() {
 		} else if (cell.load_failed) {
 			QPainter painter(this);
 			painter.setPen(palette().color(QPalette::WindowText));
-			const QString message =
-				cell.load_error_message.empty() ? QString("Error") : QString::fromStdString(cell.load_error_message);
+			const QString message = cell.load_error_message.empty() ? QString("Error") : QString::fromStdString(cell.load_error_message);
 			painter.drawText(rect().adjusted(10, 10, -10, -10), Qt::AlignTop | Qt::AlignLeft | Qt::TextWordWrap, message);
 			painter.end();
 		}
@@ -370,7 +370,7 @@ void ModelGridGLWidget::set_categories(const std::bitset<static_cast<size_t>(Mod
 }
 
 void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
-	const auto reader = hierarchy.open_file(cell.path);
+	const auto reader = hierarchy.open_file(cell.path, Hierarchy::FileSource::all, {".mdx", ".mdl"});
 	if (!reader) {
 		cell.load_failed = true;
 		cell.load_error_message = reader.error();
@@ -380,7 +380,7 @@ void ModelGridGLWidget::load_cell(PreviewCell& cell) const {
 	auto file = reader.value();
 
 	try {
-		if (cell.path.extension() == ".mdx") {
+		if (mdx::is_mdx(file)) {
 			cell.mdx = std::make_shared<mdx::MDX>(file);
 		} else {
 			const auto view = std::string_view(reinterpret_cast<const char*>(file.buffer.data()), file.buffer.size());

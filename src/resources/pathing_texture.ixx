@@ -11,7 +11,7 @@ import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 
-export class PathingTexture : public Resource {
+export class PathingTexture: public Resource {
   public:
 	int width;
 	int height;
@@ -23,9 +23,9 @@ export class PathingTexture : public Resource {
 	static constexpr const char* name = "PathingTexture";
 
 	explicit PathingTexture(const fs::path& path) {
-		BinaryReader reader = hierarchy.open_file(path).value();
+		BinaryReader reader = hierarchy.open_file(path, Hierarchy::FileSource::all, {".dds", ".blp", ".tga"}).value();
 
-		if (path.extension() == ".blp" || path.extension() == ".BLP") {
+		if (blp::is_blp(reader)) {
 			auto image = blp::load(reader);
 			if (!image) {
 				throw std::runtime_error(std::format("Failed to load pathing texture {}: {}", path.string(), image.error()));
@@ -35,7 +35,14 @@ export class PathingTexture : public Resource {
 			channels = image->channels;
 			data = std::move(image->data);
 		} else {
-			uint8_t* image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
+			uint8_t* image_data = SOIL_load_image_from_memory(
+				reader.buffer.data(),
+				static_cast<int>(reader.buffer.size()),
+				&width,
+				&height,
+				&channels,
+				SOIL_LOAD_AUTO
+			);
 			if (image_data == nullptr) {
 				throw std::runtime_error(std::format("Failed to decode pathing texture {}", path.string()));
 			}
@@ -46,9 +53,11 @@ export class PathingTexture : public Resource {
 		homogeneous = true;
 		for (size_t i = 0; i < data.size(); i += channels) {
 			if (channels == 3) {
-				homogeneous = homogeneous && *reinterpret_cast<glm::u8vec3*>(data.data() + i) == *reinterpret_cast<glm::u8vec3*>(data.data());
+				homogeneous =
+					homogeneous && *reinterpret_cast<glm::u8vec3*>(data.data() + i) == *reinterpret_cast<glm::u8vec3*>(data.data());
 			} else if (channels == 4) {
-				homogeneous = homogeneous && *reinterpret_cast<glm::u8vec4*>(data.data() + i) == *reinterpret_cast<glm::u8vec4*>(data.data());
+				homogeneous =
+					homogeneous && *reinterpret_cast<glm::u8vec4*>(data.data() + i) == *reinterpret_cast<glm::u8vec4*>(data.data());
 			}
 		}
 	}
