@@ -71,6 +71,9 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		auto* number = new QLabel(QString::number(i + 1));
 		number->setAlignment(Qt::AlignCenter);
 
+		row.controller = new QComboBox;
+		row.controller->addItems({ "None", "User", "Computer", "Neutral", "Rescuable" });
+
 		std::string name = "Player " + std::to_string(i+1);
 		row.name = new QLineEdit(QString::fromStdString(name));
 		row.name->setEnabled(false);
@@ -83,18 +86,15 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		row.race->setEnabled(false);
 		row.race->setCurrentIndex(i%4);
 
-		row.controller = new QComboBox;
-		row.controller->addItems({ "None", "User", "Computer", "Neutral", "Rescuable" });
-
 		row.fixed_start_position = new QCheckBox;
 		row.fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
 		row.fixed_start_position->setEnabled(false);
 
 		ui.playerGrid->addWidget(number, i+1, 0);
-		ui.playerGrid->addWidget(row.name, i+1, 1);
-		ui.playerGrid->addWidget(row.color, i+1, 2);
-		ui.playerGrid->addWidget(row.race, i+1, 3);
-		ui.playerGrid->addWidget(row.controller, i+1, 4);
+		ui.playerGrid->addWidget(row.controller, i+1, 1);
+		ui.playerGrid->addWidget(row.name, i+1, 2);
+		ui.playerGrid->addWidget(row.color, i+1, 3);
+		ui.playerGrid->addWidget(row.race, i+1, 4);
 		ui.playerGrid->addWidget(row.fixed_start_position, i+1, 5, Qt::AlignHCenter);
 
 		player_rows.push_back(row);
@@ -103,6 +103,21 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.playerGrid->setVerticalSpacing(0);
 
 	for (const auto& player: map->info.players) {
+		
+		switch (player.type) {
+		case PlayerType::human:
+			player_rows[player.internal_number].controller->setCurrentIndex(1);
+			break;
+		case PlayerType::computer:
+			player_rows[player.internal_number].controller->setCurrentIndex(2);
+			break;
+		case PlayerType::neutral:
+			player_rows[player.internal_number].controller->setCurrentIndex(3);
+			break;
+		case PlayerType::rescuable:
+			player_rows[player.internal_number].controller->setCurrentIndex(4);
+			break;
+		}
 
 		player_rows[player.internal_number].name->setText(QString::fromUtf8(map->trigger_strings.string(player.name)));
 		player_rows[player.internal_number].name->setEnabled(true);
@@ -125,22 +140,6 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 			break;
 		}
 		player_rows[player.internal_number].race->setEnabled(true);
-		
-
-		switch (player.type) {
-		case PlayerType::human:
-			player_rows[player.internal_number].controller->setCurrentIndex(1);
-			break;
-		case PlayerType::computer:
-			player_rows[player.internal_number].controller->setCurrentIndex(2);
-			break;
-		case PlayerType::neutral:
-			player_rows[player.internal_number].controller->setCurrentIndex(3);
-			break;
-		case PlayerType::rescuable:
-			player_rows[player.internal_number].controller->setCurrentIndex(4);
-			break;
-		}
 
 		if (player.fixed_start_position == 0) {
 			player_rows[player.internal_number].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
@@ -153,27 +152,27 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 	connect(ui.buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
 		if (ui.buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole) {
 			// Restoring Player 1 defaults
-			player_rows[0].name->setText("");
+			player_rows[0].controller->setCurrentIndex(1);
+
+			player_rows[0].name->setText("Player 1");
 			player_rows[0].name->setEnabled(true);
 
 			player_rows[0].race->setCurrentIndex(0);
 			player_rows[0].race->setEnabled(true);
-
-			player_rows[0].controller->setCurrentIndex(1);
 
 			player_rows[0].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
 			player_rows[0].fixed_start_position->setEnabled(true);
 
 			// Restoring Player 2 - 24 defaults
 			for (int i = 1; i < 24; i++) {
+				player_rows[i].controller->setCurrentIndex(0);
+
 				std::string name = "Player " + std::to_string(i+1);
 				player_rows[i].name->setText(QString::fromStdString(name));
 				player_rows[i].name->setEnabled(false);
 
 				player_rows[i].race->setCurrentIndex(i%4);
 				player_rows[i].race->setEnabled(false);
-
-				player_rows[i].controller->setCurrentIndex(0);
 
 				player_rows[i].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
 				player_rows[i].fixed_start_position->setEnabled(false);
