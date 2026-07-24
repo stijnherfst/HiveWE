@@ -30,5 +30,7 @@ class ScenarioInfoEditor: public QDialog {
 
   private:
 	void updateController(int slotIndex, int controllerTypeIndex);
+	void restoreDefaults();
+	void restorePlayerProperties();
     
 };

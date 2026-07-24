@@ -79,7 +79,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		row.name->setEnabled(false);
 
 		row.color = new QLabel;
-		row.color->setStyleSheet(QString("background-color: #%1;").arg(player_colors[i]));
+		row.color->setStyleSheet(QString("background-color: #%1; margin: 2px 0px;").arg(player_colors[i]));
 
 		row.race = new QComboBox;
 		row.race->addItems({ "Human", "Orc", "Undead", "Night Elf", "Selectable" });
@@ -151,32 +151,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 
 	connect(ui.buttonBox, &QDialogButtonBox::clicked, this, [this](QAbstractButton *button) {
 		if (ui.buttonBox->buttonRole(button) == QDialogButtonBox::ResetRole) {
-			// Restoring Player 1 defaults
-			player_rows[0].controller->setCurrentIndex(1);
-
-			player_rows[0].name->setText("Player 1");
-			player_rows[0].name->setEnabled(true);
-
-			player_rows[0].race->setCurrentIndex(0);
-			player_rows[0].race->setEnabled(true);
-
-			player_rows[0].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
-			player_rows[0].fixed_start_position->setEnabled(true);
-
-			// Restoring Player 2 - 24 defaults
-			for (int i = 1; i < 24; i++) {
-				player_rows[i].controller->setCurrentIndex(0);
-
-				std::string name = "Player " + std::to_string(i+1);
-				player_rows[i].name->setText(QString::fromStdString(name));
-				player_rows[i].name->setEnabled(false);
-
-				player_rows[i].race->setCurrentIndex(i%4);
-				player_rows[i].race->setEnabled(false);
-
-				player_rows[i].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
-				player_rows[i].fixed_start_position->setEnabled(false);
-			}
+			restoreDefaults();
 		}
 	});
 	
@@ -245,18 +220,18 @@ bool ScenarioInfoEditor::save() const {
 		auto& p = map->info.players[found_index];
 
 		switch (controller_type) {
-			case 1:
-				p.type = PlayerType::human;
-				break;
-			case 2:
-				p.type = PlayerType::computer;
-				break;
-			case 3:
-				p.type = PlayerType::neutral;
-				break;
-			case 4:
-				p.type = PlayerType::rescuable;
-				break;
+		case 1:
+			p.type = PlayerType::human;
+			break;
+		case 2:
+			p.type = PlayerType::computer;
+			break;
+		case 3:
+			p.type = PlayerType::neutral;
+			break;
+		case 4:
+			p.type = PlayerType::rescuable;
+			break;
 		}
 
 		map->trigger_strings.set_string(p.name, player_rows[slot].name->text().toStdString());
@@ -317,5 +292,54 @@ void ScenarioInfoEditor::updateController(int slotIndex, int controllerTypeIndex
 		player_rows[slotIndex].name->setEnabled(true);
 		player_rows[slotIndex].race->setEnabled(true);
 		player_rows[slotIndex].fixed_start_position->setEnabled(true);
+	}
+}
+
+void ScenarioInfoEditor::restoreDefaults() {
+	int choice = QMessageBox::question(
+		this,
+		"Do you want to restore defaults?",
+		"Are you sure you want to restore default values?",
+		QMessageBox::Yes | QMessageBox::No,
+		QMessageBox::No
+	);
+
+	if (choice == QMessageBox::No) {
+		return;
+	}
+
+	switch (ui.tabs->currentIndex()) {
+	case 0:
+		restorePlayerProperties();
+		break;
+	}
+}
+
+void ScenarioInfoEditor::restorePlayerProperties() {
+	// Restoring Player 1 defaults
+	player_rows[0].controller->setCurrentIndex(1);
+
+	player_rows[0].name->setText("Player 1");
+	player_rows[0].name->setEnabled(true);
+
+	player_rows[0].race->setCurrentIndex(0);
+	player_rows[0].race->setEnabled(true);
+
+	player_rows[0].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
+	player_rows[0].fixed_start_position->setEnabled(true);
+
+	// Restoring Player 2 - 24 defaults
+	for (int i = 1; i < 24; i++) {
+		player_rows[i].controller->setCurrentIndex(0);
+
+		std::string name = "Player " + std::to_string(i+1);
+		player_rows[i].name->setText(QString::fromStdString(name));
+		player_rows[i].name->setEnabled(false);
+
+		player_rows[i].race->setCurrentIndex(i%4);
+		player_rows[i].race->setEnabled(false);
+
+		player_rows[i].fixed_start_position->setCheckState(Qt::CheckState::Unchecked);
+		player_rows[i].fixed_start_position->setEnabled(false);
 	}
 }
