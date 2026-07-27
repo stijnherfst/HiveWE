@@ -106,16 +106,16 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		
 		switch (player.type) {
 		case PlayerType::human:
-			player_rows[player.internal_number].controller->setCurrentIndex(1);
+			player_rows[player.internal_number].controller->setCurrentIndex(ControllerType::user);
 			break;
 		case PlayerType::computer:
-			player_rows[player.internal_number].controller->setCurrentIndex(2);
+			player_rows[player.internal_number].controller->setCurrentIndex(ControllerType::computer);
 			break;
 		case PlayerType::neutral:
-			player_rows[player.internal_number].controller->setCurrentIndex(3);
+			player_rows[player.internal_number].controller->setCurrentIndex(ControllerType::neutral);
 			break;
 		case PlayerType::rescuable:
-			player_rows[player.internal_number].controller->setCurrentIndex(4);
+			player_rows[player.internal_number].controller->setCurrentIndex(ControllerType::rescuable);
 			break;
 		}
 
@@ -190,8 +190,7 @@ bool ScenarioInfoEditor::save() const {
 			}
 		}
 
-		// Controller == None ?
-		if (controller_type == 0) {
+		if (controller_type == ControllerType::none) {
 			if (found_index != -1) {
 				map->info.players.erase(map->info.players.begin() + found_index);
 			}
@@ -262,19 +261,18 @@ bool ScenarioInfoEditor::save() const {
 
 
 void ScenarioInfoEditor::updateController(int slotIndex, int controllerTypeIndex) {
-	// Is controller type NOT Human ?
-	if (controllerTypeIndex != 1) {
-		// Is there any other Human controller type ?
+	if (controllerTypeIndex != ControllerType::user) {
+		// Is there any other User controller type ?
 		bool found_human = false;
 		for (const auto& player : player_rows) {
-			if (player.controller->currentIndex() == 1) {
+			if (player.controller->currentIndex() == ControllerType::user) {
 				found_human = true;
 				break;
 			}
 		}
 
 		if (found_human == false) {
-			player_rows[slotIndex].controller->setCurrentIndex(1);
+			player_rows[slotIndex].controller->setCurrentIndex(ControllerType::user);
 			player_rows[slotIndex].name->setEnabled(true);
 			player_rows[slotIndex].race->setEnabled(true);
 			player_rows[slotIndex].fixed_start_position->setEnabled(true);
@@ -283,8 +281,7 @@ void ScenarioInfoEditor::updateController(int slotIndex, int controllerTypeIndex
 		}
 	}
 
-	// Is controller type None ?
-	if (controllerTypeIndex == 0) {
+	if (controllerTypeIndex == ControllerType::none) {
 		player_rows[slotIndex].name->setEnabled(false);
 		player_rows[slotIndex].race->setEnabled(false);
 		player_rows[slotIndex].fixed_start_position->setEnabled(false);
@@ -317,7 +314,7 @@ void ScenarioInfoEditor::restoreDefaults() {
 
 void ScenarioInfoEditor::restorePlayerProperties() {
 	// Restoring Player 1 defaults
-	player_rows[0].controller->setCurrentIndex(1);
+	player_rows[0].controller->setCurrentIndex(ControllerType::user);
 
 	player_rows[0].name->setText("Player 1");
 	player_rows[0].name->setEnabled(true);
@@ -330,9 +327,9 @@ void ScenarioInfoEditor::restorePlayerProperties() {
 
 	// Restoring Player 2 - 24 defaults
 	for (int i = 1; i < 24; i++) {
-		player_rows[i].controller->setCurrentIndex(0);
+		player_rows[i].controller->setCurrentIndex(ControllerType::none);
 
-		std::string name = "Player " + std::to_string(i+1);
+		const std::string name = "Player " + std::to_string(i+1);
 		player_rows[i].name->setText(QString::fromStdString(name));
 		player_rows[i].name->setEnabled(false);
 

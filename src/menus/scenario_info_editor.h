@@ -33,4 +33,13 @@ class ScenarioInfoEditor: public QDialog {
 	void restoreDefaults();
 	void restorePlayerProperties();
     
+	// Private redefinition of Controller type for mapping dropdown indices
+	// PlayerType (equivalent enum) lacks the none type
+	enum ControllerType {
+		none,
+		user,
+		computer,
+		neutral,
+		rescuable
+	};
 };
