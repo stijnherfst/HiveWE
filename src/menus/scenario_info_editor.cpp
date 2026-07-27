@@ -64,7 +64,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 
 	// Player Properties tab
 
-	for (int i = 0; i < 24; i++) {
+	for (size_t i = 0; i < 24; i++) {
 		
 		PlayerRow row;
 
@@ -167,7 +167,7 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent) : QDialog(parent) {
 		close();
 	});
 
-	for (int player_slot = 0; player_slot < 24; player_slot++) {
+	for (size_t player_slot = 0; player_slot < 24; player_slot++) {
 		connect(player_rows[player_slot].controller, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this, player_slot](int controllerTypeIndex) {
 			updateController(player_slot, controllerTypeIndex);
 		});
@@ -183,7 +183,7 @@ bool ScenarioInfoEditor::save() const {
 
 		int found_index = -1;
 
-		for (int i = 0; i < map->info.players.size(); i++) {
+		for (size_t i = 0; i < map->info.players.size(); i++) {
 			if (map->info.players[i].internal_number == slot) {
 				found_index = i;
 				break;
@@ -326,7 +326,7 @@ void ScenarioInfoEditor::restorePlayerProperties() {
 	player_rows[0].fixed_start_position->setEnabled(true);
 
 	// Restoring Player 2 - 24 defaults
-	for (int i = 1; i < 24; i++) {
+	for (size_t i = 1; i < 24; i++) {
 		player_rows[i].controller->setCurrentIndex(ControllerType::none);
 
 		const std::string name = "Player " + std::to_string(i+1);
