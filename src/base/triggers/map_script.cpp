@@ -705,13 +705,13 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 		const Tileset* light_tileset = tilesets.tileset(map_info.custom_light_tileset);
 		const Tileset* ambiance_tileset = tilesets.tileset(map_info.custom_ambience_tileset);
 
-		// safety check
+		// Safety check
 		if (!tileset) {
 			std::cout << "Unknown tileset '" << terrain.tileset_id << "'" << std::endl;
 			return;
 		}
 
-		// light and ambiance tilesets are set to 0 if unused
+		// Light and ambiance tilesets are set to 0 if unused
 		if (!light_tileset) {
 			light_tileset = tileset;
 		}

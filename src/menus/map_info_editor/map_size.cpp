@@ -23,7 +23,7 @@ void MapInfoEditor::setup_map_size(const Terrain& terrain, const MapInfo& info) 
 	terrain_offset = terrain.offset;
 	original_minimap = terrain.minimap_image();
 
-	// connect arrow buttons to map size
+	// Connect arrow buttons to map size
 	connect(ui.mapBoundsLeftDec, &QPushButton::clicked, [this]() {
 		adjust_bounds(1, 0, 0, 0);
 	});
@@ -49,7 +49,7 @@ void MapInfoEditor::setup_map_size(const Terrain& terrain, const MapInfo& info) 
 		adjust_bounds(0, 0, 0, -1);
 	});
 
-	// reset camera bounds (unplayable area) to default
+	// Reset camera bounds (unplayable area) to default
 	connect(ui.resetCameraBounds, &QPushButton::clicked, [this]() {
 		new_playable_bottom_left.x = new_map_bottom_left.x + 6;
 		new_playable_bottom_left.y = new_map_bottom_left.y + 4;
@@ -67,12 +67,12 @@ void MapInfoEditor::save_map_size(Map& map) const {
 		(new_playable_bottom_left != old_playable_bottom_left) || (new_playable_top_right != old_playable_top_right);
 
 	if (changed_map_size || changed_playable_size) {
-		// to make this simpler, we first get rid of old boundaries
+		// To make this simpler, we first get rid of old boundaries
 		if (changed_map_size || changed_playable_size) {
 			map.set_playable_area(0, 0, 0, 0);
 		}
 
-		// resize the terrain
+		// Resize the terrain
 		if (changed_map_size) {
 			const int delta_left = old_map_bottom_left.x - new_map_bottom_left.x;
 			const int delta_right = new_map_top_right.x - old_map_top_right.x;
@@ -81,7 +81,7 @@ void MapInfoEditor::save_map_size(Map& map) const {
 			map.resize(delta_left, delta_right, delta_top, delta_bottom);
 		}
 
-		// apply camera bounds changes
+		// Apply camera bounds changes
 		if (changed_map_size || changed_playable_size) {
 			const int unplayable_left = new_playable_bottom_left.x - new_map_bottom_left.x;
 			const int unplayable_right = new_map_top_right.x - new_playable_top_right.x;
@@ -93,10 +93,10 @@ void MapInfoEditor::save_map_size(Map& map) const {
 }
 
 void MapInfoEditor::update_map_size_gui() {
-	// update text in the menu
+	// Update text in the menu
 	update_bounds_text();
 
-	// update the minimap image
+	// Update the minimap image
 	update_bounds_preview();
 }
 
@@ -110,11 +110,11 @@ void MapInfoEditor::update_bounds_text() const {
 	const float offset_x = terrain_offset.x + (new_map_bottom_left.x - old_map_bottom_left.x) * 128.f;
 	const float offset_y = terrain_offset.y + (new_map_bottom_left.y - old_map_bottom_left.y) * 128.f;
 
-	// update  map size labels
+	// Update  map size labels
 	ui.mapSizeFull->setText(QString::fromStdString(std::format("{} x {}", new_width, new_height)));
 	ui.mapSizePlayable->setText(QString::fromStdString(std::format("{} x {}", new_playable_width, new_playable_height)));
 
-	// update map extents and camera bounds text
+	// Update map extents and camera bounds text
 	ui.mapBoundsLeft->setText(QString::number(offset_x));
 	ui.mapBoundsRight->setText(QString::number(offset_x + new_width * 128.f));
 	ui.mapBoundsTop->setText(QString::number(offset_y + new_height * 128.f));
@@ -125,7 +125,7 @@ void MapInfoEditor::update_bounds_text() const {
 	ui.cameraBoundsTop->setText(QString::number(offset_y + (new_playable_top_right.y - 2 - new_map_bottom_left.y) * 128.f));
 	ui.cameraBoundsBottom->setText(QString::number(offset_y + (new_playable_bottom_left.y + 2 - new_map_bottom_left.y) * 128.f));
 
-	// map size text - determine size based on surface area
+	// Map size text - determine size based on surface area
 	const int surface_area = new_width * new_height;
 	QString size_description;
 
@@ -165,16 +165,16 @@ void MapInfoEditor::update_bounds_preview() const {
 	new_minimap_tex.channels = 4;
 	new_minimap_tex.data.resize(new_width * new_height * 4);
 
-	// crate the new image
+	// Create the new image
 	for (int y = 0; y < new_height; y++) {
 		for (int x = 0; x < new_width; x++) {
-			// original coordinates
+			// Original coordinates
 			const int src_x = x - delta_left;
 			const int src_y = y - delta_top;
 
 			const int dst_index = y * new_width * 4 + x * 4;
 
-			// copy from original image if possible, fill with green otherwise
+			// Copy from original image if possible, fill with green otherwise
 			if (src_x >= 0 && src_x < original_minimap.width && src_y >= 0 && src_y < original_minimap.height) {
 				const int src_index = src_y * original_minimap.width * 4 + src_x * 4;
 				new_minimap_tex.data[dst_index + 0] = original_minimap.data[src_index + 0];
@@ -188,14 +188,14 @@ void MapInfoEditor::update_bounds_preview() const {
 				new_minimap_tex.data[dst_index + 3] = 255;
 			}
 
-			// check if pixel is in unplayable area
+			// Check if pixel is in unplayable area
 			const int map_x = new_map_bottom_left.x + x;
 			const int map_y = new_map_top_right.y - y;
 			const bool is_unplayable =
 				(map_x < new_playable_bottom_left.x || map_x > new_playable_top_right.x || map_y < new_playable_bottom_left.y
 				 || map_y > new_playable_top_right.y);
 
-			// unplayable pixels are lighter
+			// Unplayable pixels are lighter
 			if (is_unplayable) {
 				new_minimap_tex.data[dst_index + 0] = (new_minimap_tex.data[dst_index + 0] + 255) / 2;
 				new_minimap_tex.data[dst_index + 1] = (new_minimap_tex.data[dst_index + 1] + 255) / 2;
@@ -204,7 +204,7 @@ void MapInfoEditor::update_bounds_preview() const {
 		}
 	}
 
-	// create image with transparent background
+	// Create image with transparent background
 	const QImage temp_image = QImage(
 		new_minimap_tex.data.data(),
 		new_minimap_tex.width,
@@ -214,16 +214,16 @@ void MapInfoEditor::update_bounds_preview() const {
 	);
 	const QPixmap source_pixmap = QPixmap::fromImage(temp_image);
 
-	// scale the pixmap with sharp pixels (no smoothing)
+	// Scale the pixmap with sharp pixels (no smoothing)
 	QPixmap scaled_pixmap = source_pixmap.scaled(ui.boundsPreview->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
 
-	// calculate camera bounds in original image coordinates
+	// Calculate camera bounds in original image coordinates
 	const int camera_bounds_left = new_playable_bottom_left.x + 4 - new_map_bottom_left.x;
 	const int camera_bounds_bottom = new_playable_bottom_left.y + 2 - new_map_bottom_left.y;
 	const int camera_bounds_right = new_playable_top_right.x - 4 - new_map_bottom_left.x;
 	const int camera_bounds_top = new_playable_top_right.y - 2 - new_map_bottom_left.y;
 
-	// scale coordinates to match the scaled pixmap
+	// Scale coordinates to match the scaled pixmap
 	const float scale_x = static_cast<float>(scaled_pixmap.width()) / new_width;
 	const float scale_y = static_cast<float>(scaled_pixmap.height()) / new_height;
 
@@ -232,7 +232,7 @@ void MapInfoEditor::update_bounds_preview() const {
 	const int scaled_right = static_cast<int>(camera_bounds_right * scale_x);
 	const int scaled_bottom = static_cast<int>((new_height - camera_bounds_bottom - 1) * scale_y);
 
-	// draw camera bounds rectangle on scaled image
+	// Draw camera bounds rectangle on scaled image
 	const QPen pen(QColor(0, 120, 255), 2);
 	QPainter painter(&scaled_pixmap);
 	painter.setPen(pen);
@@ -250,29 +250,29 @@ void MapInfoEditor::adjust_bounds(int delta_left, int delta_right, int delta_top
 	const int offset_x = static_cast<int>(terrain_offset.x / 128.0f);
 	const int offset_y = static_cast<int>(terrain_offset.y / 128.0f);
 
-	// handle terrain size change
+	// Handle terrain size change
 	if (ui.modifyMapBounds->isChecked()) {
-		// vanilla editor behaviour - changing map is 4 times faster
+		// Vanilla editor behaviour - changing map is 4 times faster
 		delta_left *= 4;
 		delta_right *= 4;
 		delta_top *= 4;
 		delta_bottom *= 4;
 
-		// accept the adjustment if the map is within acceptable bounds
+		// Accept the adjustment if the map is within acceptable bounds
 		new_width += delta_left + delta_right;
 		new_height += delta_top + delta_bottom;
 
-		// check if the map is not too large, or too small
+		// Check if the map is not too large, or too small
 		const bool allowed_size = new_width >= 32 and new_width <= 480 and new_height >= 32 and new_height <= 480;
 
-		// check if the map extents are valid (vanilla WE constraint)
+		// Check if the map extents are valid (vanilla WE constraint)
 		const int left_extent = new_map_bottom_left.x + offset_x - delta_left;
 		const int right_extent = new_map_top_right.x + offset_x + delta_right;
 		const int top_extent = new_map_top_right.y + offset_y + delta_top;
 		const int bottom_extent = new_map_bottom_left.y + offset_y - delta_bottom;
 		const bool valid_extents = (left_extent >= -252 && right_extent <= 252 && bottom_extent >= -252 && top_extent <= 252);
 
-		// bounds change
+		// Bounds change
 		if (allowed_size && valid_extents) {
 			new_map_bottom_left.x -= delta_left;
 			new_map_bottom_left.y -= delta_bottom;
@@ -281,7 +281,7 @@ void MapInfoEditor::adjust_bounds(int delta_left, int delta_right, int delta_top
 		}
 	}
 
-	// handle playable area change
+	// Handle playable area change
 	if (ui.modifyCameraBounds->isChecked()) {
 		new_playable_bottom_left.x -= delta_left;
 		new_playable_bottom_left.y -= delta_bottom;
@@ -289,23 +289,23 @@ void MapInfoEditor::adjust_bounds(int delta_left, int delta_right, int delta_top
 		new_playable_top_right.y += delta_top;
 	}
 
-	// ensure playable area stays within map bounds
+	// Ensure playable area stays within map bounds
 	new_playable_bottom_left.x = std::max(new_playable_bottom_left.x, new_map_bottom_left.x);
 	new_playable_bottom_left.y = std::max(new_playable_bottom_left.y, new_map_bottom_left.y);
 	new_playable_top_right.x = std::min(new_playable_top_right.x, new_map_top_right.x);
 	new_playable_top_right.y = std::min(new_playable_top_right.y, new_map_top_right.y);
 
-	// ensure a minimum 9x5 playable area size
+	// Ensure a minimum 9x5 playable area size
 	const int playable_width = new_playable_top_right.x - new_playable_bottom_left.x;
 	const int playable_height = new_playable_top_right.y - new_playable_bottom_left.y;
 
 	if (playable_width < 9) {
 		if (delta_left != 0) {
-			// left was adjusted: expand right as far as possible, then push left back for any remainder
+			// Left was adjusted: expand right as far as possible, then push left back for any remainder
 			new_playable_top_right.x = std::min(new_playable_bottom_left.x + 9, new_map_top_right.x);
 			new_playable_bottom_left.x = new_playable_top_right.x - 9;
 		} else if (delta_right != 0) {
-			// right was adjusted: expand left as far as possible, then push right back for any remainder
+			// Right was adjusted: expand left as far as possible, then push right back for any remainder
 			new_playable_bottom_left.x = std::max(new_playable_top_right.x - 9, new_map_bottom_left.x);
 			new_playable_top_right.x = new_playable_bottom_left.x + 9;
 		}
@@ -313,11 +313,11 @@ void MapInfoEditor::adjust_bounds(int delta_left, int delta_right, int delta_top
 
 	if (playable_height < 5) {
 		if (delta_bottom != 0) {
-			// bottom was adjusted: expand top as far as possible, then push bottom back for any remainder
+			// Bottom was adjusted: expand top as far as possible, then push bottom back for any remainder
 			new_playable_top_right.y = std::min(new_playable_bottom_left.y + 5, new_map_top_right.y);
 			new_playable_bottom_left.y = new_playable_top_right.y - 5;
 		} else if (delta_top != 0) {
-			// top was adjusted: expand bottom as far as possible, then push top back for any remainder
+			// Top was adjusted: expand bottom as far as possible, then push top back for any remainder
 			new_playable_bottom_left.y = std::max(new_playable_top_right.y - 5, new_map_bottom_left.y);
 			new_playable_top_right.y = new_playable_bottom_left.y + 5;
 		}

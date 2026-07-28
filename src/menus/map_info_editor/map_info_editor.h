@@ -40,7 +40,7 @@ class MapInfoEditor: public QDialog {
 	void update_bounds_preview() const;
 	void update_bounds_text() const;
 
-	// used for changing map size
+	// Used for changing map size
 	glm::ivec2 old_map_bottom_left;
 	glm::ivec2 old_map_top_right;
 	glm::ivec2 new_map_bottom_left;
