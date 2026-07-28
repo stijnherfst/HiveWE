@@ -230,6 +230,7 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	// Map tab
 	QRibbonTab* map_tab = new QRibbonTab;
 
+	// Map section
 	QRibbonSection* map_section = new QRibbonSection;
 
 	map_description->setIcon(QIcon("data/icons/ribbon/description.png"));
@@ -257,6 +258,35 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 	//map_section->addWidget(map_size_camera_bounds);
 
 	map_tab->addSection(map_section);
+
+	// Scenario section
+	QRibbonSection* scenario_section = new QRibbonSection;
+
+	player_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	player_properties->setText("Player\nProperties");
+	scenario_section->addWidget(player_properties);
+
+	ally_priorities_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	ally_priorities_properties->setText("Ally Priorities\nProperties");
+	scenario_section->addWidget(ally_priorities_properties);
+
+	force_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	force_properties->setText("Force\nProperties");
+	scenario_section->addWidget(force_properties);
+
+	techtree_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	techtree_properties->setText("Techtree\nProperties");
+	scenario_section->addWidget(techtree_properties);
+
+	ability_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	ability_properties->setText("Ability\nProperties");
+	scenario_section->addWidget(ability_properties);
+
+	upgrade_properties->setIcon(QIcon("data/icons/ribbon/options.png"));
+	upgrade_properties->setText("Upgrade\nProperties");
+	scenario_section->addWidget(upgrade_properties);
+
+	map_tab->addSection(scenario_section);
 
 	// Tools tab
 	QRibbonTab* tools_tab = new QRibbonTab;

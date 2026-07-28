@@ -277,8 +277,10 @@ export class MapInfo {
 			.ally_high_priorities_flags = 0,
 			.enemy_low_priorities_flags = 0,
 			.enemy_high_priorities_flags = 0,
-		}};
-		forces = {ForceData {
+		} };
+		trigger_strings.set_string(players[0].name, "Player 1");
+
+		forces = { ForceData {
 			.allied = false,
 			.allied_victory = false,
 			.share_vision = false,
@@ -286,7 +288,9 @@ export class MapInfo {
 			.share_advanced_unit_control = false,
 			.player_masks = static_cast<int>(0xFFFFFFFF),
 			.name = "",
-		}};
+		} };
+		trigger_strings.set_string(forces[0].name, "Force 1");
+
 		available_upgrades.clear();
 		available_tech.clear();
 		random_unit_tables.clear();

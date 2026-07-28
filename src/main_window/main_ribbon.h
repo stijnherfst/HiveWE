@@ -38,6 +38,13 @@ public:
 	QRibbonButton* gameplay_constants = new QRibbonButton;
 	QRibbonButton* map_protection = new QRibbonButton;
 
+	QRibbonButton* player_properties = new QRibbonButton;
+	QRibbonButton* ally_priorities_properties = new QRibbonButton;
+	QRibbonButton* force_properties = new QRibbonButton;
+	QRibbonButton* techtree_properties = new QRibbonButton;
+	QRibbonButton* ability_properties = new QRibbonButton;
+	QRibbonButton* upgrade_properties = new QRibbonButton;
+
 	QRibbonButton* import_heightmap = new QRibbonButton;
 	QRibbonButton* change_tileset = new QRibbonButton;
 	QRibbonButton* change_tile_pathing = new QRibbonButton;
