@@ -139,6 +139,7 @@ target_sources(HiveWE_lib PRIVATE
 
 	"menus/doodad_palette.cpp"
 	"menus/map_info_editor.cpp"
+	"menus/scenario_info_editor.cpp"
 	"menus/map_protection_dialog.cpp"
 	"menus/map_protection_dialog.h"
 	"menus/minimap.cpp"
