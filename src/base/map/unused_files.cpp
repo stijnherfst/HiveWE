@@ -20,6 +20,8 @@ std::vector<FileUsage> Map::get_file_usage() const {
 
 	hive::unordered_map<std::string, std::unordered_set<std::string>> resources;
 
+
+
 	const auto normalize_path = [&](const std::string& path) {
 		auto path_copy = path;
 		// CASC lookup is case-insensitive
@@ -44,15 +46,77 @@ std::vector<FileUsage> Map::get_file_usage() const {
 		}
 	};
 
-	find_references(units_slk, {"file", "portrait", "specialart", "missileart1", "missileart2", "art", "pathtex"});
-	find_references(items_slk, {"file", "art"});
-	find_references(destructibles_slk, {"file", "pathtex", "pathtexdeath"});
-	// TODO: handle doodad variations (use get_mesh machinery)
-	find_references(doodads_slk, {"file", "pathtex"});
+	const auto find_model_references = [&](const slk::SLK& slk) {
+		for (const auto& [id, values] : slk.shadow_data) {
+			const fs::path model_path = slk.data("file", id);
+			if (model_path.empty()) {
+				continue;
+			}
+			resources[normalize_path(model_path.generic_string())].emplace(id);
+		}
+	};
+
+	// We have to handle doodad variations too in file resolving
+	const auto find_doodad_model_references = [&](const slk::SLK& slk, const bool is_doodad) {
+		for (const auto& [id, values] : slk.shadow_data) {
+			const fs::path model_path = slk.data("file", id);
+			if (model_path.empty()) {
+				continue;
+			}
+
+			const fs::path base_path = model_path;
+			const auto variations = slk.data<uint32_t>("numvar", id);
+
+			for (size_t variation = 0; variation < variations; variation += 1) {
+				auto load_path = base_path;
+
+				if (variations != 1) {
+					if (is_doodad) {
+						// For doodads the game directly appends the variation number, even if an extension exists
+						load_path.replace_filename(base_path.filename().string() + std::to_string(variation) + ".mdx");
+					} else {
+						// Destructibles get it properly appended to the filename
+						load_path.replace_filename(base_path.stem().string() + std::to_string(variation));
+					}
+				}
+
+				if (hierarchy.file_exists(load_path, Hierarchy::FileSource::all, {".mdx", ".mdl"})) {
+					resources[normalize_path(load_path.generic_string())].emplace(id);
+				} else {
+					if (is_doodad && variations != 1) {
+						// Doodads with a variation that fails to load will load the base if all variations are missing
+						bool any_variation_exists = false;
+						for (size_t i = 0; i < variations; i++) {
+							auto path = base_path;
+							path.replace_filename(base_path.filename().string() + std::to_string(i) + ".mdx");
+							if (hierarchy.file_exists(path, Hierarchy::FileSource::all, {".mdl", ".mdx"})) {
+								any_variation_exists = true;
+								break;
+							}
+						}
+
+						if (!any_variation_exists) {
+							resources[normalize_path(model_path.generic_string())].emplace(id);
+						}
+					}
+				}
+			}
+		}
+	};
+
+	find_model_references(units_slk);
+	find_model_references(items_slk);
+	find_doodad_model_references(destructibles_slk, false);
+	find_doodad_model_references(doodads_slk, true);
+
+	find_references(units_slk, {"portrait", "specialart", "missileart1", "missileart2", "art", "pathtex"});
+	find_references(items_slk, {"art"});
+	find_references(destructibles_slk, {"pathtex", "pathtexdeath"});
+	find_references(doodads_slk, {"pathtex"});
 	find_references(abilities_slk, {"targetart", "effectart", "specialart", "art", "researchart"});
 	find_references(buff_slk, {"targetart", "missileart", "specialart", "buffart"});
 	// Todo, all icon levels
-	// find_references(upgrade_slk, {"file"});
+	find_references(upgrade_slk, {"file"});
 
 	if (!info.loading_screen_model.empty() && info.loading_screen_number == -1) {
 		resources[normalize_path(info.loading_screen_model)].emplace("loadingscreen");
@@ -80,12 +144,24 @@ std::vector<FileUsage> Map::get_file_usage() const {
 
 		mdx::MDX mdx;
 		try {
-			auto mdx_content = hierarchy.open_file(path);
+			auto mdx_content = hierarchy.open_file(path, Hierarchy::FileSource::all, {".mdx", ".mdl"});
 			if (!mdx_content) {
 				std::println("Error loading mdx: {} with error: {}", path, mdx_content.error());
 				return;
 			}
-			mdx = mdx::MDX(mdx_content.value());
+
+			if (mdx::is_mdx(mdx_content.value())) {
+				mdx = mdx::MDX(mdx_content.value());
+			} else {
+				const auto& buffer = mdx_content.value().buffer;
+				const auto view = std::string_view(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+				auto result = mdx::MDX::from_mdl(view);
+				if (!result.has_value()) {
+					std::println("Error parsing mdl: {} with error: {}", path, result.error());
+					return;
+				}
+				mdx = std::move(result.value());
+			}
 		} catch (const std::exception& e) {
 			std::println("Exception loading mdx: {} with error: {}", path, e.what());
 			return;

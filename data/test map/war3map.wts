@@ -46,29 +46,81 @@ STRING 13
 material_no_layer
 }
 
-STRING 14
-{
-HiveWE Test Map
-}
-
-STRING 15
-{
-Any
-}
-
-STRING 16
-{
-Nondescript
-}
-
-STRING 17
-{
-Unknown
-}
-
 STRING 18
 // Doodads: D008 (emitter2_dynamic_visibility), Name (Name)
 {
 emitter2_dynamic_visibility
+}
+
+STRING 20
+// Destructibles: B000 (one_variation_loads_base), Name (Name)
+{
+one_variation_loads_base
+}
+
+STRING 21
+// Doodads: D00A (two_variations_loads_base), Name (Name)
+{
+two_variations_loads_base
+}
+
+STRING 22
+// Destructibles: B002 (two_variations_loads_variation), Name (Name)
+{
+two_variations_loads_variation
+}
+
+STRING 23
+// Destructibles: B004 (two_variations_missing_variation_1), Name (Name)
+{
+two_variations_missing_variation_1
+}
+
+STRING 24
+// Destructibles: B003 (two_variations_missing_variation_0), Name (Name)
+{
+two_variations_missing_variation_0
+}
+
+STRING 25
+// Destructibles: B001 (two_variations_loads_none), Name (Name)
+{
+two_variations_loads_none
+}
+
+STRING 26
+// Destructibles: B005 (two_variations_has_extension), Name (Name)
+{
+two_variations_has_extension
+}
+
+STRING 27
+// Doodads: D009 (one_variation_loads_base), Name (Name)
+{
+one_variation_loads_base
+}
+
+STRING 28
+// Doodads: D00B (two_variations_loads_variation), Name (Name)
+{
+two_variations_loads_variation
+}
+
+STRING 29
+// Doodads: Dvmy (two_variations_missing_variation_1), Name (Name)
+{
+two_variations_missing_variation_1
+}
+
+STRING 30
+// Doodads: Hlwq (two_variations_missing_variation_0), Name (Name)
+{
+two_variations_missing_variation_0
+}
+
+STRING 31
+// Doodads: D00C (two_variations_has_extension), Name (Name)
+{
+two_variations_has_extension
 }
 
