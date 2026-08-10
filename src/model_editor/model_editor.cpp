@@ -169,17 +169,15 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 
 	std::shared_ptr<mdx::MDX> mdx;
 
-	if (path.extension() == ".mdl" || path.extension() == ".MDL") {
+	if (mdx::is_mdx(file)) {
+		mdx = std::make_shared<mdx::MDX>(file);
+	} else {
 		const auto view = std::string_view(reinterpret_cast<const char*>(file.buffer.data()), file.buffer.size());
 		const auto result = mdx::MDX::from_mdl(view);
 		if (!result.has_value()) {
 			return std::unexpected(result.error());
 		}
 		mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
-	} else if (path.extension() == ".mdx" || path.extension() == ".MDX") {
-		mdx = std::make_shared<mdx::MDX>(file);
-	} else {
-		return std::unexpected("Unsupported file type");
 	}
 
 	auto* dock_tab = dock_manager->createDockWidget("");
