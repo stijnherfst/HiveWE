@@ -397,6 +397,7 @@ void CliffOperator::check_nearby(const int begx, const int begy, std::span<const
 		stack.emplace_back(seed);
 	}
 
+	// DFS visit, BFS could have better locality but at this scale it likely won't make a difference
 	while (!stack.empty()) {
 		const glm::ivec2 current = stack.back();
 		stack.pop_back();
