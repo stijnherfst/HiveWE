@@ -39,6 +39,30 @@ export class DoodadTreeModel : public BaseTreeModel {
 		return categories.begin()->second.item;
 	}
 
+	static constexpr char cliffCategory = 'C';
+
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (!target->baseCategory) {
+			return {};
+		}
+
+		const char category = rowToCategory[target->row()];
+		const std::string_view current = doodads_slk.data<std::string_view>("category", id);
+
+		const bool wasCliff = !current.empty() && current.front() == cliffCategory;
+		const bool isCliff = category == cliffCategory;
+
+		std::vector<std::pair<std::string, std::string>> fields = { { "category", std::string(1, category) } };
+
+		if (wasCliff != isCliff) {
+			return { DropChange::Verdict::confirm,
+					 "Moving doodads into or out of the Cliff/Terrain category is a functional change.\n\nAre you sure?",
+					 fields };
+		}
+
+		return { DropChange::Verdict::accept, {}, fields };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -86,5 +110,6 @@ export class DoodadTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "category" };
+		mimeType = "application/x-hivewe-doodads";
 	}
 };

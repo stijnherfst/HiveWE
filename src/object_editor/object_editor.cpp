@@ -257,6 +257,11 @@ void ObjectEditor::addTypeTreeView(
 	view->setSelectionBehavior(QAbstractItemView::SelectRows);
 	view->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	view->setUniformRowHeights(true);
+	view->setDragDropMode(QAbstractItemView::DragDrop);
+	view->setDragEnabled(true);
+	view->setAcceptDrops(true);
+	view->setDropIndicatorShown(true);
+	view->setDefaultDropAction(Qt::MoveAction);
 	view->expandAll();
 
 	connect(view, &QTreeView::customContextMenuRequested, [=, this](const QPoint& pos) {
@@ -323,7 +328,7 @@ void ObjectEditor::addTypeTreeView(
 
 			QLineEdit* id = new QLineEdit;
 			id->setPlaceholderText("Free ID");
-			id->setText(QString::fromStdString(map->get_unique_id(false)));
+			id->setText(QString::fromStdString(get_unique_id(false)));
 			id->setFont(QFont("consolas"));
 
 			// error icon inside the id field, hidden by default
@@ -414,7 +419,7 @@ void ObjectEditor::addTypeTreeView(
 					nameEdit->setText(sub_filter->data(current).toString());
 					const BaseTreeItem* treeItem = static_cast<BaseTreeItem*>(sub_filter->mapToSource(current).internalPointer());
 					if (!(treeItem->baseCategory || treeItem->subCategory)) {
-						id->setText(QString::fromStdString(map->get_unique_id(!islower(treeItem->id.front()))));
+						id->setText(QString::fromStdString(get_unique_id(!islower(treeItem->id.front()))));
 					}
 					is_valid();
 				}

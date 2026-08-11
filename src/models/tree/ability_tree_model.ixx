@@ -46,6 +46,35 @@ export class AbilityTreeModel : public BaseTreeModel {
 		return found_race->second.item->children[subIndex];
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (target->baseCategory) {
+			// Only the race changes, the sub category stays the same
+			return { DropChange::Verdict::accept, {}, { { "race", rowToCategory[target->row()] } } };
+		}
+
+		if (!target->subCategory) {
+			return {};
+		}
+
+		std::vector<std::pair<std::string, std::string>> fields = { { "race", rowToCategory[target->parent->row()] } };
+		switch (target->row()) {
+			case 0: // Units
+				fields.emplace_back("hero", "0");
+				fields.emplace_back("item", "0");
+				break;
+			case 1: // Heroes
+				fields.emplace_back("hero", "1");
+				fields.emplace_back("item", "0");
+				break;
+			case 2: // Items
+				fields.emplace_back("hero", "0");
+				fields.emplace_back("item", "1");
+				break;
+		}
+
+		return { DropChange::Verdict::accept, {}, fields };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -104,5 +133,6 @@ export class AbilityTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "race", "hero", "item" };
+		mimeType = "application/x-hivewe-abilities";
 	}
 };

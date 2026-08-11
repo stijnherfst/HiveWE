@@ -831,25 +831,6 @@ export class Map: public QObject {
 	/// Also updates the pathing map and deletes units/items which are now out of bounds
 	void set_playable_area(int unplayable_left, int unplayable_right, int unplayable_top, int unplayable_bottom);
 
-	std::string get_unique_id(bool first_uppercase) {
-		std::random_device rd;
-		std::mt19937 mt(rd());
-		std::uniform_int_distribution<int> dist(0, 25);
-	again:
-
-		std::string id =
-			""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
-
-		if (units_slk.row_headers.contains(id) || items_slk.row_headers.contains(id) || abilities_slk.row_headers.contains(id)
-			|| doodads_slk.row_headers.contains(id) || destructibles_slk.row_headers.contains(id) || upgrade_slk.row_headers.contains(id)
-			|| buff_slk.row_headers.contains(id)) {
-			std::print("Generated an existing ID: {} what're the odds\n", id);
-			goto again;
-		}
-
-		return id;
-	}
-
 	/// Returns a list containing all the custom resources in the map folder with how many times they are referenced.
 	/// Note that this isn't exhaustive as we cannot detect confidently whether all game file overrides are used.
 	/// We also scan the map code for the file path (with forward slashed),

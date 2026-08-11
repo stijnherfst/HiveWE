@@ -30,6 +30,14 @@ export class UpgradeTreeModel : public BaseTreeModel {
 		return categories.at(race).item;
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (!target->baseCategory) {
+			return {};
+		}
+
+		return { DropChange::Verdict::accept, {}, { { "race", rowToCategory[target->row()] } } };
+	}
+
 	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override {
 		if (!proxyIndex.isValid()) {
 			return {};
@@ -105,5 +113,6 @@ export class UpgradeTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "race" };
+		mimeType = "application/x-hivewe-upgrades";
 	}
 };
