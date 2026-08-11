@@ -96,7 +96,9 @@ export class Terrain: public QObject {
 	std::vector<glm::uvec4> gpu_ground_texture_list;
 	std::vector<GLuint64> gpu_ground_texture_handles;
 	/// One per tile, not per corner. So (width - 1) * (height - 1)
+	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
 	std::vector<std::uint32_t> gpu_ground_exists_data;
+	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
 	std::vector<uint32_t> gpu_water_exists_data;
 
 	btHeightfieldTerrainShape* collision_shape;
@@ -433,10 +435,10 @@ export class Terrain: public QObject {
 
 		setup_collision_shape(physics);
 
-		update_ground_heights({0, 0, width - 1, height - 1});
+		update_ground_heights({0, 0, width, height});
 		update_cliff_meshes({0, 0, width - 1, height - 1});
 		update_ground_textures({0, 0, width, height});
-		update_water({0, 0, width - 1, height - 1});
+		update_water({0, 0, width, height});
 
 		emit minimap_changed(minimap_image());
 	}
@@ -482,14 +484,14 @@ export class Terrain: public QObject {
 	}
 
 	void render_ground(
-		bool render_pathing,
-		bool render_lighting,
-		glm::vec3 light_direction,
-		Brush* brush,
-		PathingMap& pathing_map,
+		const bool render_pathing,
+		const bool render_lighting,
+		const glm::vec3 light_direction,
+		const Brush* brush,
+		const PathingMap& pathing_map,
 		bool render_regions,
-		GLuint regions_buffer,
-		int region_count
+		const GLuint regions_buffer,
+		const int region_count
 	) const {
 		// Render tiles
 		ground_shader->use();
@@ -635,7 +637,7 @@ export class Terrain: public QObject {
 			// ToDo: this will force the editor to load correct water textures, but it won't reload other tileset specific assets
 			resource_manager.clear();
 			reload_water_textures(tilesets);
-			update_water({0, 0, width - 1, height - 1});
+			update_water({0, 0, width, height});
 		}
 
 		// update ground and cliff times, the game supports up to 15 cliff textures
