@@ -389,11 +389,9 @@ export class Map: public QObject {
 		gameplay_constants.load();
 
 		info.load();
-		profile_reset();
 		terrain.load(physics, tilesets);
 
 		std::println("Terrain loading: {:>5}ms", timer.elapsed_ms());
-		profile_print();
 		timer.reset();
 
 		// Pathing Map
@@ -423,13 +421,11 @@ export class Map: public QObject {
 			load_modification_file("war3mapSkin.w3b", destructibles_slk, destructibles_meta_slk, false);
 		}
 
-		profile_reset();
 		doodads.load(terrain, info);
 		doodads.create(terrain, pathing_map);
 		glFinish(); // Ensure all GL work submitted on worker contexts is visible to the main context
 
 		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
-		profile_print();
 		timer.reset();
 
 		if (hierarchy.map_file_exists("war3map.w3u")) {
@@ -449,7 +445,6 @@ export class Map: public QObject {
 		}
 
 		// Units/Items
-		profile_reset();
 		if (hierarchy.map_file_exists("war3mapUnits.doo")) {
 			units.load(terrain, info);
 			units.create();
@@ -457,7 +452,6 @@ export class Map: public QObject {
 		}
 
 		std::println("Unit loading:\t {:>5}ms", timer.elapsed_ms());
-		profile_print();
 		timer.reset();
 
 		// Abilities
@@ -652,7 +646,6 @@ export class Map: public QObject {
 		save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
 		regions.save(terrain.offset.x, terrain.offset.y);
-		info.update_hive_version();
 		info.save(terrain.tileset_id);
 
 		trigger_strings.save();
@@ -837,25 +830,6 @@ export class Map: public QObject {
 	/// Handles the terrain flags, camera bounds and map info
 	/// Also updates the pathing map and deletes units/items which are now out of bounds
 	void set_playable_area(int unplayable_left, int unplayable_right, int unplayable_top, int unplayable_bottom);
-
-	std::string get_unique_id(bool first_uppercase) {
-		std::random_device rd;
-		std::mt19937 mt(rd());
-		std::uniform_int_distribution<int> dist(0, 25);
-	again:
-
-		std::string id =
-			""s + char((first_uppercase ? 'A' : 'a') + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt)) + char('a' + dist(mt));
-
-		if (units_slk.row_headers.contains(id) || items_slk.row_headers.contains(id) || abilities_slk.row_headers.contains(id)
-			|| doodads_slk.row_headers.contains(id) || destructibles_slk.row_headers.contains(id) || upgrade_slk.row_headers.contains(id)
-			|| buff_slk.row_headers.contains(id)) {
-			std::print("Generated an existing ID: {} what're the odds\n", id);
-			goto again;
-		}
-
-		return id;
-	}
 
 	/// Returns a list containing all the custom resources in the map folder with how many times they are referenced.
 	/// Note that this isn't exhaustive as we cannot detect confidently whether all game file overrides are used.

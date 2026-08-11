@@ -53,6 +53,56 @@ export class UnitTreeModel : public BaseTreeModel {
 		}
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (target->baseCategory) {
+			// Only the race changes, the sub category (including Heroes) stays the same
+			return { DropChange::Verdict::accept, {}, { { "race", rowToCategory[target->row()] } } };
+		}
+
+		if (!target->subCategory) {
+			return {};
+		}
+
+		// Whether a unit is a hero follows from the capitalization of its ID, so no field can move it into or out
+		// of the Heroes folder. Dropping a hero on the Heroes folder of another race is fine as only the race changes
+		const bool isHero = isupper(id.front());
+		if (isHero != (target->row() == 2)) {
+			return {};
+		}
+
+		if (isHero) {
+			return { DropChange::Verdict::accept, {}, { { "race", rowToCategory[target->parent->row()] } } };
+		}
+
+		const bool wasBuilding = units_slk.data<bool>("isbldg", id);
+		bool isBuilding = wasBuilding;
+
+		std::vector<std::pair<std::string, std::string>> fields = { { "race", rowToCategory[target->parent->row()] } };
+		switch (target->row()) {
+			case 0: // Units
+				fields.emplace_back("isbldg", "0");
+				fields.emplace_back("special", "0");
+				isBuilding = false;
+				break;
+			case 1: // Buildings
+				fields.emplace_back("isbldg", "1");
+				fields.emplace_back("special", "0");
+				isBuilding = true;
+				break;
+			case 3: // Special units are allowed to be buildings, so isbldg is left alone
+				fields.emplace_back("special", "1");
+				break;
+		}
+
+		if (isBuilding != wasBuilding) {
+			return { DropChange::Verdict::confirm,
+					 "Moving units between the Units and Buildings folders changes whether they are a building, which is a functional change.\n\nAre you sure?",
+					 fields };
+		}
+
+		return { DropChange::Verdict::accept, {}, fields };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -114,6 +164,7 @@ export class UnitTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "race", "isbldg", "special" };
+		mimeType = "application/x-hivewe-units";
 	}
 };
 

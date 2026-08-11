@@ -32,6 +32,14 @@ export class ItemTreeModel : public BaseTreeModel {
 		return categories.at(itemClass).item;
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (!target->baseCategory) {
+			return {};
+		}
+
+		return { DropChange::Verdict::accept, {}, { { "class", rowToCategory[target->row()] } } };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -81,5 +89,6 @@ export class ItemTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "class" };
+		mimeType = "application/x-hivewe-items";
 	}
 };

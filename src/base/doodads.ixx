@@ -15,7 +15,7 @@ import BinaryWriter;
 import Hierarchy;
 import ResourceManager;
 import SkinnedMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import PathingTexture;
 import Utilities;
 import Globals;
@@ -182,55 +182,55 @@ export class Doodads {
 		// Phase 1: Pre-load unique meshes to avoid thread pool starvation.
 		// Without this, multiple threads block on shared_future::get() inside ResourceManager
 		// while only 1 thread actually constructs the shared mesh.
-		{
-			std::unordered_set<std::string> seen;
-			std::vector<std::future<void>> mesh_futures;
-
-			for (const auto& i : doodads) {
-				std::string key = i.id + std::to_string(i.variation);
-				if (seen.insert(key).second) {
-					std::string id = i.id;
-					int variation = i.variation;
-					mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
-						get_mesh(id, variation);
-					}));
-				}
-			}
-			for (const auto& i : special_doodads) {
-				std::string key = i.id + std::to_string(i.variation);
-				if (seen.insert(key).second) {
-					std::string id = i.id;
-					int variation = i.variation;
-					mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
-						get_mesh(id, variation);
-					}));
-				}
-			}
-
-			for (auto& f : mesh_futures) {
-				f.get();
-			}
-		}
+		// {
+		// 	std::unordered_set<std::string> seen;
+		// 	std::vector<std::future<void>> mesh_futures;
+		//
+		// 	for (const auto& i : doodads) {
+		// 		std::string key = i.id + std::to_string(i.variation);
+		// 		if (seen.insert(key).second) {
+		// 			std::string id = i.id;
+		// 			int variation = i.variation;
+		// 			mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
+		// 				get_mesh(id, variation);
+		// 			}));
+		// 		}
+		// 	}
+		// 	for (const auto& i : special_doodads) {
+		// 		std::string key = i.id + std::to_string(i.variation);
+		// 		if (seen.insert(key).second) {
+		// 			std::string id = i.id;
+		// 			int variation = i.variation;
+		// 			mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
+		// 				get_mesh(id, variation);
+		// 			}));
+		// 		}
+		// 	}
+		//
+		// 	for (auto& f : mesh_futures) {
+		// 		f.get();
+		// 	}
+		// }
 
 		// Phase 2: Init doodads. All meshes are now cached in id_to_mesh,
 		// so get_mesh() returns immediately without blocking in ResourceManager.
 		std::vector<std::future<void>> futures;
-		futures.reserve(doodads.size() + special_doodads.size());
+		// futures.reserve(doodads.size() + special_doodads.size());
 
 		for (auto& i : doodads) {
-			futures.push_back(gl_thread_pool.submit([&] {
+			// futures.push_back(gl_thread_pool.submit([&] {
 				i.init(i.id, get_mesh(i.id, i.variation), terrain);
-			}));
+			// }));
 		}
 		for (auto& i : special_doodads) {
-			futures.push_back(gl_thread_pool.submit([&] {
+			// futures.push_back(gl_thread_pool.submit([&] {
 				i.init(i.id, get_mesh(i.id, i.variation), terrain);
-			}));
+			// }));
 		}
-
-		for (auto& f : futures) {
-			f.get();
-		}
+		//
+		// for (auto& f : futures) {
+		// 	f.get();
+		// }
 
 		// Blit doodad pathing
 		for (const auto& i : doodads) {
@@ -257,7 +257,7 @@ export class Doodads {
 		doodad.scale = {1, 1, 1};
 		doodad.angle = 0;
 		doodad.creation_number = ++Doodad::auto_increment;
-		doodad.skeleton = SkeletalModelInstance(doodad.mesh->mdx);
+		doodad.skeleton = Skeleton(doodad.mesh->mdx);
 
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -405,7 +405,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+					i.skeleton = Skeleton(i.mesh->mdx);
 					i.update(terrain);
 				}
 			}
@@ -447,7 +447,7 @@ export class Doodads {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id, i.variation);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx);
+					i.skeleton = Skeleton(i.mesh->mdx);
 					i.update(terrain);
 					i.skeleton.update(0.016f);
 				}
@@ -488,10 +488,8 @@ export class Doodads {
 
 		const bool is_doodad = doodads_slk.row_headers.contains(id);
 		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-
-		fs::path mesh_path = string_replaced(slk.data("file", id), "\\", "/");
-		const std::string variations = slk.data("numvar", id);
-		const std::string stem = mesh_path.stem().string();
+		const fs::path base_path = string_replaced(slk.data<std::string_view>("file", id), "\\", "/");
+		const auto variations = slk.data<std::string_view>("numvar", id);
 
 		std::string custom_identifier;
 		std::optional<std::pair<int, std::string>> replaceable;
@@ -504,18 +502,42 @@ export class Doodads {
 			}
 		}
 
-		mesh_path.replace_filename(stem + (variations == "1" ? "" : std::to_string(variation)));
+		auto load_path = base_path;
 
-		auto result = resource_manager.load<SkinnedMesh>(mesh_path, custom_identifier, replaceable);
+		if (variations != "1") {
+			if (is_doodad) {
+				// For doodads the game directly appends the variation number, even if an extension exists
+				load_path.replace_filename(base_path.filename().string() + std::to_string(variation) + ".mdx");
+			} else {
+				// Destructibles get it properly appended to the filename
+				load_path.replace_filename(base_path.stem().string() + std::to_string(variation));
+			}
+		}
 
-		if (!result && is_doodad) {
-			// Use base model when variation doesn't exist, only for doodads (WE/game behaviour)
-			mesh_path.replace_filename(stem);
-			result = resource_manager.load<SkinnedMesh>(mesh_path, custom_identifier, replaceable);
+		auto result = resource_manager.load<SkinnedMesh>(load_path, custom_identifier, replaceable);
+
+		// Doodads with a variation that fails to load will:
+		// - Load the base if all variations are missing
+		// - Load the sentinel invalid model if at least one variation is present
+		if (!result && is_doodad && variations != "1") {
+			const auto variations_int = slk.data<uint32_t>("numvar", id);
+			bool any_variation_exists = false;
+			for (size_t i = 0; i < variations_int; i++) {
+				auto path = base_path;
+				path.replace_filename(base_path.filename().string() + std::to_string(i) + ".mdx");
+				if (hierarchy.file_exists(path, Hierarchy::FileSource::all, {".mdl", ".mdx"})) {
+					any_variation_exists = true;
+					break;
+				}
+			}
+
+			if (!any_variation_exists) {
+				result = resource_manager.load<SkinnedMesh>(base_path, "", replaceable);
+			}
 		}
 
 		if (!result) {
-			std::println("Invalid model file for {} with file path: {} ({})", id, mesh_path.string(), result.error());
+			std::println("Invalid model file for {} with file path: {} ({})", id, load_path.string(), result.error());
 			result = resource_manager.load<SkinnedMesh>("Objects/Invalidmodel/Invalidmodel.mdx", "", std::nullopt);
 		}
 

@@ -17,6 +17,8 @@ class IconModel : public QAbstractListModel {
 		return static_cast<int>(icons.size());
 	}
 
+	std::shared_ptr<QIconResource> invalid_icon;
+
 public:
 	explicit IconModel(QObject* parent = nullptr);
 

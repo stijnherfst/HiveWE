@@ -37,6 +37,21 @@ export class BuffTreeModel : public BaseTreeModel {
 		return categories.at(race).item->children[subIndex];
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (target->baseCategory) {
+			// Only the race changes, the sub category stays the same
+			return { DropChange::Verdict::accept, {}, { { "race", rowToCategory[target->row()] } } };
+		}
+
+		if (!target->subCategory) {
+			return {};
+		}
+
+		return { DropChange::Verdict::accept,
+				 {},
+				 { { "race", rowToCategory[target->parent->row()] }, { "iseffect", target->row() == 1 ? "1" : "0" } } };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -101,5 +116,6 @@ export class BuffTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "race", "iseffect" };
+		mimeType = "application/x-hivewe-buffs";
 	}
 };

@@ -32,6 +32,14 @@ export class DestructibleTreeModel : public BaseTreeModel {
 		return categories.at(category.front()).item;
 	}
 
+	DropChange prepareDrop(const std::string& id, const BaseTreeItem* target) const override {
+		if (!target->baseCategory) {
+			return {};
+		}
+
+		return { DropChange::Verdict::accept, {}, { { "category", std::string(1, rowToCategory[target->row()]) } } };
+	}
+
   public:
 	QVariant data(const QModelIndex& index, int role) const override {
 		if (!index.isValid()) {
@@ -78,5 +86,6 @@ export class DestructibleTreeModel : public BaseTreeModel {
 		}
 
 		categoryChangeFields = { "category" };
+		mimeType = "application/x-hivewe-destructibles";
 	}
 };

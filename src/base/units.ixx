@@ -9,7 +9,7 @@ import std;
 import GLThreadPool;
 import Utilities;
 import SkinnedMesh;
-import SkeletalModelInstance;
+import Skeleton;
 import MapInfo;
 import BinaryReader;
 import BinaryWriter;
@@ -66,7 +66,7 @@ export struct Unit {
 	int waygate = -1;
 	int creation_number;
 
-	SkeletalModelInstance skeleton;
+	Skeleton skeleton;
 	std::shared_ptr<SkinnedMesh> mesh;
 	glm::vec3 color;
 
@@ -351,14 +351,14 @@ export class Units {
 
 			futures.push_back(gl_thread_pool.submit([&] {
 				i.mesh = get_mesh(i.id);
-				i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
+				i.skeleton = Skeleton(i.mesh->mdx, get_required_animation_names(i.id));
 				i.update();
 			}));
 		}
 		for (auto& i : items) {
 			futures.push_back(gl_thread_pool.submit([&] {
 				i.mesh = get_mesh(i.id);
-				i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(i.id));
+				i.skeleton = Skeleton(i.mesh->mdx, get_required_animation_names(i.id));
 				i.update();
 			}));
 		}
@@ -370,7 +370,7 @@ export class Units {
 
 	// Will assign a unique creation number
 	Unit& add_unit(std::string id, glm::vec3 position) {
-		// ToDo change this once SkeletalModelInstance doesn't use pointers anymore
+		// ToDo change this once Skeleton doesn't use pointers anymore
 		units.push_back(Unit());
 		Unit& unit = units.back();
 		unit.id = id;
@@ -381,7 +381,7 @@ export class Units {
 		unit.angle = 0.f;
 		unit.random = {1, 0, 0, 0};
 		unit.creation_number = ++Unit::auto_increment;
-		unit.skeleton = SkeletalModelInstance(unit.mesh->mdx, get_required_animation_names(id));
+		unit.skeleton = Skeleton(unit.mesh->mdx, get_required_animation_names(id));
 		unit.update();
 
 		return units.back();
@@ -428,7 +428,7 @@ export class Units {
 			for (auto& i : units) {
 				if (i.id == id) {
 					i.mesh = get_mesh(id);
-					i.skeleton = SkeletalModelInstance(i.mesh->mdx, get_required_animation_names(id));
+					i.skeleton = Skeleton(i.mesh->mdx, get_required_animation_names(id));
 					i.update();
 				}
 			}

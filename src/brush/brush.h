@@ -45,7 +45,7 @@ class Brush: public QObject {
 
 	virtual void switch_mode();
 
-	Mode get_mode() {
+	Mode get_mode() const {
 		return mode;
 	}
 

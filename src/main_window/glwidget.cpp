@@ -219,24 +219,34 @@ void GLWidget::paintGL() {
 		p.drawText(175, 65, QString::fromStdString(std::format("Camera Horizontal Angle: {:.4f}", camera.horizontal_angle)));
 		p.drawText(175, 80, QString::fromStdString(std::format("Camera Vertical Angle: {:.4f}", camera.vertical_angle)));
 
-		const glm::ivec2 terrain_index = input_handler.mouse_world;
-		const auto corner = map->terrain.get_corner(terrain_index.x, terrain_index.y);
-		p.drawText(550, 20, QString::fromStdString(std::format("Tile info")));
-		p.drawText(550, 35, QString::fromStdString(std::format("Cliff: {}", corner.cliff)));
-		p.drawText(550, 50, QString::fromStdString(std::format("Blight: {}", corner.blight)));
-		p.drawText(550, 65, QString::fromStdString(std::format("Boundary: {}", corner.boundary)));
-		p.drawText(550, 80, QString::fromStdString(std::format("Cliff texture: {}", corner.cliff_texture)));
-		p.drawText(550, 95, QString::fromStdString(std::format("Cliff variation: {}", corner.cliff_variation)));
-		p.drawText(550, 110, QString::fromStdString(std::format("Ground texture: {}", corner.ground_texture)));
-		p.drawText(550, 125, QString::fromStdString(std::format("Ground variation: {}", corner.ground_variation)));
-		p.drawText(550, 140, QString::fromStdString(std::format("Height: {}", corner.height)));
-		p.drawText(550, 155, QString::fromStdString(std::format("Layer height: {}", corner.layer_height)));
-		p.drawText(550, 170, QString::fromStdString(std::format("Map edge: {}", corner.map_edge)));
-		p.drawText(550, 185, QString::fromStdString(std::format("Ramp: {}", corner.ramp)));
-		p.drawText(550, 200, QString::fromStdString(std::format("Romp: {}", corner.romp)));
-		p.drawText(550, 215, QString::fromStdString(std::format("Special doodad: {}", corner.special_doodad)));
-		p.drawText(550, 230, QString::fromStdString(std::format("Water: {}", corner.water)));
-		p.drawText(550, 245, QString::fromStdString(std::format("Water height: {}", corner.water_height)));
+		auto draw_corner_info = [&](const glm::ivec2 terrain_index, int x, int y) {
+			if (terrain_index.x < 0 || terrain_index.y < 0 || terrain_index.x >= map->terrain.width || terrain_index.y >= map->terrain.height) {
+				return;
+			}
+
+			const auto corner = map->terrain.get_corner(terrain_index.x, terrain_index.y);
+			p.drawText(x, y + 20, QString::fromStdString(std::format("Tile info")));
+			p.drawText(x, y + 35, QString::fromStdString(std::format("Cliff: {}", corner.cliff)));
+			p.drawText(x, y + 50, QString::fromStdString(std::format("Blight: {}", corner.blight)));
+			p.drawText(x, y + 65, QString::fromStdString(std::format("Boundary: {}", corner.boundary)));
+			p.drawText(x, y + 80, QString::fromStdString(std::format("Cliff texture: {}", corner.cliff_texture)));
+			p.drawText(x, y + 95, QString::fromStdString(std::format("Cliff variation: {}", corner.cliff_variation)));
+			p.drawText(x, y + 110, QString::fromStdString(std::format("Ground texture: {}", corner.ground_texture)));
+			p.drawText(x, y + 125, QString::fromStdString(std::format("Ground variation: {}", corner.ground_variation)));
+			p.drawText(x, y + 140, QString::fromStdString(std::format("Height: {}", corner.height)));
+			p.drawText(x, y + 155, QString::fromStdString(std::format("Layer height: {}", corner.layer_height)));
+			p.drawText(x, y + 170, QString::fromStdString(std::format("Map edge: {}", corner.map_edge)));
+			p.drawText(x, y + 185, QString::fromStdString(std::format("Ramp: {}", corner.ramp)));
+			p.drawText(x, y + 200, QString::fromStdString(std::format("Romp: {}", corner.romp)));
+			p.drawText(x, y + 215, QString::fromStdString(std::format("Special doodad: {}", corner.special_doodad)));
+			p.drawText(x, y + 230, QString::fromStdString(std::format("Water: {}", corner.water)));
+			p.drawText(x, y + 245, QString::fromStdString(std::format("Water height: {}", corner.water_height)));
+		};
+
+		draw_corner_info(glm::ivec2(input_handler.mouse_world), 550, 280);
+		draw_corner_info(glm::ivec2(input_handler.mouse_world) + glm::ivec2(1, 0), 750, 280);
+		draw_corner_info(glm::ivec2(input_handler.mouse_world) + glm::ivec2(0, 1), 550, 0);
+		draw_corner_info(glm::ivec2(input_handler.mouse_world) + glm::ivec2(1, 1), 750, 0);
 
 		p.end();
 

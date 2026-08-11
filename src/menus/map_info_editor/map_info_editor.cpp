@@ -3,7 +3,7 @@
 #include <QMessageBox>
 #include <QPainter>
 
-import std;
+import <filesystem>;
 import SLK;
 import Utilities;
 import MapGlobal;
@@ -16,16 +16,16 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	setup_description();
-	setup_loading_screen();
-	setup_options();
-	setup_map_size();
+	const MapInfo& info = map->info;
+	setup_description(info, map->trigger_strings);
+	setup_loading_screen(info, map->trigger_strings, map->filesystem_path);
+	setup_options(info, map->tilesets);
+	setup_map_size(map->terrain, info);
 
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
-		if (save()) {
-			emit accept();
-			close();
-		}
+		save();
+		emit accept();
+		close();
 	});
 
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
@@ -36,13 +36,9 @@ MapInfoEditor::MapInfoEditor(QWidget* parent) : QDialog(parent) {
 	show();
 }
 
-bool MapInfoEditor::save() const {
-	bool saved = true;
-
-	saved &= save_description();
-	saved &= save_loading_screen();
-	saved &= save_options();
-	saved &= save_map_size();
-
-	return saved;
+void MapInfoEditor::save() const {
+	save_description(map->info, map->trigger_strings);
+	save_loading_screen(map->info, map->trigger_strings);
+	save_options(map->info);
+	save_map_size(*map);
 }

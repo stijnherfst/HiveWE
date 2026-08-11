@@ -96,7 +96,9 @@ export class Terrain: public QObject {
 	std::vector<glm::uvec4> gpu_ground_texture_list;
 	std::vector<GLuint64> gpu_ground_texture_handles;
 	/// One per tile, not per corner. So (width - 1) * (height - 1)
+	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
 	std::vector<std::uint32_t> gpu_ground_exists_data;
+	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
 	std::vector<uint32_t> gpu_water_exists_data;
 
 	btHeightfieldTerrainShape* collision_shape;
@@ -433,10 +435,10 @@ export class Terrain: public QObject {
 
 		setup_collision_shape(physics);
 
-		update_ground_heights({0, 0, width - 1, height - 1});
+		update_ground_heights({0, 0, width, height});
 		update_cliff_meshes({0, 0, width - 1, height - 1});
 		update_ground_textures({0, 0, width, height});
-		update_water({0, 0, width - 1, height - 1});
+		update_water({0, 0, width, height});
 
 		emit minimap_changed(minimap_image());
 	}
@@ -482,14 +484,14 @@ export class Terrain: public QObject {
 	}
 
 	void render_ground(
-		bool render_pathing,
-		bool render_lighting,
-		glm::vec3 light_direction,
-		Brush* brush,
-		PathingMap& pathing_map,
+		const bool render_pathing,
+		const bool render_lighting,
+		const glm::vec3 light_direction,
+		const Brush* brush,
+		const PathingMap& pathing_map,
 		bool render_regions,
-		GLuint regions_buffer,
-		int region_count
+		const GLuint regions_buffer,
+		const int region_count
 	) const {
 		// Render tiles
 		ground_shader->use();
@@ -629,15 +631,13 @@ export class Terrain: public QObject {
 		const MapInfo& info
 	) {
 		// change base tileset if needed
-		// also, clear the resource manager cache to force the editor
-		// to reload tileset specific assets, like water textures
 		if (tileset_id != new_tileset) {
 			tileset_id = new_tileset;
 			hierarchy.tileset = new_tileset;
+			// ToDo: this will force the editor to load correct water textures, but it won't reload other tileset specific assets
 			resource_manager.clear();
 			reload_water_textures(tilesets);
-			update_water({0, 0, width - 1, height - 1});
-			render_water(info, tilesets);
+			update_water({0, 0, width, height});
 		}
 
 		// update ground and cliff times, the game supports up to 15 cliff textures
@@ -833,7 +833,7 @@ export class Terrain: public QObject {
 	}
 
 	/// Constructs a minimap image with tile, cliff, and water colors. Other objects such as doodads will not be added here
-	Texture minimap_image() {
+	Texture minimap_image() const {
 		Texture new_minimap_image;
 
 		new_minimap_image.width = width;
@@ -1027,6 +1027,24 @@ export class Terrain: public QObject {
 		upload_water_heights();
 	}
 
+	/// Returns the cliff mesh index for the given path, loading and caching it on first use.
+	/// Returns nullopt if the mesh could not be loaded.
+	std::optional<uint8_t> load_cliff(const std::string& file_name) {
+		if (const auto it = path_to_cliff.find(file_name); it != path_to_cliff.end()) {
+			return it->second;
+		}
+
+		const auto mesh = resource_manager.load<CliffMesh>(file_name);
+		if (!mesh) {
+			return std::nullopt;
+		}
+
+		cliff_meshes.push_back(mesh.value());
+		const auto index = static_cast<uint8_t>(cliff_meshes.size() - 1);
+		path_to_cliff.emplace(file_name, index);
+		return index;
+	}
+
 	/// Updates the cliff and ramp meshes for an area
 	void update_cliff_meshes(const TerrainRect& area) {
 		// Remove all existing cliff meshes in area
@@ -1068,13 +1086,8 @@ export class Terrain: public QObject {
 								+ char((corner_ramp[bl] ? 'L' : 'A') + (corner_layer_height[bl] - base) * (corner_ramp[bl] ? -4 : 1));
 
 							file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-							if (hierarchy.file_exists(file_name)) {
-								if (!path_to_cliff.contains(file_name)) {
-									cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name).value());
-									path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-								}
-
-								cliffs.emplace_back(i, j, path_to_cliff[file_name]);
+							if (const auto cliff = load_cliff(file_name)) {
+								cliffs.emplace_back(i, j, cliff.value());
 								corner_romp[bl] = true;
 								corner_romp[tl] = true;
 
@@ -1102,13 +1115,8 @@ export class Terrain: public QObject {
 								+ char((corner_ramp[bl] ? 'L' : 'A') + (corner_layer_height[bl] - base) * (corner_ramp[bl] ? -4 : 1));
 
 							file_name = "doodads/terrain/clifftrans/clifftrans" + file_name + "0.mdx";
-							if (hierarchy.file_exists(file_name)) {
-								if (!path_to_cliff.contains(file_name)) {
-									cliff_meshes.push_back(resource_manager.load<CliffMesh>(file_name).value());
-									path_to_cliff.emplace(file_name, static_cast<int>(cliff_meshes.size()) - 1);
-								}
-
-								cliffs.emplace_back(i, j, path_to_cliff[file_name]);
+							if (const auto cliff = load_cliff(file_name)) {
+								cliffs.emplace_back(i, j, cliff.value());
 								corner_romp[bl] = true;
 								corner_romp[br] = true;
 

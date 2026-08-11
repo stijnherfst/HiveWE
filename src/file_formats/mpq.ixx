@@ -170,8 +170,8 @@ namespace mpq {
 			}
 		}
 
-		void file_remove(const fs::path& path) const {
-			SFileRemoveFile(handle, path.string().c_str(), 0);
+		bool file_remove(const fs::path& path) const {
+			return SFileRemoveFile(handle, path.string().c_str(), 0);
 		}
 
 		bool file_exists(const fs::path& path) const {

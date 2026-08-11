@@ -17,13 +17,13 @@ import Units;
 import SkinnedMesh;
 import PathingTexture;
 import UnitsUndo;
-import SkeletalModelInstance;
+import Skeleton;
 
 class UnitBrush : public Brush {
 	std::string id;
 
 	std::shared_ptr<SkinnedMesh> mesh;
-	SkeletalModelInstance skeleton;
+	Skeleton skeleton;
 
   public:
 	float rotation = 0.f;
