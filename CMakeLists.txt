@@ -77,7 +77,7 @@ if(GIT_FOUND)
 
 	if(GIT_DIRTY_RESULT)
 		set(HIVEWE_GIT_DIRTY true)
-	else ()
+	else()
 		set(HIVEWE_GIT_DIRTY false)
 	endif()
 endif()
@@ -165,7 +165,7 @@ target_compile_definitions(HiveWE_lib PUBLIC
 if(TRACY_ENABLE)
 	target_link_libraries(HiveWE_lib PUBLIC Tracy::TracyClient)
 	target_compile_definitions(HiveWE_lib PUBLIC TRACY_ENABLE)
-else ()
+else()
 	# Headers must still resolve so `#include <tracy/Tracy.hpp>` (with no-op
 	# macros) compiles
 	target_include_directories(HiveWE_lib PUBLIC
@@ -178,7 +178,7 @@ endif()
 
 if(WIN32)
 	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc)
-else ()
+else()
 	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc_static)
 endif()
 
@@ -216,7 +216,7 @@ endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
-else ()
+else()
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
 endif()
 
