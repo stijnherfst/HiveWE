@@ -1,6 +1,7 @@
 module;
 
 #include <QObject>
+#include <cassert>
 
 module Map;
 
@@ -11,6 +12,11 @@ import PathingMap;
 /// Handles terrain, pathing map, shadow map and preplaced objects
 /// Also, as per vanilla WE behaviour, clears the entire world undo stack
 void Map::resize(const int delta_left, const int delta_right, const int delta_top, const int delta_bottom) {
+	const int new_width = terrain.width - 1 + delta_left + delta_right;
+	const int new_height = terrain.height - 1 + delta_top + delta_bottom;
+	assert(new_width >= 32 && new_width <= 480);
+	assert(new_height >= 32 && new_height <= 480);
+
 	terrain.resize(delta_left, delta_right, delta_top, delta_bottom, physics);
 
 	// update the pathing and shadow maps to the new size
