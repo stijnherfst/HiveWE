@@ -12,7 +12,7 @@ struct Version {
     bool dirty;
 };
 
-inline constexpr Version version {
+inline const Version version {
     @HIVEWE_VERSION_MAJOR@,
     @HIVEWE_VERSION_MINOR@,
     @HIVEWE_VERSION_PATCH@,
