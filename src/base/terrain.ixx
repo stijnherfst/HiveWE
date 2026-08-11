@@ -1230,7 +1230,10 @@ export class Terrain: public QObject {
 
 	/// Updates the map_edge flags (shadows on the edges of the map)
 	void set_unplayable_boundaries(int unplayable_left, int unplayable_right, int unplayable_top, int unplayable_bottom) {
-		// places "shadows" on the edges of the map
+		// A tile is considered map_edge if its bottom-left corner is a map_edge, so bump by 1 to include that corner
+		unplayable_right = unplayable_right > 0 ? unplayable_right + 1 : unplayable_right;
+		unplayable_top = unplayable_top > 0 ? unplayable_top + 1 : unplayable_top;
+
 		for (size_t i = 0; i < width; i++) {
 			for (size_t j = 0; j < height; j++) {
 				corner_map_edge[ci(i, j)] =
