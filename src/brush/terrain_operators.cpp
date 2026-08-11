@@ -10,7 +10,7 @@ import PathingUndo;
 import TerrainUndo;
 import WorldUndoManager;
 import Camera;
-import UnorderedMap;
+import UnorderedSet;
 
 void TerrainOperator::set_brush_type(Brush::Type type) {
 	brush_type = type;
@@ -379,10 +379,10 @@ void CliffOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
 	brush->add_terrain_undo(ctx, area.to_terrain(), TerrainUndoType::cliff);
 }
 
-void CliffOperator::check_nearby(const int begx, const int begy, const std::vector<glm::ivec2>& seeds, TerrainRect& area) const {
+void CliffOperator::check_nearby(const int begx, const int begy, std::span<const glm::ivec2> seeds, TerrainRect& area) const {
 	auto& terrain = map->terrain;
 
-	hive::unordered_map<size_t, bool> visited;
+	hive::unordered_set<size_t> visited;
 
 	std::vector<glm::ivec2> stack;
 	stack.reserve(64);
@@ -390,7 +390,10 @@ void CliffOperator::check_nearby(const int begx, const int begy, const std::vect
 		if (seed.x < 0 || seed.x >= terrain.width || seed.y < 0 || seed.y >= terrain.height) {
 			continue;
 		}
-		visited[terrain.ci(seed.x, seed.y)] = true;
+		const size_t idx = terrain.ci(seed.x, seed.y);
+		if (!visited.insert(idx).second) {
+			continue;
+		}
 		stack.emplace_back(seed);
 	}
 
@@ -420,8 +423,7 @@ void CliffOperator::check_nearby(const int begx, const int begy, const std::vect
 					area.setRight(std::max(area.right(), k));
 					area.setBottom(std::max(area.bottom(), l));
 
-					if (!visited[terrain.ci(k, l)]) {
-						visited[terrain.ci(k, l)] = true;
+					if (visited.insert(terrain.ci(k, l)).second) {
 						stack.emplace_back(k, l);
 					}
 				}
