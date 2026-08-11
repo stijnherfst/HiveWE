@@ -49,7 +49,7 @@ add_executable(HiveWE
 set(HIVEWE_GIT_SHA "unknown")
 set(HIVEWE_GIT_DIRTY false)
 
-if (GIT_FOUND)
+if(GIT_FOUND)
 	set_property(
 		DIRECTORY APPEND PROPERTY
 		CMAKE_CONFIGURE_DEPENDS
@@ -65,9 +65,9 @@ if (GIT_FOUND)
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
-	if (NOT GIT_RESULT EQUAL 0)
+	if(NOT GIT_RESULT EQUAL 0)
 		set(HIVEWE_GIT_SHA "unknown")
-	endif ()
+	endif()
 
 	execute_process(
 		COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
@@ -75,12 +75,12 @@ if (GIT_FOUND)
 		RESULT_VARIABLE GIT_DIRTY_RESULT
 	)
 
-	if (GIT_DIRTY_RESULT)
+	if(GIT_DIRTY_RESULT)
 		set(HIVEWE_GIT_DIRTY true)
 	else ()
 		set(HIVEWE_GIT_DIRTY false)
-	endif ()
-endif ()
+	endif()
+endif()
 
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generated")
 configure_file(
@@ -162,7 +162,7 @@ target_compile_definitions(HiveWE_lib PUBLIC
 	$<$<CXX_COMPILER_ID:GNU>:TBB_SUPPRESS_DEPRECATED_MESSAGES>
 )
 
-if (TRACY_ENABLE)
+if(TRACY_ENABLE)
 	target_link_libraries(HiveWE_lib PUBLIC Tracy::TracyClient)
 	target_compile_definitions(HiveWE_lib PUBLIC TRACY_ENABLE)
 else ()
@@ -170,17 +170,17 @@ else ()
 	# macros) compiles
 	target_include_directories(HiveWE_lib PUBLIC
 		$<TARGET_PROPERTY:Tracy::TracyClient,INTERFACE_INCLUDE_DIRECTORIES>)
-endif ()
+endif()
 
-if (TRACY_NO_EXIT)
+if(TRACY_NO_EXIT)
 	target_compile_definitions(HiveWE_lib PUBLIC TRACY_NO_EXIT)
-endif ()
+endif()
 
-if (WIN32)
+if(WIN32)
 	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc)
 else ()
 	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc_static)
-endif ()
+endif()
 
 target_compile_features(HiveWE_lib PUBLIC cxx_std_23)
 
@@ -191,10 +191,10 @@ target_include_directories(HiveWE_lib PUBLIC
 
 target_link_libraries(HiveWE PRIVATE HiveWE_lib)
 
-if (HIVEWE_BUILD_TESTS)
+if(HIVEWE_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
-endif ()
+endif()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 	COMMAND ${CMAKE_COMMAND}
@@ -206,19 +206,19 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # vcpkg's tracy port installs the Debug DLL under debug/bin/Debug/ (extra
 # subfolder), which VCPKG_APPLOCAL_DEPS doesn't pick up. Copy it manually using
 # the imported target's known location.
-if (TRACY_ENABLE)
+if(TRACY_ENABLE)
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E copy_if_different
 		"$<TARGET_FILE:Tracy::TracyClient>"
 		"$<TARGET_FILE_DIR:HiveWE>"
 	)
-endif ()
+endif()
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
 else ()
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
-endif ()
+endif()
 
 file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/platforms")
 file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/styles")
