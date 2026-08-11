@@ -18,11 +18,25 @@ import BinaryReader;
 import Hierarchy;
 import MDX;
 import UnorderedMap;
+import Utilities;
 import "object_editor/object_editor.h";
 
 namespace fs = std::filesystem;
 
 static constexpr QColor unused_color(200, 120, 0);
+
+// Safety net for pathological dependency chains, the cycle check already handles models referencing each other
+static constexpr int max_depth = 8;
+
+struct AssetTreeModel::Node {
+	Node* parent = nullptr; // nullptr for top level file items
+	int row = 0; // row inside the parent
+	int file_row = -1; // index into files, -1 if this user is not a file in the map
+	std::string id; // the used_by entry, empty for top level file items
+	bool alive = true; // false once the item is removed from the tree, its storage is only reused on a reset
+	bool children_built = false;
+	std::vector<Node*> children;
+};
 
 struct AssetTreeModel::Caches {
 	// Shared across files since the same object can use multiple files
@@ -30,7 +44,23 @@ struct AssetTreeModel::Caches {
 	hive::unordered_map<std::string, QIcon> icon_cache;
 	// Filled the first time a file's validation column is drawn. nullopt = not a model file
 	hive::unordered_map<std::string, std::optional<ValidationSummary>> validation_cache;
+
+	// A deque as the model hands out pointers to these nodes, so they may not move
+	std::deque<Node> nodes;
+	std::vector<Node*> roots; // one per file, index == row
+	hive::unordered_map<std::string, int> path_to_row; // normalized file path -> row in files
 };
+
+// Matches the normalization that Map::get_file_usage() applies before storing a file as a user of another file
+static std::string normalize_path(const std::string& path) {
+	std::string normalized = to_lowercase_copy(path);
+	normalize_path_to_forward_slash(normalized);
+	// The game first checks .mdx, then .mdl, so both are stored as .mdx
+	if (normalized.ends_with(".mdl")) {
+		normalized = normalized.substr(0, normalized.size() - 4) + ".mdx";
+	}
+	return normalized;
+}
 
 AssetTreeModel::AssetTreeModel(QObject* parent) : QAbstractItemModel(parent), caches(std::make_unique<Caches>()) {}
 
@@ -171,32 +201,108 @@ QIcon resolve_used_by_icon(const std::string& id) {
 	return QApplication::style()->standardIcon(QStyle::SP_MediaVolume);
 }
 
-// File items have internalId 0, child items have the row of their parent + 1
+AssetTreeModel::Node* AssetTreeModel::node_for(const QModelIndex& index) const {
+	return index.isValid() ? static_cast<Node*>(index.internalPointer()) : nullptr;
+}
+
+QModelIndex AssetTreeModel::index_for(Node* node) const {
+	return createIndex(node->row, 0, node);
+}
+
+int AssetTreeModel::resolve_file_row(const std::string& id) const {
+	const auto found = caches->path_to_row.find(id);
+	return found == caches->path_to_row.end() ? -1 : found->second;
+}
+
+void AssetTreeModel::detach_children(Node* node) {
+	std::vector<Node*> stack = node->children;
+	while (!stack.empty()) {
+		Node* dead = stack.back();
+		stack.pop_back();
+		dead->alive = false;
+		stack.insert(stack.end(), dead->children.begin(), dead->children.end());
+	}
+	node->children.clear();
+	node->children_built = false;
+}
+
+std::vector<AssetTreeModel::Node*> AssetTreeModel::nodes_for_file(const int file_row) const {
+	std::vector<Node*> result;
+	for (Node& node : caches->nodes) {
+		if (node.alive && node.file_row == file_row) {
+			result.push_back(&node);
+		}
+	}
+	return result;
+}
+
+int AssetTreeModel::child_count(Node* node) const {
+	if (node->file_row < 0) {
+		return 0;
+	}
+	// Stop the recursion when this file already appears higher up, otherwise models that reference
+	// each other (or themselves) would expand forever
+	int depth = 0;
+	for (const Node* ancestor = node->parent; ancestor; ancestor = ancestor->parent) {
+		if (ancestor->file_row == node->file_row) {
+			return 0;
+		}
+		depth += 1;
+	}
+	if (depth >= max_depth) {
+		return 0;
+	}
+	return static_cast<int>(files[node->file_row].used_by.size());
+}
+
+void AssetTreeModel::ensure_children(Node* node) const {
+	if (node->children_built) {
+		return;
+	}
+	node->children_built = true;
+
+	const int count = child_count(node);
+	node->children.reserve(count);
+	for (int i = 0; i < count; i++) {
+		const std::string& id = files[node->file_row].used_by[i];
+		Node& child = caches->nodes.emplace_back();
+		child.parent = node;
+		child.row = i;
+		child.file_row = resolve_file_row(id);
+		child.id = id;
+		node->children.push_back(&child);
+	}
+}
+
+// Every item carries a pointer to its own node, the nodes of a file item's children are created on demand
 QModelIndex AssetTreeModel::index(const int row, const int column, const QModelIndex& parent) const {
 	if (!hasIndex(row, column, parent)) {
 		return {};
 	}
 	if (!parent.isValid()) {
-		return createIndex(row, column, quintptr(0));
+		return createIndex(row, column, caches->roots[row]);
 	}
-	return createIndex(row, column, quintptr(parent.row()) + 1);
+	Node* parent_node = node_for(parent);
+	ensure_children(parent_node);
+	return createIndex(row, column, parent_node->children[row]);
 }
 
 QModelIndex AssetTreeModel::parent(const QModelIndex& index) const {
-	if (!index.isValid() || index.internalId() == 0) {
+	Node* node = node_for(index);
+	if (!node || !node->parent) {
 		return {};
 	}
-	return createIndex(static_cast<int>(index.internalId() - 1), 0, quintptr(0));
+	return index_for(node->parent);
 }
 
 int AssetTreeModel::rowCount(const QModelIndex& parent) const {
 	if (!parent.isValid()) {
 		return static_cast<int>(files.size());
 	}
-	if (parent.internalId() != 0 || parent.column() != 0) {
+	if (parent.column() != 0) {
 		return 0;
 	}
-	return static_cast<int>(files[parent.row()].used_by.size());
+	return child_count(node_for(parent));
 }
 
 int AssetTreeModel::columnCount(const QModelIndex&) const {
@@ -208,9 +314,11 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 		return {};
 	}
 
-	// Root item
-	if (index.internalId() == 0) {
-		const FileNode& node = files[index.row()];
+	const Node* item = node_for(index);
+
+	// File item, either top level or a file that uses the file above it
+	if (item->file_row >= 0) {
+		const FileNode& node = files[item->file_row];
 		switch (role) {
 			case Qt::DisplayRole:
 				switch (index.column()) {
@@ -274,7 +382,8 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 				}
 				return {};
 			case Qt::CheckStateRole:
-				if (index.column() == 0) {
+				// Deleting is done from the top level item only, a file can appear at many places in the tree
+				if (index.column() == 0 && !item->parent) {
 					return node.check_state;
 				}
 				return {};
@@ -292,6 +401,8 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 				return node.used_by.empty();
 			case SizeRole:
 				return node.size;
+			case FileRowRole:
+				return item->file_row;
 			case ValidationSortRole:
 				if (index.column() == 3) {
 					const auto& v = resolved_validation(node);
@@ -309,12 +420,15 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 		return {};
 	}
 
+	if (role == FileRowRole) {
+		return -1;
+	}
+
 	if (index.column() != 0) {
 		return {};
 	}
 
-	const FileNode& node = files[index.internalId() - 1];
-	const std::string& id = node.used_by[index.row()];
+	const std::string& id = item->id;
 	switch (role) {
 		case Qt::DisplayRole:
 			return resolved_name(id).display_name;
@@ -331,10 +445,14 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 }
 
 bool AssetTreeModel::setData(const QModelIndex& index, const QVariant& value, const int role) {
-	if (!index.isValid() || index.internalId() != 0 || index.column() != 0 || role != Qt::CheckStateRole) {
+	if (!index.isValid() || index.column() != 0 || role != Qt::CheckStateRole) {
 		return false;
 	}
-	files[index.row()].check_state = static_cast<Qt::CheckState>(value.toInt());
+	const Node* item = node_for(index);
+	if (item->parent || item->file_row < 0) {
+		return false;
+	}
+	files[item->file_row].check_state = static_cast<Qt::CheckState>(value.toInt());
 	emit dataChanged(index, index, {Qt::CheckStateRole});
 	return true;
 }
@@ -361,7 +479,8 @@ Qt::ItemFlags AssetTreeModel::flags(const QModelIndex& index) const {
 		return Qt::NoItemFlags;
 	}
 	Qt::ItemFlags flags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
-	if (index.internalId() == 0 && index.column() == 0) {
+	const Node* item = node_for(index);
+	if (!item->parent && index.column() == 0) {
 		flags |= Qt::ItemIsUserCheckable;
 	}
 	return flags;
@@ -382,33 +501,129 @@ void AssetTreeModel::set_files(std::vector<FileNode>&& new_files) {
 	caches->name_cache.clear();
 	caches->icon_cache.clear();
 	caches->validation_cache.clear();
+	rebuild_nodes();
 	endResetModel();
 }
 
+void AssetTreeModel::rebuild_nodes() {
+	caches->nodes.clear();
+	caches->roots.clear();
+	caches->path_to_row.clear();
+
+	caches->roots.reserve(files.size());
+	for (int row = 0; row < static_cast<int>(files.size()); row++) {
+		Node& node = caches->nodes.emplace_back();
+		node.row = row;
+		node.file_row = row;
+		caches->roots.push_back(&node);
+		// The first file wins on a collision, which is what Map::get_file_usage() does as well
+		caches->path_to_row.emplace(normalize_path(files[row].path), row);
+	}
+}
+
 void AssetTreeModel::remove_file(const int row) {
+	// Everywhere the file is shown as a user of another file it turns into a plain path that can no
+	// longer be expanded, so drop the child rows of those items first
+	const std::vector<Node*> instances = nodes_for_file(row);
+	for (Node* node : instances) {
+		if (!node->parent) {
+			continue;
+		}
+		const int count = child_count(node);
+		if (count > 0) {
+			beginRemoveRows(index_for(node), 0, count - 1);
+			detach_children(node);
+			node->file_row = -1;
+			endRemoveRows();
+		} else {
+			node->file_row = -1;
+		}
+	}
+
 	beginRemoveRows(QModelIndex(), row, row);
 	files.erase(files.begin() + row);
+
+	Node* removed_root = caches->roots[row];
+	detach_children(removed_root);
+	removed_root->alive = false;
+	removed_root->file_row = -1;
+	caches->roots.erase(caches->roots.begin() + row);
+	for (int i = row; i < static_cast<int>(caches->roots.size()); i++) {
+		caches->roots[i]->row = i;
+	}
+
+	for (Node& node : caches->nodes) {
+		if (node.file_row > row) {
+			node.file_row -= 1;
+		}
+	}
+
+	caches->path_to_row.clear();
+	for (int i = 0; i < static_cast<int>(files.size()); i++) {
+		caches->path_to_row.emplace(normalize_path(files[i].path), i);
+	}
 	endRemoveRows();
+
+	// Their size/usages/validation columns are gone now that they no longer point at a file
+	for (Node* node : instances) {
+		if (node->alive) {
+			emit dataChanged(index_for(node), createIndex(node->row, 3, node));
+		}
+	}
 }
 
 void AssetTreeModel::remove_object_references(const std::string& id) {
 	for (int row = 0; row < static_cast<int>(files.size()); row++) {
 		FileNode& node = files[row];
-		const QModelIndex file_index = index(row, 0);
 
-		bool changed = false;
+		std::vector<int> removals; // descending, so erasing does not shift the entries still to be removed
 		for (int child = static_cast<int>(node.used_by.size()) - 1; child >= 0; child--) {
 			if (node.used_by[child] == id) {
-				beginRemoveRows(file_index, child, child);
-				node.used_by.erase(node.used_by.begin() + child);
-				endRemoveRows();
-				changed = true;
+				removals.push_back(child);
+			}
+		}
+		if (removals.empty()) {
+			continue;
+		}
+
+		// The file can be shown at several places in the tree and they all show the same children,
+		// items where the recursion was cut short show no children at all and are left out
+		const std::vector<Node*> instances = nodes_for_file(row);
+		std::vector<Node*> expanded;
+		for (Node* instance : instances) {
+			if (child_count(instance) > 0) {
+				expanded.push_back(instance);
 			}
 		}
 
-		if (changed) {
-			// The usage count, unused highlight and IsUnusedRole all derive from used_by
-			emit dataChanged(file_index, index(row, 2));
+		for (const int child : removals) {
+			// All items lose the row at the same time, so announce every removal before touching the data
+			for (Node* instance : expanded) {
+				beginRemoveRows(index_for(instance), child, child);
+			}
+
+			node.used_by.erase(node.used_by.begin() + child);
+			for (Node* instance : expanded) {
+				if (!instance->children_built) {
+					continue;
+				}
+				Node* removed = instance->children[child];
+				detach_children(removed);
+				removed->alive = false;
+				instance->children.erase(instance->children.begin() + child);
+				for (int i = child; i < static_cast<int>(instance->children.size()); i++) {
+					instance->children[i]->row = i;
+				}
+			}
+
+			for (size_t i = 0; i < expanded.size(); i++) {
+				endRemoveRows();
+			}
+		}
+
+		// The usage count, unused highlight and IsUnusedRole all derive from used_by
+		for (Node* instance : instances) {
+			emit dataChanged(index_for(instance), createIndex(instance->row, 3, instance));
 		}
 	}
 }

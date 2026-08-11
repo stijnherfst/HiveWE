@@ -125,9 +125,12 @@ void AssetFilterModel::set_show_unused(const bool show) {
 
 bool AssetFilterModel::filterAcceptsRow(const int source_row, const QModelIndex& source_parent) const {
 	if (!show_used || !show_unused) {
-		// For child rows check the parent file item, since recursive filtering would
+		// For child rows check the top level file item, since recursive filtering would
 		// otherwise resurface a hidden file whose children match the text filter
-		const QModelIndex file_index = source_parent.isValid() ? source_parent : sourceModel()->index(source_row, 0, source_parent);
+		QModelIndex file_index = source_parent.isValid() ? source_parent : sourceModel()->index(source_row, 0, source_parent);
+		while (file_index.parent().isValid()) {
+			file_index = file_index.parent();
+		}
 		const bool is_unused = file_index.data(IsUnusedRole).toBool();
 		if ((!show_used && !is_unused) || (!show_unused && is_unused)) {
 			return false;
@@ -409,8 +412,8 @@ void AssetManager::open_in_editor(const QModelIndex& proxy_index) const {
 		return;
 	}
 	const QModelIndex source_index = filter_model->mapToSource(proxy_index).siblingAtColumn(0);
-	if (!source_index.parent().isValid()) {
-		return; // root (file) item — nothing to open
+	if (source_index.data(FileRowRole).toInt() >= 0) {
+		return; // file item — nothing to open in the Object Editor
 	}
 	const int category = source_index.data(CategoryRole).toInt();
 	if (category < 0) {
@@ -446,12 +449,13 @@ void AssetManager::show_preview(const QModelIndex& current) {
 		return;
 	}
 	const QModelIndex source_index = filter_model->mapToSource(current).siblingAtColumn(0);
-	if (source_index.parent().isValid()) {
-		show_empty_preview(); // a used-by child row, not a file
+	const int file_row = source_index.data(FileRowRole).toInt();
+	if (file_row < 0) {
+		show_empty_preview(); // an object or a file that is not in the map, not previewable
 		return;
 	}
 
-	const AssetTreeModel::FileNode& node = model->file(source_index.row());
+	const AssetTreeModel::FileNode& node = model->file(file_row);
 
 	std::string ext = fs::path(node.path).extension().string();
 	for (auto& c : ext) {
@@ -521,11 +525,12 @@ void AssetManager::show_context_menu(const QPoint& pos) {
 
 	QMenu menu;
 
-	const bool is_root = !source_index.parent().isValid();
-	if (is_root) {
-		if (source_index.data(IsUnusedRole).toBool()) {
+	const int file_row = source_index.data(FileRowRole).toInt();
+	if (file_row >= 0) {
+		// Deleting is only offered on the top level item, the same file can be shown at many places
+		if (!source_index.parent().isValid() && source_index.data(IsUnusedRole).toBool()) {
 			QAction* delete_action = menu.addAction(QApplication::style()->standardIcon(QStyle::SP_TrashIcon), "Delete file");
-			connect(delete_action, &QAction::triggered, [this, row = source_index.row()]() {
+			connect(delete_action, &QAction::triggered, [this, row = file_row]() {
 				const QString path_str = QString::fromStdString(model->file(row).path);
 				const int answer =
 					QMessageBox::question(this, "Delete file", QString("Delete '%1'?").arg(path_str), QMessageBox::Yes | QMessageBox::No);

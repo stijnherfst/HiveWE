@@ -16,8 +16,10 @@ inline constexpr int ObjectIdRole = Qt::UserRole + 1; // QString, on child items
 inline constexpr int CategoryRole = Qt::UserRole + 2; // int, on child items (-1 = not an object)
 inline constexpr int SizeRole = Qt::UserRole + 3; // qulonglong (bytes), on size items
 inline constexpr int ValidationSortRole = Qt::UserRole + 4; // int severity score, on validation items
+inline constexpr int FileRowRole = Qt::UserRole + 5; // int row into the file list, -1 if the item is not a file
 
-/// Two-level tree of files and the objects that use them.
+/// Tree of files and the objects/files that use them. A user that is itself a file in the map can be
+/// expanded again to show its own users, so a dependency chain can be followed all the way up.
 class AssetTreeModel : public QAbstractItemModel {
 	Q_OBJECT
   public:
@@ -65,6 +67,19 @@ class AssetTreeModel : public QAbstractItemModel {
 	const QIcon& resolved_icon(const std::string& id) const;
 	// nullopt means the file is not a model (.mdx/.mdl) and has no validation
 	const std::optional<ValidationSummary>& resolved_validation(const FileNode& node) const;
+
+	// One tree item. Top level items are files, deeper items are the ids/files that use their parent.
+	struct Node;
+
+	Node* node_for(const QModelIndex& index) const; // nullptr for the invisible root
+	QModelIndex index_for(Node* node) const;
+	// Removes the children of a node and marks them (and their descendants) as no longer part of the tree
+	static void detach_children(Node* node);
+	std::vector<Node*> nodes_for_file(int file_row) const; // every place in the tree where this file is shown
+	void rebuild_nodes(); // recreates the top level items and the path lookup from the file list
+	void ensure_children(Node* node) const; // creates the child nodes of a file item on demand
+	int child_count(Node* node) const;
+	int resolve_file_row(const std::string& id) const; // -1 if the id is not a file in the map
 
 	std::vector<FileNode> files;
 
