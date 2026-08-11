@@ -493,13 +493,13 @@ void HiveWE::load_mpq() {
 		return;
 	}
 
-	constfs::path unpack_location = QFileDialog::getExistingDirectory(
-								   this,
-								   "Choose Unpacking Location",
-								   settings.value("openDirectory", QDir::current().path()).toString(),
-								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	const fs::path unpack_location = QFileDialog::getExistingDirectory(
+										 this,
+										 "Choose Unpacking Location",
+										 settings.value("openDirectory", QDir::current().path()).toString(),
+										 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
 	)
-								   .toStdString();
+										 .toStdString();
 
 	if (unpack_location.empty()) {
 		return;
@@ -545,13 +545,13 @@ void HiveWE::save_as() {
 	const QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/" + QString::fromStdString(map->name);
 
-	constfs::path file_name = QFileDialog::getExistingDirectory(
-							 this,
-							 "Choose Save Location",
-							 settings.value("openDirectory", QDir::current().path()).toString(),
-							 QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+	const fs::path file_name = QFileDialog::getExistingDirectory(
+								   this,
+								   "Choose Save Location",
+								   settings.value("openDirectory", QDir::current().path()).toString(),
+								   QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
 	)
-							 .toStdString();
+								   .toStdString();
 
 	if (file_name.empty()) {
 		return;
@@ -578,8 +578,7 @@ void HiveWE::export_map() {
 	QSettings settings;
 	const QString default_dir = settings.value("exportDirectory", QDir::current().path()).toString() + QString::fromStdString(map->name);
 
-	QString save_dir =
-		QFileDialog::getSaveFileName(this, "Export Map to MPQ", default_dir, "Warcraft III Scenario (*.w3x)");
+	QString save_dir = QFileDialog::getSaveFileName(this, "Export Map to MPQ", default_dir, "Warcraft III Scenario (*.w3x)");
 
 	if (save_dir.isEmpty()) {
 		return;
@@ -668,17 +667,16 @@ void HiveWE::export_map() {
 			flags |= MPQ_FILE_ENCRYPTED;
 		}
 
-		constbool success = SFileAddFileEx(
-				handle,
-				entry.path().c_str(),
-				relative_path.string().c_str(),
-				flags,
-				MPQ_COMPRESSION_ZLIB,
-				MPQ_COMPRESSION_NEXT_SAME
-			);
-			if (!success) {
-				std::println("Error {} adding file {}", GetLastError(), entry.path().string());
-
+		const bool success = SFileAddFileEx(
+			handle,
+			entry.path().c_str(),
+			relative_path.string().c_str(),
+			flags,
+			MPQ_COMPRESSION_ZLIB,
+			MPQ_COMPRESSION_NEXT_SAME
+		);
+		if (!success) {
+			std::println("Error {} adding file {}", GetLastError(), entry.path().string());
 		}
 	}
 
