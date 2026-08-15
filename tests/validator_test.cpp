@@ -158,8 +158,15 @@ TEST_CASE("Validator: objects") {
 TEST_CASE("Validator: particle emitter 2") {
 	const auto messages = validate_fixture("emitter2_v800.mdl");
 	CHECK(has_message(messages, mdx::ValidationSeverity::error, "invalid replaceable id 99"));
-	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "time middle"));
-	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "zero rows or columns"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::error, "time middle"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "0x1 texture grid"));
+}
+
+TEST_CASE("Validator: particle emitter 2 texture grid") {
+	// Rows 3 is non-zero, so only the power-of-two rule catches it.
+	const auto messages = validate_fixture("bad_emitter2_texture_grid_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "3x2 texture grid"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::error, "negative lifespan"));
 }
 
 TEST_CASE("Validator: event objects") {

@@ -118,7 +118,7 @@ export class ParticleEmitter2Simulation {
 
 		if (params.visibility > 0.f) {
 			if (emitter.squirt != 0 && params.sequence_just_wrapped) {
-				uint32_t burst = static_cast<uint32_t>(params.emission_rate);
+				uint32_t burst = static_cast<uint32_t>(std::max(params.emission_rate, 0.f));
 				while (burst-- > 0 && pool.alive_count < capacity) {
 					create_particle(0.f, pool, params, emitter);
 				}

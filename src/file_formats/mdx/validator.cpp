@@ -5,6 +5,15 @@ module MDX;
 import std;
 
 namespace mdx {
+	namespace {
+		/// A particle emitter texture grid dimension is only usable if it is a non-zero power of two.
+		/// The game splits an atlas cell index into a row and a column with a shift and a mask rather
+		/// than a divide, so anything else makes the grid meaningless to it.
+		bool is_usable_grid_dimension(const uint32_t value) {
+			return value != 0 && (value & (value - 1)) == 0;
+		}
+	}
+
 	/// Returns false is the model has errors so severe that it cannot be displayed at all
 	bool MDX::is_valid() {
 		bool is_valid = true;
@@ -52,27 +61,8 @@ namespace mdx {
 		}
 
 		for (const auto& emitter : emitters2) {
-			// HiveWE specific?
-			if (emitter.life_span < 0.0) {
-				is_valid = false;
-			}
-			// HiveWE specific?
-			if (emitter.time_middle < 0.0 || emitter.time_middle > 1.f) {
-				is_valid = false;
-			}
-			// HiveWE specific?
-			if (emitter.rows == 0 || emitter.columns == 0) {
-				is_valid = false;
-			}
+			// The game indexes its texture array with this unchecked, so it reads out of bounds.
 			if (emitter.texture_id >= textures.size()) {
-				is_valid = false;
-			}
-			// HiveWE specific?
-			if (emitter.squirt > 1) {
-				is_valid = false;
-			}
-			// HiveWE specific?
-			if (emitter.tail_length < 0.f) {
 				is_valid = false;
 			}
 		}
@@ -334,19 +324,14 @@ namespace mdx {
 				error(std::format("Particle emitter 2 \"{}\" has invalid replaceable id {}", emitter.node.name, emitter.replaceable_id));
 			}
 			if (emitter.time_middle < 0.f || emitter.time_middle > 1.f) {
-				severe(std::format("Particle emitter 2 \"{}\" has a time middle {} outside [0, 1]", emitter.node.name, emitter.time_middle));
+				error(std::format("Particle emitter 2 \"{}\" has a time middle {} outside [0, 1]", emitter.node.name, emitter.time_middle));
 			}
+			// A negative one kills every particle on the frame it is born and the emitter shows nothing. Zero is used by game files to disable emitters.
 			if (emitter.life_span < 0.f) {
-				severe(std::format("Particle emitter 2 \"{}\" has a lifespan {} that is negative", emitter.node.name, emitter.life_span));
+				error(std::format("Particle emitter 2 \"{}\" has a negative lifespan {} and emits nothing", emitter.node.name, emitter.life_span));
 			}
-			if (emitter.rows == 0 || emitter.columns == 0) {
-				warning(std::format("Particle emitter 2 \"{}\" has zero rows or columns", emitter.node.name));
-			}
-			if (emitter.squirt > 1) {
-				warning(std::format("Particle emitter 2 \"{}\" has squirt that is {}, should be 0 or 1", emitter.node.name, emitter.squirt));
-			}
-			if (emitter.tail_length < 0.f) {
-				warning(std::format("Particle emitter 2 \"{}\" has tail length that is {}, should be larger than 0", emitter.node.name, emitter.tail_length));
+			if (!is_usable_grid_dimension(emitter.rows) || !is_usable_grid_dimension(emitter.columns)) {
+				severe(std::format("Particle emitter 2 \"{}\" has a {}x{} texture grid, but rows and columns must each be a power of two", emitter.node.name, emitter.rows, emitter.columns));
 			}
 		}
 
@@ -633,6 +618,10 @@ namespace mdx {
 			);
 		}
 
+		// Ensure that the pivot buffer is big enough. This has to happen before calculate_extents(),
+		// which indexes pivots by node id to bound the particle emitters.
+		pivots.resize(node_count, {});
+
 		// Can't have zero-sized extents unless you're rendering nothing!
 		if (extent.minimum == glm::vec3(0.f) && extent.maximum == glm::vec3(0.f)) {
 			calculate_extents();
@@ -649,9 +638,6 @@ namespace mdx {
 		std::ranges::sort(sequences, [](const auto& a, const auto& b) {
 			return a.start_frame < b.start_frame;
 		});
-
-		// Ensure that the pivot buffer is big enough
-		pivots.resize(node_count, {});
 
 		// Compact node IDs
 		std::vector<int> IDs;
@@ -672,6 +658,14 @@ namespace mdx {
 				node.parent_id = remapping[node.parent_id];
 			}
 		});
+
+		for (auto& emitter : emitters2) {
+			// Needs to be power of two or otherwise defaults to 1
+			if (!is_usable_grid_dimension(emitter.rows) || !is_usable_grid_dimension(emitter.columns)) {
+				emitter.rows = 1;
+				emitter.columns = 1;
+			}
+		}
 
 		// Fix vertex groups that reference non-existent matrix groups
 		for (auto& i : geosets) {

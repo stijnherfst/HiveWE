@@ -6,6 +6,7 @@ add_executable(HiveWE_tests
 	binary_writer_test.cpp
 	mdl_reader_test.cpp
 	validator_test.cpp
+	particle_emitter2_test.cpp
 )
 
 target_link_libraries(HiveWE_tests PRIVATE
