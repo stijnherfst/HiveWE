@@ -78,11 +78,13 @@ Attachment "Ref" {
 ParticleEmitter "Emit" {
 	ObjectId 3,
 	Parent 0,
-	EmitterUsesMdl,
+	EmitterUsesMDL,
 	static EmissionRate 1,
-	static LifeSpan 1,
-	static InitVelocity 1,
-	Path "foo.bar",
+	Particle {
+		static LifeSpan 1,
+		static InitVelocity 1,
+		Path "foo.bar",
+	}
 }
 PivotPoints 4 {
 	{ 0, 0, 0 },

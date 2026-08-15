@@ -656,7 +656,26 @@ namespace mdx {
 			const int node_reader_pos = reader.position;
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			emitter.node = Node(reader, mdx.unique_tracks);
-			emitter.data = reader.read_vector<uint8_t>(inclusive_size - (reader.position - node_reader_pos));
+			emitter.life_span = reader.read<float>();
+			emitter.emission_rate = reader.read<float>();
+			emitter.speed = reader.read<float>();
+			emitter.color = reader.read<glm::vec3>();
+			emitter.alpha = reader.read<float>();
+			emitter.replaceable_id = reader.read<uint32_t>();
+			emitter.path = reader.read_string(260);
+			emitter.anim_visibility_guide = reader.read_string(260);
+			while (reader.position < node_reader_pos + inclusive_size) {
+				const TrackTag tag = static_cast<TrackTag>(reader.read<int32_t>());
+				if (tag == TrackTag::KPPA) {
+					emitter.KPPA = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KPPE) {
+					emitter.KPPE = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KPPV) {
+					emitter.KPPV = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else {
+					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
+				}
+			}
 			mdx.corn_emitters.push_back(std::move(emitter));
 		}
 	}

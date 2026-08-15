@@ -99,7 +99,7 @@ namespace mdx {
 			write_track_body(track_header, name);
 		}
 
-		void write_node(const Node& node, const bool is_particle_emitter_1 = false) {
+		void write_node(const Node& node, const bool is_particle_emitter_1 = false, const bool is_corn_emitter = false) {
 			write_line("ObjectId {},", node.id);
 			if (node.parent_id != -1) {
 				write_line("Parent {},", node.parent_id);
@@ -132,7 +132,7 @@ namespace mdx {
 			if (node.flags & Node::Flags::unshaded) {
 				if (is_particle_emitter_1) {
 					// Blizzard reused flag, context-sensitive
-					write_line("EmitterUsesMdl,");
+					write_line("EmitterUsesMDL,");
 				} else {
 					write_line("Unshaded,");
 				}
@@ -140,7 +140,7 @@ namespace mdx {
 			if (node.flags & Node::Flags::sort_primitives_far_z) {
 				if (is_particle_emitter_1) {
 					// Blizzard reused flag, context-sensitive
-					write_line("EmitterUsesTga,");
+					write_line("EmitterUsesTGA,");
 				} else {
 					write_line("SortPrimsFarZ,");
 				}
@@ -149,7 +149,11 @@ namespace mdx {
 				write_line("LineEmitter,");
 			}
 			if (node.flags & Node::Flags::unfogged) {
-				write_line("Unfogged,");
+				if (is_corn_emitter) {
+					write_line("PopcornScaling,");
+				} else {
+					write_line("Unfogged,");
+				}
 			}
 			if (node.flags & Node::Flags::model_space) {
 				write_line("ModelSpace,");
@@ -163,8 +167,9 @@ namespace mdx {
 			write_node_track(node.KGSC, "Scaling");
 		}
 
+		/// Some sections need to close with a }, instead of }
 		template<typename T>
-		void start_group(std::string name, T callback) {
+		void start_group(const std::string name, T callback, const char* closing = "}") {
 			for (size_t i = 0; i < current_indentation; i++) {
 				mdl += '\t';
 			}
@@ -175,7 +180,8 @@ namespace mdx {
 			for (size_t i = 0; i < current_indentation; i++) {
 				mdl += '\t';
 			}
-			mdl += "}\n";
+			mdl += closing;
+			mdl += "\n";
 		}
 	};
 
@@ -233,6 +239,12 @@ namespace mdx {
 		if (layer.shading_flags & Layer::ShadingFlags::unshaded) {
 			mdl.write_line("Unshaded,");
 		}
+		if (layer.shading_flags & Layer::ShadingFlags::wrap_width) {
+			mdl.write_line("WrapWidth,");
+		}
+		if (layer.shading_flags & Layer::ShadingFlags::wrap_height) {
+			mdl.write_line("WrapHeight,");
+		}
 		if (layer.shading_flags & Layer::ShadingFlags::sphere_environment_map) {
 			mdl.write_line("SphereEnvMap,");
 		}
@@ -247,6 +259,9 @@ namespace mdx {
 		}
 		if (layer.shading_flags & Layer::ShadingFlags::no_depth_set) {
 			mdl.write_line("NoDepthSet,");
+		}
+		if (layer.shading_flags & Layer::ShadingFlags::unlit) {
+			mdl.write_line("Unlit,");
 		}
 	}
 
@@ -364,6 +379,9 @@ namespace mdx {
 						if (material.flags & Material::Flags::constant_color) {
 							mdl.write_line("ConstantColor,");
 						}
+						if (material.flags & Material::Flags::two_sided) {
+							mdl.write_line("TwoSided,");
+						}
 						if (material.flags & Material::Flags::sort_primitives_near_z) {
 							mdl.write_line("SortPrimsNearZ,");
 						}
@@ -466,7 +484,7 @@ namespace mdx {
 				}
 
 				if (!geoset.skin.empty() && version >= 900) {
-					mdl.start_group(std::format("SkinWeights {}", geoset.skin.size() / 8), [&]() {
+					mdl.start_group("SkinWeights", [&]() {
 						for (size_t i = 0; i < geoset.skin.size() / 8; i++) {
 							mdl.write_line(
 								"{}, {}, {}, {}, {}, {}, {}, {},",
@@ -653,11 +671,13 @@ namespace mdx {
 				if (!emitter.KPEV.tracks.empty()) {
 					mdl.write_track_body(emitter.KPEV, "Visibility");
 				}
-				if (!emitter.path.empty()) {
-					mdl.write_line("Path \"{}\",", emitter.path);
-				}
-				mdl.write_track(emitter.KPEL, "LifeSpan", emitter.life_span);
-				mdl.write_track(emitter.KPES, "InitVelocity", emitter.speed);
+				mdl.start_group("Particle", [&]() {
+					mdl.write_track(emitter.KPEL, "LifeSpan", emitter.life_span);
+					mdl.write_track(emitter.KPES, "InitVelocity", emitter.speed);
+					if (!emitter.path.empty()) {
+						mdl.write_line("Path \"{}\",", emitter.path);
+					}
+				});
 			});
 		}
 
@@ -702,26 +722,30 @@ namespace mdx {
 				mdl.write_line("TailLength {},", emitter.tail_length);
 				mdl.write_line("Time {},", emitter.time_middle);
 
-				mdl.start_group("SegmentColor", [&]() {
-					mdl.write_line(
-						"Color {{ {}, {}, {} }},",
-						emitter.start_segment_color.x,
-						emitter.start_segment_color.y,
-						emitter.start_segment_color.z
-					);
-					mdl.write_line(
-						"Color {{ {}, {}, {} }},",
-						emitter.middle_segment_color.x,
-						emitter.middle_segment_color.y,
-						emitter.middle_segment_color.z
-					);
-					mdl.write_line(
-						"Color {{ {}, {}, {} }},",
-						emitter.end_segment_color.x,
-						emitter.end_segment_color.y,
-						emitter.end_segment_color.z
-					);
-				});
+				mdl.start_group(
+					"SegmentColor",
+					[&]() {
+						mdl.write_line(
+							"Color {{ {}, {}, {} }},",
+							emitter.start_segment_color.x,
+							emitter.start_segment_color.y,
+							emitter.start_segment_color.z
+						);
+						mdl.write_line(
+							"Color {{ {}, {}, {} }},",
+							emitter.middle_segment_color.x,
+							emitter.middle_segment_color.y,
+							emitter.middle_segment_color.z
+						);
+						mdl.write_line(
+							"Color {{ {}, {}, {} }},",
+							emitter.end_segment_color.x,
+							emitter.end_segment_color.y,
+							emitter.end_segment_color.z
+						);
+					},
+					"},"
+				);
 
 				mdl.write_line("Alpha {{ {}, {}, {} }},", emitter.segment_alphas.x, emitter.segment_alphas.y, emitter.segment_alphas.z);
 				mdl.write_line(
@@ -772,14 +796,16 @@ namespace mdx {
 				mdl.write_track(ribbon.KRHB, "HeightBelow", ribbon.height_below);
 				mdl.write_track(ribbon.KRAL, "Alpha", ribbon.alpha);
 				mdl.write_track(ribbon.KRCO, "Color", ribbon.color);
-				mdl.write_line("LifeSpan {},", ribbon.life_span);
 				if (!ribbon.KRTX.tracks.empty()) {
 					mdl.write_track_body(ribbon.KRTX, "TextureSlot");
 				} else if (ribbon.texture_slot != 0) {
 					mdl.write_line("TextureSlot {},", ribbon.texture_slot);
 				}
-				mdl.write_track(ribbon.KRVS, "Visibility", 1.f);
+				if (!ribbon.KRVS.tracks.empty()) {
+					mdl.write_track_body(ribbon.KRVS, "Visibility");
+				}
 				mdl.write_line("EmissionRate {},", ribbon.emission_rate);
+				mdl.write_line("LifeSpan {},", ribbon.life_span);
 				mdl.write_line("Rows {},", ribbon.rows);
 				mdl.write_line("Columns {},", ribbon.columns);
 				mdl.write_line("MaterialID {},", ribbon.material_id);
@@ -888,8 +914,24 @@ namespace mdx {
 
 		for (const auto& corn : corn_emitters) {
 			mdl.start_group(std::format("ParticleEmitterPopcorn \"{}\"", corn.node.name), [&]() {
-				mdl.write_node(corn.node);
-				// TODO: decode PopcornFX data fields (payload kept opaque for now)
+				mdl.write_node(corn.node, false, true);
+				mdl.write_line("static LifeSpan {},", corn.life_span);
+				mdl.write_track(corn.KPPE, "EmissionRate", corn.emission_rate);
+				mdl.write_line("static Speed {},", corn.speed);
+				mdl.write_line("static Color {{ {}, {}, {} }},", corn.color.x, corn.color.y, corn.color.z);
+				mdl.write_track(corn.KPPA, "Alpha", corn.alpha);
+				// A replaceable id takes the place of a path, it is never both.
+				if (corn.replaceable_id != 0) {
+					mdl.write_line("ReplaceableId {},", corn.replaceable_id);
+				} else if (!corn.path.empty()) {
+					mdl.write_line("Path \"{}\",", corn.path);
+				}
+				if (!corn.anim_visibility_guide.empty()) {
+					mdl.write_line("AnimVisibilityGuide \"{}\",", corn.anim_visibility_guide);
+				}
+				if (!corn.KPPV.tracks.empty()) {
+					mdl.write_track_body(corn.KPPV, "Visibility");
+				}
 			});
 		}
 

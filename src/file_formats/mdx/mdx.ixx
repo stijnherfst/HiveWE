@@ -80,7 +80,10 @@ namespace mdx {
 		KFC3 = '3CFK',
 		KFCA = 'ACFK',
 		KFTC = 'CTFK',
-		KMTE = 'ETMK'
+		KMTE = 'ETMK',
+		KPPA = 'APPK',
+		KPPE = 'EPPK',
+		KPPV = 'VPPK'
 	};
 
 	enum class ChunkTag {
@@ -102,7 +105,7 @@ namespace mdx {
 		EVTS = 'STVE',
 		CLID = 'DILC',
 		CORN = 'NROC',
-		SNDS = 'SDNS',
+		SNDS = 'SDNS', // Not used by any game files in 2.1, possibly earlier
 		TXAN = 'NAXT',
 		BPOS = 'SOPB',
 		FAFX = 'XFAF',
@@ -224,12 +227,13 @@ namespace mdx {
 		enum ShadingFlags {
 			unshaded = 1,
 			sphere_environment_map = 2,
-			unknown1 = 4,
-			unknown2 = 8,
+			wrap_width = 4, /// Identical to the relevant texture field or does this take precedence?
+			wrap_height = 8, /// Identical to the relevant texture field or does this take precedence?
 			two_sided = 16,
 			unfogged = 32,
 			no_depth_test = 64,
-			no_depth_set = 128
+			no_depth_set = 128,
+			unlit = 256
 		};
 
 		bool operator==(const Layer&) const = default;
@@ -308,6 +312,7 @@ namespace mdx {
 			/// if_particle_emitter : emitter_uses_tga,
 			sort_primitives_far_z = 0x10000,
 			line_emitter = 0x20000,
+			/// if_popcorn : popcorn_scaling,
 			unfogged = 0x40000,
 			model_space = 0x80000,
 			xy_quad = 0x100000
@@ -411,6 +416,8 @@ namespace mdx {
 
 		enum Flags {
 			constant_color = 0x1,
+			two_sided = 0x2,
+			unknown = 0x4, /// Not set or named in any of the game files
 			sort_primitives_near_z = 0x8,
 			sort_primitives_far_z = 0x10,
 			full_resolution = 0x20
@@ -593,7 +600,7 @@ namespace mdx {
 		TrackHeader<float> KRAL; // Alpha
 		TrackHeader<glm::vec3> KRCO; // Color
 		TrackHeader<uint32_t> KRTX; // Texture slot
-		TrackHeader<float> KRVS; // Visibility
+		TrackHeader<float> KRVS; // Visibility, has no static equivalent
 	};
 
 	/*
@@ -693,11 +700,22 @@ namespace mdx {
 		fs::path path; /// FaceFX effect file
 	};
 
-	/// PopcornFX emitter. We keep its payload opaque and re-emit it verbatim.
-	/// The debug leak that happened accidentally in 2025 revealed the info needed to reverse engineer PopcornFX
+	/// PopcornFX emitter
 	struct CornEmitter {
 		Node node;
-		std::vector<uint8_t> data; /// Just store it so we can save it again
+		float life_span;
+		float emission_rate;
+		float speed;
+		glm::vec3 color;
+		float alpha;
+		uint32_t replaceable_id; // Non-zero replaces path, like Texture
+		std::string path; // The .pkfx to spawn
+		/// Which sequences the effect plays in, e.g. "Always=off, Death=on"
+		std::string anim_visibility_guide;
+
+		TrackHeader<float> KPPA; // Alpha
+		TrackHeader<float> KPPE; // Emission rate
+		TrackHeader<float> KPPV; // Visibility
 	};
 
 	/// A camera with a position, look-at target, and lens settings.

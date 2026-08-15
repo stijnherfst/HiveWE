@@ -162,14 +162,16 @@ PivotPoints 12 {
 ParticleEmitter "Emitter1" {
 	ObjectId 4,
 	Parent 0,
-	EmitterUsesMdl,
+	EmitterUsesMDL,
 	static EmissionRate 10,
 	static Gravity 0,
 	static Longitude 0,
 	static Latitude 0,
-	Path "Models\Dummy.mdl",
-	static LifeSpan 1,
-	static InitVelocity 100,
+	Particle {
+		static LifeSpan 1,
+		static InitVelocity 100,
+		Path "Models\Dummy.mdl",
+	}
 }
 ParticleEmitter2 "Sparkles" {
 	ObjectId 5,
@@ -193,7 +195,7 @@ ParticleEmitter2 "Sparkles" {
 		Color { 1, 1, 1 },
 		Color { 0.5, 0.5, 0.5 },
 		Color { 0, 0, 0 },
-	}
+	},
 	Alpha { 255, 200, 0 },
 	ParticleScaling { 1, 2, 3 },
 	LifeSpanUVAnim { 0, 0, 1 },
@@ -209,9 +211,8 @@ RibbonEmitter "Trail" {
 	static HeightBelow 1,
 	static Alpha 1,
 	static Color { 1, 0, 0 },
-	LifeSpan 2,
-	static Visibility 1,
 	EmissionRate 30,
+	LifeSpan 2,
 	Rows 1,
 	Columns 1,
 	MaterialID 0,

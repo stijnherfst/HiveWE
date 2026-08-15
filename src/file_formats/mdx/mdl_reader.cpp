@@ -428,8 +428,9 @@ namespace mdx {
 				OUTCOME_TRY(mdx.extent.bounds_radius, r.consume_f32());
 			} else if (kw.text == "NumGeosets" || kw.text == "NumGeosetAnims" || kw.text == "NumHelpers" || kw.text == "NumLights"
 					   || kw.text == "NumBones" || kw.text == "NumAttachments" || kw.text == "NumParticleEmitters"
-					   || kw.text == "NumParticleEmitters2" || kw.text == "NumRibbonEmitters" || kw.text == "NumEvents"
-					   || kw.text == "NumFaceFX") {
+					   || kw.text == "NumParticleEmitters2" || kw.text == "NumParticleEmittersPopcorn"
+					   || kw.text == "NumRibbonEmitters" || kw.text == "NumEvents" || kw.text == "NumSoundEmitters"
+					   || kw.text == "NumMeshes" || kw.text == "NumFaceFX") {
 				// Informational counts only so we can discard, the actual lists are authoritative.
 				OUTCOME_TRY(r.consume_i64());
 			} else {
@@ -592,6 +593,12 @@ namespace mdx {
 				layer.shading_flags |= Layer::ShadingFlags::no_depth_test;
 			} else if (kw.text == "NoDepthSet") {
 				layer.shading_flags |= Layer::ShadingFlags::no_depth_set;
+			} else if (kw.text == "WrapWidth") {
+				layer.shading_flags |= Layer::ShadingFlags::wrap_width;
+			} else if (kw.text == "WrapHeight") {
+				layer.shading_flags |= Layer::ShadingFlags::wrap_height;
+			} else if (kw.text == "Unlit") {
+				layer.shading_flags |= Layer::ShadingFlags::unlit;
 			} else if (kw.text == "TVertexAnimId") {
 				OUTCOME_TRY(layer.texture_animation_id, r.consume_u32());
 			} else if (kw.text == "CoordId") {
@@ -670,6 +677,9 @@ namespace mdx {
 				} else if (r.peek_is("ConstantColor")) {
 					TRY(r.consume("ConstantColor"));
 					material.flags |= Material::Flags::constant_color;
+				} else if (r.peek_is("TwoSided")) {
+					TRY(r.consume("TwoSided"));
+					material.flags |= Material::Flags::two_sided;
 				} else if (r.peek_is("SortPrimsNearZ")) {
 					TRY(r.consume("SortPrimsNearZ"));
 					material.flags |= Material::Flags::sort_primitives_near_z;
@@ -766,10 +776,8 @@ namespace mdx {
 				}
 				TRY(r.consume("}"));
 			} else if (kw.text == "SkinWeights") {
-				OUTCOME_TRY(auto n, r.consume_u32());
 				TRY(r.consume("{"));
-				g.skin.reserve(n * 8);
-				for (uint32_t i = 0; i < n * 8; i++) {
+				while (!r.peek_is("}")) {
 					OUTCOME_TRY(auto v, r.consume_u32());
 					g.skin.push_back(static_cast<uint8_t>(v));
 				}
@@ -1113,9 +1121,9 @@ namespace mdx {
 				is_static = true;
 			}
 			OUTCOME_TRY(auto kw, r.consume());
-			if (kw.text == "EmitterUsesMdl") {
+			if (kw.text == "EmitterUsesMDL") {
 				e.node.flags |= 0x8000;
-			} else if (kw.text == "EmitterUsesTga") {
+			} else if (kw.text == "EmitterUsesTGA") {
 				e.node.flags |= 0x10000;
 			} else if (kw.text == "EmissionRate") {
 				if (is_static) {
@@ -1143,20 +1151,35 @@ namespace mdx {
 				}
 			} else if (kw.text == "Visibility") {
 				OUTCOME_TRY(e.KPEV, r.parse_animated_track<float>(mdx.unique_tracks));
-			} else if (kw.text == "LifeSpan") {
-				if (is_static) {
-					OUTCOME_TRY(e.life_span, r.consume_f32());
-				} else {
-					OUTCOME_TRY(e.KPEL, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "Particle") {
+				// Lifespan, velocity and the spawned model path only exist in here.
+				TRY(r.consume("{"));
+				while (!r.peek_is("}")) {
+					bool particle_is_static = false;
+					if (r.peek_is("static")) {
+						TRY(r.consume("static"));
+						particle_is_static = true;
+					}
+					OUTCOME_TRY(auto pkw, r.consume());
+					if (pkw.text == "LifeSpan") {
+						if (particle_is_static) {
+							OUTCOME_TRY(e.life_span, r.consume_f32());
+						} else {
+							OUTCOME_TRY(e.KPEL, r.parse_animated_track<float>(mdx.unique_tracks));
+						}
+					} else if (pkw.text == "InitVelocity") {
+						if (particle_is_static) {
+							OUTCOME_TRY(e.speed, r.consume_f32());
+						} else {
+							OUTCOME_TRY(e.KPES, r.parse_animated_track<float>(mdx.unique_tracks));
+						}
+					} else if (pkw.text == "Path") {
+						OUTCOME_TRY(e.path, r.consume_quoted_string());
+					} else {
+						return failure(std::format("ParticleEmitter Particle: unknown field '{}' at line {}", pkw.text, pkw.line));
+					}
 				}
-			} else if (kw.text == "InitVelocity") {
-				if (is_static) {
-					OUTCOME_TRY(e.speed, r.consume_f32());
-				} else {
-					OUTCOME_TRY(e.KPES, r.parse_animated_track<float>(mdx.unique_tracks));
-				}
-			} else if (kw.text == "Path") {
-				OUTCOME_TRY(e.path, r.consume_quoted_string());
+				TRY(r.consume("}"));
 			} else {
 				return failure(std::format("ParticleEmitter: unknown field '{}' at line {}", kw.text, kw.line));
 			}
@@ -1576,8 +1599,45 @@ namespace mdx {
 			if (handled) {
 				continue;
 			}
-			const auto& tok = r.peek();
-			return failure(std::format("ParticleEmitterPopcorn: unknown field '{}' at line {}", tok.text, tok.line));
+
+			bool is_static = false;
+			if (r.peek_is("static")) {
+				TRY(r.consume("static"));
+				is_static = true;
+			}
+			OUTCOME_TRY(auto kw, r.consume());
+			if (kw.text == "PopcornScaling") {
+				// Blizzard reused the unfogged bit for this on Popcorn emitters.
+				c.node.flags |= Node::Flags::unfogged;
+			} else if (kw.text == "LifeSpan") {
+				OUTCOME_TRY(c.life_span, r.consume_f32());
+			} else if (kw.text == "EmissionRate") {
+				if (is_static) {
+					OUTCOME_TRY(c.emission_rate, r.consume_f32());
+				} else {
+					OUTCOME_TRY(c.KPPE, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "Speed") {
+				OUTCOME_TRY(c.speed, r.consume_f32());
+			} else if (kw.text == "Color") {
+				OUTCOME_TRY(c.color, r.consume_vec3());
+			} else if (kw.text == "Alpha") {
+				if (is_static) {
+					OUTCOME_TRY(c.alpha, r.consume_f32());
+				} else {
+					OUTCOME_TRY(c.KPPA, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "ReplaceableId") {
+				OUTCOME_TRY(c.replaceable_id, r.consume_u32());
+			} else if (kw.text == "Path") {
+				OUTCOME_TRY(c.path, r.consume_quoted_string());
+			} else if (kw.text == "AnimVisibilityGuide") {
+				OUTCOME_TRY(c.anim_visibility_guide, r.consume_quoted_string());
+			} else if (kw.text == "Visibility") {
+				OUTCOME_TRY(c.KPPV, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else {
+				return failure(std::format("ParticleEmitterPopcorn: unknown field '{}' at line {}", kw.text, kw.line));
+			}
 		}
 		TRY(r.consume("}"));
 		mdx.corn_emitters.push_back(std::move(c));
