@@ -1,6 +1,7 @@
 export module Protection;
 
 import std;
+import Paths;
 
 namespace fs = std::filesystem;
 
@@ -19,7 +20,7 @@ namespace protection {
 	};
 
 	/// Editor only files the game doesn't need
-	constexpr std::array world_editor_files = {
+	const std::vector<std::string> world_editor_files = {
 		"war3map.doo",
 		"war3map.w3c",
 		"war3map.w3s",
@@ -29,13 +30,14 @@ namespace protection {
 		"war3map.wct",
 		"war3map.wtg",
 		"conversation.json",
-		"hiveWE/terrain_pathing.json",
+		paths::terrain_pathing_file("").generic_string(),
+		paths::map_info_extras_file("").generic_string(),
 	};
 
 	/// Whether only the editor needs this file, matched against the path relative to the map root
 	export bool is_editor_file(const fs::path& relative_path) {
 		const std::string name = relative_path.generic_string();
-		return std::ranges::any_of(world_editor_files, [&](const char* editor_file) {
+		return std::ranges::any_of(world_editor_files, [&](const std::string& editor_file) {
 			return name == editor_file;
 		});
 	}
