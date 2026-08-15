@@ -315,9 +315,9 @@ namespace mdx {
 	};
 
 	export struct Extent {
-		float bounds_radius;
-		glm::vec3 minimum;
-		glm::vec3 maximum;
+		float bounds_radius = 0.f;
+		glm::vec3 minimum = glm::vec3(0.f);
+		glm::vec3 maximum = glm::vec3(0.f);
 
 		Extent() = default;
 
@@ -886,14 +886,22 @@ namespace mdx {
 			for (auto& i : emitters1) {
 				F(i.KPEE);
 				F(i.KPEG);
+				F(i.KPLN);
+				F(i.KPLT);
+				F(i.KPEL);
+				F(i.KPES);
+				F(i.KPEV);
 			}
 
 			for (auto& i : emitters2) {
-				F(i.KP2E);
-				F(i.KP2G);
+				F(i.KP2S);
 				F(i.KP2R);
-				F(i.KP2W);
+				F(i.KP2L);
+				F(i.KP2G);
+				F(i.KP2E);
 				F(i.KP2N);
+				F(i.KP2W);
+				F(i.KP2V);
 			}
 
 			for (auto& i : materials) {
@@ -938,6 +946,100 @@ namespace mdx {
 				F(i.KTAT);
 				F(i.KTAR);
 				F(i.KTAS);
+			}
+		}
+
+		/// Like for_each_track, but visits every track the format has and tells the callback which
+		/// object and which chunk each one came from, so diagnostics can name their source.
+		/// for_each_track is missing a handful of emitter tracks; this one is the complete set.
+		template<typename Func>
+			requires std::invocable<Func, TrackHeader<float>&, std::string_view, const char*>
+			and std::invocable<Func, TrackHeader<uint32_t>&, std::string_view, const char*>
+			and std::invocable<Func, TrackHeader<glm::vec3>&, std::string_view, const char*>
+			and std::invocable<Func, TrackHeader<glm::quat>&, std::string_view, const char*>
+		void for_each_track_labelled(const Func F) {
+			for_each_node([&](Node& node) {
+				F(node.KGRT, node.name, "KGRT");
+				F(node.KGTR, node.name, "KGTR");
+				F(node.KGSC, node.name, "KGSC");
+			});
+
+			for (size_t i = 0; i < animations.size(); i++) {
+				const std::string label = std::format("Geoset animation {}", i);
+				F(animations[i].KGAC, label, "KGAC");
+				F(animations[i].KGAO, label, "KGAO");
+			}
+
+			for (auto& i : attachments) {
+				F(i.KATV, i.node.name, "KATV");
+			}
+
+			for (auto& i : emitters1) {
+				F(i.KPEE, i.node.name, "KPEE");
+				F(i.KPEG, i.node.name, "KPEG");
+				F(i.KPLN, i.node.name, "KPLN");
+				F(i.KPLT, i.node.name, "KPLT");
+				F(i.KPEL, i.node.name, "KPEL");
+				F(i.KPES, i.node.name, "KPES");
+				F(i.KPEV, i.node.name, "KPEV");
+			}
+
+			for (auto& i : emitters2) {
+				F(i.KP2S, i.node.name, "KP2S");
+				F(i.KP2R, i.node.name, "KP2R");
+				F(i.KP2L, i.node.name, "KP2L");
+				F(i.KP2G, i.node.name, "KP2G");
+				F(i.KP2E, i.node.name, "KP2E");
+				F(i.KP2N, i.node.name, "KP2N");
+				F(i.KP2W, i.node.name, "KP2W");
+				F(i.KP2V, i.node.name, "KP2V");
+			}
+
+			for (size_t i = 0; i < materials.size(); i++) {
+				for (size_t j = 0; j < materials[i].layers.size(); j++) {
+					auto& layer = materials[i].layers[j];
+					const std::string label = std::format("Material {} layer {}", i, j);
+					F(layer.KMTA, label, "KMTA");
+					F(layer.KMTE, label, "KMTE");
+					F(layer.KFC3, label, "KFC3");
+					F(layer.KFCA, label, "KFCA");
+					F(layer.KFTC, label, "KFTC");
+					for (auto& k : layer.textures) {
+						F(k.KMTF, label, "KMTF");
+					}
+				}
+			}
+
+			for (auto& i : lights) {
+				F(i.KLAS, i.node.name, "KLAS");
+				F(i.KLAE, i.node.name, "KLAE");
+				F(i.KLAC, i.node.name, "KLAC");
+				F(i.KLAI, i.node.name, "KLAI");
+				F(i.KLBI, i.node.name, "KLBI");
+				F(i.KLBC, i.node.name, "KLBC");
+				F(i.KLAV, i.node.name, "KLAV");
+			}
+
+			for (auto& i : ribbons) {
+				F(i.KRHA, i.node.name, "KRHA");
+				F(i.KRHB, i.node.name, "KRHB");
+				F(i.KRAL, i.node.name, "KRAL");
+				F(i.KRCO, i.node.name, "KRCO");
+				F(i.KRTX, i.node.name, "KRTX");
+				F(i.KRVS, i.node.name, "KRVS");
+			}
+
+			for (auto& i : cameras) {
+				F(i.KCTR, i.name, "KCTR");
+				F(i.KTTR, i.name, "KTTR");
+				F(i.KCRL, i.name, "KCRL");
+			}
+
+			for (size_t i = 0; i < texture_animations.size(); i++) {
+				const std::string label = std::format("Texture animation {}", i);
+				F(texture_animations[i].KTAT, label, "KTAT");
+				F(texture_animations[i].KTAR, label, "KTAR");
+				F(texture_animations[i].KTAS, label, "KTAS");
 			}
 		}
 	};

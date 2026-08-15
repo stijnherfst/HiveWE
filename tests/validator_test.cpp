@@ -82,7 +82,7 @@ TEST_CASE("Validator: event object references invalid global sequence id") {
 
 TEST_CASE("Validator: track references invalid global sequence id") {
 	const auto messages = validate_fixture("bad_track_globalseq_v800.mdl");
-	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "A track references invalid global sequence id 5"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "Root track KGTR references invalid global sequence id 5"));
 }
 
 TEST_CASE("Validator: texture has no replaceable id and no path") {
@@ -188,6 +188,38 @@ TEST_CASE("Validator: unused material and texture animation") {
 TEST_CASE("Validator: negative extents") {
 	const auto messages = validate_fixture("negative_extent_v800.mdl");
 	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "Model has negative extents"));
+}
+
+// ——————————————————————— Batch 3 ———————————————————————
+
+TEST_CASE("Validator: texture referenced only by an unused material") {
+	const auto messages = validate_fixture("transitive_unused_texture_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::unused, "Material 0 is never referenced"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::unused, "Texture 0 is never referenced"));
+	CHECK_FALSE(has_message(messages, mdx::ValidationSeverity::unused, "Texture 1 is never referenced"));
+}
+
+TEST_CASE("Validator: camera without a portrait sequence") {
+	const auto messages = validate_fixture("portrait_camera_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::unused, "Camera \"Camera01\" is never used, the model has no Portrait sequence"));
+}
+
+TEST_CASE("Validator: event object name does not follow the convention") {
+	const auto messages = validate_fixture("bad_event_name_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "Event object \"Footstep\" does not follow the 8 character type + rawcode naming convention"));
+	CHECK_FALSE(has_message(messages, mdx::ValidationSeverity::warning, "Event object \"SNDxFOO0\" does not follow"));
+}
+
+TEST_CASE("Validator: keyframe past a global sequence duration") {
+	const auto messages = validate_fixture("globalseq_overrun_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "PastDuration track KGTR has a keyframe at frame 1500 past global sequence 1's duration 1000"));
+	// A final keyframe sitting exactly on the duration is how a loop is normally closed.
+	CHECK_FALSE(has_message(messages, mdx::ValidationSeverity::severe, "OnDuration track KGTR has a keyframe"));
+}
+
+TEST_CASE("Validator: particle emitter 2 visibility track is validated") {
+	const auto messages = validate_fixture("emitter2_visibility_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "Sparkles track KP2V has keyframes that are not in ascending order (frame 400 after 800)"));
 }
 
 TEST_CASE("Validator: SD geoset too many vertices (in-memory)") {

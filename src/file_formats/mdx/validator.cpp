@@ -153,6 +153,12 @@ namespace mdx {
 					if (texture.slot > 5) {
 						warning(std::format("Material {} layer {} texture uses invalid PBR slot {}", id, layer_id, texture.slot));
 					}
+					for (const auto& track : texture.KMTF.tracks) {
+						if (track.value >= textures.size()) {
+							warning(std::format("Material {} layer {} has an animated texture id {} that is out of range", id, layer_id, track.value));
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -365,14 +371,32 @@ namespace mdx {
 		}
 
 		// Cameras
+		const bool has_portrait = std::ranges::any_of(sequences, [](const Sequence& sequence) {
+			std::string lower = sequence.name;
+			std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return std::tolower(c); });
+			return lower.starts_with("portrait");
+		});
 		for (const auto& camera : cameras) {
 			if (camera.near_clip < 0.f || camera.far_clip <= camera.near_clip) {
 				warning(std::format("Camera \"{}\" has invalid clip planes (near {}, far {})", camera.name, camera.near_clip, camera.far_clip));
 			}
+			if (!has_portrait) {
+				unused(std::format("Camera \"{}\" is never used, the model has no Portrait sequence", camera.name));
+			}
 		}
 
 		// Event objects
+		static const std::array<std::string_view, 5> event_prefixes = { "SPN", "SPLT", "FPT", "UBR", "SND" };
 		for (const auto& event : event_objects) {
+			std::string upper_name = event.node.name;
+			std::ranges::transform(upper_name, upper_name.begin(), [](unsigned char c) { return std::toupper(c); });
+			const bool known_prefix = std::ranges::any_of(event_prefixes, [&](const std::string_view prefix) {
+				return upper_name.starts_with(prefix);
+			});
+			if (upper_name.size() != 8 || !known_prefix) {
+				warning(std::format("Event object \"{}\" does not follow the 8 character type + rawcode naming convention", event.node.name));
+			}
+
 			if (event.global_sequence_id != -1 && static_cast<size_t>(event.global_sequence_id) >= global_sequences.size()) {
 				warning(std::format("Event object \"{}\" references invalid global sequence id {}", event.node.name, event.global_sequence_id));
 			}
@@ -394,21 +418,36 @@ namespace mdx {
 		}
 
 		// Animation tracks
-		for_each_track([&](const auto& header) {
-			if (header.global_sequence_ID != -1
-				&& (header.global_sequence_ID < 0 || static_cast<size_t>(header.global_sequence_ID) >= global_sequences.size())) {
-				warning(std::format("A track references invalid global sequence id {}", header.global_sequence_ID));
+		for_each_track_labelled([&](const auto& header, const std::string_view owner, const char* track_name) {
+			const bool valid_global_sequence = header.global_sequence_ID != -1
+				&& header.global_sequence_ID >= 0
+				&& static_cast<size_t>(header.global_sequence_ID) < global_sequences.size();
+
+			if (header.global_sequence_ID != -1 && !valid_global_sequence) {
+				warning(std::format("{} track {} references invalid global sequence id {}", owner, track_name, header.global_sequence_ID));
+			}
+
+			// A global sequence track loops over [0, duration], so anything past the duration is
+			// never reached. The final keyframe conventionally sits exactly on it.
+			if (valid_global_sequence) {
+				const uint32_t duration = global_sequences[header.global_sequence_ID];
+				for (const auto& track : header.tracks) {
+					if (track.frame > static_cast<int32_t>(duration)) {
+						severe(std::format("{} track {} has a keyframe at frame {} past global sequence {}'s duration {}", owner, track_name, track.frame, header.global_sequence_ID, duration));
+						break;
+					}
+				}
 			}
 
 			bool order_reported = false;
 			bool duplicate_reported = false;
 			for (size_t i = 1; i < header.tracks.size(); i++) {
 				if (!order_reported && header.tracks[i].frame < header.tracks[i - 1].frame) {
-					severe(std::format("A track has keyframes that are not in ascending order (frame {} after {})", header.tracks[i].frame, header.tracks[i - 1].frame));
+					severe(std::format("{} track {} has keyframes that are not in ascending order (frame {} after {})", owner, track_name, header.tracks[i].frame, header.tracks[i - 1].frame));
 					order_reported = true;
 				}
 				if (!duplicate_reported && header.tracks[i].frame == header.tracks[i - 1].frame) {
-					warning(std::format("A track has a duplicate keyframe at frame {}", header.tracks[i].frame));
+					warning(std::format("{} track {} has a duplicate keyframe at frame {}", owner, track_name, header.tracks[i].frame));
 					duplicate_reported = true;
 				}
 			}
@@ -498,27 +537,32 @@ namespace mdx {
 		std::unordered_set<uint32_t> used_textures;
 		std::unordered_set<uint32_t> used_materials;
 		std::unordered_set<uint32_t> used_texture_animations;
-		for (const auto& material : materials) {
-			for (const auto& layer : material.layers) {
+		for (const auto& geoset : geosets) {
+			used_materials.insert(geoset.material_id);
+		}
+		for (const auto& ribbon : ribbons) {
+			used_materials.insert(ribbon.material_id);
+		}
+		for (const auto& [id, material] : std::ranges::enumerate_view(materials)) {
+			if (!used_materials.contains(static_cast<uint32_t>(id))) {
+				continue;
+			}
+			for (const auto& [layer_id, layer] : std::ranges::enumerate_view(material.layers)) {
 				if (layer.texture_animation_id != 0xFFFFFFFF) {
 					used_texture_animations.insert(layer.texture_animation_id);
 				}
 				for (const auto& texture : layer.textures) {
 					used_textures.insert(texture.id);
 					for (const auto& track : texture.KMTF.tracks) {
-						used_textures.insert(track.value);
+						if (track.value < textures.size()) {
+							used_textures.insert(track.value);
+						}
 					}
 				}
 			}
 		}
 		for (const auto& emitter : emitters2) {
 			used_textures.insert(emitter.texture_id);
-		}
-		for (const auto& geoset : geosets) {
-			used_materials.insert(geoset.material_id);
-		}
-		for (const auto& ribbon : ribbons) {
-			used_materials.insert(ribbon.material_id);
 		}
 		for (size_t i = 0; i < textures.size(); i++) {
 			if (!used_textures.contains(static_cast<uint32_t>(i))) {
