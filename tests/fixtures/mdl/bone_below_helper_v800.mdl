@@ -1,0 +1,80 @@
+Version {
+	FormatVersion 800,
+}
+Model "bone_below_helper" {
+	BlendTime 150,
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Sequences 1 {
+	Anim "Stand" {
+		Interval { 0, 1000 },
+	}
+}
+Textures 1 {
+	Bitmap {
+		Image "Textures/white.blp",
+	}
+}
+Materials 1 {
+	Material {
+		Layer {
+			FilterMode None,
+			static TextureID 0,
+		}
+	}
+}
+Geoset {
+	Vertices 3 {
+		{ 0, 0, 0 },
+		{ 1, 0, 0 },
+		{ 0, 1, 0 },
+	}
+	Normals 3 {
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+		{ 0, 0, 1 },
+	}
+	TVertices 3 {
+		{ 0, 0 },
+		{ 1, 0 },
+		{ 0, 1 },
+	}
+	VertexGroup {
+		0,
+		0,
+		0,
+	}
+	Faces 1 3 {
+		Triangles {
+			{ 0, 1, 2 },
+		}
+	}
+	Groups 1 1 {
+		Matrices { 1 },
+	}
+	Anim {
+		MinimumExtent { -1, -1, 0 },
+		MaximumExtent { 1, 1, 1 },
+	}
+	MaterialID 0,
+}
+Helper "HelperRoot" {
+	ObjectId 0,
+}
+Bone "Arm" {
+	ObjectId 1,
+	Parent 0,
+	GeosetId 0,
+	GeosetAnimId None,
+	Translation 3 {
+		Linear,
+		0: { 0, 0, 0 },
+		500: { 0, 0, 1 },
+		1000: { 0, 0, 0 },
+	}
+}
+PivotPoints 2 {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+}

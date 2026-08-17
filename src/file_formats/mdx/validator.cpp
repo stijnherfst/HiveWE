@@ -50,6 +50,37 @@ namespace mdx {
 			is_valid = is_valid && sum == correct_sum && sum_squared == correct_sum_squared;
 		}
 
+		// Bones have to be the first bones.size() node IDs
+		for (const auto& bone : bones) {
+			if (bone.node.id < 0 || static_cast<size_t>(bone.node.id) >= bones.size()) {
+				is_valid = false;
+			}
+		}
+
+		for (const auto& geoset : geosets) {
+			if (geoset.skin.empty()) {
+				if (geoset.vertex_groups.size() != geoset.vertices.size()) {
+					is_valid = false;
+				}
+			}
+
+			// Boneless models get fixed by the game
+			if (!bones.empty()) {
+				for (const auto& index : geoset.matrix_indices) {
+					if (index >= node_count) {
+						is_valid = false;
+					}
+				}
+
+				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
+					is_valid = is_valid && geoset.skin[i + 0] < node_count;
+					is_valid = is_valid && geoset.skin[i + 1] < node_count;
+					is_valid = is_valid && geoset.skin[i + 2] < node_count;
+					is_valid = is_valid && geoset.skin[i + 3] < node_count;
+				}
+			}
+		}
+
 		for (const auto& material : materials) {
 			for (const auto& layer: material.layers) {
 				for (const auto& texture: layer.textures) {
@@ -103,8 +134,7 @@ namespace mdx {
 		for_each_node([&](const Node& node) {
 			if (node.id < 0) {
 				error(std::format("Node \"{}\" has invalid ID {}", node.name, node.id));
-			}
-			if (node.id >= node_count) {
+			} else if (static_cast<size_t>(node.id) >= node_count) {
 				error(std::format("Node \"{}\" has ID {} which is higher than node count {}", node.name, node.id, node_count));
 			}
 			const auto [id, inserted] = ids.insert(node.id);
@@ -197,7 +227,11 @@ namespace mdx {
 				}
 			}
 
-			if (!geoset.vertex_groups.empty() && geoset.vertex_groups.size() != geoset.vertices.size()) {
+			if (geoset.skin.empty()) {
+				if (geoset.vertex_groups.size() != geoset.vertices.size()) {
+					error(std::format("Geoset {} has {} vertex groups but {} vertices", id, geoset.vertex_groups.size(), geoset.vertices.size()));
+				}
+			} else if (!geoset.vertex_groups.empty() && geoset.vertex_groups.size() != geoset.vertices.size()) {
 				warning(std::format("Geoset {} has {} vertex groups but {} vertices", id, geoset.vertex_groups.size(), geoset.vertices.size()));
 			}
 
@@ -300,6 +334,11 @@ namespace mdx {
 			}
 			if (has_skinnable_geometry && !used_bones.contains(bone.node.id)) {
 				warning(std::format("Bone {} \"{}\" has no vertices attached", id, bone.node.name));
+			}
+			if (bone.node.id >= 0 && static_cast<size_t>(bone.node.id) >= bones.size()) {
+				error(std::format("Bone {} \"{}\" has object ID {} but the model has {} bones. Warcraft 3 skins only to the "
+								  "first {} object IDs, so vertices attached to this bone will not render",
+					id, bone.node.name, bone.node.id, bones.size(), bones.size()));
 			}
 		}
 
@@ -412,13 +451,11 @@ namespace mdx {
 				warning(std::format("{} track {} references invalid global sequence id {}", owner, track_name, header.global_sequence_ID));
 			}
 
-			// A global sequence track loops over [0, duration], so anything past the duration is
-			// never reached. The final keyframe conventionally sits exactly on it.
 			if (valid_global_sequence) {
 				const uint32_t duration = global_sequences[header.global_sequence_ID];
 				for (const auto& track : header.tracks) {
 					if (track.frame > static_cast<int32_t>(duration)) {
-						severe(std::format("{} track {} has a keyframe at frame {} past global sequence {}'s duration {}", owner, track_name, track.frame, header.global_sequence_ID, duration));
+						warning(std::format("{} track {} has a keyframe at frame {} past global sequence {}'s duration {}, which is never reached", owner, track_name, track.frame, header.global_sequence_ID, duration));
 						break;
 					}
 				}
@@ -565,10 +602,38 @@ namespace mdx {
 			}
 		}
 
+		// Names and paths that MDL cannot represent. This works fine until you export from MDX to MDL
+		const auto check_quoting = [&](const std::string_view kind, const std::string_view text) {
+			if (text.contains('"') || text.contains('\n') || text.contains('\r')) {
+				warning(std::format("{} \"{}\" contains a quote or newline, which cannot be written to MDL", kind, text));
+			}
+		};
+
+		check_quoting("Model", name);
+		for_each_node([&](const Node& node) {
+			check_quoting("Node", node.name);
+		});
+		for (const auto& sequence : sequences) {
+			check_quoting("Sequence", sequence.name);
+		}
+		for (const auto& texture : textures) {
+			check_quoting("Texture path", texture.file_name.string());
+		}
+		for (const auto& camera : cameras) {
+			check_quoting("Camera", camera.name);
+		}
+		for (const auto& attachment : attachments) {
+			check_quoting("Attachment path", attachment.path);
+		}
+		for (const auto& emitter : emitters1) {
+			check_quoting("Particle emitter path", emitter.path);
+		}
+
 		return messages;
 	}
 
 	/// Fixes errors in models that the game tolerates
+	/// The model should successfully pass MDX::is_valid() before calling this
 	void MDX::fix_up() {
 		// Remove geoset animations that reference non-existing geosets
 		for (size_t i = animations.size(); i-- > 0;) {
@@ -580,12 +645,37 @@ namespace mdx {
 		size_t node_count = bones.size() + lights.size() + help_bones.size() + attachments.size() + emitters1.size() + emitters2.size()
 			+ ribbons.size() + event_objects.size() + collision_shapes.size() + corn_emitters.size();
 
-		// If there are no bones we have to add one to prevent crashing and stuff.
+		// The game adds a bone when there are none
 		if (bones.empty()) {
+			// Bones have to precede all other node types, so move the others
+			if (node_count > 0) {
+				for_each_node([](Node& node) {
+					node.id += 1;
+					if (node.parent_id != -1) {
+						node.parent_id += 1;
+					}
+				});
+				if (!pivots.empty()) {
+					pivots.insert(pivots.begin(), glm::vec3(0.f));
+				}
+			}
+
 			Bone bone {};
 			bone.node.parent_id = -1;
-			bone.node.id = node_count++;
+			bone.node.id = 0;
 			bones.push_back(bone);
+			node_count += 1;
+
+			// And all vertices should refer to bone 0 now
+			for (auto& geoset : geosets) {
+				std::ranges::fill(geoset.matrix_indices, 0);
+				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
+					geoset.skin[i + 0] = 0;
+					geoset.skin[i + 1] = 0;
+					geoset.skin[i + 2] = 0;
+					geoset.skin[i + 3] = 0;
+				}
+			}
 		}
 
 		// ———————————No sequences?———————————
@@ -618,9 +708,22 @@ namespace mdx {
 			);
 		}
 
-		// Ensure that the pivot buffer is big enough. This has to happen before calculate_extents(),
-		// which indexes pivots by node id to bound the particle emitters.
+		// Ensure that the pivot buffer is big enough. Everything below indexes pivots by node id.
 		pivots.resize(node_count, {});
+
+		std::unordered_set<int> node_ids;
+		node_ids.reserve(node_count);
+		for_each_node([&](const Node& node) {
+			node_ids.insert(node.id);
+		});
+
+		// Missing parent node becomes root, so walking up a hierarchy always terminates
+		// TODO what is the game's behaviour
+		for_each_node([&](Node& node) {
+			if (node.parent_id != -1 && !node_ids.contains(node.parent_id)) {
+				node.parent_id = -1;
+			}
+		});
 
 		// Can't have zero-sized extents unless you're rendering nothing!
 		if (extent.minimum == glm::vec3(0.f) && extent.maximum == glm::vec3(0.f)) {
@@ -637,26 +740,6 @@ namespace mdx {
 		// We rely on sortedness for MDX optimization
 		std::ranges::sort(sequences, [](const auto& a, const auto& b) {
 			return a.start_frame < b.start_frame;
-		});
-
-		// Compact node IDs
-		std::vector<int> IDs;
-		IDs.reserve(node_count);
-		for_each_node([&](const Node& node) {
-			IDs.push_back(node.id);
-		});
-
-		const int max_id = *std::max_element(IDs.begin(), IDs.end());
-		std::vector<int> remapping(max_id + 1);
-		for (size_t i = 0; i < IDs.size(); i++) {
-			remapping[IDs[i]] = i;
-		}
-
-		for_each_node([&](mdx::Node& node) {
-			node.id = remapping[node.id];
-			if (node.parent_id != -1) {
-				node.parent_id = remapping[node.parent_id];
-			}
 		});
 
 		for (auto& emitter : emitters2) {

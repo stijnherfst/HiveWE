@@ -769,11 +769,11 @@ namespace mdx {
 		write_PIVT(writer, *this);
 		write_PREM(writer, *this);
 		write_PRE2(writer, *this);
+		write_CORN(writer, *this);
 		write_RIBB(writer, *this);
 		write_CAMS(writer, *this);
 		write_EVTS(writer, *this);
 		write_CLID(writer, *this);
-		write_CORN(writer, *this);
 		write_FAFX(writer, *this);
 		write_BPOS(writer, *this);
 		write_TXAN(writer, *this);

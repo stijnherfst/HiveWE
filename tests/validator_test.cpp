@@ -219,7 +219,7 @@ TEST_CASE("Validator: event object name does not follow the convention") {
 
 TEST_CASE("Validator: keyframe past a global sequence duration") {
 	const auto messages = validate_fixture("globalseq_overrun_v800.mdl");
-	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "PastDuration track KGTR has a keyframe at frame 1500 past global sequence 1's duration 1000"));
+	CHECK(has_message(messages, mdx::ValidationSeverity::warning, "PastDuration track KGTR has a keyframe at frame 1500 past global sequence 1's duration 1000"));
 	// A final keyframe sitting exactly on the duration is how a loop is normally closed.
 	CHECK_FALSE(has_message(messages, mdx::ValidationSeverity::severe, "OnDuration track KGTR has a keyframe"));
 }
@@ -246,4 +246,15 @@ TEST_CASE("Validator: SD geoset too many vertices (in-memory)") {
 
 	const auto messages = model.validate();
 	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "exceeds the Warcraft 3 limit"));
+}
+
+TEST_CASE("Validator: bone numbered above a helper cannot be skinned to") {
+	const auto messages = validate_fixture("bone_below_helper_v800.mdl");
+	CHECK(has_message(messages, mdx::ValidationSeverity::error,
+		"Bone 0 \"Arm\" has object ID 1 but the model has 1 bones"));
+}
+
+TEST_CASE("Validator: a bone below every other node is accepted") {
+	const auto messages = validate_fixture("nodes_v800.mdl");
+	CHECK(!has_message(messages, mdx::ValidationSeverity::error, "will not render"));
 }

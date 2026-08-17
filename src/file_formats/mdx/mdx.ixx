@@ -839,6 +839,7 @@ namespace mdx {
 
 		MDX& calculate_extents();
 
+		/// Visits every node in the order their chunks appear in an MDX file
 		template<std::invocable<Node&> Func>
 		void for_each_node(const Func F) {
 			for (auto& i : bones) {
@@ -865,6 +866,10 @@ namespace mdx {
 				F(i.node);
 			}
 
+			for (auto& i : corn_emitters) {
+				F(i.node);
+			}
+
 			for (auto& i : ribbons) {
 				F(i.node);
 			}
@@ -874,10 +879,6 @@ namespace mdx {
 			}
 
 			for (auto& i : collision_shapes) {
-				F(i.node);
-			}
-
-			for (auto& i : corn_emitters) {
 				F(i.node);
 			}
 		}
