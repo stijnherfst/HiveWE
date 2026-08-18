@@ -1,5 +1,9 @@
 #pragma once
 
+#include <span>
+
+#include <glm/glm.hpp>
+
 class TerrainBrush;
 class Terrain;
 class TerrainRect;
@@ -94,7 +98,7 @@ class CliffOperator: public TerrainOperator {
 	PathingRect apply(const TerrainRect& area, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx, const PathingRect& area) override;
 
-	void check_nearby(const int begx, const int begy, const int i, const int j, TerrainRect& area) const;
+	void check_nearby(const int begx, const int begy, std::span<const glm::ivec2> seeds, TerrainRect& area) const;
 	void update_ramp(const int i, const int j, const int horizontal, const int vertical, TerrainRect& area);
 	PathingRect apply_cliffs(const TerrainRect& area, double frame_delta);
 	PathingRect apply_ramps(const TerrainRect& area, double frame_delta);

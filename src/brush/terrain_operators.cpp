@@ -10,6 +10,7 @@ import PathingUndo;
 import TerrainUndo;
 import WorldUndoManager;
 import Camera;
+import UnorderedSet;
 
 void TerrainOperator::set_brush_type(Brush::Type type) {
 	brush_type = type;
@@ -251,6 +252,8 @@ PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_de
 	TerrainRect expanded_area =
 		TerrainRect(area.x() - 1, area.y() - 1, area.width() + 1, area.height() + 1).intersected({0, 0, width - 1, height - 1});
 
+	std::vector<glm::ivec2> cliff_seeds;
+
 	for (int j = area.y(); j < area.y() + area.height(); j++) {
 		for (int i = area.x(); i < area.x() + area.width(); i++) {
 			if (!brush->contains(glm::ivec2(i - area.x(), j - area.y()) - glm::min(pos, 0))) {
@@ -284,8 +287,12 @@ PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_de
 					break;
 			}
 
-			check_nearby(pos.x, pos.y, i, j, expanded_area);
+			cliff_seeds.emplace_back(i, j);
 		}
+	}
+
+	if (!cliff_seeds.empty()) {
+		check_nearby(pos.x, pos.y, cliff_seeds, expanded_area);
 	}
 
 	// Bounds check
@@ -372,32 +379,55 @@ void CliffOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
 	brush->add_terrain_undo(ctx, area.to_terrain(), TerrainUndoType::cliff);
 }
 
-/// Make this an iterative function instead to avoid stack overflows
-void CliffOperator::check_nearby(const int begx, const int begy, const int i, const int j, TerrainRect& area) const {
+void CliffOperator::check_nearby(const int begx, const int begy, std::span<const glm::ivec2> seeds, TerrainRect& area) const {
 	auto& terrain = map->terrain;
-	TerrainRect bounds = TerrainRect(i - 1, j - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
-	for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-		for (int k = bounds.x(); k <= bounds.right(); k++) {
-			// assign proper cliff texture to all corners in the 3x3 neighbourhood
-			terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_index;
+	hive::unordered_set<size_t> visited;
 
-			if (k == 0 && l == 0) {
-				continue;
-			}
+	std::vector<glm::ivec2> stack;
+	stack.reserve(64);
+	for (const auto& seed : seeds) {
+		if (seed.x < 0 || seed.x >= terrain.width || seed.y < 0 || seed.y >= terrain.height) {
+			continue;
+		}
+		const size_t idx = terrain.ci(seed.x, seed.y);
+		if (!visited.insert(idx).second) {
+			continue;
+		}
+		stack.emplace_back(seed);
+	}
 
-			int difference = terrain.corner_layer_height[terrain.ci(i, j)] - terrain.corner_layer_height[terrain.ci(k, l)];
-			if (std::abs(difference) > 2 && !brush->contains(glm::ivec2(begx + (k - i), begy + (l - k)))) {
-				terrain.corner_layer_height[terrain.ci(k, l)] =
-					terrain.corner_layer_height[terrain.ci(i, j)] - std::clamp(difference, -2, 2);
-				terrain.corner_ramp[terrain.ci(k, l)] = false;
+	// DFS visit, BFS could have better locality but at this scale it likely won't make a difference
+	while (!stack.empty()) {
+		const glm::ivec2 current = stack.back();
+		stack.pop_back();
 
-				area.setX(std::min(area.x(), k - 1));
-				area.setY(std::min(area.y(), l - 1));
-				area.setRight(std::max(area.right(), k));
-				area.setBottom(std::max(area.bottom(), l));
+		TerrainRect bounds = TerrainRect(current.x - 1, current.y - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
-				check_nearby(begx, begy, k, l, area);
+		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+			for (int k = bounds.x(); k <= bounds.right(); k++) {
+				// assign proper cliff texture to all corners in the 3x3 neighbourhood
+				terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_index;
+
+				if (k == current.x && l == current.y) {
+					continue;
+				}
+
+				int difference = terrain.corner_layer_height[terrain.ci(current.x, current.y)] - terrain.corner_layer_height[terrain.ci(k, l)];
+				if (std::abs(difference) > 2 && !brush->contains(glm::ivec2(begx + (k - current.x), begy + (l - current.y)))) {
+					terrain.corner_layer_height[terrain.ci(k, l)] =
+						terrain.corner_layer_height[terrain.ci(current.x, current.y)] - std::clamp(difference, -2, 2);
+					terrain.corner_ramp[terrain.ci(k, l)] = false;
+
+					area.setX(std::min(area.x(), k - 1));
+					area.setY(std::min(area.y(), l - 1));
+					area.setRight(std::max(area.right(), k));
+					area.setBottom(std::max(area.bottom(), l));
+
+					if (visited.insert(terrain.ci(k, l)).second) {
+						stack.emplace_back(k, l);
+					}
+				}
 			}
 		}
 	}
