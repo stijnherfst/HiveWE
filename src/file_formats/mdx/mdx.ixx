@@ -148,7 +148,8 @@ namespace mdx {
 			global_sequence_ID = reader.read<int32_t>();
 			id = track_id;
 
-			tracks.reserve(tracks_count);
+			const size_t max_tracks = static_cast<size_t>(reader.remaining()) / (sizeof(int32_t) + sizeof(T));
+			tracks.reserve(std::min<size_t>(tracks_count, max_tracks));
 			for (size_t i = 0; i < tracks_count; i++) {
 				Track<T> track;
 				track.frame = reader.read<int32_t>();

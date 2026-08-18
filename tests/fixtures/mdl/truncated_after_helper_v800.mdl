@@ -1,0 +1,8 @@
+Version {
+	FormatVersion 800,
+}
+Model "truncated" {
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Helper "Dangling" {

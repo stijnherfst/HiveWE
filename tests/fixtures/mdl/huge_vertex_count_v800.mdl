@@ -1,0 +1,12 @@
+Version {
+	FormatVersion 800,
+}
+Model "huge_vertex_count" {
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Geoset {
+	Vertices 4294967295 {
+		{ 0, 0, 0 },
+	}
+}

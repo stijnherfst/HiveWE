@@ -71,8 +71,9 @@ namespace mdx {
 		// bind_poses.append_range(new_mdx.bind_poses);
 		// texture_animations.append_range(new_mdx.texture_animations);
 
-		// Just to be sure
-		fix_up();
+		if (is_valid()) {
+			fix_up();
+		}
 	}
 
 	/// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.

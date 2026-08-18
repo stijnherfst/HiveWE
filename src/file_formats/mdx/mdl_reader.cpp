@@ -86,7 +86,7 @@ namespace mdx {
 				if (is_separator(ch) || is_punct(ch) || ch == '"') {
 					break;
 				}
-				if (ch == '/' && pos + 1 < source.size() && (source[pos + 1] == '/' || source[pos + 1] == '*')) {
+				if (ch == '/' && pos + 1 < source.size() && source[pos + 1] == '/') {
 					break;
 				}
 				pos += 1;
@@ -105,7 +105,17 @@ namespace mdx {
 			return position >= tokens.size();
 		}
 
+		size_t reserve_count(const size_t declared, const size_t min_tokens_per_element) const {
+			return std::min(declared, (tokens.size() - position) / min_tokens_per_element);
+		}
+
 		const Token& peek(const size_t offset = 0) const {
+			// A truncated file leaves an unknown-field error path reading one past the end. Hand back an
+			// empty sentinel instead of indexing out of bounds.
+			static constexpr Token eof_token{ "", 0 };
+			if (position + offset >= tokens.size()) {
+				return eof_token;
+			}
 			return tokens[position + offset];
 		}
 
@@ -263,7 +273,7 @@ namespace mdx {
 				track.global_sequence_ID = static_cast<int32_t>(gs);
 			}
 
-			track.tracks.reserve(count);
+			track.tracks.reserve(reserve_count(count, 3));
 			for (uint32_t i = 0; i < count; i++) {
 				Track<T> k {};
 				OUTCOME_TRY(auto frame, consume_i64());
@@ -740,7 +750,7 @@ namespace mdx {
 			if (kw.text == "Vertices") {
 				OUTCOME_TRY(auto n, r.consume_u32());
 				TRY(r.consume("{"));
-				g.vertices.reserve(n);
+				g.vertices.reserve(r.reserve_count(n, 5));
 				for (uint32_t i = 0; i < n; i++) {
 					OUTCOME_TRY(auto v, r.consume_vec3());
 					g.vertices.push_back(v);
@@ -749,7 +759,7 @@ namespace mdx {
 			} else if (kw.text == "Normals") {
 				OUTCOME_TRY(auto n, r.consume_u32());
 				TRY(r.consume("{"));
-				g.normals.reserve(n);
+				g.normals.reserve(r.reserve_count(n, 5));
 				for (uint32_t i = 0; i < n; i++) {
 					OUTCOME_TRY(auto v, r.consume_vec3());
 					g.normals.push_back(v);
@@ -759,7 +769,7 @@ namespace mdx {
 				OUTCOME_TRY(auto n, r.consume_u32());
 				TRY(r.consume("{"));
 				std::vector<glm::vec2> uvs;
-				uvs.reserve(n);
+				uvs.reserve(r.reserve_count(n, 4));
 				for (uint32_t i = 0; i < n; i++) {
 					OUTCOME_TRY(auto v, r.consume_vec2());
 					uvs.push_back(v);
@@ -769,7 +779,7 @@ namespace mdx {
 			} else if (kw.text == "Tangents") {
 				OUTCOME_TRY(auto n, r.consume_u32());
 				TRY(r.consume("{"));
-				g.tangents.reserve(n);
+				g.tangents.reserve(r.reserve_count(n, 6));
 				for (uint32_t i = 0; i < n; i++) {
 					OUTCOME_TRY(auto v, r.consume_vec4());
 					g.tangents.push_back(v);
@@ -796,7 +806,7 @@ namespace mdx {
 				TRY(r.consume("{"));
 				TRY(r.consume("Triangles"));
 				TRY(r.consume("{"));
-				g.faces.reserve(index_count);
+				g.faces.reserve(r.reserve_count(index_count, 1));
 				// Accept either one combined `{ i, i, i, ... }` block OR many per-triangle `{ a, b, c }` blocks.
 				while (!r.peek_is("}")) {
 					TRY(r.consume("{"));
@@ -1447,7 +1457,7 @@ namespace mdx {
 					OUTCOME_TRY(auto gs, r.consume_i64());
 					ev.global_sequence_id = static_cast<int>(gs);
 				}
-				ev.times.reserve(count);
+				ev.times.reserve(r.reserve_count(count, 1));
 				for (uint32_t i = 0; i < count; i++) {
 					OUTCOME_TRY(auto t, r.consume_u32());
 					ev.times.push_back(t);
@@ -1553,7 +1563,7 @@ namespace mdx {
 		TRY(r.consume("Matrices"));
 		OUTCOME_TRY(auto count, r.consume_u32());
 		TRY(r.consume("{"));
-		mdx.bind_poses.reserve(count * 12);
+		mdx.bind_poses.reserve(r.reserve_count(count, 14) * 12);
 		for (uint32_t i = 0; i < count; i++) {
 			TRY(r.consume("{"));
 			for (int j = 0; j < 12; j++) {

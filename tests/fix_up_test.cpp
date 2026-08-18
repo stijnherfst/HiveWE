@@ -27,6 +27,15 @@ namespace {
 		return model;
 	}
 
+	/// Attach a minimal renderable material (one texture, one layer using it) so a geoset-bearing model
+	/// satisfies is_valid()'s material checks. These cases isolate skinning, not materials, but a geoset
+	/// with no material would crash the renderer and so is now rejected.
+	void give_material(mdx::MDX& model) {
+		model.textures.emplace_back();
+		auto& material = model.materials.emplace_back();
+		material.layers.emplace_back().textures.emplace_back();
+	}
+
 	bool has_message(const std::vector<mdx::ValidationMessage>& messages, const mdx::ValidationSeverity severity,
 		const std::string_view fragment) {
 		return std::ranges::any_of(messages, [&](const mdx::ValidationMessage& message) {
@@ -51,6 +60,7 @@ TEST_CASE("Validator: a negative node id is an error and fails is_valid") {
 TEST_CASE("fix_up: geoset matrix indices still point at the bones they did") {
 	mdx::MDX model = model_with_bones({ { 0, -1 }, { 1, 0 }, { 2, 0 } });
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -120,6 +130,7 @@ TEST_CASE("fix_up: a model with no nodes at all keeps its skinning pointed at ob
 	// make room, which is right when there are nodes to move, would leave them pointing at nothing.
 	mdx::MDX model {};
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -145,6 +156,7 @@ TEST_CASE("fix_up: a boneless model binds its skinning to the bone it gains") {
 	// mis-skinned here.
 	mdx::MDX model {};
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -166,6 +178,7 @@ TEST_CASE("fix_up: a boneless model with other nodes does not skin to them") {
 	emitter.node.id = 0;
 	emitter.node.parent_id = -1;
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -218,6 +231,7 @@ TEST_CASE("Validator: a skinning index past the node count fails is_valid") {
 	// renders rather than clamped afterwards.
 	mdx::MDX model = model_with_bones({ { 0, -1 }, { 1, 0 } });
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -288,6 +302,7 @@ TEST_CASE("Validator: a boneless model may skin to anything") {
 	// uploads and the 267 CORN-only models in the dev build.
 	mdx::MDX model {};
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.vertex_groups.assign(3, 0);
 	geoset.matrix_groups = { 1 };
@@ -303,6 +318,7 @@ TEST_CASE("Validator: an SD geoset needs one vertex group per vertex") {
 	// Skeleton::build_sample_frames then reads it by vertex, so a short list runs off the end.
 	mdx::MDX model = model_with_bones({ { 0, -1 } });
 	auto& geoset = model.geosets.emplace_back();
+	give_material(model);
 	geoset.vertices.assign(3, glm::vec3(0.f));
 	geoset.matrix_groups = { 1 };
 	geoset.matrix_indices = { 0 };

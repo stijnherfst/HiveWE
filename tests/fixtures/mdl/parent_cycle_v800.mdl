@@ -1,0 +1,23 @@
+Version {
+	FormatVersion 800,
+}
+Model "parent_cycle" {
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Bone "Root" {
+	ObjectId 0,
+}
+Helper "A" {
+	ObjectId 1,
+	Parent 2,
+}
+Helper "B" {
+	ObjectId 2,
+	Parent 1,
+}
+PivotPoints 3 {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+}

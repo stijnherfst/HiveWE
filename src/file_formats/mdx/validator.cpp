@@ -21,33 +21,45 @@ namespace mdx {
 		const size_t node_count = bones.size() + lights.size() + help_bones.size() + attachments.size() + emitters1.size()
 			+ emitters2.size() + ribbons.size() + event_objects.size() + collision_shapes.size() + corn_emitters.size();
 
-		// Check for missing/incorrect/duplicate Node IDs
+		// Node IDs must be exactly the permutation 0..node_count-1, with no node parenting itself or a node that does not exist.
 		{
-			int64_t sum = 0;
-			int64_t sum_squared = 0;
+			std::vector<bool> seen(node_count, false);
+			std::vector<int> parent_of(node_count, -1);
+			bool structure_ok = true; // ids a permutation and every parent in range: the cycle walk needs both
+
 			for_each_node([&](const Node& node) {
-				if (node.id < 0 || node.id >= node_count) {
+				if (node.id < 0 || static_cast<size_t>(node.id) >= node_count || seen[node.id]) {
 					is_valid = false;
+					structure_ok = false;
+					return;
 				}
+				seen[node.id] = true;
+				parent_of[node.id] = node.parent_id;
 
-				if (node.parent_id < -1) {
+				if (node.parent_id < -1 || (node.parent_id >= 0 && static_cast<size_t>(node.parent_id) >= node_count)) {
 					is_valid = false;
+					structure_ok = false;
 				}
-
-				if (node.parent_id >= 0 && node.parent_id >= node_count) {
-					is_valid = false;
-				}
-
 				if (node.parent_id == node.id) {
 					is_valid = false;
 				}
-
-				sum += node.id;
-				sum_squared += static_cast<int64_t>(node.id) * node.id;
 			});
-			const int64_t correct_sum = node_count * (node_count - 1) / 2;
-			const int64_t correct_sum_squared = (node_count - 1) * node_count * (2 * node_count - 1) / 6;
-			is_valid = is_valid && sum == correct_sum && sum_squared == correct_sum_squared;
+
+			// Check for cycles
+			if (structure_ok) {
+				for (size_t start = 0; start < node_count; start++) {
+					int current = parent_of[start];
+					size_t steps = 0;
+					while (current != -1 && steps <= node_count) {
+						current = parent_of[current];
+						steps++;
+					}
+					if (steps > node_count) {
+						is_valid = false;
+						break;
+					}
+				}
+			}
 		}
 
 		// Bones have to be the first bones.size() node IDs
@@ -58,8 +70,26 @@ namespace mdx {
 		}
 
 		for (const auto& geoset : geosets) {
+			if (geoset.material_id >= materials.size()) {
+				is_valid = false;
+			}
+
+			// Only SD geosets skin through the matrix groups
 			if (geoset.skin.empty()) {
 				if (geoset.vertex_groups.size() != geoset.vertices.size()) {
+					is_valid = false;
+				}
+
+				// A matrix group of size 0 divides by zero when a vertex's weight is spread across it,
+				// and the group sizes together must not claim more bone indices than MATS holds.
+				size_t matrix_index_total = 0;
+				for (const auto& group_size : geoset.matrix_groups) {
+					if (group_size == 0) {
+						is_valid = false;
+					}
+					matrix_index_total += group_size;
+				}
+				if (matrix_index_total > geoset.matrix_indices.size()) {
 					is_valid = false;
 				}
 			}
@@ -67,22 +97,27 @@ namespace mdx {
 			// Boneless models get fixed by the game
 			if (!bones.empty()) {
 				for (const auto& index : geoset.matrix_indices) {
-					if (index >= node_count) {
+					if (index >= bones.size()) {
 						is_valid = false;
 					}
 				}
 
 				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
-					is_valid = is_valid && geoset.skin[i + 0] < node_count;
-					is_valid = is_valid && geoset.skin[i + 1] < node_count;
-					is_valid = is_valid && geoset.skin[i + 2] < node_count;
-					is_valid = is_valid && geoset.skin[i + 3] < node_count;
+					for (size_t j = 0; j < 4; j++) {
+						// A zero-weight slot is never accumulated, so its index is never dereferenced.
+						if (geoset.skin[i + 4 + j] != 0 && geoset.skin[i + j] >= bones.size()) {
+							is_valid = false;
+						}
+					}
 				}
 			}
 		}
 
 		for (const auto& material : materials) {
 			for (const auto& layer: material.layers) {
+				if (layer.textures.empty()) {
+					is_valid = false;
+				}
 				for (const auto& texture: layer.textures) {
 					if (texture.id >= textures.size()) {
 						is_valid = false;

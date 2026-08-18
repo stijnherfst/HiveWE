@@ -715,7 +715,10 @@ namespace mdx {
 
 	void read_BPOS(BinaryReader& reader, MDX& mdx) {
 		const uint32_t size = reader.read<uint32_t>();
-		mdx.bind_poses = reader.read_vector<float>(reader.read<uint32_t>() * 12);
+		const uint32_t matrix_count = reader.read<uint32_t>();
+		const size_t floats_from_count = static_cast<size_t>(matrix_count) * 12;
+		const size_t floats_from_size = size >= sizeof(uint32_t) ? (size - sizeof(uint32_t)) / sizeof(float) : 0;
+		mdx.bind_poses = reader.read_vector<float>(std::min(floats_from_count, floats_from_size));
 	}
 
 	void read_TXAN(BinaryReader& reader, MDX& mdx) {

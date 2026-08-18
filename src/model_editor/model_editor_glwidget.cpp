@@ -90,10 +90,16 @@ void ModelEditorGLWidget::initializeGL() {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
-	skeleton = Skeleton(mdx);
-	Skeleton::pick_preview_sequence(skeleton, *mdx);
-	recenter_camera();
+	try {
+		mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
+		skeleton = Skeleton(mdx);
+		Skeleton::pick_preview_sequence(skeleton, *mdx);
+		recenter_camera();
+	} catch (const std::exception& e) {
+		mesh = nullptr;
+		messages = mdx->validate();
+		messages.insert(messages.begin(), {mdx::ValidationSeverity::error, std::string("Could not build mesh: ") + e.what()});
+	}
 
 	shader_sd = resource_manager.load<Shader>({"data/shaders/editable_mesh_sd.vert", "data/shaders/editable_mesh_sd.frag"}).value();
 	shader_hd = resource_manager.load<Shader>({"data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag"}).value();
@@ -137,22 +143,24 @@ void ModelEditorGLWidget::paintGL() {
 	// Opaque passes — depth test/write on, blend off (state restored per-layer inside render_opaque)
 	glEnable(GL_BLEND);
 
-	shader_sd->use();
-	mesh->render_opaque(false, 0, skeleton, camera.projection_view, camera.direction);
-	shader_hd->use();
-	mesh->render_opaque(true, 0, skeleton, camera.projection_view, camera.direction);
+	if (mesh) {
+		shader_sd->use();
+		mesh->render_opaque(false, 0, skeleton, camera.projection_view, camera.direction);
+		shader_hd->use();
+		mesh->render_opaque(true, 0, skeleton, camera.projection_view, camera.direction);
 
-	// Opaque sets depth mask itself, transparent always off
-	glDepthMask(false);
+		// Opaque sets depth mask itself, transparent always off
+		glDepthMask(false);
 
-	shader_sd->use();
-	mesh->render_transparent(false, 0, skeleton, camera.projection_view, camera.direction);
-	shader_hd->use();
-	mesh->render_transparent(true, 0, skeleton, camera.projection_view, camera.direction);
+		shader_sd->use();
+		mesh->render_transparent(false, 0, skeleton, camera.projection_view, camera.direction);
+		shader_hd->use();
+		mesh->render_transparent(true, 0, skeleton, camera.projection_view, camera.direction);
 
-	glEnable(GL_DEPTH_TEST);
+		glEnable(GL_DEPTH_TEST);
 
-	mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
+		mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
+	}
 
 	if (draw_grid) {
 		render_grid();

@@ -121,36 +121,7 @@ export class EditableMesh: public Resource {
 			// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
 			// This could cause graphical inconsistensies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
 			if (i.skin.empty()) {
-				std::vector<glm::u8vec4> groups;
-				std::vector<glm::u8vec4> weights;
-
-				int bone_offset = 0;
-				for (const auto& group_size : i.matrix_groups) {
-					int bone_count = std::min(group_size, 4u);
-					glm::uvec4 indices(0);
-					glm::uvec4 weightss(0);
-
-					int weight = 255 / bone_count;
-					for (int j = 0; j < bone_count; j++) {
-						indices[j] = i.matrix_indices[bone_offset + j];
-						weightss[j] = weight;
-					}
-
-					int remainder = 255 - weight * bone_count;
-					weightss[0] += remainder;
-
-					groups.push_back(indices);
-					weights.push_back(weightss);
-					bone_offset += group_size;
-				}
-
-				std::vector<glm::u8vec4> skin_weights;
-				skin_weights.reserve(entry.vertices * 2);
-				for (const auto& vertex_group : i.vertex_groups) {
-					skin_weights.push_back(groups[vertex_group]);
-					skin_weights.push_back(weights[vertex_group]);
-				}
-
+				const std::vector<glm::u8vec4> skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
 				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, skin_weights.data());
 			} else {
 				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
@@ -159,7 +130,9 @@ export class EditableMesh: public Resource {
 			glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
 			glNamedBufferSubData(uv_buffer, base_vertex * sizeof(glm::vec2), entry.vertices * sizeof(glm::vec2), i.uv_sets.front().data());
 			glNamedBufferSubData(normal_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.normals.data());
-			glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+			if (!i.tangents.empty()) {
+				glNamedBufferSubData(tangent_buffer, base_vertex * sizeof(glm::vec4), entry.vertices * sizeof(glm::vec4), i.tangents.data());
+			}
 			glNamedBufferSubData(index_buffer, base_index * sizeof(uint16_t), entry.indices * sizeof(uint16_t), i.faces.data());
 
 			base_vertex += entry.vertices;

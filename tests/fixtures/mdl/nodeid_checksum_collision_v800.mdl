@@ -1,0 +1,48 @@
+Version {
+	FormatVersion 800,
+}
+Model "nodeid_checksum_collision" {
+	MinimumExtent { -1, -1, 0 },
+	MaximumExtent { 1, 1, 1 },
+}
+Bone "Root" {
+	ObjectId 0,
+}
+Helper "H1" {
+	ObjectId 1,
+	Parent 0,
+}
+Helper "H2" {
+	ObjectId 1,
+	Parent 0,
+}
+Helper "H4" {
+	ObjectId 4,
+	Parent 0,
+}
+Helper "H5a" {
+	ObjectId 5,
+	Parent 0,
+}
+Helper "H5b" {
+	ObjectId 5,
+	Parent 0,
+}
+Helper "H6a" {
+	ObjectId 6,
+	Parent 0,
+}
+Helper "H6b" {
+	ObjectId 6,
+	Parent 0,
+}
+PivotPoints 8 {
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+}
