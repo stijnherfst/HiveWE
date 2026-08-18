@@ -81,6 +81,11 @@ void Brush::set_shape(const Shape new_shape) {
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
 bool Brush::contains(const glm::ivec2 pos) const {
+	const glm::ivec2 extent = size / size_granularity;
+	if (pos.x < 0 || pos.y < 0 || pos.x >= extent.x || pos.y >= extent.y) {
+		return false;
+	}
+
 	switch (shape) {
 		case Shape::square:
 			return true;

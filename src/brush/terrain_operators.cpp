@@ -10,7 +10,6 @@ import PathingUndo;
 import TerrainUndo;
 import WorldUndoManager;
 import Camera;
-import UnorderedSet;
 
 void TerrainOperator::set_brush_type(Brush::Type type) {
 	brush_type = type;
@@ -381,52 +380,56 @@ void CliffOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
 
 void CliffOperator::check_nearby(const int begx, const int begy, std::span<const glm::ivec2> seeds, TerrainRect& area) const {
 	auto& terrain = map->terrain;
-
-	hive::unordered_set<size_t> visited;
+	constexpr int max_layer_difference = 2;
 
 	std::vector<glm::ivec2> stack;
 	stack.reserve(64);
-	for (const auto& seed : seeds) {
-		if (seed.x < 0 || seed.x >= terrain.width || seed.y < 0 || seed.y >= terrain.height) {
-			continue;
+
+	// +1 pulls the too low corners up towards the brush, -1 pulls too high corners down
+	for (const int direction : {1, -1}) {
+		for (const auto& seed : seeds) {
+			if (seed.x < 0 || seed.x >= terrain.width || seed.y < 0 || seed.y >= terrain.height) {
+				continue;
+			}
+			stack.emplace_back(seed);
 		}
-		const size_t idx = terrain.ci(seed.x, seed.y);
-		if (!visited.insert(idx).second) {
-			continue;
-		}
-		stack.emplace_back(seed);
-	}
 
-	// DFS visit, BFS could have better locality but at this scale it likely won't make a difference
-	while (!stack.empty()) {
-		const glm::ivec2 current = stack.back();
-		stack.pop_back();
+		// DFS visit, BFS could have better locality but at this scale it likely won't make a difference
+		while (!stack.empty()) {
+			const glm::ivec2 current = stack.back();
+			stack.pop_back();
 
-		TerrainRect bounds = TerrainRect(current.x - 1, current.y - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
+			const int target_height =
+				terrain.corner_layer_height[terrain.ci(current.x, current.y)] - direction * max_layer_difference;
 
-		for (int l = bounds.y(); l <= bounds.bottom(); l++) {
-			for (int k = bounds.x(); k <= bounds.right(); k++) {
-				// assign proper cliff texture to all corners in the 3x3 neighbourhood
-				terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_index;
+			TerrainRect bounds = TerrainRect(current.x - 1, current.y - 1, 3, 3).intersected({0, 0, terrain.width, terrain.height});
 
-				if (k == current.x && l == current.y) {
-					continue;
-				}
+			for (int l = bounds.y(); l <= bounds.bottom(); l++) {
+				for (int k = bounds.x(); k <= bounds.right(); k++) {
+					// Assign proper cliff texture to all corners in the 3x3 neighbourhood
+					terrain.corner_cliff_texture[terrain.ci(k, l)] = cliff_index;
 
-				int difference = terrain.corner_layer_height[terrain.ci(current.x, current.y)] - terrain.corner_layer_height[terrain.ci(k, l)];
-				if (std::abs(difference) > 2 && !brush->contains(glm::ivec2(begx + (k - current.x), begy + (l - current.y)))) {
-					terrain.corner_layer_height[terrain.ci(k, l)] =
-						terrain.corner_layer_height[terrain.ci(current.x, current.y)] - std::clamp(difference, -2, 2);
-					terrain.corner_ramp[terrain.ci(k, l)] = false;
+					// corners under the brush were set by the caller and stay as they are
+					if (brush->contains(glm::ivec2(k - begx, l - begy))) {
+						continue;
+					}
+
+					const size_t idx = terrain.ci(k, l);
+
+					// Already close enough, or on the side that the other pass takes care of. `current` always continues
+					if (direction * (terrain.corner_layer_height[idx] - target_height) >= 0) {
+						continue;
+					}
+
+					terrain.corner_layer_height[idx] = target_height;
+					terrain.corner_ramp[idx] = false;
 
 					area.setX(std::min(area.x(), k - 1));
 					area.setY(std::min(area.y(), l - 1));
 					area.setRight(std::max(area.right(), k));
 					area.setBottom(std::max(area.bottom(), l));
 
-					if (visited.insert(terrain.ci(k, l)).second) {
-						stack.emplace_back(k, l);
-					}
+					stack.emplace_back(k, l);
 				}
 			}
 		}
