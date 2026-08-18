@@ -87,7 +87,7 @@ export class TableModel : public QAbstractTableModel {
 
 					QStringList result;
 					for (const auto& part : parts) {
-						result.append(units_table->data(part, "name", role).toString());
+						result.append(units_table->data(part, "name", role).toString() + " " + units_table->data(part, "editorsuffix", role).toString());
 					}
 					return result.join('\n');
 				} else if (type == "abilityList" || type == "abilitySkinList" || type == "heroAbilityList") {
@@ -95,7 +95,7 @@ export class TableModel : public QAbstractTableModel {
 
 					QStringList result;
 					for (const auto& part : parts) {
-						result.append(abilities_table->data(part, "name", role).toString());
+						result.append(abilities_table->data(part, "name", role).toString() + " " + abilities_table->data(part, "editorsuffix", role).toString());
 					}
 					return result.join('\n');
 				} else if (type == "upgradeList") {
@@ -103,7 +103,7 @@ export class TableModel : public QAbstractTableModel {
 
 					QStringList result;
 					for (const auto& part : parts) {
-						result.append(upgrade_table->data(part, "name1", role).toString());
+						result.append(upgrade_table->data(part, "name1", role).toString() + " " + upgrade_table->data(part, "editorsuffix1", role).toString());
 					}
 					return result.join('\n');
 				} else if (type == "buffList") {

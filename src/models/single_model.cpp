@@ -418,7 +418,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		const auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(units_table->data(id.toStdString(), "name").toString());
+			item->setText(units_table->data(id.toStdString(), "name").toString() + " " + units_table->data(id.toStdString(), "editorsuffix").toString());
 			item->setIcon(units_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
@@ -429,7 +429,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		const auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(upgrade_table->data(id.toStdString(), "name1").toString());
+			item->setText(upgrade_table->data(id.toStdString(), "name1").toString() + " " + upgrade_table->data(id.toStdString(), "editorsuffix1").toString());
 			item->setIcon(upgrade_table->data(id.toStdString(), "art1", Qt::DecorationRole).value<QIcon>());
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
@@ -440,7 +440,7 @@ void TableDelegate::setEditorData(QWidget* editor, const QModelIndex& index) con
 		const auto ids = index.data(Qt::EditRole).toString().split(',', Qt::SkipEmptyParts);
 		for (const auto& id : ids) {
 			QListWidgetItem* item = new QListWidgetItem;
-			item->setText(abilities_table->data(id.toStdString(), "name").toString());
+			item->setText(abilities_table->data(id.toStdString(), "name").toString() + " " + abilities_table->data(id.toStdString(), "editorsuffix").toString());
 			item->setIcon(abilities_table->data(id.toStdString(), "art", Qt::DecorationRole).value<QIcon>());
 			item->setData(Qt::StatusTipRole, id);
 			list->addItem(item);
@@ -766,7 +766,7 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-			item->setText(upgrade_table->data(treeItem->id, "name1").toString());
+			item->setText(upgrade_table->data(treeItem->id, "name1").toString() + " " + upgrade_table->data(treeItem->id, "editorsuffix1").toString());
 			item->setIcon(upgrade_table->data(treeItem->id, "art1", Qt::DecorationRole).value<QIcon>());
 			list->addItem(item);
 		};
@@ -883,7 +883,7 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-			item->setText(units_table->data(treeItem->id, "name").toString());
+			item->setText(units_table->data(treeItem->id, "name").toString() + " " + units_table->data(treeItem->id, "editorsuffix").toString());
 			item->setIcon(units_table->data(treeItem->id, "art", Qt::DecorationRole).value<QIcon>());
 			list->addItem(item);
 		};
@@ -1003,7 +1003,7 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 
 			QListWidgetItem* item = new QListWidgetItem;
 			item->setData(Qt::StatusTipRole, QString::fromStdString(treeItem->id));
-			item->setText(abilities_table->data(treeItem->id, "name").toString());
+			item->setText(abilities_table->data(treeItem->id, "name").toString()  + " " + abilities_table->data(treeItem->id, "editorsuffix").toString());
 			item->setIcon(abilities_table->data(treeItem->id, "art", Qt::DecorationRole).value<QIcon>());
 
 			list->addItem(item);

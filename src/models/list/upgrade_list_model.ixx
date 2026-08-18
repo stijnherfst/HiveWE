@@ -30,7 +30,7 @@ export class UpgradeListModel: public BaseListModel {
 
 		switch (role) {
 			case Qt::DisplayRole:
-				return mapToSource(index).data(role).toString() + " " + QString::fromUtf8(upgrade_slk.data<std::string_view>("editorsuffix", index.row()));
+				return mapToSource(index).data(role).toString() + " " + QString::fromUtf8(upgrade_slk.data<std::string_view>("editorsuffix1", index.row()));
 			case Qt::UserRole:
 				return QString::fromStdString("upgrades/" + upgrade_slk.data("race", index.row()) + "/" + upgrade_slk.index_to_row.at(index.row()));
 			case Qt::DecorationRole:

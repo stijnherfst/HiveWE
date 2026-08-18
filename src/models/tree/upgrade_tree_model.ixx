@@ -71,7 +71,7 @@ export class UpgradeTreeModel : public BaseTreeModel {
 				if (item->baseCategory) {
 					return QString::fromStdString(categories.at(rowToCategory[index.row()]).name);
 				} else {
-					return QAbstractProxyModel::data(index, role).toString() + " " + QString::fromUtf8(upgrade_slk.data<std::string_view>("editorsuffix", item->id));
+					return QAbstractProxyModel::data(index, role).toString() + " " + sourceModel()->data(sourceModel()->index(slk->row_headers.at(item->id), slk->column_headers.at("editorsuffix1")), role).toString();
 				}
 			default:
 				return BaseTreeModel::data(index, role);
