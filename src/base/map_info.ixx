@@ -12,8 +12,23 @@ import Hierarchy;
 import TriggerStrings;
 import Utilities;
 import Paths;
+import HiveWEVersion;
 import <nlohmann/json.hpp>;
 import <glm/glm.hpp>;
+
+namespace hive {
+	inline void to_json(nlohmann::json& j, const Version& v) {
+		j = {{"major", v.major}, {"minor", v.minor}, {"patch", v.patch}, {"commit", v.commit}, {"dirty", v.dirty}};
+	}
+
+	inline void from_json(const nlohmann::json& j, Version& v) {
+		v.major = j.value("major", 0);
+		v.minor = j.value("minor", 0);
+		v.patch = j.value("patch", 0);
+		v.commit = j.value("commit", "");
+		v.dirty = j.value("dirty", false);
+	}
+} // namespace hive
 
 export enum class PlayerType {
 	human,
@@ -178,6 +193,14 @@ export class MapInfo {
 	static constexpr int write_game_version_build = 22978;
 
 	// hiveWE specific data
+	/// HiveWE version when this map was last saved by HiveWE
+	hive::Version hive_editor_version;
+
+	/// Snapshot of map_version at the time HiveWE last saved.
+	/// If map_version > hive_map_version on load, the map was modified
+	/// by an external tool or vanilla WE
+	int hive_map_version;
+
 	char custom_ambience_tileset;
 
 	void load() {
@@ -186,9 +209,13 @@ export class MapInfo {
 	}
 
 	void save(char tileset) const {
-		// save data
 		save_w3i(tileset);
 		save_hive();
+	}
+
+	void update_hive_version() {
+		hive_editor_version = hive::version;
+		hive_map_version = map_version;
 	}
 
 	/// For creating new maps from scratch
@@ -277,10 +304,10 @@ export class MapInfo {
 			.ally_high_priorities_flags = 0,
 			.enemy_low_priorities_flags = 0,
 			.enemy_high_priorities_flags = 0,
-		} };
+		}};
 		trigger_strings.set_string(players[0].name, "Player 1");
 
-		forces = { ForceData {
+		forces = {ForceData {
 			.allied = false,
 			.allied_victory = false,
 			.share_vision = false,
@@ -288,7 +315,7 @@ export class MapInfo {
 			.share_advanced_unit_control = false,
 			.player_masks = static_cast<int>(0xFFFFFFFF),
 			.name = "",
-		} };
+		}};
 		trigger_strings.set_string(forces[0].name, "Force 1");
 
 		available_upgrades.clear();
@@ -336,9 +363,11 @@ export class MapInfo {
 	void save_hive() const {
 		nlohmann::json root;
 
+		root["hive_editor_version"] = hive_editor_version;
+		root["hive_map_version"] = hive_map_version;
 		root["custom_ambience_sound"] = static_cast<uint8_t>(custom_ambience_tileset);
 
-		// dump, also create parent directory if it doesn't exist
+		// Dump, also create parent directory if it doesn't exist
 		const auto pathing_file = paths::map_info_extras_file(hierarchy.map_directory);
 		std::filesystem::create_directories(pathing_file.parent_path());
 		std::ofstream file(pathing_file);
@@ -492,11 +521,13 @@ export class MapInfo {
 			try {
 				const nlohmann::json root = nlohmann::json::parse(file);
 
-				// load data
+				// Load data
+				hive_editor_version = root.value("hive_editor_version", nlohmann::json::object()).get<hive::Version>();
+				hive_map_version = root.value("hive_map_version", 0);
 				custom_ambience_tileset = static_cast<char>(root.value("custom_ambience_sound", 0));
 
 			} catch (const std::exception& e) {
-				// throw an error message if the json is corrupted or failed to load for some reason
+				// Throw an error message if the json is corrupted or failed to load for some reason
 				QMessageBox::critical(
 					nullptr,
 					"Error loading map info",

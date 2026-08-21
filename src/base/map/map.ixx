@@ -646,6 +646,8 @@ export class Map: public QObject {
 		save_modification_file("war3mapSkin.w3q", upgrade_slk, upgrade_meta_slk, true, true);
 
 		regions.save(terrain.offset.x, terrain.offset.y);
+
+		info.update_hive_version();
 		info.save(terrain.tileset_id);
 
 		trigger_strings.save();
