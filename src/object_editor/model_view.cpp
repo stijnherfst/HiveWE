@@ -11,10 +11,17 @@
 #include <QScrollBar>
 #include <QVBoxLayout>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import Globals;
-import WindowHandler;
+#include "base/window_handler.h"
 import Utilities;
 
 namespace fs = std::filesystem;

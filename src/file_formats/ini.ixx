@@ -1,16 +1,42 @@
+module;
+
+#include <absl/strings/str_split.h>
+#include "absl/strings/str_join.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module INI;
 
+#ifndef __linux__
 import std;
+#endif
 import Utilities;
 import Hierarchy;
 import Utilities;
-import <absl/strings/str_split.h>;
-import "absl/strings/str_join.h";
 import UnorderedMap;
 
 namespace fs = std::filesystem;
 
 namespace ini {
+	static float ini_float_from_string(const std::string_view value) {
+		std::string_view text = value;
+
+		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.front()))) {
+			text.remove_prefix(1);
+		}
+		while (!text.empty() && std::isspace(static_cast<unsigned char>(text.back()))) {
+			text.remove_suffix(1);
+		}
+
+		float result = 0.f;
+		const auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), result);
+		if (ec != std::errc{} || ptr != text.data() + text.size()) {
+			throw std::runtime_error(std::format("Invalid INI float: {}", value));
+		}
+		return result;
+	}
 	export class INI {
 	  public:
 		/// header to items to list of values to value
@@ -177,7 +203,7 @@ namespace ini {
 			} else if constexpr (std::is_same_v<T, int>) {
 				return std::stoi(value->second[argument]);
 			} else if constexpr (std::is_same_v<T, float>) {
-				return std::stof(value->second[argument]);
+				return ini_float_from_string(value->second[argument]);
 			} else  {
 				static_assert(false, "Type not supported. Convert yourself or add conversion here if it makes sense");
 			}

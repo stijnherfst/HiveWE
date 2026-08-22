@@ -1,13 +1,23 @@
-﻿export module MDX;
+﻿module;
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <outcome/outcome.hpp>
+
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
+export module MDX;
+
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
 import BinaryWriter;
 import Timer;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import <outcome/outcome.hpp>;
 
 namespace fs = std::filesystem;
 using OUTCOME_V2_NAMESPACE::failure;
@@ -1096,7 +1106,7 @@ namespace std {
 	};
 
 	template<typename T>
-	struct std::hash<mdx::Track<T>> {
+	struct hash<mdx::Track<T>> {
 		std::size_t operator()(const mdx::Track<T>& t) const {
 			std::size_t h = 0;
 			hash_combine(h, t.frame);
@@ -1108,7 +1118,7 @@ namespace std {
 	};
 
 	template<typename T>
-	struct std::hash<mdx::TrackHeader<T>> {
+	struct hash<mdx::TrackHeader<T>> {
 		std::size_t operator()(const mdx::TrackHeader<T>& th) const {
 			std::size_t h = 0;
 			hash_combine(h, static_cast<int>(th.interpolation_type));
@@ -1168,7 +1178,7 @@ namespace std {
 	// };
 
 	template<>
-	struct std::hash<mdx::Material> {
+	struct hash<mdx::Material> {
 		std::size_t operator()(const mdx::Material& s) const noexcept {
 			std::size_t h1 = std::hash<uint32_t> {}(s.priority_plane);
 			std::size_t h2 = std::hash<uint32_t> {}(s.flags);
@@ -1180,7 +1190,7 @@ namespace std {
 	};
 
 	template<>
-	struct std::hash<mdx::Texture> {
+	struct hash<mdx::Texture> {
 		std::size_t operator()(const mdx::Texture& s) const noexcept {
 			std::size_t h1 = std::hash<fs::path> {}(s.file_name);
 			std::size_t h2 = std::hash<uint32_t> {}(s.flags);

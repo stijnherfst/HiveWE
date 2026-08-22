@@ -25,7 +25,11 @@ __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 
 #include <tracy/Tracy.hpp>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
 import std;
+#endif
 import Map;
 import Timer;
 import MapGlobal;
@@ -33,7 +37,7 @@ import Globals;
 import Utilities;
 import Hierarchy;
 import BinaryReader;
-import GLThreadPool;
+#include "utilities/gl_thread_pool.h"
 namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
@@ -154,5 +158,9 @@ int main(int argc, char* argv[]) {
 	map->load("data/test map/");
 	// map->load("C:/Users/User/Desktop/MCFC.w3x");
 
-	return QApplication::exec();
+	const int result = QApplication::exec();
+
+	gl_thread_pool.stop();
+
+	return result;
 }

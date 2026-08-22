@@ -6,7 +6,16 @@
 #include <vector>
 #include <string>
 
+#ifdef __linux__
+#include "std_compat.h"
+#include <utility>
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
+import MapInfo;
 import SLK;
 import Utilities;
 import MapGlobal;
@@ -184,7 +193,7 @@ bool ScenarioInfoEditor::save() const {
 		int found_index = -1;
 
 		for (size_t i = 0; i < map->info.players.size(); i++) {
-			if (map->info.players[i].internal_number == slot) {
+			if (std::cmp_equal(map->info.players[i].internal_number, slot)) {
 				found_index = i;
 				break;
 			}

@@ -3,9 +3,15 @@ module;
 
 #include <QObject>
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 module Map;
 
+#ifndef __linux__
 import std;
+#endif
 import MDX;
 
 namespace fs = std::filesystem;

@@ -15,16 +15,15 @@
 
 #include <string>
 #include <memory>
-
-import BaseTreeModel;
-import AbilityTreeModel;
-import DoodadTreeModel;
-import BuffTreeModel;
-import DestructibleTreeModel;
-import UnitTreeModel;
-import UpgradeTreeModel;
-import ItemTreeModel;
-import TableModel;
+#include "models/tree/base_tree_model.h"
+#include "models/tree/ability_tree_model.h"
+#include "models/tree/doodad_tree_model.h"
+#include "models/tree/buff_tree_model.h"
+#include "models/tree/destructible_tree_model.h"
+#include "models/tree/unit_tree_model.h"
+#include "models/tree/upgrade_tree_model.h"
+#include "models/tree/item_tree_model.h"
+#include "models/table_model.h"
 import QIconResource;
 
 class ObjectEditor : public QMainWindow {

@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module types;
 
+#ifndef __linux__
 import std;
+#endif
 
 export {
 	using u8  = std::uint8_t;

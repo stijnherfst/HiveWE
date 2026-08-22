@@ -1,3 +1,4 @@
+#include "utilities/texture_to_icon.h"
 #include <trigger_model.h>
 
 #include <QStringList>
@@ -72,7 +73,7 @@ TreeModel::~TreeModel() {
 	delete rootItem;
 }
 
-int TreeModel::columnCount(const QModelIndex& parent) const {
+int TreeModel::columnCount(const QModelIndex&) const {
 	return 1;
 }
 
@@ -92,7 +93,7 @@ void TreeModel::deleteItem(const QModelIndex& item) {
 	endRemoveRows();
 }
 
-bool TreeModel::removeRows(int row, int count, const QModelIndex& parent) {
+bool TreeModel::removeRows(int, int, const QModelIndex&) {
 	puts("remove\n");
 	return false;
 }
@@ -114,7 +115,7 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent) {
 //	//endMoveRows();
 //}
 
-bool TreeModel::insertRows(int row, int count, const QModelIndex& parent) {
+bool TreeModel::insertRows(int, int, const QModelIndex&) {
 	puts("insert\n");
 	return false;
 }
@@ -151,7 +152,7 @@ QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const {
 	return result;
 }
 
-bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& destinationParent) {
+bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction, int, int, const QModelIndex& destinationParent) {
 	if (!destinationParent.isValid()) {
 		return false;
 	}
@@ -200,10 +201,13 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
 	childItem->parent = destinationParentItem;
 
 	switch (childItem->type) {
+		case Classifier::map:
+		case Classifier::library:
+		    break;
 		case Classifier::comment:
 		case Classifier::gui:
 		case Classifier::script:
-			for (int i = 0; i < map->triggers.triggers.size(); i++) {
+			for (int i = 0; std::cmp_less(i, map->triggers.triggers.size()); i++) {
 				Trigger& trigger = map->triggers.triggers[i];
 				if (trigger.id == childItem->id) {
 					trigger.parent_id = destinationParentItem->id;
@@ -212,7 +216,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
 			}
 			break;
 		case Classifier::category:
-			for (int i = 0; i < map->triggers.categories.size(); i++) {
+			for (int i = 0; std::cmp_less(i, map->triggers.categories.size()); i++) {
 				TriggerCategory& category = map->triggers.categories[i];
 				if (category.id == childItem->id) {
 					category.parent_id = destinationParentItem->id;
@@ -221,7 +225,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
 			}
 			break;
 		case Classifier::variable:
-			for (int i = 0; i < map->triggers.categories.size(); i++) {
+			for (int i = 0; std::cmp_less(i, map->triggers.categories.size()); i++) {
 				TriggerVariable& variable = map->triggers.variables[i];
 				if (variable.id == childItem->id) {
 					variable.parent_id = destinationParentItem->id;
@@ -248,6 +252,9 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const {
 			return item->data(index.column());
 		case Qt::DecorationRole:
 			switch (item->type) {
+				case Classifier::map:
+				case Classifier::library:
+				    break;
 				case Classifier::category:
 					return folder_icon;
 				case Classifier::script:
@@ -374,6 +381,9 @@ QVariant TreeItem::data(int column) const {
 	}
 
 	switch (type) {
+		case Classifier::map:
+		case Classifier::library:
+		    break;
 		case Classifier::comment:
 		case Classifier::gui:
 		case Classifier::script:
@@ -403,12 +413,15 @@ QVariant TreeItem::data(int column) const {
 	return "Not found";
 }
 
-bool TreeItem::setData(const QModelIndex& index, const QVariant& value, int role) {
+bool TreeItem::setData(const QModelIndex&, const QVariant& value, int) {
 	if (value.toString().isEmpty()) {
 		return false;
 	}
 
 	switch (type) {
+		case Classifier::map:
+		case Classifier::library:
+		    break;
 		case Classifier::comment:
 		case Classifier::gui:
 		case Classifier::script:
@@ -446,3 +459,6 @@ int TreeItem::row() const {
 
 	return 0;
 }
+
+#include "moc_trigger_model.cpp"
+#include <utility>

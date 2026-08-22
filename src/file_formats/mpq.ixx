@@ -1,11 +1,17 @@
 module;
 
 #define __STORMLIB_NO_STATIC_LINK__
-#include "StormLib.h";
+#include "StormLib.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
 
 export module MPQ;
 
+#ifndef __linux__
 import std;
+#endif
 
 namespace fs = std::filesystem;
 

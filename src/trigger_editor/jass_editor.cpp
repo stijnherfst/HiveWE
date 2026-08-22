@@ -59,6 +59,9 @@ int Styling::styleToken(JassToken const& token, int start) {
 				style = JASS_KEYWORD;
 			}
 			break;
+
+		default:
+			break;
 	}
 
 	setStyling(token.stop() - start, style);

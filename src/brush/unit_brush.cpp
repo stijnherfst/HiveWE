@@ -1,24 +1,32 @@
+#include "base/global_context.h"
+#include "camera.h"
 #include "unit_brush.h"
 
 #include <QKeyEvent>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import Texture;
 import WorldUndoManager;
-import Camera;
 import OpenGLUtilities;
 import RenderManager;
 import Globals;
 import PathingMap;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 import MapGlobal;
 
 UnitBrush::UnitBrush() : Brush() {}
 
-void UnitBrush::set_shape(const Shape new_shape) {}
+void UnitBrush::set_shape(const Shape) {}
 
 void UnitBrush::key_press_event(QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
@@ -255,7 +263,7 @@ void UnitBrush::apply_begin() {
 	unit_undo = std::make_unique<UnitAddAction>();
 }
 
-void UnitBrush::apply(double frame_delta) {
+void UnitBrush::apply(double) {
 	if (id.empty()) {
 		return;
 	}
@@ -360,7 +368,7 @@ void UnitBrush::set_random_rotation() {
 }
 
 void UnitBrush::set_unit(const std::string& id) {
-	context->makeCurrent();
+	make_global_context_current();
 	this->id = id;
 	mesh = map->units.get_mesh(id);
 	skeleton = Skeleton(mesh->mdx, Units::get_required_animation_names(id));

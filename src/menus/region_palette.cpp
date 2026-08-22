@@ -1,13 +1,20 @@
+#include "camera.h"
 #include "region_palette.h"
 
 #include <QListWidgetItem>
 #include <QPixmap>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import SLK;
 import MapGlobal;
 import Globals;
-import Camera;
 
 RegionPalette::RegionPalette(QWidget* parent) : Palette(parent) {
 	ui.setupUi(this);
@@ -244,3 +251,5 @@ void RegionPalette::deactivate(QRibbonTab* tab) {
 		selection_mode->disableShortcuts();
 	}
 }
+
+#include "moc_region_palette.cpp"

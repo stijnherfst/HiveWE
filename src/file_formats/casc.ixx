@@ -1,10 +1,19 @@
+module;
+
+#include <CascLib.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module CASC;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import no_init_allocator;
 import BinaryReader;
-import <CascLib.h>;
 
 namespace fs = std::filesystem;
 
@@ -56,7 +65,7 @@ namespace casc {
 			std::vector<std::string> files;
 
 			CASC_FIND_DATA data;
-			const HANDLE found = CascFindFirstFile(handle, path.c_str(), &data, L"");
+			const HANDLE found = CascFindFirstFile(handle, path.c_str(), &data, nullptr);
 
 			if (found == INVALID_HANDLE_VALUE) {
 				return {};
@@ -107,7 +116,7 @@ namespace casc {
 		/// being present in the storage index (which lists all locales regardless of what is installed).
 		bool file_exists_locally(const fs::path& path) const {
 			CASC_FIND_DATA data;
-			const HANDLE found = CascFindFirstFile(handle, path.string().c_str(), &data, L"");
+			const HANDLE found = CascFindFirstFile(handle, path.string().c_str(), &data, nullptr);
 			if (found == INVALID_HANDLE_VALUE) {
 				return false;
 			}

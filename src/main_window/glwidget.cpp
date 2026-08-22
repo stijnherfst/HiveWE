@@ -1,3 +1,5 @@
+#include "camera.h"
+#include "brush.h"
 #include "glwidget.h"
 
 #include <QTimer>
@@ -5,12 +7,18 @@
 
 #include <tracy/Tracy.hpp>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import OpenGLUtilities;
-import Camera;
 import MapGlobal;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
+#include <glad/glad.h>
+#include <glm/glm.hpp>
 
 void APIENTRY gl_debug_output(
 	const GLenum source,

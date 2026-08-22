@@ -1,3 +1,4 @@
+#include <QFrame>
 #pragma once
 
 #include "ui_minimap.h"

@@ -1,10 +1,15 @@
 module;
 
-#include "main_window/glwidget.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
 
 export module Globals;
 
+#ifndef __linux__
 import std;
+#endif
 import INI;
 import SLK;
 
@@ -34,7 +39,6 @@ export inline slk::SLK upgrade_meta_slk;
 export inline slk::SLK buff_slk;
 export inline slk::SLK buff_meta_slk;
 
-export inline GLWidget* context;
 
 /// Generates a four character ID that is not in use by any of the object types
 export std::string get_unique_id(bool first_uppercase) {

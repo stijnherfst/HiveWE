@@ -15,7 +15,7 @@ import EditableMesh;
 import Skeleton;
 import MDX;
 import Shader;
-import <glm/glm.hpp>;
+#include <glm/glm.hpp>
 
 enum class ModelCategory {
 	Map,

@@ -5,7 +5,7 @@
 
 #include <vector>
 
-import QRibbon;
+#include "qribbon.h"
 
 /// Palette is the base for all other palette kinds and facilitates things like brush switching and shortcut management
 class Palette : public QDialog {

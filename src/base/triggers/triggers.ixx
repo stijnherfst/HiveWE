@@ -1,10 +1,19 @@
+module;
+
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module Triggers;
 
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import Utilities;
 import Globals;
-import <glm/glm.hpp>;
 import Units;
 import Doodads;
 import Regions;
@@ -590,7 +599,7 @@ export class Triggers {
 		}
 	}
 
-	void load_version_31(BinaryReader& reader, uint32_t version) {
+	void load_version_31(BinaryReader& reader, [[maybe_unused]] uint32_t version) {
 		uint32_t sub_version = reader.read<uint32_t>();
 		if (sub_version != 7 && sub_version != 4) {
 			std::print("Unknown 1.31 WTG subformat! Trying anyway.\n");

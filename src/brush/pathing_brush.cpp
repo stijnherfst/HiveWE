@@ -1,10 +1,17 @@
+#include "camera.h"
 #include "pathing_brush.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import <glm/glm.hpp>;
+#endif
+#include <glm/glm.hpp>
 import MapGlobal;
 import PathingUndo;
-import Camera;
 
 PathingBrush::PathingBrush() : Brush() {
 	position_granularity = 4.f;
@@ -23,7 +30,7 @@ void PathingBrush::apply_begin() {
 	old_pathing_cells_static = map->pathing_map.pathing_cells_static;
 }
 
-void PathingBrush::apply(double frame_delta) {
+void PathingBrush::apply(double) {
 	const glm::ivec2 pos = glm::vec2(input_handler.mouse_world) * 4.f - size.x / 2.f + 0.5f;
 	const PathingRect area = PathingRect(pos.x, pos.y, size.x, size.y).intersected({0, 0, map->pathing_map.width, map->pathing_map.height});
 

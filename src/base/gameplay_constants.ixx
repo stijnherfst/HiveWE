@@ -1,13 +1,22 @@
+module;
+
+#include "absl/strings/str_join.h"
+#include "absl/strings/str_split.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module GameplayConstants;
 
+#ifndef __linux__
 import std;
+#endif
 import INI;
 import SLK;
 import Hierarchy;
 import Globals;
 import Utilities;
-import "absl/strings/str_join.h";
-import "absl/strings/str_split.h";
 
 namespace fs = std::filesystem;
 

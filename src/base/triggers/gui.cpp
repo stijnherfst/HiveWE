@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 module Triggers;
 
+#ifndef __linux__
 import std;
+#endif
 
 std::string Triggers::get_type(const std::string_view function_name, const size_t parameter) const {
 	std::string type;
@@ -433,6 +441,8 @@ std::string Triggers::convert_gui_to_jass(const Trigger& trigger, std::vector<st
 		}
 
 		switch (i.type) {
+			case ECA::Type::call:
+				break;
 			case ECA::Type::event: {
 				if (i.name == "MapInitializationEvent") {
 					map_initializations.push_back(trigger_variable_name);

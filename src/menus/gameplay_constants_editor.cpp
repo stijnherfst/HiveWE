@@ -1,10 +1,16 @@
 #include "gameplay_constants_editor.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import MapGlobal;
 import GameplayConstants;
-import TableModel;
-
+#include "models/table_model.h"
 #include "single_model.h"
 
 #include <QHeaderView>

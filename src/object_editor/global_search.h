@@ -13,14 +13,29 @@
 #include <QPainter>
 #include <QSortFilterProxyModel>
 
-import DestructibleListModel;
-import UnitListModel;
-import BaseListModel;
-import DoodadListModel;
-import ItemListModel;
-import AbilityListModel;
-import UpgradeListModel;
-import BuffListModel;
+
+
+
+
+
+
+
+
+class DestructableListModel;
+class DestructableListFilter;
+class UnitListModel;
+class UnitListFilter;
+class BaseListModel;
+class DoodadListModel;
+class DoodadListFilter;
+class ItemListModel;
+class ItemListFilter;
+class AbilityListModel;
+class AbilityListFilter;
+class UpgradeListModel;
+class UpgradeListFilter;
+class BuffListModel;
+class BuffListFilter;
 
 class ActionListModel : public QAbstractListModel {
 public:

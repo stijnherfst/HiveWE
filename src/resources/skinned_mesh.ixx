@@ -1,8 +1,22 @@
+module;
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/packing.hpp>
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
+
 export module SkinnedMesh;
 
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
-import Camera;
 import GPUTexture;
 import Hierarchy;
 import MDX;
@@ -13,11 +27,6 @@ import Skeleton;
 import SkinnedMeshGlobals;
 import Timer;
 import Utilities;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import <glm/gtc/packing.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
@@ -343,7 +352,7 @@ export class SkinnedMesh: public Resource {
 					}
 				}
 
-				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
+				if (replaceable_id_override && std::cmp_equal(texture.replaceable_id, replaceable_id_override->first)) {
 					textures.push_back(resource_manager
 										   .load<GPUTexture>(
 											   replaceable_id_override->second + suffix,
@@ -400,9 +409,9 @@ export class SkinnedMesh: public Resource {
 		for (const auto& g : geosets) {
 			for (const auto& layer : mdx->materials[g.material_id].layers) {
 				LayerTextureIds e {};
-				uint32_t* slots = &e.albedo;
+				uint32_t* texture_slots = &e.albedo;
 				for (size_t s = 0; s < layer.textures.size() && s < 6; s++) {
-					slots[s] = layer.textures[s].id + texture_base;
+					texture_slots[s] = layer.textures[s].id + texture_base;
 				}
 				layer_ids.push_back(e);
 
@@ -542,7 +551,7 @@ export class SkinnedMesh: public Resource {
 
 		glBindVertexArray(skinned_mesh_globals.vao);
 
-		glm::mat4 MVP = camera.projection_view * skeleton.matrix;
+		glm::mat4 MVP = camera_projection_view() * skeleton.matrix;
 		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
 
 		glUniform1i(7, id);

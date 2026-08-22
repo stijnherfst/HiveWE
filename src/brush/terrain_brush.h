@@ -7,7 +7,7 @@ import Doodad;
 import Terrain;
 import TerrainUndo;
 import WorldUndoManager;
-import Rects;
+#include "utilities/rects.h"
 
 class TerrainBrush: public Brush {
 	// Friend declarations for terrain operators

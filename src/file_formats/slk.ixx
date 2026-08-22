@@ -1,14 +1,23 @@
+module;
+
+#include "absl/strings/str_split.h"
+#include "absl/strings/str_join.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module SLK;
 
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import BinaryReader;
 import Utilities;
 import INI;
 import UnorderedMap;
 import no_init_allocator;
-import "absl/strings/str_split.h";
-import "absl/strings/str_join.h";
 
 namespace fs = std::filesystem;
 

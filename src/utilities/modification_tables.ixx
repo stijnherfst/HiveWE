@@ -1,16 +1,45 @@
+module;
+
+#include <cassert>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module ModificationTables;
 
+#ifndef __linux__
 import std;
+#endif
+#ifndef __linux__
 import std.compat;
+#endif
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
 import SLK;
 import Utilities;
 import UnorderedMap;
-import <cassert>;
 
 namespace fs = std::filesystem;
+
+static std::string modification_float_to_string(const float value) {
+	char buffer[64];
+	const auto [ptr, ec] = std::to_chars(buffer, buffer + sizeof(buffer), value);
+	if (ec != std::errc{}) {
+		throw std::runtime_error("Failed to format modification table float");
+	}
+	return std::string(buffer, ptr);
+}
+
+static float modification_float_from_string(const std::string_view value) {
+	float result = 0.f;
+	const auto [ptr, ec] = std::from_chars(value.data(), value.data() + value.size(), result);
+	if (ec != std::errc{} || ptr != value.data() + value.size()) {
+		throw std::runtime_error(std::format("Invalid modification table float: {}", value));
+	}
+	return result;
+}
 
 constexpr int mod_table_write_version = 3;
 
@@ -58,7 +87,7 @@ export void load_modification_table(BinaryReader& reader, const uint32_t version
 					break;
 				case 1:
 				case 2:
-					data = std::to_string(reader.read<float>());
+					data = modification_float_to_string(reader.read<float>());
 					break;
 				case 3:
 					data = reader.read_c_string();
@@ -188,7 +217,7 @@ export void save_modification_table(BinaryWriter& writer, const slk::SLK& slk, c
 			if (write_type == 0) {
 				sub_writer.write<int>(std::stoi(value));
 			} else if (write_type == 1 || write_type == 2) {
-				sub_writer.write<float>(std::stof(value));
+				sub_writer.write<float>(modification_float_from_string(value));
 			} else {
 				sub_writer.write_c_string(value);
 			}

@@ -1,10 +1,25 @@
 module;
 
-#include <QMessageBox>
+#include <glad/glad.h>
+#include <bullet/btBulletDynamicsCommon.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
+#include "map_runtime_bridge.h"
+#include "models/table_model_bridge.h"
+
+class Brush;
+
 
 export module Map;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import MDX;
 import SLK;
@@ -23,12 +38,11 @@ import PathingMap;
 import ShadowMap;
 import Physics;
 import Hierarchy;
-import Camera;
 import Timer;
 import Physics;
 import ModificationTables;
 import RenderManager;
-import TableModel;
+
 import Globals;
 import Units;
 import Doodads;
@@ -37,12 +51,6 @@ import Terrain;
 import GameplayConstants;
 import Utilities;
 import UnorderedMap;
-import "brush.h";
-import "region_brush.h";
-import <glad/glad.h>;
-import <bullet/btBulletDynamicsCommon.h>;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;
@@ -53,8 +61,7 @@ export struct FileUsage {
 	std::unordered_set<std::string> used_by; // empty = unused
 };
 
-export class Map: public QObject {
-	Q_OBJECT
+export class Map {
 
   public:
 	bool loaded = false;
@@ -344,21 +351,23 @@ export class Map: public QObject {
 			buff_future.get();
 		} catch (const std::exception& e) {
 			std::println("Error loading game data: {}", e.what());
-			QMessageBox::critical(
-				nullptr,
-				"Map loading error",
-				QString::fromStdString(std::format("Failed to load game data files:\n{}", e.what()))
+			map_show_critical_error(
+			    "Map loading error",
+			    std::format(
+			        "Failed to load game data files:\n{}",
+			        e.what()
+			    )
 			);
 			return;
 		}
 
-		units_table = new TableModel(&units_slk, &units_meta_slk, &trigger_strings);
-		items_table = new TableModel(&items_slk, &items_meta_slk, &trigger_strings);
-		abilities_table = new TableModel(&abilities_slk, &abilities_meta_slk, &trigger_strings);
-		doodads_table = new TableModel(&doodads_slk, &doodads_meta_slk, &trigger_strings);
-		destructibles_table = new TableModel(&destructibles_slk, &destructibles_meta_slk, &trigger_strings);
-		upgrade_table = new TableModel(&upgrade_slk, &upgrade_meta_slk, &trigger_strings);
-		buff_table = new TableModel(&buff_slk, &buff_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::units, &units_slk, &units_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::items, &items_slk, &items_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::abilities, &abilities_slk, &abilities_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::doodads, &doodads_slk, &doodads_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::destructibles, &destructibles_slk, &destructibles_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::upgrades, &upgrade_slk, &upgrade_meta_slk, &trigger_strings);
+		create_global_table_model(GlobalTableModelKind::buffs, &buff_slk, &buff_meta_slk, &trigger_strings);
 
 		std::println("\nSLK loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
@@ -511,98 +520,113 @@ export class Map: public QObject {
 		std::println("Full loading: {:>5}ms", full_timer.elapsed_ms());
 
 		// Center camera
-		camera.position = glm::vec3(terrain.width / 2, terrain.height / 2, 0);
-		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y, true);
+		glm::vec3 camera_position_value = glm::vec3(
+                terrain.width / 2,
+                terrain.height / 2,
+                0
+            );
+            camera_position_value.z =
+                terrain.interpolated_height(
+                    camera_position_value.x,
+                    camera_position_value.y,
+                    true
+                );
+            camera_set_position(camera_position_value);
 
 		loaded = true;
 
-		connect(
-			units_table,
-			&TableModel::dataChanged,
-			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-				const std::string& id = units_slk.index_to_row.at(top_left.row());
-				const std::string& field = units_slk.index_to_column.at(top_left.column());
-				units.process_unit_field_change(id, field);
-			}
+		connect_global_table_model_data_changed(
+		    GlobalTableModelKind::units,
+		    [&](int row, int column) {
+		        const std::string& id = units_slk.index_to_row.at(row);
+		        const std::string& field = units_slk.index_to_column.at(column);
+		        units.process_unit_field_change(id, field);
+		    }
 		);
 
-		connect(units_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
-			for (size_t i = first; i <= last; i++) {
-				const std::string& id = units_slk.index_to_row.at(i);
-				std::erase_if(units.units, [&](Unit& unit) {
-					return unit.id == id;
-				});
-
-				if (brush) {
-					brush->unselect_id(id);
-				}
-			}
-		});
-
-		connect(
-			items_table,
-			&TableModel::dataChanged,
-			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-				const std::string& id = items_slk.index_to_row.at(top_left.row());
-				const std::string& field = items_slk.index_to_column.at(top_left.column());
-				units.process_item_field_change(id, field);
-			}
+		connect_global_table_model_rows_about_to_be_removed(
+		    GlobalTableModelKind::units,
+		    [&](int first, int last) {
+		        for (int i = first; i <= last; i++) {
+		            const std::string& id = units_slk.index_to_row.at(i);
+		            std::erase_if(units.units, [&](Unit& unit) {
+		                return unit.id == id;
+		            });
+		            if (brush) {
+		                map_brush_unselect_id(brush, id);
+		            }
+		        }
+		    }
 		);
 
-		connect(items_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
-			for (size_t i = first; i <= last; i++) {
-				const std::string& id = items_slk.index_to_row.at(i);
-				std::erase_if(units.items, [&](Unit& item) {
-					return item.id == id;
-				});
-			}
-		});
-
-		connect(
-			doodads_table,
-			&TableModel::dataChanged,
-			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-				const std::string& id = doodads_slk.index_to_row.at(top_left.row());
-				const std::string& field = doodads_slk.index_to_column.at(top_left.column());
-				doodads.process_doodad_field_change(id, field, terrain);
-			}
+		connect_global_table_model_data_changed(
+		    GlobalTableModelKind::items,
+		    [&](int row, int column) {
+		        const std::string& id = items_slk.index_to_row.at(row);
+		        const std::string& field = items_slk.index_to_column.at(column);
+		        units.process_item_field_change(id, field);
+		    }
 		);
 
-		connect(doodads_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
-			for (size_t i = first; i <= last; i++) {
-				const std::string& id = doodads_slk.index_to_row.at(i);
-				std::erase_if(doodads.doodads, [&](Doodad& doodad) {
-					return doodad.id == id;
-				});
-
-				if (brush) {
-					brush->unselect_id(id);
-				}
-			}
-		});
-
-		connect(
-			destructibles_table,
-			&TableModel::dataChanged,
-			[&](const QModelIndex& top_left, const QModelIndex& top_right, const QVector<int>& roles) {
-				const std::string& id = destructibles_slk.index_to_row.at(top_left.row());
-				const std::string& field = destructibles_slk.index_to_column.at(top_left.column());
-				doodads.process_destructible_field_change(id, field, terrain);
-			}
+		connect_global_table_model_rows_about_to_be_removed(
+		    GlobalTableModelKind::items,
+		    [&](int first, int last) {
+		        for (int i = first; i <= last; i++) {
+		            const std::string& id = items_slk.index_to_row.at(i);
+		            std::erase_if(units.items, [&](Unit& item) {
+		                return item.id == id;
+		            });
+		        }
+		    }
 		);
 
-		connect(destructibles_table, &TableModel::rowsAboutToBeRemoved, [&](const QModelIndex& parent, int first, int last) {
-			for (size_t i = first; i <= last; i++) {
-				const std::string& id = destructibles_slk.index_to_row.at(i);
-				std::erase_if(doodads.doodads, [&](Doodad& destructable) {
-					return destructable.id == id;
-				});
+		connect_global_table_model_data_changed(
+		    GlobalTableModelKind::doodads,
+		    [&](int row, int column) {
+		        const std::string& id = doodads_slk.index_to_row.at(row);
+		        const std::string& field = doodads_slk.index_to_column.at(column);
+		        doodads.process_doodad_field_change(id, field, terrain);
+		    }
+		);
 
-				if (brush) {
-					brush->unselect_id(id);
-				}
-			}
-		});
+		connect_global_table_model_rows_about_to_be_removed(
+		    GlobalTableModelKind::doodads,
+		    [&](int first, int last) {
+		        for (int i = first; i <= last; i++) {
+		            const std::string& id = doodads_slk.index_to_row.at(i);
+		            std::erase_if(doodads.doodads, [&](Doodad& doodad) {
+		                return doodad.id == id;
+		            });
+		            if (brush) {
+		                map_brush_unselect_id(brush, id);
+		            }
+		        }
+		    }
+		);
+
+		connect_global_table_model_data_changed(
+		    GlobalTableModelKind::destructibles,
+		    [&](int row, int column) {
+		        const std::string& id = destructibles_slk.index_to_row.at(row);
+		        const std::string& field = destructibles_slk.index_to_column.at(column);
+		        doodads.process_destructible_field_change(id, field, terrain);
+		    }
+		);
+
+		connect_global_table_model_rows_about_to_be_removed(
+		    GlobalTableModelKind::destructibles,
+		    [&](int first, int last) {
+		        for (int i = first; i <= last; i++) {
+		            const std::string& id = destructibles_slk.index_to_row.at(i);
+		            std::erase_if(doodads.doodads, [&](Doodad& destructable) {
+		                return destructable.id == id;
+		            });
+		            if (brush) {
+		                map_brush_unselect_id(brush, id);
+		            }
+		        }
+		    }
+		);
 	}
 
 	bool save(const fs::path& path) {
@@ -611,9 +635,7 @@ export class Map: public QObject {
 			try {
 				fs::copy(filesystem_path, fs::absolute(path), fs::copy_options::recursive);
 			} catch (fs::filesystem_error& e) {
-				QMessageBox msgbox;
-				msgbox.setText(e.what());
-				msgbox.exec();
+				map_show_message(e.what());
 				return false;
 			}
 			filesystem_path = fs::absolute(path) / "";
@@ -658,11 +680,11 @@ export class Map: public QObject {
 
 		const auto result = triggers.generate_map_script(terrain, units, doodads, info, sounds, regions, cameras, tilesets, mode);
 		if (!result.has_value()) {
-			QMessageBox::information(
-				nullptr,
-				"vJass output",
-				"There were compilation errors:\n" + QString::fromStdString(result.error()),
-				QMessageBox::StandardButton::Ok
+			map_show_information(
+			    "vJass output",
+			    std::string(
+			        "There were compilation errors:\n"
+			    ) + result.error()
 			);
 		}
 
@@ -680,8 +702,16 @@ export class Map: public QObject {
 			return;
 		}
 
-		camera.position.z = terrain.interpolated_height(camera.position.x, camera.position.y, true);
-		camera.update(delta);
+		glm::vec3 camera_position_value =
+                camera_position();
+            camera_position_value.z =
+                terrain.interpolated_height(
+                    camera_position_value.x,
+                    camera_position_value.y,
+                    true
+                );
+            camera_set_position(camera_position_value);
+            camera_update(delta);
 
 		// Update current water texture index
 		terrain.current_texture += std::max(0.0, terrain.animation_rate * delta);
@@ -694,10 +724,21 @@ export class Map: public QObject {
 		light_direction = glm::normalize(glm::vec3(std::cos(seconds), std::sin(seconds), -2.f));*/
 
 		// Map mouse coordinates to world coordinates
-		if (input_handler.mouse != input_handler.previous_mouse) {
-			glm::vec3 window = {input_handler.mouse.x, height - input_handler.mouse.y, 1.f};
-			glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, width, height));
-			glm::vec3 origin = camera.position - camera.direction * camera.distance;
+		if (input_mouse_moved()) {
+			const glm::vec2 mouse =
+                    input_mouse_position();
+                glm::vec3 window = {
+                    mouse.x,
+                    height - mouse.y,
+                    1.f
+                };
+			glm::vec3 pos = glm::unProject(
+                    window,
+                    camera_view_matrix(),
+                    camera_projection_matrix(),
+                    glm::vec4(0, 0, width, height)
+                );
+			glm::vec3 origin = camera_eye_position();
 			glm::vec3 direction = glm::normalize(pos - origin);
 			glm::vec3 toto = origin + direction * 2000.f;
 
@@ -711,8 +752,13 @@ export class Map: public QObject {
 
 			if (res.hasHit()) {
 				auto& hit = res.m_hitPointWorld;
-				input_handler.previous_mouse_world = input_handler.mouse_world;
-				input_handler.mouse_world = glm::vec3(hit.x(), hit.y(), hit.z());
+				input_update_mouse_world(
+                            glm::vec3(
+                                hit.x(),
+                                hit.y(),
+                                hit.z()
+                            )
+                        );
 			}
 		}
 
@@ -727,7 +773,7 @@ export class Map: public QObject {
 			}
 
 			mdx::Extent& extent = i.mesh->mdx->sequences.at(i.skeleton.sequence_index).extent;
-			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
+			if (!camera_inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
 
@@ -746,7 +792,7 @@ export class Map: public QObject {
 			}
 
 			mdx::Extent& extent = i.mesh->mdx->sequences.at(i.skeleton.sequence_index).extent;
-			if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
+			if (!camera_inside_frustrum_transform(extent.minimum, extent.maximum, i.skeleton.matrix)) {
 				return;
 			}
 
@@ -764,8 +810,10 @@ export class Map: public QObject {
 		glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 		if (render_regions) {
-			const auto* region_brush = dynamic_cast<RegionBrush*>(brush);
-			regions.update_render_buffer(region_brush ? &region_brush->selections : nullptr);
+			map_update_region_render_buffer(
+			    &regions,
+			    brush
+			);
 		}
 
 		terrain.render_ground(
@@ -809,7 +857,7 @@ export class Map: public QObject {
 		}
 
 		if (render_brush && brush) {
-			brush->render();
+			map_brush_render(brush);
 		}
 
 		render_manager.render(render_lighting, light_direction);
@@ -850,5 +898,3 @@ export class Map: public QObject {
 		int new_bottom
 	);
 };
-
-#include "map.moc"

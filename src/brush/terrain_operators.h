@@ -5,11 +5,9 @@
 #include <glm/glm.hpp>
 
 class TerrainBrush;
-class Terrain;
 class TerrainRect;
 class PathingRect;
-struct WorldEditContext;
-
+import WorldUndoManager;
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...
 class TerrainOperator {
 	friend class TerrainBrush;

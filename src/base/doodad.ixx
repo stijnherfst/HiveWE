@@ -1,11 +1,19 @@
 module;
 
-#include <QRectF>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "utilities/rects.h"
+
 
 export module Doodad;
 
+#ifndef __linux__
 import std;
-import Rects;
+#endif
 import SkinnedMesh;
 import PathingTexture;
 import Skeleton;
@@ -14,8 +22,6 @@ import SLK;
 import Globals;
 import ResourceManager;
 import Utilities;
-import <glm/glm.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 export struct Doodad {
 	static inline int auto_increment;
@@ -180,7 +186,7 @@ export struct Doodad {
 	static float acceptable_angle(
 		const std::string_view id,
 		const std::shared_ptr<PathingTexture>& pathing,
-		const float current_angle,
+		[[maybe_unused]] const float current_angle,
 		const float target_angle
 	) {
 		float fixed_rotation = 0.0;

@@ -1,11 +1,17 @@
 module;
 
-#include <QSettings>
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "qt_settings_bridge.h"
 
 export module Utilities;
 
+#ifndef __linux__
 import std;
-import <glm/glm.hpp>;
+#endif
 import BinaryReader;
 import no_init_allocator;
 import types;
@@ -271,14 +277,13 @@ transform_aabb_non_uniform(const glm::vec3& min, const glm::vec3& max, glm::vec3
 }
 
 export fs::path find_warcraft_directory() {
-	QSettings settings;
-	if (settings.contains("warcraftDirectory")) {
-		return settings.value("warcraftDirectory").toString().toStdString();
-	} else if (fs::exists("C:/Program Files/Warcraft III")) {
-		return "C:/Program Files/Warcraft III";
-	} else if (fs::exists("C:/Program Files (x86)/Warcraft III")) {
-		return "C:/Program Files (x86)/Warcraft III";
-	} else {
-		return "";
-	}
+    if (const auto configured = hivewe_warcraft_directory_setting()) {
+        return *configured;
+    } else if (fs::exists("C:/Program Files/Warcraft III")) {
+        return "C:/Program Files/Warcraft III";
+    } else if (fs::exists("C:/Program Files (x86)/Warcraft III")) {
+        return "C:/Program Files (x86)/Warcraft III";
+    } else {
+        return "";
+    }
 }

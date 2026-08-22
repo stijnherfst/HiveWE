@@ -1,0 +1,114 @@
+#pragma once
+
+#include <QSortFilterProxyModel>
+#include <QSize>
+#include "models/list/base_list_model.h"
+import Globals;
+
+class UnitListModel: public BaseListModel {
+
+  public:
+	explicit UnitListModel(QObject* parent = nullptr) : BaseListModel(units_slk, parent) {}
+
+	[[nodiscard]]
+	QModelIndex mapToSource(const QModelIndex& proxyIndex) const override {
+		if (!proxyIndex.isValid()) {
+			return {};
+		}
+
+		return sourceModel()->index(proxyIndex.row(), units_slk.column_headers.at("name"));
+	}
+
+	[[nodiscard]]
+	QVariant data(const QModelIndex& index, int role) const override {
+		if (!index.isValid()) {
+			return {};
+		}
+
+		switch (role) {
+			case Qt::DisplayRole:
+				return mapToSource(index).data(role).toString() + " " + QString::fromUtf8(units_slk.data<std::string_view>("editorsuffix", index.row()));
+			case Qt::UserRole:
+				return QString::fromStdString("units/" + units_slk.data("race", index.row()) + "/" + units_slk.index_to_row.at(index.row()));
+			case Qt::DecorationRole:
+				return sourceModel()->index(index.row(), units_slk.column_headers.at("art")).data(role);
+			default:
+				return BaseListModel::data(index, role);
+		}
+	}
+};
+
+class UnitListFilter: public QSortFilterProxyModel {
+
+	[[nodiscard]]
+	bool filterAcceptsRow(const int sourceRow, [[maybe_unused]] const QModelIndex& sourceParent) const override {
+		if (!filterRegularExpression().pattern().isEmpty()) {
+			if (QString::fromStdString(units_slk.index_to_row.at(sourceRow)).contains(filterRegularExpression())) {
+				return true;
+			}
+
+			const QModelIndex source_index = sourceModel()->index(sourceRow, 0);
+			return source_index.data().toString().contains(filterRegularExpression());
+		}
+
+		if (filterRace) {
+			if (units_slk.data<std::string_view>("race", sourceRow) != filterRace->toStdString()) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	[[nodiscard]]
+	bool lessThan(const QModelIndex& left, const QModelIndex& right) const override {
+		QString leftIndex = "0";
+		{
+			const bool isHostile = units_slk.data<std::string_view>("hostilepal", left.row()) == "1";
+			const bool isBuilding = units_slk.data<std::string_view>("isbldg", left.row()) == "1";
+			const bool isHero = isupper(units_slk.index_to_row.at(left.row()).front());
+			const bool isSpecial = units_slk.data<std::string_view>("special", left.row()) == "1";
+
+			if (isSpecial) {
+				leftIndex = "3";
+			} else if (isBuilding) {
+				leftIndex = "1";
+			} else if (isHero) {
+				leftIndex = "2";
+			}
+			leftIndex += QString::fromUtf8(units_slk.data<std::string_view>("name", left.row()));
+		}
+
+		QString rightIndex = "0";
+		{
+			const bool isHostile = units_slk.data<std::string_view>("hostilepal", right.row()) == "1";
+			const bool isBuilding = units_slk.data<std::string_view>("isbldg", right.row()) == "1";
+			const bool isHero = isupper(units_slk.index_to_row.at(right.row()).front());
+			const bool isSpecial = units_slk.data<std::string_view>("special", right.row()) == "1";
+
+			if (isSpecial) {
+				rightIndex = "3";
+			} else if (isBuilding) {
+				rightIndex = "1";
+			} else if (isHero) {
+				rightIndex = "2";
+			}
+			rightIndex += QString::fromUtf8(units_slk.data<std::string_view>("name", right.row()));
+		}
+
+		return leftIndex < rightIndex;
+	}
+
+	std::optional<QString> filterRace;
+
+  public:
+	using QSortFilterProxyModel::QSortFilterProxyModel;
+
+  public slots:
+
+	void setFilterRace(const QString& race) {
+  		beginFilterChange();
+		filterRace = race;
+  		endFilterChange(Direction::Rows);
+	}
+};

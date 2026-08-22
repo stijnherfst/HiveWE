@@ -1,10 +1,20 @@
 module;
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
 
 export module RenderManager;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import SkinnedMesh;
 import SkinnedMeshGlobals;
@@ -13,15 +23,11 @@ import Skeleton;
 import ResourceManager;
 import Timer;
 import MDX;
-import Camera;
 import Utilities;
 import Globals;
 import Units;
 import SLK;
 import UnorderedMap;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
 import Doodads;
 import Doodad;
 
@@ -97,7 +103,7 @@ export class RenderManager {
 	queue_render(SkinnedMesh& skinned_mesh, const Skeleton& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
 		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
 
-		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, skeleton.matrix)) {
+		if (!camera_inside_frustrum_transform(extent.minimum, extent.maximum, skeleton.matrix)) {
 			return;
 		}
 
@@ -122,7 +128,7 @@ export class RenderManager {
 				SkinnedInstance {
 					.mesh = &skinned_mesh,
 					.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
-					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
+					.distance = glm::distance(camera_eye_position(), glm::vec3(skeleton.matrix[3])),
 				}
 			);
 		}
@@ -225,14 +231,14 @@ export class RenderManager {
 
 		// OPAQUE PASS — collapse multi-draw across meshes within each draw-state group.
 		skinned_mesh_shader_sd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, false, &camera_projection_view()[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
 		glUniform1i(2, render_lighting ? 1 : 0);
 		glBlendFunc(GL_ONE, GL_ZERO);
 		render_opaque(false, mesh_offsets);
 
 		skinned_mesh_shader_hd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, false, &camera_projection_view()[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
 		glUniform1i(2, render_lighting ? 1 : 0);
 		render_opaque(true, mesh_offsets);
@@ -245,13 +251,13 @@ export class RenderManager {
 		glDepthMask(false);
 
 		skinned_mesh_shader_sd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, false, &camera_projection_view()[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
 		glUniform1i(2, render_lighting ? 1 : 0);
 		render_transparent(false, mesh_offsets, staging_layer_colors);
 
 		skinned_mesh_shader_hd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, false, &camera_projection_view()[0][0]);
 		glUniform3fv(3, 1, &light_direction.x);
 		glUniform1i(2, render_lighting ? 1 : 0);
 		render_transparent(true, mesh_offsets, staging_layer_colors);
@@ -301,7 +307,7 @@ export class RenderManager {
 			} // ToDo handle starting locations
 
 			const mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
-			if (camera.inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
+			if (camera_inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
 				unit.mesh->render_color_coded(unit.skeleton, i + 1);
 			}
 		}
@@ -340,9 +346,10 @@ export class RenderManager {
 		glDepthMask(true);
 		glDisable(GL_BLEND);
 
-		glm::vec3 window = {input_handler.mouse.x, window_height - input_handler.mouse.y, 1.f};
-		glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, window_width, window_height));
-		glm::vec3 ray_origin = camera.position - camera.direction * camera.distance;
+		const glm::vec2 mouse = input_mouse_position();
+                glm::vec3 window = {mouse.x, window_height - mouse.y, 1.f};
+		glm::vec3 pos = glm::unProject(window, camera_view_matrix(), camera_projection_matrix(), glm::vec4(0, 0, window_width, window_height));
+		glm::vec3 ray_origin = camera_eye_position();
 		glm::vec3 ray_direction = glm::normalize(pos - ray_origin);
 
 		colored_skinned_shader->use();

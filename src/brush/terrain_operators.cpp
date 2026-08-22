@@ -1,15 +1,22 @@
+#include "camera.h"
 #include "terrain_brush.h"
 #include "terrain_operators.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import Rects;
+#endif
+#include "utilities/rects.h"
 import MapGlobal;
 import Terrain;
 import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
 import WorldUndoManager;
-import Camera;
 
 void TerrainOperator::set_brush_type(Brush::Type type) {
 	brush_type = type;
@@ -19,7 +26,7 @@ void TerrainOperator::set_brush_type(Brush::Type type) {
 	}
 }
 
-void HeightOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
+void HeightOperator::apply_begin(const TerrainRect&, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 	deformation_height_ground = terrain.corner_height[center_idx];
@@ -145,12 +152,12 @@ void HeightOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) {
 	}
 }
 
-void TextureOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
+void TextureOperator::apply_begin(const TerrainRect&, int, int) {
 	auto& terrain = map->terrain;
 	tile_index = terrain.ground_texture_to_id(tile_id);
 }
 
-PathingRect TextureOperator::apply(const TerrainRect& area, double frame_delta) {
+PathingRect TextureOperator::apply(const TerrainRect& area, double) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -200,7 +207,7 @@ void TextureOperator::apply_end(WorldEditContext& ctx, const PathingRect& area) 
 	brush->add_terrain_undo(ctx, area.to_terrain(), TerrainUndoType::texture);
 }
 
-void CliffOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
+void CliffOperator::apply_begin(const TerrainRect&, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 	layer_height = terrain.corner_layer_height[center_idx];
@@ -241,7 +248,7 @@ void CliffOperator::apply_begin(const TerrainRect& area, int center_x, int cente
 	layer_height = std::clamp(layer_height, 0, 15);
 }
 
-PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_delta) {
+PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -283,6 +290,8 @@ PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_de
 				case cliff_operation::deep_water:
 					terrain.corner_water[idx] = true;
 					terrain.corner_water_height[idx] = terrain.corner_layer_height[idx];
+					break;
+				case cliff_operation::ramp:
 					break;
 			}
 
@@ -334,7 +343,7 @@ PathingRect CliffOperator::apply_cliffs(const TerrainRect& area, double frame_de
 	return expanded_area.to_pathing();
 }
 
-PathingRect CliffOperator::apply_ramps(const TerrainRect& area, double frame_delta) {
+PathingRect CliffOperator::apply_ramps(const TerrainRect& area, double) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;
@@ -576,7 +585,7 @@ void CliffOperator::update_ramp(const int i, const int j, int horizontal, int ve
 	);
 }
 
-void CellOperator::apply_begin(const TerrainRect& area, int center_x, int center_y) {
+void CellOperator::apply_begin(const TerrainRect&, int center_x, int center_y) {
 	auto& terrain = map->terrain;
 	const size_t center_idx = terrain.ci(center_x, center_y);
 
@@ -589,7 +598,7 @@ void CellOperator::apply_begin(const TerrainRect& area, int center_x, int center
 	}
 }
 
-PathingRect CellOperator::apply(const TerrainRect& area, double frame_delta) {
+PathingRect CellOperator::apply(const TerrainRect& area, double) {
 	auto& terrain = map->terrain;
 	const int width = terrain.width;
 	const int height = terrain.height;

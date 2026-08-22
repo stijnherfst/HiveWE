@@ -1,6 +1,16 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "brush/brush_render_bridge.h"
+
+
 export module UnitsUndo;
 
+#ifndef __linux__
 import std;
+#endif
 import Units;
 import WorldUndoManager;
 
@@ -24,7 +34,7 @@ public:
 
 	void undo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		ctx.units.units.insert(ctx.units.units.end(), units.begin(), units.end());
@@ -32,7 +42,7 @@ public:
 
 	void redo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		ctx.units.units.resize(ctx.units.units.size() - units.size());

@@ -1,14 +1,187 @@
 module;
 
-#include <QDir>
+#include <glm/trigonometric.hpp>
+#ifndef __linux__
 #include <QProcess>
+#endif
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
+#ifdef __linux__
+#include <cerrno>
+#include <cstring>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#endif
 
 module Triggers;
 
+#ifndef __linux__
 import std;
+#endif
 import INI;
 
 namespace fs = std::filesystem;
+
+static std::string script_real(const float value) {
+	return std::format("{:.6f}", value);
+}
+
+#ifdef __linux__
+static std::expected<std::string, std::string>
+run_jasshelper_linux(const fs::path& input_path) {
+        const std::string input =
+                fs::absolute(input_path).string();
+
+        int output_pipe[2];
+
+        if (pipe(output_pipe) != 0) {
+                return std::unexpected(
+                        std::string(
+                                "Failed to create JassHelper pipe: "
+                        ) + std::strerror(errno)
+                );
+        }
+
+        const pid_t pid = fork();
+
+        if (pid < 0) {
+                close(output_pipe[0]);
+                close(output_pipe[1]);
+
+                return std::unexpected(
+                        std::string(
+                                "Failed to fork JassHelper process: "
+                        ) + std::strerror(errno)
+                );
+        }
+
+        if (pid == 0) {
+                close(output_pipe[0]);
+
+                if (dup2(
+                        output_pipe[1],
+                        STDOUT_FILENO
+                ) == -1) {
+                        _exit(125);
+                }
+
+                if (dup2(
+                        output_pipe[1],
+                        STDERR_FILENO
+                ) == -1) {
+                        _exit(125);
+                }
+
+                close(output_pipe[1]);
+
+                if (chdir("data/tools") != 0) {
+                        _exit(126);
+                }
+
+                execlp(
+                        "wine",
+                        "wine",
+                        "./clijasshelper.exe",
+                        "--scriptonly",
+                        "common.j",
+                        "blizzard.j",
+                        input.c_str(),
+                        "war3map.j",
+                        static_cast<char*>(nullptr)
+                );
+
+                _exit(127);
+        }
+
+        close(output_pipe[1]);
+
+        std::string output;
+        char buffer[4096];
+
+        while (true) {
+                const ssize_t count =
+                        read(
+                                output_pipe[0],
+                                buffer,
+                                sizeof(buffer)
+                        );
+
+                if (count > 0) {
+                        output.append(
+                                buffer,
+                                static_cast<size_t>(count)
+                        );
+                        continue;
+                }
+
+                if (count < 0 && errno == EINTR) {
+                        continue;
+                }
+
+                break;
+        }
+
+        close(output_pipe[0]);
+
+        int status = 0;
+
+        while (waitpid(pid, &status, 0) < 0) {
+                if (errno == EINTR) {
+                        continue;
+                }
+
+                return std::unexpected(
+                        std::string(
+                                "Failed waiting for JassHelper: "
+                        ) + std::strerror(errno)
+                );
+        }
+
+        if (!WIFEXITED(status)) {
+                return std::unexpected(
+                        "JassHelper terminated abnormally.\n"
+                        + output
+                );
+        }
+
+        const int exit_code = WEXITSTATUS(status);
+
+        if (exit_code == 125) {
+                return std::unexpected(
+                        "Failed to redirect JassHelper output."
+                );
+        }
+
+        if (exit_code == 126) {
+                return std::unexpected(
+                        "Unable to access data/tools."
+                );
+        }
+
+        if (exit_code == 127) {
+                return std::unexpected(
+                        "Unable to start Wine. "
+                        "JASS compilation on Linux requires Wine."
+                );
+        }
+
+        if (exit_code != 0) {
+                return std::unexpected(
+                        output.empty()
+                                ? "JassHelper exited with code "
+                                        + std::to_string(exit_code)
+                                : output
+                );
+        }
+
+        return output;
+}
+#endif
+
 
 void generate_global_variables(
 	MapScriptWriter& script,
@@ -184,7 +357,7 @@ void generate_units(
 
 			if (i.health != -1) {
 				script.set_variable("life", std::format("GetUnitState({}, {})", unit_reference, "UNIT_STATE_LIFE"));
-				script.call("SetUnitState", unit_reference, "UNIT_STATE_LIFE", std::to_string(i.health / 100.f) + " * life");
+				script.call("SetUnitState", unit_reference, "UNIT_STATE_LIFE", script_real(i.health / 100.f) + " * life");
 			}
 
 			if (i.mana != -1) {
@@ -226,12 +399,12 @@ void generate_units(
 					if (order_on.empty()) {
 						order_on = abilities_slk.data<std::string_view>("order", std::get<0>(j));
 					}
-					script.call("IssueImmediateOrder", unit_reference, "\"" + order_on + "\"");
+					script.call("IssueImmediateOrder", unit_reference, std::string("\"") + std::string(order_on) + "\"");
 
 				} else {
 					std::string_view order_off = abilities_slk.data<std::string_view>("orderoff", std::get<0>(j));
 					if (!order_off.empty()) {
-						script.call("IssueImmediateOrder", unit_reference, "\"" + order_off + "\"");
+						script.call("IssueImmediateOrder", unit_reference, std::string("\"") + std::string(order_off) + "\"");
 					}
 				}
 			}
@@ -308,7 +481,7 @@ void generate_destructables(
 
 			if (i.life != 100) {
 				script.set_variable("life", "GetDestructableLife(" + id + ")");
-				script.call("SetDestructableLife", id, std::to_string(i.life / 100.f) + " * life");
+				script.call("SetDestructableLife", id, script_real(i.life / 100.f) + " * life");
 			}
 
 			if (!i.item_sets.empty()) {
@@ -688,17 +861,17 @@ void generate_main(MapScriptWriter& script, const Terrain& terrain, const MapInf
 	script.function("main", [&]() {
 		script.call(
 			"SetCameraBounds",
-			std::to_string(map_info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-			std::to_string(map_info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
+			script_real(map_info.camera_left_bottom.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+			script_real(map_info.camera_left_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)",
 
-			std::to_string(map_info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-			std::to_string(map_info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+			script_real(map_info.camera_right_top.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+			script_real(map_info.camera_right_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-			std::to_string(map_info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
-			std::to_string(map_info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
+			script_real(map_info.camera_left_top.x - 512.f) + " + GetCameraMargin(CAMERA_MARGIN_LEFT)",
+			script_real(map_info.camera_left_top.y + 256.f) + " - GetCameraMargin(CAMERA_MARGIN_TOP)",
 
-			std::to_string(map_info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
-			std::to_string(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)"
+			script_real(map_info.camera_right_bottom.x + 512.f) + " - GetCameraMargin(CAMERA_MARGIN_RIGHT)",
+			script_real(map_info.camera_right_bottom.y - 256.f) + " + GetCameraMargin(CAMERA_MARGIN_BOTTOM)"
 		);
 
 		const Tileset* tileset = tilesets.tileset(terrain.tileset_id);
@@ -872,12 +1045,47 @@ std::expected<void, std::string> Triggers::generate_map_script(
 	generate_main(script_writer, terrain, map_info, tilesets);
 	generate_map_configuration(script_writer, terrain, units, map_info);
 
-	fs::path path = QDir::tempPath().toStdString() + "/input.lua";
+	fs::path path = fs::temp_directory_path() / "input.lua";
 	std::ofstream output(path, std::ios::binary);
 	output.write((char*)script_writer.script.data(), script_writer.script.size());
 	output.close();
 
 	if (mode == ScriptMode::jass) {
+#ifdef __linux__
+                auto process_result =
+                        run_jasshelper_linux(path);
+
+                if (!process_result) {
+                        return std::unexpected(
+                                process_result.error()
+                        );
+                }
+
+                const std::string& result =
+                        *process_result;
+
+                if (const auto position =
+                                result.find("Compile error");
+                    position != std::string::npos) {
+                        return std::unexpected(
+                                result.substr(position)
+                        );
+                }
+
+                if (const auto position =
+                                result.find("compile errors");
+                    position != std::string::npos) {
+                        return std::unexpected(
+                                result.substr(position)
+                        );
+                }
+
+                hierarchy.map_file_add(
+                        "data/tools/war3map.j",
+                        "war3map.j"
+                );
+#else
+
 		QProcess* proc = new QProcess();
 		proc->setWorkingDirectory("data/tools");
 		proc->start(
@@ -894,7 +1102,9 @@ std::expected<void, std::string> Triggers::generate_map_script(
 		} else {
 			hierarchy.map_file_add("data/tools/war3map.j", "war3map.j");
 		}
-	} else {
+
+#endif
+        } else {
 		hierarchy.map_file_add(path, "war3map.lua");
 	}
 

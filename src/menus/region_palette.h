@@ -5,7 +5,7 @@
 #include "palette.h"
 #include "region_brush.h"
 
-import QRibbon;
+#include "qribbon.h"
 
 class RegionPalette : public Palette {
 	Q_OBJECT

@@ -32,14 +32,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/vcpkg_cache
-          key: vcpkg-binaries-${{ runner.os }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-binaries-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'overlay-ports/**') }}
           restore-keys: |
             vcpkg-binaries-${{ runner.os }}-
 
       - name: Configure CMake
         run: >
-          cmake --preset Release 
-          -DVCPKG_TARGET_TRIPLET=x64-windows 
+          cmake --preset Release
+          -DVCPKG_TARGET_TRIPLET=x64-windows
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
@@ -47,3 +47,73 @@ jobs:
 
       - name: Test
         run: ctest --preset Release
+
+  linux-build:
+    runs-on: ubuntu-24.04
+
+    env:
+      VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/vcpkg_cache,readwrite"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            clang-19 \
+            pkg-config \
+            libxcb1-dev \
+            libxcb-cursor-dev \
+            libxcb-dri3-dev \
+            libxcb-glx0-dev \
+            libxcb-icccm4-dev \
+            libxcb-image0-dev \
+            libxcb-keysyms1-dev \
+            libxcb-present-dev \
+            libxcb-randr0-dev \
+            libxcb-render0-dev \
+            libxcb-render-util0-dev \
+            libxcb-shape0-dev \
+            libxcb-shm0-dev \
+            libxcb-sync-dev \
+            libxcb-util-dev \
+            libxcb-xfixes0-dev \
+            libxcb-xinerama0-dev \
+            libxcb-xinput-dev \
+            libxcb-xkb-dev \
+            libx11-xcb-dev \
+            libglu1-mesa-dev \
+            libxrender-dev \
+            libxi-dev \
+            libxkbcommon-dev \
+            libxkbcommon-x11-dev \
+            libegl1-mesa-dev \
+            libwayland-dev \
+            wayland-protocols \
+            libfontconfig1-dev \
+            libfreetype-dev \
+            libharfbuzz-dev
+
+      - name: Configure vcpkg environment
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/vcpkg_cache"
+
+      - name: Restore/Save vcpkg Binary Cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg_cache
+          key: vcpkg-binaries-${{ runner.os }}-${{ hashFiles('vcpkg.json', 'overlay-ports/**') }}
+          restore-keys: |
+            vcpkg-binaries-${{ runner.os }}-
+
+      - name: Configure CMake
+        run: cmake --preset linux-release -DCMAKE_CXX_COMPILER=clang++-19
+
+      - name: Build
+        run: cmake --build --preset linux-release --parallel 4

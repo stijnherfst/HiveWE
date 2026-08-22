@@ -1,11 +1,11 @@
+#include "camera.h"
 #pragma once
 
 #include <QMouseEvent>
 
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import Camera;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 struct ModelEditorCamera {
 	glm::vec3 position = { 0, 0, 0 };

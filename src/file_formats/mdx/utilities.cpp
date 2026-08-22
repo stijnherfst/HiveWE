@@ -1,7 +1,15 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "glm/glm.hpp"
+
 module MDX;
 
+#ifndef __linux__
 import std;
-import "glm/glm.hpp";
+#endif
 
 namespace mdx {
 	/// Will not retain sequences and bones because there is no straightforward way to merge them
@@ -49,27 +57,27 @@ namespace mdx {
 		// 	ribbon.material_id += materials.size();
 		// }
 
-		geosets.append_range(new_mdx.geosets);
-		// sequences.append_range(new_mdx.sequences);
-		// global_sequences.append_range(new_mdx.global_sequences);
-		animations.append_range(new_mdx.animations);
-		// bones.append_range(new_mdx.bones);
-		materials.append_range(new_mdx.materials);
-		textures.append_range(new_mdx.textures);
-		// lights.append_range(new_mdx.lights);
-		// help_bones.append_range(new_mdx.help_bones);
-		// attachments.append_range(new_mdx.attachments);
-		// pivots.append_range(new_mdx.pivots);
-		// emitters1.append_range(new_mdx.emitters1);
-		// emitters2.append_range(new_mdx.emitters2);
-		// ribbons.append_range(new_mdx.ribbons);
-		// event_objects.append_range(new_mdx.event_objects);
-		// collision_shapes.append_range(new_mdx.collision_shapes);
-		// corn_emitters.append_range(new_mdx.corn_emitters);
-		// facefxes.append_range(new_mdx.facefxes);
-		// cameras.append_range(new_mdx.cameras);
-		// bind_poses.append_range(new_mdx.bind_poses);
-		// texture_animations.append_range(new_mdx.texture_animations);
+		geosets.insert(geosets.end(), new_mdx.geosets.begin(), new_mdx.geosets.end());
+		// sequences.insert(// sequences.end(), new_mdx.sequences.begin(), new_mdx.sequences.end());
+		// global_sequences.insert(// global_sequences.end(), new_mdx.global_sequences.begin(), new_mdx.global_sequences.end());
+		animations.insert(animations.end(), new_mdx.animations.begin(), new_mdx.animations.end());
+		// bones.insert(// bones.end(), new_mdx.bones.begin(), new_mdx.bones.end());
+		materials.insert(materials.end(), new_mdx.materials.begin(), new_mdx.materials.end());
+		textures.insert(textures.end(), new_mdx.textures.begin(), new_mdx.textures.end());
+		// lights.insert(// lights.end(), new_mdx.lights.begin(), new_mdx.lights.end());
+		// help_bones.insert(// help_bones.end(), new_mdx.help_bones.begin(), new_mdx.help_bones.end());
+		// attachments.insert(// attachments.end(), new_mdx.attachments.begin(), new_mdx.attachments.end());
+		// pivots.insert(// pivots.end(), new_mdx.pivots.begin(), new_mdx.pivots.end());
+		// emitters1.insert(// emitters1.end(), new_mdx.emitters1.begin(), new_mdx.emitters1.end());
+		// emitters2.insert(// emitters2.end(), new_mdx.emitters2.begin(), new_mdx.emitters2.end());
+		// ribbons.insert(// ribbons.end(), new_mdx.ribbons.begin(), new_mdx.ribbons.end());
+		// event_objects.insert(// event_objects.end(), new_mdx.event_objects.begin(), new_mdx.event_objects.end());
+		// collision_shapes.insert(// collision_shapes.end(), new_mdx.collision_shapes.begin(), new_mdx.collision_shapes.end());
+		// corn_emitters.insert(// corn_emitters.end(), new_mdx.corn_emitters.begin(), new_mdx.corn_emitters.end());
+		// facefxes.insert(// facefxes.end(), new_mdx.facefxes.begin(), new_mdx.facefxes.end());
+		// cameras.insert(// cameras.end(), new_mdx.cameras.begin(), new_mdx.cameras.end());
+		// bind_poses.insert(// bind_poses.end(), new_mdx.bind_poses.begin(), new_mdx.bind_poses.end());
+		// texture_animations.insert(// texture_animations.end(), new_mdx.texture_animations.begin(), new_mdx.texture_animations.end());
 
 		if (is_valid()) {
 			fix_up();
@@ -92,7 +100,7 @@ namespace mdx {
 
 			if (bone_count > 0) {
 				const int weight = 255 / bone_count;
-				for (size_t j = 0; j < bone_count; j++) {
+				for (int j = 0; j < bone_count; j++) {
 					if (bone_offset + j < geoset.matrix_indices.size()) {
 						indices[j] = geoset.matrix_indices[bone_offset + j];
 					}

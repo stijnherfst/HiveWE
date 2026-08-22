@@ -1,5 +1,7 @@
 #include "variable_editor.h"
 
+import Triggers;
+
 VariableEditor::VariableEditor(TriggerVariable& variable) : QWidget() {
 	ui.setupUi(this);
 	ui.name->setText(QString::fromStdString(variable.name));

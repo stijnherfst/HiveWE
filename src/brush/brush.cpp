@@ -1,13 +1,21 @@
+#include "base/global_context.h"
+#include "camera.h"
 #include "brush.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import Camera;
+#endif
 import OpenGLUtilities;
 import ResourceManager;
 import Globals;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 Brush::Brush() {
 	set_size(size);
@@ -53,7 +61,7 @@ void Brush::set_size(const glm::ivec2 new_size) {
 }
 
 void Brush::set_shape(const Shape new_shape) {
-	context->makeCurrent();
+	make_global_context_current();
 	std::vector<glm::u8vec4> brush(size.x * size.y, {0, 0, 0, 0});
 
 	shape = new_shape;
@@ -160,7 +168,7 @@ void Brush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	}
 }
 
-void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void Brush::mouse_press_event(QMouseEvent* event, double) {
 	if (event->button() != Qt::LeftButton) {
 		return;
 	}
@@ -236,3 +244,5 @@ void Brush::render_selector() const {
 }
 
 void Brush::render_brush() {}
+
+#include "moc_brush.cpp"

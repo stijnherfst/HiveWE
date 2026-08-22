@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module Timer;
 
+#ifndef __linux__
 import std;
+#endif
 
 export class Timer {
 	std::chrono::steady_clock::time_point start_time;

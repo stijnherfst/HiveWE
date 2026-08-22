@@ -1,9 +1,18 @@
+module;
+
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module Shader;
 
+#ifndef __linux__
 import std;
+#endif
 import ResourceManager;
 import Utilities;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

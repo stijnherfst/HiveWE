@@ -1,7 +1,15 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include <glm/glm.hpp>
+
 module MDX;
 
+#ifndef __linux__
 import std;
-import <glm/glm.hpp>;
+#endif
 
 namespace fs = std::filesystem;
 

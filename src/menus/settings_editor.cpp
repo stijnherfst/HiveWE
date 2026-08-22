@@ -3,7 +3,14 @@
 #include <QSettings>
 #include <QFile>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 
 void setTestArgs(Ui::SettingsEditor &ui) {
 	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString::fromStdString(std::string("") + char(ui.diff->currentIndex() + '0')) +
@@ -50,7 +57,7 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 		save();
 		QSettings settings;
 		QFile file("data/themes/" + settings.value("theme").toString() + ".qss");
-		file.open(QFile::ReadOnly);
+		(void)file.open(QFile::ReadOnly);
 		QString StyleSheet = QLatin1String(file.readAll());
 
 		qApp->setStyleSheet(StyleSheet);

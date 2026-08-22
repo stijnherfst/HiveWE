@@ -18,12 +18,19 @@
 
 #include "model_view.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
 import Hierarchy;
 import MDX;
 import Utilities;
-import "absl/strings/str_join.h";
+#include "absl/strings/str_join.h"
 
 class CCustomComponentsFactory: public ads::CDockComponentsFactory {
   public:
@@ -46,7 +53,7 @@ class CCustomComponentsFactory: public ads::CDockComponentsFactory {
 		const int index = title_bar->indexOf(title_bar->tabBar());
 		title_bar->insertWidget(index + 1, add_tab);
 
-		QObject::connect(add_tab, &QToolButton::clicked, [=] {
+		QObject::connect(add_tab, &QToolButton::clicked, [=, this] {
 			model_editor.browse_models(dock_area);
 		});
 
@@ -213,3 +220,5 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 
 	return dock_tab;
 }
+
+#include "moc_model_editor.cpp"

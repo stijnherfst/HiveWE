@@ -2,7 +2,14 @@
 
 #include <QPushButton>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import ResourceManager;
 import Texture;
 import OpenGLUtilities;
@@ -84,3 +91,5 @@ void TilePicker::completed() {
 	emit tile_chosen(from_tile, to_tile);
 	close();
 }
+
+#include "moc_tile_picker.cpp"

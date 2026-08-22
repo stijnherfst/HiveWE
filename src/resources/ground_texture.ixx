@@ -1,14 +1,23 @@
+module;
+
+#include <soil2/SOIL2.h>
+#include <glm/glm.hpp>
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module GroundTexture;
 
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
 import ResourceManager;
 import OpenGLUtilities;
 import BLP;
 import Hierarchy;
-import <soil2/SOIL2.h>;
-import <glm/glm.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

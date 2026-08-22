@@ -17,13 +17,20 @@
 #include <QMenu>
 #include <QMessageBox>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import UnitSelector;
+#endif
+#include "custom_widgets/unit_selector.h"
 import MapGlobal;
 import Globals;
 import ResourceManager;
 import SlkConversions;
-import "single_model.h";
+#include "single_model.h"
 
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);
@@ -61,14 +68,14 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	upgradeTreeModel = new UpgradeTreeModel(this);
 	buffTreeModel = new BuffTreeModel(this);
 
-	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon, "Units", Category::unit);
-	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon, "Items", Category::item);
+	addTypeTreeView(unitTreeModel, unitTreeFilter, units_table, unit_explorer, custom_unit_icon->icon(), "Units", Category::unit);
+	addTypeTreeView(itemTreeModel, itemTreeFilter, items_table, item_explorer, custom_item_icon->icon(), "Items", Category::item);
 	addTypeTreeView(
 		doodadTreeModel,
 		doodadTreeFilter,
 		doodads_table,
 		doodad_explorer,
-		custom_doodad_icon->icon,
+		custom_doodad_icon->icon(),
 		"Doodads",
 		Category::doodad
 	);
@@ -77,7 +84,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 		destructibleTreeFilter,
 		destructibles_table,
 		destructible_explorer,
-		custom_destructible_icon->icon,
+		custom_destructible_icon->icon(),
 		"Destructibles",
 		Category::destructible
 	);
@@ -86,7 +93,7 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 		abilityTreeFilter,
 		abilities_table,
 		ability_explorer,
-		custom_ability_icon->icon,
+		custom_ability_icon->icon(),
 		"Abilities",
 		Category::ability
 	);
@@ -95,11 +102,11 @@ ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 		upgradeTreeFilter,
 		upgrade_table,
 		upgrade_explorer,
-		custom_upgrade_icon->icon,
+		custom_upgrade_icon->icon(),
 		"Upgrades",
 		Category::upgrade
 	);
-	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon, "Buffs", Category::buff);
+	addTypeTreeView(buffTreeModel, buffTreeFilter, buff_table, buff_explorer, custom_buff_icon->icon(), "Buffs", Category::buff);
 
 	explorer_area->setCurrentIndex(0);
 	// Set initial sizes, the second size doesn't really matter with only 2 dock areas
@@ -412,7 +419,7 @@ void ObjectEditor::addTypeTreeView(
 			connect(
 				sub_view->selectionModel(),
 				&QItemSelectionModel::currentChanged,
-				[table, sub_filter, filter, id, nameEdit, is_valid](const QModelIndex& current, const QModelIndex& previous) {
+				[table, sub_filter, filter, id, nameEdit, is_valid](const QModelIndex& current, const QModelIndex&) {
 					if (!current.isValid()) {
 						return;
 					}
@@ -426,7 +433,7 @@ void ObjectEditor::addTypeTreeView(
 			);
 
 			// id input field
-			connect(id, &QLineEdit::textChanged, [is_valid](const QString& text) {
+			connect(id, &QLineEdit::textChanged, [is_valid](const QString&) {
 				is_valid();
 			});
 
@@ -600,3 +607,5 @@ void ObjectEditor::select_id(Category category, const std::string& id) const {
 		}
 	}
 }
+
+#include "moc_object_editor.cpp"

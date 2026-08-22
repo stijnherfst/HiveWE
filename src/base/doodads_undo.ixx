@@ -1,12 +1,20 @@
 module;
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "brush/brush_render_bridge.h"
+#include "utilities/rects.h"
+
+
+
 export module DoodadsUndo;
 
+#ifndef __linux__
 import std;
+#endif
 import Doodad;
 import WorldUndoManager;
-import Rects;
-
 // Undo/redo structures
 export class DoodadAddAction final: public WorldCommand {
   public:
@@ -29,7 +37,7 @@ export class DoodadDeleteAction final: public WorldCommand {
 
 	void undo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		ctx.doodads.doodads.insert(ctx.doodads.doodads.end(), doodads.begin(), doodads.end());
@@ -38,7 +46,7 @@ export class DoodadDeleteAction final: public WorldCommand {
 
 	void redo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		ctx.doodads.doodads.resize(ctx.doodads.doodads.size() - doodads.size());

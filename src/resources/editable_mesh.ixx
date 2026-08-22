@@ -1,6 +1,17 @@
+module;
+
+#include <glm/glm.hpp>
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module EditableMesh;
 
+#ifndef __linux__
 import std;
+#endif
 import MDX;
 import ResourceManager;
 import GPUTexture;
@@ -9,8 +20,6 @@ import Skeleton;
 import ParticleEmitter2Renderer;
 import Hierarchy;
 import BinaryReader;
-import <glm/glm.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
@@ -191,7 +200,7 @@ export class EditableMesh: public Resource {
 					}
 				}
 
-				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
+				if (replaceable_id_override && std::cmp_equal(texture.replaceable_id, replaceable_id_override->first)) {
 					textures.push_back(resource_manager
 										   .load<GPUTexture>(
 											   replaceable_id_override->second + suffix,

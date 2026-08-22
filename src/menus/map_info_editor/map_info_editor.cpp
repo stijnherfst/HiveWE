@@ -3,7 +3,7 @@
 #include <QMessageBox>
 #include <QPainter>
 
-import <filesystem>;
+#include <filesystem>
 import SLK;
 import Utilities;
 import MapGlobal;
@@ -42,3 +42,5 @@ void MapInfoEditor::save() const {
 	save_options(map->info);
 	save_map_size(*map);
 }
+
+#include "moc_map_info_editor.cpp"

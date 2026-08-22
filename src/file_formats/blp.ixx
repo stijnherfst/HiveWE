@@ -1,9 +1,18 @@
+module;
+
+#include <turbojpeg.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module BLP;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import BinaryReader;
-import <turbojpeg.h>;
 
 namespace blp {
 	export struct Image {

@@ -1,6 +1,14 @@
+#include "terrain_notifier_bridge.h"
 #include "tile_pather.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import OpenGLUtilities;
 import Texture;
 import MapGlobal;
@@ -8,7 +16,7 @@ import PathingMap;
 import Tileset;
 import ResourceManager;
 import Terrain;
-import <glad/glad.h>;
+#include <glad/glad.h>
 
 TilePather::TilePather(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
@@ -127,7 +135,7 @@ void TilePather::save_tiles() {
 		map->pathing_map.pathing_cells_static.data()
 	);
 
-	emit map->terrain.tileset_changed();
+	emit_terrain_tileset_changed(map->terrain.notifier);
 	close();
 }
 
@@ -140,3 +148,5 @@ TextureButton* TilePather::create_tex_button(const TerrainTexture* tex) {
 	button->setToolTip(QString::fromUtf8(tex->name));
 	return button;
 }
+
+#include "moc_tile_pather.cpp"

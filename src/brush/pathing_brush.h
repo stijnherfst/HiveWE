@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "brush.h"
-import Rects;
+#include "utilities/rects.h"
 
 class PathingBrush: public Brush {
   public:

@@ -8,10 +8,17 @@
 
 #include "asset_tree_model.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import SLK;
 import Globals;
-import TableModel;
+#include "models/table_model.h"
 import ResourceManager;
 import QIconResource;
 import BinaryReader;
@@ -19,7 +26,7 @@ import Hierarchy;
 import MDX;
 import UnorderedMap;
 import Utilities;
-import "object_editor/object_editor.h";
+#include "object_editor/object_editor.h"
 
 namespace fs = std::filesystem;
 
@@ -169,7 +176,7 @@ QIcon resolve_used_by_icon(const std::string& id) {
 	const auto category_icon = [](const std::string& section, char cat) -> QIcon {
 		for (const auto& [key, value] : world_edit_data.section(section)) {
 			if (!key.empty() && key.front() == cat) {
-				return resource_manager.load<QIconResource>(value[1]).value()->icon;
+				return resource_manager.load<QIconResource>(value[1]).value()->icon();
 			}
 		}
 		return {};
@@ -400,7 +407,7 @@ QVariant AssetTreeModel::data(const QModelIndex& index, const int role) const {
 			case IsUnusedRole:
 				return node.used_by.empty();
 			case SizeRole:
-				return node.size;
+				return QVariant(static_cast<qulonglong>(node.size));
 			case FileRowRole:
 				return item->file_row;
 			case ValidationSortRole:

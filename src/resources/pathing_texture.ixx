@@ -1,13 +1,22 @@
+module;
+
+#include <soil2/SOIL2.h>
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module PathingTexture;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import ResourceManager;
 import Hierarchy;
 import BLP;
 import BinaryReader;
-import <soil2/SOIL2.h>;
-import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 

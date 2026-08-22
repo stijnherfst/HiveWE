@@ -5,7 +5,14 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import MapGlobal;
 
 namespace fs = std::filesystem;
@@ -150,3 +157,5 @@ void PathingPalette::deactivate(QRibbonTab* tab) {
 		selection_mode->disableShortcuts();
 	}
 }
+
+#include "moc_pathing_palette.cpp"

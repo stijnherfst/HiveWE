@@ -1,11 +1,20 @@
+module;
+
+#include <glad/glad.h>
+#include <bullet/btBulletDynamicsCommon.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
+
 export module Physics;
 
+#ifndef __linux__
 import std;
+#endif
 import Shader;
-import Camera;
 import ResourceManager;
-import <glad/glad.h>;
-import <bullet/btBulletDynamicsCommon.h>;
 
 class PhysicsDebugDraw : public btIDebugDraw {
 	std::shared_ptr<Shader> shader;
@@ -19,7 +28,7 @@ class PhysicsDebugDraw : public btIDebugDraw {
 		shader = resource_manager.load<Shader>({ "data/shaders/physics_debug.vert", "data/shaders/physics_debug.frag" }).value();
 	}
 
-	void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) {
+	void drawLine(const btVector3& from, const btVector3& to, const btVector3&) {
 		debug_vertices.push_back(from.x());
 		debug_vertices.push_back(from.y());
 		debug_vertices.push_back(from.z());
@@ -28,16 +37,16 @@ class PhysicsDebugDraw : public btIDebugDraw {
 		debug_vertices.push_back(to.z());
 	}
 
-	void drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color) {
+	void drawContactPoint(const btVector3&, const btVector3&, btScalar, int, const btVector3&) {
 	}
 
-	void reportErrorWarning(const char* warningString) {
+	void reportErrorWarning(const char*) {
 	}
 
-	void draw3dText(const btVector3& location, const char* textString) {
+	void draw3dText(const btVector3&, const char*) {
 	}
 
-	void setDebugMode(int debugMode) {
+	void setDebugMode(int) {
 	}
 
 	int getDebugMode() const {
@@ -54,7 +63,7 @@ class PhysicsDebugDraw : public btIDebugDraw {
 		shader->use();
 		// glDisable(GL_DEPTH_TEST);
 
-		glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(1, 1, GL_FALSE, &camera_projection_view()[0][0]);
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);

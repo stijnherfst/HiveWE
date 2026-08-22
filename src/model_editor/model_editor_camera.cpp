@@ -1,6 +1,13 @@
 #include "model_editor_camera.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 
 void ModelEditorCamera::reset() {
 	distance = 20;
@@ -9,7 +16,7 @@ void ModelEditorCamera::reset() {
 	update(0);
 }
 
-void ModelEditorCamera::update(double delta) {
+void ModelEditorCamera::update(double) {
 	direction = glm::vec3(
 		std::cos(vertical_angle) * std::sin(horizontal_angle),
 		std::cos(vertical_angle) * std::cos(horizontal_angle),

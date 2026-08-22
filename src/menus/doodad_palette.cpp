@@ -33,13 +33,20 @@
 #include <QStandardPaths>
 #include <qurl.h>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import TableModel;
-import QRibbon;
+#endif
+#include "models/table_model.h"
+#include "qribbon.h"
 import Doodad;
 import MapGlobal;
 import Globals;
-import WindowHandler;
+#include "base/window_handler.h"
 import SLK;
 import MDX;
 import BinaryWriter;
@@ -304,13 +311,13 @@ DoodadPalette::DoodadPalette(QWidget* parent) : Palette(parent) {
 		brush.state = Doodad::State::visible_solid;
 	});
 
-	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
+	connect(ui.type, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int) {
 		// Possible Qt bug. Try swapping the two lines below and see if it crashes when selecting a tree and then swapping to a doodad category
 		destructable_filter_model->setFilterCategory(ui.type->currentData().toString());
 		doodad_filter_model->setFilterCategory(ui.type->currentData().toString());
 	});
 
-	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int index) {
+	connect(ui.tileset, QOverload<int>::of(&QComboBox::currentIndexChanged), [&](int) {
 		destructable_filter_model->setFilterTileset(ui.tileset->currentData().toChar().toLatin1());
 		doodad_filter_model->setFilterTileset(ui.tileset->currentData().toChar().toLatin1());
 	});
@@ -649,7 +656,7 @@ void DoodadPalette::update_scale_change(int component, const QString& text) {
 	brush.set_selection_scale_component(component, text.toFloat());
 }
 
-void DoodadPalette::update_scale_finish(int component) {
+void DoodadPalette::update_scale_finish(int) {
 	update_selection_info();
 }
 
@@ -699,3 +706,5 @@ void DoodadPalette::set_selection_rotation(float new_rotation) {
 	brush.set_selection_angle(glm::radians(new_rotation));
 	update_selection_info();
 }
+
+#include "moc_doodad_palette.cpp"

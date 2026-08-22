@@ -1,6 +1,9 @@
+module;
+
+#include <filesystem>
+
 export module Paths;
 
-import <filesystem>;
 
 namespace fs = std::filesystem;
 

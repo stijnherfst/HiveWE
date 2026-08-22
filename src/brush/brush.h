@@ -51,7 +51,7 @@ class Brush: public QObject {
 
 	virtual void key_press_event(QKeyEvent* event);
 
-	virtual void key_release_event(QKeyEvent* event) {}
+	virtual void key_release_event(QKeyEvent*) {}
 
 	virtual void mouse_move_event(QMouseEvent* event, double frame_delta);
 	virtual void mouse_press_event(QMouseEvent* event, double frame_delta);
@@ -113,7 +113,7 @@ class Brush: public QObject {
 
   public slots:
 
-	virtual void unselect_id(std::string_view id) {}
+	virtual void unselect_id(std::string_view) {}
 
   signals:
 	void size_changed(glm::ivec2 size);

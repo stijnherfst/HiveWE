@@ -5,13 +5,20 @@
 #include <QLabel>
 #include <QMessageBox>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import ResourceManager;
 import OpenGLUtilities;
 import MapGlobal;
 import Globals;
 import Texture;
-import <glm/glm.hpp>;
+#include <glm/glm.hpp>
 
 TileSetter::TileSetter(QWidget* parent) : QDialog(parent) {
 	ui.setupUi(this);
@@ -306,7 +313,7 @@ void TileSetter::save_tiles() {
 			from_to_id[i] = found - new_terrain_textures.begin();
 		} else {
 			TilePicker replace_dialog(this, {from_id}, new_terrain_textures);
-			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string& id, const std::string& to_id) {
+			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string&, const std::string& to_id) {
 				const auto tile_found = std::ranges::find(new_terrain_textures, to_id);
 				from_to_id[i] = tile_found - new_terrain_textures.begin();
 			});
@@ -318,3 +325,5 @@ void TileSetter::save_tiles() {
 	map->terrain.change_tileset(new_terrain_textures, from_to_id, new_tileset, map->tilesets, map->info);
 	close();
 }
+
+#include "moc_tile_setter.cpp"

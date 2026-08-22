@@ -1,14 +1,22 @@
-﻿#include "doodad_brush.h"
+#include "base/global_context.h"
+#include "camera.h"
+#include "doodad_brush.h"
 
 #include <QKeyEvent>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import SLK;
 import Texture;
 import Doodad;
 import WorldUndoManager;
-import Camera;
 import OpenGLUtilities;
 import ResourceManager;
 import PathingMap;
@@ -16,11 +24,11 @@ import SkinnedMesh;
 import Skeleton;
 import Globals;
 import MapGlobal;
-import Rects;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
+#include "utilities/rects.h"
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 DoodadBrush::DoodadBrush() : Brush() {
 	position_granularity = 2.f;
@@ -51,7 +59,7 @@ glm::vec2 DoodadBrush::get_position() const {
 }
 
 void DoodadBrush::set_shape(const Shape new_shape) {
-	context->makeCurrent();
+	make_global_context_current();
 	shape = new_shape;
 
 	glDeleteTextures(1, &brush_texture);
@@ -447,7 +455,7 @@ void DoodadBrush::apply_begin() {
 	doodad_undo = std::make_unique<DoodadAddAction>();
 }
 
-void DoodadBrush::apply(double frame_delta) {
+void DoodadBrush::apply(double) {
 	if (doodad.id == "") {
 		return;
 	}
@@ -604,7 +612,7 @@ bool DoodadBrush::can_place() {
 
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
-	context->makeCurrent();
+	make_global_context_current();
 	doodad.init(doodad.id, map->doodads.get_mesh(doodad.id, variation), map->terrain);
 }
 
@@ -630,7 +638,7 @@ void DoodadBrush::erase_variation(int variation) {
 }
 
 void DoodadBrush::set_doodad(const std::string& id) {
-	context->makeCurrent();
+	make_global_context_current();
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
@@ -738,3 +746,5 @@ void DoodadBrush::unselect_id(const std::string_view id) {
 		set_doodad("ATtr");
 	}
 }
+
+#include "moc_doodad_brush.cpp"

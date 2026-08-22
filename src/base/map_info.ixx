@@ -1,10 +1,18 @@
 module;
 
-#include <QMessageBox>
+#include "qt_message_box.h"
+#include <nlohmann/json.hpp>
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
 
 export module MapInfo;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import BinaryReader;
 import BinaryWriter;
@@ -12,8 +20,6 @@ import Hierarchy;
 import TriggerStrings;
 import Utilities;
 import Paths;
-import <nlohmann/json.hpp>;
-import <glm/glm.hpp>;
 
 export enum class PlayerType {
 	human,
@@ -345,7 +351,7 @@ export class MapInfo {
 		if (file) {
 			file << root.dump(1, '\t') << '\n';
 		} else {
-			QMessageBox::critical(nullptr, "Error saving map data", QString("Failed to save %1").arg(pathing_file.string().c_str()));
+			show_critical_error("Error saving map data", "Failed to save " + pathing_file.string());
 		}
 	}
 
@@ -497,12 +503,9 @@ export class MapInfo {
 
 			} catch (const std::exception& e) {
 				// throw an error message if the json is corrupted or failed to load for some reason
-				QMessageBox::critical(
-					nullptr,
+				show_critical_error(
 					"Error loading map info",
-					QString("Failed to load %1:\n%2")
-						.arg(paths::map_info_extras_file(hierarchy.map_directory).string().c_str())
-						.arg(e.what())
+					"Failed to load " + paths::map_info_extras_file(hierarchy.map_directory).string() + ":\n" + e.what()
 				);
 			}
 		}

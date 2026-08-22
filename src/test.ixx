@@ -1,10 +1,19 @@
+module;
+
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module test;
 
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
 import MDX;
 import Utilities;
-import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 

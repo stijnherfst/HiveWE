@@ -1,15 +1,24 @@
+module;
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module ParticleEmitter2Renderer;
 
+#ifndef __linux__
 import std;
+#endif
 import MDX;
 import ParticleEmitter2Simulation;
 import Skeleton;
 import GPUTexture;
 import Shader;
 import ResourceManager;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glad/glad.h>;
 
 struct ParticleVertex {
 	glm::vec3 position;

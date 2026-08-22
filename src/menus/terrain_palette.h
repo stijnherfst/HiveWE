@@ -8,8 +8,8 @@
 #include "palette.h"
 #include "terrain_brush.h"
 
-import QRibbon;
-import FlowLayout;
+#include "qribbon.h"
+#include "flow_layout.h"
 import TextureButton;
 import Tileset;
 

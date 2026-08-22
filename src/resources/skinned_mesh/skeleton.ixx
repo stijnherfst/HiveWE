@@ -2,19 +2,25 @@ module;
 
 #include <cassert>
 #include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
 
 export module Skeleton;
 
+#ifndef __linux__
 import std;
-import Camera;
+#endif
 import Utilities;
 import MathOperations;
 import RenderNode;
 import MDX;
 import ParticleEmitter2Simulation;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 // Ghostwolf mentioned this to me once, so I used it,
 // as 0.75, experimentally determined as a guess at
@@ -156,7 +162,7 @@ export class Skeleton {
 		//	current_frame = std::min<int>(current_frame + delta * 1000.0, sequence.end_frame);
 		//} else {
 		current_frame += delta * 1000.0;
-		if (current_frame > sequence.end_frame) {
+		if (std::cmp_greater(current_frame, sequence.end_frame)) {
 			current_frame = sequence.start_frame;
 		}
 		//}
@@ -243,7 +249,7 @@ export class Skeleton {
 
 			glm::quat final_rotation = rotation;
 			if (apply_billboard && node.billboarded) {
-				const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(camera.view_inverse);
+				const glm::mat3 cam_world = inverse_model_rotation * glm::mat3(camera_view_inverse());
 				const glm::mat3 inverse_camera_world = glm::mat3(cam_world[2], cam_world[0], cam_world[1]);
 
 				if (node.node->parent_id != -1) {
@@ -504,7 +510,7 @@ export class Skeleton {
 		current.right = -1;
 
 		// Find the sequence start and end tracks, these are not always exactly at the sequence start/end
-		for (int i = 0; i < header.tracks.size(); i++) {
+		for (int i = 0; std::cmp_less(i, header.tracks.size()); i++) {
 			const mdx::Track<T>& track = header.tracks[i];
 
 			if (track.frame > local_sequence_end) {

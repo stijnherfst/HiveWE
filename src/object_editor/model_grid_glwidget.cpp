@@ -7,11 +7,18 @@
 #include <QToolTip>
 #include <QWheelEvent>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import BinaryReader;
 import Hierarchy;
 import ResourceManager;
-import <glm/gtc/matrix_transform.hpp>;
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace fs = std::filesystem;
 
@@ -541,3 +548,5 @@ void ModelGridGLWidget::emit_layout_change() {
 	emit content_height_changed(content_height_px());
 	emit scroll_changed(scroll_offset_y);
 }
+
+#include "moc_model_grid_glwidget.cpp"

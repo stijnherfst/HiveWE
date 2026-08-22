@@ -17,18 +17,25 @@
 #include "model_editor/model_editor.h"
 #include "object_editor/model_grid_glwidget.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import SLK;
 import Map;
 import MapGlobal;
 import Globals;
-import TableModel;
+#include "models/table_model.h"
 import ResourceManager;
-import WindowHandler;
+#include "base/window_handler.h"
 import Texture;
-import AspectRatioPixmapLabel;
+#include "aspect_ratio_pixmap_label.h"
 import Timer;
-import "object_editor/object_editor.h";
+#include "object_editor/object_editor.h"
 
 namespace fs = std::filesystem;
 

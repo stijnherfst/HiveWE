@@ -3,13 +3,19 @@ module;
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
 module MDX;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import MathOperations;
-import <glm/glm.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 namespace mdx {
 	void remove_unused_materials(MDX& mdx) {
@@ -147,28 +153,28 @@ namespace mdx {
 				continue;
 			}
 
-			geosets[index].vertices.append_range(geosets[i].vertices);
-			geosets[index].normals.append_range(geosets[i].normals);
-			geosets[index].face_type_groups.append_range(geosets[i].face_type_groups);
+			geosets[index].vertices.insert(geosets[index].vertices.end(), geosets[i].vertices.begin(), geosets[i].vertices.end());
+			geosets[index].normals.insert(geosets[index].normals.end(), geosets[i].normals.begin(), geosets[i].normals.end());
+			geosets[index].face_type_groups.insert(geosets[index].face_type_groups.end(), geosets[i].face_type_groups.begin(), geosets[i].face_type_groups.end());
 			// Just use triangles
-			// geosets[current_material].face_groups.append_range(geosets[i].face_groups);
-			geosets[index].faces.append_range(geosets[i].faces);
+			// geosets[current_material].face_groups.insert(// geosets[current_material].face_groups.end(), geosets[i].face_groups.begin(), geosets[i].face_groups.end());
+			geosets[index].faces.insert(geosets[index].faces.end(), geosets[i].faces.begin(), geosets[i].faces.end());
 			// The following three lines are likely wrong but w/e, you should use skin anyway
-			geosets[index].vertex_groups.append_range(geosets[i].vertex_groups);
-			geosets[index].matrix_groups.append_range(geosets[i].matrix_groups);
-			geosets[index].matrix_indices.append_range(geosets[i].matrix_indices);
+			geosets[index].vertex_groups.insert(geosets[index].vertex_groups.end(), geosets[i].vertex_groups.begin(), geosets[i].vertex_groups.end());
+			geosets[index].matrix_groups.insert(geosets[index].matrix_groups.end(), geosets[i].matrix_groups.begin(), geosets[i].matrix_groups.end());
+			geosets[index].matrix_indices.insert(geosets[index].matrix_indices.end(), geosets[i].matrix_indices.begin(), geosets[i].matrix_indices.end());
 
 			// We told the user to recalculate extents after
-			// geosets[index].extents.append_range(geosets[i].extents);
+			// geosets[index].extents.insert(// geosets[index].extents.end(), geosets[i].extents.begin(), geosets[i].extents.end());
 
-			geosets[index].tangents.append_range(geosets[i].tangents);
-			geosets[index].skin.append_range(geosets[i].skin);
+			geosets[index].tangents.insert(geosets[index].tangents.end(), geosets[i].tangents.begin(), geosets[i].tangents.end());
+			geosets[index].skin.insert(geosets[index].skin.end(), geosets[i].skin.begin(), geosets[i].skin.end());
 
 			// By the lord, please don't use multiple uv sets
 			assert(geosets[index].uv_sets.size() == geosets[i].uv_sets.size());
 
 			for (size_t j = 0; j < geosets[i].uv_sets.size(); j++) {
-				geosets[index].uv_sets[j].append_range(geosets[i].uv_sets[j]);
+				geosets[index].uv_sets[j].insert(geosets[index].uv_sets[j].end(), geosets[i].uv_sets[j].begin(), geosets[i].uv_sets[j].end());
 			}
 
 			geosets.erase(geosets.begin() + i);
@@ -190,14 +196,14 @@ namespace mdx {
 		for (size_t i = 0; i < header.tracks.size(); i++) {
 			const auto& current = header.tracks[i];
 
-			if (current.frame > sequences[current_sequence].end_frame) {
+			if (std::cmp_greater(current.frame, sequences[current_sequence].end_frame)) {
 				current_sequence += 1;
 				if (current_sequence >= sequences.size()) {
 					return;
 				}
 			}
 
-			if (current.frame < sequences[current_sequence].start_frame) {
+			if (std::cmp_less(current.frame, sequences[current_sequence].start_frame)) {
 				continue;
 			}
 
@@ -227,7 +233,7 @@ namespace mdx {
 			const auto& current = header.tracks[i];
 			const auto& next = header.tracks[i + 1];
 
-			if (next.frame > sequences[current_sequence].end_frame) {
+			if (std::cmp_greater(next.frame, sequences[current_sequence].end_frame)) {
 				current_sequence += 1;
 				// Write the end keyframe of the sequence
 				header.tracks[write_index++] = current;

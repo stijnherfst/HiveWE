@@ -16,10 +16,11 @@
         "value": "x64",
         "strategy": "external"
       },
-
       "vendor": {
         "microsoft.com/VisualStudioSettings/CMake/1.0": {
-          "hostOS": [ "Windows" ]
+          "hostOS": [
+            "Windows"
+          ]
         }
       }
     },
@@ -62,6 +63,18 @@
         "CMAKE_VISIBILITY_PRESET": "hidden",
         "CMAKE_VISIBILITY_INLINES_HIDDEN": "ON"
       }
+    },
+    {
+      "name": "linux-release",
+      "displayName": "Linux Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/linux-release",
+      "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "HIVEWE_BUILD_TESTS": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -79,6 +92,10 @@
       "name": "Release",
       "configurePreset": "Release",
       "configuration": "Release"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release"
     }
   ],
   "testPresets": [

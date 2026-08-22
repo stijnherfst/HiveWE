@@ -2,11 +2,23 @@ module;
 
 #include <absl/strings/str_split.h>
 #include <tracy/Tracy.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "utilities/gl_thread_pool.h"
+#include "utilities/rects.h"
+
+
 
 export module Units;
 
+#ifndef __linux__
 import std;
-import GLThreadPool;
+#endif
+
 import Utilities;
 import SkinnedMesh;
 import Skeleton;
@@ -17,10 +29,6 @@ import ResourceManager;
 import Hierarchy;
 import Globals;
 import Terrain;
-import Rects;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-
 namespace fs = std::filesystem;
 
 export struct Unit {
@@ -306,7 +314,7 @@ export class Units {
 	}
 
 	void create() {
-		ZoneScoped("Creating Units");
+		ZoneScopedN("Creating Units");
 		// Phase 1: Pre-load unique meshes to avoid thread pool starvation.
 		// Without this, multiple threads block on shared_future::get() inside ResourceManager
 		// while only 1 thread actually constructs the shared mesh.

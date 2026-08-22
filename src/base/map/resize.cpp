@@ -3,9 +3,16 @@ module;
 #include <QObject>
 #include <cassert>
 
+#ifdef __linux__
+#include "std_compat.h"
+#include "camera.h"
+#endif
+
 module Map;
 
+#ifndef __linux__
 import std;
+#endif
 import PathingMap;
 
 /// Resizes the entire map by expanding/shirnking it from all sides
@@ -74,7 +81,7 @@ void Map::set_playable_area(const int unplayable_left, const int unplayable_righ
 /// resizing the map may nudge all preplaced objeccts (units, doodads...)
 /// calling this function will restore original positions after the resize
 /// also, if will delete objects which are now out of bounds
-int Map::update_object_positions(const int delta_left, const int delta_right, const int delta_top, const int delta_bottom) {
+int Map::update_object_positions(const int delta_left, const int, const int, const int delta_bottom) {
 	size_t num_deleted = 0;
 
 	// terrain is already resized here
@@ -191,8 +198,8 @@ void Map::reset_map_edge_pathing(
 
 	constexpr uint8_t edge_pathing = PathingMap::unwalkable | PathingMap::unflyable | PathingMap::unbuildable;
 
-	for (size_t i = 0; i < width; ++i) {
-		for (size_t j = 0; j < height; ++j) {
+	for (int i = 0; i < width; ++i) {
+		for (int j = 0; j < height; ++j) {
 			// check if outside new boundaries (in unplayable area)
 			bool outside_new = (i < new_left_p || i >= width - new_right_p || j < new_bottom_p || j >= height - new_top_p);
 

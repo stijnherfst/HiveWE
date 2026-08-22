@@ -1,8 +1,15 @@
 module;
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include <glm/glm.hpp>
+
 module MDX;
 
+#ifndef __linux__
 import std;
+#endif
 
 namespace mdx {
 	namespace {
@@ -181,7 +188,7 @@ namespace mdx {
 				error(std::format("Node {} references invalid parent ID {}", node.name, node.parent_id));
 			}
 
-			if (node.parent_id >= 0 && node.parent_id >= node_count) {
+			if (node.parent_id >= 0 && static_cast<size_t>(node.parent_id) >= node_count) {
 				error(std::format("Node {} references invalid parent ID {}", node.name, node.parent_id));
 			}
 

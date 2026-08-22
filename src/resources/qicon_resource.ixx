@@ -1,29 +1,25 @@
 module;
 
-#include <QIcon>
-#include <QImage>
-#include <QPixMap>
+#include <filesystem>
+#include <memory>
+#include "qicon_fwd.h"
 
 export module QIconResource;
 
-import std;
 import ResourceManager;
-import Texture;
 
 namespace fs = std::filesystem;
 
 export class QIconResource : public Resource {
   public:
-	QIcon icon;
+    static constexpr const char* name = "QIconResource";
 
-	static constexpr const char* name = "QIconResource";
+    explicit QIconResource();
+    explicit QIconResource(const fs::path& path);
 
-	explicit QIconResource() = default;
+    const QIcon& icon() const;
 
-	explicit QIconResource(const fs::path& path) {
-		const auto image = resource_manager.load<Texture>(path).value();
-		const QImage temp_image(image->data.data(), image->width, image->height, image->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888);
-		const auto pix = QPixmap::fromImage(temp_image);
-		icon = QIcon(pix);
-	}
+  private:
+    struct Impl;
+    std::shared_ptr<Impl> impl;
 };

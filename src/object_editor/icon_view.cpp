@@ -9,7 +9,14 @@
 #include <QJsonObject>
 #include <QLabel>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Hierarchy;
 import Globals;
 import ResourceManager;
@@ -159,7 +166,7 @@ IconModel::IconModel(QObject* parent) : QAbstractListModel(parent) {
 	invalid_icon = resource_manager.load<QIconResource>("ReplaceableTextures/WorldEditUI/DoodadPlaceholder.dds").value();
 
 	QFile file(fs::path("data/warcraft/icon_tags.json"));
-	file.open(QIODevice::ReadOnly);
+	(void)file.open(QIODevice::ReadOnly);
 
 	QJsonParseError error;
 	QJsonDocument json = QJsonDocument::fromJson(file.readAll(), &error);
@@ -197,16 +204,16 @@ QVariant IconModel::data(const QModelIndex& index, const int role) const {
 			const std::string& string_path = icons[index.row()].first;
 
 			if (const auto found = icon_cache.find(string_path); found != icon_cache.end()) {
-				return found->second->icon;
+				return found->second->icon();
 			} else {
 				const auto loaded_icon = resource_manager.load<QIconResource>(string_path);
 				if (!loaded_icon) {
 					const auto [it, inserted] = icon_cache.emplace(string_path, invalid_icon);
-					return it->second->icon;
+					return it->second->icon();
 				}
 
 				const auto [it, inserted] = icon_cache.emplace(string_path, loaded_icon.value());
-				return it->second->icon;
+				return it->second->icon();
 			}
 		}
 		case Qt::ToolTipRole:
@@ -273,3 +280,5 @@ QString IconView::currentIconPath() {
 void IconView::setCurrentIconPath(QString path) {
 	finalPath->setText(path);
 }
+
+#include "moc_icon_view.cpp"

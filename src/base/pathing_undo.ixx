@@ -2,13 +2,19 @@ module;
 
 #include <cstdint>
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "utilities/rects.h"
+
+
 export module PathingUndo;
 
+#ifndef __linux__
 import std;
+#endif
 import WorldUndoManager;
 import PathingMap;
-import Rects;
-
 export class PathingMapAction: public WorldCommand {
   public:
 	PathingRect area;

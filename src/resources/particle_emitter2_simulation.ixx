@@ -1,8 +1,17 @@
+module;
+
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module ParticleEmitter2Simulation;
 
+#ifndef __linux__
 import std;
+#endif
 import MDX;
-import <glm/glm.hpp>;
 
 export struct EmitterPool {
 	std::vector<glm::vec3> positions;

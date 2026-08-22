@@ -1,13 +1,20 @@
+#include "camera.h"
 #include "region_brush.h"
 
 #include <QKeyEvent>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import WorldUndoManager;
-import Camera;
 import Globals;
 import MapGlobal;
-import <glm/glm.hpp>;
+#include <glm/glm.hpp>
 
 RegionBrush::RegionBrush() : Brush() {
 	// Make the ground projected brush square invisible as regions are drawn by the terrain shaders
@@ -370,7 +377,7 @@ void RegionBrush::clear_selection() {
 	emit selection_changed();
 }
 
-void RegionBrush::apply(double frame_delta) {
+void RegionBrush::apply(double) {
 	// Regions are created in the mouse handlers as they are drawn by dragging out a rectangle
 }
 
@@ -388,3 +395,5 @@ void RegionBrush::end_action() {
 	}
 	map->world_undo.add_undo_action(std::move(state_undo));
 }
+
+#include "moc_region_brush.cpp"

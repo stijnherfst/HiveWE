@@ -1,13 +1,26 @@
 module;
 
 #include <tracy/Tracy.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "base/global_context.h"
+#include "utilities/gl_thread_pool.h"
+#include "utilities/rects.h"
+
+
 
 export module Doodads;
 
+#ifndef __linux__
 import std;
+#endif
+#ifndef __linux__
 import std.compat;
-import Rects;
-import GLThreadPool;
+#endif
 import Terrain;
 import Doodad;
 import BinaryReader;
@@ -23,8 +36,6 @@ import MapInfo;
 import UnorderedMap;
 import SLK;
 import PathingMap;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 
@@ -178,7 +189,7 @@ export class Doodads {
 	}
 
 	void create(Terrain& terrain, PathingMap& pathing_map) {
-		ZoneScoped("Creating Doodads");
+		ZoneScopedN("Creating Doodads");
 		// Phase 1: Pre-load unique meshes to avoid thread pool starvation.
 		// Without this, multiple threads block on shared_future::get() inside ResourceManager
 		// while only 1 thread actually constructs the shared mesh.
@@ -393,7 +404,7 @@ export class Doodads {
 	}
 
 	void process_doodad_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {
-		context->makeCurrent();
+		make_global_context_current();
 
 		if (field == "file" || field == "numvar") {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them
@@ -435,7 +446,7 @@ export class Doodads {
 	}
 
 	void process_destructible_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {
-		context->makeCurrent();
+		make_global_context_current();
 
 		if (field == "file" || field == "numvar") {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them

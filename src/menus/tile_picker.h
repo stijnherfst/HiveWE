@@ -7,7 +7,7 @@
 
 #include <string>
 
-import FlowLayout;
+#include "flow_layout.h"
 import TextureButton;
 import Tileset;
 

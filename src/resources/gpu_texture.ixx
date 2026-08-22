@@ -1,14 +1,23 @@
+module;
+
+#include <soil2/SOIL2.h>
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module GPUTexture;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import BinaryReader;
 import ResourceManager;
 import Hierarchy;
 import BLP;
 import Timer;
-import <soil2/SOIL2.h>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

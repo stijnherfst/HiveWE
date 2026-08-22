@@ -1,10 +1,19 @@
+module;
+
+#include <glad/glad.h>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module ShadowMap;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import Hierarchy;
 import BinaryReader;
-import <glad/glad.h>;
 
 export class ShadowMap {
 	size_t width;

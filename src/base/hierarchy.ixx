@@ -1,10 +1,16 @@
 module;
 
-#include <QSettings>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "hierarchy_settings.h"
 
 export module Hierarchy;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import JSON;
 import BinaryReader;
@@ -45,15 +51,14 @@ export class Hierarchy {
 	friend constexpr FileSource operator~(FileSource a);
 
 	Hierarchy() {
-		QSettings war3reg("HKEY_CURRENT_USER\\Software\\Blizzard Entertainment\\Warcraft III", QSettings::NativeFormat);
-		allow_local_files = war3reg.value("Allow Local Files", 0).toInt() != 0;
-	}
+        allow_local_files = hierarchy_allow_local_files_setting();
+    }
 
 	bool open_casc(const fs::path& directory) {
-		QSettings settings;
-		ptr = settings.value("flavour", "Retail").toString() == "PTR";
-		hd = settings.value("hd", "False").toString() == "True";
-		teen = settings.value("teen", "False").toString() == "True";
+		const auto runtime_settings = hierarchy_runtime_settings();
+        ptr = runtime_settings.ptr;
+        hd = runtime_settings.hd;
+        teen = runtime_settings.teen;
 
 		warcraft_directory = directory;
 

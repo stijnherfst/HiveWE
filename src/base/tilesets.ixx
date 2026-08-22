@@ -1,18 +1,24 @@
 module;
 
-#include <QMessageBox>
+#include <nlohmann/json.hpp>
+#include "glm/glm.hpp"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "tileset_dialogs.h"
 
 export module Tileset;
 
+#ifndef __linux__
 import std;
+#endif
 import SLK;
 import PathingMap;
 import Hierarchy;
 import UnorderedMap;
 import Paths;
 import Globals;
-import <nlohmann/json.hpp>;
-import "glm/glm.hpp";
 
 export class TerrainTexture {
   public:
@@ -208,7 +214,7 @@ export class TilesetData {
 		if (file) {
 			file << root.dump(1, '\t') << '\n';
 		} else {
-			QMessageBox::critical(nullptr, "Error saving custom pathing", QString("Failed to save %1").arg(pathing_file.string().c_str()));
+			show_tileset_save_error(pathing_file.string());
 		}
 	}
 
@@ -255,13 +261,10 @@ export class TilesetData {
 				}
 			} catch (const std::exception& e) {
 				// throw an error message if the json is corrupted or failed to load for some reason
-				QMessageBox::critical(
-					nullptr,
-					"Error loading terrain pathing",
-					QString("Failed to load %1:\n%2")
-						.arg(paths::terrain_pathing_file(hierarchy.map_directory).string().c_str())
-						.arg(e.what())
-				);
+				show_tileset_load_error(
+                    paths::terrain_pathing_file(hierarchy.map_directory).string(),
+                    e.what()
+                );
 			}
 		}
 	}

@@ -1,15 +1,17 @@
 module;
 
-#include <QPainter>
-#include <QIcon>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
 
 export module OpenGLUtilities;
 
+#ifndef __linux__
 import std;
-import ResourceManager;
-import Texture;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
+#endif
 
 namespace fs = std::filesystem;
 
@@ -34,14 +36,3 @@ export class Shapes {
 export inline Shapes shapes;
 
 /// Loads a texture from the hierarchy and returns an icon
-export QIcon texture_to_icon(const fs::path& path) {
-	const auto tex = resource_manager.load<Texture>(path).value();
-	const QImage temp_image = QImage(
-		tex->data.data(),
-		tex->width,
-		tex->height,
-		tex->channels == 3 ? QImage::Format::Format_RGB888 : QImage::Format::Format_RGBA8888
-	);
-	const auto pix = QPixmap::fromImage(temp_image);
-	return QIcon(pix);
-}

@@ -5,6 +5,8 @@ module;
 #include <format>
 #include <stdexcept>
 #include <utility>
+#include <soil2/SOIL2.h>
+#include <print>
 
 export module Texture;
 
@@ -12,7 +14,6 @@ import Hierarchy;
 import BLP;
 import BinaryReader;
 import ResourceManager;
-import <soil2/SOIL2.h>;
 
 namespace fs = std::filesystem;
 

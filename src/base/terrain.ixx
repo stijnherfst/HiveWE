@@ -1,13 +1,27 @@
 module;
 
-#include <QObject>
 
-#include <brush.h>
+#include "brush_render_bridge.h"
+#include "glad/glad.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
+#include "btBulletDynamicsCommon.h"
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "camera_view.h"
+#include "terrain_notifier_bridge.h"
+#include "utilities/rects.h"
+
 
 export module Terrain;
 
+#ifndef __linux__
 import std;
-import Rects;
+#endif
 import GroundTexture;
 import Texture;
 import BinaryReader;
@@ -20,16 +34,9 @@ import PathingMap;
 import Hierarchy;
 import ResourceManager;
 import Globals;
-import Camera;
 import UnorderedMap;
 import Tileset;
 import MapInfo;
-import "glad/glad.h";
-import "glm/glm.hpp";
-import "glm/gtc/matrix_transform.hpp";
-import "glm/gtc/quaternion.hpp";
-import "bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h";
-import "btBulletDynamicsCommon.h";
 
 using namespace std::literals::string_literals;
 
@@ -86,10 +93,19 @@ export int random_ground_variation() {
 	return 0;
 }
 
-export class Terrain: public QObject {
-	Q_OBJECT
+export class Terrain {
+  public:
+        std::shared_ptr<void> notifier = create_terrain_notifier();
 
-	static constexpr int write_version = 12;
+        Terrain() = default;
+
+    Terrain(const Terrain&) = delete;
+        Terrain& operator=(const Terrain&) = delete;
+        Terrain(Terrain&&) = delete;
+        Terrain& operator=(Terrain&&) = delete;
+
+  private:
+static constexpr int write_version = 12;
 
 	// Derived GPU arrays
 	std::vector<float> gpu_final_ground_heights;
@@ -270,7 +286,7 @@ export class Terrain: public QObject {
 	float current_texture = 1.f;
 	GLuint water_texture_array;
 
-	~Terrain() override {
+	~Terrain() {
 		glDeleteTextures(1, &cliff_texture_array);
 		glDeleteTextures(1, &water_texture_array);
 
@@ -317,7 +333,7 @@ export class Terrain: public QObject {
 
 		// Parse all tilepoints
 		resize_corner_arrays(width * height);
-		for (size_t i = 0; i < width * height; i++) {
+		for (int i = 0; i < width * height; i++) {
 			corner_height[i] = (reader.read<uint16_t>() - 8192.f) / 512.f;
 
 			const uint16_t water_and_edge = reader.read<uint16_t>();
@@ -440,7 +456,7 @@ export class Terrain: public QObject {
 		update_ground_textures({0, 0, width, height});
 		update_water({0, 0, width, height});
 
-		emit minimap_changed(minimap_image());
+		emit_terrain_minimap_changed(notifier);
 	}
 
 	void save() const {
@@ -457,7 +473,7 @@ export class Terrain: public QObject {
 		writer.write(height);
 		writer.write(offset);
 
-		for (size_t i = 0; i < width * height; i++) {
+		for (int i = 0; i < width * height; i++) {
 			writer.write<uint16_t>(corner_height[i] * 512.f + 8192.f);
 
 			uint16_t water_and_edge = corner_water_height[i] * 512.f + 8192.f;
@@ -499,7 +515,7 @@ export class Terrain: public QObject {
 		glDisable(GL_BLEND);
 		glEnable(GL_CULL_FACE);
 
-		glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(1, 1, GL_FALSE, &camera_projection_view()[0][0]);
 		glUniform1i(2, render_pathing);
 		glUniform1i(3, render_lighting);
 		glUniform3fv(4, 1, &light_direction.x);
@@ -513,15 +529,15 @@ export class Terrain: public QObject {
 		}
 
 		if (brush) {
-			glUniform2fv(5, 1, &brush->get_position()[0]);
+			upload_brush_position(brush, 5);
 		}
 
 		glBindTextureUnit(17, pathing_map.texture_static);
 		glBindTextureUnit(18, pathing_map.texture_dynamic);
 
-		glUniform1i(6, brush && brush->get_mode() != Brush::Mode::selection);
+		glUniform1i(6, brush && !brush_is_selection_mode(brush));
 		if (brush) {
-			glBindTextureUnit(19, brush->brush_texture);
+			glBindTextureUnit(19, brush_texture_id(brush));
 		}
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cliff_level_buffer);
@@ -554,16 +570,16 @@ export class Terrain: public QObject {
 
 		cliff_shader->use();
 
-		glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &camera_projection_view()[0][0]);
 		glUniform1i(1, render_pathing);
 		glUniform1i(2, render_lighting);
 		glUniform3fv(3, 1, &light_direction.x);
 		glUniform1i(8, render_regions);
 		glUniform1ui(9, region_count);
 		if (brush) {
-			glUniform2fv(4, 1, &brush->get_position()[0]);
+			upload_brush_position(brush, 4);
 		}
-		glUniform1i(5, brush && brush->get_mode() != Brush::Mode::selection);
+		glUniform1i(5, brush && !brush_is_selection_mode(brush));
 
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ground_height_buffer);
 
@@ -573,7 +589,7 @@ export class Terrain: public QObject {
 		glUniform2i(7, width, height);
 
 		if (brush) {
-			glBindTextureUnit(3, brush->brush_texture);
+			glBindTextureUnit(3, brush_texture_id(brush));
 		}
 		for (const auto& i : cliff_meshes) {
 			i->render();
@@ -602,7 +618,7 @@ export class Terrain: public QObject {
 
 		water_shader->use();
 
-		glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
+		glUniformMatrix4fv(0, 1, GL_FALSE, &camera_projection_view()[0][0]);
 		glUniform4fv(1, 1, &shallow_color_min[0]);
 		glUniform4fv(2, 1, &shallow_color_max[0]);
 		glUniform4fv(3, 1, &deep_color_min[0]);
@@ -628,7 +644,7 @@ export class Terrain: public QObject {
 		std::vector<int> new_to_old,
 		char new_tileset,
 		const TilesetData& tilesets,
-		const MapInfo& info
+		const MapInfo&
 	) {
 		// change base tileset if needed
 		if (tileset_id != new_tileset) {
@@ -704,7 +720,7 @@ export class Terrain: public QObject {
 		reload_ground_textures(tilesets);
 
 		update_ground_textures({0, 0, width, height});
-		emit tileset_changed();
+		emit_terrain_tileset_changed(notifier);
 	}
 
 	/// The texture of the tile point which is influenced by its surroundings.
@@ -1234,14 +1250,14 @@ export class Terrain: public QObject {
 		unplayable_right = unplayable_right > 0 ? unplayable_right + 1 : unplayable_right;
 		unplayable_top = unplayable_top > 0 ? unplayable_top + 1 : unplayable_top;
 
-		for (size_t i = 0; i < width; i++) {
-			for (size_t j = 0; j < height; j++) {
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
 				corner_map_edge[ci(i, j)] =
 					i < unplayable_left || i >= width - unplayable_right || j < unplayable_bottom || j >= height - unplayable_top;
 			}
 		}
 
-		emit minimap_changed(minimap_image());
+		emit_terrain_minimap_changed(notifier);
 	}
 
 	/// Resizes the terrain by expanding/shrinking it from all four sides
@@ -1271,11 +1287,11 @@ export class Terrain: public QObject {
 
 		re_render(physics);
 
-		emit minimap_changed(minimap_image());
+		emit_terrain_minimap_changed(notifier);
 	}
 
 	void update_minimap() {
-		emit minimap_changed(minimap_image());
+		emit_terrain_minimap_changed(notifier);
 	}
 
   private:
@@ -1584,10 +1600,4 @@ export class Terrain: public QObject {
 		collision_body->setCollisionFlags(collision_body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT);
 		physics.dynamicsWorld->addRigidBody(collision_body, 32, 32);
 	}
-
-  signals:
-	void minimap_changed(Texture minimap);
-	void tileset_changed();
 };
-
-#include "terrain.moc"

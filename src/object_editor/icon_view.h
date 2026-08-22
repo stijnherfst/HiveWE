@@ -13,7 +13,7 @@
 import QIconResource;
 
 class IconModel : public QAbstractListModel {
-	int rowCount(const QModelIndex& parent = QModelIndex()) const override {
+	int rowCount(const QModelIndex& = QModelIndex()) const override {
 		return static_cast<int>(icons.size());
 	}
 

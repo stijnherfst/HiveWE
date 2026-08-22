@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module no_init_allocator;
 
+#ifndef __linux__
 import std;
+#endif
 
 export template <typename T, typename A = std::allocator<T>>
 class default_init_allocator : public A {

@@ -1,3 +1,4 @@
+#include <utility>
 #include "single_model.h"
 
 #include "model_view.h"
@@ -17,12 +18,19 @@
 
 #include "object_editor/icon_view.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import BaseTreeModel;
-import AbilityTreeModel;
-import UpgradeTreeModel;
-import UnitTreeModel;
-import UnitSelector;
+#endif
+#include "models/tree/base_tree_model.h"
+#include "models/tree/ability_tree_model.h"
+#include "models/tree/upgrade_tree_model.h"
+#include "models/tree/unit_tree_model.h"
+#include "custom_widgets/unit_selector.h"
 import Utilities;
 import Globals;
 
@@ -46,7 +54,7 @@ QModelIndex SingleModel::mapFromSource(const QModelIndex& sourceIndex) const {
 		return {};
 	}
 
-	if (sourceIndex.row() != slk->row_headers.at(id)) {
+	if (!std::cmp_equal(sourceIndex.row(), slk->row_headers.at(id))) {
 		std::print("Invalid ID for SLK {}\n", id);
 		return {};
 	}
@@ -137,11 +145,11 @@ bool SingleModel::setData(const QModelIndex& index, const QVariant& value, int r
 	return QAbstractProxyModel::setData(index, value, role);
 }
 
-int SingleModel::rowCount(const QModelIndex& parent) const {
+int SingleModel::rowCount(const QModelIndex&) const {
 	return id_mapping.size();
 }
 
-int SingleModel::columnCount(const QModelIndex& parent) const {
+int SingleModel::columnCount(const QModelIndex&) const {
 	if (meta_slk->column_headers.contains("description")) {
 		return 2;
 	} else {
@@ -149,11 +157,11 @@ int SingleModel::columnCount(const QModelIndex& parent) const {
 	}
 }
 
-QModelIndex SingleModel::index(int row, int column, const QModelIndex& parent) const {
+QModelIndex SingleModel::index(int row, int column, const QModelIndex&) const {
 	return createIndex(row, column);
 }
 
-QModelIndex SingleModel::parent(const QModelIndex& child) const {
+QModelIndex SingleModel::parent(const QModelIndex&) const {
 	return QModelIndex();
 }
 
@@ -278,8 +286,8 @@ void SingleModel::sourceDataChanged(const QModelIndex& topLeft, const QModelInde
 	Q_ASSERT(topLeft.isValid() ? topLeft.model() == sourceModel() : true);
 	Q_ASSERT(bottomRight.isValid() ? bottomRight.model() == sourceModel() : true);
 
-	for (size_t i = topLeft.row(); i < bottomRight.row(); i++) {
-		if (i == slk->row_headers.at(id)) {
+	for (int i = topLeft.row(); i < bottomRight.row(); i++) {
+		if (std::cmp_equal(i, slk->row_headers.at(id))) {
 			const auto top_left = mapFromSource(createIndex(i, topLeft.column()));
 			const auto bottom_right = mapFromSource(createIndex(i, bottomRight.column()));
 			emit dataChanged(top_left, bottom_right, roles);
@@ -596,13 +604,13 @@ QWidget* TableDelegate::create_list_editor(QWidget* parent) const {
 	layout->addWidget(text_edit);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -632,13 +640,13 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -684,13 +692,13 @@ QWidget* TableDelegate::create_target_list_editor(QWidget* parent) const {
 	layout->addLayout(flow);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -724,7 +732,7 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 	hbox->addWidget(add);
 	hbox->addWidget(remove);
 	layout->addLayout(hbox);
-	connect(add, &QPushButton::clicked, [=]() {
+	connect(add, &QPushButton::clicked, [=, this]() {
 		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		selectdialog->resize(300, 560);
 		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -776,7 +784,7 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 			selectdialog->close();
 		});
 
-		connect(selectdialog, &QDialog::accepted, [=]() {
+		connect(selectdialog, &QDialog::accepted, [=, this]() {
 			for (const auto& i : view->selectionModel()->selectedIndexes()) {
 				add(i);
 			}
@@ -801,13 +809,13 @@ QWidget* TableDelegate::create_upgrade_list_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -841,7 +849,7 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 	hbox->addWidget(add);
 	hbox->addWidget(remove);
 	layout->addLayout(hbox);
-	connect(add, &QPushButton::clicked, [=]() {
+	connect(add, &QPushButton::clicked, [=, this]() {
 		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		selectdialog->resize(300, 560);
 		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -893,7 +901,7 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 			selectdialog->close();
 		});
 
-		connect(selectdialog, &QDialog::accepted, [=]() {
+		connect(selectdialog, &QDialog::accepted, [=, this]() {
 			for (const auto& i : view->selectionModel()->selectedIndexes()) {
 				add(i);
 			}
@@ -918,13 +926,13 @@ QWidget* TableDelegate::create_unit_list_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -961,7 +969,7 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 	hbox->addWidget(add);
 	hbox->addWidget(remove);
 	layout->addLayout(hbox);
-	connect(add, &QPushButton::clicked, [=]() {
+	connect(add, &QPushButton::clicked, [=, this]() {
 		QDialog* selectdialog = new QDialog(dialog, Qt::WindowTitleHint | Qt::WindowMaximizeButtonHint | Qt::WindowCloseButtonHint);
 		selectdialog->resize(300, 560);
 		selectdialog->setWindowModality(Qt::WindowModality::WindowModal);
@@ -1014,7 +1022,7 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 			selectdialog->close();
 		});
 
-		connect(selectdialog, &QDialog::accepted, [=]() {
+		connect(selectdialog, &QDialog::accepted, [=, this]() {
 			for (const auto& i : view->selectionModel()->selectedIndexes()) {
 				add(i);
 			}
@@ -1038,13 +1046,13 @@ QWidget* TableDelegate::create_ability_list_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 	layout->addWidget(buttonBox);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -1069,13 +1077,13 @@ QWidget* TableDelegate::create_icon_editor(QWidget* parent) const {
 	connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
 	connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
-	connect(dialog, &QDialog::accepted, [=]() {
+	connect(dialog, &QDialog::accepted, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->commitData(editor);
 		emit delegate->closeEditor(editor);
 	});
 
-	connect(dialog, &QDialog::rejected, [=]() {
+	connect(dialog, &QDialog::rejected, [=, this]() {
 		const auto delegate = const_cast<TableDelegate*>(this);
 		emit delegate->closeEditor(editor);
 	});
@@ -1088,3 +1096,5 @@ QWidget* TableDelegate::create_icon_editor(QWidget* parent) const {
 
 	return editor;
 }
+
+#include "moc_single_model.cpp"

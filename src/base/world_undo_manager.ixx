@@ -1,12 +1,21 @@
+module;
+
+class Brush;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module WorldUndoManager;
 
+#ifndef __linux__
 import std;
+#endif
 import PathingMap;
 import Units;
 import Doodads;
 import Terrain;
 import Regions;
-import "brush/brush.h";
 
 /// So we don't have to pass a global variable around
 export struct WorldEditContext {

@@ -10,9 +10,16 @@
 //#include <map_global.h>
 #include <object_editor.h>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
-import TableModel;
-import WindowHandler;
+#endif
+#include "models/table_model.h"
+#include "base/window_handler.h"
 import MapGlobal;
 import Globals;
 
@@ -181,3 +188,5 @@ void UnitPalette::update_selection_info() {
 		}
 	}
 }
+
+#include "moc_unit_palette.cpp"

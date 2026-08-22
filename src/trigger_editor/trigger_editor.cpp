@@ -1,3 +1,4 @@
+#include "utilities/texture_to_icon.h"
 #include "trigger_editor.h"
 
 #include <QPlainTextEdit>
@@ -11,13 +12,20 @@
 #include <QFileIconProvider>
 #include <QTreeWidget>
 
-#include "HiveWE.h"
+#include "hivewe.h"
 #include "jass_editor.h"
 #include "search_window.h"
 #include "variable_editor.h"
 #include "trigger_model.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Utilities;
 import Triggers;
 import Globals;
@@ -287,7 +295,9 @@ void TriggerEditor::save_tab(ads::CDockWidget* tab) {
 	}
 
 	// Variable editor
-	auto var_editor = tab->findChild<VariableEditor*>("var_editor");
+	auto* var_editor = dynamic_cast<VariableEditor*>(
+        tab->findChild<QWidget*>("var_editor")
+    );
 	if (var_editor) {
 		TriggerVariable& variable = *std::ranges::find_if(map->triggers.variables, [trigger_id](const TriggerVariable& i) {
 			return i.id == trigger_id;
@@ -322,6 +332,16 @@ void TriggerEditor::show_gui_trigger(QTreeWidget* edit, const Trigger& trigger) 
 		std::vector<std::string> string_parameters;
 
 		switch (i.type) {
+			case ECA::Type::call:
+                          string_parameters = map->triggers.trigger_data.whole_data(
+                              "TriggerCalls",
+                              "_" + i.name + "_Parameters"
+                          );
+                          category = map->triggers.trigger_data.data(
+                              "TriggerCalls",
+                              "_" + i.name + "_Category"
+                          );
+                          break;
 			case ECA::Type::event:
 				string_parameters = map->triggers.trigger_data.whole_data("TriggerEvents", "_" + i.name + "_Parameters");
 				category = map->triggers.trigger_data.data("TriggerEvents", "_" + i.name + "_Category");
@@ -484,3 +504,5 @@ void TriggerEditor::save_changes() {
 		save_tab(tab);
 	}
 }
+
+#include "moc_trigger_editor.cpp"

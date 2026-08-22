@@ -31,10 +31,9 @@
 #include <QKeySequence>
 
 #include <string>
-
-import UnitListModel;
-import UnitSelector;
-import QRibbon;
+#include "models/list/unit_list_model.h"
+#include "custom_widgets/unit_selector.h"
+#include "qribbon.h"
 
 class UnitPalette : public Palette {
 	Q_OBJECT

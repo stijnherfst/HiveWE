@@ -1,14 +1,21 @@
+#include "camera.h"
 #include "terrain_brush.h"
 #include "terrain_operators.h"
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import MapGlobal;
 import Terrain;
 import DoodadsUndo;
 import PathingUndo;
 import TerrainUndo;
-import Camera;
-import Rects;
+#include "utilities/rects.h"
 import PathingMap;
 
 TerrainBrush::TerrainBrush() :
@@ -200,9 +207,8 @@ void TerrainBrush::apply(double frame_delta) {
 	updated_area = updated_area.united(affected_area);
 
 	// apply pathing
-	static constexpr uint8_t clear_mask =
-		~(PathingMap::Flags::unbuildable | PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::blight
-		  | PathingMap::Flags::water | PathingMap::Flags::amphibious);
+	static constexpr uint8_t clear_mask = static_cast<uint8_t>(~(PathingMap::Flags::unbuildable | PathingMap::Flags::unwalkable | PathingMap::Flags::unflyable | PathingMap::Flags::blight
+		  | PathingMap::Flags::water | PathingMap::Flags::amphibious));
 
 	for (int i = affected_area.x(); i <= affected_area.right(); i++) {
 		for (int j = affected_area.y(); j <= affected_area.bottom(); j++) {

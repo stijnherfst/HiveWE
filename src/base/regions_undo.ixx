@@ -1,6 +1,16 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "brush/brush_render_bridge.h"
+
+
 export module RegionsUndo;
 
+#ifndef __linux__
 import std;
+#endif
 import Regions;
 import WorldUndoManager;
 
@@ -10,7 +20,7 @@ export class RegionAddAction final : public WorldCommand {
 
 	void undo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		std::erase_if(ctx.regions.regions, [&](const Region& region) {
@@ -20,7 +30,7 @@ export class RegionAddAction final : public WorldCommand {
 
 	void redo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		ctx.regions.regions.insert(ctx.regions.regions.end(), regions.begin(), regions.end());
@@ -35,7 +45,7 @@ export class RegionDeleteAction final : public WorldCommand {
 
 	void undo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		for (const auto& [index, region] : regions) {
@@ -45,7 +55,7 @@ export class RegionDeleteAction final : public WorldCommand {
 
 	void redo(WorldEditContext& ctx) override {
 		if (ctx.brush) {
-			ctx.brush->clear_selection();
+			clear_brush_selection(ctx.brush);
 		}
 
 		std::erase_if(ctx.regions.regions, [&](const Region& region) {
@@ -88,7 +98,7 @@ export class RegionStateAction final : public WorldCommand {
 	/// listens to this signal to refresh the names/colors it displays
 	static void notify(WorldEditContext& ctx) {
 		if (ctx.brush) {
-			ctx.brush->selection_changed();
+			notify_brush_selection_changed(ctx.brush);
 		}
 	}
 };

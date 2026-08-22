@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module ResourceManager;
 
+#ifndef __linux__
 import std;
+#endif
 import UnorderedMap;
 
 namespace fs = std::filesystem;

@@ -4,9 +4,15 @@ module;
 #include <cstdint>
 #include <glad/glad.h>
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module SkinnedMeshGlobals;
 
+#ifndef __linux__
 import std;
+#endif
 
 /// Shared mega-buffers for all SkinnedMesh static and per-frame data.
 /// init_gl() must run on the main GL context before any worker thread submits a SkinnedMesh constructor.

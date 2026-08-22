@@ -1,13 +1,19 @@
 module;
 
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "utilities/rects.h"
+
+
 export module TerrainUndo;
 
+#ifndef __linux__
 import std;
+#endif
 import Terrain;
 import Units;
 import WorldUndoManager;
-import Rects;
-
 export enum class TerrainUndoType {
 	texture,
 	height,

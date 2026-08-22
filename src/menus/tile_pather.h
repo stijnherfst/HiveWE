@@ -9,7 +9,7 @@
 
 #include <string>
 
-import FlowLayout;
+#include "flow_layout.h"
 import Tileset;
 import TextureButton;
 

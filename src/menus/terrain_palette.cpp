@@ -3,7 +3,14 @@
 
 import MapGlobal;
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import Tileset;
 import Texture;
 import OpenGLUtilities;
@@ -653,3 +660,5 @@ CliffButton* TerrainPalette::cliff_button(const CliffType* cliff, const TerrainT
 	button->setToolTip(QString::fromStdString(cliff->name));
 	return button;
 }
+
+#include "moc_terrain_palette.cpp"

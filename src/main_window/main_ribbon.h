@@ -1,6 +1,6 @@
 #pragma once
 
-import QRibbon;
+#include "qribbon.h"
 
 #include <QObject>
 #include <QToolButton>

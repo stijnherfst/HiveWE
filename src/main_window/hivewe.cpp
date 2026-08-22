@@ -1,49 +1,237 @@
-#include "HiveWE.h"
+#include "terrain_notifier.h"
+#include "base/global_context.h"
+#include "camera.h"
+#include "hivewe.h"
 #define __STORMLIB_NO_STATIC_LINK__
 #include "StormLib.h"
 
+#ifdef __linux__
+#include <cerrno>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <thread>
+#include <unistd.h>
+#include <vector>
+
+extern char** environ;
+#endif
+
+#ifdef __linux__
+#include "std_compat.h"
+#else
 import std;
+#endif
 import Hierarchy;
 import MPQ;
-import Camera;
 import Globals;
 import Map;
 import MapInfo;
 import TriggerStrings;
 import Terrain;
 import Doodads;
-import <soil2/SOIL2.h>;
+#include <soil2/SOIL2.h>
 import MapGlobal;
 import WorldUndoManager;
 import SkinnedMeshGlobals;
 import ResourceManager;
-import "pathing_palette.h";
-import "region_palette.h";
-import "object_editor/object_editor.h";
-import "model_editor/model_editor.h";
-import "tile_setter.h";
-import "scenario_info_editor.h";
-import "map_info_editor/map_info_editor.h";
-import "terrain_palette.h";
-import "settings_editor.h";
-import "map_protection_dialog.h";
+#include "pathing_palette.h"
+#include "region_palette.h"
+#include "object_editor/object_editor.h"
+#include "model_editor/model_editor.h"
+#include "tile_setter.h"
+#include "scenario_info_editor.h"
+#include "map_info_editor/map_info_editor.h"
+#include "terrain_palette.h"
+#include "settings_editor.h"
+#include "map_protection_dialog.h"
 import Protection;
 import Utilities;
-import "tile_pather.h";
-import "palette.h";
-import "terrain_palette.h";
-import "doodad_palette.h";
-import "unit_palette.h";
-import "object_editor/icon_view.h";
-import "trigger_editor.h";
+#include "tile_pather.h"
+#include "palette.h"
+#include "terrain_palette.h"
+#include "doodad_palette.h"
+#include "unit_palette.h"
+#include "object_editor/icon_view.h"
+#include "trigger_editor.h"
 #include "QMessageBox"
+#ifndef __linux__
 #include "QProcess"
+#endif
 #include "QKeySequence"
 #include "QString"
-import "menus/gameplay_constants_editor.h";
-import "asset_manager/asset_manager.h";
+#include "menus/gameplay_constants_editor.h"
+#include "asset_manager/asset_manager.h"
 
 namespace fs = std::filesystem;
+
+#ifdef __linux__
+namespace {
+std::string wine_windows_path(const fs::path& path) {
+    int pipe_fds[2];
+
+    if (::pipe(pipe_fds) != 0) {
+        return {};
+    }
+
+    posix_spawn_file_actions_t actions;
+    posix_spawn_file_actions_init(&actions);
+
+    posix_spawn_file_actions_addclose(
+        &actions,
+        pipe_fds[0]
+    );
+
+    posix_spawn_file_actions_adddup2(
+        &actions,
+        pipe_fds[1],
+        STDOUT_FILENO
+    );
+
+    posix_spawn_file_actions_addclose(
+        &actions,
+        pipe_fds[1]
+    );
+
+    std::string native_path =
+        fs::canonical(path).string();
+
+    char* argv[] = {
+        const_cast<char*>("winepath"),
+        const_cast<char*>("-w"),
+        native_path.data(),
+        nullptr
+    };
+
+    pid_t pid = 0;
+
+    const int spawn_result = posix_spawnp(
+        &pid,
+        "winepath",
+        &actions,
+        nullptr,
+        argv,
+        environ
+    );
+
+    posix_spawn_file_actions_destroy(&actions);
+
+    ::close(pipe_fds[1]);
+
+    if (spawn_result != 0) {
+        ::close(pipe_fds[0]);
+        return {};
+    }
+
+    std::string result;
+    char buffer[4096];
+
+    while (true) {
+        const ssize_t count = ::read(
+            pipe_fds[0],
+            buffer,
+            sizeof(buffer)
+        );
+
+        if (count > 0) {
+            result.append(
+                buffer,
+                static_cast<size_t>(count)
+            );
+            continue;
+        }
+
+        if (
+            count < 0
+            && errno == EINTR
+        ) {
+            continue;
+        }
+
+        break;
+    }
+
+    ::close(pipe_fds[0]);
+
+    int status = 0;
+
+    while (
+        ::waitpid(pid, &status, 0) < 0
+        && errno == EINTR
+    ) {
+    }
+
+    if (
+        !WIFEXITED(status)
+        || WEXITSTATUS(status) != 0
+    ) {
+        return {};
+    }
+
+    while (
+        !result.empty()
+        && (
+            result.back() == '\n'
+            || result.back() == '\r'
+        )
+    ) {
+        result.pop_back();
+    }
+
+    return result;
+}
+
+bool launch_with_wine(
+    std::vector<std::string> arguments
+) {
+    std::vector<std::string> storage;
+    storage.reserve(arguments.size() + 1);
+
+    storage.emplace_back("wine");
+
+    for (auto& argument : arguments) {
+        storage.emplace_back(std::move(argument));
+    }
+
+    std::vector<char*> argv;
+    argv.reserve(storage.size() + 1);
+
+    for (auto& argument : storage) {
+        argv.push_back(argument.data());
+    }
+
+    argv.push_back(nullptr);
+
+    pid_t pid = 0;
+
+    const int result = posix_spawnp(
+        &pid,
+        "wine",
+        nullptr,
+        nullptr,
+        argv.data(),
+        environ
+    );
+
+    if (result != 0) {
+        return false;
+    }
+
+    std::thread([pid] {
+        int status = 0;
+
+        while (
+            ::waitpid(pid, &status, 0) < 0
+            && errno == EINTR
+        ) {
+        }
+    }).detach();
+
+    return true;
+}
+}
+#endif
+
+
 
 HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	setAutoFillBackground(true);
@@ -53,7 +241,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	// setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
 	// setAttribute(Qt::WA_LayoutOnEntireRect, true);
 	ui.setupUi(this);
-	context = ui.widget;
+	set_global_context(ui.widget);
 
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() {
 		// ToDo: temporary, undoing should still allow a selection to persist
@@ -326,8 +514,10 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	ui.widget->makeCurrent();
 
 	map = new Map();
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	connect(&map->terrain, &Terrain::tileset_changed, [&]() {
+	connect(terrain_notifier_from_handle(map->terrain.notifier), &TerrainNotifier::minimap_changed, minimap, [this, &terrain = map->terrain]() {
+		minimap->set_minimap(terrain.minimap_image());
+	});
+	connect(terrain_notifier_from_handle(map->terrain.notifier), &TerrainNotifier::tileset_changed, [&]() {
 		const auto palette = window_handler.get_open<TerrainPalette>();
 		if (palette) {
 			palette.value()->refresh();
@@ -346,8 +536,12 @@ void HiveWE::load_map(const fs::path& directory) {
 	skinned_mesh_globals.reset();
 	map = new Map();
 
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	connect(&map->terrain, &Terrain::tileset_changed, [&]() {
+	connect(terrain_notifier_from_handle(map->terrain.notifier), &TerrainNotifier::minimap_changed, minimap, [this, &terrain = map->terrain]() {
+
+		minimap->set_minimap(terrain.minimap_image());
+
+	});
+	connect(terrain_notifier_from_handle(map->terrain.notifier), &TerrainNotifier::tileset_changed, [&]() {
 		const auto palette = window_handler.get_open<TerrainPalette>();
 		if (palette) {
 			palette.value()->refresh();
@@ -618,7 +812,12 @@ void HiveWE::export_map() {
 
 	HANDLE handle;
 	// Use SFileCreateArchive2 as SFileCreateArchive forces a listfile
-	const bool open = SFileCreateArchive2(save_dir.toStdWString().c_str(), &create_info, &handle);
+	#ifdef __linux__
+        const QByteArray save_dir_bytes = save_dir.toUtf8();
+        const bool open = SFileCreateArchive2(save_dir_bytes.constData(), &create_info, &handle);
+#else
+        const bool open = SFileCreateArchive2(save_dir.toStdWString().c_str(), &create_info, &handle);
+#endif
 	if (!open) {
 		QMessageBox::critical(this, "Exporting failed", "There was an error creating the archive.");
 		std::println("{}", GetLastError());
@@ -683,22 +882,108 @@ void HiveWE::export_map() {
 }
 
 void HiveWE::play_test() {
-	emit saving_initiated();
-	if (!map->save(map->filesystem_path)) {
-		return;
-	}
-	QProcess* warcraft = new QProcess;
-	const QString warcraft_path = QString::fromStdString(fs::canonical(hierarchy.root_directory / "x86_64" / "Warcraft III.exe").string());
-	QStringList arguments;
-	arguments << "-launch"
-			  << "-loadfile" << QString::fromStdString(fs::canonical(map->filesystem_path).string());
+    emit saving_initiated();
 
-	QSettings settings;
-	if (settings.value("testArgs").toString() != "") {
-		arguments << settings.value("testArgs").toString().split(' ');
-	}
+    if (!map->save(map->filesystem_path)) {
+        return;
+    }
 
-	warcraft->start(warcraft_path, arguments);
+#ifdef __linux__
+    const fs::path warcraft_path = fs::canonical(
+        hierarchy.root_directory
+        / "x86_64"
+        / "Warcraft III.exe"
+    );
+
+    const fs::path map_path =
+        fs::canonical(map->filesystem_path);
+
+    const std::string wine_map_path =
+        wine_windows_path(map_path);
+
+    if (wine_map_path.empty()) {
+        QMessageBox::critical(
+            this,
+            "Warcraft III",
+            "winepath failed to convert the map path."
+        );
+        return;
+    }
+
+    std::vector<std::string> arguments {
+        warcraft_path.string(),
+        "-launch",
+        "-loadfile",
+        wine_map_path
+    };
+
+    QSettings settings;
+
+    const QString test_args =
+        settings.value("testArgs").toString();
+
+    if (!test_args.isEmpty()) {
+        for (
+            const QString& argument :
+            test_args.split(
+                ' ',
+                Qt::SkipEmptyParts
+            )
+        ) {
+            arguments.emplace_back(
+                argument.toStdString()
+            );
+        }
+    }
+
+    if (!launch_with_wine(std::move(arguments))) {
+        QMessageBox::critical(
+            this,
+            "Warcraft III",
+            "Failed to start Warcraft III through Wine."
+        );
+    }
+#else
+    QProcess* warcraft = new QProcess;
+
+    const QString warcraft_path =
+        QString::fromStdString(
+            fs::canonical(
+                hierarchy.root_directory
+                / "x86_64"
+                / "Warcraft III.exe"
+            ).string()
+        );
+
+    QStringList arguments;
+
+    arguments
+        << "-launch"
+        << "-loadfile"
+        << QString::fromStdString(
+            fs::canonical(
+                map->filesystem_path
+            ).string()
+        );
+
+    QSettings settings;
+
+    if (
+        settings.value("testArgs").toString()
+        != ""
+    ) {
+        arguments
+            << settings
+                   .value("testArgs")
+                   .toString()
+                   .split(' ');
+    }
+
+    warcraft->start(
+        warcraft_path,
+        arguments
+    );
+#endif
 }
 
 void HiveWE::closeEvent(QCloseEvent* event) {
@@ -847,3 +1132,5 @@ void HiveWE::remove_custom_tab() {
 		}
 	}
 }
+
+#include "moc_hivewe.cpp"

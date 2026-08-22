@@ -2,7 +2,14 @@
 
 #include <QMouseEvent>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 
 Minimap::Minimap(QWidget *parent) : QWidget(parent) {
 	ui.setupUi(this);
@@ -56,3 +63,5 @@ void Minimap::mouseMoveEvent(QMouseEvent* event) {
 		}
 	}
 }
+
+#include "moc_minimap.cpp"

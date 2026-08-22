@@ -1,6 +1,14 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+
 export module BinaryReader;
 
+#ifndef __linux__
 import std;
+#endif
 import types;
 import no_init_allocator;
 

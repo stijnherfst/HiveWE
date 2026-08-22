@@ -1,3 +1,4 @@
+#include <utility>
 #include "model_editor_glwidget.h"
 
 #include <QFileDialog>
@@ -5,12 +6,19 @@
 #include <QDesktopServices>
 #include <QUrl>
 
-#include <qt_imgui/qt_imGui.h>
+#include <qt_imgui/qt_imgui.h>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import MDX;
-import <imgui.h>;
-import <imgui_internal.h>;
+#include <imgui.h>
+#include <imgui_internal.h>
 
 namespace {
 	const char* blend_mode_name(const uint32_t mode) {
@@ -387,11 +395,11 @@ void ModelEditorGLWidget::render_imgui() {
 		ImGui::SetNextItemWidth(-1.0f);
 		if (ImGui::BeginCombo("##sequence", model.sequences[skeleton.sequence_index].name.c_str())) {
 			for (size_t i = 0; i < model.sequences.size(); i++) {
-				if (ImGui::Selectable(model.sequences[i].name.c_str(), i == skeleton.sequence_index)) {
+				if (ImGui::Selectable(model.sequences[i].name.c_str(), std::cmp_equal(i, skeleton.sequence_index))) {
 					skeleton.set_sequence(static_cast<int>(i));
 					recenter_camera();
 				}
-				if (i == skeleton.sequence_index) {
+				if (std::cmp_equal(i, skeleton.sequence_index)) {
 					ImGui::SetItemDefaultFocus();
 				}
 			}
@@ -641,7 +649,7 @@ void ModelEditorGLWidget::render_imgui() {
 			for (size_t i = 0; i < model.sequences.size(); i++) {
 				const auto& sequence = model.sequences[i];
 				ImGui::TableNextColumn();
-				if (ImGui::Selectable(sequence.name.c_str(), i == skeleton.sequence_index, ImGuiSelectableFlags_SpanAllColumns)) {
+				if (ImGui::Selectable(sequence.name.c_str(), std::cmp_equal(i, skeleton.sequence_index), ImGuiSelectableFlags_SpanAllColumns)) {
 					skeleton.set_sequence(i);
 					recenter_camera();
 				}

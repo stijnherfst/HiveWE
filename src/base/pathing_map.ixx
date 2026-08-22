@@ -2,17 +2,24 @@ module;
 
 #include <cstdint>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include "utilities/rects.h"
+
 
 export module PathingMap;
 
+#ifndef __linux__
 import std;
-import Rects;
+#endif
 import BinaryReader;
 import BinaryWriter;
 import PathingTexture;
 import OpenGLUtilities;
 import Hierarchy;
-import <glm/glm.hpp>;
 
 export class PathingMap {
 	static constexpr int write_version = 0;

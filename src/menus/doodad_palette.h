@@ -33,11 +33,10 @@
 
 #include <string>
 
-import QRibbon;
-import AspectRatioPixmapLabel;
-import DestructibleListModel;
-import DoodadListModel;
-
+#include "qribbon.h"
+#include "aspect_ratio_pixmap_label.h"
+#include "models/list/destructible_list_model.h"
+#include "models/list/doodad_list_model.h"
 ///	Only allows inputting doubles and automatically selects the text on focus
 class DoubleInput : public QLineEdit {
 	void focusInEvent(QFocusEvent* event) override {

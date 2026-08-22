@@ -1,10 +1,18 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include <glm/glm.hpp>
+#include <outcome/outcome.hpp>
+#include <outcome/try.hpp>
+
 module MDX;
 
+#ifndef __linux__
 import std;
 import std.compat;
-import <glm/glm.hpp>;
-import <outcome/outcome.hpp>;
-import <outcome/try.hpp>;
+#endif
 
 namespace outcome = OUTCOME_V2_NAMESPACE;
 using OUTCOME_V2_NAMESPACE::failure;

@@ -1,4 +1,12 @@
 #include "global_search.h"
+#include "models/list/destructible_list_model.h"
+#include "models/list/unit_list_model.h"
+#include "models/list/base_list_model.h"
+#include "models/list/doodad_list_model.h"
+#include "models/list/item_list_model.h"
+#include "models/list/ability_list_model.h"
+#include "models/list/upgrade_list_model.h"
+#include "models/list/buff_list_model.h"
 
 #include "model_editor.h"
 #include "object_editor.h"
@@ -10,11 +18,17 @@
 #include <ui_object_editor.h>
 #include <QPainter>
 
-import std;
-import WindowHandler;
-import Globals;
-import TableModel;
+#ifdef __linux__
+#include "std_compat.h"
+#else
 
+#endif
+#ifndef __linux__
+import std;
+#endif
+#include "base/window_handler.h"
+import Globals;
+#include "models/table_model.h"
 GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 	setWindowFlag(Qt::FramelessWindowHint, true);
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -121,7 +135,7 @@ GlobalSearchWidget::GlobalSearchWidget(QWidget* parent) : QDialog(parent) {
 		list->setCurrentIndex(concat_table->index(0, 0));
 	});
 
-	connect(list, &QListView::activated, [=](const QModelIndex& index) {
+	connect(list, &QListView::activated, [=, this](const QModelIndex& index) {
 		const auto model = concat_table->mapToSource(index).model();
 		if (model == action_filter_model) {
 			if (index.data() == "Open Model Editor") {

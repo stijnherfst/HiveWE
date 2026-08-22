@@ -16,7 +16,7 @@ find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
-find_package(stormlib CONFIG REQUIRED)
+find_package(StormLib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED) # Required by Stormlib
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
@@ -30,7 +30,7 @@ find_package(unordered_dense CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(unofficial-qscintilla CONFIG REQUIRED)
-find_package(tracy CONFIG REQUIRED)
+find_package(Tracy CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -42,6 +42,8 @@ add_executable(HiveWE
 )
 
 add_subdirectory(src)
+
+set_property(TARGET HiveWE_lib PROPERTY CXX_SCAN_FOR_MODULES ON)
 
 target_include_directories(HiveWE_lib PUBLIC
 	"src"
@@ -73,9 +75,10 @@ target_link_libraries(HiveWE_lib PUBLIC
 	soil2::soil2
 	StormLib::storm
 	BZip2::BZip2
-	libjpeg-turbo::jpeg
+	JPEG::JPEG
 	absl::base
-	libjpeg-turbo::turbojpeg
+	absl::strings
+	$<IF:$<TARGET_EXISTS:libjpeg-turbo::turbojpeg>,libjpeg-turbo::turbojpeg,libjpeg-turbo::turbojpeg-static>
 	ads::qtadvanceddocking-qt6
 	TBB::tbb
 	imgui::imgui
@@ -150,12 +153,96 @@ if(TRACY_ENABLE)
 	)
 endif()
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
-else()
-	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
+if(WIN32)
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
+	else()
+		set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
+	endif()
+
+	file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/platforms")
+	file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/styles")
+	file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/imageformats")
 endif()
 
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/platforms")
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/styles")
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/imageformats")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	find_package(Qt6WaylandClient CONFIG REQUIRED)
+
+	set(HIVEWE_PLATFORM_PLUGINS)
+
+	if(TARGET Qt6::QXcbIntegrationPlugin)
+		list(APPEND HIVEWE_PLATFORM_PLUGINS
+			Qt6::QXcbIntegrationPlugin
+		)
+	endif()
+
+	if(TARGET Qt6::QWaylandIntegrationPlugin)
+		list(APPEND HIVEWE_PLATFORM_PLUGINS
+			Qt6::QWaylandIntegrationPlugin
+		)
+	endif()
+
+	if(NOT HIVEWE_PLATFORM_PLUGINS)
+		message(FATAL_ERROR "No Qt Linux platform plugins found")
+	endif()
+
+	qt_import_plugins(
+		HiveWE
+		INCLUDE_BY_TYPE platforms ${HIVEWE_PLATFORM_PLUGINS}
+	)
+
+	set(HIVEWE_XCB_GL_PLUGINS)
+
+	if(TARGET Qt6::QXcbGlxIntegrationPlugin)
+		list(APPEND HIVEWE_XCB_GL_PLUGINS
+			Qt6::QXcbGlxIntegrationPlugin
+		)
+	endif()
+
+	if(TARGET Qt6::QXcbEglIntegrationPlugin)
+		list(APPEND HIVEWE_XCB_GL_PLUGINS
+			Qt6::QXcbEglIntegrationPlugin
+		)
+	endif()
+
+	if(NOT HIVEWE_XCB_GL_PLUGINS)
+		message(FATAL_ERROR "No Qt XCB OpenGL integration plugins found")
+	endif()
+
+	qt_import_plugins(
+		HiveWE
+		INCLUDE_BY_TYPE xcbglintegrations ${HIVEWE_XCB_GL_PLUGINS}
+	)
+
+	set(HIVEWE_WAYLAND_SHELL_PLUGINS)
+
+	if(TARGET Qt6::QWaylandXdgShellIntegrationPlugin)
+		list(APPEND HIVEWE_WAYLAND_SHELL_PLUGINS
+			Qt6::QWaylandXdgShellIntegrationPlugin
+		)
+	endif()
+
+	if(HIVEWE_WAYLAND_SHELL_PLUGINS)
+		qt_import_plugins(
+			HiveWE
+			INCLUDE_BY_TYPE wayland-shell-integration
+				${HIVEWE_WAYLAND_SHELL_PLUGINS}
+		)
+	endif()
+
+	set(HIVEWE_WAYLAND_GRAPHICS_PLUGINS)
+
+	if(TARGET Qt6::QWaylandEglClientBufferPlugin)
+		list(APPEND HIVEWE_WAYLAND_GRAPHICS_PLUGINS
+			Qt6::QWaylandEglClientBufferPlugin
+		)
+	endif()
+
+	if(HIVEWE_WAYLAND_GRAPHICS_PLUGINS)
+		qt_import_plugins(
+			HiveWE
+			INCLUDE_BY_TYPE wayland-graphics-integration-client
+				${HIVEWE_WAYLAND_GRAPHICS_PLUGINS}
+		)
+	endif()
+endif()

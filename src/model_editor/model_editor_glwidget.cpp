@@ -1,3 +1,4 @@
+#include "camera.h"
 #include "model_editor_glwidget.h"
 
 #include <QTimer>
@@ -10,17 +11,23 @@
 #include <QFileSystemWatcher>
 #include <glm/gtx/component_wise.inl>
 
-#include <qt_imgui/qt_imGui.h>
+#include <qt_imgui/qt_imgui.h>
 
+#ifdef __linux__
+#include "std_compat.h"
+#else
+
+#endif
+#ifndef __linux__
 import std;
+#endif
 import OpenGLUtilities;
 import BinaryReader;
 import Hierarchy;
 import MDX;
-import Camera;
 import ResourceManager;
-import <imgui.h>;
-import <imgui_internal.h>;
+#include <imgui.h>
+#include <imgui_internal.h>
 
 namespace fs = std::filesystem;
 
@@ -386,3 +393,5 @@ void ModelEditorGLWidget::reload_from_mdl() {
 	recenter_camera();
 	messages = mdx->validate();
 }
+
+#include "moc_model_editor_glwidget.cpp"

@@ -1,8 +1,16 @@
+module;
+
+#ifdef __linux__
+#include "std_compat.h"
+#endif
+#include <glm/glm.hpp>
+
 module MDX;
 
+#ifndef __linux__
 import std;
+#endif
 import Timer;
-import <glm/glm.hpp>;
 
 namespace mdx {
 	/// A minimal utility wrapper around an std::string that manages newlines, indentation and closing braces

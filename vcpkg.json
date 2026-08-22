@@ -47,7 +47,39 @@
         "jpeg",
         "opengl",
         "png",
-        "widgets"
+        "widgets",
+        {
+          "name": "xcb",
+          "platform": "linux"
+        },
+        {
+          "name": "egl",
+          "platform": "linux"
+        },
+        {
+          "name": "xcb-xlib",
+          "platform": "linux"
+        },
+        {
+          "name": "xlib",
+          "platform": "linux"
+        },
+        {
+          "name": "wayland",
+          "platform": "linux"
+        },
+        {
+          "name": "freetype",
+          "platform": "linux"
+        },
+        {
+          "name": "fontconfig",
+          "platform": "linux"
+        },
+        {
+          "name": "harfbuzz",
+          "platform": "linux"
+        }
       ]
     },
     "soil2",
@@ -56,6 +88,10 @@
     "unordered-dense",
     "qscintilla",
     "tracy",
-    "doctest"
+    "doctest",
+    {
+      "name": "qtwayland",
+      "platform": "linux"
+    }
   ]
 }
