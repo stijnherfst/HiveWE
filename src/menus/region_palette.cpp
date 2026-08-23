@@ -174,7 +174,6 @@ RegionPalette::RegionPalette(QWidget* parent) : Palette(parent), regions(map->re
 }
 
 RegionPalette::~RegionPalette() {
-	map->brush = nullptr;
 }
 
 void RegionPalette::update_list() {
@@ -224,6 +223,13 @@ void RegionPalette::update_properties() {
 
 bool RegionPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
+		// The palette is deleted after the map it points into, so the brush has to be
+		// let go of here rather than in the destructor. Another palette may have taken
+		// over in the meantime, so only clear our own.
+		if (map->brush == &brush) {
+			map->brush = nullptr;
+		}
+
 		// Remove shortcut from parent
 		selection_mode->disconnectShortcuts();
 		ribbon_tab->setParent(nullptr);

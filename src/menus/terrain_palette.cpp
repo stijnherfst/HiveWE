@@ -53,7 +53,6 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent), terrain(map->
 }
 
 TerrainPalette::~TerrainPalette() {
-	map->brush = nullptr;
 	delete change_mode_parent;
 	delete change_mode_this;
 }
@@ -72,6 +71,13 @@ void TerrainPalette::refresh() {
 
 bool TerrainPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
+		// The palette is deleted after the map it points into, so the brush has to be
+		// let go of here rather than in the destructor. Another palette may have taken
+		// over in the meantime, so only clear our own.
+		if (map->brush == &brush) {
+			map->brush = nullptr;
+		}
+
 		change_mode_this->setEnabled(false);
 		change_mode_parent->setEnabled(false);
 		ribbon_tab->setParent(nullptr);

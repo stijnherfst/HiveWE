@@ -466,13 +466,19 @@ DoodadPalette::DoodadPalette(QWidget* parent)
 }
 
 DoodadPalette::~DoodadPalette() {
-	map->brush = nullptr;
 	delete change_mode_parent;
 	delete change_mode_this;
 }
 
 bool DoodadPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
+		// The palette is deleted after the map it points into, so the brush has to be
+		// let go of here rather than in the destructor. Another palette may have taken
+		// over in the meantime, so only clear our own.
+		if (map->brush == &brush) {
+			map->brush = nullptr;
+		}
+
 		// Remove shortcut from parent
 		find_this->setEnabled(false);
 		find_parent->setEnabled(false);
