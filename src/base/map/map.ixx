@@ -99,6 +99,20 @@ export class Map: public QObject {
 
 	RenderManager render_manager;
 
+	/// Bundles up the parts of the map that world edits act on, so that brushes and
+	/// undo commands take what they need as a parameter instead of reaching for the
+	/// map global.
+	WorldEditContext edit_context() {
+		return WorldEditContext {
+			.terrain = terrain,
+			.units = units,
+			.doodads = doodads,
+			.regions = regions,
+			.brush = brush,
+			.pathing_map = pathing_map,
+		};
+	}
+
 	void load(const fs::path& path) {
 		Timer full_timer;
 		Timer timer;

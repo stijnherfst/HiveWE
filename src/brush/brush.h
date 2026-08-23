@@ -3,7 +3,6 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -34,7 +33,7 @@ class Brush: public QObject {
 		cell
 	};
 
-	GLuint brush_texture;
+	uint32_t brush_texture;
 
 	Brush();
 
@@ -51,13 +50,11 @@ class Brush: public QObject {
 		return mode;
 	}
 
-	virtual void key_press_event(QKeyEvent* event);
-
-	virtual void key_release_event(QKeyEvent* event) {}
-
-	virtual void mouse_move_event(QMouseEvent* event, double frame_delta);
-	virtual void mouse_press_event(QMouseEvent* event, double frame_delta);
-	virtual void mouse_release_event(QMouseEvent* event);
+	virtual void key_press_event(WorldEditContext& ctx, const QKeyEvent* event);
+	virtual void key_release_event(WorldEditContext& ctx, const QKeyEvent* event) {}
+	virtual void mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta);
+	virtual void mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta);
+	virtual void mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event);
 
 	virtual void delete_selection() {}
 

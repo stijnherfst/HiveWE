@@ -17,10 +17,12 @@ class MapInfoEditor: public QDialog {
 	Q_OBJECT
 
   public:
-	MapInfoEditor(QWidget* parent = nullptr);
+	MapInfoEditor(QWidget* parent, Map& map);
 
 	Ui::MapInfoEditor ui;
 
+	// Resizing the map is a whole-map operation, the rest of the editor only touches these parts of it
+	Map& map;
 	MapInfo& info;
 	TriggerStrings& trigger_strings;
 	Terrain& terrain;

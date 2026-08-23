@@ -2,7 +2,6 @@ export module SlkConversions;
 
 import std;
 import Map;
-import MapGlobal;
 import SLK;
 import Globals;
 

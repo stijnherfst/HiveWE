@@ -2,7 +2,6 @@
 #include "terrain_operators.h"
 
 import std;
-import MapGlobal;
 import WorldUndoManager;
 import Terrain;
 import DoodadsUndo;
@@ -61,7 +60,7 @@ bool TerrainBrush::can_combine(const TerrainOperator& a, const TerrainOperator& 
 	});
 }
 
-void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void TerrainBrush::mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, const double frame_delta) {
 	//if (event->button() == Qt::LeftButton && mode == Mode::selection && !event->modifiers() && input_handler.mouse.y > 0.f) {
 	/*auto id = map->render_manager.pick_unit_id_under_mouse(units, input_handler.mouse);
 		if (id) {
@@ -74,11 +73,11 @@ void TerrainBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 		}*/
 	//}
 
-	Brush::mouse_press_event(event, frame_delta);
+	Brush::mouse_press_event(ctx, event, frame_delta);
 }
 
-void TerrainBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	Brush::mouse_move_event(event, frame_delta);
+void TerrainBrush::mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(ctx, event, frame_delta);
 
 	/*if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -115,7 +114,7 @@ void TerrainBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	}*/
 }
 
-void TerrainBrush::mouse_release_event(QMouseEvent* event) {
+void TerrainBrush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) {
 	//dragging = false;
 	//if (dragged) {
 	//	dragged = false;
@@ -125,7 +124,7 @@ void TerrainBrush::mouse_release_event(QMouseEvent* event) {
 	//	map->terrain_undo.add_undo_action(std::move(unit_state_undo));
 	//}
 
-	Brush::mouse_release_event(event);
+	Brush::mouse_release_event(ctx, event);
 }
 
 bool TerrainBrush::has_active_operators() {

@@ -3,15 +3,14 @@
 import std;
 import OpenGLUtilities;
 import Texture;
-import MapGlobal;
 import PathingMap;
 import Tileset;
 import ResourceManager;
 import Terrain;
 import <glad/glad.h>;
 
-TilePather::TilePather(QWidget* parent)
-	: QDialog(parent), terrain(map->terrain), pathing_map(map->pathing_map), tilesets(map->tilesets) {
+TilePather::TilePather(QWidget* parent, Terrain& terrain, PathingMap& pathing_map, TilesetData& tilesets)
+	: QDialog(parent), terrain(terrain), pathing_map(pathing_map), tilesets(tilesets) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -42,15 +41,15 @@ TilePather::TilePather(QWidget* parent)
 	connect(ui.buttonBox, &QDialogButtonBox::accepted, this, &TilePather::save_tiles);
 	connect(ui.buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
 
-	connect(ui.unwalkable, &QPushButton::clicked, [&](const bool checked) {
+	connect(ui.unwalkable, &QPushButton::clicked, [this](const bool checked) {
 		pathing_options[selected_button->texture()->id].unwalkable = checked;
 		update_selected_icon();
 	});
-	connect(ui.unflyable, &QPushButton::clicked, [&](const bool checked) {
+	connect(ui.unflyable, &QPushButton::clicked, [this](const bool checked) {
 		pathing_options[selected_button->texture()->id].unflyable = checked;
 		update_selected_icon();
 	});
-	connect(ui.unbuildable, &QPushButton::clicked, [&](const bool checked) {
+	connect(ui.unbuildable, &QPushButton::clicked, [this](const bool checked) {
 		pathing_options[selected_button->texture()->id].unbuildable = checked;
 		update_selected_icon();
 	});

@@ -17,7 +17,7 @@ class TileSetter: public QDialog {
 	Q_OBJECT
 
   public:
-	explicit TileSetter(QWidget* parent = nullptr);
+	TileSetter(QWidget* parent, Terrain& terrain, TilesetData& tilesets, MapInfo& info);
 
 	Terrain& terrain;
 	TilesetData& tilesets;

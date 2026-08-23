@@ -5,7 +5,6 @@ import Camera;
 import OpenGLUtilities;
 import ResourceManager;
 import Globals;
-import MapGlobal;
 import WorldUndoManager;
 import <glad/glad.h>;
 import <glm/glm.hpp>;
@@ -121,7 +120,7 @@ void Brush::switch_mode() {
 	selection_started = false;
 }
 
-void Brush::key_press_event(QKeyEvent* event) {
+void Brush::key_press_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	switch (event->key()) {
 		case Qt::Key_Escape:
 			clear_selection();
@@ -154,27 +153,15 @@ void Brush::key_press_event(QKeyEvent* event) {
 	}
 }
 
-static WorldEditContext world_context(Brush* brush) {
-	return WorldEditContext {
-		.terrain = map->terrain,
-		.units = map->units,
-		.doodads = map->doodads,
-		.regions = map->regions,
-		.brush = brush,
-		.pathing_map = map->pathing_map,
-	};
-}
-
-void Brush::mouse_move_event(QMouseEvent* event, double frame_delta) {
+void Brush::mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, const double frame_delta) {
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::placement && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
-			auto ctx = world_context(this);
 			apply(ctx, frame_delta);
 		}
 	}
 }
 
-void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void Brush::mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, const double frame_delta) {
 	if (event->button() != Qt::LeftButton) {
 		return;
 	}
@@ -191,7 +178,6 @@ void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 	} else if (mode == Mode::placement) {
 		// Check if eligible for placement
 		if (event->button() == Qt::LeftButton) {
-			auto ctx = world_context(this);
 			apply_begin(ctx);
 			if (can_place() || event->modifiers() & Qt::ShiftModifier) {
 				apply(ctx, 0.5);
@@ -199,18 +185,16 @@ void Brush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 		}
 	} else if (mode == Mode::pasting && (can_place() || event->modifiers() & Qt::ShiftModifier)) {
 		clear_selection();
-		auto ctx = world_context(this);
 		place_clipboard(ctx);
 		mode = Mode::selection;
 	}
 }
 
-void Brush::mouse_release_event(QMouseEvent* event) {
+void Brush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) {
 	if (mode == Mode::selection) {
 		selection_started = false;
 	} else if (mode == Mode::placement) {
 		if (event->button() == Qt::LeftButton) {
-			auto ctx = world_context(this);
 			apply_end(ctx);
 		}
 	}

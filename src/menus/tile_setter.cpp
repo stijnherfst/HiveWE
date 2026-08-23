@@ -8,13 +8,12 @@
 import std;
 import ResourceManager;
 import OpenGLUtilities;
-import MapGlobal;
 import Globals;
 import Texture;
 import <glm/glm.hpp>;
 
-TileSetter::TileSetter(QWidget* parent)
-	: QDialog(parent), terrain(map->terrain), tilesets(map->tilesets), info(map->info) {
+TileSetter::TileSetter(QWidget* parent, Terrain& terrain, TilesetData& tilesets, MapInfo& info)
+	: QDialog(parent), terrain(terrain), tilesets(tilesets), info(info) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -306,7 +305,7 @@ void TileSetter::save_tiles() {
 		if (found != new_terrain_textures.end()) {
 			from_to_id[i] = found - new_terrain_textures.begin();
 		} else {
-			TilePicker replace_dialog(this, {from_id}, new_terrain_textures);
+			TilePicker replace_dialog(this, tilesets, {from_id}, new_terrain_textures);
 			connect(&replace_dialog, &TilePicker::tile_chosen, [&](const std::string& id, const std::string& to_id) {
 				const auto tile_found = std::ranges::find(new_terrain_textures, to_id);
 				from_to_id[i] = tile_found - new_terrain_textures.begin();

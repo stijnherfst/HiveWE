@@ -24,10 +24,10 @@ class RegionBrush : public Brush {
 	Regions& regions;
 	WorldUndoManager& world_undo;
 
-	void key_press_event(QKeyEvent* event) override;
-	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
-	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
-	void mouse_release_event(QMouseEvent* event) override;
+	void key_press_event(WorldEditContext& ctx, const QKeyEvent* event) override;
+	void mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
+	void mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
+	void mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) override;
 
 	void delete_selection() override;
 	void clear_selection() override;

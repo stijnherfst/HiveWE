@@ -13,8 +13,7 @@ import Globals;
 import PathingMap;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
-
-import MapGlobal;
+import <glad/glad.h>;
 
 UnitBrush::UnitBrush(Units& units, Terrain& terrain, PathingMap& pathing_map,
 		   RenderManager& render_manager, WorldUndoManager& world_undo)
@@ -23,7 +22,7 @@ UnitBrush::UnitBrush(Units& units, Terrain& terrain, PathingMap& pathing_map,
 
 void UnitBrush::set_shape(const Shape new_shape) {}
 
-void UnitBrush::key_press_event(QKeyEvent* event) {
+void UnitBrush::key_press_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
 		if (!event->isAutoRepeat()) {
 			world_undo.new_undo_group();
@@ -62,14 +61,14 @@ void UnitBrush::key_press_event(QKeyEvent* event) {
 				emit selection_changed();
 				break;
 			default:
-				Brush::key_press_event(event);
+				Brush::key_press_event(ctx, event);
 		}
 	} else {
-		Brush::key_press_event(event);
+		Brush::key_press_event(ctx, event);
 	}
 }
 
-void UnitBrush::key_release_event(QKeyEvent* event) {
+void UnitBrush::key_release_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	if (!event->isAutoRepeat()) {
 		if (unit_state_undo) {
 			for (const auto& i : selections) {
@@ -80,7 +79,7 @@ void UnitBrush::key_release_event(QKeyEvent* event) {
 	}
 }
 
-void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void UnitBrush::mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && input_handler.mouse.y > 0.f) {
 		if (mode == Mode::selection) {
@@ -121,11 +120,11 @@ void UnitBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 		}
 	}
 
-	Brush::mouse_press_event(event, frame_delta);
+	Brush::mouse_press_event(ctx, event, frame_delta);
 }
 
-void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	Brush::mouse_move_event(event, frame_delta);
+void UnitBrush::mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(ctx, event, frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -182,7 +181,7 @@ void UnitBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	}
 }
 
-void UnitBrush::mouse_release_event(QMouseEvent* event) {
+void UnitBrush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) {
 	dragging = false;
 	if (dragged) {
 		dragged = false;
@@ -192,7 +191,7 @@ void UnitBrush::mouse_release_event(QMouseEvent* event) {
 		world_undo.add_undo_action(std::move(unit_state_undo));
 	}
 
-	Brush::mouse_release_event(event);
+	Brush::mouse_release_event(ctx, event);
 }
 
 void UnitBrush::delete_selection() {

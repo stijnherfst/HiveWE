@@ -7,16 +7,15 @@ import ResourceManager;
 import Texture;
 import OpenGLUtilities;
 import SLK;
-import MapGlobal;
 
-TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
+TilePicker::TilePicker(QWidget* parent, const TilesetData& tilesets, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {
 	ui.setupUi(this);
 
 	ui.flowlayout_placeholder_1->addLayout(from_layout);
 	ui.flowlayout_placeholder_2->addLayout(to_layout);
 
 	for (const auto& i : from_ids) {
-		const TerrainTexture* texture = map->tilesets.terrain_texture(i);
+		const TerrainTexture* texture = tilesets.terrain_texture(i);
 
 		TextureButton* button = create_tex_button(texture);
 
@@ -25,7 +24,7 @@ TilePicker::TilePicker(QWidget* parent, std::vector<std::string> from_ids, std::
 	}
 
 	for (const auto& i : to_ids) {
-		const TerrainTexture* texture = map->tilesets.terrain_texture(i);
+		const TerrainTexture* texture = tilesets.terrain_texture(i);
 
 		TextureButton* button = create_tex_button(texture);
 

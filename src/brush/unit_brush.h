@@ -8,12 +8,9 @@
 #include <QMouseEvent>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-
-import Units;
 #include "brush.h"
 
+import Units;
 import SkinnedMesh;
 import PathingTexture;
 import UnitsUndo;
@@ -57,13 +54,13 @@ class UnitBrush : public Brush {
 	RenderManager& render_manager;
 	WorldUndoManager& world_undo;
 
-	void set_shape(const Shape new_shape) override;
+	void set_shape(Shape new_shape) override;
 
-	void key_press_event(QKeyEvent* event) override;
-	void key_release_event(QKeyEvent* event) override;
-	void mouse_release_event(QMouseEvent* event) override;
-	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
-	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
+	void key_press_event(WorldEditContext& ctx, const QKeyEvent* event) override;
+	void key_release_event(WorldEditContext& ctx, const QKeyEvent* event) override;
+	void mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) override;
+	void mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
+	void mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
 
 	void delete_selection() override;
 	void copy_selection() override;

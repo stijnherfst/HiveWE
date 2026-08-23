@@ -7,7 +7,6 @@
 #include <QStack>
 #include <set>
 
-import MapGlobal;
 import OpenGLUtilities;
 import Globals;
 

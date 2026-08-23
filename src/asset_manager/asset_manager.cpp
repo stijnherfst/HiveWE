@@ -20,7 +20,6 @@
 import std;
 import SLK;
 import Map;
-import MapGlobal;
 import Globals;
 import TableModel;
 import ResourceManager;
@@ -139,7 +138,7 @@ bool AssetFilterModel::filterAcceptsRow(const int source_row, const QModelIndex&
 	return QSortFilterProxyModel::filterAcceptsRow(source_row, source_parent);
 }
 
-AssetManager::AssetManager(QWidget* parent) : QDialog(parent) {
+AssetManager::AssetManager(QWidget* parent, Map& map) : QDialog(parent), map(map) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle("Asset Manager");
 	resize(1200, 850);
@@ -291,7 +290,7 @@ void AssetManager::refresh() const {
 		select_all_unused_box->setChecked(false);
 	}
 
-	auto results = map->get_file_usage();
+	auto results = map.get_file_usage();
 
 	std::vector<AssetTreeModel::FileNode> nodes;
 	nodes.reserve(results.size());
@@ -386,7 +385,7 @@ void AssetManager::delete_checked() {
 	for (const int row : checked | std::views::reverse) {
 		const QString path_str = QString::fromStdString(model->file(row).path);
 		std::error_code ec;
-		fs::remove(map->filesystem_path / path_str.toStdString(), ec);
+		fs::remove(map.filesystem_path / path_str.toStdString(), ec);
 		if (ec) {
 			failures.append(QString("%1: %2").arg(path_str, QString::fromStdString(ec.message())));
 			continue;
@@ -490,7 +489,7 @@ void AssetManager::show_preview(const QModelIndex& current) {
 		// Not handled by Texture/hierarchy decode; Qt loads these directly from disk
 		auto* label = new AspectRatioPixmapLabel(preview_host);
 		label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-		const QString full_path = QString::fromStdString((map->filesystem_path / node.path).string());
+		const QString full_path = QString::fromStdString((map.filesystem_path / node.path).string());
 		label->setPixmap(QPixmap(full_path));
 		set_preview(label);
 		return;
@@ -507,7 +506,7 @@ void AssetManager::open_selected_in_model_editor() {
 	}
 	bool created = false;
 	auto* model_editor = window_handler.create_or_raise<ModelEditor>(nullptr, created);
-	const auto opened = model_editor->open_model_docked(map->filesystem_path / current_model_path.toStdString(), true);
+	const auto opened = model_editor->open_model_docked(map.filesystem_path / current_model_path.toStdString(), true);
 	if (!opened) {
 		QMessageBox::critical(this, "Error opening model",
 							  QString::fromStdString(std::format("Failed to open model with: {}", opened.error())));
@@ -537,7 +536,7 @@ void AssetManager::show_context_menu(const QPoint& pos) {
 				if (answer != QMessageBox::Yes) {
 					return;
 				}
-				const fs::path full_path = map->filesystem_path / path_str.toStdString();
+				const fs::path full_path = map.filesystem_path / path_str.toStdString();
 				std::error_code ec;
 				fs::remove(full_path, ec);
 				if (ec) {

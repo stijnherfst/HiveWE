@@ -5,8 +5,8 @@
 
 import Doodad;
 import Terrain;
-import TerrainUndo;
 import WorldUndoManager;
+import TerrainUndo;
 import Rects;
 import Units;
 import Tileset;
@@ -41,9 +41,9 @@ class TerrainBrush: public Brush {
 	TilesetData& tilesets;
 	WorldUndoManager& world_undo;
 
-	void mouse_release_event(QMouseEvent* event) override;
-	void mouse_press_event(QMouseEvent* event, double frame_delta) override;
-	void mouse_move_event(QMouseEvent* event, double frame_delta) override;
+	void mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) override;
+	void mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
+	void mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) override;
 
 	void apply_begin(WorldEditContext& ctx) override;
 	void apply(WorldEditContext& ctx, double frame_delta) override;

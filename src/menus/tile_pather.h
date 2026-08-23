@@ -25,7 +25,7 @@ class TilePather: public QDialog {
 	Q_OBJECT
 
   public:
-	explicit TilePather(QWidget* parent = nullptr);
+	TilePather(QWidget* parent, Terrain& terrain, PathingMap& pathing_map, TilesetData& tilesets);
 
 	Terrain& terrain;
 	PathingMap& pathing_map;

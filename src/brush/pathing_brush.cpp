@@ -2,12 +2,11 @@
 
 import std;
 import <glm/glm.hpp>;
-import MapGlobal;
 import WorldUndoManager;
 import PathingUndo;
 import Camera;
 
-PathingBrush::PathingBrush() : Brush() {
+PathingBrush::PathingBrush(WorldUndoManager& world_undo) : Brush(), world_undo(world_undo)  {
 	position_granularity = 4.f;
 	size_granularity = 1;
 	brush_type = Brush::Type::cell;
@@ -20,7 +19,7 @@ void PathingBrush::apply_begin(WorldEditContext& ctx) {
 
 	applied_area = PathingRect(x, y, size.x, size.y).intersected({0, 0, ctx.pathing_map.width, ctx.pathing_map.height});
 
-	map->world_undo.new_undo_group();
+	world_undo.new_undo_group();
 	old_pathing_cells_static = ctx.pathing_map.pathing_cells_static;
 }
 
@@ -62,14 +61,14 @@ void PathingBrush::apply(WorldEditContext& ctx, double frame_delta) {
 }
 
 void PathingBrush::apply_end(WorldEditContext& ctx) {
-	add_pathing_undo(applied_area);
+	add_pathing_undo(ctx, applied_area);
 }
 
-void PathingBrush::add_pathing_undo(const PathingRect& area) {
+void PathingBrush::add_pathing_undo(WorldEditContext& ctx, const PathingRect& area) {
 	auto undo_action = std::make_unique<PathingMapAction>();
 
 	undo_action->area = area;
-	const auto width = map->pathing_map.width;
+	const auto width = ctx.pathing_map.width;
 
 	// Copy old corners
 	undo_action->old_pathing.reserve(area.width() * area.height());
@@ -83,9 +82,9 @@ void PathingBrush::add_pathing_undo(const PathingRect& area) {
 	undo_action->new_pathing.reserve(area.width() * area.height());
 	for (int j = area.top(); j <= area.bottom(); j++) {
 		for (int i = area.left(); i <= area.right(); i++) {
-			undo_action->new_pathing.push_back(map->pathing_map.pathing_cells_static[j * width + i]);
+			undo_action->new_pathing.push_back(ctx.pathing_map.pathing_cells_static[j * width + i]);
 		}
 	}
 
-	map->world_undo.add_undo_action(std::move(undo_action));
+	world_undo.add_undo_action(std::move(undo_action));
 }

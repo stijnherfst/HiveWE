@@ -14,6 +14,8 @@
 
 #include "asset_tree_model.h"
 
+import Map;
+
 class AssetFilterModel : public QSortFilterProxyModel {
 	Q_OBJECT
   public:
@@ -34,7 +36,7 @@ class AssetFilterModel : public QSortFilterProxyModel {
 class AssetManager : public QDialog {
 	Q_OBJECT
   public:
-	explicit AssetManager(QWidget* parent = nullptr);
+	AssetManager(QWidget* parent, Map& map);
 
   private:
 	void refresh() const;
@@ -58,6 +60,8 @@ class AssetManager : public QDialog {
 	QTreeView* tree_view;
 	QLabel* status_label;
 	AssetTreeModel* model;
+
+	Map& map;
 	AssetFilterModel* filter_model;
 
 	QWidget* preview_host;

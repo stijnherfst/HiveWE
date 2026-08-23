@@ -11,6 +11,7 @@ import Camera;
 import MapGlobal;
 import <glad/glad.h>;
 import <glm/glm.hpp>;
+import WorldUndoManager;
 
 void APIENTRY gl_debug_output(
 	const GLenum source,
@@ -268,7 +269,8 @@ void GLWidget::keyPressEvent(QKeyEvent* event) {
 	input_handler.keys_pressed.emplace(event->key());
 
 	if (map->brush) {
-		map->brush->key_press_event(event);
+		auto ctx = map->edit_context();
+		map->brush->key_press_event(ctx, event);
 	}
 	QOpenGLWidget::keyPressEvent(event);
 }
@@ -281,7 +283,8 @@ void GLWidget::keyReleaseEvent(QKeyEvent* event) {
 	input_handler.keys_pressed.erase(event->key());
 
 	if (map->brush) {
-		map->brush->key_release_event(event);
+		auto ctx = map->edit_context();
+		map->brush->key_release_event(ctx, event);
 	}
 	QOpenGLWidget::keyReleaseEvent(event);
 }
@@ -295,7 +298,8 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event) {
 	camera.mouse_move_event(event);
 
 	if (map->brush) {
-		map->brush->mouse_move_event(event, delta);
+		auto ctx = map->edit_context();
+		map->brush->mouse_move_event(ctx, event, delta);
 	}
 }
 
@@ -307,7 +311,8 @@ void GLWidget::mousePressEvent(QMouseEvent* event) {
 	camera.mouse_press_event(event);
 	if (map->brush) {
 		makeCurrent();
-		map->brush->mouse_press_event(event, delta);
+		auto ctx = map->edit_context();
+		map->brush->mouse_press_event(ctx, event, delta);
 	}
 }
 
@@ -317,7 +322,8 @@ void GLWidget::mouseReleaseEvent(QMouseEvent* event) {
 	}
 	camera.mouse_release_event(event);
 	if (map->brush) {
-		map->brush->mouse_release_event(event);
+		auto ctx = map->edit_context();
+		map->brush->mouse_release_event(ctx, event);
 	}
 }
 

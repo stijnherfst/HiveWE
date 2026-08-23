@@ -19,7 +19,6 @@
 
 import std;
 import UnitSelector;
-import MapGlobal;
 import Globals;
 import ResourceManager;
 import SlkConversions;

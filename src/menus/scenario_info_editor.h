@@ -23,7 +23,7 @@ class ScenarioInfoEditor: public QDialog {
 	Q_OBJECT
 
   public:
-	ScenarioInfoEditor(QWidget* parent = nullptr);
+	ScenarioInfoEditor(QWidget* parent, MapInfo& info, TriggerStrings& trigger_strings);
 
 	Ui::ScenarioInfoEditor ui;
 

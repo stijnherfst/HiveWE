@@ -15,7 +15,6 @@ import PathingMap;
 import SkinnedMesh;
 import Skeleton;
 import Globals;
-import MapGlobal;
 import Rects;
 import <glad/glad.h>;
 import <glm/glm.hpp>;
@@ -117,7 +116,7 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 	}
 }
 
-void DoodadBrush::key_press_event(QKeyEvent* event) {
+void DoodadBrush::key_press_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	if (event->modifiers() & Qt::KeypadModifier) {
 		if (action == Action::none) {
 			start_action(Action::move);
@@ -189,7 +188,7 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				emit position_changed();
 				break;
 			default:
-				Brush::key_press_event(event);
+				Brush::key_press_event(ctx, event);
 		}
 	} else {
 		switch (event->key()) {
@@ -214,12 +213,12 @@ void DoodadBrush::key_press_event(QKeyEvent* event) {
 				emit scale_changed();
 				break;
 			default:
-				Brush::key_press_event(event);
+				Brush::key_press_event(ctx, event);
 		}
 	}
 }
 
-void DoodadBrush::key_release_event(QKeyEvent* event) {
+void DoodadBrush::key_release_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	if (event->isAutoRepeat()) {
 		return;
 	}
@@ -229,7 +228,7 @@ void DoodadBrush::key_release_event(QKeyEvent* event) {
 	}
 }
 
-void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void DoodadBrush::mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && input_handler.mouse.y > 0.f) {
 		if (mode == Mode::selection) {
@@ -277,11 +276,11 @@ void DoodadBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			emit request_doodad_select(doodad.id);
 		}
 	}
-	Brush::mouse_press_event(event, frame_delta);
+	Brush::mouse_press_event(ctx, event, frame_delta);
 }
 
-void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	Brush::mouse_move_event(event, frame_delta);
+void DoodadBrush::mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(ctx, event, frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if (mode == Mode::selection) {
@@ -359,7 +358,7 @@ void DoodadBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	}
 }
 
-void DoodadBrush::mouse_release_event(QMouseEvent* event) {
+void DoodadBrush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) {
 	dragging = false;
 
 	if (event->button() == Qt::LeftButton) {
@@ -368,7 +367,7 @@ void DoodadBrush::mouse_release_event(QMouseEvent* event) {
 		}
 	}
 
-	Brush::mouse_release_event(event);
+	Brush::mouse_release_event(ctx, event);
 }
 
 void DoodadBrush::delete_selection() {

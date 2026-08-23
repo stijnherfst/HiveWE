@@ -6,7 +6,6 @@ import std;
 import WorldUndoManager;
 import Camera;
 import Globals;
-import MapGlobal;
 import <glm/glm.hpp>;
 
 RegionBrush::RegionBrush(Regions& regions, WorldUndoManager& world_undo)
@@ -90,20 +89,20 @@ std::vector<Region*> RegionBrush::regions_under() const {
 	return result;
 }
 
-void RegionBrush::key_press_event(QKeyEvent* event) {
+void RegionBrush::key_press_event(WorldEditContext& ctx, const QKeyEvent* event) {
 	if (event->modifiers() & Qt::ControlModifier && event->key() == Qt::Key_A) {
 		selections.clear();
 		selections.reserve(regions.regions.size());
-		for (auto& region : regions.regions) {
+		for (auto& region : ctx.regions.regions) {
 			selections.emplace(&region);
 		}
 		emit selection_changed();
 		return;
 	}
-	Brush::key_press_event(event);
+	Brush::key_press_event(ctx, event);
 }
 
-void RegionBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
+void RegionBrush::mouse_press_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
 	// The mouse.y check is needed as sometimes it is negative for unknown reasons
 	if (event->button() == Qt::LeftButton && input_handler.mouse.y > 0.f) {
 		if (mode == Mode::placement) {
@@ -191,11 +190,11 @@ void RegionBrush::mouse_press_event(QMouseEvent* event, double frame_delta) {
 			}
 		}
 	}
-	Brush::mouse_press_event(event, frame_delta);
+	Brush::mouse_press_event(ctx, event, frame_delta);
 }
 
-void RegionBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
-	Brush::mouse_move_event(event, frame_delta);
+void RegionBrush::mouse_move_event(WorldEditContext& ctx, const QMouseEvent* event, double frame_delta) {
+	Brush::mouse_move_event(ctx, event, frame_delta);
 
 	if (event->buttons() == Qt::LeftButton) {
 		if ((dragging || resizing) && snap(input_handler.mouse_world) != press_position) {
@@ -281,7 +280,7 @@ void RegionBrush::mouse_move_event(QMouseEvent* event, double frame_delta) {
 	}
 }
 
-void RegionBrush::mouse_release_event(QMouseEvent* event) {
+void RegionBrush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event) {
 	if (event->button() == Qt::LeftButton) {
 		if (creating) {
 			creating = false;
@@ -330,7 +329,7 @@ void RegionBrush::mouse_release_event(QMouseEvent* event) {
 		}
 	}
 
-	Brush::mouse_release_event(event);
+	Brush::mouse_release_event(ctx, event);
 }
 
 void RegionBrush::delete_selection() {

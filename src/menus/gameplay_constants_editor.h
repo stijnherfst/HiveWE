@@ -3,10 +3,13 @@
 #include <QDialog>
 #include <QLineEdit>
 
+import GameplayConstants;
+import TriggerStrings;
+
 class GameplayConstantsEditor : public QDialog {
 	Q_OBJECT
 public:
-	explicit GameplayConstantsEditor(QWidget* parent = nullptr);
+	GameplayConstantsEditor(QWidget* parent, GameplayConstants& constants, TriggerStrings& trigger_strings);
 
 private:
 	QLineEdit* search;

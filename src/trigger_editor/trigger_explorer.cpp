@@ -14,7 +14,6 @@
 
 import Triggers;
 import Utilities;
-import MapGlobal;
 import OpenGLUtilities;
 import Globals;
 

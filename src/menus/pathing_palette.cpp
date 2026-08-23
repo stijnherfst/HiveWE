@@ -10,7 +10,7 @@ import MapGlobal;
 
 namespace fs = std::filesystem;
 
-PathingPalette::PathingPalette(QWidget *parent) : Palette(parent), pathing_map(map->pathing_map) {
+PathingPalette::PathingPalette(QWidget *parent) : Palette(parent), pathing_map(map->pathing_map), brush(map->world_undo) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);

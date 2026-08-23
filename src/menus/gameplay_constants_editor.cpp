@@ -1,7 +1,6 @@
 #include "gameplay_constants_editor.h"
 
 import std;
-import MapGlobal;
 import GameplayConstants;
 import TableModel;
 
@@ -13,7 +12,7 @@ import TableModel;
 #include <QTimer>
 #include <QVBoxLayout>
 
-GameplayConstantsEditor::GameplayConstantsEditor(QWidget* parent) : QDialog(parent) {
+GameplayConstantsEditor::GameplayConstantsEditor(QWidget* parent, GameplayConstants& constants, TriggerStrings& trigger_strings) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle("Gameplay Constants");
 	resize(1000, 600);
@@ -23,7 +22,7 @@ GameplayConstantsEditor::GameplayConstantsEditor(QWidget* parent) : QDialog(pare
 	search->setPlaceholderText("Search...");
 	layout->addWidget(search);
 
-	TableModel* table = new TableModel(&map->gameplay_constants.data, &map->gameplay_constants.metadata, &map->trigger_strings, this);
+	TableModel* table = new TableModel(&constants.data, &constants.metadata, &trigger_strings, this);
 	SingleModel* single_model = new SingleModel(table, this);
 	single_model->setID(constants_row_key);
 

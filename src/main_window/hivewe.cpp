@@ -61,15 +61,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			map->brush->clear_selection();
 		}
 
-		auto context = WorldEditContext {
-			.terrain = map->terrain,
-			.units = map->units,
-			.doodads = map->doodads,
-			.regions = map->regions,
-			.brush = map->brush,
-			.pathing_map = map->pathing_map,
-		};
-
+		auto context = map->edit_context();
 		map->world_undo.undo(context);
 	});
 	connect(ui.ribbon->redo, &QPushButton::clicked, [&]() {
@@ -78,15 +70,7 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 			map->brush->clear_selection();
 		}
 
-		auto context = WorldEditContext {
-			.terrain = map->terrain,
-			.units = map->units,
-			.doodads = map->doodads,
-			.regions = map->regions,
-			.brush = map->brush,
-			.pathing_map = map->pathing_map,
-		};
-
+		auto context = map->edit_context();
 		map->world_undo.redo(context);
 	});
 
@@ -210,50 +194,50 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->change_tileset, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<TileSetter>(this, created);
+		window_handler.create_or_raise<TileSetter>(this, created, map->terrain, map->tilesets, map->info);
 	});
 	connect(ui.ribbon->change_tile_pathing, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<TilePather>(this, created);
+		window_handler.create_or_raise<TilePather>(this, created, map->terrain, map->pathing_map, map->tilesets);
 	});
 
 	connect(ui.ribbon->map_description, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<MapInfoEditor>(this, created)->ui.tabs->setCurrentIndex(0);
+		window_handler.create_or_raise<MapInfoEditor>(this, created, *map)->ui.tabs->setCurrentIndex(0);
 	});
 	connect(ui.ribbon->map_loading_screen, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<MapInfoEditor>(this, created)->ui.tabs->setCurrentIndex(3);
+		window_handler.create_or_raise<MapInfoEditor>(this, created, *map)->ui.tabs->setCurrentIndex(3);
 	});
 	connect(ui.ribbon->map_options, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<MapInfoEditor>(this, created)->ui.tabs->setCurrentIndex(1);
+		window_handler.create_or_raise<MapInfoEditor>(this, created, *map)->ui.tabs->setCurrentIndex(1);
 	});
 	// connect(ui, &QAction::triggered, [&]() { (new MapInfoEditor(this))->ui.tabs->setCurrentIndex(3); });
 
 	connect(ui.ribbon->player_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(0);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(0);
 	});
 	connect(ui.ribbon->ally_priorities_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(1);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(1);
 	});
 	connect(ui.ribbon->force_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(2);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(2);
 	});
 	connect(ui.ribbon->techtree_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(3);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(3);
 	});
 	connect(ui.ribbon->ability_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(4);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(4);
 	});
 	connect(ui.ribbon->upgrade_properties, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<ScenarioInfoEditor>(this, created)->ui.tabs->setCurrentIndex(5);
+		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(5);
 	});
 
 	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
@@ -317,12 +301,12 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 
 	connect(ui.ribbon->gameplay_constants, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<GameplayConstantsEditor>(nullptr, created);
+		window_handler.create_or_raise<GameplayConstantsEditor>(nullptr, created, map->gameplay_constants, map->trigger_strings);
 	});
 
 	connect(ui.ribbon->asset_manager, &QRibbonButton::clicked, [this]() {
 		bool created = false;
-		window_handler.create_or_raise<AssetManager>(nullptr, created);
+		window_handler.create_or_raise<AssetManager>(nullptr, created, *map);
 	});
 
 	restore_window_state();

@@ -9,14 +9,13 @@
 import std;
 import SLK;
 import Utilities;
-import MapGlobal;
 import Globals;
 import Tileset;
 
 namespace fs = std::filesystem;
 
-ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent)
-	: QDialog(parent), info(map->info), trigger_strings(map->trigger_strings) {
+ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent, MapInfo& info, TriggerStrings& trigger_strings)
+	: QDialog(parent), info(info), trigger_strings(trigger_strings) {
     ui.setupUi(this);
     setAttribute(Qt::WA_DeleteOnClose);
     
@@ -156,14 +155,14 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent)
 		}
 	});
 	
-	connect(ui.buttonBox, &QDialogButtonBox::accepted, [&]() {
+	connect(ui.buttonBox, &QDialogButtonBox::accepted, [this]() {
 		if (save()) {
 			emit accept();
 			close();
 		}
 	});
 
-	connect(ui.buttonBox, &QDialogButtonBox::rejected, [&]() {
+	connect(ui.buttonBox, &QDialogButtonBox::rejected, [this]() {
 		emit reject();
 		close();
 	});
