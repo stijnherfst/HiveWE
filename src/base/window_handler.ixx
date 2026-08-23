@@ -47,7 +47,12 @@ export class WindowHandler : public QObject {
 	}
 
 	void close_all() {
-		for (const auto& [name, window] : windows) {
+		// Every window here is WA_DeleteOnClose, so closing one only queues a deleteLater
+		// and it stays in the list until that runs. Drop them now instead, so that nothing
+		// can be handed a window that is on its way out and still points at the old map.
+		const auto closing = std::move(windows);
+		windows.clear();
+		for (const auto& [name, window] : closing) {
 			window->close();
 		}
 	}
