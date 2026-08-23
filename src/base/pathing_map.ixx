@@ -60,13 +60,40 @@ export class PathingMap {
 		height = reader.read<uint32_t>();
 
 		if (width == 0 || height == 0) {
-			resize(terrain_width * 4, terrain_height * 4);
+			resize((terrain_width - 1) * 4, (terrain_height - 1) * 4);
 			return true;
 		}
 
 		pathing_cells_static = reader.read_vector<uint8_t>(width * height);
 		pathing_cells_dynamic.resize(width * height);
 
+		const int expected_width = static_cast<int>((terrain_width - 1) * 4);
+		const int expected_height = static_cast<int>((terrain_height - 1) * 4);
+		const int legacy_width = static_cast<int>(terrain_width * 4);
+		const int legacy_height = static_cast<int>(terrain_height * 4);
+
+		if (width == legacy_width && height == legacy_height) {
+			std::vector<uint8_t> corrected_static(
+				static_cast<size_t>(expected_width) * expected_height,
+				0
+			);
+
+			for (size_t y = 0; y < static_cast<size_t>(expected_height); ++y) {
+				std::copy_n(
+					pathing_cells_static.begin() + y * width,
+					expected_width,
+					corrected_static.begin() + y * expected_width
+				);
+			}
+
+			width = expected_width;
+			height = expected_height;
+			pathing_cells_static = std::move(corrected_static);
+			pathing_cells_dynamic.assign(
+				static_cast<size_t>(width) * height,
+				0
+			);
+		}
 		recreate_textures();
 
 		return true;

@@ -119,7 +119,7 @@ PathingRect HeightOperator::apply(const TerrainRect& area, double frame_delta) {
 			}
 
 			if (brush->deform_ground) {
-				terrain.corner_height[idx] = std::clamp(new_height_ground, Terrain::min_ground_height, Terrain::max_ground_height);
+				terrain.corner_height[idx] = std::clamp(new_height_ground, Terrain::blizzard_we_min_ground_height, Terrain::max_ground_height);
 			}
 
 			if (brush->deform_water) {

@@ -138,6 +138,7 @@ static constexpr int write_version = 12;
 
   public:
 	static constexpr float min_ground_height = -16.f;
+	static constexpr float blizzard_we_min_ground_height = -0.5f;
 	static constexpr float max_ground_height = 15.98f; // ToDo why 15.98?
 
 	static constexpr int min_layer_height = 0;
@@ -1186,6 +1187,10 @@ static constexpr int write_version = 12;
 		const size_t cx = i / 4;
 		const size_t cy = j / 4;
 
+		if (cx >= static_cast<size_t>(width) || cy >= static_cast<size_t>(height)) {
+			return 0;
+		}
+
 		const size_t bl_idx = ci(cx, cy);
 
 		uint8_t mask = 0;
@@ -1193,11 +1198,23 @@ static constexpr int write_version = 12;
 		// take terrain texture into account (from the closest corner)
 		const int x = static_cast<int>(std::round(i / 4.0));
 		const int y = static_cast<int>(std::round(j / 4.0));
-		const size_t closest_idx = ci(x, y);
+
+		if (x < 0 || y < 0 || x >= width || y >= height) {
+			return mask;
+		}
+
+		const size_t closest_idx = ci(static_cast<size_t>(x), static_cast<size_t>(y));
 
 		if (tile_pathing) {
-			const std::string& tile_id = tileset_ids[corner_ground_texture[closest_idx]];
-			mask = tilesets.terrain_texture(tile_id)->get_tile_pathing();
+			const uint8_t texture_index = corner_ground_texture[closest_idx];
+
+			if (texture_index < tileset_ids.size()) {
+				const std::string& tile_id = tileset_ids[texture_index];
+
+				if (const TerrainTexture* texture = tilesets.terrain_texture(tile_id)) {
+					mask = texture->get_tile_pathing();
+				}
+			}
 		}
 
 		// cliffs are unbuildable and unwalkable

@@ -1,4 +1,5 @@
 #include "terrain_notifier.h"
+#include <cstdlib>
 #include "base/global_context.h"
 #include "camera.h"
 #include "hivewe.h"
@@ -1040,7 +1041,13 @@ void HiveWE::switch_warcraft() {
 
 // ToDo move to terrain class?
 void HiveWE::import_heightmap() {
-	QMessageBox::information(this, "Heightmap information", "Will read the red channel and map this onto the range -16 to +16");
+	QMessageBox::information(
+		this,
+		"Heightmap information",
+		"Will read the red channel and map it onto the range -16 to +16. "
+		"Ground heights are automatically normalized for Blizzard World Editor compatibility."
+	);
+
 	QSettings settings;
 	const QString directory = settings.value("openDirectory", QDir::current().path()).toString() + "/"
 		+ QString::fromStdString(map->filesystem_path.filename().string());
@@ -1051,10 +1058,25 @@ void HiveWE::import_heightmap() {
 		return;
 	}
 
-	int width;
-	int height;
-	int channels;
-	uint8_t* image_data = SOIL_load_image(file_name.toStdString().c_str(), &width, &height, &channels, SOIL_LOAD_AUTO);
+	int width = 0;
+	int height = 0;
+	int channels = 0;
+	uint8_t* image_data = SOIL_load_image(
+		file_name.toStdString().c_str(),
+		&width,
+		&height,
+		&channels,
+		SOIL_LOAD_AUTO
+	);
+
+	if (!image_data) {
+		QMessageBox::warning(
+			this,
+			"Heightmap Error",
+			"Could not load the heightmap image."
+		);
+		return;
+	}
 
 	if (width != map->terrain.width || height != map->terrain.height) {
 		QMessageBox::warning(
@@ -1068,17 +1090,66 @@ void HiveWE::import_heightmap() {
 					QString::number(map->terrain.height)
 				)
 		);
+		std::free(image_data);
 		return;
 	}
 
+	float imported_min = 0.f;
+	float imported_max = 0.f;
+	bool first_height = true;
+
 	for (int j = 0; j < height; j++) {
 		for (int i = 0; i < width; i++) {
-			map->terrain.corner_height[map->terrain.ci(i, j)] = (image_data[((height - 1 - j) * width + i) * channels] - 128.f) / 8.f;
+			const float imported_height =
+				(image_data[((height - 1 - j) * width + i) * channels] - 128.f) / 8.f;
+
+			map->terrain.corner_height[map->terrain.ci(i, j)] = imported_height;
+
+			if (first_height) {
+				imported_min = imported_height;
+				imported_max = imported_height;
+				first_height = false;
+			} else {
+				if (imported_height < imported_min) {
+					imported_min = imported_height;
+				}
+				if (imported_height > imported_max) {
+					imported_max = imported_height;
+				}
+			}
+		}
+	}
+
+	const float safe_min = Terrain::blizzard_we_min_ground_height;
+	const float safe_max = Terrain::max_ground_height;
+
+	float scale = 1.f;
+	float offset = 0.f;
+
+	if (imported_min < safe_min) {
+		offset = safe_min - imported_min;
+	}
+
+	if (imported_max + offset > safe_max) {
+		const float source_range = imported_max - imported_min;
+		const float target_min = imported_min < safe_min ? safe_min : imported_min;
+
+		if (source_range > 0.f) {
+			scale = (safe_max - target_min) / source_range;
+			offset = target_min - imported_min * scale;
+		} else {
+			offset = safe_min - imported_min;
+		}
+	}
+
+	if (scale != 1.f || offset != 0.f) {
+		for (float& ground_height : map->terrain.corner_height) {
+			ground_height = ground_height * scale + offset;
 		}
 	}
 
 	map->terrain.update_ground_heights({0, 0, width, height});
-	delete image_data;
+	std::free(image_data);
 }
 
 void HiveWE::save_window_state() {
