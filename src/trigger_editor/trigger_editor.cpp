@@ -26,7 +26,7 @@ import MapGlobal;
 
 constexpr int map_header_id = 0;
 
-TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent), triggers(map->triggers) {
+TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent), map(*::map), triggers(map.triggers) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -85,18 +85,18 @@ TriggerEditor::TriggerEditor(QWidget* parent) : QMainWindow(parent), triggers(ma
 		save_changes();
 
 		ScriptMode mode = ScriptMode::jass;
-		if (map->info.lua) {
+		if (map.info.lua) {
 			mode = ScriptMode::lua;
 		}
 		const auto result = triggers.generate_map_script(
-			map->terrain,
-			map->units,
-			map->doodads,
-			map->info,
-			map->sounds,
-			map->regions,
-			map->cameras,
-			map->tilesets,
+			map.terrain,
+			map.units,
+			map.doodads,
+			map.info,
+			map.sounds,
+			map.regions,
+			map.cameras,
+			map.tilesets,
 			mode
 		);
 
@@ -444,11 +444,11 @@ std::string TriggerEditor::get_parameters_names(
 					}
 
 					if (pre_result.starts_with("TRIGSTR")) {
-						result += map->trigger_strings.string(pre_result);
+						result += map.trigger_strings.string(pre_result);
 					} else if (!pre_result.empty()) {
 						result += pre_result;
 					} else if (j.value.starts_with("TRIGSTR")) {
-						result += map->trigger_strings.string(j.value);
+						result += map.trigger_strings.string(j.value);
 					} else {
 						result += j.value;
 					}

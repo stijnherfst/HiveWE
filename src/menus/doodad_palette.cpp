@@ -50,7 +50,7 @@ import Tileset;
 namespace fs = std::filesystem;
 
 DoodadPalette::DoodadPalette(QWidget* parent)
-	: Palette(parent), brush(map->doodads, map->terrain, map->pathing_map, map->render_manager, map->world_undo) {
+	: Palette(parent), terrain(map->terrain), brush(map->doodads, terrain, map->pathing_map, map->render_manager, map->world_undo) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
@@ -586,7 +586,7 @@ void DoodadPalette::update_selection_info() {
 		const Doodad& doodad = **brush.selections.begin();
 
 		const float first_relative_height =
-			doodad.position.z - map->terrain.interpolated_height(doodad.position.x, doodad.position.y, true);
+			doodad.position.z - terrain.interpolated_height(doodad.position.x, doodad.position.y, true);
 		bool same_object = true;
 		bool same_x = true;
 		bool same_y = true;
@@ -595,7 +595,7 @@ void DoodadPalette::update_selection_info() {
 		bool same_absolute_height = true;
 		bool same_relative_height = true;
 		for (const auto& i : brush.selections) {
-			const float other_relative_height = i->position.z - map->terrain.interpolated_height(i->position.x, i->position.y, true);
+			const float other_relative_height = i->position.z - terrain.interpolated_height(i->position.x, i->position.y, true);
 
 			same_object = same_object && i->id == doodad.id;
 			same_x = same_x && i->scale.x == doodad.scale.x;

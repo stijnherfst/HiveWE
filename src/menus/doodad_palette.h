@@ -66,6 +66,7 @@ private:
 
 	Ui::DoodadPalette ui;
 
+	Terrain& terrain;
 	DoodadBrush brush;
 	DoodadListModel* doodad_list_model;
 	DoodadListFilter* doodad_filter_model;

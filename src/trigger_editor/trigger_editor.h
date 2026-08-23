@@ -18,6 +18,7 @@
 #include "global_search.h"
 
 import Triggers;
+import Map;
 
 class TriggerEditor : public QMainWindow {
 	Q_OBJECT
@@ -28,6 +29,8 @@ public:
 
 	void save_changes();
 private:
+	/// Generating the map script needs most of the map, so the editor holds all of it
+	Map& map;
 	Triggers& triggers;
 
 	Ui::TriggerEditor ui;
