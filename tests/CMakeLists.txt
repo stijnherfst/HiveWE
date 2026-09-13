@@ -8,6 +8,7 @@ add_executable(HiveWE_tests
 	validator_test.cpp
 	particle_emitter2_test.cpp
 	fix_up_test.cpp
+	slk_test.cpp
 	adversarial_test.cpp
 )
 
@@ -19,6 +20,7 @@ target_link_libraries(HiveWE_tests PRIVATE
 target_compile_definitions(HiveWE_tests PRIVATE
 	MDL_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/mdl"
 	MDX_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/mdx"
+	SLK_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/slk"
 )
 
 include(doctest)
