@@ -5,16 +5,16 @@
 
 import std;
 import SLK;
-import MapGlobal;
 import Globals;
 import Camera;
 
-RegionPalette::RegionPalette(QWidget* parent) : Palette(parent), regions(map->regions), sounds(map->sounds), brush(map->regions, map->world_undo) {
+RegionPalette::RegionPalette(QWidget* parent, Brush*& active_brush, Regions& regions, Sounds& sounds, WorldUndoManager& world_undo)
+	: Palette(parent, active_brush), regions(regions), sounds(sounds), brush(regions, world_undo) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	map->brush = &brush;
+	claim_brush(&brush);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -223,12 +223,7 @@ void RegionPalette::update_properties() {
 
 bool RegionPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
-		// The palette is deleted after the map it points into, so the brush has to be
-		// let go of here rather than in the destructor. Another palette may have taken
-		// over in the meantime, so only clear our own.
-		if (map->brush == &brush) {
-			map->brush = nullptr;
-		}
+		release_brush(&brush);
 
 		// Remove shortcut from parent
 		selection_mode->disconnectShortcuts();
@@ -236,7 +231,7 @@ bool RegionPalette::event(QEvent* e) {
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
 		selection_mode->enableShortcuts();
-		map->brush = &brush;
+		claim_brush(&brush);
 		emit ribbon_tab_requested(ribbon_tab, "Region Palette");
 		// The regions may have changed (e.g. through undo/redo) while another brush was active
 		update_list();

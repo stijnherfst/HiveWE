@@ -240,48 +240,45 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 		window_handler.create_or_raise<ScenarioInfoEditor>(this, created, map->info, map->trigger_strings)->ui.tabs->setCurrentIndex(5);
 	});
 
-	connect(new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
-		open_palette<TerrainPalette>();
-	});
+	connect(
+		new QShortcut(QKeySequence(Qt::Key_T), this, nullptr, nullptr, Qt::WindowShortcut),
+		&QShortcut::activated,
+		this,
+		&HiveWE::open_terrain_palette
+	);
+	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, this, &HiveWE::open_terrain_palette);
 
-	connect(ui.ribbon->terrain_palette, &QRibbonButton::clicked, [this]() {
-		open_palette<TerrainPalette>();
-	});
+	connect(
+		new QShortcut(QKeySequence(Qt::Key_D), this, nullptr, nullptr, Qt::WindowShortcut),
+		&QShortcut::activated,
+		this,
+		&HiveWE::open_doodad_palette
+	);
+	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, this, &HiveWE::open_doodad_palette);
 
-	connect(new QShortcut(QKeySequence(Qt::Key_D), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
-		open_palette<DoodadPalette>();
-	});
-	connect(ui.ribbon->doodad_palette, &QRibbonButton::clicked, [this]() {
-		open_palette<DoodadPalette>();
-	});
+	connect(
+		new QShortcut(QKeySequence(Qt::Key_U), this, nullptr, nullptr, Qt::WindowShortcut),
+		&QShortcut::activated,
+		this,
+		&HiveWE::open_unit_palette
+	);
+	connect(ui.ribbon->unit_palette, &QRibbonButton::clicked, this, &HiveWE::open_unit_palette);
 
-	connect(new QShortcut(QKeySequence(Qt::Key_U), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
-		open_palette<UnitPalette>();
-	});
+	connect(
+		new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::WindowShortcut),
+		&QShortcut::activated,
+		this,
+		&HiveWE::open_pathing_palette
+	);
+	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, this, &HiveWE::open_pathing_palette);
 
-	connect(ui.ribbon->unit_palette, &QRibbonButton::clicked, [this]() {
-		open_palette<UnitPalette>();
-	});
-
-	connect(new QShortcut(QKeySequence(Qt::Key_P), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
-		ui.ribbon->pathing_visible->setChecked(true);
-		open_palette<PathingPalette>();
-	});
-
-	connect(ui.ribbon->pathing_palette, &QRibbonButton::clicked, [this]() {
-		ui.ribbon->pathing_visible->setChecked(true);
-		open_palette<PathingPalette>();
-	});
-
-	connect(new QShortcut(QKeySequence(Qt::Key_R), this, nullptr, nullptr, Qt::WindowShortcut), &QShortcut::activated, [&]() {
-		ui.ribbon->regions_visible->setChecked(true);
-		open_palette<RegionPalette>();
-	});
-
-	connect(ui.ribbon->region_palette, &QRibbonButton::clicked, [this]() {
-		ui.ribbon->regions_visible->setChecked(true);
-		open_palette<RegionPalette>();
-	});
+	connect(
+		new QShortcut(QKeySequence(Qt::Key_R), this, nullptr, nullptr, Qt::WindowShortcut),
+		&QShortcut::activated,
+		this,
+		&HiveWE::open_region_palette
+	);
+	connect(ui.ribbon->region_palette, &QRibbonButton::clicked, this, &HiveWE::open_region_palette);
 
 	connect(ui.ribbon->trigger_editor, &QRibbonButton::clicked, [this]() {
 		bool created = false;
@@ -330,6 +327,38 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	});
 
 	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
+}
+
+void HiveWE::open_terrain_palette() {
+	open_palette<TerrainPalette>(map->brush, map->terrain, map->units, map->tilesets, map->world_undo);
+}
+
+void HiveWE::open_doodad_palette() {
+	open_palette<
+		DoodadPalette>(map->brush, map->doodads, map->terrain, map->pathing_map, map->render_manager, map->world_undo, map->tilesets);
+}
+
+void HiveWE::open_unit_palette() {
+	open_palette<UnitPalette>(
+		map->brush,
+		map->units,
+		map->terrain,
+		map->pathing_map,
+		map->render_manager,
+		map->world_undo,
+		map->info,
+		map->trigger_strings
+	);
+}
+
+void HiveWE::open_pathing_palette() {
+	ui.ribbon->pathing_visible->setChecked(true);
+	open_palette<PathingPalette>(map->brush, map->pathing_map, map->world_undo);
+}
+
+void HiveWE::open_region_palette() {
+	ui.ribbon->regions_visible->setChecked(true);
+	open_palette<RegionPalette>(map->brush, map->regions, map->sounds, map->world_undo);
 }
 
 void HiveWE::load_map(const fs::path& directory) {

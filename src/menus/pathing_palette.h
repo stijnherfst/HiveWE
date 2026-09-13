@@ -8,12 +8,13 @@
 #include "pathing_brush.h"
 
 import PathingMap;
+import WorldUndoManager;
 
 class PathingPalette : public Palette {
 	Q_OBJECT
 
 public:
-	explicit PathingPalette(QWidget* parent = nullptr);
+	PathingPalette(QWidget* parent, Brush*& active_brush, PathingMap& pathing_map, WorldUndoManager& world_undo);
 	~PathingPalette();
 
 private:

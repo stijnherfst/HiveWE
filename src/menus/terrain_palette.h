@@ -13,12 +13,21 @@ import FlowLayout;
 import TextureButton;
 import Terrain;
 import Tileset;
+import Units;
+import WorldUndoManager;
 
 class TerrainPalette: public Palette {
 	Q_OBJECT
 
   public:
-	explicit TerrainPalette(QWidget* parent = nullptr);
+	TerrainPalette(
+		QWidget* parent,
+		Brush*& active_brush,
+		Terrain& terrain,
+		Units& units,
+		TilesetData& tilesets,
+		WorldUndoManager& world_undo
+	);
 	~TerrainPalette() override;
 
 	void refresh();

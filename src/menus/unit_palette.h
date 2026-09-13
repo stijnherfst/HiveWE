@@ -35,12 +35,29 @@
 import UnitListModel;
 import UnitSelector;
 import QRibbon;
+import Units;
+import Terrain;
+import PathingMap;
+import RenderManager;
+import WorldUndoManager;
+import MapInfo;
+import TriggerStrings;
 
 class UnitPalette : public Palette {
 	Q_OBJECT
 
 public:
-	UnitPalette(QWidget* parent = nullptr);
+	UnitPalette(
+		QWidget* parent,
+		Brush*& active_brush,
+		Units& units,
+		Terrain& terrain,
+		PathingMap& pathing_map,
+		RenderManager& render_manager,
+		WorldUndoManager& world_undo,
+		const MapInfo& info,
+		const TriggerStrings& trigger_strings
+	);
 	~UnitPalette();
 
 private:

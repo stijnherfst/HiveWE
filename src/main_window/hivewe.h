@@ -66,6 +66,11 @@ private:
 	void moveEvent(QMoveEvent* event) override;
 
 	void switch_warcraft();
+	void open_terrain_palette();
+	void open_doodad_palette();
+	void open_unit_palette();
+	void open_pathing_palette();
+	void open_region_palette();
 	void import_heightmap();
 	void save_window_state();
 	void restore_window_state();
@@ -74,10 +79,10 @@ private:
 	void set_current_custom_tab(QRibbonTab* tab, QString name);
 	void remove_custom_tab();
 
-	template <typename T>
-	void open_palette() {
+	template <typename T, typename... Args>
+	void open_palette(Args&&... args) {
 		bool created = false;
-		auto palette = window_handler.create_or_raise<T>(this, created);
+		auto palette = window_handler.create_or_raise<T>(this, created, std::forward<Args>(args)...);
 		if (created) {
 			palette->move(this->x() + this->width() - palette->width() - 10, this->y() + 160);
 			connect(palette, &T::ribbon_tab_requested, this, &HiveWE::set_current_custom_tab);

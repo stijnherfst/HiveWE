@@ -37,7 +37,6 @@ import std;
 import TableModel;
 import QRibbon;
 import Doodad;
-import MapGlobal;
 import Globals;
 import WindowHandler;
 import SLK;
@@ -49,16 +48,25 @@ import Tileset;
 
 namespace fs = std::filesystem;
 
-DoodadPalette::DoodadPalette(QWidget* parent)
-	: Palette(parent), terrain(map->terrain), brush(map->doodads, terrain, map->pathing_map, map->render_manager, map->world_undo) {
+DoodadPalette::DoodadPalette(
+	QWidget* parent,
+	Brush*& active_brush,
+	Doodads& doodads,
+	Terrain& terrain,
+	PathingMap& pathing_map,
+	RenderManager& render_manager,
+	WorldUndoManager& world_undo,
+	const TilesetData& tilesets
+)
+	: Palette(parent, active_brush), terrain(terrain), brush(doodads, terrain, pathing_map, render_manager, world_undo) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	map->brush = &brush;
+	claim_brush(&brush);
 
 	ui.tileset->addItem("All Tilesets", '*');
-	for (const auto& [key, value] : map->tilesets.tilesets()) {
+	for (const auto& [key, value] : tilesets.tilesets()) {
 		ui.tileset->addItem(QString::fromStdString(value.name), key);
 	}
 
@@ -473,11 +481,8 @@ DoodadPalette::~DoodadPalette() {
 bool DoodadPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
 		// The palette is deleted after the map it points into, so the brush has to be
-		// let go of here rather than in the destructor. Another palette may have taken
-		// over in the meantime, so only clear our own.
-		if (map->brush == &brush) {
-			map->brush = nullptr;
-		}
+		// let go of here rather than in the destructor.
+		release_brush(&brush);
 
 		// Remove shortcut from parent
 		find_this->setEnabled(false);
@@ -491,7 +496,7 @@ bool DoodadPalette::event(QEvent* e) {
 		find_parent->setEnabled(true);
 		change_mode_this->setEnabled(true);
 		change_mode_parent->setEnabled(true);
-		map->brush = &brush;
+		claim_brush(&brush);
 		emit ribbon_tab_requested(ribbon_tab, "Doodad Palette");
 	}
 

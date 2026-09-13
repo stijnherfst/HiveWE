@@ -6,17 +6,17 @@
 #include <QMessageBox>
 
 import std;
-import MapGlobal;
 
 namespace fs = std::filesystem;
 
-PathingPalette::PathingPalette(QWidget *parent) : Palette(parent), pathing_map(map->pathing_map), brush(map->world_undo) {
+PathingPalette::PathingPalette(QWidget* parent, Brush*& active_brush, PathingMap& pathing_map, WorldUndoManager& world_undo)
+	: Palette(parent, active_brush), pathing_map(pathing_map), brush(world_undo) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	map->brush = &brush;
+	claim_brush(&brush);
 
 	QRibbonSection* selection_section = new QRibbonSection;
 	selection_section->setText("Selection");
@@ -131,12 +131,7 @@ PathingPalette::~PathingPalette() {
 
 bool PathingPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
-		// The palette is deleted after the map it points into, so the brush has to be
-		// let go of here rather than in the destructor. Another palette may have taken
-		// over in the meantime, so only clear our own.
-		if (map->brush == &brush) {
-			map->brush = nullptr;
-		}
+		release_brush(&brush);
 
 		// Remove shortcut from parent
 		selection_mode->disconnectShortcuts();
@@ -144,7 +139,7 @@ bool PathingPalette::event(QEvent* e) {
 		delete ribbon_tab;
 	} else if (e->type() == QEvent::WindowActivate) {
 		selection_mode->enableShortcuts();
-		map->brush = &brush;
+		claim_brush(&brush);
 		emit ribbon_tab_requested(ribbon_tab, "Pathing Palette");
 	}
 	return QWidget::event(e);

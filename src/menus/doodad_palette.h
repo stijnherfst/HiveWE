@@ -37,6 +37,12 @@ import QRibbon;
 import AspectRatioPixmapLabel;
 import DestructibleListModel;
 import DoodadListModel;
+import Doodads;
+import Terrain;
+import PathingMap;
+import RenderManager;
+import WorldUndoManager;
+import Tileset;
 
 ///	Only allows inputting doubles and automatically selects the text on focus
 class DoubleInput : public QLineEdit {
@@ -55,7 +61,16 @@ class DoodadPalette : public Palette {
 	Q_OBJECT
 
 public:
-	DoodadPalette(QWidget* parent = nullptr);
+	DoodadPalette(
+		QWidget* parent,
+		Brush*& active_brush,
+		Doodads& doodads,
+		Terrain& terrain,
+		PathingMap& pathing_map,
+		RenderManager& render_manager,
+		WorldUndoManager& world_undo,
+		const TilesetData& tilesets
+	);
 	~DoodadPalette();
 
 private:

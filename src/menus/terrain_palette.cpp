@@ -1,8 +1,6 @@
 #include "terrain_palette.h"
 #include "terrain_operators.h"
 
-import MapGlobal;
-
 import std;
 import Tileset;
 import Texture;
@@ -10,8 +8,15 @@ import OpenGLUtilities;
 import ResourceManager;
 import Globals;
 
-TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent), terrain(map->terrain), tilesets(map->tilesets),
-	  brush(map->terrain, map->units, map->tilesets, map->world_undo) {
+TerrainPalette::TerrainPalette(
+	QWidget* parent,
+	Brush*& active_brush,
+	Terrain& terrain,
+	Units& units,
+	TilesetData& tilesets,
+	WorldUndoManager& world_undo
+)
+	: Palette(parent, active_brush), terrain(terrain), tilesets(tilesets), brush(terrain, units, tilesets, world_undo) {
 	ui.setupUi(this);
 
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -20,7 +25,7 @@ TerrainPalette::TerrainPalette(QWidget* parent) : Palette(parent), terrain(map->
 	brush.texture_operator.tile_id = terrain.tileset_ids.front();
 	brush.cliff_operator.cliff_id = terrain.cliffset_ids.front();
 
-	map->brush = &brush;
+	claim_brush(&brush);
 
 	change_mode_this = new QShortcut(Qt::Key_Space, this, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
 	change_mode_parent = new QShortcut(Qt::Key_Space, parent, nullptr, nullptr, Qt::ShortcutContext::WindowShortcut);
@@ -71,12 +76,7 @@ void TerrainPalette::refresh() {
 
 bool TerrainPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
-		// The palette is deleted after the map it points into, so the brush has to be
-		// let go of here rather than in the destructor. Another palette may have taken
-		// over in the meantime, so only clear our own.
-		if (map->brush == &brush) {
-			map->brush = nullptr;
-		}
+		release_brush(&brush);
 
 		change_mode_this->setEnabled(false);
 		change_mode_parent->setEnabled(false);
@@ -85,7 +85,7 @@ bool TerrainPalette::event(QEvent* e) {
 	} else if (e->type() == QEvent::WindowActivate) {
 		change_mode_this->setEnabled(true);
 		change_mode_parent->setEnabled(true);
-		map->brush = &brush;
+		claim_brush(&brush);
 		emit ribbon_tab_requested(ribbon_tab, "Terrain Palette");
 	}
 	return QWidget::event(e);

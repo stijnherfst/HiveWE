@@ -8,12 +8,13 @@
 import QRibbon;
 import Regions;
 import Sounds;
+import WorldUndoManager;
 
 class RegionPalette : public Palette {
 	Q_OBJECT
 
 public:
-	explicit RegionPalette(QWidget* parent = nullptr);
+	RegionPalette(QWidget* parent, Brush*& active_brush, Regions& regions, Sounds& sounds, WorldUndoManager& world_undo);
 	~RegionPalette();
 
 private:

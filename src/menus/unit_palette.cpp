@@ -13,22 +13,31 @@
 import std;
 import TableModel;
 import WindowHandler;
-import MapGlobal;
 import Globals;
 
-UnitPalette::UnitPalette(QWidget* parent)
-	: Palette(parent), brush(map->units, map->terrain, map->pathing_map, map->render_manager, map->world_undo) {
+UnitPalette::UnitPalette(
+	QWidget* parent,
+	Brush*& active_brush,
+	Units& units,
+	Terrain& terrain,
+	PathingMap& pathing_map,
+	RenderManager& render_manager,
+	WorldUndoManager& world_undo,
+	const MapInfo& info,
+	const TriggerStrings& trigger_strings
+)
+	: Palette(parent, active_brush), brush(units, terrain, pathing_map, render_manager, world_undo) {
 	ui.setupUi(this);
 	setAttribute(Qt::WA_DeleteOnClose);
 	show();
 
-	for (const auto& player : map->info.players) {
+	for (const auto& player : info.players) {
 		std::string color_lookup = std::to_string(player.internal_number);
 		if (color_lookup.size() == 1) {
 			color_lookup = "0" + color_lookup;
 		}
 
-		const auto player_name = std::format("{} ({})", map->trigger_strings.string(player.name), world_edit_strings.data("WorldEditStrings", "WESTRING_UNITCOLOR_" + color_lookup));
+		const auto player_name = std::format("{} ({})", trigger_strings.string(player.name), world_edit_strings.data("WorldEditStrings", "WESTRING_UNITCOLOR_" + color_lookup));
 
 		ui.player->addItem(QString::fromStdString(player_name), player.internal_number);
 	}
@@ -122,12 +131,7 @@ UnitPalette::~UnitPalette() {
 
 bool UnitPalette::event(QEvent* e) {
 	if (e->type() == QEvent::Close) {
-		// The palette is deleted after the map it points into, so the brush has to be
-		// let go of here rather than in the destructor. Another palette may have taken
-		// over in the meantime, so only clear our own.
-		if (map->brush == &brush) {
-			map->brush = nullptr;
-		}
+		release_brush(&brush);
 
 		// Remove shortcut from parent
 		find_this->setEnabled(false);
@@ -139,7 +143,7 @@ bool UnitPalette::event(QEvent* e) {
 		find_this->setEnabled(true);
 		find_parent->setEnabled(true);
 		selection_mode->enableShortcuts();
-		map->brush = &brush;
+		claim_brush(&brush);
 		emit ribbon_tab_requested(ribbon_tab, "Unit Palette");
 	}
 	return QWidget::event(e);

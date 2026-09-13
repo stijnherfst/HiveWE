@@ -28,7 +28,6 @@ __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 import std;
 import Map;
 import Timer;
-import MapGlobal;
 import Globals;
 import Utilities;
 import Hierarchy;
@@ -151,8 +150,8 @@ int main(int argc, char* argv[]) {
 
 	std::println("Application start: {}ms", start_timer.elapsed_ms());
 
-	map->load("data/test map/");
-	// map->load("C:/Users/User/Desktop/MCFC.w3x");
+	w.load_map("data/test map/");
+	// w.load_map("C:/Users/User/Desktop/MCFC.w3x");
 
 	return QApplication::exec();
 }
