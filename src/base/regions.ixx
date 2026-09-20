@@ -14,17 +14,17 @@ export constexpr float region_border_size() {
 }
 
 /// Darker pastel colors that new regions cycle through
-export constexpr std::array<glm::u8vec3, 10> region_preset_colors = {{
-	{ 177, 84, 84 },
-	{ 185, 122, 86 },
-	{ 181, 157, 84 },
-	{ 122, 158, 90 },
-	{ 84, 158, 146 },
-	{ 84, 122, 168 },
-	{ 122, 98, 168 },
-	{ 164, 92, 146 },
-	{ 180, 100, 124 },
-	{ 110, 122, 138 },
+export constexpr std::array<glm::u8vec4, 10> region_preset_colors = {{
+	{ 177, 84, 84, 255 },
+	{ 185, 122, 86, 255 },
+	{ 181, 157, 84, 255 },
+	{ 122, 158, 90, 255 },
+	{ 84, 158, 146, 255 },
+	{ 84, 122, 168, 255 },
+	{ 122, 98, 168, 255 },
+	{ 164, 92, 146, 255 },
+	{ 180, 100, 124, 255 },
+	{ 110, 122, 138, 255 },
 }};
 
 export struct Region {
@@ -36,11 +36,13 @@ export struct Region {
 	int creation_number;
 	std::string weather_id;
 	std::string ambient_id;
-	glm::u8vec3 color = {255, 0, 0};
+	glm::u8vec4 color = {255, 0, 0, 255};
+	uint32_t block_camera;
+	uint32_t alpha_tile_minimap_color;
 };
 
 export class Regions {
-	static constexpr int write_version = 5;
+	static constexpr int write_version = 7;
 
 	struct RegionRenderData {
 		glm::vec4 rect; // left, bottom, right, top
@@ -93,8 +95,8 @@ export class Regions {
 		BinaryReader reader = hierarchy.map_file_read("war3map.w3r").value();
 
 		const int version = reader.read<uint32_t>();
-		if (version != 5) {
-			std::cout << "Unknown Regions file version. Attempting to load, but may crash.";
+		if (version != 5 && version != 7) {
+			std::println("Unknown Regions file version {}. Attempting to load, but may crash.", version);
 		}
 
 		regions.resize(reader.read<uint32_t>());
@@ -108,9 +110,12 @@ export class Regions {
 			i.creation_number = reader.read<int>();
 			i.weather_id = reader.read_string(4);
 			i.ambient_id = reader.read_c_string();
-			const auto color = reader.read<glm::u8vec3>();
-			i.color = {color.b, color.g, color.r}; // BGR to RGB
-			reader.advance(1);
+			const auto color = reader.read<glm::u8vec4>();
+			i.color = {color.b, color.g, color.r, color.r}; // BGR to RGB
+			if (version >= 7) {
+				i.block_camera = reader.read<uint32_t>();
+				i.alpha_tile_minimap_color = reader.read<uint32_t>();
+			}
 		}
 
 		return true;
@@ -131,8 +136,9 @@ export class Regions {
 			writer.write<int>(i.creation_number);
 			writer.write_c_string_padded(i.weather_id, 4);
 			writer.write_c_string(i.ambient_id);
-			writer.write(glm::u8vec3(i.color.b, i.color.g, i.color.r));
-			writer.write<uint8_t>(0xFF);
+			writer.write(glm::u8vec4(i.color.b, i.color.g, i.color.r, i.color.a));
+			writer.write(i.block_camera);
+			writer.write(i.alpha_tile_minimap_color);
 		}
 
 		hierarchy.map_file_write("war3map.w3r", writer.buffer);

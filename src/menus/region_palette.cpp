@@ -131,7 +131,7 @@ RegionPalette::RegionPalette(QWidget* parent, Brush*& active_brush, Regions& reg
 			return;
 		}
 
-		const glm::u8vec3 new_color = { color.red(), color.green(), color.blue() };
+		const glm::u8vec4 new_color = { color.red(), color.green(), color.blue(), color.alpha() };
 		if ((*brush.selections.begin())->color == new_color) {
 			return;
 		}

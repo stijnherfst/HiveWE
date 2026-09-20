@@ -63,7 +63,7 @@ export class Doodads {
 			return false;
 		}
 		const uint32_t version = reader.read<uint32_t>();
-		if (version != 7 && version != 8) {
+		if (version != 7 && version != 8 && version != 13) {
 			std::println("Unknown war3map.doo version: {} Attempting to load but may crash\nPlease send this map to eejin\n", version);
 		}
 
@@ -86,6 +86,10 @@ export class Doodads {
 				i.skin_id = i.id;
 			}
 
+			if (version >= 13) {
+				i.group_id = reader.read<uint32_t>();
+			}
+
 			i.state = static_cast<Doodad::State>(reader.read<uint8_t>());
 			i.life = reader.read<uint8_t>();
 
@@ -101,7 +105,29 @@ export class Doodads {
 				}
 			}
 
+			if (version >= 13) {
+				i.unknown = reader.read<uint32_t>();
+			}
 			i.creation_number = reader.read<uint32_t>();
+
+			if (version >= 13) {
+				i.roll = reader.read<float>();
+				i.pitch = reader.read<float>();
+
+				i.lights.resize(reader.read<uint32_t>());
+				for (auto&& j : i.lights) {
+					j.index = reader.read<uint32_t>();
+					j.is_shadow_casting = reader.read<uint32_t>();
+					j.color = reader.read<glm::u8vec4>();
+					j.intensity = reader.read<float>();
+					j.shadow_casting_start = reader.read<float>();
+					j.shadow_casting_end = reader.read<float>();
+					j.quadratic_falloff = reader.read<float>();
+					j.linear_falloff = reader.read<float>();
+					j.damping = reader.read<float>();
+				}
+			}
+
 			Doodad::auto_increment = std::max(Doodad::auto_increment, i.creation_number);
 		}
 
