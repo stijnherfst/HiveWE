@@ -114,8 +114,13 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 
 target_sources(HiveWE PRIVATE
 	"main.cpp"
-	"main_window/hivewe.rc"
 )
+
+if(WIN32)
+  target_sources(HiveWE PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/main_window/hivewe.rc"
+    )
+endif()
 
 target_sources(HiveWE_lib PRIVATE
 	"main_window/hivewe.cpp"

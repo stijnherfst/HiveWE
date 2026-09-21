@@ -6,6 +6,15 @@ cmake_minimum_required(VERSION 3.29)
 #    SET(VCPKG_TARGET_TRIPLET "x64-windows-static")
 # endif()
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(CMAKE_CXX_MODULE_STD ON)
+set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "f35a9ac6-8463-4d38-8eec-5d6008153e7d")
+
 project (HiveWE CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -16,21 +25,26 @@ find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
-find_package(stormlib CONFIG REQUIRED)
+find_package(StormLib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED) # Required by Stormlib
 find_package(CascLib CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
-find_package(libjpeg-turbo CONFIG REQUIRED)
+
+if(WIN32)
+  find_package(libjpeg-turbo CONFIG REQUIRED)
+endif()
+
 find_package(imgui CONFIG REQUIRED)
 find_package(outcome CONFIG REQUIRED)
 find_package(unordered_dense CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(unofficial-qscintilla CONFIG REQUIRED)
-find_package(tracy CONFIG REQUIRED)
+find_package(Tracy CONFIG REQUIRED)
+
 
 qt_standard_project_setup()
 
@@ -73,9 +87,7 @@ target_link_libraries(HiveWE_lib PUBLIC
 	soil2::soil2
 	StormLib::storm
 	BZip2::BZip2
-	libjpeg-turbo::jpeg
 	absl::base
-	libjpeg-turbo::turbojpeg
 	ads::qtadvanceddocking-qt6
 	TBB::tbb
 	imgui::imgui
@@ -85,6 +97,13 @@ target_link_libraries(HiveWE_lib PUBLIC
 	unofficial::qscintilla::qscintilla
 	${BULLET_LIBRARIES}
 )
+
+if(WIN32)
+  target_link_libraries(HiveWE_lib PUBLIC
+    libjpeg-turbo::jpeg
+    libjpeg-turbo::turbojpeg
+  )
+endif()
 
 target_compile_options(HiveWE_lib PUBLIC
 	$<$<CXX_COMPILER_ID:MSVC>:/Zc:__cplusplus /MP /sdl /diagnostics:caret /permissive->
@@ -150,12 +169,21 @@ if(TRACY_ENABLE)
 	)
 endif()
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
+if(WIN32)
+  if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
+  else()
+    set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
+  endif()
 else()
-	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
+  set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-linux")
 endif()
 
 file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/platforms/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/platforms")
-file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/styles")
+
+if(EXISTS "${QT_VCPKG_PATH}/Qt6/plugins/styles")
+  file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/styles/"
+  DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/styles")
+endif()
+
 file(COPY "${QT_VCPKG_PATH}/Qt6/plugins/imageformats/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/imageformats")
