@@ -1,10 +1,13 @@
+module;
+
+#include <glm/glm.hpp>
+
 export module test;
 
 import std;
 import BinaryReader;
 import MDX;
 import Utilities;
-import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 

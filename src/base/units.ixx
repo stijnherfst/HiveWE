@@ -2,6 +2,8 @@ module;
 
 #include <absl/strings/str_split.h>
 #include <tracy/Tracy.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 export module Units;
 
@@ -18,8 +20,6 @@ import Hierarchy;
 import Globals;
 import Terrain;
 import Rects;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 

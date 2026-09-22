@@ -1,10 +1,13 @@
+module;
+
+#include <glad/glad.h>
+
 export module ShadowMap;
 
 import std;
 import types;
 import Hierarchy;
 import BinaryReader;
-import <glad/glad.h>;
 
 export class ShadowMap {
 	size_t width;

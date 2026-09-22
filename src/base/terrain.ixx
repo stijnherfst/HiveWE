@@ -1,6 +1,12 @@
 module;
 
 #include <QObject>
+#include "glad/glad.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/quaternion.hpp"
+#include "bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h"
+#include "btBulletDynamicsCommon.h"
 
 #include <brush.h>
 
@@ -24,12 +30,6 @@ import Camera;
 import UnorderedMap;
 import Tileset;
 import MapInfo;
-import "glad/glad.h";
-import "glm/glm.hpp";
-import "glm/gtc/matrix_transform.hpp";
-import "glm/gtc/quaternion.hpp";
-import "bullet/BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h";
-import "btBulletDynamicsCommon.h";
 
 using namespace std::literals::string_literals;
 

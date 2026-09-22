@@ -1,3 +1,8 @@
+module;
+
+#include <glm/glm.hpp>
+#include <glad/glad.h>
+
 export module EditableMesh;
 
 import std;
@@ -9,8 +14,6 @@ import Skeleton;
 import ParticleEmitter2Renderer;
 import Hierarchy;
 import BinaryReader;
-import <glm/glm.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

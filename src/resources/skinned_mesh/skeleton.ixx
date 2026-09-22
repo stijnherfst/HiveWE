@@ -2,6 +2,9 @@ module;
 
 #include <cassert>
 #include <chrono>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 export module Skeleton;
 
@@ -12,9 +15,6 @@ import MathOperations;
 import RenderNode;
 import MDX;
 import ParticleEmitter2Simulation;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 // Ghostwolf mentioned this to me once, so I used it,
 // as 0.75, experimentally determined as a guess at

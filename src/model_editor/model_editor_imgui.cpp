@@ -6,11 +6,11 @@
 #include <QUrl>
 
 #include <qt_imgui/qt_imGui.h>
+#include <imgui.h>
+#include <imgui_internal.h>
 
 import std;
 import MDX;
-import <imgui.h>;
-import <imgui_internal.h>;
 
 namespace {
 	const char* blend_mode_name(const uint32_t mode) {

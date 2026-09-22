@@ -1,3 +1,8 @@
+module;
+
+#include "absl/strings/str_split.h"
+#include "absl/strings/str_join.h"
+
 export module SLK;
 
 import std;
@@ -7,8 +12,6 @@ import Utilities;
 import INI;
 import UnorderedMap;
 import no_init_allocator;
-import "absl/strings/str_split.h";
-import "absl/strings/str_join.h";
 
 namespace fs = std::filesystem;
 

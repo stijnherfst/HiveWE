@@ -1,4 +1,5 @@
 #include "tile_pather.h"
+#include <glad/glad.h>
 
 import std;
 import OpenGLUtilities;
@@ -7,7 +8,6 @@ import PathingMap;
 import Tileset;
 import ResourceManager;
 import Terrain;
-import <glad/glad.h>;
 
 TilePather::TilePather(QWidget* parent, Terrain& terrain, PathingMap& pathing_map, TilesetData& tilesets)
 	: QDialog(parent), terrain(terrain), pathing_map(pathing_map), tilesets(tilesets) {

@@ -1,12 +1,12 @@
 #include "region_brush.h"
 
 #include <QKeyEvent>
+#include <glm/glm.hpp>
 
 import std;
 import WorldUndoManager;
 import Camera;
 import Globals;
-import <glm/glm.hpp>;
 
 RegionBrush::RegionBrush(Regions& regions, WorldUndoManager& world_undo)
 	: Brush(), regions(regions), world_undo(world_undo) {

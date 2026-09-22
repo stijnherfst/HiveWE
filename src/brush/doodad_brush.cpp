@@ -1,6 +1,10 @@
 ﻿#include "doodad_brush.h"
 
 #include <QKeyEvent>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 import std;
 import Hierarchy;
@@ -16,10 +20,6 @@ import SkinnedMesh;
 import Skeleton;
 import Globals;
 import Rects;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 DoodadBrush::DoodadBrush(Doodads& doodads, Terrain& terrain, PathingMap& pathing_map,
 		     RenderManager& render_manager, WorldUndoManager& world_undo)

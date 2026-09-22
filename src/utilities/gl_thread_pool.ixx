@@ -5,11 +5,11 @@ module;
 #include <QOpenGLContext>
 #include <QSurfaceFormat>
 #include <QThread>
+#include "glad/glad.h"
 
 export module GLThreadPool;
 
 import std;
-import "glad/glad.h";
 
 export class GLThreadPool {
 	std::mutex mutex;

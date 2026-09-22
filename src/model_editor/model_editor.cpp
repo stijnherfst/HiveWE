@@ -23,7 +23,7 @@ import BinaryReader;
 import Hierarchy;
 import MDX;
 import Utilities;
-import "absl/strings/str_join.h";
+#include "absl/strings/str_join.h"
 
 class CCustomComponentsFactory: public ads::CDockComponentsFactory {
   public:

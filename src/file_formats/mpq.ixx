@@ -1,7 +1,7 @@
 module;
 
 #define __STORMLIB_NO_STATIC_LINK__
-#include "StormLib.h";
+#include "StormLib.h"
 
 export module MPQ;
 

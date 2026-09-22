@@ -1,6 +1,8 @@
 module;
 
 #include <QAbstractTableModel>
+#include <absl/strings/str_split.h>
+#include <absl/strings/str_join.h>
 
 export module TableModel;
 
@@ -13,8 +15,6 @@ import QIconResource;
 import Hierarchy;
 import ResourceManager;
 import UnorderedMap;
-import <absl/strings/str_split.h>;
-import <absl/strings/str_join.h>;
 
 namespace fs = std::filesystem;
 

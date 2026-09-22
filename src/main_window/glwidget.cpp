@@ -4,13 +4,13 @@
 #include <QPainter>
 
 #include <tracy/Tracy.hpp>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
 
 import std;
 import OpenGLUtilities;
 import Camera;
 import MapGlobal;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
 import WorldUndoManager;
 
 void APIENTRY gl_debug_output(

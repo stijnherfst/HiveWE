@@ -17,12 +17,13 @@
 #include <QMenu>
 #include <QMessageBox>
 
+#include "single_model.h"
+
 import std;
 import UnitSelector;
 import Globals;
 import ResourceManager;
 import SlkConversions;
-import "single_model.h";
 
 ObjectEditor::ObjectEditor(QWidget* parent) : QMainWindow(parent) {
 	ui.setupUi(this);

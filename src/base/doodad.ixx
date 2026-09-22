@@ -1,6 +1,8 @@
 module;
 
 #include <QRectF>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 export module Doodad;
 
@@ -14,8 +16,6 @@ import SLK;
 import Globals;
 import ResourceManager;
 import Utilities;
-import <glm/glm.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 export struct Doodad {
 	static inline int auto_increment;

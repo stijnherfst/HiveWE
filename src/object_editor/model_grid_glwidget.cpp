@@ -6,12 +6,12 @@
 #include <QStyle>
 #include <QToolTip>
 #include <QWheelEvent>
+#include <glm/gtc/matrix_transform.hpp>
 
 import std;
 import BinaryReader;
 import Hierarchy;
 import ResourceManager;
-import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 

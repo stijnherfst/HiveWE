@@ -2,9 +2,9 @@
 
 #include <QMouseEvent>
 
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 import Camera;
 
 struct ModelEditorCamera {

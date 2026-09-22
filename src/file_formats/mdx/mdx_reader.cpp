@@ -1,8 +1,9 @@
+#include <glm/glm.hpp>
+
 module MDX;
 
 import std;
 import BinaryReader;
-import <glm/glm.hpp>;
 
 namespace mdx {
 	glm::vec3 rgb_to_bgr(const glm::vec3 rgb) {

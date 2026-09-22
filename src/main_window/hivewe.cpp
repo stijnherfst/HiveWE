@@ -1,6 +1,30 @@
 #include "HiveWE.h"
 #define __STORMLIB_NO_STATIC_LINK__
 #include "StormLib.h"
+#include <soil2/SOIL2.h>
+#include "pathing_palette.h"
+#include "region_palette.h"
+#include "object_editor/object_editor.h"
+#include "model_editor/model_editor.h"
+#include "tile_setter.h"
+#include "scenario_info_editor.h"
+#include "map_info_editor/map_info_editor.h"
+#include "terrain_palette.h"
+#include "settings_editor.h"
+#include "map_protection_dialog.h"
+#include "tile_pather.h"
+#include "palette.h"
+#include "terrain_palette.h"
+#include "doodad_palette.h"
+#include "unit_palette.h"
+#include "object_editor/icon_view.h"
+#include "trigger_editor.h"
+#include "QMessageBox"
+#include "QProcess"
+#include "QKeySequence"
+#include "QString"
+#include "menus/gameplay_constants_editor.h"
+#include "asset_manager/asset_manager.h"
 
 import std;
 import Hierarchy;
@@ -12,36 +36,12 @@ import MapInfo;
 import TriggerStrings;
 import Terrain;
 import Doodads;
-import <soil2/SOIL2.h>;
 import MapGlobal;
 import WorldUndoManager;
 import SkinnedMeshGlobals;
 import ResourceManager;
-import "pathing_palette.h";
-import "region_palette.h";
-import "object_editor/object_editor.h";
-import "model_editor/model_editor.h";
-import "tile_setter.h";
-import "scenario_info_editor.h";
-import "map_info_editor/map_info_editor.h";
-import "terrain_palette.h";
-import "settings_editor.h";
-import "map_protection_dialog.h";
 import Protection;
 import Utilities;
-import "tile_pather.h";
-import "palette.h";
-import "terrain_palette.h";
-import "doodad_palette.h";
-import "unit_palette.h";
-import "object_editor/icon_view.h";
-import "trigger_editor.h";
-#include "QMessageBox"
-#include "QProcess"
-#include "QKeySequence"
-#include "QString"
-import "menus/gameplay_constants_editor.h";
-import "asset_manager/asset_manager.h";
 
 namespace fs = std::filesystem;
 

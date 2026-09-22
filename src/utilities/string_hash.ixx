@@ -1,7 +1,10 @@
+module;
+
+#include "ankerl/unordered_dense.h"
+
 export module StringHash;
 
 import std;
-import "ankerl/unordered_dense.h";
 
 export struct string_hash {
     using is_transparent = void; // enable heterogeneous lookup

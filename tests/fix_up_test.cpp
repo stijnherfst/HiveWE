@@ -8,9 +8,9 @@
 
 #include <algorithm>
 #include <doctest/doctest.h>
+#include <glm/glm.hpp>
 
 import MDX;
-import <glm/glm.hpp>;
 
 namespace {
 	/// A bone chain, one bone per (id, parent_id) pair, with a pivot per bone marking where it began.

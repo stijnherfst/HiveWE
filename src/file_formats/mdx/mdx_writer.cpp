@@ -1,7 +1,8 @@
+#include <glm/glm.hpp>
+
 module MDX;
 
 import std;
-import <glm/glm.hpp>;
 
 namespace fs = std::filesystem;
 

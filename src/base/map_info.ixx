@@ -1,6 +1,8 @@
 module;
 
 #include <QMessageBox>
+#include <nlohmann/json.hpp>
+#include <glm/glm.hpp>
 
 export module MapInfo;
 
@@ -12,8 +14,6 @@ import Hierarchy;
 import TriggerStrings;
 import Utilities;
 import Paths;
-import <nlohmann/json.hpp>;
-import <glm/glm.hpp>;
 
 export enum class PlayerType {
 	human,
