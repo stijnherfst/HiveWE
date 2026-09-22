@@ -42,6 +42,8 @@ namespace {
 				return "HD";
 			case mdx::ShaderType::SDOnHD:
 				return "SD on HD";
+			case mdx::ShaderType::crystal:
+				return "HD Crystal";
 			default:
 				return "Unknown";
 		}
@@ -508,7 +510,7 @@ void ModelEditorGLWidget::render_imgui() {
 			const auto& material = model.materials[m];
 			ImGui::PushID(static_cast<int>(m));
 			if (ImGui::CollapsingHeader(std::format("Material {} ({} layers)", m, material.layers.size()).c_str())) {
-				ImGui::Text("Priority plane: %u", material.priority_plane);
+				ImGui::Text("Priority plane: %d", material.priority_plane);
 				ImGui::Text("Flags: %s", material_flags_string(material.flags).c_str());
 
 				for (size_t l = 0; l < material.layers.size(); l++) {

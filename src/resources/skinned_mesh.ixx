@@ -316,7 +316,7 @@ export class SkinnedMesh: public Resource {
 
 							found = true;
 
-							if (layer.shader == mdx::ShaderType::HD) {
+							if (mdx::is_hd_shader(layer.shader)) {
 								switch (j) {
 									case 0:
 										suffix = "_diffuse";
@@ -471,7 +471,7 @@ export class SkinnedMesh: public Resource {
 					entry.layer_index_global = static_cast<uint32_t>(lay_index + layer_base);
 					entry.layer_index_local = static_cast<uint32_t>(lay_index);
 
-					const bool layer_is_hd = layer.shader == mdx::ShaderType::HD;
+					const bool layer_is_hd = mdx::is_hd_shader(layer.shader);
 					auto& target = geoset_is_opaque ? (layer_is_hd ? opaque_entries_hd : opaque_entries_sd)
 													: (layer_is_hd ? transparent_entries_hd : transparent_entries_sd);
 					target.push_back(entry);

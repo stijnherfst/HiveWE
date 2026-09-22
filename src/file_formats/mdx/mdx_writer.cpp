@@ -82,7 +82,11 @@ namespace mdx {
 			if (geoset.skin.size()) {
 				writer.write_string("SKIN");
 				writer.write<uint32_t>(geoset.skin.size());
-				writer.write_vector(geoset.skin);
+				if (version >= 1400) {
+					writer.write_vector(std::vector<uint16_t>(geoset.skin.begin(), geoset.skin.end()));
+				} else {
+					writer.write_vector(geoset.skin);
+				}
 			}
 
 			writer.write_string("UVAS");
@@ -154,20 +158,18 @@ namespace mdx {
 			const size_t material_index = writer.buffer.size();
 			writer.write<uint32_t>(0);
 
-			writer.write<uint32_t>(material.priority_plane);
+			writer.write<int32_t>(material.priority_plane);
 			writer.write<uint32_t>(material.flags);
 
-			// v900/v1000: 80-byte shader name string; non-empty marks the material as HD
+			const ShaderType material_shader = material.layers.empty() ? ShaderType::SD : material.layers[0].shader;
 			if (version == 900 || version == 1000) {
-				const bool is_hd = !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
-				writer.write_c_string_padded(is_hd ? "Shader_HD_DefaultUnit" : "", 80);
+				writer.write_c_string_padded(is_hd_shader(material_shader) ? shader_type_name(material_shader) : "", 80);
 			}
 
 			writer.write_string("LAYS");
 
 			if (version < 1100) {
-				const bool is_hd_pre_v1100 = (version == 900 || version == 1000)
-					&& !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
+				const bool is_hd_pre_v1100 = (version == 900 || version == 1000) && is_hd_shader(material_shader);
 
 				if (is_hd_pre_v1100) {
 					// HD pre-v1100: our single merged Layer fans out to one MDX layer entry per texture slot.
@@ -347,6 +349,9 @@ namespace mdx {
 
 			light.node.save(writer);
 			writer.write<uint32_t>(light.type);
+			if (version >= 1300) {
+				writer.write<uint32_t>(light.shadow_casting ? 1 : 0);
+			}
 			writer.write<float>(light.attenuation_start);
 			writer.write<float>(light.attenuation_end);
 			writer.write<glm::vec3>(light.color);
@@ -356,6 +361,15 @@ namespace mdx {
 			if (version >= 1200) {
 				writer.write<float>(light.shadow_intensity);
 			}
+			if (version >= 1300) {
+				writer.write<float>(light.shadow_casting_start);
+				writer.write<float>(light.shadow_casting_end);
+			}
+			if (version >= 1600) {
+				writer.write<float>(light.quadratic_falloff);
+				writer.write<float>(light.linear_falloff);
+				writer.write<float>(light.damping);
+			}
 
 			light.KLAS.save(TrackTag::KLAS, writer);
 			light.KLAE.save(TrackTag::KLAE, writer);
@@ -364,6 +378,15 @@ namespace mdx {
 			light.KLBI.save(TrackTag::KLBI, writer);
 			light.KLBC.save(TrackTag::KLBC, writer);
 			light.KLAV.save(TrackTag::KLAV, writer);
+			if (version >= 1300) {
+				light.KLSS.save(TrackTag::KLSS, writer);
+				light.KLSE.save(TrackTag::KLSE, writer);
+			}
+			if (version >= 1600) {
+				light.KLQF.save(TrackTag::KLQF, writer);
+				light.KLLF.save(TrackTag::KLLF, writer);
+				light.KLDA.save(TrackTag::KLDA, writer);
+			}
 
 			const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - light_index);
 			std::memcpy(writer.buffer.data() + light_index, &temporary, 4);
@@ -684,6 +707,10 @@ namespace mdx {
 			camera.KCTR.save(TrackTag::KCTR, writer);
 			camera.KCRL.save(TrackTag::KCRL, writer);
 			camera.KTTR.save(TrackTag::KTTR, writer);
+			camera.KCVS.save(TrackTag::KCVS, writer);
+			camera.IDUF.save(TrackTag::IDUF, writer);
+			camera.ELAF.save(TrackTag::ELAF, writer);
+			camera.PTSF.save(TrackTag::PTSF, writer);
 
 			const uint32_t temporary = static_cast<uint32_t>(writer.buffer.size() - camera_index);
 			std::memcpy(writer.buffer.data() + camera_index, &temporary, 4);
@@ -742,6 +769,16 @@ namespace mdx {
 		}
 	}
 
+	void write_DILG(BinaryWriter& writer, const MDX& mdx) {
+		if (mdx.gliders.empty()) {
+			return;
+		}
+
+		writer.write(ChunkTag::DILG);
+		writer.write<uint32_t>(mdx.gliders.size() * 4);
+		writer.write_vector(mdx.gliders);
+	}
+
 	BinaryWriter MDX::to_mdx(const uint32_t version) const {
 		BinaryWriter writer;
 		writer.write_string("MDLX");
@@ -777,6 +814,7 @@ namespace mdx {
 		write_FAFX(writer, *this);
 		write_BPOS(writer, *this);
 		write_TXAN(writer, *this);
+		write_DILG(writer, *this);
 
 		return writer;
 	}

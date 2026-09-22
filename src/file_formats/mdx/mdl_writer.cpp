@@ -263,6 +263,12 @@ namespace mdx {
 		if (layer.shading_flags & Layer::ShadingFlags::unlit) {
 			mdl.write_line("Unlit,");
 		}
+		if (layer.shading_flags & Layer::ShadingFlags::back_faces_for_shadows) {
+			mdl.write_line("BackFacesForShadows,");
+		}
+		if (layer.shading_flags & Layer::ShadingFlags::ambient_occlusion) {
+			mdl.write_line("AmbientOcclusion,");
+		}
 	}
 
 	// static TextureID id <= slot, when fixed; track form (no slot designator) when animated.
@@ -392,24 +398,24 @@ namespace mdx {
 							mdl.write_line("FullResolution,");
 						}
 
-						const bool is_hd = !material.layers.empty() && material.layers[0].shader == ShaderType::HD;
+						const ShaderType material_shader = material.layers.empty() ? ShaderType::SD : material.layers[0].shader;
 
 						// v900/v1000 record the HD shader name once at the material level.
-						if (is_hd && (version == 900 || version == 1000)) {
-							mdl.write_line("Shader \"Shader_HD_DefaultUnit\",");
+						if (is_hd_shader(material_shader) && (version == 900 || version == 1000)) {
+							mdl.write_line("Shader \"{}\",", shader_type_name(material_shader));
 						}
 
 						for (const auto& layer : material.layers) {
 							// HD texture slots are only meaningful from v900 on; older targets bind slot 0 only.
-							const bool hd_slots = layer.shader == ShaderType::HD && version >= 900;
+							const bool hd_slots = is_hd_shader(layer.shader) && version >= 900;
 
 							mdl.start_group("Layer", [&]() {
 								mdl.write_line("FilterMode {},", material_filter_mode(layer.blend_mode));
 								write_layer_shading_flags(mdl, layer);
 
 								// v1100+ records the HD shader name per layer instead of per material.
-								if (layer.shader == ShaderType::HD && version >= 1100) {
-									mdl.write_line("Shader \"Shader_HD_DefaultUnit\",");
+								if (is_hd_shader(layer.shader) && version >= 1100) {
+									mdl.write_line("Shader \"{}\",", shader_type_name(layer.shader));
 								}
 
 								if (layer.texture_animation_id != 0xFFFFFFFF) {
@@ -636,6 +642,22 @@ namespace mdx {
 				mdl.write_track(light.KLBC, "AmbColor", light.ambient_color);
 				if (!light.KLAV.tracks.empty()) {
 					mdl.write_track_body(light.KLAV, "Visibility");
+				}
+				// Shadow intensity has no track of its own
+				if (version >= 1200) {
+					mdl.write_line("static ShadowIntensity {},", light.shadow_intensity);
+				}
+				if (version >= 1300) {
+					if (light.shadow_casting) {
+						mdl.write_line("ShadowCasting,");
+					}
+					mdl.write_track(light.KLSS, "ShadowCastingStart", light.shadow_casting_start);
+					mdl.write_track(light.KLSE, "ShadowCastingEnd", light.shadow_casting_end);
+				}
+				if (version >= 1600) {
+					mdl.write_track(light.KLQF, "QuadraticFalloff", light.quadratic_falloff);
+					mdl.write_track(light.KLLF, "LinearFalloff", light.linear_falloff);
+					mdl.write_track(light.KLDA, "Damping", light.damping);
 				}
 			});
 		}
@@ -866,6 +888,17 @@ namespace mdx {
 				mdl.write_line("FieldOfView {},", camera.field_of_view);
 				mdl.write_line("FarClip {},", camera.far_clip);
 				mdl.write_line("NearClip {},", camera.near_clip);
+				// Depth of field only exists as tracks. We write the keyed form because the game's
+				// own text reader swaps the scalar FocalLength and FStop keywords.
+				if (!camera.IDUF.tracks.empty()) {
+					mdl.write_track_body(camera.IDUF, "FocusDistanceKeys");
+				}
+				if (!camera.ELAF.tracks.empty()) {
+					mdl.write_track_body(camera.ELAF, "FocalLengthKeys");
+				}
+				if (!camera.PTSF.tracks.empty()) {
+					mdl.write_track_body(camera.PTSF, "FStopKeys");
+				}
 				mdl.start_group("Target", [&]() {
 					mdl.write_line(
 						"Position {{ {}, {}, {} }},",
@@ -877,6 +910,9 @@ namespace mdx {
 						mdl.write_track_body(camera.KTTR, "Translation");
 					}
 				});
+				if (!camera.KCVS.tracks.empty()) {
+					mdl.write_track_body(camera.KCVS, "Visibility");
+				}
 			});
 		}
 
@@ -932,6 +968,12 @@ namespace mdx {
 				if (!corn.KPPV.tracks.empty()) {
 					mdl.write_track_body(corn.KPPV, "Visibility");
 				}
+			});
+		}
+
+		for (const auto& geoset_id : gliders) {
+			mdl.start_group("Glider", [&]() {
+				mdl.write_line("GeosetId {},", geoset_id);
 			});
 		}
 

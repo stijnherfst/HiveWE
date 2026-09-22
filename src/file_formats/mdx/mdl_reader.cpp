@@ -415,7 +415,8 @@ namespace mdx {
 		TRY(r.consume("FormatVersion"));
 		OUTCOME_TRY(const auto v, r.consume_i64());
 		mdx.version = static_cast<uint32_t>(v);
-		if (mdx.version != 800 && mdx.version != 900 && mdx.version != 1000 && mdx.version != 1100 && mdx.version != 1200) {
+		if (mdx.version != 800 && mdx.version != 900 && mdx.version != 1000 && mdx.version != 1100 && mdx.version != 1200
+			&& mdx.version != 1300 && mdx.version != 1400 && mdx.version != 1600 && mdx.version != 1800) {
 			return failure(std::format("Unsupported FormatVersion {}", mdx.version));
 		}
 		TRY(r.consume("}"));
@@ -560,11 +561,11 @@ namespace mdx {
 		return 0xFFFFFFFFu;
 	}
 
-	static outcome::result<void, std::string> parse_layer(MDLReader& r, Material& material, int& unique_tracks, bool is_hd) {
+	static outcome::result<void, std::string> parse_layer(MDLReader& r, Material& material, int& unique_tracks, ShaderType material_shader) {
 		TRY(r.consume("Layer"));
 		TRY(r.consume("{"));
 		Layer layer {};
-		layer.shader = is_hd ? ShaderType::HD : ShaderType::SD;
+		layer.shader = material_shader;
 		layer.texture_animation_id = 0xFFFFFFFFu;
 		layer.alpha = 1.f;
 		layer.emissive_gain = 1.f;
@@ -579,11 +580,8 @@ namespace mdx {
 			OUTCOME_TRY(auto kw, r.consume());
 
 			if (kw.text == "Shader") {
-				// Per-layer HD shader name (v1100+). Material-level Shader is handled by the caller.
 				OUTCOME_TRY(auto shader_name, r.consume_quoted_string());
-				if (!shader_name.empty()) {
-					layer.shader = ShaderType::HD;
-				}
+				layer.shader = shader_type_from_name(shader_name);
 			} else if (kw.text == "FilterMode") {
 				OUTCOME_TRY(auto mode_tok, r.consume());
 				const uint32_t fm = parse_material_filter_mode(mode_tok.text);
@@ -609,6 +607,10 @@ namespace mdx {
 				layer.shading_flags |= Layer::ShadingFlags::wrap_height;
 			} else if (kw.text == "Unlit") {
 				layer.shading_flags |= Layer::ShadingFlags::unlit;
+			} else if (kw.text == "BackFacesForShadows") {
+				layer.shading_flags |= Layer::ShadingFlags::back_faces_for_shadows;
+			} else if (kw.text == "AmbientOcclusion") {
+				layer.shading_flags |= Layer::ShadingFlags::ambient_occlusion;
 			} else if (kw.text == "TVertexAnimId") {
 				OUTCOME_TRY(layer.texture_animation_id, r.consume_u32());
 			} else if (kw.text == "CoordId") {
@@ -675,15 +677,16 @@ namespace mdx {
 			TRY(r.consume("Material"));
 			TRY(r.consume("{"));
 			Material material {};
-			bool is_hd = false;
+			ShaderType material_shader = ShaderType::SD;
 			while (!r.peek_is("}")) {
 				if (r.peek_is("Shader")) {
 					TRY(r.consume("Shader"));
 					OUTCOME_TRY(auto shader, r.consume_quoted_string());
-					is_hd = !shader.empty();
+					material_shader = shader_type_from_name(shader);
 				} else if (r.peek_is("PriorityPlane")) {
 					TRY(r.consume("PriorityPlane"));
-					OUTCOME_TRY(material.priority_plane, r.consume_u32());
+					OUTCOME_TRY(const auto plane, r.consume_i64());
+					material.priority_plane = static_cast<int32_t>(plane);
 				} else if (r.peek_is("ConstantColor")) {
 					TRY(r.consume("ConstantColor"));
 					material.flags |= Material::Flags::constant_color;
@@ -700,7 +703,7 @@ namespace mdx {
 					TRY(r.consume("FullResolution"));
 					material.flags |= Material::Flags::full_resolution;
 				} else if (r.peek_is("Layer")) {
-					OUTCOME_TRY(parse_layer(r, material, mdx.unique_tracks, is_hd));
+					OUTCOME_TRY(parse_layer(r, material, mdx.unique_tracks, material_shader));
 				} else {
 					const auto& tok = r.peek();
 					return failure(std::format("Material: unknown field '{}' at line {}", tok.text, tok.line));
@@ -1058,6 +1061,41 @@ namespace mdx {
 				}
 			} else if (kw.text == "Visibility") {
 				OUTCOME_TRY(light.KLAV, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "ShadowIntensity") {
+				OUTCOME_TRY(light.shadow_intensity, r.consume_f32());
+			} else if (kw.text == "ShadowCasting") {
+				// A bare flag, in the same family as Omnidirectional
+				light.shadow_casting = true;
+			} else if (kw.text == "ShadowCastingStart") {
+				if (is_static) {
+					OUTCOME_TRY(light.shadow_casting_start, r.consume_f32());
+				} else {
+					OUTCOME_TRY(light.KLSS, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "ShadowCastingEnd") {
+				if (is_static) {
+					OUTCOME_TRY(light.shadow_casting_end, r.consume_f32());
+				} else {
+					OUTCOME_TRY(light.KLSE, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "QuadraticFalloff") {
+				if (is_static) {
+					OUTCOME_TRY(light.quadratic_falloff, r.consume_f32());
+				} else {
+					OUTCOME_TRY(light.KLQF, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "LinearFalloff") {
+				if (is_static) {
+					OUTCOME_TRY(light.linear_falloff, r.consume_f32());
+				} else {
+					OUTCOME_TRY(light.KLLF, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
+			} else if (kw.text == "Damping") {
+				if (is_static) {
+					OUTCOME_TRY(light.damping, r.consume_f32());
+				} else {
+					OUTCOME_TRY(light.KLDA, r.parse_animated_track<float>(mdx.unique_tracks));
+				}
 			} else {
 				return failure(std::format("Light: unknown field '{}' at line {}", kw.text, kw.line));
 			}
@@ -1516,6 +1554,16 @@ namespace mdx {
 		return outcome::success();
 	}
 
+	/// For some of the new fields there is no `scalar 1.f` type syntax and they are a single valued track.
+	/// The game's text reader swaps FocalLength and FStop,
+	static result<TrackHeader<float>, std::string> parse_single_key_track(MDLReader& r, int& unique_tracks) {
+		TrackHeader<float> track;
+		track.id = unique_tracks++;
+		OUTCOME_TRY(const auto value, r.consume_f32());
+		track.tracks.push_back(Track<float>{ .frame = 0, .value = value, .inTan = 0.f, .outTan = 0.f });
+		return track;
+	}
+
 	static outcome::result<void, std::string> parse_camera(MDLReader& r, MDX& mdx) {
 		TRY(r.consume("Camera"));
 		Camera cam {};
@@ -1535,6 +1583,21 @@ namespace mdx {
 				OUTCOME_TRY(cam.far_clip, r.consume_f32());
 			} else if (kw.text == "NearClip") {
 				OUTCOME_TRY(cam.near_clip, r.consume_f32());
+			} else if (kw.text == "Visibility") {
+				OUTCOME_TRY(cam.KCVS, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "FocusDistanceKeys") {
+				OUTCOME_TRY(cam.IDUF, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "FocalLengthKeys") {
+				OUTCOME_TRY(cam.ELAF, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "FStopKeys") {
+				OUTCOME_TRY(cam.PTSF, r.parse_animated_track<float>(mdx.unique_tracks));
+			} else if (kw.text == "DOFDistance") {
+				// The World Editor spells the scalar focus distance differently from its track
+				OUTCOME_TRY(cam.IDUF, parse_single_key_track(r, mdx.unique_tracks));
+			} else if (kw.text == "FocalLength") {
+				OUTCOME_TRY(cam.ELAF, parse_single_key_track(r, mdx.unique_tracks));
+			} else if (kw.text == "FStop") {
+				OUTCOME_TRY(cam.PTSF, parse_single_key_track(r, mdx.unique_tracks));
 			} else if (kw.text == "Target") {
 				TRY(r.consume("{"));
 				while (!r.peek_is("}")) {
@@ -1554,6 +1617,29 @@ namespace mdx {
 		}
 		TRY(r.consume("}"));
 		mdx.cameras.push_back(std::move(cam));
+		return outcome::success();
+	}
+
+	static outcome::result<void, std::string> parse_glider(MDLReader& r, MDX& mdx) {
+		TRY(r.consume("Glider"));
+		TRY(r.consume("{"));
+		uint32_t geoset_id = 0;
+		bool has_geoset_id = false;
+		while (!r.peek_is("}")) {
+			OUTCOME_TRY(auto kw, r.consume());
+			if (kw.text == "GeosetId") {
+				OUTCOME_TRY(geoset_id, r.consume_u32());
+				has_geoset_id = true;
+			} else {
+				return failure(std::format("Glider: unknown field '{}' at line {}", kw.text, kw.line));
+			}
+		}
+		if (!has_geoset_id) {
+			const auto& tok = r.peek();
+			return failure(std::format("Glider: missing GeosetId at line {}", tok.line));
+		}
+		TRY(r.consume("}"));
+		mdx.gliders.push_back(geoset_id);
 		return outcome::success();
 	}
 
@@ -1709,6 +1795,8 @@ namespace mdx {
 				OUTCOME_TRY(parse_facefx(reader, mdx));
 			} else if (kw.text == "ParticleEmitterPopcorn") {
 				OUTCOME_TRY(parse_corn(reader, mdx));
+			} else if (kw.text == "Glider") {
+				OUTCOME_TRY(parse_glider(reader, mdx));
 			} else {
 				return failure(std::format("Unknown top-level section '{}' at line {}", kw.text, kw.line));
 			}

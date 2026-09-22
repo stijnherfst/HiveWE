@@ -75,8 +75,24 @@ namespace mdx {
 			}
 
 			if (tag == "SKIN") {
-				uint32_t skin_count = reader.read<uint32_t>();
-				geoset.skin = reader.read_vector<uint8_t>(skin_count);
+				const uint32_t skin_count = reader.read<uint32_t>();
+				if (mdx.version >= 1400) {
+					// The count stays an element count, the element itself widened to fit bone
+					// indices past 255. We keep the byte layout the GPU wants, so such an index
+					// can not be represented and we report it instead of quietly truncating.
+					const std::vector<uint16_t> wide_skin = reader.read_vector<uint16_t>(skin_count);
+					bool reported = false;
+					geoset.skin.reserve(wide_skin.size());
+					for (const uint16_t value : wide_skin) {
+						if (value > 255 && !reported) {
+							std::print("Geoset skins to bone index {} which does not fit in a byte\n", value);
+							reported = true;
+						}
+						geoset.skin.push_back(static_cast<uint8_t>(value));
+					}
+				} else {
+					geoset.skin = reader.read_vector<uint8_t>(skin_count);
+				}
 				reader.advance(4); // UVAS
 			}
 
@@ -92,15 +108,16 @@ namespace mdx {
 	}
 
 	// Transform from the old version format to our new v1100 based internal representation
-	void read_MTLS_texs_pre_v1100(BinaryReader& reader, bool is_hd, uint32_t version, Material& material, int& unique_tracks) {
+	void read_MTLS_texs_pre_v1100(BinaryReader& reader, ShaderType shader, uint32_t version, Material& material, int& unique_tracks) {
 		reader.advance(4);
 		const uint32_t layers_count = reader.read<uint32_t>();
+		const bool is_hd = is_hd_shader(shader);
 
 		// These older versions encoded HD materials by having a layer for each PBR material
 		// We combine these into the new format
 		if (is_hd) {
 			Layer layer{};
-			layer.shader = ShaderType::HD;
+			layer.shader = shader;
 
 			for (size_t i = 0; i < layers_count; i++) {
 				const size_t reader_pos = reader.position;
@@ -270,15 +287,15 @@ namespace mdx {
 			total_size += reader.read<uint32_t>();
 
 			Material material;
-			material.priority_plane = reader.read<uint32_t>();
+			material.priority_plane = reader.read<int32_t>();
 			material.flags = reader.read<uint32_t>();
 
 			if (mdx.version < 1100) {
-				bool is_hd = false;
+				ShaderType shader = ShaderType::SD;
 				if (mdx.version == 900 || mdx.version == 1000) {
-					is_hd = !reader.read_string(80).empty();
+					shader = shader_type_from_name(reader.read_string(80));
 				}
-				read_MTLS_texs_pre_v1100(reader, is_hd, mdx.version, material, mdx.unique_tracks);
+				read_MTLS_texs_pre_v1100(reader, shader, mdx.version, material, mdx.unique_tracks);
 			} else {
 				read_MTLS_texs_post_v1100(reader, material, mdx.unique_tracks);
 			}
@@ -371,6 +388,11 @@ namespace mdx {
 			const uint32_t inclusive_size = reader.read<uint32_t>();
 			light.node = Node(reader, mdx.unique_tracks);
 			light.type = reader.read<uint32_t>();
+			if (mdx.version >= 1300) {
+				light.shadow_casting = reader.read<uint32_t>() != 0;
+			} else {
+				light.shadow_casting = false;
+			}
 			light.attenuation_start = reader.read<float>();
 			light.attenuation_end = reader.read<float>();
 			light.color = reader.read<glm::vec3>();
@@ -382,6 +404,22 @@ namespace mdx {
 			}
 			else {
 				light.shadow_intensity = 0.4f;
+			}
+			if (mdx.version >= 1300) {
+				light.shadow_casting_start = reader.read<float>();
+				light.shadow_casting_end = reader.read<float>();
+			} else {
+				light.shadow_casting_start = 0.f;
+				light.shadow_casting_end = 0.f;
+			}
+			if (mdx.version >= 1600) {
+				light.quadratic_falloff = reader.read<float>();
+				light.linear_falloff = reader.read<float>();
+				light.damping = reader.read<float>();
+			} else {
+				light.quadratic_falloff = 0.0005f;
+				light.linear_falloff = 0.f;
+				light.damping = 0.00001f;
 			}
 
 			while (reader.position < node_reader_pos + inclusive_size) {
@@ -400,6 +438,16 @@ namespace mdx {
 					light.KLBC = TrackHeader<glm::vec3>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KLAV) {
 					light.KLAV = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KLSS) {
+					light.KLSS = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KLSE) {
+					light.KLSE = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KLQF) {
+					light.KLQF = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KLLF) {
+					light.KLLF = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KLDA) {
+					light.KLDA = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else {
 					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
@@ -686,7 +734,9 @@ namespace mdx {
 
 		while (reader.position < chunk_end) {
 			const size_t entry_start = reader.position;
-			const uint32_t inclusive_size = reader.read<uint32_t>();
+			const uint32_t size_and_variant = reader.read<uint32_t>();
+			const uint32_t inclusive_size = size_and_variant & 0x00FFFFFF;
+			const uint32_t variant = size_and_variant >> 24;
 
 			Camera camera;
 			camera.name = reader.read_string(80);
@@ -694,6 +744,9 @@ namespace mdx {
 			camera.field_of_view = reader.read<float>();
 			camera.far_clip = reader.read<float>();
 			camera.near_clip = reader.read<float>();
+			if (variant == 1 || variant == 2) {
+				reader.advance(12); // Twelve bytes the game reads and throws away
+			}
 			camera.target_position = reader.read<glm::vec3>();
 
 			while (reader.position < entry_start + inclusive_size) {
@@ -704,6 +757,14 @@ namespace mdx {
 					camera.KCRL = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else if (tag == TrackTag::KTTR) {
 					camera.KTTR = TrackHeader<glm::vec3>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::KCVS) {
+					camera.KCVS = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::IDUF) {
+					camera.IDUF = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::ELAF) {
+					camera.ELAF = TrackHeader<float>(reader, mdx.unique_tracks++);
+				} else if (tag == TrackTag::PTSF) {
+					camera.PTSF = TrackHeader<float>(reader, mdx.unique_tracks++);
 				} else {
 					std::print("Unknown track tag {}\n", static_cast<uint32_t>(tag));
 				}
@@ -745,6 +806,14 @@ namespace mdx {
 
 			mdx.texture_animations.push_back(std::move(animation));
 		}
+	}
+
+	void read_DILG(BinaryReader& reader, MDX& mdx) {
+		const uint32_t size = reader.read<uint32_t>();
+		mdx.gliders = reader.read_vector<uint32_t>(size / 4);
+		// The game refuses a model whose glider list does not divide into whole entries. We skip
+		// the leftover bytes so that the chunks after this one still line up.
+		reader.advance(size % 4);
 	}
 
 	void read_FAFX(BinaryReader& reader, MDX& mdx) {
@@ -841,6 +910,9 @@ namespace mdx {
 					break;
 				case ChunkTag::TXAN:
 					read_TXAN(reader, *this);
+					break;
+				case ChunkTag::DILG:
+					read_DILG(reader, *this);
 					break;
 				default:
 					reader.advance(reader.read<uint32_t>());

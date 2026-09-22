@@ -49,6 +49,11 @@ namespace mdx {
 		KLBI = 'IBLK',
 		KLBC = 'CBLK',
 		KLAV = 'VALK',
+		KLSS = 'SSLK',
+		KLSE = 'ESLK',
+		KLQF = 'FQLK',
+		KLLF = 'FLLK',
+		KLDA = 'ADLK',
 		KATV = 'VTAK',
 		KPEE = 'EEPK',
 		KPEG = 'GEPK',
@@ -74,6 +79,10 @@ namespace mdx {
 		KCTR = 'RTCK',
 		KTTR = 'RTTK',
 		KCRL = 'LRCK',
+		KCVS = 'SVCK',
+		IDUF = 'FUDI',
+		ELAF = 'FALE',
+		PTSF = 'FSTP',
 		KGTR = 'RTGK',
 		KGRT = 'TRGK',
 		KGSC = 'CSGK',
@@ -110,7 +119,8 @@ namespace mdx {
 		BPOS = 'SOPB',
 		FAFX = 'XFAF',
 		MODL = 'LDOM',
-		CAMS = 'SMAC'
+		CAMS = 'SMAC',
+		DILG = 'GLID'
 	};
 
 	/// A single keyframe. inTan/outTan only used for hermite/bezier interpolation.
@@ -185,12 +195,18 @@ namespace mdx {
 		bool operator==(const TrackHeader&) const = default;
 	};
 
-	/// Shading pipeline for a layer (v>=1100). On disk only SD/HD occur.
+	/// Shading pipeline for a layer (v>=1100). The engine has more, but we don't care.
 	export enum class ShaderType: uint32_t {
 		SD = 0,
 		HD = 1,
 		SDOnHD = 2,
+		crystal = 24,
 	};
+
+	export bool is_hd_shader(ShaderType shader);
+
+	ShaderType shader_type_from_name(std::string_view name);
+	std::string_view shader_type_name(ShaderType shader);
 
 	export struct LayerTexture {
 		uint32_t id; /// Index into the model's texture list
@@ -234,7 +250,9 @@ namespace mdx {
 			unfogged = 32,
 			no_depth_test = 64,
 			no_depth_set = 128,
-			unlit = 256
+			unlit = 256,
+			back_faces_for_shadows = 512,
+			ambient_occlusion = 1024
 		};
 
 		bool operator==(const Layer&) const = default;
@@ -411,7 +429,7 @@ namespace mdx {
 	};
 
 	export struct Material {
-		uint32_t priority_plane; // Higher draws later (over lower)
+		int32_t priority_plane; // Higher draws later (over lower)
 		uint32_t flags; // See Flags
 		std::vector<Layer> layers;
 
@@ -445,6 +463,12 @@ namespace mdx {
 		glm::vec3 ambient_color; // Default {1,1,1}
 		float ambient_intensity;
 		float shadow_intensity;
+		bool shadow_casting;
+		float shadow_casting_start; // Distance where shadow casting begins
+		float shadow_casting_end; // Distance where shadow casting stops
+		float quadratic_falloff = 0.0005f;
+		float linear_falloff = 0.f;
+		float damping = 0.00001f;
 
 		TrackHeader<float> KLAS; // Attenuation start
 		TrackHeader<float> KLAE; // Attenuation end
@@ -453,6 +477,11 @@ namespace mdx {
 		TrackHeader<float> KLBI; // Ambient intensity
 		TrackHeader<glm::vec3> KLBC; // Ambient color
 		TrackHeader<float> KLAV; // Visibility
+		TrackHeader<float> KLSS; // Shadow casting start
+		TrackHeader<float> KLSE; // Shadow casting end
+		TrackHeader<float> KLQF; // Quadratic falloff
+		TrackHeader<float> KLLF; // Linear falloff
+		TrackHeader<float> KLDA; // Damping
 	};
 
 	// An attachment point (e.g. weapon/overhead/origin) where other models can be hung.
@@ -731,6 +760,11 @@ namespace mdx {
 		TrackHeader<glm::vec3> KCTR; /// Translation
 		TrackHeader<float> KCRL; /// Roll
 		TrackHeader<glm::vec3> KTTR; /// Target translation
+		TrackHeader<float> KCVS; /// Visibility
+		/// Depth of field has no static fields, only these tracks. A single value is stored as a one keyframe track.
+		TrackHeader<float> IDUF; /// Focus distance
+		TrackHeader<float> ELAF; /// Focal length
+		TrackHeader<float> PTSF; /// F-stop
 	};
 
 	/// Animates a layer's UV transform (scroll/rotate/scale of texture coordinates).
@@ -756,7 +790,7 @@ namespace mdx {
 	  public:
 		int unique_tracks = 0;
 
-		static constexpr uint32_t LATEST_MDX_VERSION = 1200;
+		static constexpr uint32_t LATEST_MDX_VERSION = 1800;
 
 		uint32_t version = LATEST_MDX_VERSION;
 		std::string name;
@@ -788,6 +822,9 @@ namespace mdx {
 		std::vector<Camera> cameras;
 		std::vector<float> bind_poses;
 		std::vector<TextureAnimation> texture_animations;
+		/// Geoset indices that a world picking ray is allowed to hit. When empty all are valid, otherwise only the ones defined here
+		/// Kept as the file spells it. The game's reader drops all but the last entry into slot 0, so it picks geoset 0 plus that one
+		std::vector<uint32_t> gliders;
 
 	  private:
 		void load(BinaryReader& reader);
@@ -945,6 +982,11 @@ namespace mdx {
 				F(i.KLBI);
 				F(i.KLBC);
 				F(i.KLAV);
+				F(i.KLSS);
+				F(i.KLSE);
+				F(i.KLQF);
+				F(i.KLLF);
+				F(i.KLDA);
 			}
 
 			for (auto& i : ribbons) {
@@ -960,6 +1002,10 @@ namespace mdx {
 				F(i.KCTR);
 				F(i.KTTR);
 				F(i.KCRL);
+				F(i.KCVS);
+				F(i.IDUF);
+				F(i.ELAF);
+				F(i.PTSF);
 			}
 
 			for (auto& i : texture_animations) {
@@ -1038,6 +1084,11 @@ namespace mdx {
 				F(i.KLBI, i.node.name, "KLBI");
 				F(i.KLBC, i.node.name, "KLBC");
 				F(i.KLAV, i.node.name, "KLAV");
+				F(i.KLSS, i.node.name, "KLSS");
+				F(i.KLSE, i.node.name, "KLSE");
+				F(i.KLQF, i.node.name, "KLQF");
+				F(i.KLLF, i.node.name, "KLLF");
+				F(i.KLDA, i.node.name, "KLDA");
 			}
 
 			for (auto& i : ribbons) {
@@ -1053,6 +1104,10 @@ namespace mdx {
 				F(i.KCTR, i.name, "KCTR");
 				F(i.KTTR, i.name, "KTTR");
 				F(i.KCRL, i.name, "KCRL");
+				F(i.KCVS, i.name, "KCVS");
+				F(i.IDUF, i.name, "IDUF");
+				F(i.ELAF, i.name, "ELAF");
+				F(i.PTSF, i.name, "PTSF");
 			}
 
 			for (size_t i = 0; i < texture_animations.size(); i++) {
@@ -1170,7 +1225,7 @@ namespace std {
 	template<>
 	struct std::hash<mdx::Material> {
 		std::size_t operator()(const mdx::Material& s) const noexcept {
-			std::size_t h1 = std::hash<uint32_t> {}(s.priority_plane);
+			std::size_t h1 = std::hash<int32_t> {}(s.priority_plane);
 			std::size_t h2 = std::hash<uint32_t> {}(s.flags);
 			std::size_t h3 = hash_vector<mdx::Layer> {}(s.layers);
 

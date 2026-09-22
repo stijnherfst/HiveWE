@@ -164,7 +164,7 @@ export class EditableMesh: public Resource {
 
 							found = true;
 
-							if (layer.shader == mdx::ShaderType::HD) {
+							if (mdx::is_hd_shader(layer.shader)) {
 								switch (j) {
 									case 0:
 										suffix = "_diffuse";
@@ -331,7 +331,7 @@ export class EditableMesh: public Resource {
 			}
 
 			for (const auto& layer : layers) {
-				if ((layer.shader == mdx::ShaderType::HD) != render_hd) {
+				if (mdx::is_hd_shader(layer.shader) != render_hd) {
 					continue;
 				}
 

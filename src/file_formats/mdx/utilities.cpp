@@ -4,6 +4,45 @@ import std;
 import "glm/glm.hpp";
 
 namespace mdx {
+	bool is_hd_shader(const ShaderType shader) {
+		return shader == ShaderType::HD || shader == ShaderType::crystal;
+	}
+
+	ShaderType shader_type_from_name(const std::string_view name) {
+		static constexpr std::pair<std::string_view, ShaderType> registry[] = {
+			{ "Shader_SD_Legacy", ShaderType::SD },
+			{ "Shader_HD_DefaultUnit", ShaderType::HD },
+			{ "Shader_SD_FixedFunction", ShaderType::SDOnHD },
+			{ "Shader_HD_Crystal", ShaderType::crystal },
+		};
+
+		const auto same_letter = [](const char a, const char b) {
+			const auto lower = [](const char c) { return c >= 'A' && c <= 'Z' ? static_cast<char>(c - 'A' + 'a') : c; };
+			return lower(a) == lower(b);
+		};
+
+		for (const auto& [registered, shader] : registry) {
+			if (std::ranges::equal(name, registered, same_letter)) {
+				return shader;
+			}
+		}
+		return ShaderType::SD;
+	}
+
+	std::string_view shader_type_name(const ShaderType shader) {
+		switch (shader) {
+			case ShaderType::SD:
+				return "Shader_SD_Legacy";
+			case ShaderType::HD:
+				return "Shader_HD_DefaultUnit";
+			case ShaderType::SDOnHD:
+				return "Shader_SD_FixedFunction";
+			case ShaderType::crystal:
+				return "Shader_HD_Crystal";
+		}
+		return "";
+	}
+
 	/// Will not retain sequences and bones because there is no straightforward way to merge them
 	void MDX::merge_with(const MDX& mdx, const glm::mat4& transform) {
 		MDX new_mdx = mdx;

@@ -510,6 +510,12 @@ namespace mdx {
 			}
 		});
 
+		for (const auto& [id, geoset_id] : std::ranges::enumerate_view(gliders)) {
+			if (geoset_id >= geosets.size()) {
+				warning(std::format("Glider {} names geoset {} but the model has {} geosets, so a picking ray can never hit it", id, geoset_id, geosets.size()));
+			}
+		}
+
 		// Pivots & sequences
 		if (pivots.size() != node_count) {
 			warning(std::format("Model has {} pivot points but {} nodes", pivots.size(), node_count));
