@@ -1,6 +1,8 @@
 module;
 
 #include <QMessageBox>
+#include <nlohmann/json.hpp>
+#include "glm/glm.hpp"
 
 export module Tileset;
 
@@ -11,8 +13,6 @@ import Hierarchy;
 import UnorderedMap;
 import Paths;
 import Globals;
-import <nlohmann/json.hpp>;
-import "glm/glm.hpp";
 
 export class TerrainTexture {
   public:

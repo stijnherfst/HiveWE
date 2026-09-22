@@ -1,6 +1,12 @@
 module;
 
 #include <QMessageBox>
+#include "brush.h"
+#include "region_brush.h"
+#include <glad/glad.h>
+#include <bullet/btBulletDynamicsCommon.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 export module Map;
 
@@ -37,12 +43,6 @@ import Terrain;
 import GameplayConstants;
 import Utilities;
 import UnorderedMap;
-import "brush.h";
-import "region_brush.h";
-import <glad/glad.h>;
-import <bullet/btBulletDynamicsCommon.h>;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
 
 namespace fs = std::filesystem;
 using namespace std::literals::string_literals;

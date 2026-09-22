@@ -1,3 +1,8 @@
+module;
+
+#include <soil2/SOIL2.h>
+#include <glad/glad.h>
+
 export module GPUTexture;
 
 import std;
@@ -7,8 +12,6 @@ import ResourceManager;
 import Hierarchy;
 import BLP;
 import Timer;
-import <soil2/SOIL2.h>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

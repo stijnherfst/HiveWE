@@ -2,6 +2,7 @@ module;
 
 #include <cstdint>
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 
 export module PathingMap;
 
@@ -12,7 +13,6 @@ import BinaryWriter;
 import PathingTexture;
 import OpenGLUtilities;
 import Hierarchy;
-import <glm/glm.hpp>;
 
 export class PathingMap {
 	static constexpr int write_version = 0;

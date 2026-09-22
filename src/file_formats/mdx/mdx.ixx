@@ -1,13 +1,16 @@
-﻿export module MDX;
+﻿module;
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <outcome/outcome.hpp>
+
+export module MDX;
 
 import std;
 import BinaryReader;
 import BinaryWriter;
 import Timer;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import <outcome/outcome.hpp>;
 
 namespace fs = std::filesystem;
 using OUTCOME_V2_NAMESPACE::failure;

@@ -14,16 +14,16 @@ namespace fs = std::filesystem;
 #include <QMenu>
 #include <QPainter>
 #include <QKeyEvent>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "ui_HiveWE.h"
 #include "global_search.h"
+#include "palette.h"
+#include "minimap.h"
 
 import QRibbon;
 import WindowHandler;
-import <glm/glm.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import "palette.h";
-import "minimap.h";
 
 class HiveWE : public QMainWindow {
 	Q_OBJECT

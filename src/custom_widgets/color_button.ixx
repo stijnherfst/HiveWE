@@ -3,10 +3,9 @@ module;
 #include <QPushButton>
 #include <QColorDialog>
 #include <QColor>
+#include <glm/glm.hpp>
 
 export module ColorButton;
-
-import <glm/glm.hpp>;
 
 export class ColorButton: public QPushButton {
 	Q_OBJECT

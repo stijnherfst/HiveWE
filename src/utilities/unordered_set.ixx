@@ -1,7 +1,10 @@
+module;
+
+#include "ankerl/unordered_dense.h"
+
 export module UnorderedSet;
 
 import std;
-import "ankerl/unordered_dense.h";
 import StringHash;
 
 export namespace hive {

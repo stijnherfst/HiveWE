@@ -1,7 +1,8 @@
 #include "pathing_brush.h"
 
+#include <glm/glm.hpp>
+
 import std;
-import <glm/glm.hpp>;
 import WorldUndoManager;
 import PathingUndo;
 import Camera;

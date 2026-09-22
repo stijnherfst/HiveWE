@@ -1,11 +1,14 @@
+module;
+
+#include <absl/strings/str_split.h>
+#include "absl/strings/str_join.h"
+
 export module INI;
 
 import std;
 import Utilities;
 import Hierarchy;
 import Utilities;
-import <absl/strings/str_split.h>;
-import "absl/strings/str_join.h";
 import UnorderedMap;
 
 namespace fs = std::filesystem;

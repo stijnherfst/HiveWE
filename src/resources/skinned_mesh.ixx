@@ -1,3 +1,11 @@
+module;
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/packing.hpp>
+#include <glad/glad.h>
+
 export module SkinnedMesh;
 
 import std;
@@ -13,11 +21,6 @@ import Skeleton;
 import SkinnedMeshGlobals;
 import Timer;
 import Utilities;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
-import <glm/gtc/packing.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 

@@ -2,7 +2,7 @@ module;
 
 #include <QIcon>
 #include <QImage>
-#include <QPixMap>
+#include <QPixmap>
 
 export module QIconResource;
 

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "brush.h"
+
 import Rects;
 import WorldUndoManager;
 

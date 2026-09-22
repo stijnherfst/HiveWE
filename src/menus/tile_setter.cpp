@@ -4,13 +4,13 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QMessageBox>
+#include <glm/glm.hpp>
 
 import std;
 import ResourceManager;
 import OpenGLUtilities;
 import Globals;
 import Texture;
-import <glm/glm.hpp>;
 
 TileSetter::TileSetter(QWidget* parent, Terrain& terrain, TilesetData& tilesets, MapInfo& info)
 	: QDialog(parent), terrain(terrain), tilesets(tilesets), info(info) {

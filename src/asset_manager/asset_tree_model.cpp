@@ -7,6 +7,7 @@
 #include <QStyle>
 
 #include "asset_tree_model.h"
+#include "object_editor/object_editor.h"
 
 import std;
 import SLK;
@@ -19,7 +20,6 @@ import Hierarchy;
 import MDX;
 import UnorderedMap;
 import Utilities;
-import "object_editor/object_editor.h";
 
 namespace fs = std::filesystem;
 

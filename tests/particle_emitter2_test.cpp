@@ -6,10 +6,10 @@
 
 #include <algorithm>
 #include <doctest/doctest.h>
+#include <glm/glm.hpp>
 
 import MDX;
 import ParticleEmitter2Simulation;
-import <glm/glm.hpp>;
 
 namespace {
 	/// An emitter that emits steadily, so a test only has to change the one field it cares about.

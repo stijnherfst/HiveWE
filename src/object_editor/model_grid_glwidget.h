@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <bitset>
 #include <filesystem>
 #include <memory>
@@ -15,7 +16,6 @@ import EditableMesh;
 import Skeleton;
 import MDX;
 import Shader;
-import <glm/glm.hpp>;
 
 enum class ModelCategory {
 	Map,

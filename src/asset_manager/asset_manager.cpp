@@ -16,6 +16,7 @@
 
 #include "model_editor/model_editor.h"
 #include "object_editor/model_grid_glwidget.h"
+#include "object_editor/object_editor.h"
 
 import std;
 import SLK;
@@ -27,7 +28,6 @@ import WindowHandler;
 import Texture;
 import AspectRatioPixmapLabel;
 import Timer;
-import "object_editor/object_editor.h";
 
 namespace fs = std::filesystem;
 

@@ -1,8 +1,10 @@
-export module MathOperations;
+module;
 
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glm/gtc/quaternion.hpp>;
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+export module MathOperations;
 
 export extern const glm::vec3 TRANSLATION_IDENTITY(0);
 export extern const glm::vec3 SCALE_IDENTITY(1);

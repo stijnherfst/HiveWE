@@ -1,15 +1,13 @@
-module;
-
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 module MDX;
 
 import std;
 import types;
 import MathOperations;
-import <glm/glm.hpp>;
-import <glm/gtc/quaternion.hpp>;
 
 namespace mdx {
 	void remove_unused_materials(MDX& mdx) {

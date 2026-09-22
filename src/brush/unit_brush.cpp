@@ -1,6 +1,9 @@
 #include "unit_brush.h"
 
 #include <QKeyEvent>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glad/glad.h>
 
 import std;
 import Hierarchy;
@@ -11,9 +14,6 @@ import OpenGLUtilities;
 import RenderManager;
 import Globals;
 import PathingMap;
-import <glm/glm.hpp>;
-import <glm/gtc/matrix_transform.hpp>;
-import <glad/glad.h>;
 
 UnitBrush::UnitBrush(Units& units, Terrain& terrain, PathingMap& pathing_map,
 		   RenderManager& render_manager, WorldUndoManager& world_undo)

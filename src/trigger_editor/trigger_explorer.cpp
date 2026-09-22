@@ -10,7 +10,7 @@
 #include "trigger_model.h"
 
 #include "trigger_explorer.h"
-#include "HiveWE.h"
+#include "hivewe.h"
 
 import Triggers;
 import Utilities;

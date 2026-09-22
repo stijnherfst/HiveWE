@@ -1,11 +1,14 @@
+module;
+
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+
 export module Regions;
 
 import std;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
-import <glad/glad.h>;
-import <glm/glm.hpp>;
 
 /// The thickness of a drawn region border in world space (one tile = 1)
 /// Must match the `border` constant in terrain.frag and cliff.frag

@@ -1,8 +1,9 @@
 module;
 
+#include <QRect>
+#include <QRectF>
+
 export module Rects;
-import <QRect>;
-import <QRectF>;
 
 export class PathingRect;
 export class TerrainRectF;
