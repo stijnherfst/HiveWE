@@ -792,7 +792,7 @@ namespace mdx {
 				TRY(r.consume("{"));
 				while (!r.peek_is("}")) {
 					OUTCOME_TRY(auto v, r.consume_u32());
-					g.skin.push_back(static_cast<uint8_t>(v));
+					g.skin.push_back(static_cast<uint16_t>(v));
 				}
 				TRY(r.consume("}"));
 			} else if (kw.text == "VertexGroup") {

@@ -171,7 +171,7 @@ export class SkinnedMesh: public Resource {
 
 		// Buffer Data
 		struct GeosetBuffers {
-			std::vector<glm::u8vec4> skin_weights; // empty = use i.skin directly
+			std::vector<glm::u16vec4> skin_weights; // empty = use i.skin directly
 			std::vector<glm::uvec2> vertices_snorm;
 			std::vector<uint32_t> uvs_snorm;
 			std::vector<uint32_t> normals_oct_snorm;
@@ -237,12 +237,12 @@ export class SkinnedMesh: public Resource {
 			if (i.skin.empty()) {
 				glNamedBufferSubData(
 					skinned_mesh_globals.weight_buffer,
-					v_off * sizeof(glm::uvec2),
-					entry.vertices * 8,
+					v_off * sizeof(glm::uvec4),
+					entry.vertices * sizeof(glm::uvec4),
 					buf.skin_weights.data()
 				);
 			} else {
-				glNamedBufferSubData(skinned_mesh_globals.weight_buffer, v_off * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
+				glNamedBufferSubData(skinned_mesh_globals.weight_buffer, v_off * sizeof(glm::uvec4), entry.vertices * sizeof(glm::uvec4), i.skin.data());
 			}
 
 			glNamedBufferSubData(

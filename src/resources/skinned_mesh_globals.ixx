@@ -88,7 +88,7 @@ export class SkinnedMeshGlobals {
 		glNamedBufferStorage(tangent_buffer, max_vertices * 16, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 		glCreateBuffers(1, &weight_buffer);
-		glNamedBufferStorage(weight_buffer, max_vertices * sizeof(uint64_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(weight_buffer, max_vertices * 16, nullptr, GL_DYNAMIC_STORAGE_BIT);
 
 		glCreateBuffers(1, &index_buffer);
 		glNamedBufferStorage(index_buffer, max_indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_STORAGE_BIT);

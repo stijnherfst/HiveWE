@@ -398,8 +398,9 @@ namespace mdx {
 		std::vector<Extent> sequence_extents;
 
 		std::vector<glm::vec4> tangents;
-		/// vertices.size() * 4 bone indices, each a byte, 4 weights, each a byte
-		std::vector<uint8_t> skin;
+		/// vertices.size() * 4 bone indices (u16), then 4 weights (u16).
+		/// Weights are in the 0..255 range and sum to 255 even though they are 16 bits.
+		std::vector<uint16_t> skin;
 		/// We only support one uv set
 		std::vector<std::vector<glm::vec2>> uv_sets;
 	};
@@ -854,7 +855,7 @@ namespace mdx {
 
 		void merge_with(const MDX& mdx, const glm::mat4& transform);
 
-		static std::vector<glm::u8vec4> matrix_groups_as_skin_weights(const Geoset& geoset);
+		static std::vector<glm::u16vec4> matrix_groups_as_skin_weights(const Geoset& geoset);
 
 		struct OptimizationStats {
 			size_t materials_removed = 0;

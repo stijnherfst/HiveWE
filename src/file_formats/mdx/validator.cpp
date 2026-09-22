@@ -318,8 +318,8 @@ namespace mdx {
 					const size_t offset = v * 8;
 					int weight_sum = 0;
 					for (size_t j = 0; j < 4; j++) {
-						const uint8_t bone = geoset.skin[offset + j];
-						const uint8_t weight = geoset.skin[offset + 4 + j];
+						const uint16_t bone = geoset.skin[offset + j];
+						const uint16_t weight = geoset.skin[offset + 4 + j];
 						weight_sum += weight;
 						if (weight == 0) {
 							continue;

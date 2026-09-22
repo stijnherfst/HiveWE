@@ -11,7 +11,7 @@ layout(std430, binding = 1) buffer layoutName1 {
 };
 
 layout(std430, binding = 2) buffer layoutName6 {
-    uvec2 skins[];
+    uvec4 skins[];
 };
 
 vec3 unpack_uvec2_to_vec3(const uvec2 v, const float extent) {
@@ -27,14 +27,15 @@ vec3 unpack_uvec2_to_vec3(const uvec2 v, const float extent) {
 }
 
 void main() {
-	const mat4 b0 = bones[int(skins[gl_VertexID].x & 0x000000FF)];
-	const mat4 b1 = bones[int(skins[gl_VertexID].x & 0x0000FF00) >> 8];
-	const mat4 b2 = bones[int(skins[gl_VertexID].x & 0x00FF0000) >> 16];
-	const mat4 b3 = bones[int(skins[gl_VertexID].x & 0xFF000000) >> 24];
-	const float w0 = (skins[gl_VertexID].y & 0x000000FF) / 255.f;
-	const float w1 = ((skins[gl_VertexID].y & 0x0000FF00) >> 8) / 255.f;
-	const float w2 = ((skins[gl_VertexID].y & 0x00FF0000) >> 16) / 255.f;
-	const float w3 = ((skins[gl_VertexID].y & 0xFF000000) >> 24) / 255.f;
+	const uvec4 skin = skins[gl_VertexID];
+	const mat4 b0 = bones[int(skin.x & 0x0000FFFFu)];
+	const mat4 b1 = bones[int(skin.x >> 16)];
+	const mat4 b2 = bones[int(skin.y & 0x0000FFFFu)];
+	const mat4 b3 = bones[int(skin.y >> 16)];
+	const float w0 = (skin.z & 0x0000FFFFu) / 255.f;
+	const float w1 = (skin.z >> 16) / 255.f;
+	const float w2 = (skin.w & 0x0000FFFFu) / 255.f;
+	const float w3 = (skin.w >> 16) / 255.f;
 	
 	vec2 xy = unpackSnorm2x16(vertices[gl_VertexID].x) * 1024.f;
 	vec2 zw = unpackSnorm2x16(vertices[gl_VertexID].y) * 1024.f;

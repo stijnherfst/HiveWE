@@ -31,7 +31,7 @@ layout(std430, binding = 5) buffer layoutName5 {
 };
 
 layout(std430, binding = 6) buffer layoutName6 {
-	uvec2 skins[];
+	uvec4 skins[];
 };
 
 layout(std430, binding = 7) buffer layoutName7 {
@@ -124,15 +124,15 @@ void main() {
 	const int instance_id = gl_InstanceID;
 	const uint instance_idx = info.instance_offset + uint(instance_id);
 
-	const uvec2 skin = skins[gl_VertexID];
-	const mat4 b0 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.x & 0x000000FFu)];
-	const mat4 b1 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0x0000FF00u) >> 8)];
-	const mat4 b2 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0x00FF0000u) >> 16)];
-	const mat4 b3 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + ((skin.x & 0xFF000000u) >> 24)];
-	const float w0 = (skin.y & 0x000000FFu) / 255.f;
-	const float w1 = ((skin.y & 0x0000FF00u) >> 8) / 255.f;
-	const float w2 = ((skin.y & 0x00FF0000u) >> 16) / 255.f;
-	const float w3 = ((skin.y & 0xFF000000u) >> 24) / 255.f;
+	const uvec4 skin = skins[gl_VertexID];
+	const mat4 b0 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.x & 0x0000FFFFu)];
+	const mat4 b1 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.x >> 16)];
+	const mat4 b2 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.y & 0x0000FFFFu)];
+	const mat4 b3 = bone_matrices[info.bone_offset + uint(instance_id) * info.bone_count + (skin.y >> 16)];
+	const float w0 = (skin.z & 0x0000FFFFu) / 255.f;
+	const float w1 = (skin.z >> 16) / 255.f;
+	const float w2 = (skin.w & 0x0000FFFFu) / 255.f;
+	const float w3 = (skin.w >> 16) / 255.f;
 	const mat4 skin_matrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 
 	const vec3 vertex = unpack_uvec2_to_vec3(vertices[gl_VertexID], 8192.f);

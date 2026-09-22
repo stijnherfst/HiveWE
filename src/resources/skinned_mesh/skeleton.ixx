@@ -836,9 +836,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 		geoset.sequence_extents.resize(model->sequences.size());
 	}
 
-	// Per-geoset skin weights as (bone index, weight) pairs per vertex. HD geosets store this in
-	// geoset.skin directly; SD geosets derive it from their matrix groups.
-	std::vector<std::vector<glm::u8vec4>> geoset_skins(model->geosets.size());
+	std::vector<std::vector<glm::u16vec4>> geoset_skins(model->geosets.size());
 	for (size_t g = 0; g < model->geosets.size(); g++) {
 		if (model->geosets[g].skin.empty()) {
 			geoset_skins[g] = mdx::MDX::matrix_groups_as_skin_weights(model->geosets[g]);
@@ -904,7 +902,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 
 					const mdx::Geoset& geoset = model->geosets[g];
 					const bool hd = !geoset.skin.empty();
-					const std::vector<glm::u8vec4>& sd_skin = geoset_skins[g];
+					const std::vector<glm::u16vec4>& sd_skin = geoset_skins[g];
 
 					for (size_t v = 0; v < geoset.vertices.size(); v++) {
 						glm::uvec4 indices(0);
@@ -917,7 +915,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 							}
 						} else {
 							indices = sd_skin[v * 2];
-							const glm::u8vec4 w = sd_skin[v * 2 + 1];
+							const glm::u16vec4 w = sd_skin[v * 2 + 1];
 							weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
 						}
 

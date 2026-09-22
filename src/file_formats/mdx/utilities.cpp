@@ -63,7 +63,7 @@ namespace mdx {
 			}
 
 			// Zero skin weights because we will have only 1 bone
-			geoset.skin = std::vector<std::uint8_t>(geoset.vertices.size() * 8, 0);
+			geoset.skin = std::vector<std::uint16_t>(geoset.vertices.size() * 8, 0);
 			// Set the contribution of the first bone to 255
 			for (size_t i = 0; i < geoset.skin.size(); i += 8) {
 				geoset.skin[i + 4] = 255;
@@ -117,10 +117,10 @@ namespace mdx {
 
 	/// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
 	/// This could cause graphical inconsistencies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
-	std::vector<glm::u8vec4> MDX::matrix_groups_as_skin_weights(const Geoset& geoset) {
-		std::vector<glm::u8vec4> groups;
+	std::vector<glm::u16vec4> MDX::matrix_groups_as_skin_weights(const Geoset& geoset) {
+		std::vector<glm::u16vec4> groups;
 		groups.reserve(geoset.matrix_groups.size());
-		std::vector<glm::u8vec4> weights;
+		std::vector<glm::u16vec4> weights;
 		weights.reserve(geoset.matrix_groups.size());
 
 		size_t bone_offset = 0;
@@ -145,15 +145,15 @@ namespace mdx {
 			bone_offset += group_size;
 		}
 
-		std::vector<glm::u8vec4> skin_weights;
+		std::vector<glm::u16vec4> skin_weights;
 		skin_weights.reserve(groups.size() * 2);
 		for (const auto& vertex_group : geoset.vertex_groups) {
 			if (vertex_group < groups.size()) {
 				skin_weights.push_back(groups[vertex_group]);
 				skin_weights.push_back(weights[vertex_group]);
 			} else {
-				skin_weights.push_back(glm::u8vec4(0));
-				skin_weights.push_back(glm::u8vec4(0));
+				skin_weights.push_back(glm::u16vec4(0));
+				skin_weights.push_back(glm::u16vec4(0));
 			}
 		}
 

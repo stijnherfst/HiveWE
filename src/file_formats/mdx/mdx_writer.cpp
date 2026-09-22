@@ -83,9 +83,19 @@ namespace mdx {
 				writer.write_string("SKIN");
 				writer.write<uint32_t>(geoset.skin.size());
 				if (version >= 1400) {
-					writer.write_vector(std::vector<uint16_t>(geoset.skin.begin(), geoset.skin.end()));
-				} else {
 					writer.write_vector(geoset.skin);
+				} else {
+					std::vector<uint8_t> narrow_skin;
+					narrow_skin.reserve(geoset.skin.size());
+					bool reported = false;
+					for (const uint16_t value : geoset.skin) {
+						if (value > 255 && !reported) {
+							std::print("Geoset skins to bone index {} which does not fit in the v{} skin format\n", value, version);
+							reported = true;
+						}
+						narrow_skin.push_back(static_cast<uint8_t>(value));
+					}
+					writer.write_vector(narrow_skin);
 				}
 			}
 

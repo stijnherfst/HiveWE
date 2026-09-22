@@ -91,7 +91,7 @@ export class EditableMesh: public Resource {
 		glNamedBufferData(tangent_buffer, vertices * sizeof(glm::vec4), nullptr, GL_DYNAMIC_DRAW);
 
 		glCreateBuffers(1, &weight_buffer);
-		glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec2), nullptr, GL_DYNAMIC_DRAW);
+		glNamedBufferData(weight_buffer, vertices * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_DRAW);
 
 		glCreateBuffers(1, &index_buffer);
 		glNamedBufferData(index_buffer, indices * sizeof(uint16_t), nullptr, GL_DYNAMIC_DRAW);
@@ -121,10 +121,10 @@ export class EditableMesh: public Resource {
 			// Technically SD supports infinite bones per vertex, but we limit it to 4 like HD does.
 			// This could cause graphical inconsistensies with the game, but after more than 4 bones the contribution per bone is low enough that we don't care
 			if (i.skin.empty()) {
-				const std::vector<glm::u8vec4> skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
-				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, skin_weights.data());
+				const std::vector<glm::u16vec4> skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
+				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec4), entry.vertices * sizeof(glm::uvec4), skin_weights.data());
 			} else {
-				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec2), entry.vertices * 8, i.skin.data());
+				glNamedBufferSubData(weight_buffer, base_vertex * sizeof(glm::uvec4), entry.vertices * sizeof(glm::uvec4), i.skin.data());
 			}
 
 			glNamedBufferSubData(vertex_buffer, base_vertex * sizeof(glm::vec3), entry.vertices * sizeof(glm::vec3), i.vertices.data());
@@ -246,7 +246,7 @@ export class EditableMesh: public Resource {
 		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 		glBindBuffer(GL_ARRAY_BUFFER, weight_buffer);
-		glVertexAttribIPointer(4, 2, GL_UNSIGNED_INT, 0, nullptr);
+		glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, 0, nullptr);
 
 		particle_renderer.init();
 	}

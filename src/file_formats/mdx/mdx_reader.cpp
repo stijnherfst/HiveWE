@@ -77,21 +77,10 @@ namespace mdx {
 			if (tag == "SKIN") {
 				const uint32_t skin_count = reader.read<uint32_t>();
 				if (mdx.version >= 1400) {
-					// The count stays an element count, the element itself widened to fit bone
-					// indices past 255. We keep the byte layout the GPU wants, so such an index
-					// can not be represented and we report it instead of quietly truncating.
-					const std::vector<uint16_t> wide_skin = reader.read_vector<uint16_t>(skin_count);
-					bool reported = false;
-					geoset.skin.reserve(wide_skin.size());
-					for (const uint16_t value : wide_skin) {
-						if (value > 255 && !reported) {
-							std::print("Geoset skins to bone index {} which does not fit in a byte\n", value);
-							reported = true;
-						}
-						geoset.skin.push_back(static_cast<uint8_t>(value));
-					}
+					geoset.skin = reader.read_vector<uint16_t>(skin_count);
 				} else {
-					geoset.skin = reader.read_vector<uint8_t>(skin_count);
+					const std::vector<uint8_t> narrow_skin = reader.read_vector<uint8_t>(skin_count);
+					geoset.skin.assign(narrow_skin.begin(), narrow_skin.end());
 				}
 				reader.advance(4); // UVAS
 			}

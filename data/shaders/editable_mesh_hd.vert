@@ -4,7 +4,7 @@ layout (location = 0) in vec3 vPosition;
 layout (location = 1) in vec2 vUV;
 layout (location = 2) in vec3 vNormal;
 layout (location = 3) in vec4 vTangent;
-layout (location = 4) in uvec2 vSkin;
+layout (location = 4) in uvec4 vSkin;
 
 layout (location = 0) uniform mat4 MVP;
 layout (location = 3) uniform vec3 light_direction;
@@ -49,14 +49,14 @@ const vec3 team_colors[28] = {
 };
 
 void main() {
-	const mat4 b0 = bones[int(vSkin.x & 0x000000FFu)];
-	const mat4 b1 = bones[int(vSkin.x & 0x0000FF00u) >> 8];
-	const mat4 b2 = bones[int(vSkin.x & 0x00FF0000u) >> 16];
-	const mat4 b3 = bones[int(vSkin.x & 0xFF000000u) >> 24];
-	const float w0 = (vSkin.y & 0x000000FFu) / 255.f;
-	const float w1 = ((vSkin.y & 0x0000FF00u) >> 8) / 255.f;
-	const float w2 = ((vSkin.y & 0x00FF0000u) >> 16) / 255.f;
-	const float w3 = ((vSkin.y & 0xFF000000u) >> 24) / 255.f;
+	const mat4 b0 = bones[int(vSkin.x & 0x0000FFFFu)];
+	const mat4 b1 = bones[int(vSkin.x >> 16)];
+	const mat4 b2 = bones[int(vSkin.y & 0x0000FFFFu)];
+	const mat4 b3 = bones[int(vSkin.y >> 16)];
+	const float w0 = (vSkin.z & 0x0000FFFFu) / 255.f;
+	const float w1 = (vSkin.z >> 16) / 255.f;
+	const float w2 = (vSkin.w & 0x0000FFFFu) / 255.f;
+	const float w3 = (vSkin.w >> 16) / 255.f;
 	const mat4 skin_matrix = b0 * w0 + b1 * w1 + b2 * w2 + b3 * w3;
 
 	gl_Position = MVP * skin_matrix * vec4(vPosition, 1.f);
