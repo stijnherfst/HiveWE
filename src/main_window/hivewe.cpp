@@ -1,4 +1,4 @@
-#include "HiveWE.h"
+#include "hivewe.h"
 #define __STORMLIB_NO_STATIC_LINK__
 #include "StormLib.h"
 #include <soil2/SOIL2.h>

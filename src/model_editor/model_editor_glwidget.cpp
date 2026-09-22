@@ -10,7 +10,7 @@
 #include <QFileSystemWatcher>
 #include <glm/gtx/component_wise.inl>
 
-#include <qt_imgui/qt_imGui.h>
+#include <qt_imgui/qt_imgui.h>
 #include <imgui.h>
 #include <imgui_internal.h>
 

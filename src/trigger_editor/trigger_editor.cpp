@@ -11,7 +11,7 @@
 #include <QFileIconProvider>
 #include <QTreeWidget>
 
-#include "HiveWE.h"
+#include "hivewe.h"
 #include "jass_editor.h"
 #include "search_window.h"
 #include "variable_editor.h"
