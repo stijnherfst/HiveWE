@@ -6,7 +6,11 @@ cmake_minimum_required(VERSION 3.29)
 #    SET(VCPKG_TARGET_TRIPLET "x64-windows-static")
 # endif()
 
-project (HiveWE CXX)
+project(HiveWE VERSION 0.11.0 LANGUAGES CXX)
+
+set(HIVEWE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(HIVEWE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(HIVEWE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -31,6 +35,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(unofficial-qscintilla CONFIG REQUIRED)
 find_package(tracy CONFIG REQUIRED)
+find_package(Git QUIET)
 
 qt_standard_project_setup()
 
@@ -41,7 +46,66 @@ add_executable(HiveWE
 	${QT_RESOURCES}
 )
 
+set(HIVEWE_GIT_SHA "unknown")
+set(HIVEWE_GIT_DIRTY false)
+
+if(GIT_FOUND)
+	set_property(
+		DIRECTORY APPEND PROPERTY
+		CMAKE_CONFIGURE_DEPENDS
+		"${CMAKE_SOURCE_DIR}/.git/HEAD"
+		"${CMAKE_SOURCE_DIR}/.git/index"
+	)
+
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		RESULT_VARIABLE GIT_RESULT
+		OUTPUT_VARIABLE HIVEWE_GIT_SHA
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	if(NOT GIT_RESULT EQUAL 0)
+		set(HIVEWE_GIT_SHA "unknown")
+	endif()
+
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} diff-index --quiet HEAD --
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		RESULT_VARIABLE GIT_DIRTY_RESULT
+	)
+
+	if(GIT_DIRTY_RESULT)
+		set(HIVEWE_GIT_DIRTY true)
+	else()
+		set(HIVEWE_GIT_DIRTY false)
+	endif()
+endif()
+
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/generated")
+configure_file(
+	${CMAKE_SOURCE_DIR}/src/utilities/version.ixx.in
+	${CMAKE_BINARY_DIR}/generated/hive.version.ixx
+	@ONLY
+)
+
+set(HIVEWE_VERSION_MODULE
+	${CMAKE_BINARY_DIR}/generated/hive.version.ixx
+)
+
+set_source_files_properties(
+	${HIVEWE_VERSION_MODULE}
+	PROPERTIES
+	GENERATED TRUE
+)
+
 add_subdirectory(src)
+
+target_sources(HiveWE_lib PUBLIC
+	FILE_SET yeet
+	BASE_DIRS ${CMAKE_BINARY_DIR}/generated
+	FILES ${HIVEWE_VERSION_MODULE}
+)
 
 target_include_directories(HiveWE_lib PUBLIC
 	"src"
@@ -150,7 +214,7 @@ if(TRACY_ENABLE)
 	)
 endif()
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows/debug")
 else()
 	set(QT_VCPKG_PATH "${CMAKE_CURRENT_BINARY_DIR}/vcpkg_installed/x64-windows")
