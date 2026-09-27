@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QImage>
 #include <QVulkanInstance>
 #include <QWindow>
@@ -23,7 +24,8 @@ void shutdown_vulkan();
 
 /// A Vulkan window that presents through its own swapchain on the shared VkContext device.
 /// Embed it in a widget hierarchy with QWidget::createWindowContainer.
-/// Renders continuously: each presented frame requests the next update, and FIFO present paces it to vsync.
+/// Renders continuously: each presented frame requests the next update. MAILBOX present is preferred, paced by present
+/// wait and a frame cap near the refresh rate; FIFO is the fallback, paced by vsync. HIVEWE_PRESENT_MODE=fifo forces FIFO.
 class VulkanViewport : public QWindow {
   public:
 	/// The color image is in color_attachment_format and the depth image in depth_attachment_format
@@ -85,6 +87,10 @@ class VulkanViewport : public QWindow {
 	uint64_t presented_frames = 0;
 	/// Identifies each present to vkWaitForPresentKHR; increases across swapchains
 	uint64_t present_id = 0;
+	/// The first present_id given to the current swapchain, as waiting on an earlier id is only meaningful to the swapchain it was presented to
+	uint64_t swapchain_first_present_id = 1;
+	/// Measures the time since the last frame started, for the frame cap MAILBOX needs
+	QElapsedTimer frame_clock;
 
 	void render();
 	bool ensure_swapchain();

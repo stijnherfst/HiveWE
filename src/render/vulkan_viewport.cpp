@@ -2,6 +2,8 @@
 #include <QExposeEvent>
 #include <QPlatformSurfaceEvent>
 #include <QResizeEvent>
+#include <QScreen>
+#include <QTimer>
 
 #include <volk.h>
 #include <vk_mem_alloc.h>
@@ -133,8 +135,24 @@ void VulkanViewport::schedule_update() {
 		return;
 	}
 	update_scheduled = true;
-	// Low priority, so input that arrived meanwhile is delivered before the next frame is recorded
-	QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest), Qt::LowEventPriority);
+	const auto post = [this] {
+		// Low priority, so input that arrived meanwhile is delivered before the next frame is recorded
+		QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest), Qt::LowEventPriority);
+	};
+
+	// MAILBOX never blocks, and where present wait returns before the frame is on screen (NVIDIA's DXGI layered present
+	// does), nothing else stops the viewport from rendering frames the display drops. The cap sits a little above the
+	// refresh rate, so present wait stays the pacer where it works and every refresh still gets a new frame where it doesn't.
+	if (swapchain.present_mode == VK_PRESENT_MODE_MAILBOX_KHR && frame_clock.isValid()) {
+		const qreal refresh_rate = screen() ? screen()->refreshRate() : 60.0;
+		const qint64 min_interval_ns = static_cast<qint64>(0.95 * 1e9 / std::max(refresh_rate, 1.0));
+		const qint64 remaining_ns = min_interval_ns - frame_clock.nsecsElapsed();
+		if (remaining_ns > 1'000'000) {
+			QTimer::singleShot(std::chrono::nanoseconds(remaining_ns), Qt::PreciseTimer, this, post);
+			return;
+		}
+	}
+	post();
 }
 
 void VulkanViewport::exposeEvent(QExposeEvent*) {
@@ -194,7 +212,8 @@ bool VulkanViewport::ensure_swapchain() {
 					  vk_context.graphics_queue_family
 	)
 					  .set_desired_format({color_attachment_format, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
-					  .set_desired_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+					  .set_desired_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+					  .add_fallback_present_mode(VK_PRESENT_MODE_FIFO_KHR)
 					  .set_desired_extent(width, height)
 					  .set_old_swapchain(swapchain)
 					  .build();
@@ -226,6 +245,7 @@ bool VulkanViewport::ensure_swapchain() {
 		);
 	}
 
+	swapchain_first_present_id = present_id + 1;
 	swapchain_dirty = false;
 	return true;
 }
@@ -257,6 +277,7 @@ void VulkanViewport::render() {
 	}
 
 	vk_context.collect_garbage();
+	frame_clock.start();
 
 	const VkDevice device = vk_context.device.device;
 	Frame& frame = frames[frame_index];
@@ -386,11 +407,17 @@ void VulkanViewport::render() {
 	qt_instance->presentQueued(this);
 
 	// Without this wait, FIFO present lets frames queue up for several refreshes, and the camera lags behind the mouse.
-	// Waiting until this frame is on screen lets Qt deliver the input that arrived meanwhile before the next frame is recorded.
+	// Under FIFO, waiting until the previous frame is on screen keeps at most one frame queued behind the display, while
+	// the CPU records the next frame as the GPU draws this one. Waiting for this frame instead would leave the GPU idle
+	// during recording, and then it lowers its clocks.
+	// Under MAILBOX a newer frame replaces a queued one, so waiting for this frame starts the next one right at the
+	// refresh that showed it, and input is read one refresh before it is shown.
 	// The timeout keeps an occluded window, which may never show the frame, from stalling the event loop.
-	if (vk_context.has_present_wait && !swapchain_dirty) {
+	const bool mailbox = swapchain.present_mode == VK_PRESENT_MODE_MAILBOX_KHR;
+	const uint64_t wait_id = mailbox ? present_id : present_id - 1;
+	if (vk_context.has_present_wait && !swapchain_dirty && wait_id >= swapchain_first_present_id) {
 		constexpr uint64_t timeout_ns = 50'000'000;
-		vkWaitForPresentKHR(device, swapchain.swapchain, present_id, timeout_ns);
+		vkWaitForPresentKHR(device, swapchain.swapchain, wait_id, timeout_ns);
 	}
 
 	presented_frames++;
