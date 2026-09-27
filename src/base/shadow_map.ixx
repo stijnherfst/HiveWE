@@ -4,25 +4,12 @@ import std;
 import types;
 import Hierarchy;
 import BinaryReader;
-import <glad/glad.h>;
 
 export class ShadowMap {
 	size_t width;
 	size_t height;
 
-	GLuint texture;
 	std::vector<u8> cells;
-
-  private:
-	void update_texture() {
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-		glTextureStorage2D(texture, 1, GL_R8UI, width, height);
-		glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, cells.data());
-		glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
 
   public:
 	bool load(size_t terrain_width, size_t terrain_height) {
@@ -41,8 +28,6 @@ export class ShadowMap {
 			cells = reader.read_vector<u8>(expected_size);
 		}
 
-		update_texture();
-
 		return true;
 	}
 
@@ -50,24 +35,18 @@ export class ShadowMap {
 		hierarchy.map_file_write("war3map.shd", cells);
 	}
 
-	void resize(size_t new_width, size_t new_height) {
+	void resize(const size_t new_width, const size_t new_height) {
 		width = new_width;
 		height = new_height;
 		cells.resize(width * height, 0);
-
-		glDeleteTextures(1, &texture);
-		update_texture();
 	}
 
-	void resize(int delta_left, int delta_right, int delta_top, int delta_bottom) {
-		size_t new_width = static_cast<size_t>(static_cast<int>(width) + delta_left + delta_right);
-		size_t new_height = static_cast<size_t>(static_cast<int>(height) + delta_top + delta_bottom);
+	void resize(const int delta_left, const int delta_right, const int delta_top, const int delta_bottom) {
+		const size_t new_width = static_cast<size_t>(static_cast<int>(width) + delta_left + delta_right);
+		const size_t new_height = static_cast<size_t>(static_cast<int>(height) + delta_top + delta_bottom);
 
 		width = new_width;
 		height = new_height;
 		cells.resize(width * height, 0);
-
-		glDeleteTextures(1, &texture);
-		update_texture();
 	}
 };

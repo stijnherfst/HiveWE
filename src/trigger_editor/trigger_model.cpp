@@ -7,7 +7,7 @@
 #include <QStack>
 #include <set>
 
-import OpenGLUtilities;
+import TextureIcon;
 import Globals;
 
 constexpr int map_header_id = 0;

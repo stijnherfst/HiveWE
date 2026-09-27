@@ -1,14 +1,14 @@
 #version 450 core
 
-layout (binding = 0) uniform sampler2DArray water_textures;
+#extension GL_GOOGLE_include_directive : require
+#include "terrain_common.glsl"
 
-layout (location = 6) uniform int current_texture;
+layout (location = 0) in vec2 UV;
+layout (location = 1) in vec4 Color;
 
-in vec2 UV;
-in vec4 Color;
-
-out vec4 outColor;
+layout (location = 0) out vec4 outColor;
 
 void main() {
-	outColor = texture(water_textures, vec3(UV, current_texture)) * Color;
+	TerrainFrame frame = pc.frame;
+	outColor = texture(array_textures[frame.water_texture_slot], vec3(UV, frame.current_water_texture)) * Color;
 }

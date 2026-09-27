@@ -1,6 +1,7 @@
 module;
 
 #include <QObject>
+#include <volk.h>
 
 #include <brush.h>
 
@@ -13,7 +14,6 @@ import Texture;
 import BinaryReader;
 import BinaryWriter;
 import CliffMesh;
-import Shader;
 import SLK;
 import Physics;
 import PathingMap;
@@ -23,8 +23,10 @@ import Globals;
 import Camera;
 import UnorderedMap;
 import Tileset;
+import VkContext;
+import VkResources;
+import VkTexture;
 import MapInfo;
-import "glad/glad.h";
 import "glm/glm.hpp";
 import "glm/gtc/matrix_transform.hpp";
 import "glm/gtc/quaternion.hpp";
@@ -86,6 +88,43 @@ export int random_ground_variation() {
 	return 0;
 }
 
+/// Mirrors TerrainFrame in data/shaders/terrain_common.glsl
+struct TerrainFrameData {
+	glm::mat4 mvp;
+	glm::vec4 light_direction;
+	glm::vec4 shallow_color_min;
+	glm::vec4 shallow_color_max;
+	glm::vec4 deep_color_min;
+	glm::vec4 deep_color_max;
+	glm::vec2 brush_position;
+	glm::ivec2 map_size;
+	VkDeviceAddress cliff_levels;
+	VkDeviceAddress ground_heights;
+	VkDeviceAddress ground_textures;
+	VkDeviceAddress ground_exists;
+	VkDeviceAddress ground_texture_slots;
+	VkDeviceAddress water_heights;
+	VkDeviceAddress water_exists;
+	VkDeviceAddress regions;
+	uint32_t region_count;
+	uint32_t flags;
+	uint32_t pathing_static_slot;
+	uint32_t pathing_dynamic_slot;
+	uint32_t brush_slot;
+	uint32_t cliff_texture_slot;
+	uint32_t water_texture_slot;
+	float water_offset;
+	int32_t current_water_texture;
+};
+
+static_assert(offsetof(TerrainFrameData, cliff_levels) == 160);
+static_assert(offsetof(TerrainFrameData, region_count) == 224);
+
+constexpr uint32_t terrain_flag_pathing = 1;
+constexpr uint32_t terrain_flag_lighting = 2;
+constexpr uint32_t terrain_flag_regions = 4;
+constexpr uint32_t terrain_flag_brush = 8;
+
 export class Terrain: public QObject {
 	Q_OBJECT
 
@@ -94,28 +133,85 @@ export class Terrain: public QObject {
 	// Derived GPU arrays
 	std::vector<float> gpu_final_ground_heights;
 	std::vector<glm::uvec4> gpu_ground_texture_list;
-	std::vector<GLuint64> gpu_ground_texture_handles;
+	/// Bindless slot of each ground texture, indexed by ground texture id
+	std::vector<uint32_t> gpu_ground_texture_slots;
 	/// One per tile, not per corner. So (width - 1) * (height - 1)
-	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
+	// TODO use new vulkan 8 bit storage buffers!
 	std::vector<std::uint32_t> gpu_ground_exists_data;
-	// Directly upload corner_water when using Vulkan and GL_EXT_shader_8bit_storage. OpenGL does not allow 8bit SSBO types, unfortunately.
+	// TODO use new vulkan 8 bit storage buffers!
 	std::vector<uint32_t> gpu_water_exists_data;
 
 	btHeightfieldTerrainShape* collision_shape;
 	btRigidBody* collision_body;
 
 	// Ground
-	std::shared_ptr<Shader> ground_shader;
 	std::vector<std::shared_ptr<GroundTexture>> ground_textures;
 
 	// GPU buffers
-	GLuint ground_height_buffer;
-	GLuint cliff_level_buffer;
-	GLuint water_height_buffer;
-	GLuint ground_texture_handle_buffer = 0;
-	GLuint ground_texture_data_buffer;
-	GLuint ground_exists_buffer;
-	GLuint water_exists_buffer;
+	Buffer ground_height_buffer;
+	Buffer cliff_level_buffer;
+	Buffer water_height_buffer;
+	Buffer ground_texture_slot_buffer;
+	Buffer ground_texture_data_buffer;
+	Buffer ground_exists_buffer;
+	Buffer water_exists_buffer;
+
+	Pipeline ground_pipeline {{
+		.vertex_shader = "data/shaders/terrain.vert.spv",
+		.fragment_shader = "data/shaders/terrain.frag.spv",
+	}};
+	Pipeline cliff_pipeline {{
+		.vertex_shader = "data/shaders/cliff.vert.spv",
+		.fragment_shader = "data/shaders/cliff.frag.spv",
+		.blend = true,
+		.src_factor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dst_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	}};
+	Pipeline water_pipeline {{
+		.vertex_shader = "data/shaders/water.vert.spv",
+		.fragment_shader = "data/shaders/water.frag.spv",
+		.blend = true,
+		.src_factor = VK_BLEND_FACTOR_SRC_ALPHA,
+		.dst_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+	}};
+
+	void destroy_buffers() {
+		for (auto* buffer :
+			 {&ground_height_buffer,
+			  &cliff_level_buffer,
+			  &water_height_buffer,
+			  &ground_texture_data_buffer,
+			  &ground_exists_buffer,
+			  &water_exists_buffer}) {
+			destroy_buffer_deferred(*buffer);
+			*buffer = {};
+		}
+	}
+
+	/// The per-draw data shared by the ground, cliff and water shaders, written to the frame allocator
+	VkDeviceAddress write_frame_data(FrameAllocator& allocator, const TerrainFrameData& data) const {
+		const auto allocation = allocator.allocate(sizeof(TerrainFrameData));
+		std::memcpy(allocation.data, &data, sizeof(data));
+		return allocation.address;
+	}
+
+	TerrainFrameData base_frame_data() const {
+		return {
+			.mvp = camera.projection_view,
+			.map_size = {width, height},
+			.cliff_levels = cliff_level_buffer.address,
+			.ground_heights = ground_height_buffer.address,
+			.ground_textures = ground_texture_data_buffer.address,
+			.ground_exists = ground_exists_buffer.address,
+			.ground_texture_slots = ground_texture_slot_buffer.address,
+			.water_heights = water_height_buffer.address,
+			.water_exists = water_exists_buffer.address,
+			.cliff_texture_slot = cliff_texture_slot,
+			.water_texture_slot = water_texture_slot,
+			.water_offset = water_offset,
+			.current_water_texture = static_cast<int32_t>(current_texture),
+		};
+	}
 
 	hive::unordered_map<std::string, int> ground_texture_to_id_map;
 	hive::unordered_map<std::string, int> cliff_type_to_id_map;
@@ -248,11 +344,11 @@ export class Terrain: public QObject {
 	hive::unordered_map<std::string, uint8_t> cliff_variations;
 	std::vector<uint8_t> cliff_to_ground_texture;
 
-	std::shared_ptr<Shader> cliff_shader;
 	std::vector<std::shared_ptr<CliffMesh>> cliff_meshes;
 	std::vector<std::shared_ptr<Texture>> cliff_textures;
 
-	GLuint cliff_texture_array = 0;
+	Image cliff_texture_array;
+	uint32_t cliff_texture_slot = 0;
 
 	int cliff_texture_size = 256;
 
@@ -265,21 +361,17 @@ export class Terrain: public QObject {
 	int water_textures_nr;
 	int animation_rate;
 
-	std::shared_ptr<Shader> water_shader;
-
 	float current_texture = 1.f;
-	GLuint water_texture_array;
+	Image water_texture_array;
+	uint32_t water_texture_slot = 0;
 
 	~Terrain() override {
-		glDeleteTextures(1, &cliff_texture_array);
-		glDeleteTextures(1, &water_texture_array);
-
-		glDeleteBuffers(1, &ground_height_buffer);
-		glDeleteBuffers(1, &cliff_level_buffer);
-		glDeleteBuffers(1, &water_height_buffer);
-		glDeleteBuffers(1, &ground_texture_data_buffer);
-		glDeleteBuffers(1, &ground_exists_buffer);
-		glDeleteBuffers(1, &water_exists_buffer);
+		if (vk_context.is_initialized()) {
+			release_array_texture(cliff_texture_array, cliff_texture_slot);
+			release_array_texture(water_texture_array, water_texture_slot);
+			destroy_buffers();
+			destroy_buffer_deferred(ground_texture_slot_buffer);
+		}
 
 		//map->physics.dynamicsWorld->removeRigidBody(collision_body);
 		//delete collision_body;
@@ -429,10 +521,6 @@ export class Terrain: public QObject {
 		// Prepare and create GPU buffers
 		setup_GPU_buffers();
 
-		ground_shader = resource_manager.load<Shader>({"data/shaders/terrain.vert", "data/shaders/terrain.frag"}).value();
-		cliff_shader = resource_manager.load<Shader>({"data/shaders/cliff.vert", "data/shaders/cliff.frag"}).value();
-		water_shader = resource_manager.load<Shader>({"data/shaders/water.vert", "data/shaders/water.frag"}).value();
-
 		setup_collision_shape(physics);
 
 		update_ground_heights({0, 0, width, height});
@@ -483,57 +571,51 @@ export class Terrain: public QObject {
 		hierarchy.map_file_write("war3map.w3e", writer.buffer);
 	}
 
+	/// Draws the ground tiles and the cliff/ramp meshes. Expects the viewport set and the bindless set bound.
 	void render_ground(
+		const VkCommandBuffer cmd,
+		FrameAllocator& allocator,
 		const bool render_pathing,
 		const bool render_lighting,
 		const glm::vec3 light_direction,
 		const Brush* brush,
 		const PathingMap& pathing_map,
-		bool render_regions,
-		const GLuint regions_buffer,
-		const int region_count
-	) const {
-		// Render tiles
-		ground_shader->use();
+		const bool render_regions,
+		const std::span<const std::byte> regions,
+		const uint32_t region_count
+	) {
+		TerrainFrameData data = base_frame_data();
+		data.light_direction = glm::vec4(light_direction, 0.f);
+		data.pathing_static_slot = pathing_map.texture_static->slot;
+		data.pathing_dynamic_slot = pathing_map.texture_dynamic->slot;
 
-		glDisable(GL_BLEND);
-		glEnable(GL_CULL_FACE);
-
-		glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-		glUniform1i(2, render_pathing);
-		glUniform1i(3, render_lighting);
-		glUniform3fv(4, 1, &light_direction.x);
-		glUniform2i(7, width, height);
-
-		render_regions = render_regions && regions_buffer && region_count > 0;
-		glUniform1i(8, render_regions);
-		glUniform1ui(9, region_count);
-		if (render_regions) {
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, regions_buffer);
+		if (render_pathing) {
+			data.flags |= terrain_flag_pathing;
 		}
-
+		if (render_lighting) {
+			data.flags |= terrain_flag_lighting;
+		}
+		if (render_regions && region_count > 0) {
+			data.flags |= terrain_flag_regions;
+			data.regions = allocator.upload(regions, 16).address;
+			data.region_count = region_count;
+		}
 		if (brush) {
-			glUniform2fv(5, 1, &brush->get_position()[0]);
+			data.brush_position = brush->get_position();
+			data.brush_slot = brush->brush_texture;
+			if (brush->get_mode() != Brush::Mode::selection) {
+				data.flags |= terrain_flag_brush;
+			}
 		}
+		const VkDeviceAddress frame = write_frame_data(allocator, data);
 
-		glBindTextureUnit(17, pathing_map.texture_static);
-		glBindTextureUnit(18, pathing_map.texture_dynamic);
-
-		glUniform1i(6, brush && brush->get_mode() != Brush::Mode::selection);
-		if (brush) {
-			glBindTextureUnit(19, brush->brush_texture);
-		}
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cliff_level_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ground_height_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ground_texture_data_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ground_exists_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ground_texture_handle_buffer);
-
-		// Use gl_VertexID in the shader to determine square position
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
-
-		glEnable(GL_BLEND);
+		// Render tiles; the vertex shader derives each tile's position from the instance index
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, ground_pipeline);
+		vkCmdSetCullMode(cmd, VK_CULL_MODE_BACK_BIT);
+		vkCmdSetDepthTestEnable(cmd, VK_TRUE);
+		vkCmdSetDepthWriteEnable(cmd, VK_TRUE);
+		vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(frame), &frame);
+		vkCmdDraw(cmd, 6, (width - 1) * (height - 1), 0, 0);
 
 		// Render cliffs
 		for (const auto& i : cliffs) {
@@ -552,75 +634,42 @@ export class Terrain: public QObject {
 			cliff_meshes[i.z]->render_queue({i.x, i.y, min - 2, corner_cliff_texture[bl]});
 		}
 
-		cliff_shader->use();
-
-		glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
-		glUniform1i(1, render_pathing);
-		glUniform1i(2, render_lighting);
-		glUniform3fv(3, 1, &light_direction.x);
-		glUniform1i(8, render_regions);
-		glUniform1ui(9, region_count);
-		if (brush) {
-			glUniform2fv(4, 1, &brush->get_position()[0]);
-		}
-		glUniform1i(5, brush && brush->get_mode() != Brush::Mode::selection);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ground_height_buffer);
-
-		glBindTextureUnit(0, cliff_texture_array);
-		glBindTextureUnit(2, pathing_map.texture_static);
-
-		glUniform2i(7, width, height);
-
-		if (brush) {
-			glBindTextureUnit(3, brush->brush_texture);
-		}
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, cliff_pipeline);
 		for (const auto& i : cliff_meshes) {
-			i->render();
+			i->render(cmd, allocator, frame);
 		}
 	}
 
-	void render_water(const MapInfo& map_info, const TilesetData& tilesets) const {
+	void render_water(
+		const VkCommandBuffer cmd,
+		FrameAllocator& allocator,
+		const MapInfo& map_info,
+		const TilesetData& tilesets
+	) const {
 		const Tileset& tileset = *tilesets.tileset(tileset_id);
 
-		glm::vec4 shallow_color_min = tileset.shallow_color_min;
-		glm::vec4 shallow_color_max = tileset.shallow_color_max;
-		glm::vec4 deep_color_min = tileset.deep_color_min;
-		glm::vec4 deep_color_max = tileset.deep_color_max;
+		TerrainFrameData data = base_frame_data();
+		data.shallow_color_min = tileset.shallow_color_min;
+		data.shallow_color_max = tileset.shallow_color_max;
+		data.deep_color_min = tileset.deep_color_min;
+		data.deep_color_max = tileset.deep_color_max;
 
 		if (map_info.water_tinting) {
 			const glm::vec4 water_tint = glm::vec4(map_info.water_color) / 255.0f;
-			shallow_color_min *= water_tint;
-			shallow_color_max *= water_tint;
-			deep_color_min *= water_tint;
-			deep_color_max *= water_tint;
+			data.shallow_color_min *= water_tint;
+			data.shallow_color_max *= water_tint;
+			data.deep_color_min *= water_tint;
+			data.deep_color_max *= water_tint;
 		}
+		const VkDeviceAddress frame = write_frame_data(allocator, data);
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDepthMask(false);
-
-		water_shader->use();
-
-		glUniformMatrix4fv(0, 1, GL_FALSE, &camera.projection_view[0][0]);
-		glUniform4fv(1, 1, &shallow_color_min[0]);
-		glUniform4fv(2, 1, &shallow_color_max[0]);
-		glUniform4fv(3, 1, &deep_color_min[0]);
-		glUniform4fv(4, 1, &deep_color_max[0]);
-		glUniform1f(5, water_offset);
-		glUniform1i(6, current_texture);
-		glUniform2i(7, width, height);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cliff_level_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, water_height_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, water_exists_buffer);
-
-		glBindTextureUnit(0, water_texture_array);
-
-		// Use gl_VertexID in the shader to determine square position
-		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, (width - 1) * (height - 1));
-
-		glDepthMask(true);
+		vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, water_pipeline);
+		vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
+		vkCmdSetDepthTestEnable(cmd, VK_TRUE);
+		vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
+		vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(frame), &frame);
+		// The vertex shader derives each quad's position from the instance index
+		vkCmdDraw(cmd, 6, (width - 1) * (height - 1), 0, 0);
 	}
 
 	void change_tileset(
@@ -874,32 +923,27 @@ export class Terrain: public QObject {
 	}
 
 	void upload_ground_heights() const {
-		glNamedBufferSubData(ground_height_buffer, 0, corner_height.size() * sizeof(float), corner_height.data());
+		upload_buffer(ground_height_buffer, corner_height);
 	}
 
 	void upload_corner_heights() const {
-		glNamedBufferSubData(cliff_level_buffer, 0, gpu_final_ground_heights.size() * sizeof(float), gpu_final_ground_heights.data());
+		upload_buffer(cliff_level_buffer, gpu_final_ground_heights);
 	}
 
 	void upload_ground_texture() const {
-		glNamedBufferSubData(
-			ground_texture_data_buffer,
-			0,
-			gpu_ground_texture_list.size() * sizeof(glm::uvec4),
-			gpu_ground_texture_list.data()
-		);
+		upload_buffer(ground_texture_data_buffer, gpu_ground_texture_list);
 	}
 
 	void upload_ground_exists() const {
-		glNamedBufferSubData(ground_exists_buffer, 0, gpu_ground_exists_data.size() * sizeof(uint32_t), gpu_ground_exists_data.data());
+		upload_buffer(ground_exists_buffer, gpu_ground_exists_data);
 	}
 
 	void upload_water_exists() const {
-		glNamedBufferSubData(water_exists_buffer, 0, gpu_water_exists_data.size() * sizeof(uint32_t), gpu_water_exists_data.data());
+		upload_buffer(water_exists_buffer, gpu_water_exists_data);
 	}
 
 	void upload_water_heights() const {
-		glNamedBufferSubData(water_height_buffer, 0, corner_water_height.size() * sizeof(float), corner_water_height.data());
+		upload_buffer(water_height_buffer, corner_water_height);
 	}
 
 	void update_ground_heights(const TerrainRect& area) {
@@ -1382,7 +1426,7 @@ export class Terrain: public QObject {
 		ground_textures.clear(); // ToDo Clear them after loading new ones?
 		ground_texture_to_id_map.clear();
 		cliff_type_to_id_map.clear();
-		gpu_ground_texture_handles.clear();
+		gpu_ground_texture_slots.clear();
 
 		const Tileset* tileset = tilesets.tileset(tileset_id);
 
@@ -1390,21 +1434,16 @@ export class Terrain: public QObject {
 			const auto& texture = *tilesets.terrain_texture(tile_id);
 			ground_textures.push_back(resource_manager.load<GroundTexture>(texture.file_path).value());
 			ground_texture_to_id_map.emplace(tile_id, static_cast<int>(ground_textures.size() - 1));
-			gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+			gpu_ground_texture_slots.push_back(ground_textures.back()->slot);
 		}
 		blight_texture = static_cast<int>(ground_textures.size());
 		ground_texture_to_id_map.emplace("blight", blight_texture);
 		ground_textures.push_back(resource_manager.load<GroundTexture>(tileset->blight_texture).value());
-		gpu_ground_texture_handles.push_back(ground_textures.back()->bindless_handle);
+		gpu_ground_texture_slots.push_back(ground_textures.back()->slot);
 
-		glDeleteBuffers(1, &ground_texture_handle_buffer);
-		glCreateBuffers(1, &ground_texture_handle_buffer);
-		glNamedBufferStorage(
-			ground_texture_handle_buffer,
-			gpu_ground_texture_handles.size() * sizeof(GLuint64),
-			gpu_ground_texture_handles.data(),
-			GL_DYNAMIC_STORAGE_BIT
-		);
+		destroy_buffer_deferred(ground_texture_slot_buffer);
+		ground_texture_slot_buffer =
+			create_device_buffer(std::as_bytes(std::span(gpu_ground_texture_slots)), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
 		cliff_to_ground_texture.clear();
 		int next_id = 0;
@@ -1422,35 +1461,43 @@ export class Terrain: public QObject {
 			cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		}
 
-		glDeleteTextures(1, &cliff_texture_array);
-		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &cliff_texture_array);
-		glTextureStorage3D(
-			cliff_texture_array,
-			log2(cliff_texture_size) + 1,
-			GL_RGBA8,
-			cliff_texture_size,
-			cliff_texture_size,
-			cliff_textures.size()
-		);
-		glTextureParameteri(cliff_texture_array, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		int sub = 0;
-		for (const auto& i : cliff_textures) {
-			glTextureSubImage3D(
-				cliff_texture_array,
-				0,
-				0,
-				0,
-				sub,
-				i->width,
-				i->height,
-				1,
-				i->channels == 4 ? GL_RGBA : GL_RGB,
-				GL_UNSIGNED_BYTE,
-				i->data.data()
-			);
-			sub += 1;
+		// Smaller cliff textures go in the top-left corner of their layer, as with glTextureSubImage3D
+		release_array_texture(cliff_texture_array, cliff_texture_slot);
+		cliff_texture_array = create_array_texture(cliff_textures, cliff_texture_size);
+		cliff_texture_slot = bindless.add(cliff_texture_array.view, bindless.samplers[0]);
+	}
+
+	/// Packs textures into the layers of one RGBA array texture of layer_size x layer_size
+	static Image create_array_texture(const std::vector<std::shared_ptr<Texture>>& textures, const int layer_size) {
+		const size_t layer_bytes = static_cast<size_t>(layer_size) * layer_size * 4;
+		std::vector<uint8_t> pixels(layer_bytes * std::max<size_t>(textures.size(), 1), 0);
+		for (size_t layer = 0; layer < textures.size(); layer++) {
+			const Texture& texture = *textures[layer];
+			const std::vector<uint8_t> rgba = expand_to_rgba8(texture.data, texture.channels);
+			const int copy_width = std::min(texture.width, layer_size);
+			const int copy_height = std::min(texture.height, layer_size);
+			for (int y = 0; y < copy_height; y++) {
+				std::memcpy(
+					pixels.data() + layer * layer_bytes + static_cast<size_t>(y) * layer_size * 4,
+					rgba.data() + static_cast<size_t>(y) * texture.width * 4,
+					static_cast<size_t>(copy_width) * 4
+				);
+			}
 		}
-		glGenerateTextureMipmap(cliff_texture_array);
+		return create_rgba8_array_image(
+			{static_cast<uint32_t>(layer_size), static_cast<uint32_t>(layer_size)},
+			static_cast<uint32_t>(std::max<size_t>(textures.size(), 1)),
+			pixels
+		);
+	}
+
+	static void release_array_texture(Image& image, const uint32_t slot) {
+		if (image.image == VK_NULL_HANDLE) {
+			return;
+		}
+		bindless.remove(slot);
+		destroy_image_deferred(image);
+		image = {};
 	}
 
 	void reload_water_textures(const TilesetData& tilesets) {
@@ -1463,18 +1510,9 @@ export class Terrain: public QObject {
 		water_textures_nr = tileset->water_textures_nr;
 		animation_rate = tileset->water_animation_rate;
 
-		if (water_texture_array) {
-			glDeleteTextures(1, &water_texture_array);
-			water_texture_array = 0;
-		}
-
-		glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &water_texture_array);
-		glTextureStorage3D(water_texture_array, std::log(128) + 1, GL_RGBA8, 128, 128, water_textures_nr);
-		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(water_texture_array, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
 		const std::string_view file_name = tileset->water_texture;
 
+		std::vector<std::shared_ptr<Texture>> water_textures;
 		for (int i = 0; i < water_textures_nr; i++) {
 			// Hack to force loading of SD water textures till I implement a water shader
 			const auto hd = hierarchy.hd;
@@ -1485,33 +1523,17 @@ export class Terrain: public QObject {
 			if (texture->width != 128 || texture->height != 128) {
 				std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
 			}
-
-			glTextureSubImage3D(
-				water_texture_array,
-				0,
-				0,
-				0,
-				i,
-				texture->width,
-				texture->height,
-				1,
-				texture->channels == 4 ? GL_RGBA : GL_RGB,
-				GL_UNSIGNED_BYTE,
-				texture->data.data()
-			);
+			water_textures.push_back(texture);
 		}
 
-		glGenerateTextureMipmap(water_texture_array);
+		release_array_texture(water_texture_array, water_texture_slot);
+		water_texture_array = create_array_texture(water_textures, 128);
+		water_texture_slot = bindless.add(water_texture_array.view, bindless.samplers[0]);
 	}
 
 	void re_render(Physics& physics) {
 		// clear old buffers
-		glDeleteBuffers(1, &ground_height_buffer);
-		glDeleteBuffers(1, &cliff_level_buffer);
-		glDeleteBuffers(1, &water_height_buffer);
-		glDeleteBuffers(1, &ground_texture_data_buffer);
-		glDeleteBuffers(1, &ground_exists_buffer);
-		glDeleteBuffers(1, &water_exists_buffer);
+		destroy_buffers();
 
 		// clear all cliffs (this prevents out of bounds error when shrinking terrain)
 		cliffs.clear();
@@ -1559,21 +1581,19 @@ export class Terrain: public QObject {
 		gpu_ground_exists_data.resize(width * height);
 		gpu_water_exists_data.resize(width * height);
 
+		const auto storage = [](const size_t size) {
+			return create_buffer(std::max<size_t>(size, 16), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, false);
+		};
+
 		// ground buffers
-		glCreateBuffers(1, &ground_height_buffer);
-		glNamedBufferStorage(ground_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &cliff_level_buffer);
-		glNamedBufferStorage(cliff_level_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &ground_texture_data_buffer);
-		glNamedBufferStorage(ground_texture_data_buffer, (width - 1) * (height - 1) * sizeof(glm::uvec4), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &ground_exists_buffer);
-		glNamedBufferStorage(ground_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+		ground_height_buffer = storage(width * height * sizeof(float));
+		cliff_level_buffer = storage(width * height * sizeof(float));
+		ground_texture_data_buffer = storage((width - 1) * (height - 1) * sizeof(glm::uvec4));
+		ground_exists_buffer = storage(width * height * sizeof(uint32_t));
 
 		// water buffers
-		glCreateBuffers(1, &water_height_buffer);
-		glNamedBufferStorage(water_height_buffer, width * height * sizeof(float), nullptr, GL_DYNAMIC_STORAGE_BIT);
-		glCreateBuffers(1, &water_exists_buffer);
-		glNamedBufferStorage(water_exists_buffer, width * height * sizeof(uint32_t), nullptr, GL_DYNAMIC_STORAGE_BIT);
+		water_height_buffer = storage(width * height * sizeof(float));
+		water_exists_buffer = storage(width * height * sizeof(uint32_t));
 	}
 
 	void setup_collision_shape(const Physics& physics) {

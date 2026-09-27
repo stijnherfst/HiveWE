@@ -13,16 +13,13 @@
     "bullet3",
     "bzip2",
     "casclib",
+    "glm",
     {
-      "name": "glad",
-      "default-features": false,
+      "name": "glslang",
       "features": [
-        "extensions",
-        "gl-api-46",
-        "loader"
+        "tools"
       ]
     },
-    "glm",
     {
       "name": "imgui",
       "features": [
@@ -45,8 +42,8 @@
       "features": [
         "gui",
         "jpeg",
-        "opengl",
         "png",
+        "vulkan",
         "widgets"
       ]
     },
@@ -54,6 +51,10 @@
     "stormlib",
     "tbb",
     "unordered-dense",
+    "vk-bootstrap",
+    "volk",
+    "vulkan-memory-allocator",
+    "vulkan-validationlayers",
     "qscintilla",
     "tracy",
     "doctest"

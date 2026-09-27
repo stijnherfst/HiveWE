@@ -1,17 +1,25 @@
 #version 450 core
 
-in vec2 v_uv;
-in vec4 v_color;
+#extension GL_EXT_nonuniform_qualifier : require
 
-layout (binding = 0) uniform sampler2D u_texture;
-layout (location = 1) uniform int u_filter_mode;
+// Mirrors ParticlePushConstants in vk_editable_mesh.ixx
+layout(push_constant, std430) uniform PushConstants {
+	mat4 mvp;
+	uint texture_slot;
+	int filter_mode;
+} pc;
 
-out vec4 frag_color;
+layout (set = 0, binding = 0) uniform sampler2D textures[];
+
+layout (location = 0) in vec2 v_uv;
+layout (location = 1) in vec4 v_color;
+
+layout (location = 0) out vec4 frag_color;
 
 void main() {
-	vec4 tex = texture(u_texture, v_uv);
+	vec4 tex = texture(textures[pc.texture_slot], v_uv);
 	vec4 c = tex * v_color;
-	if (u_filter_mode == 4 && c.a < 0.5) {
+	if (pc.filter_mode == 4 && c.a < 0.5) {
 		discard;
 	}
 	frag_color = c;

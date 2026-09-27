@@ -1,13 +1,11 @@
 #include "tile_pather.h"
 
 import std;
-import OpenGLUtilities;
 import Texture;
 import PathingMap;
 import Tileset;
 import ResourceManager;
 import Terrain;
-import <glad/glad.h>;
 
 TilePather::TilePather(QWidget* parent, Terrain& terrain, PathingMap& pathing_map, TilesetData& tilesets)
 	: QDialog(parent), terrain(terrain), pathing_map(pathing_map), tilesets(tilesets) {
@@ -115,17 +113,7 @@ void TilePather::save_tiles() {
 		}
 	}
 
-	glTextureSubImage2D(
-		pathing_map.texture_static,
-		0,
-		0,
-		0,
-		pathing_map.width,
-		pathing_map.height,
-		GL_RED_INTEGER,
-		GL_UNSIGNED_BYTE,
-		pathing_map.pathing_cells_static.data()
-	);
+	pathing_map.upload_static_pathing();
 
 	emit terrain.tileset_changed();
 	close();

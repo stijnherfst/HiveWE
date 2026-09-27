@@ -21,7 +21,7 @@ import std;
 import Utilities;
 import Triggers;
 import Globals;
-import OpenGLUtilities;
+import TextureIcon;
 import MapGlobal;
 
 constexpr int map_header_id = 0;

@@ -1,26 +1,18 @@
-#include "model_editor_glwidget.h"
-
-#include <QTimer>
-#include <QPainter>
-#include <QFileDialog>
-#include <QSettings>
-#include <QStandardPaths>
-#include <QDesktopServices>
 #include <QFile>
 #include <QFileSystemWatcher>
-#include <glm/gtx/component_wise.inl>
+#include <QLabel>
+#include <QStandardPaths>
+#include <QWidget>
 
-#include <qt_imgui/qt_imGui.h>
+#include "model_editor_viewport.h"
 
 import std;
-import OpenGLUtilities;
 import BinaryReader;
 import Hierarchy;
 import MDX;
 import Camera;
 import ResourceManager;
-import <imgui.h>;
-import <imgui_internal.h>;
+import VkContext;
 
 namespace fs = std::filesystem;
 
@@ -28,32 +20,23 @@ namespace fs = std::filesystem;
 InputHandler my_input_handler;
 mdx::MDX::OptimizationStats stats;
 
-ModelEditorGLWidget::ModelEditorGLWidget(
-	QWidget* parent,
-	const std::shared_ptr<mdx::MDX>& mdx,
-	std::vector<mdx::ValidationMessage> messages
-) :
-	QOpenGLWidget(parent),
-	mdx(mdx),
-	messages(std::move(messages)) {
-	// Give the widget its own persistent native surface. Without this, floating the ADS dock tab
-	// reparents the QOpenGLWidget into a new top-level container, tears down/recreates its GL surface,
-	// and the viewport renders white. Mirrors the WA_NativeWindow workaround used for the model browser.
-	setAttribute(Qt::WA_NativeWindow);
-	setAttribute(Qt::WA_DontCreateNativeAncestors);
+/// Mirrors PushConstants in data/shaders/line.*
+struct LinePushConstants {
+	glm::mat4 mvp;
+	glm::vec4 color;
+	VkDeviceAddress positions;
+};
 
-	makeCurrent();
-
-	setMouseTracking(true);
-	setFocus();
-	setFocusPolicy(Qt::WheelFocus);
-
-	connect(this, &QOpenGLWidget::frameSwapped, [&]() {
-		update();
-	});
-
+ModelEditorViewport::ModelEditorViewport(const std::shared_ptr<mdx::MDX>& mdx, std::vector<mdx::ValidationMessage> messages)
+	: mdx(mdx),
+	  messages(std::move(messages)),
+	  line_pipeline({
+		  .vertex_shader = "data/shaders/line.vert.spv",
+		  .fragment_shader = "data/shaders/line.frag.spv",
+		  .topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST,
+	  }) {
 	// Hot-reload: when the temp .mdl opened by "Edit MDL" changes on disk, queue a reload. Editors
-	// often replace the file (drops the watch), so re-add the path and reload on the next paintGL.
+	// often replace the file (drops the watch), so re-add the path and reload on the next frame.
 	mdl_watcher = new QFileSystemWatcher(this);
 	connect(mdl_watcher, &QFileSystemWatcher::fileChanged, [this](const QString& path) {
 		reload_pending = true;
@@ -61,10 +44,11 @@ ModelEditorGLWidget::ModelEditorGLWidget(
 			mdl_watcher->addPath(path);
 		}
 	});
-}
 
-void ModelEditorGLWidget::initializeGL() {
 	ref = QtImGui::initialize(this, false);
+	QtImGui::setFontUploader(ref, [this](const unsigned char* pixels, const int width, const int height) {
+		return imgui_renderer.create_font_texture(pixels, width, height);
+	});
 
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -79,50 +63,47 @@ void ModelEditorGLWidget::initializeGL() {
 	// Build the default floating layout only when there is no remembered layout yet.
 	build_default_layout = !fs::exists(ini_path);
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glClearColor(0, 0, 0, 1);
-
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
 	try {
-		mesh = std::make_shared<EditableMesh>(mdx, std::nullopt);
+		mesh = std::make_shared<VulkanEditableMesh>(mdx, std::nullopt);
 		skeleton = Skeleton(mdx);
 		Skeleton::pick_preview_sequence(skeleton, *mdx);
 		recenter_camera();
 	} catch (const std::exception& e) {
 		mesh = nullptr;
-		messages = mdx->validate();
-		messages.insert(messages.begin(), {mdx::ValidationSeverity::error, std::string("Could not build mesh: ") + e.what()});
+		this->messages = mdx->validate();
+		this->messages.insert(this->messages.begin(), {mdx::ValidationSeverity::error, std::string("Could not build mesh: ") + e.what()});
 	}
 
-	shader_sd = resource_manager.load<Shader>({"data/shaders/editable_mesh_sd.vert", "data/shaders/editable_mesh_sd.frag"}).value();
-	shader_hd = resource_manager.load<Shader>({"data/shaders/editable_mesh_hd.vert", "data/shaders/editable_mesh_hd.frag"}).value();
-
-	line_shader = resource_manager.load<Shader>({"data/shaders/physics_debug.vert", "data/shaders/physics_debug.frag"}).value();
-	grid_shader = resource_manager.load<Shader>({"data/shaders/grid.vert", "data/shaders/grid.frag"}).value();
-
 	elapsed_timer.start();
-
-	glGenVertexArrays(1, &line_vao);
-	glCreateBuffers(1, &line_vbo);
 }
 
-void ModelEditorGLWidget::resizeGL(const int w, const int h) {
-	glViewport(0, 0, w, h);
-	camera.aspect_ratio = double(w) / h;
-	camera.update(delta);
-	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
+ModelEditorViewport::~ModelEditorViewport() {
+	wait_idle();
 }
 
-void ModelEditorGLWidget::paintGL() {
-	makeCurrent();
+QWidget* ModelEditorViewport::create_widget(const std::shared_ptr<mdx::MDX>& model, std::vector<mdx::ValidationMessage> messages) {
+	if (!initialize_vulkan()) {
+		auto* label = new QLabel("The model editor needs a GPU with Vulkan 1.3 support");
+		label->setAlignment(Qt::AlignCenter);
+		return label;
+	}
+	auto* viewport = new ModelEditorViewport(model, std::move(messages));
+	QWidget* container = QWidget::createWindowContainer(viewport);
+	viewport->container = container;
+	// Keep ADS's own widgets alien; only the viewport needs a native window
+	container->setAttribute(Qt::WA_DontCreateNativeAncestors);
+	container->setFocusPolicy(Qt::WheelFocus);
+	return container;
+}
 
+const VulkanTexture* ModelEditorViewport::texture_at(const size_t index) const {
+	if (!mesh || index >= mesh->textures.size()) {
+		return nullptr;
+	}
+	return mesh->textures[index].get();
+}
+
+void ModelEditorViewport::record(const VkCommandBuffer cmd, const FrameTarget& target, FrameAllocator& allocator) {
 	delta = elapsed_timer.nsecsElapsed() / 1'000'000'000.0;
 	elapsed_timer.start();
 
@@ -134,68 +115,84 @@ void ModelEditorGLWidget::paintGL() {
 	skeleton.update_location(glm::vec3(0.f), glm::quat(), glm::vec3(1.f));
 	skeleton.update(animation_paused ? 0.0 : delta);
 
+	camera.aspect_ratio = static_cast<float>(target.extent.width) / static_cast<float>(target.extent.height);
 	camera.update(delta);
 
-	glBindVertexArray(vao);
-	glClearColor(0.3f, 0.3f, 0.3f, 1.f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Built before recording so the panels see this frame's model state
+	render_imgui();
 
-	// Opaque passes — depth test/write on, blend off (state restored per-layer inside render_opaque)
-	glEnable(GL_BLEND);
+	const VkRenderingAttachmentInfo color = {
+		.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+		.imageView = target.view,
+		.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+		.clearValue = {.color = {{0.3f, 0.3f, 0.3f, 1.f}}},
+	};
+	const VkRenderingAttachmentInfo depth = {
+		.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+		.imageView = target.depth_view,
+		.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.clearValue = {.depthStencil = {1.f, 0}},
+	};
+	const VkRenderingInfo rendering = {
+		.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+		.renderArea = {{0, 0}, target.extent},
+		.layerCount = 1,
+		.colorAttachmentCount = 1,
+		.pColorAttachments = &color,
+		.pDepthAttachment = &depth,
+	};
+	vkCmdBeginRendering(cmd, &rendering);
+	bindless.bind(cmd);
+	set_viewport(cmd, {{0, 0}, target.extent}, target.extent);
 
 	if (mesh) {
-		shader_sd->use();
-		mesh->render_opaque(false, 0, skeleton, camera.projection_view, camera.direction);
-		shader_hd->use();
-		mesh->render_opaque(true, 0, skeleton, camera.projection_view, camera.direction);
-
-		// Opaque sets depth mask itself, transparent always off
-		glDepthMask(false);
-
-		shader_sd->use();
-		mesh->render_transparent(false, 0, skeleton, camera.projection_view, camera.direction);
-		shader_hd->use();
-		mesh->render_transparent(true, 0, skeleton, camera.projection_view, camera.direction);
-
-		glEnable(GL_DEPTH_TEST);
-
-		mesh->render_particles(skeleton, camera.projection_view, camera.X, camera.Y, camera.direction);
+		mesh_renderer.render(
+			cmd,
+			allocator,
+			*mesh,
+			skeleton,
+			camera.projection_view,
+			camera.direction,
+			camera.X,
+			camera.Y,
+			camera.direction,
+			0
+		);
 	}
 
 	if (draw_grid) {
-		render_grid();
+		render_grid(cmd, allocator);
 	}
 
-	if (draw_extents_box || draw_extents_sphere) {
-		render_extents();
+	if (mesh && (draw_extents_box || draw_extents_sphere)) {
+		render_extents(cmd, allocator);
 	}
 
-	glBindVertexArray(0);
+	if (show_ui) {
+		imgui_renderer.render(cmd, allocator, ImGui::GetDrawData(), target.extent);
+	}
 
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	render_imgui();
+	vkCmdEndRendering(cmd);
 }
 
-void ModelEditorGLWidget::keyPressEvent(QKeyEvent* event) {
+void ModelEditorViewport::keyPressEvent(QKeyEvent* event) {
 	my_input_handler.keys_pressed.emplace(event->key());
 }
 
-void ModelEditorGLWidget::keyReleaseEvent(QKeyEvent* event) {
+void ModelEditorViewport::keyReleaseEvent(QKeyEvent* event) {
 	my_input_handler.keys_pressed.erase(event->key());
 }
 
-void ModelEditorGLWidget::mouseMoveEvent(QMouseEvent* event) {
+void ModelEditorViewport::mouseMoveEvent(QMouseEvent* event) {
 	my_input_handler.mouse_move_event(event);
 	camera.mouse_move_event(event, my_input_handler);
 }
 
-void ModelEditorGLWidget::mousePressEvent(QMouseEvent* event) {
-	makeCurrent();
-
+void ModelEditorViewport::mousePressEvent(QMouseEvent* event) {
 	if (ImGui::GetIO().WantCaptureMouse) {
 		return;
 	}
@@ -203,11 +200,11 @@ void ModelEditorGLWidget::mousePressEvent(QMouseEvent* event) {
 	camera.mouse_press_event(event);
 }
 
-void ModelEditorGLWidget::mouseReleaseEvent(QMouseEvent* event) {
+void ModelEditorViewport::mouseReleaseEvent(QMouseEvent* event) {
 	camera.mouse_release_event(event);
 }
 
-void ModelEditorGLWidget::wheelEvent(QWheelEvent* event) {
+void ModelEditorViewport::wheelEvent(QWheelEvent* event) {
 	if (ImGui::GetIO().WantCaptureMouse) {
 		return;
 	}
@@ -215,7 +212,7 @@ void ModelEditorGLWidget::wheelEvent(QWheelEvent* event) {
 	camera.mouse_scroll_event(event);
 }
 
-void ModelEditorGLWidget::recenter_camera() {
+void ModelEditorViewport::recenter_camera() {
 	// Fit mesh extents AABB into screen. Some sequences (spell missiles, etc.) ship with the
 	// sentinel extent (min = +FLT_MAX, max = -FLT_MAX); using that directly would compute
 	// length() as +inf and push the camera to infinity. Fall back to bounds_radius, or a
@@ -233,7 +230,26 @@ void ModelEditorGLWidget::recenter_camera() {
 	camera.distance = radius / std::sin(glm::radians(camera.fov) * 0.5f);
 }
 
-void ModelEditorGLWidget::render_extents() {
+void ModelEditorViewport::draw_lines(
+	const VkCommandBuffer cmd,
+	FrameAllocator& allocator,
+	const std::vector<glm::vec3>& lines,
+	const glm::vec4 color
+) {
+	if (lines.empty()) {
+		return;
+	}
+	const auto vertices = allocator.upload(std::span<const glm::vec3>(lines), 16);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, line_pipeline);
+	vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
+	vkCmdSetDepthTestEnable(cmd, VK_TRUE);
+	vkCmdSetDepthWriteEnable(cmd, VK_TRUE);
+	const LinePushConstants push = {camera.projection_view, color, vertices.address};
+	vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(push), &push);
+	vkCmdDraw(cmd, static_cast<uint32_t>(lines.size()), 1, 0, 0);
+}
+
+void ModelEditorViewport::render_extents(const VkCommandBuffer cmd, FrameAllocator& allocator) {
 	const auto& extent = mesh->mdx->sequences[skeleton.sequence_index].extent;
 
 	std::vector<glm::vec3> lines;
@@ -294,26 +310,11 @@ void ModelEditorGLWidget::render_extents() {
 		}
 	}
 
-	if (lines.empty()) {
-		return;
-	}
-
-	glNamedBufferData(line_vbo, lines.size() * sizeof(glm::vec3), lines.data(), GL_STREAM_DRAW);
-
-	line_shader->use();
-	glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-
-	glBindVertexArray(line_vao);
-	glEnable(GL_DEPTH_TEST);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, line_vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lines.size()));
+	draw_lines(cmd, allocator, lines, glm::vec4(0.f, 1.f, 0.f, 1.f));
 }
 
-void ModelEditorGLWidget::render_grid() {
-	const auto& extent = mesh->mdx->extent;
+void ModelEditorViewport::render_grid(const VkCommandBuffer cmd, FrameAllocator& allocator) {
+	const auto& extent = mdx->extent;
 	float reach = 0.0f;
 	if (extent.minimum.x <= extent.maximum.x) {
 		reach = std::max({std::abs(extent.minimum.x), std::abs(extent.maximum.x), std::abs(extent.minimum.y), std::abs(extent.maximum.y)});
@@ -330,28 +331,11 @@ void ModelEditorGLWidget::render_grid() {
 		lines.emplace_back(static_cast<float>(half), static_cast<float>(c), 0.0f);
 	}
 
-	grid_shader->use();
-	glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-
-	glBindVertexArray(line_vao);
-	glEnable(GL_DEPTH_TEST);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, line_vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	if (!minor.empty()) {
-		glNamedBufferData(line_vbo, minor.size() * sizeof(glm::vec3), minor.data(), GL_STREAM_DRAW);
-		glUniform4f(0, 0.40f, 0.40f, 0.40f, 1.0f);
-		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(minor.size()));
-	}
-	if (!major.empty()) {
-		glNamedBufferData(line_vbo, major.size() * sizeof(glm::vec3), major.data(), GL_STREAM_DRAW);
-		glUniform4f(0, 0.62f, 0.62f, 0.68f, 1.0f);
-		glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(major.size()));
-	}
+	draw_lines(cmd, allocator, minor, glm::vec4(0.40f, 0.40f, 0.40f, 1.0f));
+	draw_lines(cmd, allocator, major, glm::vec4(0.62f, 0.62f, 0.68f, 1.0f));
 }
 
-void ModelEditorGLWidget::reload_from_mdl() {
+void ModelEditorViewport::reload_from_mdl() {
 	if (hot_reload_path.empty()) {
 		return;
 	}
@@ -370,9 +354,9 @@ void ModelEditorGLWidget::reload_from_mdl() {
 
 	auto new_mdx = std::make_shared<mdx::MDX>(std::move(result.value()));
 
-	std::shared_ptr<EditableMesh> new_mesh;
+	std::shared_ptr<VulkanEditableMesh> new_mesh;
 	try {
-		new_mesh = std::make_shared<EditableMesh>(new_mdx, std::nullopt);
+		new_mesh = std::make_shared<VulkanEditableMesh>(new_mdx, std::nullopt);
 	} catch (const std::exception& e) {
 		messages = new_mdx->validate();
 		messages.insert(messages.begin(), {mdx::ValidationSeverity::error, std::string("Hot reload could not build mesh: ") + e.what()});
@@ -380,6 +364,7 @@ void ModelEditorGLWidget::reload_from_mdl() {
 	}
 
 	mdx = new_mdx;
+	// The old mesh's buffers are destroyed once the frames using them have finished
 	mesh = new_mesh;
 	skeleton = Skeleton(mdx);
 	Skeleton::pick_preview_sequence(skeleton, *mdx);

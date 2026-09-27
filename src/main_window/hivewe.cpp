@@ -53,7 +53,6 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	// setWindowFlag(Qt::NoTitleBarBackgroundHint, true);
 	// setAttribute(Qt::WA_LayoutOnEntireRect, true);
 	ui.setupUi(this);
-	context = ui.widget;
 
 	connect(ui.ribbon->undo, &QPushButton::clicked, [&]() {
 		// ToDo: temporary, undoing should still allow a selection to persist
@@ -309,13 +308,15 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	restore_window_state();
 
 	minimap->setParent(ui.widget);
+	// The map viewport is a native window, so the minimap has to be one too to be drawn on top of it
+	minimap->setAttribute(Qt::WA_NativeWindow);
 	minimap->move(10, 10);
 	minimap->show();
+	minimap->raise();
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) {
 		camera.position = {location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z};
 	});
-	ui.widget->makeCurrent();
 
 	map = new Map();
 	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
@@ -363,7 +364,6 @@ void HiveWE::open_region_palette() {
 
 void HiveWE::load_map(const fs::path& directory) {
 	window_handler.close_all();
-	ui.widget->makeCurrent();
 
 	delete map;
 	resource_manager.clear();

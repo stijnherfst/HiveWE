@@ -1,6 +1,5 @@
 #include "model_editor.h"
 
-#include "model_editor_glwidget.h"
 
 #include <QObject>
 #include <QLabel>
@@ -17,6 +16,8 @@
 #include <DockComponentsFactory.h>
 
 #include "model_view.h"
+
+#include "model_editor_viewport.h"
 
 import std;
 import BinaryReader;
@@ -115,8 +116,8 @@ void ModelEditor::browse_models(ads::CDockAreaWidget* parent) {
 	dialog->resize(1200, 720);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
-	// Force native window, otherwise ModelView causes switch to OpenGL-capable
-	// surface which unmaps the window and shows white flash.
+	// Force a native window up front, otherwise ModelView's embedded native model views can make Qt
+	// recreate the window's surface later, which unmaps the window and shows a white flash.
 	dialog->setAttribute(Qt::WA_NativeWindow);
 	(void)dialog->winId();
 
@@ -196,8 +197,7 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 
 	if (mdx->is_valid()) {
 		// The model renders, but validate() may still report problems to surface to the user.
-		auto* gl_widget = new ModelEditorGLWidget(nullptr, mdx, mdx->validate());
-		dock_tab->setWidget(gl_widget);
+		dock_tab->setWidget(ModelEditorViewport::create_widget(mdx, mdx->validate()));
 	} else {
 		auto* text_edit = new QTextEdit();
 		const auto messages = mdx->validate();

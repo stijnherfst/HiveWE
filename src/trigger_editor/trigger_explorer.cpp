@@ -14,7 +14,6 @@
 
 import Triggers;
 import Utilities;
-import OpenGLUtilities;
 import Globals;
 
 constexpr int map_header_id = 0;

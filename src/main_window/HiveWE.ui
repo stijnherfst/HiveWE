@@ -34,7 +34,7 @@
      <widget class="MainRibbon" name="ribbon"/>
     </item>
     <item>
-     <widget class="GLWidget" name="widget" native="true">
+     <widget class="MapWidget" name="widget" native="true">
       <property name="minimumSize">
        <size>
         <width>200</width>
@@ -307,9 +307,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>GLWidget</class>
+   <class>MapWidget</class>
    <extends>QWidget</extends>
-   <header>glwidget.h</header>
+   <header>map_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -1,7 +1,7 @@
 module;
 
 #include <cstdint>
-#include <glad/glad.h>
+#include <volk.h>
 
 export module PathingMap;
 
@@ -10,8 +10,9 @@ import Rects;
 import BinaryReader;
 import BinaryWriter;
 import PathingTexture;
-import OpenGLUtilities;
 import Hierarchy;
+import VkResources;
+import VkTexture;
 import <glm/glm.hpp>;
 
 export class PathingMap {
@@ -31,8 +32,9 @@ export class PathingMap {
 		amphibious = 0b10000000
 	};
 
-	GLuint texture_static = 0;
-	GLuint texture_dynamic = 0;
+	/// R8_UINT images of the cells, sampled by the terrain shaders for the pathing overlay
+	std::unique_ptr<UpdatableTexture> texture_static;
+	std::unique_ptr<UpdatableTexture> texture_dynamic;
 	std::vector<uint8_t> pathing_cells_static;
 	std::vector<uint8_t> pathing_cells_dynamic;
 
@@ -193,7 +195,7 @@ export class PathingMap {
 	/// Blits a pathing texture to the specified location on the pathing map. Manually call update_dynamic() afterwards to upload the changes to the GPU
 	/// Expects position in whole grid tiles and draws the texture centered around this position
 	/// Rotation in multiples of 90
-	/// Blits the texture upside down as OpenGL uses the bottom-left as 0,0
+	/// Blits the texture upside down, as image rows run top to bottom while pathing map rows run bottom to top
 	void blit_pathing_texture(const glm::vec2 position, const int rotation, const std::shared_ptr<PathingTexture>& pathing_texture) {
 		const int div_w = (rotation % 180) ? pathing_texture->height : pathing_texture->width;
 		const int div_h = (rotation % 180) ? pathing_texture->width : pathing_texture->height;
@@ -237,11 +239,11 @@ export class PathingMap {
 	}
 
 	void upload_static_pathing() {
-		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
+		texture_static->update(extent(), pathing_cells_static);
 	}
 
 	void upload_dynamic_pathing() {
-		glTextureSubImage2D(texture_dynamic, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_dynamic.data());
+		texture_dynamic->update(extent(), pathing_cells_dynamic);
 	}
 
 	void resize(size_t new_width, size_t new_height) {
@@ -307,28 +309,14 @@ export class PathingMap {
 	}
 
   private:
-	void recreate_textures() {
-		if (texture_static != 0) {
-			glDeleteTextures(1, &texture_static);
-		}
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_static);
-		glTextureStorage2D(texture_static, 1, GL_R8UI, width, height);
-		glTextureSubImage2D(texture_static, 0, 0, 0, width, height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, pathing_cells_static.data());
-		glTextureParameteri(texture_static, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_static, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	VkExtent2D extent() const {
+		return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+	}
 
-		if (texture_dynamic != 0) {
-			glDeleteTextures(1, &texture_dynamic);
-		}
-		glCreateTextures(GL_TEXTURE_2D, 1, &texture_dynamic);
-		glTextureStorage2D(texture_dynamic, 1, GL_R8UI, width, height);
-		const uint8_t clear_color = 0;
-		glClearTexImage(texture_dynamic, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &clear_color);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTextureParameteri(texture_dynamic, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	void recreate_textures() {
+		texture_static = std::make_unique<UpdatableTexture>(VK_FORMAT_R8_UINT, bindless.nearest_sampler, 1);
+		texture_dynamic = std::make_unique<UpdatableTexture>(VK_FORMAT_R8_UINT, bindless.nearest_sampler, 1);
+		upload_static_pathing();
+		upload_dynamic_pathing();
 	}
 };

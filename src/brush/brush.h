@@ -7,10 +7,18 @@
 
 #include <memory>
 #include <string_view>
-
-import Shader;
+#include <vector>
 
 struct WorldEditContext;
+
+/// The 2D overlays brushes draw on the map, as model matrices mapping the unit square [0, 1]^2 into the world.
+/// The map renders them with the camera; brushes stay independent of the graphics API.
+struct BrushDrawList {
+	/// Green rectangle outlines, e.g. the drag selection box
+	std::vector<glm::mat4> selection_rectangles;
+	/// Green rings inscribed in the square, marking selected objects
+	std::vector<glm::mat4> selection_circles;
+};
 
 class Brush: public QObject {
 	Q_OBJECT
@@ -33,7 +41,10 @@ class Brush: public QObject {
 		cell
 	};
 
-	uint32_t brush_texture;
+	/// Bindless slot of the brush shape texture the terrain shaders overlay at the brush position
+	uint32_t brush_texture = 0;
+	/// Owns the brush shape texture. Type-erased because this header can't import the Vulkan modules
+	std::shared_ptr<void> brush_texture_owner;
 
 	Brush();
 
@@ -68,10 +79,11 @@ class Brush: public QObject {
 
 	virtual void clear_clipboard() {}
 
-	void render();
-	virtual void render_selector() const;
+	/// Queues brush previews with the render manager and adds the brush's overlays to `draw_list`
+	void render(BrushDrawList& draw_list);
+	virtual void render_selector(BrushDrawList& draw_list) const;
 
-	virtual void render_selection() const {}
+	virtual void render_selection(BrushDrawList& draw_list) const {}
 
 	virtual void render_clipboard() {}
 
@@ -105,10 +117,6 @@ class Brush: public QObject {
 
 	bool selection_started = false;
 	glm::vec3 selection_start;
-
-	std::shared_ptr<Shader> selection_shader;
-	std::shared_ptr<Shader> selection_circle_shader;
-	std::shared_ptr<Shader> brush_shader;
 
   public slots:
 

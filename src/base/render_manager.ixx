@@ -1,6 +1,7 @@
 module;
 
-#include <glad/glad.h>
+#include <volk.h>
+#include <vk_mem_alloc.h>
 
 export module RenderManager;
 
@@ -8,7 +9,6 @@ import std;
 import types;
 import SkinnedMesh;
 import SkinnedMeshGlobals;
-import Shader;
 import Skeleton;
 import ResourceManager;
 import Timer;
@@ -19,11 +19,50 @@ import Globals;
 import Units;
 import SLK;
 import UnorderedMap;
+import VkContext;
+import VkResources;
+import VkEditableMesh;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 import Doodads;
 import Doodad;
+
+/// Mirrors SkinnedFrame in data/shaders/skinned_mesh_common.glsl
+struct SkinnedFrameData {
+	glm::mat4 VP;
+	glm::vec4 light_direction;
+	uint32_t render_lighting;
+	uint32_t padding[3];
+	VkDeviceAddress layer_colors;
+	VkDeviceAddress uvs;
+	VkDeviceAddress vertices;
+	VkDeviceAddress tangents;
+	VkDeviceAddress normals;
+	VkDeviceAddress instance_matrices;
+	VkDeviceAddress skins;
+	VkDeviceAddress bone_matrices;
+	VkDeviceAddress team_color_indexes;
+	VkDeviceAddress draw_infos;
+	VkDeviceAddress layer_textures;
+	VkDeviceAddress layer_params;
+};
+static_assert(offsetof(SkinnedFrameData, layer_colors) == 96);
+
+/// Mirrors PushConstants in data/shaders/skinned_mesh_common.glsl
+struct SkinnedPushConstants {
+	VkDeviceAddress frame;
+	uint32_t draw_info_base;
+};
+
+/// Mirrors PushConstants in data/shaders/skinned_mesh_pick.*
+struct PickPushConstants {
+	glm::mat4 MVP;
+	VkDeviceAddress bones;
+	VkDeviceAddress vertices;
+	VkDeviceAddress skins;
+	int32_t color_id;
+};
 
 export class RenderManager {
 	struct PerMeshOffsets {
@@ -38,9 +77,15 @@ export class RenderManager {
 		float distance;
 	};
 
-	std::shared_ptr<Shader> skinned_mesh_shader_sd;
-	std::shared_ptr<Shader> skinned_mesh_shader_hd;
-	std::shared_ptr<Shader> colored_skinned_shader;
+	/// A mesh drawn into the picking target with a color encoding its id
+	struct PickJob {
+		const SkinnedMesh* mesh;
+		const Skeleton* skeleton;
+		int id;
+	};
+
+	static constexpr VkFormat pick_color_format = VK_FORMAT_R8G8B8A8_UNORM;
+	static constexpr VkFormat pick_depth_format = VK_FORMAT_D32_SFLOAT;
 
 	std::vector<SkinnedMesh*> skinned_meshes;
 	std::vector<SkinnedInstance> skinned_transparent_instances;
@@ -48,49 +93,50 @@ export class RenderManager {
 	std::shared_ptr<SkinnedMesh> click_helper;
 	std::vector<Skeleton> click_helper_instances;
 
-	GLuint color_buffer;
-	GLuint depth_buffer;
-	GLuint color_picking_framebuffer;
+	// Indexed by BlendMode
+	std::array<Pipeline, blend_mode_count> sd_pipelines;
+	std::array<Pipeline, blend_mode_count> hd_pipelines;
 
-	int window_width;
-	int window_height;
+	Pipeline pick_pipeline {{
+		.vertex_shader = "data/shaders/skinned_mesh_pick.vert.spv",
+		.fragment_shader = "data/shaders/skinned_mesh_pick.frag.spv",
+		.color_format = pick_color_format,
+		.depth_format = pick_depth_format,
+	}};
+	Image pick_color;
+	Image pick_depth;
+
+	int window_width = 1;
+	int window_height = 1;
 
   public:
 	RenderManager() {
-		skinned_mesh_globals.init_gl();
-
-		skinned_mesh_shader_sd =
-			resource_manager.load<Shader>({"data/shaders/skinned_mesh_sd.vert", "data/shaders/skinned_mesh_sd.frag"}).value();
-		skinned_mesh_shader_hd =
-			resource_manager.load<Shader>({"data/shaders/skinned_mesh_hd.vert", "data/shaders/skinned_mesh_hd.frag"}).value();
-		colored_skinned_shader =
-			resource_manager
-				.load<Shader>(
-					{"data/shaders/skinned_mesh_instance_color_coded.vert", "data/shaders/skinned_mesh_instance_color_coded.frag"}
-				)
-				.value();
-
+		skinned_mesh_globals.init();
 		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt).value();
 
-		glCreateFramebuffers(1, &color_picking_framebuffer);
+		for (size_t mode = 0; mode < blend_mode_count; mode++) {
+			const auto& [enable, src, dst] = blend_factors[mode];
+			PipelineDescription description = {
+				.blend = enable,
+				.src_factor = src,
+				.dst_factor = dst,
+			};
+			description.vertex_shader = "data/shaders/skinned_mesh_sd.vert.spv";
+			description.fragment_shader = "data/shaders/skinned_mesh_sd.frag.spv";
+			sd_pipelines[mode] = Pipeline(description);
 
-		glCreateRenderbuffers(1, &color_buffer);
-		glNamedRenderbufferStorage(color_buffer, GL_RGBA8, 800, 600);
-		glNamedFramebufferRenderbuffer(color_picking_framebuffer, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_buffer);
-
-		glCreateRenderbuffers(1, &depth_buffer);
-		glNamedRenderbufferStorage(depth_buffer, GL_DEPTH24_STENCIL8, 800, 600);
-		glNamedFramebufferRenderbuffer(color_picking_framebuffer, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depth_buffer);
-
-		if (glCheckNamedFramebufferStatus(color_picking_framebuffer, GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-			std::println("ERROR::FRAMEBUFFER:: Framebuffer is not complete!\n");
+			description.vertex_shader = "data/shaders/skinned_mesh_hd.vert.spv";
+			description.fragment_shader = "data/shaders/skinned_mesh_hd.frag.spv";
+			hd_pipelines[mode] = Pipeline(description);
 		}
 	}
 
 	~RenderManager() {
-		glDeleteRenderbuffers(1, &color_buffer);
-		glDeleteRenderbuffers(1, &depth_buffer);
-		glDeleteFramebuffers(1, &color_picking_framebuffer);
+		if (!vk_context.is_initialized()) {
+			return;
+		}
+		destroy_image_deferred(pick_color);
+		destroy_image_deferred(pick_depth);
 	}
 
 	void
@@ -136,10 +182,14 @@ export class RenderManager {
 		click_helper_instances.push_back(a);
 	}
 
-	void render(const bool render_lighting, const glm::vec3 light_direction) {
-		GLint old_vao;
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
-
+	/// Draws everything queued since the last call and clears the queues.
+	/// Expects rendering to have begun with the viewport set and the bindless set bound.
+	void render(
+		const VkCommandBuffer cmd,
+		FrameAllocator& allocator,
+		const bool render_lighting,
+		const glm::vec3 light_direction
+	) {
 		for (const auto& i : click_helper_instances) {
 			queue_render(*click_helper, i, glm::vec3(1.f), 0);
 		}
@@ -157,7 +207,6 @@ export class RenderManager {
 			if (mesh->geosets.empty()) {
 				continue;
 			}
-			mesh->make_textures_resident();
 
 			PerMeshOffsets o;
 			o.instance_offset = static_cast<uint32_t>(staging_instance.size());
@@ -192,72 +241,38 @@ export class RenderManager {
 			}
 		}
 
-		auto& g = skinned_mesh_globals;
-
-		// Single upload per per-frame SSBO.
 		if (!staging_instance.empty()) {
-			glNamedBufferData(g.instance_ssbo, staging_instance.size() * sizeof(glm::mat4), staging_instance.data(), GL_DYNAMIC_DRAW);
+			const auto& g = skinned_mesh_globals;
+			SkinnedFrameData frame = {
+				.VP = camera.projection_view,
+				.light_direction = glm::vec4(light_direction, 0.f),
+				.render_lighting = render_lighting ? 1u : 0u,
+				.layer_colors = upload_or_zero(allocator, staging_layer_colors),
+				.uvs = g.uv_snorm_buffer.address,
+				.vertices = g.vertex_snorm_buffer.address,
+				.tangents = g.tangent_buffer.address,
+				.normals = g.normal_buffer.address,
+				.instance_matrices = allocator.upload(std::span<const glm::mat4>(staging_instance)).address,
+				.skins = g.weight_buffer.address,
+				.bone_matrices = upload_or_zero(allocator, staging_bones),
+				.team_color_indexes = allocator.upload(std::span<const uint32_t>(staging_team_color)).address,
+				.layer_textures = g.layer_texture_ids_buffer.address,
+				.layer_params = g.layer_params_buffer.address,
+			};
+
+			vkCmdBindIndexBuffer(cmd, g.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+
+			// OPAQUE PASS — collapse multi-draw across meshes within each draw-state group.
+			render_opaque(cmd, allocator, frame, false, mesh_offsets);
+			render_opaque(cmd, allocator, frame, true, mesh_offsets);
+
+			// TRANSPARENT PASS — distance-sorted, coalesce adjacent same-state.
+			std::ranges::sort(skinned_transparent_instances, [](auto& l, auto& r) {
+				return l.distance > r.distance;
+			});
+			render_transparent(cmd, allocator, frame, false, mesh_offsets, staging_layer_colors);
+			render_transparent(cmd, allocator, frame, true, mesh_offsets, staging_layer_colors);
 		}
-		if (!staging_team_color.empty()) {
-			glNamedBufferData(
-				g.instance_team_color_index_ssbo,
-				staging_team_color.size() * sizeof(uint32_t),
-				staging_team_color.data(),
-				GL_DYNAMIC_DRAW
-			);
-		}
-		if (!staging_bones.empty()) {
-			glNamedBufferData(g.bone_matrices_ssbo, staging_bones.size() * sizeof(glm::mat4), staging_bones.data(), GL_DYNAMIC_DRAW);
-		}
-		if (!staging_layer_colors.empty()) {
-			glNamedBufferData(
-				g.layer_colors_ssbo,
-				staging_layer_colors.size() * sizeof(glm::vec4),
-				staging_layer_colors.data(),
-				GL_DYNAMIC_DRAW
-			);
-		}
-
-		glBindVertexArray(g.vao);
-		g.bind_static_ssbos();
-		g.bind_per_frame_ssbos();
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
-
-		// OPAQUE PASS — collapse multi-draw across meshes within each draw-state group.
-		skinned_mesh_shader_sd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(3, 1, &light_direction.x);
-		glUniform1i(2, render_lighting ? 1 : 0);
-		glBlendFunc(GL_ONE, GL_ZERO);
-		render_opaque(false, mesh_offsets);
-
-		skinned_mesh_shader_hd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(3, 1, &light_direction.x);
-		glUniform1i(2, render_lighting ? 1 : 0);
-		render_opaque(true, mesh_offsets);
-
-		// TRANSPARENT PASS — distance-sorted, coalesce adjacent same-state.
-		std::ranges::sort(skinned_transparent_instances, [](auto& l, auto& r) {
-			return l.distance > r.distance;
-		});
-		glEnable(GL_BLEND);
-		glDepthMask(false);
-
-		skinned_mesh_shader_sd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(3, 1, &light_direction.x);
-		glUniform1i(2, render_lighting ? 1 : 0);
-		render_transparent(false, mesh_offsets, staging_layer_colors);
-
-		skinned_mesh_shader_hd->use();
-		glUniformMatrix4fv(0, 1, false, &camera.projection_view[0][0]);
-		glUniform3fv(3, 1, &light_direction.x);
-		glUniform1i(2, render_lighting ? 1 : 0);
-		render_transparent(true, mesh_offsets, staging_layer_colors);
-
-		glDepthMask(true);
-		glBindVertexArray(old_vao);
 
 		for (auto* m : skinned_meshes) {
 			m->clear_render_data();
@@ -267,85 +282,49 @@ export class RenderManager {
 		skinned_transparent_instances.clear();
 	}
 
-	void resize_framebuffers(const int width, const int height) {
-		glNamedRenderbufferStorage(color_buffer, GL_RGBA8, width, height);
-		glNamedRenderbufferStorage(depth_buffer, GL_DEPTH24_STENCIL8, width, height);
-		window_width = width;
-		window_height = height;
+	/// The map view's size in logical pixels, which mouse positions are in
+	glm::ivec2 viewport_size() const {
+		return {window_width, window_height};
 	}
 
-	/// Requires the OpenGL context to be active/current.
+	void resize_framebuffers(const int width, const int height) {
+		window_width = std::max(width, 1);
+		window_height = std::max(height, 1);
+	}
+
 	/// Returns the unit ID of the unit that is currently under the mouse coordinates.
 	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
 	[[nodiscard]]
-	std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) const {
-		GLint old_fbo;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
-		GLint old_vao;
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, color_picking_framebuffer);
-
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		glViewport(0, 0, window_width, window_height);
-
-		glDepthMask(true);
-		glDisable(GL_BLEND);
-
-		colored_skinned_shader->use();
+	std::optional<size_t> pick_unit_id_under_mouse(const Units& units, const glm::vec2 mouse_position) {
+		std::vector<PickJob> jobs;
 		for (size_t i = 0; i < units.units.size(); i++) {
 			const Unit& unit = units.units[i];
 			if (unit.id == "sloc") {
 				continue;
 			} // ToDo handle starting locations
 
+			// TODO: technically we don't care about the frustrum. The mouse world ray just has to intersect with the AABB
 			const mdx::Extent& extent = unit.mesh->mdx->sequences[unit.skeleton.sequence_index].extent;
 			if (camera.inside_frustrum_transform(extent.minimum, extent.maximum, unit.skeleton.matrix)) {
-				unit.mesh->render_color_coded(unit.skeleton, i + 1);
+				jobs.push_back({unit.mesh.get(), &unit.skeleton, static_cast<int>(i + 1)});
 			}
 		}
 
-		glm::u8vec4 color;
-		glReadPixels(mouse_position.x, window_height - mouse_position.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
-		glBindVertexArray(old_vao);
-		glEnable(GL_BLEND);
-
-		const int index = color.r + (color.g << 8) + (color.b << 16);
-		if (index != 0) {
-			return {index - 1};
-		} else {
-			return {};
-		}
+		return pick(jobs, mouse_position);
 	}
 
-	/// Requires the OpenGL context to be active/current.
 	/// Returns the doodad ID of the doodad that is currently under the mouse coordinates.
-	/// Renders the meshes currently inside the view frustrum coded by unit ID and then reads the pixel under the mouse coordinates
+	/// Renders the meshes currently inside the view frustrum coded by doodad ID and then reads the pixel under the mouse coordinates
 	[[nodiscard]]
-	std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) const {
-		GLint old_fbo;
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &old_fbo);
-		GLint old_vao;
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &old_vao);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, color_picking_framebuffer);
-
-		glClearColor(0, 0, 0, 1);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		glViewport(0, 0, window_width, window_height);
-
-		glDepthMask(true);
-		glDisable(GL_BLEND);
-
+	std::optional<size_t> pick_doodad_id_under_mouse(const Doodads& doodads, const glm::vec2 mouse_position) {
 		glm::vec3 window = {input_handler.mouse.x, window_height - input_handler.mouse.y, 1.f};
 		glm::vec3 pos = glm::unProject(window, camera.view, camera.projection, glm::vec4(0, 0, window_width, window_height));
 		glm::vec3 ray_origin = camera.position - camera.direction * camera.distance;
 		glm::vec3 ray_direction = glm::normalize(pos - ray_origin);
 
-		colored_skinned_shader->use();
+		// Click helper skeletons must outlive the pick
+		std::vector<std::unique_ptr<Skeleton>> helper_skeletons;
+		std::vector<PickJob> jobs;
 		for (size_t i = 0; i < doodads.doodads.size(); i++) {
 			const Doodad& doodad = doodads.doodads[i];
 
@@ -367,36 +346,76 @@ export class RenderManager {
 			transform_aabb_non_uniform(local_min, local_max, min, max, doodad.skeleton.matrix);
 
 			if (intersect_aabb(min, max, ray_origin, ray_direction)) {
-				doodad.mesh->render_color_coded(doodad.skeleton, i + 1);
+				jobs.push_back({doodad.mesh.get(), &doodad.skeleton, static_cast<int>(i + 1)});
 
 				if (use_click_helper) {
-					auto a = Skeleton(click_helper->mdx);
-					a.matrix = doodad.skeleton.matrix;
-					a.update(0.016f);
-					click_helper->render_color_coded(a, i + 1);
+					auto helper = std::make_unique<Skeleton>(click_helper->mdx);
+					helper->matrix = doodad.skeleton.matrix;
+					helper->update(0.016f);
+					jobs.push_back({click_helper.get(), helper.get(), static_cast<int>(i + 1)});
+					helper_skeletons.push_back(std::move(helper));
 				}
 			}
 		}
 
-		glm::u8vec4 color;
-		glReadPixels(mouse_position.x, window_height - mouse_position.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &color);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, old_fbo);
-		glBindVertexArray(old_vao);
-		glEnable(GL_BLEND);
-
-		const int index = color.r + (color.g << 8) + (color.b << 16);
-		if (index != 0) {
-			return {index - 1};
-		} else {
-			return {};
-		}
+		return pick(jobs, mouse_position);
 	}
 
   private:
-	void render_opaque(const bool render_hd, const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets) const {
-		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> commands;
+	template <typename T>
+	static VkDeviceAddress upload_or_zero(FrameAllocator& allocator, const std::vector<T>& data) {
+		if (data.empty()) {
+			return 0;
+		}
+		return allocator.upload(std::span<const T>(data)).address;
+	}
+
+	VkPipeline pipeline_for(const bool render_hd, const uint8_t blend_mode) const {
+		return (render_hd ? hd_pipelines : sd_pipelines)[blend_mode];
+	}
+
+	/// Writes a frame block pointing at this pass's draw infos, and the indirect commands, and returns their addresses
+	std::pair<VkDeviceAddress, FrameAllocator::Allocation> write_pass(
+		FrameAllocator& allocator,
+		SkinnedFrameData frame,
+		const std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand>& commands,
+		const std::vector<SkinnedMeshGlobals::DrawInfo>& draw_infos
+	) const {
+		frame.draw_infos = allocator.upload(std::span<const SkinnedMeshGlobals::DrawInfo>(draw_infos)).address;
+		const auto frame_allocation = allocator.allocate(sizeof(SkinnedFrameData));
+		std::memcpy(frame_allocation.data, &frame, sizeof(frame));
+		const auto indirect = allocator.upload(std::span<const SkinnedMeshGlobals::DrawIndexedIndirectCommand>(commands), 16);
+		return {frame_allocation.address, indirect};
+	}
+
+	void draw_group(
+		const VkCommandBuffer cmd,
+		const FrameAllocator::Allocation& indirect,
+		const VkDeviceAddress frame_address,
+		const size_t group_start,
+		const size_t group_end
+	) const {
+		const SkinnedPushConstants push = {frame_address, static_cast<uint32_t>(group_start)};
+		vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(push), &push);
+		vkCmdDrawIndexedIndirect(
+			cmd,
+			indirect.buffer,
+			indirect.offset + group_start * sizeof(SkinnedMeshGlobals::DrawIndexedIndirectCommand),
+			static_cast<uint32_t>(group_end - group_start),
+			sizeof(SkinnedMeshGlobals::DrawIndexedIndirectCommand)
+		);
+	}
+
+	void render_opaque(
+		const VkCommandBuffer cmd,
+		FrameAllocator& allocator,
+		const SkinnedFrameData& frame,
+		const bool render_hd,
+		const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets
+	) const {
+		std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> commands;
 		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
+		std::vector<SkinnedMesh::DrawState> states;
 
 		for (const auto* mesh : skinned_meshes) {
 			if (mesh->geosets.empty()) {
@@ -409,20 +428,17 @@ export class RenderManager {
 			const auto& off = it->second;
 
 			const auto& entries = render_hd ? mesh->opaque_entries_hd : mesh->opaque_entries_sd;
-			if (entries.empty()) {
-				continue;
-			}
-			const GLuint instance_count = static_cast<GLuint>(mesh->render_jobs.size());
+			const uint32_t instance_count = static_cast<uint32_t>(mesh->render_jobs.size());
 			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
 			const uint32_t skip_count = static_cast<uint32_t>(mesh->skip_count);
 
 			for (const auto& e : entries) {
 				commands.push_back({
-					.count = e.count,
+					.indexCount = e.count,
 					.instanceCount = instance_count,
 					.firstIndex = e.first_index,
-					.baseVertex = e.base_vertex,
-					.baseInstance = 0,
+					.vertexOffset = e.base_vertex,
+					.firstInstance = 0,
 				});
 				SkinnedMeshGlobals::DrawInfo di {};
 				di.instance_offset = off.instance_offset;
@@ -433,6 +449,7 @@ export class RenderManager {
 				di.layer_index_global = e.layer_index_global;
 				di.layer_index_local = e.layer_index_local;
 				draw_infos.push_back(di);
+				states.push_back(e.state);
 			}
 		}
 
@@ -440,35 +457,14 @@ export class RenderManager {
 			return;
 		}
 
-		// Sort (commands, draw_infos) jointly by DrawState. We don't have DrawState in the command,
-		// build a parallel states[] vector while populating.
-		std::vector<SkinnedMesh::DrawState> states;
-		states.reserve(commands.size());
-		{
-			size_t idx = 0;
-			for (const auto* mesh : skinned_meshes) {
-				if (mesh->geosets.empty()) {
-					continue;
-				}
-				if (mesh_offsets.find(mesh) == mesh_offsets.end()) {
-					continue;
-				}
-				const auto& entries = render_hd ? mesh->opaque_entries_hd : mesh->opaque_entries_sd;
-				for (const auto& e : entries) {
-					(void)idx;
-					states.push_back(e.state);
-					idx++;
-				}
-			}
-		}
-
+		// Sort (commands, draw_infos) jointly by DrawState so each state becomes one multi-draw
 		std::vector<size_t> perm(commands.size());
 		std::iota(perm.begin(), perm.end(), 0u);
 		std::ranges::sort(perm, [&](const size_t a, const size_t b) {
 			return states[a] < states[b];
 		});
 
-		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> sorted_commands(commands.size());
+		std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> sorted_commands(commands.size());
 		std::vector<SkinnedMeshGlobals::DrawInfo> sorted_infos(commands.size());
 		std::vector<SkinnedMesh::DrawState> sorted_states(commands.size());
 		for (size_t i = 0; i < perm.size(); i++) {
@@ -477,24 +473,7 @@ export class RenderManager {
 			sorted_states[i] = states[perm[i]];
 		}
 
-		auto& g = skinned_mesh_globals;
-		glNamedBufferData(
-			g.indirect_buffer,
-			sorted_commands.size() * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand),
-			sorted_commands.data(),
-			GL_DYNAMIC_DRAW
-		);
-		glNamedBufferData(
-			g.draw_infos_ssbo,
-			sorted_infos.size() * sizeof(SkinnedMeshGlobals::DrawInfo),
-			sorted_infos.data(),
-			GL_DYNAMIC_DRAW
-		);
-		// glNamedBufferData orphans the buffer object, so we must rebind for it to be visible at the binding point.
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, g.draw_infos_ssbo);
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
-
-		size_t groups = 0;
+		const auto [frame_address, indirect] = write_pass(allocator, frame, sorted_commands, sorted_infos);
 
 		size_t group_start = 0;
 		while (group_start < sorted_commands.size()) {
@@ -502,40 +481,25 @@ export class RenderManager {
 			while (group_end < sorted_commands.size() && sorted_states[group_end] == sorted_states[group_start]) {
 				group_end++;
 			}
-			groups += 1;
 			const auto& s = sorted_states[group_start];
-			glBlendFunc(s.src_factor, s.dst_factor);
-			if (s.cull_face) {
-				glEnable(GL_CULL_FACE);
-			} else {
-				glDisable(GL_CULL_FACE);
-			}
-			if (s.depth_test) {
-				glEnable(GL_DEPTH_TEST);
-			} else {
-				glDisable(GL_DEPTH_TEST);
-			}
-			glDepthMask(s.depth_mask);
-
-			glUniform1ui(8, static_cast<GLuint>(group_start));
-			glMultiDrawElementsIndirect(
-				GL_TRIANGLES,
-				GL_UNSIGNED_SHORT,
-				reinterpret_cast<void*>(group_start * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand)),
-				static_cast<GLsizei>(group_end - group_start),
-				0
-			);
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(render_hd, s.blend_mode));
+			vkCmdSetCullMode(cmd, s.cull_face ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
+			vkCmdSetDepthTestEnable(cmd, s.depth_test);
+			vkCmdSetDepthWriteEnable(cmd, s.depth_mask);
+			draw_group(cmd, indirect, frame_address, group_start, group_end);
 			group_start = group_end;
 		}
-		// std::println("opaque commands {}, groups {}", sorted_commands.size(), groups);
 	}
 
 	void render_transparent(
+		const VkCommandBuffer cmd,
+		FrameAllocator& allocator,
+		const SkinnedFrameData& frame,
 		const bool render_hd,
 		const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets,
 		const std::vector<glm::vec4>& staging_layer_colors
 	) const {
-		std::vector<SkinnedMeshGlobals::DrawElementsIndirectCommand> commands;
+		std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> commands;
 		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
 		std::vector<SkinnedMesh::DrawState> states;
 
@@ -548,9 +512,6 @@ export class RenderManager {
 			const auto& [instance_offset, bone_offset, layer_color_offset] = it->second;
 
 			const auto& entries = render_hd ? mesh->transparent_entries_hd : mesh->transparent_entries_sd;
-			if (entries.empty()) {
-				continue;
-			}
 			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
 			const uint32_t skip_count = static_cast<uint32_t>(mesh->skip_count);
 			const uint32_t instance_id = inst.instance_id;
@@ -561,11 +522,11 @@ export class RenderManager {
 					continue;
 				}
 				commands.push_back({
-					.count = e.count,
+					.indexCount = e.count,
 					.instanceCount = 1u,
 					.firstIndex = e.first_index,
-					.baseVertex = e.base_vertex,
-					.baseInstance = 0,
+					.vertexOffset = e.base_vertex,
+					.firstInstance = 0,
 				});
 				SkinnedMeshGlobals::DrawInfo di {};
 				di.instance_offset = instance_offset + instance_id;
@@ -584,51 +545,195 @@ export class RenderManager {
 			return;
 		}
 
-		auto& g = skinned_mesh_globals;
-		glNamedBufferData(
-			g.indirect_buffer,
-			commands.size() * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand),
-			commands.data(),
-			GL_DYNAMIC_DRAW
-		);
-		glNamedBufferData(g.draw_infos_ssbo, draw_infos.size() * sizeof(SkinnedMeshGlobals::DrawInfo), draw_infos.data(), GL_DYNAMIC_DRAW);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 12, g.draw_infos_ssbo);
-		glBindBuffer(GL_DRAW_INDIRECT_BUFFER, g.indirect_buffer);
+		const auto [frame_address, indirect] = write_pass(allocator, frame, commands, draw_infos);
 
-		// Walk in order (distance-sorted) and coalesce only adjacent same-state runs.
-		size_t groups = 0;
+		// Walk in order (distance-sorted) and coalesce only adjacent same-state runs. Transparent layers never write depth.
 		size_t group_start = 0;
 		while (group_start < commands.size()) {
 			size_t group_end = group_start + 1;
 			while (group_end < commands.size() && states[group_end] == states[group_start]) {
 				group_end++;
 			}
-
-			groups += 1;
-
 			const auto& s = states[group_start];
-			glBlendFunc(s.src_factor, s.dst_factor);
-			if (s.cull_face) {
-				glEnable(GL_CULL_FACE);
-			} else {
-				glDisable(GL_CULL_FACE);
-			}
-			if (s.depth_test) {
-				glEnable(GL_DEPTH_TEST);
-			} else {
-				glDisable(GL_DEPTH_TEST);
-			}
-
-			glUniform1ui(8, static_cast<GLuint>(group_start));
-			glMultiDrawElementsIndirect(
-				GL_TRIANGLES,
-				GL_UNSIGNED_SHORT,
-				reinterpret_cast<void*>(group_start * sizeof(SkinnedMeshGlobals::DrawElementsIndirectCommand)),
-				static_cast<GLsizei>(group_end - group_start),
-				0
-			);
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(render_hd, s.blend_mode));
+			vkCmdSetCullMode(cmd, s.cull_face ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
+			vkCmdSetDepthTestEnable(cmd, s.depth_test);
+			vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
+			draw_group(cmd, indirect, frame_address, group_start, group_end);
 			group_start = group_end;
 		}
-		// std::println("transparent commands {}, groups {}", commands.size(), groups);
+	}
+
+	/// (Re)creates the picking target at the window's size
+	void ensure_pick_target() {
+		const VkExtent2D extent = {static_cast<uint32_t>(window_width), static_cast<uint32_t>(window_height)};
+		if (pick_color.extent.width == extent.width && pick_color.extent.height == extent.height) {
+			return;
+		}
+		destroy_image_deferred(pick_color);
+		destroy_image_deferred(pick_depth);
+		pick_color = create_image(
+			pick_color_format,
+			extent,
+			1,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+			VK_IMAGE_ASPECT_COLOR_BIT
+		);
+		pick_depth = create_image(pick_depth_format, extent, 1, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_IMAGE_ASPECT_DEPTH_BIT);
+	}
+
+	/// Draws the jobs color coded by id and returns the id under the mouse, if any. Blocks until the GPU is done.
+	std::optional<size_t> pick(const std::vector<PickJob>& jobs, const glm::vec2 mouse_position) {
+		const int x = static_cast<int>(mouse_position.x);
+		const int y = static_cast<int>(mouse_position.y);
+		if (jobs.empty() || x < 0 || y < 0 || x >= window_width || y >= window_height) {
+			return std::nullopt;
+		}
+
+		ensure_pick_target();
+
+		// All bone matrices for the jobs, in one host buffer the shaders read directly
+		size_t total_bones = 0;
+		for (const auto& job : jobs) {
+			total_bones += std::max<size_t>(job.mesh->mdx->bones.size(), 1);
+		}
+		Buffer bones = create_buffer(total_bones * sizeof(glm::mat4), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, true);
+		std::vector<VkDeviceAddress> bone_addresses;
+		size_t bone_offset = 0;
+		for (const auto& job : jobs) {
+			const size_t count = job.mesh->mdx->bones.size();
+			std::memcpy(static_cast<glm::mat4*>(bones.mapped) + bone_offset, job.skeleton->world_matrices.data(), count * sizeof(glm::mat4));
+			bone_addresses.push_back(bones.address + bone_offset * sizeof(glm::mat4));
+			bone_offset += std::max<size_t>(count, 1);
+		}
+
+		const Buffer readback = create_buffer(4, VK_BUFFER_USAGE_TRANSFER_DST_BIT, true);
+
+		vk_context.immediate_submit([&](const VkCommandBuffer cmd) {
+			image_barrier(
+				cmd,
+				pick_color.image,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+				VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT
+			);
+			image_barrier(
+				cmd,
+				pick_depth.image,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+				VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
+				VK_ACCESS_2_NONE,
+				VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+				VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+				VK_IMAGE_ASPECT_DEPTH_BIT
+			);
+
+			const VkRenderingAttachmentInfo color = {
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+				.imageView = pick_color.view,
+				.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+				.clearValue = {.color = {{0.f, 0.f, 0.f, 1.f}}},
+			};
+			const VkRenderingAttachmentInfo depth = {
+				.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+				.imageView = pick_depth.view,
+				.imageLayout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+				.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+				.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				.clearValue = {.depthStencil = {1.f, 0}},
+			};
+			const VkRenderingInfo rendering = {
+				.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+				.renderArea = {{0, 0}, pick_color.extent},
+				.layerCount = 1,
+				.colorAttachmentCount = 1,
+				.pColorAttachments = &color,
+				.pDepthAttachment = &depth,
+			};
+			vkCmdBeginRendering(cmd, &rendering);
+			set_viewport(cmd, {{0, 0}, pick_color.extent}, pick_color.extent);
+			vkCmdSetPolygonModeEXT(cmd, VK_POLYGON_MODE_FILL);
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pick_pipeline);
+			vkCmdBindIndexBuffer(cmd, skinned_mesh_globals.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
+
+			for (size_t j = 0; j < jobs.size(); j++) {
+				const SkinnedMesh& mesh = *jobs[j].mesh;
+				const Skeleton& skeleton = *jobs[j].skeleton;
+
+				const PickPushConstants push = {
+					.MVP = camera.projection_view * skeleton.matrix,
+					.bones = bone_addresses[j],
+					.vertices = skinned_mesh_globals.vertex_snorm_buffer.address,
+					.skins = skinned_mesh_globals.weight_buffer.address,
+					.color_id = jobs[j].id,
+				};
+				vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(push), &push);
+
+				// The first visible layer of each geoset decides its depth and culling state
+				for (const auto& geoset : mesh.geosets) {
+					float geoset_anim_visibility = 1.0f;
+					if (geoset.geoset_anim && skeleton.sequence_index >= 0) {
+						geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*geoset.geoset_anim);
+					}
+
+					for (const auto& layer : mesh.mdx->materials[geoset.material_id].layers) {
+						const float layer_visibility = skeleton.sequence_index >= 0 ? skeleton.get_layer_visiblity(layer) : 1.0f;
+						if (layer_visibility * geoset_anim_visibility <= 0.001f) {
+							continue;
+						}
+
+						vkCmdSetDepthTestEnable(cmd, !(layer.shading_flags & 0x40));
+						vkCmdSetDepthWriteEnable(cmd, !(layer.shading_flags & 0x80));
+						vkCmdSetCullMode(cmd, (layer.shading_flags & 0x10) ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT);
+						vkCmdDrawIndexed(
+							cmd,
+							geoset.indices,
+							1,
+							geoset.base_index + mesh.index_base,
+							geoset.base_vertex + static_cast<int32_t>(mesh.vertex_base),
+							0
+						);
+						break;
+					}
+				}
+			}
+			vkCmdEndRendering(cmd);
+
+			image_barrier(
+				cmd,
+				pick_color.image,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+				VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+				VK_ACCESS_2_TRANSFER_READ_BIT
+			);
+			// The picking target is top-left origin, like the mouse coordinates
+			const VkBufferImageCopy region = {
+				.imageSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1},
+				.imageOffset = {x, y, 0},
+				.imageExtent = {1, 1, 1},
+			};
+			vkCmdCopyImageToBuffer(cmd, pick_color.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, readback.buffer, 1, &region);
+		});
+
+		vmaInvalidateAllocation(vk_context.allocator, readback.allocation, 0, VK_WHOLE_SIZE);
+		glm::u8vec4 color;
+		std::memcpy(&color, readback.mapped, sizeof(color));
+		vmaDestroyBuffer(vk_context.allocator, readback.buffer, readback.allocation);
+		vmaDestroyBuffer(vk_context.allocator, bones.buffer, bones.allocation);
+
+		const int index = color.r + (color.g << 8) + (color.b << 16);
+		if (index != 0) {
+			return {index - 1};
+		}
+		return {};
 	}
 };

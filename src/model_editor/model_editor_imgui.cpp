@@ -1,16 +1,16 @@
-#include "model_editor_glwidget.h"
-
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QDesktopServices>
 #include <QUrl>
 
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <qt_imgui/qt_imGui.h>
+
+#include "model_editor_viewport.h"
 
 import std;
 import MDX;
-import <imgui.h>;
-import <imgui_internal.h>;
 
 namespace {
 	const char* blend_mode_name(const uint32_t mode) {
@@ -185,15 +185,21 @@ namespace {
 		return texture.file_name.string();
 	}
 
-	// Queries the dimensions of an already-uploaded GL texture's base level.
-	std::pair<int, int> texture_size(const GLuint id) {
-		int width = 0;
-		int height = 0;
-		if (id != 0) {
-			glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_WIDTH, &width);
-			glGetTextureLevelParameteriv(id, 0, GL_TEXTURE_HEIGHT, &height);
+	// The dimensions of an uploaded texture's base level, or 0x0 when there is none
+	std::pair<int, int> texture_size(const VulkanTexture* texture) {
+		if (!texture) {
+			return {0, 0};
 		}
-		return {width, height};
+		return {static_cast<int>(texture->image.extent.width), static_cast<int>(texture->image.extent.height)};
+	}
+
+	// ImGui::Image for a texture that may be missing; a missing one leaves an empty space of the same size
+	void texture_image(const VulkanTexture* texture, const ImVec2 size) {
+		if (texture) {
+			ImGui::Image(static_cast<ImTextureID>(texture->slot), size);
+		} else {
+			ImGui::Dummy(size);
+		}
 	}
 
 	template<typename T>
@@ -262,7 +268,7 @@ namespace {
 	}
 } // namespace
 
-void ModelEditorGLWidget::render_imgui() {
+void ModelEditorViewport::render_imgui() {
 	QtImGui::newFrame(ref);
 
 	// No dockspace: windows float inside the widget and can be docked together into floating groups,
@@ -336,7 +342,7 @@ void ModelEditorGLWidget::render_imgui() {
 		ImGui::SameLine();
 		if (ImGui::Button("Save to MDX")) {
 			const QString file_name = QFileDialog::getSaveFileName(
-				this,
+				container,
 				"Save MDX",
 				QStandardPaths::writableLocation(QStandardPaths::TempLocation),
 				"MDX (*.mdx *.MDX)"
@@ -353,7 +359,7 @@ void ModelEditorGLWidget::render_imgui() {
 		ImGui::SameLine();
 		if (ImGui::Button("Save to MDL")) {
 			const QString file_name = QFileDialog::getSaveFileName(
-				this,
+				container,
 				"Save MDL",
 				QStandardPaths::writableLocation(QStandardPaths::TempLocation),
 				"MDL (*.mdl *.MDL)"
@@ -530,10 +536,7 @@ void ModelEditorGLWidget::render_imgui() {
 						}
 
 						for (const auto& layer_texture : layer.textures) {
-							const GLuint tex_id = layer_texture.id < mesh->textures.size() && mesh->textures[layer_texture.id]
-								? mesh->textures[layer_texture.id]->id
-								: 0;
-							ImGui::Image(static_cast<ImTextureID>(tex_id), ImVec2(48, 48));
+							texture_image(texture_at(layer_texture.id), ImVec2(48, 48));
 							ImGui::SameLine();
 							const std::string name = layer_texture.id < model.textures.size()
 								? texture_display_name(model.textures[layer_texture.id])
@@ -557,10 +560,8 @@ void ModelEditorGLWidget::render_imgui() {
 	if (ImGui::Begin("Textures")) {
 		if (selected_texture >= 0 && selected_texture < static_cast<int>(model.textures.size())) {
 			const auto& texture = model.textures[selected_texture];
-			const GLuint tex_id = selected_texture < static_cast<int>(mesh->textures.size()) && mesh->textures[selected_texture]
-				? mesh->textures[selected_texture]->id
-				: 0;
-			const auto [tw, th] = texture_size(tex_id);
+			const VulkanTexture* selected = texture_at(selected_texture);
+			const auto [tw, th] = texture_size(selected);
 
 			ImGui::Text("Texture %d: %s", selected_texture, texture_display_name(texture).c_str());
 			ImGui::Text("Replaceable ID: %u", texture.replaceable_id);
@@ -575,7 +576,7 @@ void ModelEditorGLWidget::render_imgui() {
 				selected_texture = -1;
 			}
 			const float display = std::min(256.0f, ImGui::GetContentRegionAvail().x);
-			ImGui::Image(tex_id, ImVec2(display, display));
+			texture_image(selected, ImVec2(display, display));
 			ImGui::Separator();
 		}
 
@@ -589,12 +590,14 @@ void ModelEditorGLWidget::render_imgui() {
 			ImGui::PushID(static_cast<int>(i));
 			ImGui::BeginGroup();
 
-			const GLuint tex_id = i < mesh->textures.size() && mesh->textures[i] ? mesh->textures[i]->id : 0;
-			if (ImGui::ImageButton("thumb", tex_id, ImVec2(cell, cell))) {
+			const VulkanTexture* thumbnail = texture_at(i);
+			const bool clicked = thumbnail ? ImGui::ImageButton("thumb", static_cast<ImTextureID>(thumbnail->slot), ImVec2(cell, cell))
+										   : ImGui::Button("?", ImVec2(cell, cell));
+			if (clicked) {
 				selected_texture = static_cast<int>(i);
 			}
 
-			const auto [tw, th] = texture_size(tex_id);
+			const auto [tw, th] = texture_size(thumbnail);
 			std::string type = model.textures[i].file_name.extension().string();
 			const std::string dims = std::format("ID {}, {}x{}, {}", i, tw, th, type);
 			ImGui::TextUnformatted(dims.c_str());
@@ -747,8 +750,8 @@ void ModelEditorGLWidget::render_imgui() {
 					ImGui::Text("Size: %.3f x %.3f", emitter.length, emitter.width);
 					ImGui::Text("Filter mode: %u   Rows: %u   Columns: %u", emitter.filter_mode, emitter.rows, emitter.columns);
 					ImGui::Text("Texture: %u", emitter.texture_id);
-					if (emitter.texture_id < mesh->textures.size() && mesh->textures[emitter.texture_id]) {
-						ImGui::Image(mesh->textures[emitter.texture_id]->id, ImVec2(64, 64));
+					if (const VulkanTexture* texture = texture_at(emitter.texture_id)) {
+						ImGui::Image(static_cast<ImTextureID>(texture->slot), ImVec2(64, 64));
 					}
 					render_node_tracks(emitter.node);
 					render_track("Emission rate", emitter.KP2E);
@@ -946,5 +949,4 @@ void ModelEditorGLWidget::render_imgui() {
 	ImGui::End();
 
 	ImGui::Render();
-	QtImGui::render(ref);
 }

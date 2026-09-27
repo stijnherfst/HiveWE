@@ -84,9 +84,9 @@ export struct Camera {
 		frustrum_planes[3].normal = glm::vec3(vp[0][3] - vp[0][1], vp[1][3] - vp[1][1], vp[2][3] - vp[2][1]);
 		frustrum_planes[3].d = vp[3][3] - vp[3][1];
 
-		// Near
-		frustrum_planes[4].normal = glm::vec3(vp[0][3] + vp[0][2], vp[1][3] + vp[1][2], vp[2][3] + vp[2][2]);
-		frustrum_planes[4].d = vp[3][3] + vp[3][2];
+		// Near. Clip space depth starts at 0 (GLM_FORCE_DEPTH_ZERO_TO_ONE), so this is the third row alone
+		frustrum_planes[4].normal = glm::vec3(vp[0][2], vp[1][2], vp[2][2]);
+		frustrum_planes[4].d = vp[3][2];
 
 		// Far
 		frustrum_planes[5].normal = glm::vec3(vp[0][3] - vp[0][2], vp[1][3] - vp[1][2], vp[2][3] - vp[2][2]);

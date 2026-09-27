@@ -5,7 +5,6 @@
 import std;
 import ResourceManager;
 import Texture;
-import OpenGLUtilities;
 import SLK;
 
 TilePicker::TilePicker(QWidget* parent, const TilesetData& tilesets, std::vector<std::string> from_ids, std::vector<std::string> to_ids) : QDialog(parent) {

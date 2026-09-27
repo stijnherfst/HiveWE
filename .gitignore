@@ -7,3 +7,4 @@ build
 logs
 vc140.pdb
 .claude
+*.spv

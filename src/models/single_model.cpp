@@ -620,8 +620,8 @@ QWidget* TableDelegate::create_model_editor(QWidget* parent) const {
 	dialog->resize(1200, 720);
 	dialog->setWindowModality(Qt::WindowModality::WindowModal);
 
-	// Force native window, otherwise ModelView causes switch to OpenGL-capable
-	// surface which unmaps the window and shows white flash.
+	// Force a native window up front, otherwise ModelView's embedded native model views can make Qt
+	// recreate the window's surface later, which unmaps the window and shows a white flash.
 	dialog->setAttribute(Qt::WA_NativeWindow);
 	(void)dialog->winId();
 

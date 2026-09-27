@@ -7,7 +7,7 @@ export module Doodads;
 import std;
 import std.compat;
 import Rects;
-import GLThreadPool;
+import ThreadPool;
 import Terrain;
 import Doodad;
 import BinaryReader;
@@ -208,55 +208,55 @@ export class Doodads {
 		// Phase 1: Pre-load unique meshes to avoid thread pool starvation.
 		// Without this, multiple threads block on shared_future::get() inside ResourceManager
 		// while only 1 thread actually constructs the shared mesh.
-		// {
-		// 	std::unordered_set<std::string> seen;
-		// 	std::vector<std::future<void>> mesh_futures;
-		//
-		// 	for (const auto& i : doodads) {
-		// 		std::string key = i.id + std::to_string(i.variation);
-		// 		if (seen.insert(key).second) {
-		// 			std::string id = i.id;
-		// 			int variation = i.variation;
-		// 			mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
-		// 				get_mesh(id, variation);
-		// 			}));
-		// 		}
-		// 	}
-		// 	for (const auto& i : special_doodads) {
-		// 		std::string key = i.id + std::to_string(i.variation);
-		// 		if (seen.insert(key).second) {
-		// 			std::string id = i.id;
-		// 			int variation = i.variation;
-		// 			mesh_futures.push_back(gl_thread_pool.submit([this, id, variation] {
-		// 				get_mesh(id, variation);
-		// 			}));
-		// 		}
-		// 	}
-		//
-		// 	for (auto& f : mesh_futures) {
-		// 		f.get();
-		// 	}
-		// }
+		{
+			std::unordered_set<std::string> seen;
+			std::vector<std::future<void>> mesh_futures;
+
+			for (const auto& i : doodads) {
+				std::string key = i.id + std::to_string(i.variation);
+				if (seen.insert(key).second) {
+					std::string id = i.id;
+					int variation = i.variation;
+					mesh_futures.push_back(thread_pool.submit([this, id, variation] {
+						get_mesh(id, variation);
+					}));
+				}
+			}
+			for (const auto& i : special_doodads) {
+				std::string key = i.id + std::to_string(i.variation);
+				if (seen.insert(key).second) {
+					std::string id = i.id;
+					int variation = i.variation;
+					mesh_futures.push_back(thread_pool.submit([this, id, variation] {
+						get_mesh(id, variation);
+					}));
+				}
+			}
+
+			for (auto& f : mesh_futures) {
+				f.get();
+			}
+		}
 
 		// Phase 2: Init doodads. All meshes are now cached in id_to_mesh,
 		// so get_mesh() returns immediately without blocking in ResourceManager.
 		std::vector<std::future<void>> futures;
-		// futures.reserve(doodads.size() + special_doodads.size());
+		futures.reserve(doodads.size() + special_doodads.size());
 
 		for (auto& i : doodads) {
-			// futures.push_back(gl_thread_pool.submit([&] {
+			futures.push_back(thread_pool.submit([&] {
 				i.init(i.id, get_mesh(i.id, i.variation), terrain);
-			// }));
+			}));
 		}
 		for (auto& i : special_doodads) {
-			// futures.push_back(gl_thread_pool.submit([&] {
+			futures.push_back(thread_pool.submit([&] {
 				i.init(i.id, get_mesh(i.id, i.variation), terrain);
-			// }));
+			}));
 		}
-		//
-		// for (auto& f : futures) {
-		// 	f.get();
-		// }
+
+		for (auto& f : futures) {
+			f.get();
+		}
 
 		// Blit doodad pathing
 		for (const auto& i : doodads) {
@@ -419,7 +419,6 @@ export class Doodads {
 	}
 
 	void process_doodad_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {
-		context->makeCurrent();
 
 		if (field == "file" || field == "numvar") {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them
@@ -461,7 +460,6 @@ export class Doodads {
 	}
 
 	void process_destructible_field_change(const std::string& id, const std::string& field, const Terrain& terrain) {
-		context->makeCurrent();
 
 		if (field == "file" || field == "numvar") {
 			// id_to_mesh requires a variation too so we will just have to check a bunch of them

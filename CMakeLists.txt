@@ -11,10 +11,9 @@ project (HiveWE CXX)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 COMPONENTS Core Gui Widgets OpenGL OpenGLWidgets REQUIRED)
+find_package(Qt6 COMPONENTS Core Gui Widgets REQUIRED)
 find_package(Bullet CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(glad CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED) # Required by Stormlib
@@ -31,6 +30,9 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 find_package(unofficial-qscintilla CONFIG REQUIRED)
 find_package(tracy CONFIG REQUIRED)
+find_package(volk CONFIG REQUIRED)
+find_package(VulkanMemoryAllocator CONFIG REQUIRED)
+find_package(vk-bootstrap CONFIG REQUIRED)
 
 qt_standard_project_setup()
 
@@ -66,10 +68,7 @@ target_link_libraries(HiveWE_lib PUBLIC
 	mimalloc
 	Qt6::Gui
 	Qt6::Widgets
-	Qt6::OpenGL
-	Qt6::OpenGLWidgets
 	glm::glm
-	glad::glad
 	soil2::soil2
 	StormLib::storm
 	BZip2::BZip2
@@ -83,6 +82,9 @@ target_link_libraries(HiveWE_lib PUBLIC
 	unordered_dense::unordered_dense
 	nlohmann_json::nlohmann_json
 	unofficial::qscintilla::qscintilla
+	volk::volk_headers
+	GPUOpen::VulkanMemoryAllocator
+	vk-bootstrap::vk-bootstrap
 	${BULLET_LIBRARIES}
 )
 
@@ -93,9 +95,45 @@ target_compile_options(HiveWE_lib PUBLIC
 )
 
 target_compile_definitions(HiveWE_lib PUBLIC
+	# Vulkan's clip space depth range is 0..1 rather than OpenGL's -1..1
+	GLM_FORCE_DEPTH_ZERO_TO_ONE
 	$<$<CXX_COMPILER_ID:MSVC>:UNICODE _UNICODE>
 	$<$<CXX_COMPILER_ID:Clang>:TBB_SUPPRESS_DEPRECATED_MESSAGES>
 	$<$<CXX_COMPILER_ID:GNU>:TBB_SUPPRESS_DEPRECATED_MESSAGES>
+)
+
+# Vulkan shaders live in data/shaders and are compiled to SPIR-V next to their sources, since
+# the build directory reaches data/ through a symlink
+find_program(GLSLANG_EXECUTABLE
+	NAMES glslang glslangValidator
+	PATHS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/glslang"
+	REQUIRED
+)
+file(GLOB VULKAN_SHADER_SOURCES CONFIGURE_DEPENDS
+	"${PROJECT_SOURCE_DIR}/data/shaders/*.vert"
+	"${PROJECT_SOURCE_DIR}/data/shaders/*.frag"
+	"${PROJECT_SOURCE_DIR}/data/shaders/*.comp"
+)
+# Shared GLSL included by the shaders; every shader is rebuilt when one changes
+file(GLOB VULKAN_SHADER_INCLUDES CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/data/shaders/*.glsl")
+set(VULKAN_SHADER_BINARIES)
+foreach(shader ${VULKAN_SHADER_SOURCES})
+	set(spirv "${shader}.spv")
+	add_custom_command(
+		OUTPUT "${spirv}"
+		COMMAND "${GLSLANG_EXECUTABLE}" -V --target-env vulkan1.3 -g -o "${spirv}" "${shader}"
+		DEPENDS "${shader}" ${VULKAN_SHADER_INCLUDES}
+		COMMENT "Compiling SPIR-V ${shader}"
+		VERBATIM
+	)
+	list(APPEND VULKAN_SHADER_BINARIES "${spirv}")
+endforeach()
+add_custom_target(HiveWE_shaders DEPENDS ${VULKAN_SHADER_BINARIES} SOURCES ${VULKAN_SHADER_SOURCES} ${VULKAN_SHADER_INCLUDES})
+add_dependencies(HiveWE_lib HiveWE_shaders)
+
+# Lets debug builds find the validation layer vcpkg installed without needing the Vulkan SDK
+target_compile_definitions(HiveWE_lib PUBLIC
+	$<$<CONFIG:Debug>:HIVEWE_VULKAN_LAYER_PATH="${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin">
 )
 
 if(TRACY_ENABLE)

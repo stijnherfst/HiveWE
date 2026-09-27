@@ -1,22 +1,19 @@
+#include <volk.h>
+
 #include "brush.h"
 
 import std;
+import VkResources;
+import VkTexture;
 import Camera;
-import OpenGLUtilities;
 import ResourceManager;
 import Globals;
 import WorldUndoManager;
-import <glad/glad.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 
 Brush::Brush() {
 	set_size(size);
-
-	selection_shader = resource_manager.load<Shader>({"data/shaders/selection.vert", "data/shaders/selection.frag"}).value();
-	selection_circle_shader =
-		resource_manager.load<Shader>({"data/shaders/selection_circle.vert", "data/shaders/selection_circle.frag"}).value();
-	brush_shader = resource_manager.load<Shader>({"data/shaders/brush.vert", "data/shaders/brush.frag"}).value();
 }
 
 glm::vec2 Brush::get_position() const {
@@ -54,7 +51,6 @@ void Brush::set_size(const glm::ivec2 new_size) {
 }
 
 void Brush::set_shape(const Shape new_shape) {
-	context->makeCurrent();
 	std::vector<glm::u8vec4> brush(size.x * size.y, {0, 0, 0, 0});
 
 	shape = new_shape;
@@ -69,15 +65,13 @@ void Brush::set_shape(const Shape new_shape) {
 		}
 	}
 
-	glDeleteTextures(1, &brush_texture);
-	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	glTextureStorage2D(brush_texture, 1, GL_RGBA8, size.x, size.y);
-	glTextureSubImage2D(brush_texture, 0, 0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+	auto texture = std::make_shared<UpdatableTexture>(VK_FORMAT_R8G8B8A8_UNORM, bindless.nearest_sampler, 4);
+	texture->update(
+		{static_cast<uint32_t>(size.x), static_cast<uint32_t>(size.y)},
+		std::span(reinterpret_cast<const uint8_t*>(brush.data()), brush.size() * sizeof(glm::u8vec4))
+	);
+	brush_texture = texture->slot;
+	brush_texture_owner = std::move(texture);
 }
 
 /// Whether the brush shape contains the point, Arguments in brush coordinates
@@ -200,9 +194,9 @@ void Brush::mouse_release_event(WorldEditContext& ctx, const QMouseEvent* event)
 	}
 }
 
-void Brush::render() {
+void Brush::render(BrushDrawList& draw_list) {
 	if (mode == Mode::selection) {
-		render_selector();
+		render_selector(draw_list);
 	}
 	if (mode == Mode::placement) {
 		render_brush();
@@ -210,29 +204,15 @@ void Brush::render() {
 	if (mode == Mode::pasting) {
 		render_clipboard();
 	}
-	render_selection();
+	render_selection(draw_list);
 }
 
-void Brush::render_selector() const {
+void Brush::render_selector(BrushDrawList& draw_list) const {
 	if (selection_started) {
-		glDisable(GL_DEPTH_TEST);
-
-		selection_shader->use();
-
 		glm::mat4 model(1.f);
 		model = glm::translate(model, selection_start);
 		model = glm::scale(model, glm::vec3(glm::vec2(input_handler.mouse_world), 1.f) - glm::vec3(glm::vec2(selection_start), 1.f));
-		model = camera.projection_view * model;
-		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glDrawArrays(GL_LINE_LOOP, 0, 4);
-
-		glDisableVertexAttribArray(0);
-		glEnable(GL_DEPTH_TEST);
+		draw_list.selection_rectangles.push_back(model);
 	}
 }
 

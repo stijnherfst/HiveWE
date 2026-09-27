@@ -7,7 +7,6 @@
 
 import std;
 import ResourceManager;
-import OpenGLUtilities;
 import Globals;
 import Texture;
 import <glm/glm.hpp>;

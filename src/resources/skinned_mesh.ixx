@@ -3,21 +3,19 @@ export module SkinnedMesh;
 import std;
 import BinaryReader;
 import Camera;
-import GPUTexture;
 import Hierarchy;
 import MDX;
-import ParticleEmitter2Renderer;
 import ResourceManager;
-import Shader;
 import Skeleton;
 import SkinnedMeshGlobals;
 import Timer;
 import Utilities;
+import VkEditableMesh;
+import VkTexture;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
 import <glm/gtc/packing.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
@@ -46,12 +44,9 @@ export class SkinnedMesh: public Resource {
 	uint32_t vertex_base = 0;
 	uint32_t index_base = 0;
 	uint32_t layer_base = 0;
-	uint32_t texture_base = 0;
 
-	// Per-mesh GPU buffer used only by the color-coded picking path.
-	GLuint bones_ssbo_colored = 0;
-
-	// Mirrors std430 layout in skinned_mesh_*.frag - 8 * uint = 32 bytes per entry.
+	// Mirrors std430 layout in data/shaders/skinned_mesh_common.glsl - 8 * uint = 32 bytes per entry.
+	// The values are bindless texture slots.
 	struct LayerTextureIds {
 		uint32_t albedo; // also serves as SD diffuse
 		uint32_t normal;
@@ -63,7 +58,7 @@ export class SkinnedMesh: public Resource {
 		uint32_t _pad1;
 	};
 
-	// Mirrors std430 layout in skinned_mesh_*.frag - 16 bytes per entry.
+	// Mirrors std430 layout in data/shaders/skinned_mesh_common.glsl - 16 bytes per entry.
 	struct LayerParams {
 		float alpha_test;
 		uint32_t layer_lit;
@@ -72,8 +67,8 @@ export class SkinnedMesh: public Resource {
 	};
 
 	struct DrawState {
-		GLenum src_factor;
-		GLenum dst_factor;
+		/// Index into the renderer's pipelines for the MDX blend mode, see layer_blend_mode()
+		uint8_t blend_mode;
 		bool cull_face;
 		bool depth_test;
 		bool depth_mask;
@@ -97,8 +92,7 @@ export class SkinnedMesh: public Resource {
 	int skip_count = 0;
 
 	fs::path path;
-	std::vector<std::shared_ptr<GPUTexture>> textures;
-	bool textures_resident = false;
+	std::vector<std::shared_ptr<VulkanTexture>> textures;
 
 	std::vector<glm::mat4> render_jobs;
 	std::vector<glm::vec3> render_colors;
@@ -159,15 +153,15 @@ export class SkinnedMesh: public Resource {
 		const auto alloc = skinned_mesh_globals.reserve(
 			static_cast<uint32_t>(vertices),
 			static_cast<uint32_t>(indices),
-			static_cast<uint32_t>(total_layers),
-			static_cast<uint32_t>(mdx->textures.size())
+			static_cast<uint32_t>(total_layers)
 		);
 		vertex_base = alloc.vertex_base;
 		index_base = alloc.index_base;
 		layer_base = alloc.layer_base;
-		texture_base = alloc.texture_base;
 
-		glCreateBuffers(1, &bones_ssbo_colored);
+		// Everything this mesh puts in the static buffers, uploaded in one go at the end
+		std::vector<SkinnedMeshGlobals::Upload> uploads;
+		const auto& g = skinned_mesh_globals;
 
 		// Buffer Data
 		struct GeosetBuffers {
@@ -231,56 +225,19 @@ export class SkinnedMesh: public Resource {
 			geosets.push_back(entry);
 
 			const GeosetBuffers& buf = packed_geosets[packed_index++];
-			const GLintptr v_off = vertex_base + local_base_vertex;
-			const GLintptr i_off = index_base + local_base_index;
+			const size_t v_off = vertex_base + local_base_vertex;
+			const size_t i_off = index_base + local_base_index;
 
-			if (i.skin.empty()) {
-				glNamedBufferSubData(
-					skinned_mesh_globals.weight_buffer,
-					v_off * sizeof(glm::uvec4),
-					entry.vertices * sizeof(glm::uvec4),
-					buf.skin_weights.data()
-				);
-			} else {
-				glNamedBufferSubData(skinned_mesh_globals.weight_buffer, v_off * sizeof(glm::uvec4), entry.vertices * sizeof(glm::uvec4), i.skin.data());
-			}
-
-			glNamedBufferSubData(
-				skinned_mesh_globals.vertex_snorm_buffer,
-				v_off * sizeof(glm::uvec2),
-				entry.vertices * sizeof(glm::uvec2),
-				buf.vertices_snorm.data()
-			);
-
-			glNamedBufferSubData(
-				skinned_mesh_globals.uv_snorm_buffer,
-				v_off * sizeof(uint32_t),
-				entry.vertices * sizeof(uint32_t),
-				buf.uvs_snorm.data()
-			);
-
-			glNamedBufferSubData(
-				skinned_mesh_globals.normal_buffer,
-				v_off * sizeof(uint32_t),
-				entry.vertices * sizeof(uint32_t),
-				buf.normals_oct_snorm.data()
-			);
-
+			// Skin weights are 4 bone indices then 4 weights, 16 bits each
+			const auto skin = i.skin.empty() ? std::as_bytes(std::span(buf.skin_weights)) : std::as_bytes(std::span(i.skin));
+			uploads.push_back({&g.weight_buffer, v_off * 16, skin.first(std::min<size_t>(skin.size(), entry.vertices * 16))});
+			uploads.push_back({&g.vertex_snorm_buffer, v_off * sizeof(glm::uvec2), std::as_bytes(std::span(buf.vertices_snorm))});
+			uploads.push_back({&g.uv_snorm_buffer, v_off * sizeof(uint32_t), std::as_bytes(std::span(buf.uvs_snorm))});
+			uploads.push_back({&g.normal_buffer, v_off * sizeof(uint32_t), std::as_bytes(std::span(buf.normals_oct_snorm))});
 			if (!i.tangents.empty()) {
-				glNamedBufferSubData(
-					skinned_mesh_globals.tangent_buffer,
-					v_off * sizeof(glm::vec4),
-					entry.vertices * sizeof(glm::vec4),
-					i.tangents.data()
-				);
+				uploads.push_back({&g.tangent_buffer, v_off * sizeof(glm::vec4), std::as_bytes(std::span(i.tangents))});
 			}
-
-			glNamedBufferSubData(
-				skinned_mesh_globals.index_buffer,
-				i_off * sizeof(uint16_t),
-				entry.indices * sizeof(uint16_t),
-				i.faces.data()
-			);
+			uploads.push_back({&g.index_buffer, i_off * sizeof(uint16_t), std::as_bytes(std::span(i.faces))});
 
 			local_base_vertex += entry.vertices;
 			local_base_index += entry.indices;
@@ -298,111 +255,24 @@ export class SkinnedMesh: public Resource {
 			}
 		}
 
-		for (size_t i = 0; i < mdx->textures.size(); i++) {
-			const mdx::Texture& texture = mdx->textures[i];
-
-			if (texture.replaceable_id != 0) {
-				// Figure out if this is an HD texture
-				// Unfortunately replaceable ID textures don't have any additional information on whether they are diffuse/normal/orm
-				// So we take a guess using the index
-				std::string suffix("");
-				bool found = false;
-				for (const auto& material : mdx->materials) {
-					for (const auto& layer : material.layers) {
-						for (size_t j = 0; j < layer.textures.size(); j++) {
-							if (layer.textures[j].id != i) {
-								continue;
-							}
-
-							found = true;
-
-							if (mdx::is_hd_shader(layer.shader)) {
-								switch (j) {
-									case 0:
-										suffix = "_diffuse";
-										break;
-									case 1:
-										suffix = "_normal";
-										break;
-									case 2:
-										suffix = "_orm";
-										break;
-									case 3:
-										suffix = "_emissive";
-										break;
-								}
-							}
-							break;
-						}
-						if (found) {
-							break;
-						}
-					}
-					if (found) {
-						break;
-					}
-				}
-
-				if (replaceable_id_override && texture.replaceable_id == replaceable_id_override->first) {
-					textures.push_back(resource_manager
-										   .load<GPUTexture>(
-											   replaceable_id_override->second + suffix,
-											   std::to_string(texture.flags),
-											   static_cast<int>(texture.flags)
-										   )
-										   .value());
-				} else {
-					textures.push_back(resource_manager
-										   .load<GPUTexture>(
-											   mdx::replaceable_id_to_texture.at(texture.replaceable_id) + suffix,
-											   std::to_string(texture.flags),
-											   static_cast<int>(texture.flags)
-										   )
-										   .value());
-				}
-			} else {
-				// An empty filename means no texture/pure white.
-				if (texture.file_name.empty()) {
-					textures.push_back(
-						resource_manager
-							.load<GPUTexture>("textures/white.dds", std::to_string(texture.flags), static_cast<int>(texture.flags))
-							.value()
-					);
-				} else {
-					textures.push_back(
-						resource_manager.load<GPUTexture>(texture.file_name, std::to_string(texture.flags), static_cast<int>(texture.flags))
-							.value()
-					);
-				}
-			}
+		for (const auto& [texture_path, flags] : mesh_texture_requests(*mdx, replaceable_id_override)) {
+			textures.push_back(resource_manager.load<VulkanTexture>(texture_path, std::to_string(flags), flags).value());
 		}
-
-		// Bindless texture handles into the global texture_handles SSBO.
-		std::vector<GLuint64> handles;
-		handles.reserve(textures.size());
-		for (const auto& texture : textures) {
-			handles.push_back(texture->bindless_handle);
-		}
-
-		glNamedBufferSubData(
-			skinned_mesh_globals.texture_handles_ssbo,
-			texture_base * sizeof(GLuint64),
-			handles.size() * sizeof(GLuint64),
-			handles.data()
-		);
 
 		// Layer texture-id and layer-param tables, written at this mesh's global slot.
-		// Texture slots are pre-globalized so the fragment shader can index `textures[]` directly.
+		// Texture ids are bindless slots so the fragment shader can index `textures[]` directly.
 		std::vector<LayerTextureIds> layer_ids;
 		layer_ids.reserve(total_layers);
 		std::vector<LayerParams> layer_params;
 		layer_params.reserve(total_layers);
 		for (const auto& g : geosets) {
 			for (const auto& layer : mdx->materials[g.material_id].layers) {
+				// Slots a layer has no texture for fall back to its albedo, so every slot the shaders read is valid
 				LayerTextureIds e {};
 				uint32_t* slots = &e.albedo;
-				for (size_t s = 0; s < layer.textures.size() && s < 6; s++) {
-					slots[s] = layer.textures[s].id + texture_base;
+				for (size_t s = 0; s < 6; s++) {
+					const uint32_t texture = s < layer.textures.size() ? layer.textures[s].id : layer.textures[0].id;
+					slots[s] = textures[texture]->slot;
 				}
 				layer_ids.push_back(e);
 
@@ -415,38 +285,12 @@ export class SkinnedMesh: public Resource {
 			}
 		}
 
-		glNamedBufferSubData(
-			skinned_mesh_globals.layer_texture_ids_ssbo,
-			layer_base * sizeof(LayerTextureIds),
-			layer_ids.size() * sizeof(LayerTextureIds),
-			layer_ids.data()
-		);
-		glNamedBufferSubData(
-			skinned_mesh_globals.layer_params_ssbo,
-			layer_base * sizeof(LayerParams),
-			layer_params.size() * sizeof(LayerParams),
-			layer_params.data()
-		);
+		uploads.push_back({&g.layer_texture_ids_buffer, layer_base * sizeof(LayerTextureIds), std::as_bytes(std::span(layer_ids))});
+		uploads.push_back({&g.layer_params_buffer, layer_base * sizeof(LayerParams), std::as_bytes(std::span(layer_params))});
+		SkinnedMeshGlobals::upload(uploads);
 
 		// Pre-build per-layer indirect-draw entries. Walks geosets/layers in declaration order so the
 		// global lay_index matches the layer_textures / layer_params buffers.
-		auto blend_factors_for = [](const uint32_t blend_mode) -> std::pair<GLenum, GLenum> {
-			switch (blend_mode) {
-				case 2:
-					return {GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA};
-				case 3:
-					return {GL_SRC_ALPHA, GL_ONE};
-				case 4:
-					return {GL_SRC_ALPHA, GL_ONE};
-				case 5:
-					return {GL_ZERO, GL_SRC_COLOR};
-				case 6:
-					return {GL_DST_COLOR, GL_SRC_COLOR};
-				default:
-					return {GL_ONE, GL_ZERO};
-			}
-		};
-
 		{
 			int lay_index = 0;
 			for (const auto& g : geosets) {
@@ -459,9 +303,7 @@ export class SkinnedMesh: public Resource {
 
 				for (const auto& layer : layers) {
 					DrawEntry entry;
-					const auto [src, dst] = blend_factors_for(layer.blend_mode);
-					entry.state.src_factor = src;
-					entry.state.dst_factor = dst;
+					entry.state.blend_mode = static_cast<uint8_t>(layer_blend_mode(layer.blend_mode));
 					entry.state.cull_face = !(layer.shading_flags & 0x10);
 					entry.state.depth_test = !(layer.shading_flags & 0x40);
 					entry.state.depth_mask = !(layer.shading_flags & 0x80);
@@ -511,21 +353,7 @@ export class SkinnedMesh: public Resource {
 		}
 	}
 
-	// Bindless handles must be made resident on the rendering context, but the textures may have been
-	// loaded on a worker thread. Idempotent. Called from the main thread by RenderManager.
-	void make_textures_resident() {
-		if (textures_resident) {
-			return;
-		}
-		for (const auto& tex : textures) {
-			tex->make_resident();
-		}
-		textures_resident = true;
-	}
-
-	~SkinnedMesh() {
-		glDeleteBuffers(1, &bones_ssbo_colored);
-	}
+	~SkinnedMesh() override = default;
 
 	void clear_render_data() {
 		render_jobs.clear();
@@ -534,69 +362,4 @@ export class SkinnedMesh: public Resource {
 		skeletons.clear();
 	}
 
-	// Color-coded picking path: one mesh, one skeleton, per-geoset draw.
-	void render_color_coded(const Skeleton& skeleton, const int id) const {
-		if (geosets.empty()) {
-			return;
-		}
-
-		glBindVertexArray(skinned_mesh_globals.vao);
-
-		glm::mat4 MVP = camera.projection_view * skeleton.matrix;
-		glUniformMatrix4fv(0, 1, false, &MVP[0][0]);
-
-		glUniform1i(7, id);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, bones_ssbo_colored);
-		glNamedBufferData(bones_ssbo_colored, mdx->bones.size() * sizeof(glm::mat4), skeleton.world_matrices.data(), GL_DYNAMIC_DRAW);
-
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, skinned_mesh_globals.vertex_snorm_buffer);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, skinned_mesh_globals.weight_buffer);
-
-		for (const auto& i : geosets) {
-			float geoset_anim_visibility = 1.0f;
-			if (i.geoset_anim && skeleton.sequence_index >= 0) {
-				geoset_anim_visibility = skeleton.get_geoset_animation_visiblity(*i.geoset_anim);
-			}
-
-			for (const auto& j : mdx->materials[i.material_id].layers) {
-				float layer_visibility = 1.0f;
-				if (skeleton.sequence_index >= 0) {
-					layer_visibility = skeleton.get_layer_visiblity(j);
-				}
-
-				const float final_visibility = layer_visibility * geoset_anim_visibility;
-				if (final_visibility <= 0.001f) {
-					continue;
-				}
-
-				if (j.shading_flags & 0x40) {
-					glDisable(GL_DEPTH_TEST);
-				} else {
-					glEnable(GL_DEPTH_TEST);
-				}
-
-				if (j.shading_flags & 0x80) {
-					glDepthMask(false);
-				} else {
-					glDepthMask(true);
-				}
-
-				if (j.shading_flags & 0x10) {
-					glDisable(GL_CULL_FACE);
-				} else {
-					glEnable(GL_CULL_FACE);
-				}
-
-				glDrawElementsBaseVertex(
-					GL_TRIANGLES,
-					i.indices,
-					GL_UNSIGNED_SHORT,
-					reinterpret_cast<void*>((i.base_index + index_base) * sizeof(uint16_t)),
-					i.base_vertex + vertex_base
-				);
-				break;
-			}
-		}
-	}
 };

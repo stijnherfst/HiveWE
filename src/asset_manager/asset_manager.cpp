@@ -15,7 +15,7 @@
 #include <QVBoxLayout>
 
 #include "model_editor/model_editor.h"
-#include "object_editor/model_grid_glwidget.h"
+#include "object_editor/model_grid_widget.h"
 
 import std;
 import SLK;
@@ -225,9 +225,9 @@ AssetManager::AssetManager(QWidget* parent, Map& map) : QDialog(parent), map(map
 	auto* preview_host_layout = new QVBoxLayout(preview_host);
 	preview_host_layout->setContentsMargins(0, 0, 0, 0);
 
-	// Create the OpenGL preview widget up front (with no model) so the window's OpenGL surface is
-	// established during the initial show(). Otherwise the first model click promotes the window to
-	// an OpenGL-capable surface while it is already visible, flashing the whole window white.
+	// Create the preview widget up front (with no model) so the native window it embeds is created
+	// during the initial show(), rather than on the first model click while the window is visible,
+	// which can flash the whole window white.
 	show_empty_preview();
 
 	open_model_editor_button = new QPushButton("Open in Model Editor", this);
@@ -432,9 +432,9 @@ void AssetManager::clear_preview() {
 }
 
 void AssetManager::show_empty_preview() {
-	// An empty single-preview GL widget: keeps the window's OpenGL surface alive (no white flash on
+	// An empty single-preview widget: keeps a native preview surface alive (no white flash on
 	// the next model click) while telling the user why the preview area is blank.
-	auto* placeholder = new ModelGridGLWidget({}, preview_host, true);
+	auto* placeholder = new ModelGridWidget({}, preview_host, true);
 	placeholder->set_empty_message("Select an asset to show a preview");
 	preview_widget = placeholder;
 	preview_host->layout()->addWidget(placeholder);
@@ -469,7 +469,7 @@ void AssetManager::show_preview(const QModelIndex& current) {
 	if (ext == ".mdx" || ext == ".mdl") {
 		current_model_path = QString::fromStdString(node.path);
 		open_model_editor_button->show();
-		set_preview(new ModelGridGLWidget({ModelEntry{node.path, ModelCategory::Map}}, preview_host, true));
+		set_preview(new ModelGridWidget({ModelEntry{node.path, ModelCategory::Map}}, preview_host, true));
 		return;
 	}
 

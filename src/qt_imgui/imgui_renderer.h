@@ -1,11 +1,9 @@
 #pragma once
 
-#include <glad/glad.h>
-#define QT_NO_OPENGL
-
 #include <QObject>
 #include <QPoint>
 #include <imgui.h>
+#include <functional>
 #include <memory>
 
 class QMouseEvent;
@@ -28,12 +26,16 @@ public:
     virtual void setCursorPos(const QPoint& local_pos) = 0;
 };
 
+/// Uploads the font atlas (RGBA, 8 bits per channel) to the graphics backend and returns its texture ID
+using FontUploader = std::function<ImTextureID(const unsigned char* pixels, int width, int height)>;
+
+/// Feeds Qt input into an ImGui context. Drawing ImGui::GetDrawData() is left to the graphics backend.
 class ImGuiRenderer : public QObject {
     Q_OBJECT
 public:
     void initialize(WindowWrapper *window);
+    void setFontUploader(FontUploader uploader);
     void newFrame();
-    void render();
     bool eventFilter(QObject *watched, QEvent *event);
 
     static ImGuiRenderer *instance();
@@ -51,20 +53,15 @@ private:
     void setCursorPos(const ImGuiIO &io);
 
     void applyTheme();
-    void renderDrawList(ImDrawData *draw_data);
-    bool createFontsTexture();
-    bool createDeviceObjects();
+    void createFontsTexture();
 
     std::unique_ptr<WindowWrapper> m_window;
     double       g_Time = 0.0f;
     bool         g_MousePressed[3] = { false, false, false };
     float        g_MouseWheel;
     float        g_MouseWheelH;
-    GLuint       g_FontTexture = 0;
-    int          g_ShaderHandle = 0, g_VertHandle = 0, g_FragHandle = 0;
-    int          g_AttribLocationTex = 0, g_AttribLocationProjMtx = 0;
-    int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_AttribLocationColor = 0;
-    unsigned int g_VboHandle = 0, g_VaoHandle = 0, g_ElementsHandle = 0;
+    bool         g_FontsCreated = false;
+    FontUploader m_fontUploader;
 
     ImGuiContext* g_ctx = nullptr;
 };

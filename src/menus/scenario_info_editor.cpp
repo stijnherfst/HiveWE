@@ -23,9 +23,8 @@ ScenarioInfoEditor::ScenarioInfoEditor(QWidget* parent, MapInfo& info, TriggerSt
 	// TODO/Future work: expose the player colours for access from other modules
 	// and preferably in float or u8 rgb values with utility/helper functions
 	// for conversion to hex codes.
-	// Player colours were manually calculated based on the values in data/shaders/skinned_mesh_sd.vert with
-	// an exact copy in data/shaders/skinned_mesh_hd.vert, data/shaders/editable_mesh_hd.vert and
-	// data/shaders/editable_mesh_sd.vert.
+	// Player colours were manually calculated based on the values in data/shaders/skinned_mesh_common.glsl with
+	// an exact copy in data/shaders/editable_mesh_hd.vert and data/shaders/editable_mesh_sd.vert.
 	// These exposed player colour could then be uploaded into the shaders to avoid duplicate
 	// definitions in the shaders.
 	std::vector<std::string> player_colors = {

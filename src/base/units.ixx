@@ -6,7 +6,7 @@ module;
 export module Units;
 
 import std;
-import GLThreadPool;
+import ThreadPool;
 import Utilities;
 import SkinnedMesh;
 import Skeleton;
@@ -348,7 +348,7 @@ export class Units {
 				}
 				if (seen.insert(i.id).second) {
 					std::string id = i.id;
-					mesh_futures.push_back(gl_thread_pool.submit([this, id] {
+					mesh_futures.push_back(thread_pool.submit([this, id] {
 						get_mesh(id);
 					}));
 				}
@@ -356,7 +356,7 @@ export class Units {
 			for (const auto& i : items) {
 				if (seen.insert(i.id).second) {
 					std::string id = i.id;
-					mesh_futures.push_back(gl_thread_pool.submit([this, id] {
+					mesh_futures.push_back(thread_pool.submit([this, id] {
 						get_mesh(id);
 					}));
 				}
@@ -377,14 +377,14 @@ export class Units {
 				continue;
 			}
 
-			futures.push_back(gl_thread_pool.submit([&] {
+			futures.push_back(thread_pool.submit([&] {
 				i.mesh = get_mesh(i.id);
 				i.skeleton = Skeleton(i.mesh->mdx, get_required_animation_names(i.id));
 				i.update();
 			}));
 		}
 		for (auto& i : items) {
-			futures.push_back(gl_thread_pool.submit([&] {
+			futures.push_back(thread_pool.submit([&] {
 				i.mesh = get_mesh(i.id);
 				i.skeleton = Skeleton(i.mesh->mdx, get_required_animation_names(i.id));
 				i.update();

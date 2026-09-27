@@ -4,7 +4,6 @@ import std;
 import BinaryReader;
 import BinaryWriter;
 import Hierarchy;
-import <glad/glad.h>;
 import <glm/glm.hpp>;
 
 /// The thickness of a drawn region border in world space (one tile = 1)
@@ -44,24 +43,21 @@ export struct Region {
 export class Regions {
 	static constexpr int write_version = 7;
 
+  public:
+	/// Mirrors Region in data/shaders/terrain_common.glsl
 	struct RegionRenderData {
 		glm::vec4 rect; // left, bottom, right, top
 		glm::vec4 color; // rgb + selected flag
 	};
 
-  public:
 	std::vector<Region> regions;
 
-	GLuint render_buffer = 0;
+	/// Region rectangles/colors read by the terrain/cliff shaders to draw them onto the terrain
+	std::vector<RegionRenderData> render_data;
 
-	/// Uploads the region rectangles/colors to the storage buffer
-	/// sampled by the terrain/cliff shaders to draw them onto the terrain
 	void update_render_buffer(const std::unordered_set<Region*>* selections) {
-		if (!render_buffer) {
-			glCreateBuffers(1, &render_buffer);
-		}
-
-		std::vector<RegionRenderData> data;
+		std::vector<RegionRenderData>& data = render_data;
+		data.clear();
 		data.reserve(regions.size());
 		for (auto& region : regions) {
 			float left = std::min(region.left, region.right);
@@ -87,8 +83,6 @@ export class Regions {
 				.color = { glm::vec3(region.color) / 255.f, selected ? 1.f : 0.f },
 			});
 		}
-
-		glNamedBufferData(render_buffer, data.size() * sizeof(RegionRenderData), data.data(), GL_DYNAMIC_DRAW);
 	}
 
 	bool load(float terrain_offset_x, float terrain_offset_y) {

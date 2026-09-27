@@ -1,7 +1,10 @@
 ﻿#include "doodad_brush.h"
 
 #include <QKeyEvent>
+#include <volk.h>
 
+import VkResources;
+import VkTexture;
 import std;
 import Hierarchy;
 import SLK;
@@ -9,14 +12,12 @@ import Texture;
 import Doodad;
 import WorldUndoManager;
 import Camera;
-import OpenGLUtilities;
 import ResourceManager;
 import PathingMap;
 import SkinnedMesh;
 import Skeleton;
 import Globals;
 import Rects;
-import <glad/glad.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
 import <glm/gtc/quaternion.hpp>;
@@ -53,18 +54,20 @@ glm::vec2 DoodadBrush::get_position() const {
 }
 
 void DoodadBrush::set_shape(const Shape new_shape) {
-	context->makeCurrent();
 	shape = new_shape;
 
-	glDeleteTextures(1, &brush_texture);
-	glCreateTextures(GL_TEXTURE_2D, 1, &brush_texture);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(brush_texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	auto texture = std::make_shared<UpdatableTexture>(VK_FORMAT_R8G8B8A8_UNORM, bindless.nearest_sampler, 4);
+	const auto upload = [&](const int width, const int height, const std::vector<glm::u8vec4>& pixels) {
+		texture->update(
+			{static_cast<uint32_t>(width), static_cast<uint32_t>(height)},
+			std::span(reinterpret_cast<const uint8_t*>(pixels.data()), pixels.size() * sizeof(glm::u8vec4))
+		);
+		brush_texture = texture->slot;
+		brush_texture_owner = texture;
+	};
 
 	if (doodad.pathing) {
-		// 270 instead of 90 because OpenGL upside down shenanigans
+		// 270 instead of 90 because the pathing texture's rows run top to bottom while world Y runs bottom to top
 		const int32_t rotation = static_cast<int>(glm::degrees(doodad.angle)) + 270;
 
 		const int div_w = (rotation % 180) ? doodad.pathing->height : doodad.pathing->width;
@@ -107,12 +110,10 @@ void DoodadBrush::set_shape(const Shape new_shape) {
 				}
 			}
 		}
-		glTextureStorage2D(brush_texture, 1, GL_RGBA8, div_w, div_h);
-		glTextureSubImage2D(brush_texture, 0, 0, 0, div_w, div_h, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+		upload(div_w, div_h, brush);
 	} else {
 		const std::vector<glm::u8vec4> brush(size.x * size.y, {0, 0, 0, 0});
-		glTextureStorage2D(brush_texture, 1, GL_RGBA8, size.x, size.y);
-		glTextureSubImage2D(brush_texture, 0, 0, 0, size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, brush.data());
+		upload(size.x, size.y, brush);
 	}
 }
 
@@ -523,11 +524,7 @@ void DoodadBrush::render_brush() {
 }
 
 // Quads are drawn and then in the fragment shader fragments are discarded to form a circle
-void DoodadBrush::render_selection() const {
-	glDisable(GL_DEPTH_TEST);
-	selection_circle_shader->use();
-	glEnableVertexAttribArray(0);
-
+void DoodadBrush::render_selection(BrushDrawList& draw_list) const {
 	for (const auto& i : selections) {
 		float selection_scale = 1.f;
 		if (i->mesh->mdx->sequences.empty()) {
@@ -551,18 +548,8 @@ void DoodadBrush::render_selection() const {
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
 		model = glm::scale(model, glm::vec3(selection_scale));
 
-		model = camera.projection_view * model;
-		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
-
-		glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		draw_list.selection_circles.push_back(model);
 	}
-
-	glDisableVertexAttribArray(0);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void DoodadBrush::render_clipboard() {
@@ -606,7 +593,6 @@ bool DoodadBrush::can_place() {
 
 void DoodadBrush::set_random_variation() {
 	variation = get_random_variation();
-	context->makeCurrent();
 	doodad.init(doodad.id, doodads.get_mesh(doodad.id, variation), terrain);
 }
 
@@ -632,7 +618,6 @@ void DoodadBrush::erase_variation(int variation) {
 }
 
 void DoodadBrush::set_doodad(const std::string& id) {
-	context->makeCurrent();
 
 	const bool is_doodad = doodads_slk.row_headers.contains(id);
 	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;

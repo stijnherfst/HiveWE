@@ -72,7 +72,7 @@ class UnitBrush : public Brush {
 	void apply(WorldEditContext& ctx, double frame_delta) override;
 	void apply_end(WorldEditContext& ctx) override;
 	void render_brush() override;
-	void render_selection() const override;
+	void render_selection(BrushDrawList& draw_list) const override;
 	void render_clipboard() override;
 
 	bool can_place() override;

@@ -8,6 +8,7 @@ namespace fs = std::filesystem;
 #include <QFileDialog>
 #include <QSettings>
 #include <QObject>
+#include <QElapsedTimer>
 #include <QTimer>
 #include <QGridLayout>
 #include <QLabel>

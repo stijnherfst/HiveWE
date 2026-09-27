@@ -1,7 +1,7 @@
 #include "model_view.h"
 
 #include "model_editor.h"
-#include "model_grid_glwidget.h"
+#include "model_grid_widget.h"
 
 #include <QCheckBox>
 #include <QHBoxLayout>
@@ -113,7 +113,7 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 	category_row->addStretch(1);
 	layout->addLayout(category_row);
 
-	ModelGridGLWidget* grid = new ModelGridGLWidget(entries, this);
+	ModelGridWidget* grid = new ModelGridWidget(entries, this);
 	QScrollBar* bar = new QScrollBar(Qt::Vertical, this);
 
 	QHBoxLayout* grid_row = new QHBoxLayout;
@@ -123,22 +123,22 @@ ModelView::ModelView(QWidget* parent) : QWidget(parent) {
 	grid_row->addWidget(bar);
 	layout->addLayout(grid_row, 1);
 
-	connect(bar, &QScrollBar::valueChanged, grid, &ModelGridGLWidget::set_scroll_offset);
-	connect(grid, &ModelGridGLWidget::scroll_changed, bar, &QScrollBar::setValue);
-	connect(grid, &ModelGridGLWidget::content_height_changed, this, [bar, grid](int total) {
+	connect(bar, &QScrollBar::valueChanged, grid, &ModelGridWidget::set_scroll_offset);
+	connect(grid, &ModelGridWidget::scroll_changed, bar, &QScrollBar::setValue);
+	connect(grid, &ModelGridWidget::content_height_changed, this, [bar, grid](int total) {
 		bar->setRange(0, std::max(0, total - grid->height()));
 		bar->setPageStep(grid->height());
 		bar->setSingleStep(grid->cell_pixel_size());
 	});
-	connect(grid, &ModelGridGLWidget::clicked, this, [this](const fs::path& p) {
+	connect(grid, &ModelGridWidget::clicked, this, [this](const fs::path& p) {
 		finalPath->setText(QString::fromStdString(p.string()));
 	});
 
-	connect(grid, &ModelGridGLWidget::double_clicked, this, [this](const fs::path& p) {
+	connect(grid, &ModelGridWidget::double_clicked, this, [this](const fs::path& p) {
 		emit doubleClicked(p);
 	});
 
-	connect(search, &QLineEdit::textChanged, grid, &ModelGridGLWidget::set_search);
+	connect(search, &QLineEdit::textChanged, grid, &ModelGridWidget::set_search);
 
 	auto update_categories = [grid, category_boxes]() {
 		std::bitset<static_cast<size_t>(ModelCategory::Count)> mask;

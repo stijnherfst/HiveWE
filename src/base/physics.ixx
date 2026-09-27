@@ -1,23 +1,12 @@
 export module Physics;
 
 import std;
-import Shader;
-import Camera;
-import ResourceManager;
-import <glad/glad.h>;
 import <bullet/btBulletDynamicsCommon.h>;
 
+/// Collects the lines Bullet's debug drawing produces
 class PhysicsDebugDraw : public btIDebugDraw {
-	std::shared_ptr<Shader> shader;
-	GLuint vertex_buffer;
-
   public:
 	std::vector<float> debug_vertices;
-
-	explicit PhysicsDebugDraw()	: btIDebugDraw() {
-		glCreateBuffers(1, &vertex_buffer);
-		shader = resource_manager.load<Shader>({ "data/shaders/physics_debug.vert", "data/shaders/physics_debug.frag" }).value();
-	}
 
 	void drawLine(const btVector3& from, const btVector3& to, const btVector3& color) {
 		debug_vertices.push_back(from.x());
@@ -48,23 +37,6 @@ class PhysicsDebugDraw : public btIDebugDraw {
 		debug_vertices.clear();
 	}
 
-	void render() {
-		glNamedBufferData(vertex_buffer, debug_vertices.size() * sizeof(float), debug_vertices.data(), GL_STATIC_DRAW);
-
-		shader->use();
-		// glDisable(GL_DEPTH_TEST);
-
-		glUniformMatrix4fv(1, 1, GL_FALSE, &camera.projection_view[0][0]);
-
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glDrawArrays(GL_LINES, 0, debug_vertices.size());
-
-		glDisableVertexAttribArray(0);
-		glEnable(GL_DEPTH_TEST);
-	}
 };
 
 export struct Physics {

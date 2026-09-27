@@ -1,6 +1,7 @@
 module;
 
 #include <QMessageBox>
+#include <volk.h>
 
 export module Map;
 
@@ -37,9 +38,10 @@ import Terrain;
 import GameplayConstants;
 import Utilities;
 import UnorderedMap;
+import VkResources;
+import VkBrushOverlay;
 import "brush.h";
 import "region_brush.h";
-import <glad/glad.h>;
 import <bullet/btBulletDynamicsCommon.h>;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
@@ -98,6 +100,7 @@ export class Map: public QObject {
 	std::string name;
 
 	RenderManager render_manager;
+	BrushOverlayRenderer brush_overlay;
 
 	/// Bundles up the parts of the map that world edits act on, so that brushes and
 	/// undo commands take what they need as a parameter instead of reaching for the
@@ -437,7 +440,6 @@ export class Map: public QObject {
 
 		doodads.load(terrain, info);
 		doodads.create(terrain, pathing_map);
-		glFinish(); // Ensure all GL work submitted on worker contexts is visible to the main context
 
 		std::println("Doodad loading:\t {:>5}ms", timer.elapsed_ms());
 		timer.reset();
@@ -462,7 +464,6 @@ export class Map: public QObject {
 		if (hierarchy.map_file_exists("war3mapUnits.doo")) {
 			units.load(terrain, info);
 			units.create();
-			glFinish(); // Ensure all GL work submitted on worker contexts is visible to the main context
 		}
 
 		std::println("Unit loading:\t {:>5}ms", timer.elapsed_ms());
@@ -768,29 +769,33 @@ export class Map: public QObject {
 		});
 	}
 
-	void render() {
+	/// Records the whole map. Expects rendering to have begun with the viewport set and the bindless set bound.
+	void render(const VkCommandBuffer cmd, FrameAllocator& allocator) {
 		// While switching maps it may happen that render is called before loading has finished.
 		if (!loaded) {
 			return;
 		}
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glPolygonMode(GL_FRONT_AND_BACK, render_wireframe ? GL_LINE : GL_FILL);
 
 		if (render_regions) {
 			const auto* region_brush = dynamic_cast<RegionBrush*>(brush);
 			regions.update_render_buffer(region_brush ? &region_brush->selections : nullptr);
 		}
 
+		// Wireframe covers the terrain, meshes and water, but not the brush overlays
+		const VkPolygonMode polygon_mode = render_wireframe ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
+		vkCmdSetPolygonModeEXT(cmd, polygon_mode);
+
 		terrain.render_ground(
+			cmd,
+			allocator,
 			render_pathing,
 			render_lighting,
 			light_direction,
 			brush,
 			pathing_map,
 			render_regions,
-			regions.render_buffer,
-			regions.regions.size()
+			std::as_bytes(std::span(regions.render_data)),
+			static_cast<uint32_t>(regions.render_data.size())
 		);
 
 		if (render_doodads) {
@@ -822,17 +827,22 @@ export class Map: public QObject {
 			}
 		}
 
+		// Brush previews are queued with the render manager; selection overlays are drawn over the terrain beneath the meshes
+		BrushDrawList brush_draw_list;
 		if (render_brush && brush) {
-			brush->render();
+			brush->render(brush_draw_list);
 		}
+		vkCmdSetPolygonModeEXT(cmd, VK_POLYGON_MODE_FILL);
+		brush_overlay.render(cmd, brush_draw_list.selection_rectangles, brush_draw_list.selection_circles, camera.projection_view);
+		vkCmdSetPolygonModeEXT(cmd, polygon_mode);
 
-		render_manager.render(render_lighting, light_direction);
+		render_manager.render(cmd, allocator, render_lighting, light_direction);
+
 		if (render_water) {
-			terrain.render_water(info, tilesets);
+			terrain.render_water(cmd, allocator, info, tilesets);
 		}
+		vkCmdSetPolygonModeEXT(cmd, VK_POLYGON_MODE_FILL);
 
-		// physics.dynamicsWorld->debugDrawWorld();
-		// physics.draw->render();
 	}
 
 	/// Resizes the entire map by expanding/shrinking it from all sides

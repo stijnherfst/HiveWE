@@ -1,16 +1,7 @@
 #version 450 core
 
-#extension GL_ARB_bindless_texture : require
-
-layout (location = 2) uniform bool show_pathing_map;
-layout (location = 3) uniform bool show_lighting;
-layout (location = 4) uniform vec3 light_direction;
-layout (location = 5) uniform vec2 brush_position;
-layout (location = 6) uniform bool render_brush;
-
-layout (binding = 17) uniform usampler2D pathing_map_static;
-layout (binding = 18) uniform usampler2D pathing_map_dynamic;
-layout (binding = 19) uniform sampler2D brush;
+#extension GL_GOOGLE_include_directive : require
+#include "terrain_common.glsl"
 
 layout (location = 0) in vec2 UV;
 layout (location = 1) in flat uvec4 texture_indices;
@@ -20,102 +11,47 @@ layout (location = 4) in vec2 world_position;
 
 layout (location = 0) out vec4 color;
 
-layout (location = 8) uniform bool show_regions;
-layout (location = 9) uniform uint region_count;
-
-layout(std430, binding = 4) buffer TextureHandles {
-	sampler2DArray textures[];
-};
-
-struct Region {
-	vec4 rect; // left, bottom, right, top
-	vec4 color; // rgb + selected flag
-};
-
-layout(std430, binding = 5) buffer RegionData {
-	Region regions[];
-};
-
-vec3 apply_regions(vec3 color, vec2 p) {
-	// The border/corner sizes must match the RegionBrush grab zones
-	const float border = 0.1;
-	const float corner = 0.20;
-	const float outline = 0.02;
-
-	for (uint i = 0u; i < region_count; i++) {
-		vec4 rect = regions[i].rect;
-		if (p.x < rect.x || p.x > rect.z || p.y < rect.y || p.y > rect.w) {
-			continue;
-		}
-
-		vec3 region_color = regions[i].color.rgb;
-		bool selected = regions[i].color.a > 0.5;
-
-		vec3 border_color = region_color;
-		if (selected) {
-			float luminance = dot(region_color, vec3(0.299, 0.587, 0.114));
-			border_color = luminance > 0.65 ? region_color * 0.45 : mix(region_color, vec3(1.0), 0.6);
-		}
-
-		// Distance to the nearest vertical/horizontal region edge
-		float dx = min(p.x - rect.x, rect.z - p.x);
-		float dy = min(p.y - rect.y, rect.w - p.y);
-
-		if (selected && dx < corner && dy < corner) {
-			bool corner_outline = dx > corner - outline || dy > corner - outline;
-			color = corner_outline ? vec3(0.0) : border_color;
-		} else if (dx < border || dy < border) {
-			color = border_color;
-		} else {
-			color = mix(color, region_color, 0.25);
-		}
-	}
-
-	return color;
-}
-
-vec4 get_fragment(uint id, vec3 uv) {
+vec4 get_fragment(TerrainFrame frame, uint id, vec3 uv) {
 	if (id == 0xFFFFu) {
 		return vec4(0, 0, 0, 0);
-	} else {
-		return texture(textures[id], uv).rgba;
 	}
+	const uint slot = frame.ground_texture_slots.values[id];
+	return texture(array_textures[nonuniformEXT(slot)], uv).rgba;
 }
 
 void main() {
-	color = get_fragment(texture_indices.a & 0xFFFFu, vec3(UV, texture_indices.a >> 16));
-	color = mix(get_fragment(texture_indices.b & 0xFFFFu, vec3(UV, texture_indices.b >> 16)), color, color.a);
-	color = mix(get_fragment(texture_indices.g & 0xFFFFu, vec3(UV, texture_indices.g >> 16)), color, color.a);
-	color = mix(get_fragment(texture_indices.r & 0xFFFFu, vec3(UV, texture_indices.r >> 16)), color, color.a);
+	TerrainFrame frame = pc.frame;
 
-	if (show_lighting) {
-		float contribution = (dot(-light_direction, normal) + 1.f) * 0.5f;
+	color = get_fragment(frame, texture_indices.a & 0xFFFFu, vec3(UV, texture_indices.a >> 16));
+	color = mix(get_fragment(frame, texture_indices.b & 0xFFFFu, vec3(UV, texture_indices.b >> 16)), color, color.a);
+	color = mix(get_fragment(frame, texture_indices.g & 0xFFFFu, vec3(UV, texture_indices.g >> 16)), color, color.a);
+	color = mix(get_fragment(frame, texture_indices.r & 0xFFFFu, vec3(UV, texture_indices.r >> 16)), color, color.a);
 
+	if ((frame.flags & flag_lighting) != 0u) {
+		const float contribution = (dot(-frame.light_direction.xyz, normal) + 1.f) * 0.5f;
 		color.rgb *= clamp(contribution, 0.f, 1.f);
 	}
 
-	uint byte_static = texelFetch(pathing_map_static, ivec2(pathing_map_uv), 0).r;
-	uint byte_dynamic = texelFetch(pathing_map_dynamic, ivec2(pathing_map_uv), 0).r;
-	if (show_pathing_map) {
-		uint final = byte_static.r | byte_dynamic.r;
+	if ((frame.flags & flag_pathing) != 0u) {
+		const uint byte_static = texelFetch(uint_textures[frame.pathing_static_slot], ivec2(pathing_map_uv), 0).r;
+		const uint byte_dynamic = texelFetch(uint_textures[frame.pathing_dynamic_slot], ivec2(pathing_map_uv), 0).r;
+		const uint final = byte_static | byte_dynamic;
 
-		vec3 pathing_color = vec3((final & 2u) >> 1, (final & 4u) >> 2, (final & 8u) >> 3);
+		const vec3 pathing_color = vec3((final & 2u) >> 1, (final & 4u) >> 2, (final & 8u) >> 3);
 		color.rgb = (final & 0xEu) > 0 ? mix(color.rgb, pathing_color, 0.50) : color.rgb;
 	}
 
-	if (show_regions) {
-		color.rgb = apply_regions(color.rgb, world_position);
+	if ((frame.flags & flag_regions) != 0u) {
+		color.rgb = apply_regions(frame, color.rgb, world_position);
 	}
 
-	if (render_brush) {
-		ivec2 brush_texture_size = textureSize(brush, 0);
-
-		vec2 brush_uv = ((brush_position - world_position) * 4.f) / vec2(brush_texture_size) + 0.5;
-
-		vec4 brush_color = texture(brush, brush_uv);
+	if ((frame.flags & flag_brush) != 0u) {
+		const ivec2 brush_texture_size = textureSize(textures[frame.brush_slot], 0);
+		const vec2 brush_uv = ((frame.brush_position - world_position) * 4.f) / vec2(brush_texture_size) + 0.5;
+		const vec4 brush_color = texture(textures[frame.brush_slot], brush_uv);
 
 		if (brush_uv.x >= 0.f && brush_uv.y >= 0.f && brush_uv.x <= 1.f && brush_uv.y <= 1.f) {
 			color.rgb = mix(color.rgb, brush_color.rgb, brush_color.a);
 		}
-	} 
+	}
 }

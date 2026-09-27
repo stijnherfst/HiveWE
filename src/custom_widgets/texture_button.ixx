@@ -5,7 +5,6 @@ export module TextureButton;
 import Tileset;
 import Texture;
 import ResourceManager;
-import OpenGLUtilities;
 import PathingMap;
 import <QPushButton>;
 import <QPainter>;

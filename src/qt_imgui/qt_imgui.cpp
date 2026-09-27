@@ -23,7 +23,7 @@ public:
 public:
   void newFrame() { r->newFrame(); }
 
-  void render() { r->render(); }
+  void setFontUploader(FontUploader uploader) { r->setFontUploader(std::move(uploader)); }
 private:
   ImGuiRenderer* r;
 };
@@ -178,13 +178,12 @@ void newFrame(RenderRef ref) {
   }
 }
 
-void render(RenderRef ref)
-{
+void setFontUploader(RenderRef ref, FontUploader uploader) {
   if (!ref) {
-    ImGuiRenderer::instance()->render();
+    ImGuiRenderer::instance()->setFontUploader(std::move(uploader));
   } else {
     auto wrapper = reinterpret_cast<QWindowWrapper*>(ref);
-    wrapper->render();
+    wrapper->setFontUploader(std::move(uploader));
   }
 }
 

@@ -4,7 +4,6 @@
 import std;
 import Tileset;
 import Texture;
-import OpenGLUtilities;
 import ResourceManager;
 import Globals;
 

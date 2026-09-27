@@ -1,6 +1,7 @@
 module;
 
 #include <stdexcept>
+#include <volk.h>
 
 export module CliffMesh;
 
@@ -9,22 +10,32 @@ import BinaryReader;
 import ResourceManager;
 import Hierarchy;
 import MDX;
+import VkResources;
 import <glm/glm.hpp>;
-import <glad/glad.h>;
 
 namespace fs = std::filesystem;
 
-export class CliffMesh: public Resource {
+/// Mirrors PushConstants in data/shaders/terrain_common.glsl
+struct CliffPushConstants {
+	VkDeviceAddress frame;
+	VkDeviceAddress positions;
+	VkDeviceAddress uvs;
+	VkDeviceAddress normals;
+	VkDeviceAddress instances;
+};
+
+/// A cliff or ramp model, drawn instanced once per cliff tile using it
+export class CliffMesh : public Resource {
   public:
-	GLuint vertex_buffer;
-	GLuint uv_buffer;
-	GLuint normal_buffer;
-	GLuint index_buffer;
-	GLuint instance_buffer;
-	size_t indices;
+	/// Positions, then UVs, then normals, then 16 bit indices
+	Buffer buffer;
+	std::array<VkDeviceSize, 3> stream_offsets {};
+	VkDeviceSize index_offset = 0;
+	uint32_t indices = 0;
 
 	static constexpr const char* name = "CliffMesh";
 
+	/// Per instance: tile x, tile y, base layer height, cliff texture index
 	std::vector<glm::vec4> render_jobs;
 
 	explicit CliffMesh(const fs::path& path) {
@@ -46,73 +57,52 @@ export class CliffMesh: public Resource {
 
 		mdx.fix_up();
 
-		const auto set = mdx.geosets.front();
+		const auto& set = mdx.geosets.front();
 
-		glCreateBuffers(1, &vertex_buffer);
-		glNamedBufferData(vertex_buffer, static_cast<int>(set.vertices.size() * sizeof(glm::vec3)), set.vertices.data(), GL_STATIC_DRAW);
+		const auto positions = std::as_bytes(std::span(set.vertices));
+		const auto uvs = std::as_bytes(std::span(set.uv_sets.front()));
+		const auto normals = std::as_bytes(std::span(set.normals));
+		const auto faces = std::as_bytes(std::span(set.faces));
 
-		glCreateBuffers(1, &uv_buffer);
-		glNamedBufferData(
-			uv_buffer,
-			static_cast<int>(set.uv_sets.front().size() * sizeof(glm::vec2)),
-			set.uv_sets.front().data(),
-			GL_STATIC_DRAW
-		);
+		std::vector<std::byte> bytes;
+		for (size_t i = 0; const auto& stream : {positions, uvs, normals}) {
+			stream_offsets[i++] = bytes.size();
+			bytes.insert(bytes.end(), stream.begin(), stream.end());
+		}
+		index_offset = bytes.size();
+		bytes.insert(bytes.end(), faces.begin(), faces.end());
 
-		glCreateBuffers(1, &normal_buffer);
-		glNamedBufferData(normal_buffer, static_cast<int>(set.normals.size() * sizeof(glm::vec3)), set.normals.data(), GL_STATIC_DRAW);
-
-		glCreateBuffers(1, &instance_buffer);
-
-		indices = set.faces.size();
-		glCreateBuffers(1, &index_buffer);
-		glNamedBufferData(index_buffer, static_cast<int>(set.faces.size() * sizeof(uint16_t)), set.faces.data(), GL_STATIC_DRAW);
+		indices = static_cast<uint32_t>(set.faces.size());
+		buffer = create_device_buffer(bytes, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 	}
 
-	~CliffMesh() {
-		glDeleteBuffers(1, &vertex_buffer);
-		glDeleteBuffers(1, &uv_buffer);
-		glDeleteBuffers(1, &normal_buffer);
-		glDeleteBuffers(1, &instance_buffer);
-		glDeleteBuffers(1, &index_buffer);
+	~CliffMesh() override {
+		destroy_buffer_deferred(buffer);
 	}
 
 	void render_queue(const glm::vec4 position) {
 		render_jobs.push_back(position);
 	}
 
-	void render() {
+	/// Draws every queued instance and clears the queue. Expects the cliff pipeline to be bound.
+	/// `frame` is the TerrainFrameData address.
+	void render(const VkCommandBuffer cmd, FrameAllocator& allocator, const VkDeviceAddress frame) {
 		if (render_jobs.empty()) {
 			return;
 		}
 
-		glNamedBufferData(instance_buffer, static_cast<int>(render_jobs.size() * sizeof(glm::vec4)), render_jobs.data(), GL_STATIC_DRAW);
+		const auto instances = allocator.upload(std::span<const glm::vec4>(render_jobs), 16);
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, uv_buffer);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glEnableVertexAttribArray(3);
-		glBindBuffer(GL_ARRAY_BUFFER, instance_buffer);
-		glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
-		glVertexAttribDivisor(3, 1);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-		glDrawElementsInstanced(GL_TRIANGLES, indices, GL_UNSIGNED_SHORT, nullptr, static_cast<int>(render_jobs.size()));
-
-		glVertexAttribDivisor(3, 0); // ToDo use vao
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		glDisableVertexAttribArray(2);
-		glDisableVertexAttribArray(3);
+		const CliffPushConstants push = {
+			.frame = frame,
+			.positions = buffer.address + stream_offsets[0],
+			.uvs = buffer.address + stream_offsets[1],
+			.normals = buffer.address + stream_offsets[2],
+			.instances = instances.address,
+		};
+		vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(push), &push);
+		vkCmdBindIndexBuffer(cmd, buffer.buffer, index_offset, VK_INDEX_TYPE_UINT16);
+		vkCmdDrawIndexed(cmd, indices, static_cast<uint32_t>(render_jobs.size()), 0, 0, 0);
 
 		render_jobs.clear();
 	}

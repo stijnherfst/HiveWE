@@ -49,15 +49,18 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"file_formats/mpq.ixx"
 	"file_formats/slk.ixx"
 
+	"render/vk_context.ixx"
+	"render/vk_resources.ixx"
+	"render/vk_texture.ixx"
+	"render/vk_editable_mesh.ixx"
+	"render/vk_brush_overlay.ixx"
+
 	"resources/cliff_mesh.ixx"
-	"resources/gpu_texture.ixx"
 	"resources/ground_texture.ixx"
-	"resources/shader.ixx"
 
 	"resources/texture.ixx"
 	"resources/pathing_texture.ixx"
 	"resources/qicon_resource.ixx"
-	"resources/editable_mesh.ixx"
 	"resources/particle_emitter2_simulation.ixx"
 	"resources/particle_emitter2_renderer.ixx"
 	"resources/skinned_mesh/render_node.ixx"
@@ -96,9 +99,9 @@ target_sources(HiveWE_lib PUBLIC FILE_SET yeet TYPE CXX_MODULES FILES
 	"custom_widgets/flow_layout.ixx"
 
 	"utilities/timer.ixx"
-	"utilities/gl_thread_pool.ixx"
+	"utilities/thread_pool.ixx"
 	"utilities/utilities.ixx"
-	"utilities/opengl_utilities.ixx"
+	"utilities/texture_icon.ixx"
 	"utilities/modification_tables.ixx"
 	"utilities/string_hash.ixx"
 	"utilities/unordered_map.ixx"
@@ -119,7 +122,8 @@ target_sources(HiveWE PRIVATE
 
 target_sources(HiveWE_lib PRIVATE
 	"main_window/hivewe.cpp"
-	"main_window/glwidget.cpp"
+	"main_window/map_widget.cpp"
+	"main_window/map_widget.h"
 	"main_window/main_ribbon.cpp"
 
 	"brush/brush.cpp"
@@ -181,15 +185,23 @@ target_sources(HiveWE_lib PRIVATE
 
 	"model_editor/model_editor_camera.cpp"
 	"model_editor/model_editor.cpp"
-	"model_editor/model_editor_glwidget.cpp"
+	"model_editor/model_editor_viewport.cpp"
 	"model_editor/model_editor_imgui.cpp"
 
 	"object_editor/icon_view.cpp"
 	"object_editor/model_view.cpp"
-	"object_editor/model_grid_glwidget.cpp"
+	"object_editor/model_grid_widget.cpp"
 	"object_editor/object_editor.cpp"
 	"object_editor/global_search.cpp"
 
 	"qt_imgui/imgui_renderer.cpp"
 	"qt_imgui/qt_imgui.cpp"
+
+	"render/vk_implementation.cpp"
+	"render/vulkan_imgui.cpp"
+	"render/vulkan_imgui.h"
+	"render/vulkan_viewport.cpp"
+	"render/vulkan_viewport.h"
+	"render/vulkan_test_modes.cpp"
+	"render/vulkan_test_modes.h"
 )

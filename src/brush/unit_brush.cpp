@@ -7,13 +7,11 @@ import Hierarchy;
 import Texture;
 import WorldUndoManager;
 import Camera;
-import OpenGLUtilities;
 import RenderManager;
 import Globals;
 import PathingMap;
 import <glm/glm.hpp>;
 import <glm/gtc/matrix_transform.hpp>;
-import <glad/glad.h>;
 
 UnitBrush::UnitBrush(Units& units, Terrain& terrain, PathingMap& pathing_map,
 		   RenderManager& render_manager, WorldUndoManager& world_undo)
@@ -296,11 +294,7 @@ void UnitBrush::render_brush() {
 	}
 }
 
-void UnitBrush::render_selection() const {
-	glDisable(GL_DEPTH_TEST);
-	selection_circle_shader->use();
-	glEnableVertexAttribArray(0);
-
+void UnitBrush::render_selection(BrushDrawList& draw_list) const {
 	for (const auto& i : selections) {
 		const float selection_scale = i->mesh->mdx->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 
@@ -308,18 +302,8 @@ void UnitBrush::render_selection() const {
 		model = glm::translate(model, i->position - glm::vec3(selection_scale * 0.5f, selection_scale * 0.5f, 0.f));
 		model = glm::scale(model, glm::vec3(selection_scale));
 
-		model = camera.projection_view * model;
-		glUniformMatrix4fv(1, 1, GL_FALSE, &model[0][0]);
-
-		glBindBuffer(GL_ARRAY_BUFFER, shapes.vertex_buffer);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shapes.index_buffer);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+		draw_list.selection_circles.push_back(model);
 	}
-
-	glDisableVertexAttribArray(0);
-	glEnable(GL_DEPTH_TEST);
 }
 
 void UnitBrush::render_clipboard() {
@@ -362,7 +346,6 @@ void UnitBrush::set_random_rotation() {
 }
 
 void UnitBrush::set_unit(const std::string& id) {
-	context->makeCurrent();
 	this->id = id;
 	mesh = units.get_mesh(id);
 	skeleton = Skeleton(mesh->mdx, Units::get_required_animation_names(id));

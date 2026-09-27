@@ -1,6 +1,5 @@
 module;
 
-#include <QOpenGLWidget>
 
 export module Globals;
 
@@ -34,7 +33,6 @@ export inline slk::SLK upgrade_meta_slk;
 export inline slk::SLK buff_slk;
 export inline slk::SLK buff_meta_slk;
 
-export inline QOpenGLWidget* context;
 
 /// Generates a four character ID that is not in use by any of the object types
 export std::string get_unique_id(bool first_uppercase) {
