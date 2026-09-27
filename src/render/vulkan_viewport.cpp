@@ -1,3 +1,4 @@
+#include <QCoreApplication>
 #include <QExposeEvent>
 #include <QPlatformSurfaceEvent>
 #include <QResizeEvent>
@@ -110,6 +111,7 @@ void VulkanViewport::wait_idle() const {
 bool VulkanViewport::event(QEvent* event) {
 	switch (event->type()) {
 		case QEvent::UpdateRequest:
+			update_scheduled = false;
 			render();
 			return true;
 		case QEvent::PlatformSurface:
@@ -126,9 +128,18 @@ bool VulkanViewport::event(QEvent* event) {
 	return QWindow::event(event);
 }
 
+void VulkanViewport::schedule_update() {
+	if (update_scheduled) {
+		return;
+	}
+	update_scheduled = true;
+	// Low priority, so input that arrived meanwhile is delivered before the next frame is recorded
+	QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest), Qt::LowEventPriority);
+}
+
 void VulkanViewport::exposeEvent(QExposeEvent*) {
 	if (isExposed()) {
-		requestUpdate();
+		schedule_update();
 	}
 }
 
@@ -258,7 +269,7 @@ void VulkanViewport::render() {
 		vkAcquireNextImageKHR(device, swapchain.swapchain, UINT64_MAX, frame.image_acquired, VK_NULL_HANDLE, &image_index);
 	if (acquired == VK_ERROR_OUT_OF_DATE_KHR) {
 		swapchain_dirty = true;
-		requestUpdate();
+		schedule_update();
 		return;
 	}
 	if (acquired != VK_SUCCESS && acquired != VK_SUBOPTIMAL_KHR) {
@@ -384,7 +395,7 @@ void VulkanViewport::render() {
 
 	presented_frames++;
 	frame_index = (frame_index + 1) % frames_in_flight;
-	requestUpdate();
+	schedule_update();
 }
 
 VulkanOverlay::VulkanOverlay()

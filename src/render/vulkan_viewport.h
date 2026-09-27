@@ -52,6 +52,9 @@ class VulkanViewport : public QWindow {
 	/// Only for teardown and swapchain recreation; it stalls every viewport sharing the queue.
 	void wait_idle() const;
 
+	/// Queues a render
+	void schedule_update();
+
 	bool event(QEvent* event) override;
 	void exposeEvent(QExposeEvent* event) override;
 	void resizeEvent(QResizeEvent* event) override;
@@ -74,6 +77,7 @@ class VulkanViewport : public QWindow {
 	// One per swapchain image rather than per frame, since presentation holds on to it until the image is reacquired
 	std::vector<VkSemaphore> render_finished;
 	bool swapchain_dirty = true;
+	bool update_scheduled = false;
 
 	VkCommandPool command_pool = VK_NULL_HANDLE;
 	std::array<Frame, frames_in_flight> frames;
