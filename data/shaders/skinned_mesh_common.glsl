@@ -31,7 +31,8 @@ struct LayerParams {
 	float alpha_test;
 	uint layer_lit;
 	uint is_team_color;
-	uint _pad;
+	/// Bits 0-2: BlendMode, bit 3: two-sided
+	uint flags;
 };
 
 layout(buffer_reference, std430, buffer_reference_align = 16) readonly buffer Vec4Buffer {
@@ -91,6 +92,8 @@ layout(push_constant, std430) uniform PushConstants {
 	SkinnedFrame frame;
 	/// Index of the first DrawInfo of this multi-draw
 	uint draw_info_base;
+	/// Which fixed-function state the fragment shader handles, see skinned_mesh_fragment.glsl
+	uint shader_state;
 } pc;
 
 layout(set = 0, binding = 0) uniform sampler2D textures[];

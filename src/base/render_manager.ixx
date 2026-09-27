@@ -53,6 +53,14 @@ static_assert(offsetof(SkinnedFrameData, layer_colors) == 96);
 struct SkinnedPushConstants {
 	VkDeviceAddress frame;
 	uint32_t draw_info_base;
+	uint32_t shader_state;
+};
+
+/// Bits of SkinnedPushConstants::shader_state, the fixed-function state the fragment shader handles instead.
+/// Mirrors data/shaders/skinned_mesh_fragment.glsl.
+enum ShaderState : uint32_t {
+	shader_cull = 1,
+	shader_blend = 2,
 };
 
 /// Mirrors PushConstants in data/shaders/skinned_mesh_pick.*
@@ -96,6 +104,9 @@ export class RenderManager {
 	// Indexed by BlendMode
 	std::array<Pipeline, blend_mode_count> sd_pipelines;
 	std::array<Pipeline, blend_mode_count> hd_pipelines;
+	// Blend with `color * ONE + destination * factor`, where the fragment shader expresses the layer's blend mode
+	Pipeline sd_dual_source_pipeline;
+	Pipeline hd_dual_source_pipeline;
 
 	Pipeline pick_pipeline {{
 		.vertex_shader = "data/shaders/skinned_mesh_pick.vert.spv",
@@ -129,6 +140,18 @@ export class RenderManager {
 			description.fragment_shader = "data/shaders/skinned_mesh_hd.frag.spv";
 			hd_pipelines[mode] = Pipeline(description);
 		}
+
+		PipelineDescription description = {
+			.blend = true,
+			.src_factor = VK_BLEND_FACTOR_ONE,
+			.dst_factor = VK_BLEND_FACTOR_SRC1_COLOR,
+		};
+		description.vertex_shader = "data/shaders/skinned_mesh_sd.vert.spv";
+		description.fragment_shader = "data/shaders/skinned_mesh_sd.frag.spv";
+		sd_dual_source_pipeline = Pipeline(description);
+		description.vertex_shader = "data/shaders/skinned_mesh_hd.vert.spv";
+		description.fragment_shader = "data/shaders/skinned_mesh_hd.frag.spv";
+		hd_dual_source_pipeline = Pipeline(description);
 	}
 
 	~RenderManager() {
@@ -393,9 +416,10 @@ export class RenderManager {
 		const FrameAllocator::Allocation& indirect,
 		const VkDeviceAddress frame_address,
 		const size_t group_start,
-		const size_t group_end
+		const size_t group_end,
+		const uint32_t shader_state = 0
 	) const {
-		const SkinnedPushConstants push = {frame_address, static_cast<uint32_t>(group_start)};
+		const SkinnedPushConstants push = {frame_address, static_cast<uint32_t>(group_start), shader_state};
 		vkCmdPushConstants(cmd, bindless.pipeline_layout, VK_SHADER_STAGE_ALL, 0, sizeof(push), &push);
 		vkCmdDrawIndexedIndirect(
 			cmd,
@@ -547,19 +571,41 @@ export class RenderManager {
 
 		const auto [frame_address, indirect] = write_pass(allocator, frame, commands, draw_infos);
 
-		// Walk in order (distance-sorted) and coalesce only adjacent same-state runs. Transparent layers never write depth.
+		// The fragment shader culls back faces and blends, so draws only need splitting where depth testing changes or
+		// a layer's blend mode needs a fixed-function pipeline. Transparent layers never write depth.
+		struct GroupState {
+			/// The dual-source pipeline, or else blend_mode's
+			bool shader_blend;
+			uint8_t blend_mode;
+			bool depth_test;
+			bool operator==(const GroupState&) const = default;
+		};
+		const auto group_state = [](const SkinnedMesh::DrawState& s) {
+			const bool shader_blend = s.blend_mode != blend_modulate2x;
+			return GroupState {
+				.shader_blend = shader_blend,
+				.blend_mode = shader_blend ? uint8_t {0} : s.blend_mode,
+				.depth_test = s.depth_test,
+			};
+		};
+
+		// Walk in order (distance-sorted) and coalesce adjacent runs that share state
 		size_t group_start = 0;
 		while (group_start < commands.size()) {
+			const GroupState state = group_state(states[group_start]);
 			size_t group_end = group_start + 1;
-			while (group_end < commands.size() && states[group_end] == states[group_start]) {
+			while (group_end < commands.size() && group_state(states[group_end]) == state) {
 				group_end++;
 			}
-			const auto& s = states[group_start];
-			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_for(render_hd, s.blend_mode));
-			vkCmdSetCullMode(cmd, s.cull_face ? VK_CULL_MODE_BACK_BIT : VK_CULL_MODE_NONE);
-			vkCmdSetDepthTestEnable(cmd, s.depth_test);
+			const VkPipeline pipeline = state.shader_blend
+				? (render_hd ? hd_dual_source_pipeline : sd_dual_source_pipeline)
+				: pipeline_for(render_hd, state.blend_mode);
+			vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdSetCullMode(cmd, VK_CULL_MODE_NONE);
+			vkCmdSetDepthTestEnable(cmd, state.depth_test);
 			vkCmdSetDepthWriteEnable(cmd, VK_FALSE);
-			draw_group(cmd, indirect, frame_address, group_start, group_end);
+			const uint32_t shader_state = shader_cull | (state.shader_blend ? shader_blend : 0u);
+			draw_group(cmd, indirect, frame_address, group_start, group_end, shader_state);
 			group_start = group_end;
 		}
 	}

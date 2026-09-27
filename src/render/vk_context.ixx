@@ -108,6 +108,8 @@ export class VkContext {
 
 		VkPhysicalDeviceFeatures features {};
 		features.multiDrawIndirect = true;
+		// The transparent pass expresses each layer's blend mode in the fragment shader
+		features.dualSrcBlend = true;
 		features.fillModeNonSolid = true;
 		features.samplerAnisotropy = true;
 		features.textureCompressionBC = true;
@@ -383,10 +385,10 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 
 	const char* label;
 	if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-		context->validation_errors++;
+		context->validation_errors += 1;
 		label = "error";
 	} else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-		context->validation_warnings++;
+		context->validation_warnings += 1;
 		label = "warning";
 	} else {
 		// Info and verbose messages are loader chatter

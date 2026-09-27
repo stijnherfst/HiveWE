@@ -63,7 +63,8 @@ export class SkinnedMesh: public Resource {
 		float alpha_test;
 		uint32_t layer_lit;
 		uint32_t is_team_color;
-		uint32_t _pad;
+		/// Bits 0-2: BlendMode, bit 3: two-sided
+		uint32_t flags;
 	};
 
 	struct DrawState {
@@ -281,6 +282,7 @@ export class SkinnedMesh: public Resource {
 				p.layer_lit = (layer.shading_flags & 0x1) ? 0u : 1u;
 				const uint32_t replaceable_id = mdx->textures[layer.textures[0].id].replaceable_id;
 				p.is_team_color = (replaceable_id == 1 || replaceable_id == 2) ? 1u : 0u;
+				p.flags = static_cast<uint32_t>(layer_blend_mode(layer.blend_mode)) | ((layer.shading_flags & 0x10) ? 8u : 0u);
 				layer_params.push_back(p);
 			}
 		}

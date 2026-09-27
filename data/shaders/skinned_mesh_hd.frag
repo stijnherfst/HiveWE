@@ -3,6 +3,7 @@
 #extension GL_GOOGLE_include_directive : require
 #extension GL_ARB_shader_draw_parameters : require
 #include "skinned_mesh_common.glsl"
+#include "skinned_mesh_fragment.glsl"
 
 layout (location = 0) in vec2 UV;
 layout (location = 1) in vec3 tangent_light_direction;
@@ -10,12 +11,14 @@ layout (location = 2) in vec4 vertexColor;
 layout (location = 3) in vec3 team_color;
 layout (location = 4) flat in int layer_index;
 
-layout (location = 0) out vec4 color;
+layout (location = 0, index = 0) out vec4 color;
+layout (location = 0, index = 1) out vec4 blend_factor;
 
 void main() {
 	SkinnedFrame frame = pc.frame;
 	const LayerTextureIds ids = frame.layer_textures.values[layer_index];
 	const LayerParams p = frame.layer_params.values[layer_index];
+	cull_back_face(p);
 
 	color = texture(textures[nonuniformEXT(ids.albedo)], UV) * vertexColor;
 
@@ -37,4 +40,6 @@ void main() {
 		color.rgb *= clamp(lambert + 0.1, 0.f, 1.f);
 		color.rgb += emissive_texel;
 	}
+
+	blend(p, color, blend_factor);
 }
