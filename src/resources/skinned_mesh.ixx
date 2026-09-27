@@ -100,6 +100,11 @@ export class SkinnedMesh: public Resource {
 	std::vector<uint32_t> render_team_color_indexes;
 	std::vector<const Skeleton*> skeletons;
 
+	/// Where this mesh's instances start in the current frame's instance, bone and layer color data. Set by RenderManager.
+	uint32_t frame_instance_offset = 0;
+	uint32_t frame_bone_offset = 0;
+	uint32_t frame_layer_color_offset = 0;
+
 	static constexpr const char* name = "SkinnedMesh";
 
 	explicit SkinnedMesh(const fs::path& path, std::optional<std::pair<int, std::string>> replaceable_id_override) {

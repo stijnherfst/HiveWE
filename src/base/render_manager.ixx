@@ -18,7 +18,6 @@ import Utilities;
 import Globals;
 import Units;
 import SLK;
-import UnorderedMap;
 import VkContext;
 import VkResources;
 import VkEditableMesh;
@@ -73,12 +72,6 @@ struct PickPushConstants {
 };
 
 export class RenderManager {
-	struct PerMeshOffsets {
-		uint32_t instance_offset;
-		uint32_t bone_offset;
-		uint32_t layer_color_offset;
-	};
-
 	struct SkinnedInstance {
 		SkinnedMesh* mesh;
 		uint32_t instance_id;
@@ -97,6 +90,16 @@ export class RenderManager {
 
 	std::vector<SkinnedMesh*> skinned_meshes;
 	std::vector<SkinnedInstance> skinned_transparent_instances;
+
+	// Per-frame scratch, kept between frames to reuse the allocations
+	/// The queued meshes with geometry, in instance data order
+	std::vector<SkinnedMesh*> frame_meshes;
+	/// The first instance of each chunk the instance data is filled in
+	std::vector<uint32_t> frame_chunks;
+	std::vector<glm::vec4> frame_layer_colors;
+	std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> transparent_commands;
+	std::vector<SkinnedMeshGlobals::DrawInfo> transparent_draw_infos;
+	std::vector<SkinnedMesh::DrawState> transparent_states;
 
 	std::shared_ptr<SkinnedMesh> click_helper;
 	Skeleton click_helper_skeleton;
@@ -178,12 +181,26 @@ export class RenderManager {
 		const glm::vec3 color,
 		const uint32_t team_color_index
 	) {
-		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
-
-		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, matrix)) {
-			return;
+		if (in_view(skinned_mesh, skeleton, matrix)) {
+			queue_render_in_view(skinned_mesh, skeleton, matrix, color, team_color_index);
 		}
+	}
 
+	/// Whether `skinned_mesh` posed by `skeleton` and placed by `matrix` is inside the view frustum. Safe to call from
+	/// several threads, so callers queueing many meshes can cull in parallel and pass the survivors to queue_render_in_view.
+	bool in_view(const SkinnedMesh& skinned_mesh, const Skeleton& skeleton, const glm::mat4& matrix) const {
+		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
+		return camera.inside_frustrum_transform(extent.minimum, extent.maximum, matrix);
+	}
+
+	/// queue_render for a mesh already known to be in view
+	void queue_render_in_view(
+		SkinnedMesh& skinned_mesh,
+		const Skeleton& skeleton,
+		const glm::mat4& matrix,
+		const glm::vec3 color,
+		const uint32_t team_color_index
+	) {
 		skinned_mesh.render_jobs.push_back(matrix);
 		skinned_mesh.render_colors.push_back(color);
 		skinned_mesh.render_team_color_indexes.push_back(team_color_index);
@@ -228,94 +245,103 @@ export class RenderManager {
 			queue_render(*click_helper, click_helper_skeleton, matrix, glm::vec3(1.f), 0);
 		}
 
-		// Per-frame data for all instances, laid out mesh by mesh. A serial pass assigns each instance its slots and a
-		// parallel pass fills them, as copying bones and evaluating layer colors for every instance is the bulk of the work.
-		hive::unordered_map<const SkinnedMesh*, PerMeshOffsets> mesh_offsets;
-		mesh_offsets.reserve(skinned_meshes.size());
-
-		std::vector<glm::mat4> staging_instance;
-		std::vector<uint32_t> staging_team_color;
-
-		struct InstanceJob {
-			const SkinnedMesh* mesh;
-			uint32_t instance;
-			uint32_t bone_offset;
-			uint32_t layer_color_offset;
-		};
-		std::vector<InstanceJob> jobs;
+		// Per-frame data for all instances, laid out mesh by mesh. A serial pass over the meshes assigns their offsets and
+		// a parallel pass over the instances fills them, as copying bones and evaluating layer colors is the bulk of the work.
+		frame_meshes.clear();
+		uint32_t instance_total = 0;
 		uint32_t bone_total = 0;
 		uint32_t layer_color_total = 0;
-
 		for (auto* mesh : skinned_meshes) {
 			if (mesh->geosets.empty()) {
 				continue;
 			}
-
 			const uint32_t instance_count = static_cast<uint32_t>(mesh->render_jobs.size());
-			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
-			const uint32_t layer_count = static_cast<uint32_t>(mesh->skip_count);
-			mesh_offsets[mesh] = {
-				.instance_offset = static_cast<uint32_t>(staging_instance.size()),
-				.bone_offset = bone_total,
-				.layer_color_offset = layer_color_total,
-			};
-
-			staging_instance.insert(staging_instance.end(), mesh->render_jobs.begin(), mesh->render_jobs.end());
-			staging_team_color
-				.insert(staging_team_color.end(), mesh->render_team_color_indexes.begin(), mesh->render_team_color_indexes.end());
-
-			for (uint32_t k = 0; k < instance_count; k++) {
-				jobs.push_back({mesh, k, bone_total + k * bone_count, layer_color_total + k * layer_count});
-			}
-			bone_total += instance_count * bone_count;
-			layer_color_total += instance_count * layer_count;
+			mesh->frame_instance_offset = instance_total;
+			mesh->frame_bone_offset = bone_total;
+			mesh->frame_layer_color_offset = layer_color_total;
+			frame_meshes.push_back(mesh);
+			instance_total += instance_count;
+			bone_total += instance_count * static_cast<uint32_t>(mesh->mdx->bones.size());
+			layer_color_total += instance_count * static_cast<uint32_t>(mesh->skip_count);
 		}
 
-		// Bones are written straight into the frame's GPU-visible memory. Layer colors stay on the CPU as well, since
-		// the transparent pass skips invisible layers.
-		const FrameAllocator::Allocation bones =
-			bone_total == 0 ? FrameAllocator::Allocation {} : allocator.allocate(VkDeviceSize {bone_total} * sizeof(glm::mat4));
-		auto* const bone_data = reinterpret_cast<glm::mat4*>(bones.data);
-		std::vector<glm::vec4> staging_layer_colors(layer_color_total);
+		if (instance_total > 0) {
+			const auto allocate = [&](const VkDeviceSize size) {
+				return size == 0 ? FrameAllocator::Allocation {} : allocator.allocate(size);
+			};
+			const FrameAllocator::Allocation instances = allocate(VkDeviceSize {instance_total} * sizeof(glm::mat4));
+			const FrameAllocator::Allocation team_colors = allocate(VkDeviceSize {instance_total} * sizeof(uint32_t));
+			const FrameAllocator::Allocation bones = allocate(VkDeviceSize {bone_total} * sizeof(glm::mat4));
+			const FrameAllocator::Allocation layer_colors = allocate(VkDeviceSize {layer_color_total} * sizeof(glm::vec4));
+			auto* const instance_data = reinterpret_cast<glm::mat4*>(instances.data);
+			auto* const team_color_data = reinterpret_cast<uint32_t*>(team_colors.data);
+			auto* const bone_data = reinterpret_cast<glm::mat4*>(bones.data);
+			auto* const layer_color_data = reinterpret_cast<glm::vec4*>(layer_colors.data);
+			// The transparent pass skips invisible layers, and reads the colors back from this copy as the GPU copy may
+			// be uncached memory
+			frame_layer_colors.resize(layer_color_total);
 
-		std::for_each(std::execution::par, jobs.begin(), jobs.end(), [&](const InstanceJob& job) {
-			const SkinnedMesh& mesh = *job.mesh;
-			const Skeleton& skeleton = *mesh.skeletons[job.instance];
-
-			if (const size_t bone_count = mesh.mdx->bones.size(); bone_count > 0) {
-				std::memcpy(bone_data + job.bone_offset, skeleton.world_matrices.data(), bone_count * sizeof(glm::mat4));
+			constexpr uint32_t chunk_size = 256;
+			frame_chunks.clear();
+			for (uint32_t first = 0; first < instance_total; first += chunk_size) {
+				frame_chunks.push_back(first);
 			}
+			std::for_each(std::execution::par, frame_chunks.begin(), frame_chunks.end(), [&](const uint32_t first) {
+				const uint32_t last = std::min(first + chunk_size, instance_total);
+				// The mesh holding instance `first`, then walked forward as the chunk crosses into later meshes
+				auto mesh_it = std::ranges::upper_bound(frame_meshes, first, {}, &SkinnedMesh::frame_instance_offset) - 1;
+				for (uint32_t index = first; index < last; index++) {
+					while (index >= (*mesh_it)->frame_instance_offset + (*mesh_it)->render_jobs.size()) {
+						++mesh_it;
+					}
+					const SkinnedMesh& mesh = **mesh_it;
+					const uint32_t k = index - mesh.frame_instance_offset;
+					const Skeleton& skeleton = *mesh.skeletons[k];
 
-			size_t color_index = job.layer_color_offset;
-			for (const auto& g : mesh.geosets) {
-				glm::vec3 c = mesh.render_colors[job.instance];
-				float vis = 1.0f;
-				if (g.geoset_anim && skeleton.sequence_index >= 0) {
-					c *= skeleton.get_geoset_animation_color(*g.geoset_anim);
-					vis = skeleton.get_geoset_animation_visiblity(*g.geoset_anim);
-				}
-				for (const auto& l : mesh.mdx->materials[g.material_id].layers) {
-					const float lv = skeleton.sequence_index >= 0 ? skeleton.get_layer_visiblity(l) : 1.0f;
-					staging_layer_colors[color_index++] = glm::vec4(c, lv * vis);
-				}
-			}
-		});
+					instance_data[index] = mesh.render_jobs[k];
+					team_color_data[index] = mesh.render_team_color_indexes[k];
 
-		if (!staging_instance.empty()) {
+					if (const size_t bone_count = mesh.mdx->bones.size(); bone_count > 0) {
+						std::memcpy(
+							bone_data + mesh.frame_bone_offset + k * bone_count,
+							skeleton.world_matrices.data(),
+							bone_count * sizeof(glm::mat4)
+						);
+					}
+
+					size_t color_index = mesh.frame_layer_color_offset + k * static_cast<size_t>(mesh.skip_count);
+					for (const auto& g : mesh.geosets) {
+						glm::vec3 c = mesh.render_colors[k];
+						float vis = 1.0f;
+						if (g.geoset_anim && skeleton.sequence_index >= 0) {
+							c *= skeleton.get_geoset_animation_color(*g.geoset_anim);
+							vis = skeleton.get_geoset_animation_visiblity(*g.geoset_anim);
+						}
+						for (const auto& l : mesh.mdx->materials[g.material_id].layers) {
+							const float lv = skeleton.sequence_index >= 0 ? skeleton.get_layer_visiblity(l) : 1.0f;
+							const glm::vec4 layer_color(c, lv * vis);
+							frame_layer_colors[color_index] = layer_color;
+							layer_color_data[color_index] = layer_color;
+							color_index++;
+						}
+					}
+				}
+			});
+
 			const auto& g = skinned_mesh_globals;
 			SkinnedFrameData frame = {
 				.VP = camera.projection_view,
 				.light_direction = glm::vec4(light_direction, 0.f),
 				.render_lighting = render_lighting ? 1u : 0u,
-				.layer_colors = upload_or_zero(allocator, staging_layer_colors),
+				.layer_colors = layer_colors.address,
 				.uvs = g.uv_snorm_buffer.address,
 				.vertices = g.vertex_snorm_buffer.address,
 				.tangents = g.tangent_buffer.address,
 				.normals = g.normal_buffer.address,
-				.instance_matrices = allocator.upload(std::span<const glm::mat4>(staging_instance)).address,
+				.instance_matrices = instances.address,
 				.skins = g.weight_buffer.address,
 				.bone_matrices = bones.address,
-				.team_color_indexes = allocator.upload(std::span<const uint32_t>(staging_team_color)).address,
+				.team_color_indexes = team_colors.address,
 				.layer_textures = g.layer_texture_ids_buffer.address,
 				.layer_params = g.layer_params_buffer.address,
 			};
@@ -323,15 +349,15 @@ export class RenderManager {
 			vkCmdBindIndexBuffer(cmd, g.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
 
 			// OPAQUE PASS — collapse multi-draw across meshes within each draw-state group.
-			render_opaque(cmd, allocator, frame, false, mesh_offsets);
-			render_opaque(cmd, allocator, frame, true, mesh_offsets);
+			render_opaque(cmd, allocator, frame, false);
+			render_opaque(cmd, allocator, frame, true);
 
 			// TRANSPARENT PASS — distance-sorted, coalesce adjacent same-state.
-			std::ranges::sort(skinned_transparent_instances, [](auto& l, auto& r) {
+			std::sort(std::execution::par, skinned_transparent_instances.begin(), skinned_transparent_instances.end(), [](auto& l, auto& r) {
 				return l.distance > r.distance;
 			});
-			render_transparent(cmd, allocator, frame, false, mesh_offsets, staging_layer_colors);
-			render_transparent(cmd, allocator, frame, true, mesh_offsets, staging_layer_colors);
+			render_transparent(cmd, allocator, frame, false);
+			render_transparent(cmd, allocator, frame, true);
 		}
 
 		for (auto* m : skinned_meshes) {
@@ -469,23 +495,13 @@ export class RenderManager {
 		const VkCommandBuffer cmd,
 		FrameAllocator& allocator,
 		const SkinnedFrameData& frame,
-		const bool render_hd,
-		const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets
+		const bool render_hd
 	) const {
 		std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> commands;
 		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
 		std::vector<SkinnedMesh::DrawState> states;
 
-		for (const auto* mesh : skinned_meshes) {
-			if (mesh->geosets.empty()) {
-				continue;
-			}
-			const auto it = mesh_offsets.find(mesh);
-			if (it == mesh_offsets.end()) {
-				continue;
-			}
-			const auto& off = it->second;
-
+		for (const auto* mesh : frame_meshes) {
 			const auto& entries = render_hd ? mesh->opaque_entries_hd : mesh->opaque_entries_sd;
 			const uint32_t instance_count = static_cast<uint32_t>(mesh->render_jobs.size());
 			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
@@ -500,10 +516,10 @@ export class RenderManager {
 					.firstInstance = 0,
 				});
 				SkinnedMeshGlobals::DrawInfo di {};
-				di.instance_offset = off.instance_offset;
-				di.bone_offset = off.bone_offset;
+				di.instance_offset = mesh->frame_instance_offset;
+				di.bone_offset = mesh->frame_bone_offset;
 				di.bone_count = bone_count;
-				di.layer_color_offset = off.layer_color_offset;
+				di.layer_color_offset = mesh->frame_layer_color_offset;
 				di.layer_skip_count = skip_count;
 				di.layer_index_global = e.layer_index_global;
 				di.layer_index_local = e.layer_index_local;
@@ -554,30 +570,31 @@ export class RenderManager {
 		const VkCommandBuffer cmd,
 		FrameAllocator& allocator,
 		const SkinnedFrameData& frame,
-		const bool render_hd,
-		const hive::unordered_map<const SkinnedMesh*, PerMeshOffsets>& mesh_offsets,
-		const std::vector<glm::vec4>& staging_layer_colors
-	) const {
-		std::vector<SkinnedMeshGlobals::DrawIndexedIndirectCommand> commands;
-		std::vector<SkinnedMeshGlobals::DrawInfo> draw_infos;
-		std::vector<SkinnedMesh::DrawState> states;
+		const bool render_hd
+	) {
+		auto& commands = transparent_commands;
+		auto& draw_infos = transparent_draw_infos;
+		auto& states = transparent_states;
+		commands.clear();
+		draw_infos.clear();
+		states.clear();
 
 		for (const auto& inst : skinned_transparent_instances) {
-			SkinnedMesh* mesh = inst.mesh;
-			const auto it = mesh_offsets.find(mesh);
-			if (it == mesh_offsets.end()) {
+			const SkinnedMesh* mesh = inst.mesh;
+			const auto& entries = render_hd ? mesh->transparent_entries_hd : mesh->transparent_entries_sd;
+			if (entries.empty()) {
 				continue;
 			}
-			const auto& [instance_offset, bone_offset, layer_color_offset] = it->second;
-
-			const auto& entries = render_hd ? mesh->transparent_entries_hd : mesh->transparent_entries_sd;
+			const uint32_t instance_offset = mesh->frame_instance_offset;
+			const uint32_t bone_offset = mesh->frame_bone_offset;
+			const uint32_t layer_color_offset = mesh->frame_layer_color_offset;
 			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
 			const uint32_t skip_count = static_cast<uint32_t>(mesh->skip_count);
 			const uint32_t instance_id = inst.instance_id;
 
 			for (const auto& e : entries) {
 				const size_t color_idx = layer_color_offset + instance_id * skip_count + e.layer_index_local;
-				if (color_idx < staging_layer_colors.size() && staging_layer_colors[color_idx].a <= 0.01f) {
+				if (frame_layer_colors[color_idx].a <= 0.01f) {
 					continue;
 				}
 				commands.push_back({

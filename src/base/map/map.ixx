@@ -94,6 +94,9 @@ export class Map: public QObject {
 	bool render_wireframe = false;
 	bool render_debug = false;
 
+	/// Scratch for culling doodads in parallel
+	std::vector<uint8_t> doodads_in_view;
+
 	glm::vec3 light_direction = glm::normalize(glm::vec3(1.f, 1.f, -3.f));
 
 	fs::path filesystem_path;
@@ -799,8 +802,15 @@ export class Map: public QObject {
 		);
 
 		if (render_doodads) {
-			for (const auto& i : doodads.doodads) {
-				render_manager.queue_render(*i.mesh, i.skeleton, i.color, 0);
+			doodads_in_view.resize(doodads.doodads.size());
+			std::for_each(std::execution::par_unseq, doodads.doodads.begin(), doodads.doodads.end(), [&](const Doodad& i) {
+				doodads_in_view[&i - doodads.doodads.data()] = render_manager.in_view(*i.mesh, i.skeleton, i.skeleton.matrix);
+			});
+			for (size_t k = 0; k < doodads.doodads.size(); k++) {
+				const Doodad& i = doodads.doodads[k];
+				if (doodads_in_view[k]) {
+					render_manager.queue_render_in_view(*i.mesh, i.skeleton, i.skeleton.matrix, i.color, 0);
+				}
 				if (render_click_helpers && i.use_click_helper) {
 					render_manager.queue_click_helper(i.skeleton.matrix);
 				}
