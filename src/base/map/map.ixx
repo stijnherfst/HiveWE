@@ -801,12 +801,8 @@ export class Map: public QObject {
 		if (render_doodads) {
 			for (const auto& i : doodads.doodads) {
 				render_manager.queue_render(*i.mesh, i.skeleton, i.color, 0);
-				if (render_click_helpers) {
-					const bool is_doodad = doodads_slk.row_headers.contains(i.id);
-					const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-					if (slk.data<bool>("useclickhelper", i.id)) {
-						render_manager.queue_click_helper(i.skeleton.matrix);
-					}
+				if (render_click_helpers && i.use_click_helper) {
+					render_manager.queue_click_helper(i.skeleton.matrix);
 				}
 			}
 			for (const auto& i : doodads.special_doodads) {

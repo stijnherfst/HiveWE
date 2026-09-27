@@ -355,9 +355,7 @@ export class RenderManager {
 			glm::vec3 local_min = extent.minimum;
 			glm::vec3 local_max = extent.maximum;
 
-			const bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
-			const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-			bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
+			const bool use_click_helper = doodad.use_click_helper;
 			if (use_click_helper) {
 				local_min = glm::min(local_min, click_helper->mdx->extent.minimum);
 				local_max = glm::max(local_max, click_helper->mdx->extent.maximum);

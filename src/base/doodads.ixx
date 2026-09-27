@@ -436,7 +436,7 @@ export class Doodads {
 			}
 		}
 
-		if (field == "maxroll" || field == "maxpitch" || field.starts_with("vert")) {
+		if (field == "maxroll" || field == "maxpitch" || field.starts_with("vert") || field == "useclickhelper") {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.update(terrain);
@@ -478,7 +478,7 @@ export class Doodads {
 			}
 		}
 
-		if (field == "maxroll" || field == "maxpitch" || field.starts_with("color")) {
+		if (field == "maxroll" || field == "maxpitch" || field.starts_with("color") || field == "useclickhelper") {
 			for (auto& i : doodads) {
 				if (i.id == id) {
 					i.update(terrain);

@@ -51,6 +51,7 @@ export struct Doodad {
 	std::shared_ptr<SkinnedMesh> mesh;
 	std::shared_ptr<PathingTexture> pathing;
 	glm::vec3 color = glm::vec3(1.f);
+	bool use_click_helper = false;
 
 	void init(const std::string_view id, const std::shared_ptr<SkinnedMesh> mesh, const Terrain& terrain) {
 		this->id = id;
@@ -80,7 +81,9 @@ export struct Doodad {
 		float base_scale = 1.f;
 		float max_roll;
 		float max_pitch;
-		if (doodads_slk.row_headers.contains(id)) {
+		const bool is_doodad = doodads_slk.row_headers.contains(id);
+		use_click_helper = (is_doodad ? doodads_slk : destructibles_slk).data<bool>("useclickhelper", id);
+		if (is_doodad) {
 			color.r = doodads_slk.data<float>("vertr" + std::to_string(variation + 1), id) / 255.f;
 			color.g = doodads_slk.data<float>("vertg" + std::to_string(variation + 1), id) / 255.f;
 			color.b = doodads_slk.data<float>("vertb" + std::to_string(variation + 1), id) / 255.f;

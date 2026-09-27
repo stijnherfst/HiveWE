@@ -513,10 +513,7 @@ void DoodadBrush::render_brush() {
 	doodad.skeleton.update(0.016f);
 	render_manager.queue_render(*doodad.mesh, doodad.skeleton, doodad.color, 0);
 
-	const bool is_doodad = doodads_slk.row_headers.contains(doodad.id);
-	const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-	const bool use_click_helper = slk.data<bool>("useclickhelper", doodad.id);
-	if (use_click_helper) {
+	if (doodad.use_click_helper) {
 		click_helper_skeleton.matrix = doodad.skeleton.matrix;
 		click_helper_skeleton.update(0.016f);
 		render_manager.queue_render(*click_helper, click_helper_skeleton, glm::vec3(1.f), 0);
@@ -533,11 +530,7 @@ void DoodadBrush::render_selection(BrushDrawList& draw_list) const {
 			selection_scale = i->mesh->mdx->sequences[i->skeleton.sequence_index].extent.bounds_radius / 128.f;
 		}
 
-		const bool is_doodad = doodads_slk.row_headers.contains(i->id);
-		const slk::SLK& slk = is_doodad ? doodads_slk : destructibles_slk;
-		const bool use_click_helper = slk.data<bool>("useclickhelper", i->id);
-
-		if (use_click_helper) {
+		if (i->use_click_helper) {
 			selection_scale = std::max(selection_scale, click_helper->mdx->extent.bounds_radius / 128.f);
 		}
 		if (selection_scale < 0.1f) { // Todo hack, what is the correct approach?
