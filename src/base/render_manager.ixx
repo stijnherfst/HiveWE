@@ -228,52 +228,78 @@ export class RenderManager {
 			queue_render(*click_helper, click_helper_skeleton, matrix, glm::vec3(1.f), 0);
 		}
 
-		// Build merged per-frame staging arrays across all meshes.
+		// Per-frame data for all instances, laid out mesh by mesh. A serial pass assigns each instance its slots and a
+		// parallel pass fills them, as copying bones and evaluating layer colors for every instance is the bulk of the work.
 		hive::unordered_map<const SkinnedMesh*, PerMeshOffsets> mesh_offsets;
 		mesh_offsets.reserve(skinned_meshes.size());
 
 		std::vector<glm::mat4> staging_instance;
 		std::vector<uint32_t> staging_team_color;
-		std::vector<glm::mat4> staging_bones;
-		std::vector<glm::vec4> staging_layer_colors;
+
+		struct InstanceJob {
+			const SkinnedMesh* mesh;
+			uint32_t instance;
+			uint32_t bone_offset;
+			uint32_t layer_color_offset;
+		};
+		std::vector<InstanceJob> jobs;
+		uint32_t bone_total = 0;
+		uint32_t layer_color_total = 0;
 
 		for (auto* mesh : skinned_meshes) {
 			if (mesh->geosets.empty()) {
 				continue;
 			}
 
-			PerMeshOffsets o;
-			o.instance_offset = static_cast<uint32_t>(staging_instance.size());
-			o.bone_offset = static_cast<uint32_t>(staging_bones.size());
-			o.layer_color_offset = static_cast<uint32_t>(staging_layer_colors.size());
-			mesh_offsets[mesh] = o;
+			const uint32_t instance_count = static_cast<uint32_t>(mesh->render_jobs.size());
+			const uint32_t bone_count = static_cast<uint32_t>(mesh->mdx->bones.size());
+			const uint32_t layer_count = static_cast<uint32_t>(mesh->skip_count);
+			mesh_offsets[mesh] = {
+				.instance_offset = static_cast<uint32_t>(staging_instance.size()),
+				.bone_offset = bone_total,
+				.layer_color_offset = layer_color_total,
+			};
 
 			staging_instance.insert(staging_instance.end(), mesh->render_jobs.begin(), mesh->render_jobs.end());
 			staging_team_color
 				.insert(staging_team_color.end(), mesh->render_team_color_indexes.begin(), mesh->render_team_color_indexes.end());
 
-			const size_t bone_count = mesh->mdx->bones.size();
-			for (size_t k = 0; k < mesh->render_jobs.size(); k++) {
-				staging_bones.insert(
-					staging_bones.end(),
-					mesh->skeletons[k]->world_matrices.begin(),
-					mesh->skeletons[k]->world_matrices.begin() + bone_count
-				);
+			for (uint32_t k = 0; k < instance_count; k++) {
+				jobs.push_back({mesh, k, bone_total + k * bone_count, layer_color_total + k * layer_count});
+			}
+			bone_total += instance_count * bone_count;
+			layer_color_total += instance_count * layer_count;
+		}
 
-				for (const auto& g : mesh->geosets) {
-					glm::vec3 c = mesh->render_colors[k];
-					float vis = 1.0f;
-					if (g.geoset_anim && mesh->skeletons[k]->sequence_index >= 0) {
-						c *= mesh->skeletons[k]->get_geoset_animation_color(*g.geoset_anim);
-						vis = mesh->skeletons[k]->get_geoset_animation_visiblity(*g.geoset_anim);
-					}
-					for (auto& l : mesh->mdx->materials[g.material_id].layers) {
-						const float lv = mesh->skeletons[k]->sequence_index >= 0 ? mesh->skeletons[k]->get_layer_visiblity(l) : 1.0f;
-						staging_layer_colors.emplace_back(c, lv * vis);
-					}
+		// Bones are written straight into the frame's GPU-visible memory. Layer colors stay on the CPU as well, since
+		// the transparent pass skips invisible layers.
+		const FrameAllocator::Allocation bones =
+			bone_total == 0 ? FrameAllocator::Allocation {} : allocator.allocate(VkDeviceSize {bone_total} * sizeof(glm::mat4));
+		auto* const bone_data = reinterpret_cast<glm::mat4*>(bones.data);
+		std::vector<glm::vec4> staging_layer_colors(layer_color_total);
+
+		std::for_each(std::execution::par, jobs.begin(), jobs.end(), [&](const InstanceJob& job) {
+			const SkinnedMesh& mesh = *job.mesh;
+			const Skeleton& skeleton = *mesh.skeletons[job.instance];
+
+			if (const size_t bone_count = mesh.mdx->bones.size(); bone_count > 0) {
+				std::memcpy(bone_data + job.bone_offset, skeleton.world_matrices.data(), bone_count * sizeof(glm::mat4));
+			}
+
+			size_t color_index = job.layer_color_offset;
+			for (const auto& g : mesh.geosets) {
+				glm::vec3 c = mesh.render_colors[job.instance];
+				float vis = 1.0f;
+				if (g.geoset_anim && skeleton.sequence_index >= 0) {
+					c *= skeleton.get_geoset_animation_color(*g.geoset_anim);
+					vis = skeleton.get_geoset_animation_visiblity(*g.geoset_anim);
+				}
+				for (const auto& l : mesh.mdx->materials[g.material_id].layers) {
+					const float lv = skeleton.sequence_index >= 0 ? skeleton.get_layer_visiblity(l) : 1.0f;
+					staging_layer_colors[color_index++] = glm::vec4(c, lv * vis);
 				}
 			}
-		}
+		});
 
 		if (!staging_instance.empty()) {
 			const auto& g = skinned_mesh_globals;
@@ -288,7 +314,7 @@ export class RenderManager {
 				.normals = g.normal_buffer.address,
 				.instance_matrices = allocator.upload(std::span<const glm::mat4>(staging_instance)).address,
 				.skins = g.weight_buffer.address,
-				.bone_matrices = upload_or_zero(allocator, staging_bones),
+				.bone_matrices = bones.address,
 				.team_color_indexes = allocator.upload(std::span<const uint32_t>(staging_team_color)).address,
 				.layer_textures = g.layer_texture_ids_buffer.address,
 				.layer_params = g.layer_params_buffer.address,
