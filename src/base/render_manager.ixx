@@ -99,7 +99,8 @@ export class RenderManager {
 	std::vector<SkinnedInstance> skinned_transparent_instances;
 
 	std::shared_ptr<SkinnedMesh> click_helper;
-	std::vector<Skeleton> click_helper_instances;
+	Skeleton click_helper_skeleton;
+	std::vector<glm::mat4> click_helper_matrices;
 
 	// Indexed by BlendMode
 	std::array<Pipeline, blend_mode_count> sd_pipelines;
@@ -124,6 +125,8 @@ export class RenderManager {
 	RenderManager() {
 		skinned_mesh_globals.init();
 		click_helper = resource_manager.load<SkinnedMesh>("Objects/InvalidObject/InvalidObject.mdx", "", std::nullopt).value();
+		click_helper_skeleton = Skeleton(click_helper->mdx);
+		click_helper_skeleton.update(0.016f);
 
 		for (size_t mode = 0; mode < blend_mode_count; mode++) {
 			const auto& [enable, src, dst] = blend_factors[mode];
@@ -164,13 +167,24 @@ export class RenderManager {
 
 	void
 	queue_render(SkinnedMesh& skinned_mesh, const Skeleton& skeleton, const glm::vec3 color, const uint32_t team_color_index) {
+		queue_render(skinned_mesh, skeleton, skeleton.matrix, color, team_color_index);
+	}
+
+	/// Queues `skinned_mesh` posed by `skeleton` but placed by `matrix`, so instances in the same pose can share a skeleton
+	void queue_render(
+		SkinnedMesh& skinned_mesh,
+		const Skeleton& skeleton,
+		const glm::mat4& matrix,
+		const glm::vec3 color,
+		const uint32_t team_color_index
+	) {
 		const mdx::Extent& extent = skinned_mesh.mdx->sequences[skeleton.sequence_index].extent;
 
-		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, skeleton.matrix)) {
+		if (!camera.inside_frustrum_transform(extent.minimum, extent.maximum, matrix)) {
 			return;
 		}
 
-		skinned_mesh.render_jobs.push_back(skeleton.matrix);
+		skinned_mesh.render_jobs.push_back(matrix);
 		skinned_mesh.render_colors.push_back(color);
 		skinned_mesh.render_team_color_indexes.push_back(team_color_index);
 		skinned_mesh.skeletons.push_back(&skeleton);
@@ -191,18 +205,15 @@ export class RenderManager {
 				SkinnedInstance {
 					.mesh = &skinned_mesh,
 					.instance_id = static_cast<uint32_t>(skinned_mesh.render_jobs.size() - 1),
-					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(skeleton.matrix[3])),
+					.distance = glm::distance(camera.position - camera.direction * camera.distance, glm::vec3(matrix[3])),
 				}
 			);
 		}
 	}
 
-	// Renders a click helper (little purple checkered box), kinda inefficient but couldn't be bothered writing a whole new rendering path
+	/// Renders a click helper (little purple checkered box) placed by `model`
 	void queue_click_helper(const glm::mat4& model) {
-		auto a = Skeleton(click_helper->mdx);
-		a.matrix = model;
-		a.update(0.016f);
-		click_helper_instances.push_back(a);
+		click_helper_matrices.push_back(model);
 	}
 
 	/// Draws everything queued since the last call and clears the queues.
@@ -213,8 +224,8 @@ export class RenderManager {
 		const bool render_lighting,
 		const glm::vec3 light_direction
 	) {
-		for (const auto& i : click_helper_instances) {
-			queue_render(*click_helper, i, glm::vec3(1.f), 0);
+		for (const auto& matrix : click_helper_matrices) {
+			queue_render(*click_helper, click_helper_skeleton, matrix, glm::vec3(1.f), 0);
 		}
 
 		// Build merged per-frame staging arrays across all meshes.
@@ -300,7 +311,7 @@ export class RenderManager {
 		for (auto* m : skinned_meshes) {
 			m->clear_render_data();
 		}
-		click_helper_instances.clear();
+		click_helper_matrices.clear();
 		skinned_meshes.clear();
 		skinned_transparent_instances.clear();
 	}
