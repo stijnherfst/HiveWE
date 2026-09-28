@@ -26,10 +26,10 @@ void main() {
 	// Position of the quad's bottom left vertex
 	const ivec2 quad_pos = ivec2(gl_InstanceIndex % (map_size.x - 1), gl_InstanceIndex / (map_size.x - 1));
 
-	const bool is_water = frame.water_exists.values[quad_pos.y * map_size.x + quad_pos.x] > 0u
-		|| frame.water_exists.values[quad_pos.y * map_size.x + quad_pos.x + 1] > 0u
-		|| frame.water_exists.values[(quad_pos.y + 1) * map_size.x + quad_pos.x] > 0u
-		|| frame.water_exists.values[(quad_pos.y + 1) * map_size.x + quad_pos.x + 1] > 0u;
+	const bool is_water = uint(frame.water_exists.values[quad_pos.y * map_size.x + quad_pos.x]) > 0u
+		|| uint(frame.water_exists.values[quad_pos.y * map_size.x + quad_pos.x + 1]) > 0u
+		|| uint(frame.water_exists.values[(quad_pos.y + 1) * map_size.x + quad_pos.x]) > 0u
+		|| uint(frame.water_exists.values[(quad_pos.y + 1) * map_size.x + quad_pos.x + 1]) > 0u;
 
 	UV = vec2(position[gl_VertexIndex].x, 1.f - position[gl_VertexIndex].y);
 

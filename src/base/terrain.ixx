@@ -136,10 +136,8 @@ export class Terrain: public QObject {
 	/// Bindless slot of each ground texture, indexed by ground texture id
 	std::vector<uint32_t> gpu_ground_texture_slots;
 	/// One per tile, not per corner. So (width - 1) * (height - 1)
-	// TODO use new vulkan 8 bit storage buffers!
-	std::vector<std::uint32_t> gpu_ground_exists_data;
-	// TODO use new vulkan 8 bit storage buffers!
-	std::vector<uint32_t> gpu_water_exists_data;
+	std::vector<uint8_t> gpu_ground_exists_data;
+	std::vector<uint8_t> gpu_water_exists_data;
 
 	btHeightfieldTerrainShape* collision_shape;
 	btRigidBody* collision_body;
@@ -1589,11 +1587,11 @@ export class Terrain: public QObject {
 		ground_height_buffer = storage(width * height * sizeof(float));
 		cliff_level_buffer = storage(width * height * sizeof(float));
 		ground_texture_data_buffer = storage((width - 1) * (height - 1) * sizeof(glm::uvec4));
-		ground_exists_buffer = storage(width * height * sizeof(uint32_t));
+		ground_exists_buffer = storage(width * height * sizeof(uint8_t));
 
 		// water buffers
 		water_height_buffer = storage(width * height * sizeof(float));
-		water_exists_buffer = storage(width * height * sizeof(uint32_t));
+		water_exists_buffer = storage(width * height * sizeof(uint8_t));
 	}
 
 	void setup_collision_shape(const Physics& physics) {

@@ -128,6 +128,7 @@ export class VkContext {
 		features_12.descriptorBindingUpdateUnusedWhilePending = true;
 		features_12.descriptorBindingVariableDescriptorCount = true;
 		features_12.scalarBlockLayout = true;
+		features_12.storageBuffer8BitAccess = true;
 
 		VkPhysicalDeviceVulkan13Features features_13 {};
 		features_13.dynamicRendering = true;

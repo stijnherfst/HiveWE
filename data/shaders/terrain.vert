@@ -38,7 +38,7 @@ void main() {
 	pathing_map_uv = (vPosition + pos) * 4;
 
 	// One entry per tile, in instance order
-	const bool is_ground = frame.ground_exists.values[gl_InstanceIndex] > 0u;
+	const bool is_ground = uint(frame.ground_exists.values[gl_InstanceIndex]) > 0u;
 
 	gl_Position = is_ground ? frame.mvp * vec4(vPosition + pos, height, 1) : vec4(2.0, 0.0, 0.0, 1.0);
 	world_position = vPosition + pos;

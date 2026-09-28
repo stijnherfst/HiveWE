@@ -2,6 +2,7 @@
 
 #extension GL_EXT_buffer_reference : require
 #extension GL_EXT_nonuniform_qualifier : require
+#extension GL_EXT_shader_8bit_storage : require
 #extension GL_EXT_scalar_block_layout : require
 
 struct Region {
@@ -15,6 +16,10 @@ layout(buffer_reference, std430, buffer_reference_align = 16) readonly buffer Fl
 
 layout(buffer_reference, std430, buffer_reference_align = 16) readonly buffer UintBuffer {
 	uint values[];
+};
+
+layout(buffer_reference, std430, buffer_reference_align = 16) readonly buffer Uint8Buffer {
+	uint8_t values[];
 };
 
 // Tightly packed vertex streams
@@ -58,11 +63,11 @@ layout(buffer_reference, std430, buffer_reference_align = 16) readonly buffer Te
 	FloatBuffer ground_heights;
 	/// Per tile: up to four texture ids with variation/blend masks in the upper 16 bits
 	Uvec4Buffer ground_textures;
-	UintBuffer ground_exists;
+	Uint8Buffer ground_exists;
 	/// Bindless slot of each ground texture id
 	UintBuffer ground_texture_slots;
 	FloatBuffer water_heights;
-	UintBuffer water_exists;
+	Uint8Buffer water_exists;
 	RegionBuffer regions;
 	uint region_count;
 	uint flags;
