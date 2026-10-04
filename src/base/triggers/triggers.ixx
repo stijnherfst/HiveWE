@@ -543,10 +543,7 @@ export class Triggers {
 		}
 	}
 
-  public:
-	void load() {
-		BinaryReader reader = hierarchy.map_file_read("war3map.wtg").value();
-
+	void load_game_trigger_data() {
 		trigger_strings.load("UI/TriggerStrings.txt");
 		trigger_data.load("UI/TriggerData.txt");
 		trigger_data.substitute(world_edit_strings, "WorldEditStrings");
@@ -572,6 +569,13 @@ export class Triggers {
 				argument_counts[key] = arguments;
 			}
 		}
+	}
+
+  public:
+	void load() {
+		BinaryReader reader = hierarchy.map_file_read("war3map.wtg").value();
+
+		load_game_trigger_data();
 
 		Trigger::next_id = 0;
 
@@ -590,6 +594,13 @@ export class Triggers {
 			std::println("Unknown WTG format! Trying 1.31 loader");
 			load_version_31(reader, version);
 		}
+	}
+
+	void load_empty() {
+		load_game_trigger_data();
+
+		categories = {{Classifier::map, 0, "Map Header", true, false, -1}};
+		Trigger::next_id = 1;
 	}
 
 	void load_version_31(BinaryReader& reader, uint32_t version) {

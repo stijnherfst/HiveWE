@@ -136,7 +136,7 @@ export class MapInfo {
 	bool dynamic_minimap;
 
 	int loading_screen_number;
-	int loading_screen_source;
+	int loading_screen_source = 128;
 	std::string loading_screen_model;
 	std::string loading_screen_text;
 	std::string loading_screen_title;
@@ -157,35 +157,35 @@ export class MapInfo {
 
 	int weather_id;
 
-	int unknown_fog1;
-	float fog_linear_start;
-	float fog_linear_end;
-	float fog_max_opacity;
-	int unknown_fog2;
-	int unknown_fog3;
+	int unknown_fog1 = 0;
+	float fog_linear_start = 10000.f;
+	float fog_linear_end = 10000.f;
+	float fog_max_opacity = 1.f;
+	int unknown_fog2 = 0;
+	int unknown_fog3 = 0;
 
 	std::string custom_sound_environment;
 	char custom_light_tileset;
 	glm::u8vec4 water_color;
 
-	bool lua;
-	uint32_t supported_modes;
-	uint32_t game_data_version;
+	bool lua = false;
+	uint32_t supported_modes = 3;
+	uint32_t game_data_version = 1;
 
-	uint32_t default_cam_distance;
-	uint32_t max_cam_distance;
-	uint32_t min_cam_distance;
+	uint32_t default_cam_distance = 1250;
+	uint32_t max_cam_distance = 1250;
+	uint32_t min_cam_distance = 1250;
 
-	uint32_t water_min_opacity;
-	uint32_t water_max_opacity;
-	uint32_t water_reflectivity;
-	uint32_t water_emissivity;
-	uint32_t water_edge_softness;
-	uint32_t water_waves_vertex_displacement;
-	uint32_t water_waves_normal_map_strength;
-	uint32_t water_tinting_color;
-	uint32_t water_env_map_reflectivity;
-	uint32_t unknown_post_water;
+	uint32_t water_min_opacity = 0;
+	uint32_t water_max_opacity = 100;
+	uint32_t water_reflectivity = 10;
+	uint32_t water_emissivity = 0;
+	uint32_t water_edge_softness = 50;
+	uint32_t water_waves_vertex_displacement = 20;
+	uint32_t water_waves_normal_map_strength = 100;
+	uint32_t water_tinting_color = 0;
+	uint32_t water_env_map_reflectivity = 100;
+	uint32_t unknown_post_water = 0xFFFFFFFF;
 
 	std::vector<PlayerData> players;
 	std::vector<ForceData> forces;
@@ -195,11 +195,11 @@ export class MapInfo {
 	std::vector<RandomItemTable> random_item_tables;
 
 	static constexpr int write_version = 39;
-	static constexpr int write_editor_version = 6116;
-	static constexpr int write_game_version_major = 2;
+	static constexpr int write_editor_version = 7000;
+	static constexpr int write_game_version_major = 3;
 	static constexpr int write_game_version_minor = 0;
-	static constexpr int write_game_version_patch = 3;
-	static constexpr int write_game_version_build = 22978;
+	static constexpr int write_game_version_patch = 0;
+	static constexpr int write_game_version_build = 24268;
 
 	// hiveWE specific data
 	char custom_ambience_tileset;
@@ -236,8 +236,8 @@ export class MapInfo {
 
 		hide_minimap_preview = false;
 		modif_ally_priorities = false;
-		melee_map = true;
-		unknown = true;
+		melee_map = false;
+		unknown = false;
 		masked_area_partially_visible = true;
 		fixed_player_settings = false;
 		custom_forces = false;
@@ -262,12 +262,13 @@ export class MapInfo {
 		dynamic_minimap = false;
 
 		loading_screen_number = -1;
+		loading_screen_source = 128;
 		loading_screen_model.clear();
 		loading_screen_text.clear();
 		loading_screen_title.clear();
 		loading_screen_subtitle.clear();
 
-		game_data_set = 0;
+		game_data_set = 2;
 
 		prologue_screen_model.clear();
 		prologue_text.clear();
@@ -279,6 +280,12 @@ export class MapInfo {
 		fog_end_z_height = 5000.f;
 		fog_density = 0.5f;
 		fog_color = {0, 0, 0, 255};
+		unknown_fog1 = 0;
+		fog_linear_start = 10000.f;
+		fog_linear_end = 10000.f;
+		fog_max_opacity = 1.f;
+		unknown_fog2 = 0;
+		unknown_fog3 = 0;
 
 		weather_id = 0;
 		custom_sound_environment.clear();
@@ -287,11 +294,22 @@ export class MapInfo {
 
 		lua = false;
 		supported_modes = 3;
-		game_data_version = 1;
+		game_data_version = 2;
 
-		default_cam_distance = 1650;
-		max_cam_distance = 1650;
-		min_cam_distance = 1650;
+		default_cam_distance = 1250;
+		max_cam_distance = 1250;
+		min_cam_distance = 1250;
+
+		water_min_opacity = 0;
+		water_max_opacity = 100;
+		water_reflectivity = 10;
+		water_emissivity = 0;
+		water_edge_softness = 50;
+		water_waves_vertex_displacement = 20;
+		water_waves_normal_map_strength = 100;
+		water_tinting_color = 0;
+		water_env_map_reflectivity = 100;
+		unknown_post_water = 0xFFFFFFFF;
 
 		players = {PlayerData {
 			.internal_number = 0,

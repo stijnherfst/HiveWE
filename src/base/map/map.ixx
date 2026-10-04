@@ -396,6 +396,8 @@ export class Map: public QObject {
 			if (hierarchy.map_file_exists("war3map.wct")) {
 				triggers.load_scripts();
 			}
+		} else {
+			triggers.load_empty();
 		}
 
 		std::println("Trigger loading: {:>5}ms", timer.elapsed_ms());
@@ -416,9 +418,9 @@ export class Map: public QObject {
 
 		// Pathing Map
 		if (hierarchy.map_file_exists("war3map.wpm")) {
-			pathing_map.load(terrain.width, terrain.height);
+			pathing_map.load(terrain.width - 1, terrain.height - 1);
 		} else {
-			pathing_map.resize(terrain.width * 4, terrain.height * 4);
+			pathing_map.resize((terrain.width - 1) * 4, (terrain.height - 1) * 4);
 		}
 
 		std::println("Pathing loading: {:>5}ms", timer.elapsed_ms());
