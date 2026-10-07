@@ -86,6 +86,8 @@ export class Skeleton {
 	// clock with a fixed time (ms), so global-sequence tracks can be evaluated deterministically.
 	// calculate_animated_extents uses this to sweep global motion without nondeterministic results.
 	int64_t global_sequence_time = -1;
+	// The wall-clock time (ms) update() last ran at.
+	int64_t global_sequence_clock = 0;
 
 	glm::mat4 matrix = glm::mat4(1.f);
 
@@ -145,6 +147,9 @@ export class Skeleton {
 	}
 
 	void update(const double delta) {
+		global_sequence_clock =
+			std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
 		if (model->sequences.empty() || sequence_index == -1) {
 			return;
 		}
@@ -530,13 +535,13 @@ export class Skeleton {
 		}
 	}
 
-	// Time (ms) used to evaluate global-sequence tracks: wall-clock normally, or the fixed override
-	// global_sequence_time when set (used for deterministic extent sampling).
+	// Time (ms) used to evaluate global-sequence tracks: the wall-clock time of the last update() normally, or the
+	// fixed override global_sequence_time when set (used for deterministic extent sampling).
 	int64_t global_sequence_now() const {
 		if (global_sequence_time >= 0) {
 			return global_sequence_time;
 		}
-		return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		return global_sequence_clock;
 	}
 
 	template<typename T>
