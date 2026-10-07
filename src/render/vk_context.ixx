@@ -342,7 +342,7 @@ export class VkContext {
 		vkFreeCommandBuffers(device.device, immediate_pool, 1, &cmd);
 	}
 
-	/// Runs `destroy` once the GPU has finished every submission made so far. Thread-safe.
+	/// Runs `destroy` once the GPU has finished every submission made so far, and the next one. Thread-safe.
 	/// Does nothing if the context is already gone (static destruction at exit).
 	void defer_destroy(std::move_only_function<void()> destroy) {
 		if (!is_initialized()) {
@@ -351,7 +351,8 @@ export class VkContext {
 		uint64_t submission;
 		{
 			std::lock_guard lock(queue_mutex);
-			submission = last_submitted;
+			// A command buffer still being recorded may already use the resource, and it is the next submission
+			submission = last_submitted + 1;
 		}
 		std::lock_guard lock(garbage_mutex);
 		garbage.push_back({submission, std::move(destroy)});
