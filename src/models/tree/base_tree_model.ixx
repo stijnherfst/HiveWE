@@ -449,11 +449,7 @@ export class BaseTreeModel : public QAbstractProxyModel {
 			return {};
 		}
 
-		if (slk->column_headers.contains("name")) {
-			return createIndex(slk->row_headers.at(item->id), slk->column_headers.at("name"), item);
-		} else {
-			return createIndex(slk->row_headers.at(item->id), slk->column_headers.at("bufftip"), item);
-		}
+		return createIndex(slk->row_headers.at(item->id), slk->column_headers.at(display_column), item);
 	}
 
 	void setSourceModel(QAbstractItemModel* sourceModel) override {
@@ -488,6 +484,8 @@ export class BaseTreeModel : public QAbstractProxyModel {
   protected:
 	slk::SLK* slk;
 	std::unordered_map<std::string, BaseTreeItem*> items;
+
+	std::string_view display_column = "name";
 
 	// Dragged objects are encoded as their ids separated by newlines. Every tree has its own mime type so that
 	// objects can not be dragged from one type of tree into another

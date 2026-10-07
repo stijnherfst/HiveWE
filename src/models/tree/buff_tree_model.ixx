@@ -83,6 +83,7 @@ export class BuffTreeModel : public BaseTreeModel {
 	explicit BuffTreeModel(QObject* parent)
 		: BaseTreeModel(parent) {
 		slk = &buff_slk;
+		display_column = "bufftip";
 
 		for (const auto& [key, value] : unit_editor_data.section("unitRace")) {
 			if (key == "Sort" || key == "NumValues") {
