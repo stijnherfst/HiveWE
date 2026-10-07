@@ -421,17 +421,16 @@ export class Bindless {
 	/// Writes a combined image sampler into a free slot and returns the slot. Thread-safe.
 	/// The image must be in SHADER_READ_ONLY_OPTIMAL layout whenever a shader reads the slot.
 	uint32_t add(const VkImageView view, const VkSampler sampler) {
+		std::lock_guard lock(mutex);
+
 		uint32_t slot;
-		{
-			std::lock_guard lock(mutex);
-			if (!free_slots.empty()) {
-				slot = free_slots.back();
-				free_slots.pop_back();
-			} else if (next_slot < capacity) {
-				slot = next_slot++;
-			} else {
-				throw std::runtime_error(std::format("The bindless texture table is full ({} textures)", capacity));
-			}
+		if (!free_slots.empty()) {
+			slot = free_slots.back();
+			free_slots.pop_back();
+		} else if (next_slot < capacity) {
+			slot = next_slot++;
+		} else {
+			throw std::runtime_error(std::format("The bindless texture table is full ({} textures)", capacity));
 		}
 
 		const VkDescriptorImageInfo image_info = {
