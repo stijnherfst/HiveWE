@@ -29,7 +29,7 @@ export class Texture : public Resource {
 	explicit Texture(const fs::path& path) {
 		fs::path new_path = path;
 
-		if (hierarchy.hd) {
+		if (hierarchy.remastered) {
 			new_path.replace_filename(path.stem().string() + "_diffuse");
 		}
 

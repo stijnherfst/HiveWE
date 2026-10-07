@@ -4,6 +4,10 @@
 #include <QFile>
 
 import std;
+import Hierarchy;
+
+/// The setting values for the entries of the graphics combobox, in order
+const QStringList graphics_modes = { "SD", "HD", "DE" };
 
 void setTestArgs(Ui::SettingsEditor &ui) {
 	ui.testArgs->setText(ui.userArgs->text() + " -mapdiff " + QString::fromStdString(std::string("") + char(ui.diff->currentIndex() + '0')) +
@@ -23,7 +27,7 @@ SettingsEditor::SettingsEditor(QWidget* parent)
 	ui.theme->setCurrentText(settings.value("theme", "Dark").toString());
 	ui.comments->setChecked(settings.value("comments", "True").toString() != "False");
 	ui.flavour->setCurrentText(settings.value("flavour").toString());
-	ui.hd->setChecked(settings.value("hd", "True").toString() != "False");
+	ui.graphics->setCurrentIndex(std::max<qsizetype>(0, graphics_modes.indexOf(settings.value("graphics", "SD").toString())));
 	ui.teen->setChecked(settings.value("teen", "False").toString() != "False");
 
 	ui.userArgs->setText(settings.value("userArgs", "").toString());
@@ -70,7 +74,7 @@ void SettingsEditor::save() const {
 	settings.setValue("theme", ui.theme->currentText());
 	settings.setValue("flavour", ui.flavour->currentText());
 	settings.setValue("comments", ui.comments->isChecked() ? "True" : "False");
-	settings.setValue("hd", ui.hd->isChecked() ? "True" : "False");
+	settings.setValue("graphics", graphics_modes[ui.graphics->currentIndex()]);
 	settings.setValue("teen", ui.teen->isChecked() ? "True" : "False");
 	settings.setValue("userArgs", ui.userArgs->text());
 	settings.setValue("diff", ui.diff->currentText());

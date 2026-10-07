@@ -415,7 +415,7 @@ void VulkanViewport::render() {
 		},
 		frame.allocator
 	);
-	
+
 	image_barrier(
 		frame.cmd,
 		image,

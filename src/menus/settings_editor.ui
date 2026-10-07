@@ -74,14 +74,30 @@
            </item>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QCheckBox" name="hd">
+         <item row="2" column="0">
+          <widget class="QLabel" name="graphicsLabel">
            <property name="text">
-            <string>Enable HD Mode (requires restart)</string>
+            <string>Graphics (requires restart)</string>
            </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="graphics">
+           <item>
+            <property name="text">
+             <string>SD (Classic)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>HD (Reforged)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DE (Definitive)</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="3" column="1">

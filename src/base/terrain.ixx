@@ -1513,10 +1513,10 @@ export class Terrain: public QObject {
 		std::vector<std::shared_ptr<Texture>> water_textures;
 		for (int i = 0; i < water_textures_nr; i++) {
 			// Hack to force loading of SD water textures till I implement a water shader
-			const auto hd = hierarchy.hd;
-			hierarchy.hd = false;
+			const auto hd = hierarchy.remastered;
+			hierarchy.remastered = false;
 			const auto texture = resource_manager.load<Texture>(std::format("{}{:02}", file_name, i)).value();
-			hierarchy.hd = hd;
+			hierarchy.remastered = hd;
 
 			if (texture->width != 128 || texture->height != 128) {
 				std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
