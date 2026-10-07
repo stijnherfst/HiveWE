@@ -415,7 +415,7 @@ void VulkanViewport::render() {
 		},
 		frame.allocator
 	);
-
+	
 	image_barrier(
 		frame.cmd,
 		image,
@@ -423,7 +423,7 @@ void VulkanViewport::render() {
 		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 		VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
 		VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-		VK_PIPELINE_STAGE_2_NONE,
+		VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
 		VK_ACCESS_2_NONE
 	);
 
