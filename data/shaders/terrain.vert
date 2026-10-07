@@ -28,9 +28,9 @@ void main() {
 	const float height = frame.cliff_levels.values[height_pos.y * map_size.x + height_pos.x];
 
 	const float hL = frame.ground_heights.values[height_pos.y * map_size.x + max(height_pos.x - 1, 0)];
-	const float hR = frame.ground_heights.values[height_pos.y * map_size.x + min(height_pos.x + 1, map_size.x)];
+	const float hR = frame.ground_heights.values[height_pos.y * map_size.x + min(height_pos.x + 1, map_size.x - 1)];
 	const float hD = frame.ground_heights.values[max(height_pos.y - 1, 0) * map_size.x + height_pos.x];
-	const float hU = frame.ground_heights.values[min(height_pos.y + 1, map_size.y) * map_size.x + height_pos.x];
+	const float hU = frame.ground_heights.values[min(height_pos.y + 1, map_size.y - 1) * map_size.x + height_pos.x];
 	normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
 	UV = vec2(vPosition.x, 1 - vPosition.y);

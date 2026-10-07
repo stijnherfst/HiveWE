@@ -23,9 +23,9 @@ void main() {
 	const float height = frame.ground_heights.values[height_pos.y * map_size.x + height_pos.x];
 
 	const float hL = frame.ground_heights.values[height_pos.y * map_size.x + max(height_pos.x - 1, 0)];
-	const float hR = frame.ground_heights.values[height_pos.y * map_size.x + min(height_pos.x + 1, map_size.x)];
+	const float hR = frame.ground_heights.values[height_pos.y * map_size.x + min(height_pos.x + 1, map_size.x - 1)];
 	const float hD = frame.ground_heights.values[max(height_pos.y - 1, 0) * map_size.x + height_pos.x];
-	const float hU = frame.ground_heights.values[min(height_pos.y + 1, map_size.y) * map_size.x + height_pos.x];
+	const float hU = frame.ground_heights.values[min(height_pos.y + 1, map_size.y - 1) * map_size.x + height_pos.x];
 	const vec3 terrain_normal = normalize(vec3(hL - hR, hD - hU, 2.0));
 
 	gl_Position = frame.mvp * vec4(rotated_world_position.xy, rotated_world_position.z + height, 1);
