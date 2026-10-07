@@ -213,10 +213,14 @@ export class SkinnedMesh: public Resource {
 		int local_base_index = 0;
 		int packed_index = 0;
 
+		// Geoset animations refer to geosets by their index in the MDX, which counts the skipped LOD geosets too
+		std::vector<int> entry_of_geoset(mdx->geosets.size(), -1);
+
 		for (const auto& i : mdx->geosets) {
 			if (i.lod != 0) {
 				continue;
 			}
+			entry_of_geoset[&i - mdx->geosets.data()] = static_cast<int>(geosets.size());
 			MeshEntry entry;
 			entry.vertices = static_cast<int>(i.vertices.size());
 			entry.base_vertex = local_base_vertex;
@@ -254,10 +258,9 @@ export class SkinnedMesh: public Resource {
 			instance_vertex_count += i.indices;
 		}
 
-		// animations geoset ids > geosets
 		for (auto& i : mdx->animations) {
-			if (i.geoset_id >= 0 && i.geoset_id < geosets.size()) {
-				geosets[i.geoset_id].geoset_anim = &i;
+			if (i.geoset_id < entry_of_geoset.size() && entry_of_geoset[i.geoset_id] >= 0) {
+				geosets[entry_of_geoset[i.geoset_id]].geoset_anim = &i;
 			}
 		}
 

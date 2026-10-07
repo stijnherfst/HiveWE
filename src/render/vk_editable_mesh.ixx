@@ -244,10 +244,13 @@ export class VulkanEditableMesh {
 
 		uint32_t base_vertex = 0;
 		uint32_t base_index = 0;
+		// Geoset animations refer to geosets by their index in the MDX, which counts the skipped LOD geosets too
+		std::vector<int> entry_of_geoset(this->mdx->geosets.size(), -1);
 		for (const auto& geoset : this->mdx->geosets) {
 			if (geoset.lod != 0) {
 				continue;
 			}
+			entry_of_geoset[&geoset - this->mdx->geosets.data()] = static_cast<int>(geosets.size());
 			const size_t count = geoset.vertices.size();
 			geosets.push_back({
 				.indices = static_cast<uint32_t>(geoset.faces.size()),
@@ -275,10 +278,9 @@ export class VulkanEditableMesh {
 			base_index += static_cast<uint32_t>(geoset.faces.size());
 		}
 
-		// animations geoset ids > geosets
 		for (auto& animation : this->mdx->animations) {
-			if (animation.geoset_id < geosets.size()) {
-				geosets[animation.geoset_id].geoset_anim = &animation;
+			if (animation.geoset_id < entry_of_geoset.size() && entry_of_geoset[animation.geoset_id] >= 0) {
+				geosets[entry_of_geoset[animation.geoset_id]].geoset_anim = &animation;
 			}
 		}
 
