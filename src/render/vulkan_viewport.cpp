@@ -90,6 +90,15 @@ VulkanViewport::VulkanViewport(QWindow* parent) : QWindow(parent) {
 		const VkSemaphoreCreateInfo semaphore_info = {.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
 		vkCreateSemaphore(device, &semaphore_info, nullptr, &frame.image_acquired);
 	}
+
+	if (vk_context.has_calibrated_timestamps && FramePacer::supported()) {
+		const VkQueryPoolCreateInfo query_info = {
+			.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+			.queryType = VK_QUERY_TYPE_TIMESTAMP,
+			.queryCount = frames_in_flight,
+		};
+		vkCreateQueryPool(device, &query_info, nullptr, &query_pool);
+	}
 }
 
 VulkanViewport::~VulkanViewport() {
@@ -97,6 +106,7 @@ VulkanViewport::~VulkanViewport() {
 	destroy_swapchain();
 
 	const VkDevice device = vk_context.device.device;
+	vkDestroyQueryPool(device, query_pool, nullptr);
 	for (auto& frame : frames) {
 		vkDestroyFence(device, frame.in_flight, nullptr);
 		vkDestroySemaphore(device, frame.image_acquired, nullptr);
@@ -140,9 +150,18 @@ void VulkanViewport::schedule_update() {
 		QCoreApplication::postEvent(this, new QEvent(QEvent::UpdateRequest), Qt::LowEventPriority);
 	};
 
-	// MAILBOX never blocks, and where present wait returns before the frame is on screen (NVIDIA's DXGI layered present
-	// does), nothing else stops the viewport from rendering frames the display drops. The cap sits a little above the
-	// refresh rate, so present wait stays the pacer where it works and every refresh still gets a new frame where it doesn't.
+	if (pacing_active()) {
+		const int64_t now = FramePacer::now();
+		const int64_t delay = pacer.next_start(now) - now;
+		const int64_t delay_ns = delay * 1'000'000'000 / FramePacer::ticks_per_second();
+		if (delay_ns > 500'000) {
+			QTimer::singleShot(std::chrono::nanoseconds(delay_ns), Qt::PreciseTimer, this, post);
+			return;
+		}
+		post();
+		return;
+	}
+
 	if (swapchain.present_mode == VK_PRESENT_MODE_MAILBOX_KHR && frame_clock.isValid()) {
 		const qreal refresh_rate = screen() ? screen()->refreshRate() : 60.0;
 		const qint64 min_interval_ns = static_cast<qint64>(0.95 * 1e9 / std::max(refresh_rate, 1.0));
@@ -153,6 +172,31 @@ void VulkanViewport::schedule_update() {
 		}
 	}
 	post();
+}
+
+bool VulkanViewport::pacing_active() const {
+	return query_pool != VK_NULL_HANDLE && swapchain.present_mode == VK_PRESENT_MODE_MAILBOX_KHR;
+}
+
+int64_t VulkanViewport::gpu_to_host(const uint64_t timestamp) {
+	const int64_t ticks_per_second = FramePacer::ticks_per_second();
+	if (calibration_host == 0 || FramePacer::now() - calibration_host > ticks_per_second) {
+		const std::array<VkCalibratedTimestampInfoKHR, 2> infos = {{
+			{.sType = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_KHR, .timeDomain = VK_TIME_DOMAIN_DEVICE_KHR},
+			{.sType = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_KHR, .timeDomain = VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_KHR},
+		}};
+		std::array<uint64_t, 2> timestamps;
+		uint64_t max_deviation;
+		vkGetCalibratedTimestampsKHR(vk_context.device.device, 2, infos.data(), timestamps.data(), &max_deviation);
+		calibration_gpu = timestamps[0];
+		calibration_host = static_cast<int64_t>(timestamps[1]);
+	}
+
+	// Timestamps wrap at timestamp_valid_bits, so the difference is taken in those bits and sign extended
+	const uint32_t unused_bits = 64 - vk_context.timestamp_valid_bits;
+	const int64_t gpu_ticks = static_cast<int64_t>((timestamp - calibration_gpu) << unused_bits) >> unused_bits;
+	const double nanoseconds = static_cast<double>(gpu_ticks) * vk_context.physical_device.properties.limits.timestampPeriod;
+	return calibration_host + static_cast<int64_t>(nanoseconds * static_cast<double>(ticks_per_second) / 1e9);
 }
 
 void VulkanViewport::exposeEvent(QExposeEvent*) {
@@ -247,6 +291,7 @@ bool VulkanViewport::ensure_swapchain() {
 
 	swapchain_first_present_id = present_id + 1;
 	swapchain_dirty = false;
+	pacer.reset();
 	return true;
 }
 
@@ -276,6 +321,7 @@ void VulkanViewport::render() {
 		return;
 	}
 
+	const int64_t start = FramePacer::now();
 	vk_context.collect_garbage();
 	frame_clock.start();
 
@@ -284,6 +330,26 @@ void VulkanViewport::render() {
 
 	vkWaitForFences(device, 1, &frame.in_flight, VK_TRUE, UINT64_MAX);
 	frame.allocator.reset();
+
+	if (frame.timed) {
+		frame.timed = false;
+		uint64_t timestamp;
+		const VkResult result = vkGetQueryPoolResults(
+			device,
+			query_pool,
+			frame_index,
+			1,
+			sizeof(timestamp),
+			&timestamp,
+			sizeof(timestamp),
+			VK_QUERY_RESULT_64_BIT
+		);
+		if (result == VK_SUCCESS) {
+			pacer.frame_finished(frame.start, gpu_to_host(timestamp), frame.target);
+		}
+	}
+	frame.start = pacer.frame_started(start);
+	frame.target = pacer.target();
 
 	uint32_t image_index;
 	const VkResult acquired =
@@ -306,6 +372,9 @@ void VulkanViewport::render() {
 		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
 	};
 	vkBeginCommandBuffer(frame.cmd, &begin_info);
+	if (query_pool != VK_NULL_HANDLE) {
+		vkCmdResetQueryPool(frame.cmd, query_pool, frame_index, 1);
+	}
 	// Every pipeline takes the polygon mode as dynamic state; wireframe rendering switches it to LINE and back
 	vkCmdSetPolygonModeEXT(frame.cmd, VK_POLYGON_MODE_FILL);
 
@@ -357,6 +426,11 @@ void VulkanViewport::render() {
 		VK_PIPELINE_STAGE_2_NONE,
 		VK_ACCESS_2_NONE
 	);
+
+	if (query_pool != VK_NULL_HANDLE) {
+		vkCmdWriteTimestamp2(frame.cmd, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, query_pool, frame_index);
+		frame.timed = true;
+	}
 
 	vkEndCommandBuffer(frame.cmd);
 
@@ -412,10 +486,11 @@ void VulkanViewport::render() {
 	// during recording, and then it lowers its clocks.
 	// Under MAILBOX a newer frame replaces a queued one, so waiting for this frame starts the next one right at the
 	// refresh that showed it, and input is read one refresh before it is shown.
+	// FramePacer replaces this wait, as it schedules the next frame itself.
 	// The timeout keeps an occluded window, which may never show the frame, from stalling the event loop.
 	const bool mailbox = swapchain.present_mode == VK_PRESENT_MODE_MAILBOX_KHR;
 	const uint64_t wait_id = mailbox ? present_id : present_id - 1;
-	if (vk_context.has_present_wait && !swapchain_dirty && wait_id >= swapchain_first_present_id) {
+	if (vk_context.has_present_wait && !pacing_active() && !swapchain_dirty && wait_id >= swapchain_first_present_id) {
 		constexpr uint64_t timeout_ns = 50'000'000;
 		vkWaitForPresentKHR(device, swapchain.swapchain, wait_id, timeout_ns);
 	}

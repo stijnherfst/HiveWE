@@ -32,6 +32,10 @@ export class VkContext {
 	bool has_push_descriptor = false;
 	/// VK_KHR_present_id and VK_KHR_present_wait, to wait until a presented frame is on screen
 	bool has_present_wait = false;
+	/// VK_KHR_calibrated_timestamps so we can time the CPU and GPU
+	bool has_calibrated_timestamps = false;
+	/// The meaningful low bits of the graphics queue's timestamps
+	uint32_t timestamp_valid_bits = 0;
 
 	std::atomic<uint32_t> validation_errors = 0;
 	std::atomic<uint32_t> validation_warnings = 0;
@@ -53,6 +57,18 @@ export class VkContext {
 	VkCommandPool immediate_pool = VK_NULL_HANDLE;
 	VkFence immediate_fence = VK_NULL_HANDLE;
 	std::mutex immediate_mutex;
+
+	bool has_qpc_time_domain() const {
+		if (!physical_device.is_extension_present(VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME)) {
+			return false;
+		}
+		uint32_t count = 0;
+		vkGetPhysicalDeviceCalibrateableTimeDomainsKHR(physical_device.physical_device, &count, nullptr);
+		std::vector<VkTimeDomainKHR> domains(count);
+		vkGetPhysicalDeviceCalibrateableTimeDomainsKHR(physical_device.physical_device, &count, domains.data());
+		return std::ranges::contains(domains, VK_TIME_DOMAIN_DEVICE_KHR)
+			&& std::ranges::contains(domains, VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_KHR);
+	}
 
   public:
 
@@ -176,6 +192,10 @@ export class VkContext {
 				.presentWait = VK_TRUE,
 			});
 
+		has_calibrated_timestamps = has_qpc_time_domain()
+			&& physical_device.properties.limits.timestampComputeAndGraphics
+			&& physical_device.enable_extension_if_present(VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
+
 		auto device_result = vkb::DeviceBuilder(physical_device).build();
 		if (!device_result) {
 			return std::unexpected(std::format("Creating Vulkan device failed: {}", device_result.error().message()));
@@ -185,6 +205,14 @@ export class VkContext {
 
 		graphics_queue = device.get_queue(vkb::QueueType::graphics).value();
 		graphics_queue_family = device.get_queue_index(vkb::QueueType::graphics).value();
+		if (has_calibrated_timestamps) {
+			uint32_t family_count = 0;
+			vkGetPhysicalDeviceQueueFamilyProperties(physical_device.physical_device, &family_count, nullptr);
+			std::vector<VkQueueFamilyProperties> families(family_count);
+			vkGetPhysicalDeviceQueueFamilyProperties(physical_device.physical_device, &family_count, families.data());
+			timestamp_valid_bits = families[graphics_queue_family].timestampValidBits;
+			has_calibrated_timestamps = timestamp_valid_bits > 0;
+		}
 
 		VmaAllocatorCreateInfo allocator_info {};
 		allocator_info.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
@@ -224,14 +252,15 @@ export class VkContext {
 
 		const auto& properties = physical_device.properties;
 		std::println(
-			"Vulkan {}.{}.{} on {} (driver {:#x}), push descriptors: {}, present wait: {}",
+			"Vulkan {}.{}.{} on {} (driver {:#x}), push descriptors: {}, present wait: {}, calibrated timestamps: {}",
 			VK_API_VERSION_MAJOR(properties.apiVersion),
 			VK_API_VERSION_MINOR(properties.apiVersion),
 			VK_API_VERSION_PATCH(properties.apiVersion),
 			properties.deviceName,
 			properties.driverVersion,
 			has_push_descriptor,
-			has_present_wait
+			has_present_wait,
+			has_calibrated_timestamps
 		);
 
 		return {};

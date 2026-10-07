@@ -197,6 +197,8 @@ target_sources(HiveWE_lib PRIVATE
 	"qt_imgui/imgui_renderer.cpp"
 	"qt_imgui/qt_imgui.cpp"
 
+	"render/frame_pacer.cpp"
+	"render/frame_pacer.h"
 	"render/vk_implementation.cpp"
 	"render/vulkan_imgui.cpp"
 	"render/vulkan_imgui.h"

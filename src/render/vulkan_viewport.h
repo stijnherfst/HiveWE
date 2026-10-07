@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <vector>
 
+#include "frame_pacer.h"
+
 import VkResources;
 
 /// Creates the shared Vulkan device, the bindless table and the QVulkanInstance viewports present with.
@@ -24,8 +26,6 @@ void shutdown_vulkan();
 
 /// A Vulkan window that presents through its own swapchain on the shared VkContext device.
 /// Embed it in a widget hierarchy with QWidget::createWindowContainer.
-/// Renders continuously: each presented frame requests the next update. MAILBOX present is preferred, paced by present
-/// wait and a frame cap near the refresh rate; FIFO is the fallback, paced by vsync. HIVEWE_PRESENT_MODE=fifo forces FIFO.
 class VulkanViewport : public QWindow {
   public:
 	/// The color image is in color_attachment_format and the depth image in depth_attachment_format
@@ -69,6 +69,11 @@ class VulkanViewport : public QWindow {
 		VkFence in_flight = VK_NULL_HANDLE;
 		VkSemaphore image_acquired = VK_NULL_HANDLE;
 		FrameAllocator allocator;
+		/// Whether the command buffer writes the timestamp query for when the GPU finished it
+		bool timed = false;
+		/// FramePacer ticks: when the frame started, and the refresh it is meant to be ready for
+		int64_t start = 0;
+		int64_t target = 0;
 	};
 
 	VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -91,6 +96,18 @@ class VulkanViewport : public QWindow {
 	uint64_t swapchain_first_present_id = 1;
 	/// Measures the time since the last frame started, for the frame cap MAILBOX needs
 	QElapsedTimer frame_clock;
+
+	FramePacer pacer;
+	/// One end-of-frame timestamp per frame in flight, null without calibrated timestamps
+	VkQueryPool query_pool = VK_NULL_HANDLE;
+	/// A GPU timestamp and the host tick it was taken at, renewed every second as the two clocks drift apart
+	uint64_t calibration_gpu = 0;
+	int64_t calibration_host = 0;
+
+	[[nodiscard]]
+	bool pacing_active() const;
+	[[nodiscard]]
+	int64_t gpu_to_host(uint64_t timestamp);
 
 	void render();
 	bool ensure_swapchain();

@@ -151,7 +151,7 @@ if(TRACY_NO_EXIT)
 endif()
 
 if(WIN32)
-	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc)
+	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc dwmapi)
 else()
 	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc_static)
 endif()
