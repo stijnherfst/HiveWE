@@ -270,7 +270,8 @@ export class VulkanEditableMesh {
 				const std::vector<glm::u16vec4> skin_weights = mdx::MDX::matrix_groups_as_skin_weights(geoset);
 				append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], skin_weights.data(), count * 2);
 			} else {
-				append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], geoset.skin.data(), count * 8);
+				// A skin may hold fewer vertices than the geoset, which validation only warns about
+				append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], geoset.skin.data(), std::min(geoset.skin.size(), count * 8));
 			}
 			append_bytes(bytes, index_offset + base_index * sizeof(uint16_t), geoset.faces.data(), geoset.faces.size());
 

@@ -719,6 +719,17 @@ namespace mdx {
 			}
 		}
 
+		// The game ignores the bone of a zero-weight slot, which can be out of range, but shaders read all four bones
+		for (auto& geoset : geosets) {
+			for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
+				for (size_t j = 0; j < 4; j++) {
+					if (geoset.skin[i + 4 + j] == 0 && geoset.skin[i + j] >= bones.size()) {
+						geoset.skin[i + j] = 0;
+					}
+				}
+			}
+		}
+
 		// ———————————No sequences?———————————
 		// ⣞⢽⢪⢣⢣⢣⢫⡺⡵⣝⡮⣗⢷⢽⢽⢽⣮⡷⡽⣜⣜⢮⢺⣜⢷⢽⢝⡽⣝
 		//⠸⡸⠜⠕⠕⠁⢁⢇⢏⢽⢺⣪⡳⡝⣎⣏⢯⢞⡿⣟⣷⣳⢯⡷⣽⢽⢯⣳⣫⠇
