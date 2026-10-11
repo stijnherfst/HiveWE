@@ -28,7 +28,7 @@ export class TextureButton: public QPushButton {
 			return;
 		}
 
-		const auto image = resource_manager.load<Texture>(tileset->blight_texture).value();
+		const auto image = resource_manager.load<Texture>(diffuse_texture_path(tileset->blight_texture)).value();
 		create_icon_from_image(image, false, false);
 	}
 
@@ -37,7 +37,7 @@ export class TextureButton: public QPushButton {
 			return;
 		}
 
-		const auto image = resource_manager.load<Texture>(tex->file_path).value();
+		const auto image = resource_manager.load<Texture>(diffuse_texture_path(tex->file_path)).value();
 		create_icon_from_image(image, pathing_hint, cliff_hint, pathing_override);
 	}
 

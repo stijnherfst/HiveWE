@@ -1455,7 +1455,7 @@ export class Terrain: public QObject {
 		cliff_texture_size = 256;
 		for (const auto& cliff_id : cliffset_ids) {
 			const auto& cliff = *tilesets.cliff_type(cliff_id);
-			cliff_textures.push_back(resource_manager.load<Texture>(cliff.file_path).value());
+			cliff_textures.push_back(resource_manager.load<Texture>(diffuse_texture_path(cliff.file_path)).value());
 			cliff_texture_size = std::max(cliff_texture_size, cliff_textures.back()->width);
 		}
 

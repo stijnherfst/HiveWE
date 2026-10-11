@@ -8,6 +8,7 @@ module;
 
 export module Texture;
 
+import std;
 import Hierarchy;
 import BLP;
 import BinaryReader;
@@ -15,6 +16,15 @@ import ResourceManager;
 import <soil2/SOIL2.h>;
 
 namespace fs = std::filesystem;
+
+export fs::path diffuse_texture_path(const fs::path& path) {
+	if (!hierarchy.remastered) {
+		return path;
+	}
+	fs::path new_path = path;
+	new_path.replace_filename(path.stem().string() + "_diffuse");
+	return new_path;
+}
 
 export class Texture : public Resource {
   public:
@@ -27,15 +37,9 @@ export class Texture : public Resource {
 
 	explicit Texture() = default;
 	explicit Texture(const fs::path& path) {
-		fs::path new_path = path;
-
-		if (hierarchy.remastered) {
-			new_path.replace_filename(path.stem().string() + "_diffuse");
-		}
-
-		BinaryReader reader = hierarchy.open_file(new_path, Hierarchy::FileSource::all, { ".dds", ".blp", ".tga" })
+		BinaryReader reader = hierarchy.open_file(path, Hierarchy::FileSource::all, { ".dds", ".blp", ".tga" })
 			.or_else([&](const std::string&) {
-				std::println("Error loading texture {}", new_path.string());
+				std::println("Error loading texture {}", path.string());
 				return hierarchy.open_file("Textures/btntempw.dds");
 			})
 			.value();
@@ -43,7 +47,7 @@ export class Texture : public Resource {
 		if (blp::is_blp(reader)) {
 			auto image = blp::load(reader);
 			if (!image) {
-				throw std::runtime_error(std::format("Failed to load texture {}: {}", new_path.string(), image.error()));
+				throw std::runtime_error(std::format("Failed to load texture {}: {}", path.string(), image.error()));
 			}
 			width = image->width;
 			height = image->height;
@@ -52,7 +56,7 @@ export class Texture : public Resource {
 		} else {
 			uint8_t* image_data = SOIL_load_image_from_memory(reader.buffer.data(), static_cast<int>(reader.buffer.size()), &width, &height, &channels, SOIL_LOAD_AUTO);
 			if (image_data == nullptr) {
-				throw std::runtime_error(std::format("Failed to decode texture {}", new_path.string()));
+				throw std::runtime_error(std::format("Failed to decode texture {}", path.string()));
 			}
 			data = std::vector<uint8_t>(image_data, image_data + static_cast<size_t>(width) * height * channels);
 			free(image_data);
