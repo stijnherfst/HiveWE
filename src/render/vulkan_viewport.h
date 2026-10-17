@@ -16,6 +16,10 @@
 
 import VkResources;
 
+/// Starts creating the shared Vulkan device on a background thread, so that the driver's setup overlaps other startup work.
+/// Optional: initialize_vulkan waits for it if it was started, and creates the device itself otherwise
+void begin_vulkan_initialization();
+
 /// Creates the shared Vulkan device, the bindless table and the QVulkanInstance viewports present with.
 /// Safe to call repeatedly; returns false (after printing why) if Vulkan is unusable.
 /// Validation layers are enabled in debug builds.

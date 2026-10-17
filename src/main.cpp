@@ -22,6 +22,7 @@ __declspec(dllexport) unsigned long NvOptimusEnablement = 1;
 #endif
 
 #include <tracy/Tracy.hpp>
+#include "render/vulkan_viewport.h"
 
 import std;
 import Map;
@@ -40,6 +41,9 @@ int main(int argc, char* argv[]) {
 	ZoneScopedN("main");
 
 	Timer start_timer;
+
+	// Creating the device is mostly the driver loading, which doesn't need Qt, so it starts first and runs alongside the rest
+	begin_vulkan_initialization();
 
 	QCoreApplication::setOrganizationName("HiveWE");
 	QCoreApplication::setApplicationName("HiveWE");

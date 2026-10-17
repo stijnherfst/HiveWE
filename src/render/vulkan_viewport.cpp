@@ -17,19 +17,32 @@ import VkContext;
 namespace {
 	// Wraps the VkContext instance for Qt, which creates window surfaces with it. Qt adopts the instance and never destroys it.
 	QVulkanInstance* qt_instance = nullptr;
-} // namespace
 
-bool initialize_vulkan() {
-	if (qt_instance) {
-		return true;
-	}
+	/// The device creation begin_vulkan_initialization started, until initialize_vulkan picks it up
+	std::future<std::expected<void, std::string>> context_init;
 
 #ifdef NDEBUG
 	constexpr bool validation = false;
 #else
 	constexpr bool validation = true;
 #endif
-	if (auto result = vk_context.init(validation); !result) {
+} // namespace
+
+void begin_vulkan_initialization() {
+	if (qt_instance || context_init.valid()) {
+		return;
+	}
+	context_init = std::async(std::launch::async, [] {
+		return vk_context.init(validation);
+	});
+}
+
+bool initialize_vulkan() {
+	if (qt_instance) {
+		return true;
+	}
+
+	if (auto result = context_init.valid() ? context_init.get() : vk_context.init(validation); !result) {
 		std::println("Vulkan unavailable: {}", result.error());
 		return false;
 	}
