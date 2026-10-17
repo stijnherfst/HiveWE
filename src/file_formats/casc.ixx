@@ -4,116 +4,65 @@ import std;
 import types;
 import no_init_allocator;
 import BinaryReader;
-import <CascLib.h>;
+import <whiteout/storages/casc/storage.h>;
 
 namespace fs = std::filesystem;
 
-// A thin wrapper around CascLib https://github.com/ladislav-zezula/CascLib
+// A thin wrapper around WhiteoutLib's CASC reader https://github.com/FernandoS27/WhiteoutLib
 namespace casc {
 	export class CASC {
+		std::optional<whiteout::storages::casc::Storage> storage;
+
 	  public:
-		HANDLE handle = nullptr;
-
-		CASC() = default;
-
-		explicit CASC(const fs::path& path) {
-			open(path);
-		}
-
-		~CASC() {
-			close();
-		}
-
-		CASC(CASC&& move)
-		noexcept {
-			handle = move.handle;
-			move.handle = nullptr;
-		}
-		CASC(const CASC&) = default;
-		CASC& operator=(const CASC&) = delete;
-		CASC& operator=(CASC&& move) noexcept {
-			handle = move.handle;
-			move.handle = nullptr;
-			return *this;
-		}
-
-		bool open(const fs::path& path) {
-			if (handle != nullptr)
-				close();
-			const bool opened = CascOpenStorage(path.c_str(), CASC_LOCALE_ALL, &handle);
-			if (!opened) {
-				std::print("Error opening {} with error: {}\n", path.string(), GetCascError());
+		/// Opens the storage of the Warcraft III installation in `directory`.
+		/// `product` picks the build: "w3" for retail and "w3t" for the PTR
+		bool open(const fs::path& directory, const std::string& product) {
+			std::string error;
+			storage = whiteout::storages::casc::Storage::open({
+				.path = directory.string(),
+				.product = product,
+				.errorOut = &error,
+			});
+			if (!storage) {
+				std::print("Error opening {} ({}): {}\n", directory.string(), product, error);
 			}
-			return opened;
+			return storage.has_value();
 		}
 
 		void close() {
-			CascCloseStorage(handle);
-			handle = nullptr;
+			storage.reset();
 		}
 
-		std::vector<std::string> find_files(const std::string& path) const {
+		/// The paths matching `mask`, in which `*` matches any run of characters (path separators included) and `?` one character
+		std::vector<std::string> find_files(const std::string& mask) const {
 			std::vector<std::string> files;
-
-			CASC_FIND_DATA data;
-			const HANDLE found = CascFindFirstFile(handle, path.c_str(), &data, L"");
-
-			if (found == INVALID_HANDLE_VALUE) {
-				return {};
-			}
-
-			files.push_back(data.szFileName);
-
-			while (CascFindNextFile(found, &data)) {
-				files.push_back(data.szFileName);
-			}
-
+			storage->enumerate(mask, [&](const whiteout::storages::casc::EnumerateEntry& entry) {
+				files.emplace_back(entry.path);
+				return true;
+			});
 			return files;
 		}
 
-		[[nodiscard]] std::expected<BinaryReader, std::string> open_file(const fs::path& path) const {
-			HANDLE file_handle = nullptr;
-			const bool opened = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file_handle);
-			if (!opened) {
-				return std::unexpected(std::format("Error opening {} with error: {}\n", path.string(), GetCascError()));
+		[[nodiscard]] std::expected<BinaryReader, std::string> open_file(const std::string& path) const {
+			const auto data = storage->readFile(path);
+			if (!data) {
+				return std::unexpected(std::format("Error opening {} with error: {}\n", path, whiteout::storages::casc::Storage::lastError()));
 			}
-
-			const u32 size = CascGetFileSize(file_handle, nullptr);
-			std::vector<u8, default_init_allocator<u8>> buffer(size);
-
-			#ifdef _MSC_VER
-			unsigned long bytes_read;
-			#else
-			unsigned bytes_read;
-			#endif
-			const bool success = CascReadFile(file_handle, buffer.data(), size, &bytes_read);
-			CascCloseFile(file_handle);
-			if (!success) {
-				return std::unexpected(std::format("Error failed to read file: {}\n", GetCascError()));
-			}
+			std::vector<u8, default_init_allocator<u8>> buffer(data->size());
+			std::memcpy(buffer.data(), data->data(), data->size());
 			return BinaryReader(std::move(buffer));
 		}
 
-		bool file_exists(const fs::path& path) const {
-			HANDLE file_handle = nullptr;
-			const bool exists = CascOpenFile(handle, path.string().c_str(), 0, CASC_OPEN_BY_NAME, &file_handle);
-			if (exists) {
-				CascCloseFile(file_handle);
-			}
-			return exists;
+		/// Whether the file is listed in the storage, which lists all locales regardless of what is installed
+		bool file_exists(const std::string& path) const {
+			return storage->fileExists(path);
 		}
 
 		/// Whether the file's data is actually downloaded/available locally, as opposed to merely
 		/// being present in the storage index (which lists all locales regardless of what is installed).
-		bool file_exists_locally(const fs::path& path) const {
-			CASC_FIND_DATA data;
-			const HANDLE found = CascFindFirstFile(handle, path.string().c_str(), &data, L"");
-			if (found == INVALID_HANDLE_VALUE) {
-				return false;
-			}
-			const bool available = data.bFileAvailable;
-			CascFindClose(found);
-			return available;
+		/// Only meant for small files, as it reads the file
+		bool file_exists_locally(const std::string& path) const {
+			return storage->readFile(path).has_value();
 		}
 	};
 } // namespace casc

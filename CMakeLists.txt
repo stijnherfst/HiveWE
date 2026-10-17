@@ -17,7 +17,8 @@ find_package(glm CONFIG REQUIRED)
 find_package(soil2 CONFIG REQUIRED)
 find_package(stormlib CONFIG REQUIRED)
 find_package(BZip2 REQUIRED) # Required by Stormlib
-find_package(CascLib CONFIG REQUIRED)
+find_package(ZLIB REQUIRED) # Required by Stormlib
+find_package(whiteoutlib-casc CONFIG REQUIRED)
 find_package(JPEG REQUIRED)
 find_package(qtadvanceddocking-qt6 CONFIG REQUIRED)
 find_package(absl CONFIG REQUIRED)
@@ -150,10 +151,9 @@ if(TRACY_NO_EXIT)
 	target_compile_definitions(HiveWE_lib PUBLIC TRACY_NO_EXIT)
 endif()
 
+target_link_libraries(HiveWE_lib PUBLIC whiteoutlib::whiteout_casc)
 if(WIN32)
-	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc dwmapi)
-else()
-	target_link_libraries(HiveWE_lib PUBLIC CascLib::casc_static)
+	target_link_libraries(HiveWE_lib PUBLIC dwmapi)
 endif()
 
 target_compile_features(HiveWE_lib PUBLIC cxx_std_23)

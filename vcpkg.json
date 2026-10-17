@@ -12,7 +12,6 @@
     "abseil",
     "bullet3",
     "bzip2",
-    "casclib",
     "glm",
     {
       "name": "glslang",
@@ -55,6 +54,7 @@
     "volk",
     "vulkan-memory-allocator",
     "vulkan-validationlayers",
+    "whiteoutlib-casc",
     "qscintilla",
     "tracy",
     "doctest"

@@ -68,7 +68,7 @@ export class Hierarchy {
 
 		warcraft_directory = directory;
 
-		bool open = game_data.open(warcraft_directory / (ptr ? ":w3t" : ":w3"));
+		bool open = game_data.open(warcraft_directory, ptr ? "w3t" : "w3");
 		root_directory = warcraft_directory / (ptr ? "_ptr_" : "_retail_");
 
 		if (!open) {
