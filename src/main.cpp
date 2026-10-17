@@ -120,6 +120,10 @@ int main(int argc, char* argv[]) {
 
 	thread_pool.init();
 
+	// The window and Vulkan setup don't touch the game data, so they run while it is still loading
+	HiveWE w;
+
+	// Waits for the game data and asks for the Warcraft directory if it could not be found
 	casc_future.wait();
 
 	if (!is_casc_open) {
@@ -135,8 +139,6 @@ int main(int argc, char* argv[]) {
 
 		load_files();
 	}
-
-	HiveWE w;
 
 	std::println("Application start: {}ms", start_timer.elapsed_ms());
 

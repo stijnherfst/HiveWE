@@ -315,19 +315,11 @@ HiveWE::HiveWE(QWidget* parent) : QMainWindow(parent) {
 	minimap->raise();
 
 	connect(minimap, &Minimap::clicked, [](QPointF location) {
+		if (!map) {
+			return;
+		}
 		camera.position = {location.x() * map->terrain.width, (1.0 - location.y()) * map->terrain.height, camera.position.z};
 	});
-
-	map = new Map();
-	connect(&map->terrain, &Terrain::minimap_changed, minimap, &Minimap::set_minimap);
-	connect(&map->terrain, &Terrain::tileset_changed, [&]() {
-		const auto palette = window_handler.get_open<TerrainPalette>();
-		if (palette) {
-			palette.value()->refresh();
-		}
-	});
-
-	map->render_manager.resize_framebuffers(ui.widget->width(), ui.widget->height());
 }
 
 void HiveWE::open_terrain_palette() {
