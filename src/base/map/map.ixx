@@ -55,6 +55,31 @@ export struct FileUsage {
 	std::unordered_set<std::string> used_by; // empty = unused
 };
 
+/// Starts reading and parsing the SLK or INI at `path` on another thread
+template <typename T>
+std::future<T> start_loading(const char* path) {
+	return std::async(std::launch::async, [path] { return T(path); });
+}
+
+/// Merges the INIs into `slk` in order, each as soon as it has loaded
+void merge_inis(slk::SLK& slk, const slk::SLK& meta_slk, auto& inis) {
+	for (auto& ini : inis) {
+		slk.merge(ini.get(), meta_slk);
+	}
+}
+
+/// Sometimes fields are empty or "-" which denotes empty aka the value 0.0
+void default_pitch_and_roll(slk::SLK& slk) {
+	for (auto& [key, fields] : slk.base_data) {
+		for (const char* field : {"maxpitch", "maxroll"}) {
+			std::string& value = fields[field];
+			if (value.empty() || value == "-") {
+				value = "0";
+			}
+		}
+	}
+}
+
 export class Map: public QObject {
 	Q_OBJECT
 
@@ -130,142 +155,142 @@ export class Map: public QObject {
 		// ToDo So for the game data files we should actually load from _balance/custom_v0.w3mod/Units, _balance/custom_v1.w3mod/Units, _balance/melee_v0.w3mod/units or /Units depending on the Game Data set and Game Data Versions
 		// Maybe just ignore RoC so we only need to choose between _balance/custom_v1.w3mod/Units and /Units
 		// Maybe just force everyone to suck it up and use /Units
+		using ini::INI;
+		using slk::SLK;
+
+		// Merged into the abilities and the buffs, so they are loaded once up front
+		const std::shared_future<INI> ability_skin = start_loading<INI>("Units/AbilitySkin.txt").share();
+		const std::array<std::shared_future<INI>, 18> ability_inis = {
+			ability_skin,
+			start_loading<INI>("Units/AbilitySkinStrings.txt").share(),
+			start_loading<INI>("Units/HumanAbilityFunc.txt").share(),
+			start_loading<INI>("Units/OrcAbilityFunc.txt").share(),
+			start_loading<INI>("Units/UndeadAbilityFunc.txt").share(),
+			start_loading<INI>("Units/NightElfAbilityFunc.txt").share(),
+			start_loading<INI>("Units/NeutralAbilityFunc.txt").share(),
+			start_loading<INI>("Units/ItemAbilityFunc.txt").share(),
+			start_loading<INI>("Units/CommonAbilityFunc.txt").share(),
+			start_loading<INI>("Units/CampaignAbilityFunc.txt").share(),
+			start_loading<INI>("Units/HumanAbilityStrings.txt").share(),
+			start_loading<INI>("Units/OrcAbilityStrings.txt").share(),
+			start_loading<INI>("Units/UndeadAbilityStrings.txt").share(),
+			start_loading<INI>("Units/NightElfAbilityStrings.txt").share(),
+			start_loading<INI>("Units/NeutralAbilityStrings.txt").share(),
+			start_loading<INI>("Units/ItemAbilityStrings.txt").share(),
+			start_loading<INI>("Units/CommonAbilityStrings.txt").share(),
+			start_loading<INI>("Units/CampaignAbilityStrings.txt").share(),
+		};
 
 		auto units_future = std::async(std::launch::async, [&] {
-			units_slk = slk::SLK("Units/UnitData.slk");
+			auto data = start_loading<SLK>("Units/UnitData.slk");
+			auto meta = start_loading<SLK>("Units/UnitMetaData.slk");
+			auto editor_data = start_loading<INI>("UI/UnitEditorData.txt");
+			std::array<std::future<INI>, 3> skin_inis = {
+				start_loading<INI>("Units/UnitSkin.txt"),
+				start_loading<INI>("Units/UnitWeaponsFunc.txt"),
+				start_loading<INI>("Units/UnitWeaponsSkin.txt"),
+			};
+			std::array<std::future<SLK>, 4> slks = {
+				start_loading<SLK>("Units/UnitBalance.slk"),
+				start_loading<SLK>("Units/unitUI.slk"),
+				start_loading<SLK>("Units/UnitWeapons.slk"),
+				start_loading<SLK>("Units/UnitAbilities.slk"),
+			};
+			std::array<std::future<INI>, 12> race_inis = {
+				start_loading<INI>("Units/HumanUnitFunc.txt"),
+				start_loading<INI>("Units/OrcUnitFunc.txt"),
+				start_loading<INI>("Units/UndeadUnitFunc.txt"),
+				start_loading<INI>("Units/NightElfUnitFunc.txt"),
+				start_loading<INI>("Units/NeutralUnitFunc.txt"),
+				start_loading<INI>("Units/CampaignUnitFunc.txt"),
+				start_loading<INI>("Units/HumanUnitStrings.txt"),
+				start_loading<INI>("Units/OrcUnitStrings.txt"),
+				start_loading<INI>("Units/UndeadUnitStrings.txt"),
+				start_loading<INI>("Units/NightElfUnitStrings.txt"),
+				start_loading<INI>("Units/NeutralUnitStrings.txt"),
+				start_loading<INI>("Units/CampaignUnitStrings.txt"),
+			};
+
+			units_slk = data.get();
 			// By making some changes to unitmetadata.slk and unitdata.slk we can avoid the 1->2->2 mapping for SLK->OE->W3U files. We have to add some columns for this though
 			units_slk.add_column("missilearc2");
 			units_slk.add_column("missileart2");
 			units_slk.add_column("missilespeed2");
 			units_slk.add_column("buttonpos2");
 
-			units_meta_slk = slk::SLK("Units/UnitMetaData.slk");
+			units_meta_slk = meta.get();
 			units_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 			units_meta_slk.build_meta_map();
 
-			unit_editor_data = ini::INI("UI/UnitEditorData.txt");
+			unit_editor_data = editor_data.get();
 			unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 			// Have to substitute twice since some keys refer to other keys in the same file
 			unit_editor_data.substitute(world_edit_strings, "WorldEditStrings");
 
-			units_slk.merge(ini::INI("Units/UnitSkin.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/UnitWeaponsFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/UnitWeaponsSkin.txt"), units_meta_slk);
-
-			units_slk.merge(slk::SLK("Units/UnitBalance.slk"));
-			units_slk.merge(slk::SLK("Units/unitUI.slk"));
-			units_slk.merge(slk::SLK("Units/UnitWeapons.slk"));
-			units_slk.merge(slk::SLK("Units/UnitAbilities.slk"));
-
-			units_slk.merge(ini::INI("Units/HumanUnitFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/OrcUnitFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/UndeadUnitFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/NightElfUnitFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/NeutralUnitFunc.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/CampaignUnitFunc.txt"), units_meta_slk);
-
-			units_slk.merge(ini::INI("Units/HumanUnitStrings.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/OrcUnitStrings.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/UndeadUnitStrings.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/NightElfUnitStrings.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/NeutralUnitStrings.txt"), units_meta_slk);
-			units_slk.merge(ini::INI("Units/CampaignUnitStrings.txt"), units_meta_slk);
+			merge_inis(units_slk, units_meta_slk, skin_inis);
+			for (auto& slk : slks) {
+				units_slk.merge(slk.get());
+			}
+			merge_inis(units_slk, units_meta_slk, race_inis);
 		});
 
 		auto items_future = std::async(std::launch::async, [&] {
-			items_slk = slk::SLK("Units/ItemData.slk");
-			items_meta_slk = slk::SLK("Units/ItemMetaData.slk");
+			auto data = start_loading<SLK>("Units/ItemData.slk");
+			auto meta = start_loading<SLK>("Units/ItemMetaData.slk");
+			std::array<std::future<INI>, 3> inis = {
+				start_loading<INI>("Units/ItemSkin.txt"),
+				start_loading<INI>("Units/ItemFunc.txt"),
+				start_loading<INI>("Units/ItemStrings.txt"),
+			};
+
+			items_slk = data.get();
+			items_meta_slk = meta.get();
 			items_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 			items_meta_slk.build_meta_map();
 
-			items_slk.merge(ini::INI("Units/ItemSkin.txt"), items_meta_slk);
-			items_slk.merge(ini::INI("Units/ItemFunc.txt"), items_meta_slk);
-			items_slk.merge(ini::INI("Units/ItemStrings.txt"), items_meta_slk);
+			merge_inis(items_slk, items_meta_slk, inis);
 		});
 
 		auto doodads_future = std::async(std::launch::async, [&] {
-			doodads_slk = slk::SLK("Doodads/Doodads.slk");
-			doodads_meta_slk = slk::SLK("Doodads/DoodadMetaData.slk");
+			auto data = start_loading<SLK>("Doodads/Doodads.slk");
+			auto meta = start_loading<SLK>("Doodads/DoodadMetaData.slk");
+			auto skin = start_loading<INI>("Doodads/DoodadSkins.txt");
+
+			doodads_slk = data.get();
+			doodads_meta_slk = meta.get();
 			doodads_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 			doodads_meta_slk.build_meta_map();
 
-			doodads_slk.merge(ini::INI("Doodads/DoodadSkins.txt"), doodads_meta_slk);
+			doodads_slk.merge(skin.get(), doodads_meta_slk);
 			doodads_slk.substitute(world_edit_strings, "WorldEditStrings");
 			doodads_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-
-			// Sometimes fields are empty or "-" which denotes empty aka the value 0.0
-			for (auto& [key, fields] : doodads_slk.base_data) {
-				if (auto found = fields.find("maxpitch"); found != fields.end()) {
-					if (found->second.empty() || found->second == "-") {
-						found->second = "0";
-					}
-				} else {
-					fields["maxpitch"] = "0";
-				}
-				if (auto found = fields.find("maxroll"); found != fields.end()) {
-					if (found->second.empty() || found->second == "-") {
-						found->second = "0";
-					}
-				} else {
-					fields["maxroll"] = "0";
-				}
-			}
+			default_pitch_and_roll(doodads_slk);
 		});
 
 		auto destructibles_future = std::async(std::launch::async, [&] {
-			destructibles_slk = slk::SLK("Units/DestructableData.slk");
+			auto data = start_loading<SLK>("Units/DestructableData.slk");
+			auto meta = start_loading<SLK>("Units/DestructableMetaData.slk");
+			auto skin = start_loading<INI>("Units/DestructableSkin.txt");
+
+			destructibles_slk = data.get();
 			destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 
-			destructibles_meta_slk = slk::SLK("Units/DestructableMetaData.slk");
+			destructibles_meta_slk = meta.get();
 			destructibles_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 			destructibles_meta_slk.build_meta_map();
 
-			destructibles_slk.merge(ini::INI("Units/DestructableSkin.txt"), destructibles_meta_slk);
+			destructibles_slk.merge(skin.get(), destructibles_meta_slk);
 			destructibles_slk.substitute(world_edit_strings, "WorldEditStrings");
 			destructibles_slk.substitute(world_edit_game_strings, "WorldEditStrings");
-
-			// Sometimes fields are empty or "-" which denotes empty aka the value 0.0
-			for (auto& [key, fields] : destructibles_slk.base_data) {
-				if (auto found = fields.find("maxpitch"); found != fields.end()) {
-					if (found->second.empty() || found->second == "-") {
-						found->second = "0";
-					}
-				} else {
-					fields["maxpitch"] = "0";
-				}
-				if (auto found = fields.find("maxroll"); found != fields.end()) {
-					if (found->second.empty() || found->second == "-") {
-						found->second = "0";
-					}
-				} else {
-					fields["maxroll"] = "0";
-				}
-			}
+			default_pitch_and_roll(destructibles_slk);
 		});
 
-		// Load shared files
-		const ini::INI ability_skin_ini("Units/AbilitySkin.txt");
-		const ini::INI ability_skin_strings_ini("Units/AbilitySkinStrings.txt");
-		const ini::INI human_ability_func_ini("Units/HumanAbilityFunc.txt");
-		const ini::INI orc_ability_func_ini("Units/OrcAbilityFunc.txt");
-		const ini::INI undead_ability_func_ini("Units/UndeadAbilityFunc.txt");
-		const ini::INI night_elf_ability_func_ini("Units/NightElfAbilityFunc.txt");
-		const ini::INI neutral_ability_func_ini("Units/NeutralAbilityFunc.txt");
-		const ini::INI item_ability_func_ini("Units/ItemAbilityFunc.txt");
-		const ini::INI common_ability_func_ini("Units/CommonAbilityFunc.txt");
-		const ini::INI campaign_ability_func_ini("Units/CampaignAbilityFunc.txt");
-		const ini::INI human_ability_strings_ini("Units/HumanAbilityStrings.txt");
-		const ini::INI orc_ability_strings_ini("Units/OrcAbilityStrings.txt");
-		const ini::INI undead_ability_strings_ini("Units/UndeadAbilityStrings.txt");
-		const ini::INI night_elf_ability_strings_ini("Units/NightElfAbilityStrings.txt");
-		const ini::INI neutral_ability_strings_ini("Units/NeutralAbilityStrings.txt");
-		const ini::INI item_ability_strings_ini("Units/ItemAbilityStrings.txt");
-		const ini::INI common_ability_strings_ini("Units/CommonAbilityStrings.txt");
-		const ini::INI campaign_ability_strings_ini("Units/CampaignAbilityStrings.txt");
-
 		auto abilities_future = std::async(std::launch::async, [&] {
-			abilities_slk = slk::SLK("Units/AbilityData.slk");
-			abilities_meta_slk = slk::SLK("Units/AbilityMetaData.slk");
+			auto data = start_loading<SLK>("Units/AbilityData.slk");
+			auto meta = start_loading<SLK>("Units/AbilityMetaData.slk");
+
+			abilities_slk = data.get();
+			abilities_meta_slk = meta.get();
 			abilities_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 			// Patch the SLKs
@@ -277,31 +302,31 @@ export class Map: public QObject {
 			abilities_meta_slk.set_shadow_data("field", "arpy", "researchbuttonpos2");
 			abilities_meta_slk.build_meta_map();
 
-			abilities_slk.merge(ability_skin_ini, abilities_meta_slk);
-			abilities_slk.merge(ability_skin_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(human_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(orc_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(undead_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(night_elf_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(neutral_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(item_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(common_ability_func_ini, abilities_meta_slk);
-			abilities_slk.merge(campaign_ability_func_ini, abilities_meta_slk);
-
-			abilities_slk.merge(human_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(orc_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(undead_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(night_elf_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(neutral_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(item_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(common_ability_strings_ini, abilities_meta_slk);
-			abilities_slk.merge(campaign_ability_strings_ini, abilities_meta_slk);
+			merge_inis(abilities_slk, abilities_meta_slk, ability_inis);
 		});
 
-		// Upgrades
 		auto upgrade_future = std::async(std::launch::async, [&] {
-			upgrade_slk = slk::SLK("Units/UpgradeData.slk");
-			upgrade_meta_slk = slk::SLK("Units/UpgradeMetaData.slk");
+			auto data = start_loading<SLK>("Units/UpgradeData.slk");
+			auto meta = start_loading<SLK>("Units/UpgradeMetaData.slk");
+			std::array<std::future<INI>, 14> inis = {
+				start_loading<INI>("Units/UpgradeSkin.txt"),
+				start_loading<INI>("Units/HumanUpgradeFunc.txt"),
+				start_loading<INI>("Units/OrcUpgradeFunc.txt"),
+				start_loading<INI>("Units/UndeadUpgradeFunc.txt"),
+				start_loading<INI>("Units/NightElfUpgradeFunc.txt"),
+				start_loading<INI>("Units/NeutralUpgradeFunc.txt"),
+				start_loading<INI>("Units/CampaignUpgradeFunc.txt"),
+				start_loading<INI>("Units/CampaignUpgradeStrings.txt"),
+				start_loading<INI>("Units/HumanUpgradeStrings.txt"),
+				start_loading<INI>("Units/NeutralUpgradeStrings.txt"),
+				start_loading<INI>("Units/NightElfUpgradeStrings.txt"),
+				start_loading<INI>("Units/OrcUpgradeStrings.txt"),
+				start_loading<INI>("Units/UndeadUpgradeStrings.txt"),
+				start_loading<INI>("Units/UpgradeSkinStrings.txt"),
+			};
+
+			upgrade_slk = data.get();
+			upgrade_meta_slk = meta.get();
 			upgrade_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 
 			// Patch the SLKs
@@ -309,49 +334,20 @@ export class Map: public QObject {
 			upgrade_meta_slk.set_shadow_data("field", "gbpy", "buttonpos2");
 			upgrade_meta_slk.build_meta_map();
 
-			upgrade_slk.merge(ability_skin_ini, upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/UpgradeSkin.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/HumanUpgradeFunc.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/OrcUpgradeFunc.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/UndeadUpgradeFunc.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/NightElfUpgradeFunc.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/NeutralUpgradeFunc.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/CampaignUpgradeFunc.txt"), upgrade_meta_slk);
-
-			upgrade_slk.merge(ini::INI("Units/CampaignUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/HumanUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/NeutralUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/NightElfUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/OrcUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/UndeadUpgradeStrings.txt"), upgrade_meta_slk);
-			upgrade_slk.merge(ini::INI("Units/UpgradeSkinStrings.txt"), upgrade_meta_slk);
+			upgrade_slk.merge(ability_skin.get(), upgrade_meta_slk);
+			merge_inis(upgrade_slk, upgrade_meta_slk, inis);
 		});
 
 		auto buff_future = std::async(std::launch::async, [&] {
-			buff_slk = slk::SLK("Units/AbilityBuffData.slk");
-			buff_meta_slk = slk::SLK("Units/AbilityBuffMetaData.slk");
+			auto data = start_loading<SLK>("Units/AbilityBuffData.slk");
+			auto meta = start_loading<SLK>("Units/AbilityBuffMetaData.slk");
+
+			buff_slk = data.get();
+			buff_meta_slk = meta.get();
 			buff_meta_slk.substitute(world_edit_strings, "WorldEditStrings");
 			buff_meta_slk.build_meta_map();
 
-			buff_slk.merge(ability_skin_ini, buff_meta_slk);
-			buff_slk.merge(ability_skin_strings_ini, buff_meta_slk);
-			buff_slk.merge(human_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(orc_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(undead_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(night_elf_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(neutral_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(item_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(common_ability_func_ini, buff_meta_slk);
-			buff_slk.merge(campaign_ability_func_ini, buff_meta_slk);
-
-			buff_slk.merge(human_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(orc_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(undead_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(night_elf_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(neutral_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(item_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(common_ability_strings_ini, buff_meta_slk);
-			buff_slk.merge(campaign_ability_strings_ini, buff_meta_slk);
+			merge_inis(buff_slk, buff_meta_slk, ability_inis);
 		});
 
 		try {
