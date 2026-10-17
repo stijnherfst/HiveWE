@@ -19,6 +19,7 @@ import Physics;
 import PathingMap;
 import Hierarchy;
 import ResourceManager;
+import ThreadPool;
 import Globals;
 import Camera;
 import UnorderedMap;
@@ -496,6 +497,21 @@ export class Terrain: public QObject {
 		// Cliff Meshes
 		slk::SLK cliffs_variation_slk;
 		cliffs_variation_slk.load_local("data/warcraft/Cliffs.slk");
+
+		// Parse the meshes in parallel first, so that the loop below takes them from the cache
+		std::vector<std::future<void>> loads;
+		for (size_t i = 0; i < cliffs_variation_slk.rows(); i++) {
+			for (int j = 0; j < cliffs_variation_slk.data<int>("variations", i) + 1; j++) {
+				std::string file_name =
+					"Doodads/Terrain/Cliffs/Cliffs" + cliffs_variation_slk.index_to_row.at(i) + std::to_string(j) + ".mdx";
+				loads.push_back(thread_pool.submit([file_name = std::move(file_name)] {
+					(void)resource_manager.load<CliffMesh>(file_name);
+				}));
+			}
+		}
+		for (auto& load : loads) {
+			load.get();
+		}
 
 		for (size_t i = 0; i < cliffs_variation_slk.rows(); i++) {
 			for (int j = 0; j < cliffs_variation_slk.data<int>("variations", i) + 1; j++) {
@@ -1428,6 +1444,31 @@ export class Terrain: public QObject {
 
 		const Tileset* tileset = tilesets.tileset(tileset_id);
 
+		// Decode the textures in parallel first, so that the loops below take them from the cache
+		std::vector<std::future<void>> loads;
+		for (const auto& tile_id : tileset_ids) {
+			if (const auto texture = tilesets.terrain_texture(tile_id)) {
+				loads.push_back(thread_pool.submit([path = texture->file_path] {
+					(void)resource_manager.load<GroundTexture>(path);
+				}));
+			}
+		}
+		if (tileset) {
+			loads.push_back(thread_pool.submit([path = tileset->blight_texture] {
+				(void)resource_manager.load<GroundTexture>(path);
+			}));
+		}
+		for (const auto& cliff_id : cliffset_ids) {
+			if (const auto cliff = tilesets.cliff_type(cliff_id)) {
+				loads.push_back(thread_pool.submit([path = diffuse_texture_path(cliff->file_path)] {
+					(void)resource_manager.load<Texture>(path);
+				}));
+			}
+		}
+		for (auto& load : loads) {
+			load.get();
+		}
+
 		for (const auto& tile_id : tileset_ids) {
 			const auto& texture = *tilesets.terrain_texture(tile_id);
 			ground_textures.push_back(resource_manager.load<GroundTexture>(texture.file_path).value());
@@ -1510,13 +1551,25 @@ export class Terrain: public QObject {
 
 		const std::string_view file_name = tileset->water_texture;
 
-		std::vector<std::shared_ptr<Texture>> water_textures;
+		// Hack to force loading of SD water textures till I implement a water shader
+		const auto hd = hierarchy.remastered;
+		hierarchy.remastered = false;
+		// Decoded in parallel. Nothing else may load while the flag above is flipped
+		std::vector<std::future<std::expected<std::shared_ptr<Texture>, std::string>>> loads;
 		for (int i = 0; i < water_textures_nr; i++) {
-			// Hack to force loading of SD water textures till I implement a water shader
-			const auto hd = hierarchy.remastered;
-			hierarchy.remastered = false;
-			const auto texture = resource_manager.load<Texture>(std::format("{}{:02}", file_name, i)).value();
-			hierarchy.remastered = hd;
+			loads.push_back(thread_pool.submit([path = std::format("{}{:02}", file_name, i)] {
+				return resource_manager.load<Texture>(path);
+			}));
+		}
+		std::vector<std::expected<std::shared_ptr<Texture>, std::string>> results;
+		for (auto& load : loads) {
+			results.push_back(load.get());
+		}
+		hierarchy.remastered = hd;
+
+		std::vector<std::shared_ptr<Texture>> water_textures;
+		for (auto& result : results) {
+			const auto texture = result.value();
 
 			if (texture->width != 128 || texture->height != 128) {
 				std::cout << "Odd water texture size detected of " << texture->width << " wide and " << texture->height << " high\n";
