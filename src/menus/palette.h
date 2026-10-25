@@ -31,6 +31,8 @@ protected:
 	/// meantime, in which case it is left alone.
 	void release_brush(Brush* brush);
 
+	void keyPressEvent(QKeyEvent* event) override;
+
 private:
 	Brush*& active_brush;
 
