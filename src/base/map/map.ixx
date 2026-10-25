@@ -431,6 +431,19 @@ export class Map: public QObject {
 			load_modification_file("war3mapSkin.w3d", doodads_slk, doodads_meta_slk, true);
 		}
 
+		// Fix doodads that have no/empty category
+		for (const auto& [id, index] : doodads_slk.row_headers) {
+			if (!doodads_slk.data<std::string_view>("category", id).empty()) {
+				continue;
+			}
+			if (auto found = doodads_slk.shadow_data.find(id); found != doodads_slk.shadow_data.end()) {
+				found->second.erase("category");
+			}
+			if (doodads_slk.data<std::string_view>("category", id).empty()) {
+				doodads_slk.base_data[id]["category"] = "O";
+			}
+		}
+
 		if (hierarchy.map_file_exists("war3map.w3b")) {
 			load_modification_file("war3map.w3b", destructibles_slk, destructibles_meta_slk, false);
 		}
