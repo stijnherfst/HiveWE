@@ -204,6 +204,4 @@ target_sources(HiveWE_lib PRIVATE
 	"render/vulkan_imgui.h"
 	"render/vulkan_viewport.cpp"
 	"render/vulkan_viewport.h"
-	"render/vulkan_test_modes.cpp"
-	"render/vulkan_test_modes.h"
 )

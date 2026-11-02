@@ -11,7 +11,6 @@
 #include <QTimer>
 
 #include "main_window/hivewe.h"
-#include "render/vulkan_test_modes.h"
 #include "DockManager.h"
 
 #ifdef WIN32
@@ -135,13 +134,6 @@ int main(int argc, char* argv[]) {
 		settings.setValue("warcraftDirectory", QString::fromStdString(directory.string()));
 
 		load_files();
-	}
-
-	if (QCoreApplication::arguments().contains("--vulkan-model-grid")) {
-		return run_vulkan_model_grid_test();
-	}
-	if (QCoreApplication::arguments().contains("--vulkan-model-editor")) {
-		return run_vulkan_model_editor_test();
 	}
 
 	HiveWE w;
