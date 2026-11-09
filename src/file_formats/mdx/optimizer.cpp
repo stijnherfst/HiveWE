@@ -156,13 +156,21 @@ namespace mdx {
 			// The following three lines are likely wrong but w/e, you should use skin anyway
 			geosets[index].vertex_groups.append_range(geosets[i].vertex_groups);
 			geosets[index].matrix_groups.append_range(geosets[i].matrix_groups);
+			// Skin bone indices are positions in matrix_indices, so the appended ones move past the existing entries
+			const size_t matrix_index_offset = geosets[index].matrix_indices.size();
 			geosets[index].matrix_indices.append_range(geosets[i].matrix_indices);
 
 			// We told the user to recalculate extents after
 			// geosets[index].extents.append_range(geosets[i].extents);
 
 			geosets[index].tangents.append_range(geosets[i].tangents);
+			const size_t skin_start = geosets[index].skin.size();
 			geosets[index].skin.append_range(geosets[i].skin);
+			for (size_t j = skin_start; j + 8 <= geosets[index].skin.size(); j += 8) {
+				for (size_t k = 0; k < 4; k++) {
+					geosets[index].skin[j + k] = static_cast<uint16_t>(geosets[index].skin[j + k] + matrix_index_offset);
+				}
+			}
 
 			// By the lord, please don't use multiple uv sets
 			assert(geosets[index].uv_sets.size() == geosets[i].uv_sets.size());

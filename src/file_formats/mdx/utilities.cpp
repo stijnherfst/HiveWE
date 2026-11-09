@@ -50,8 +50,9 @@ namespace mdx {
 			geoset.material_id += materials.size();
 
 			geoset.matrix_groups.clear();
-			geoset.matrix_indices.clear();
 			geoset.vertex_groups.clear();
+			// The skin weights below point at position 0 of matrix_indices, which is object id 0
+			geoset.matrix_indices = { 0 };
 
 			geoset.sequence_extents.resize(1);
 
@@ -158,6 +159,41 @@ namespace mdx {
 		}
 
 		return skin_weights;
+	}
+
+	/// The skin bone indices are positions in the geoset's matrix_indices (MATS), not node ids.
+	/// Blizzard models where MATS is not simply 0, 1, 2, ... show it, for example the "PortalFast" and "PortalSlow"
+	/// geosets of Buildings\Demon\DemonGate\DemonGate.mdx follow the "PortalFast" and "PortalSlow" bones that way,
+	/// while as node ids they would follow root_bind_jnt.
+	std::vector<glm::u16vec4> MDX::skin_as_node_weights(const Geoset& geoset) {
+		std::vector<glm::u16vec4> skin_weights;
+		skin_weights.reserve(geoset.skin.size() / 4);
+
+		for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
+			glm::u16vec4 indices(0);
+			glm::u16vec4 weights(0);
+			for (size_t j = 0; j < 4; j++) {
+				const uint16_t index = geoset.skin[i + j];
+				weights[j] = geoset.skin[i + 4 + j];
+				if (index < geoset.matrix_indices.size()) {
+					indices[j] = static_cast<uint16_t>(geoset.matrix_indices[index]);
+				} else {
+					// Nothing to follow, the validator reports these
+					weights[j] = 0;
+				}
+			}
+			skin_weights.push_back(indices);
+			skin_weights.push_back(weights);
+		}
+
+		return skin_weights;
+	}
+
+	std::vector<glm::u16vec4> MDX::node_skin_weights(const Geoset& geoset) {
+		if (geoset.skin.empty()) {
+			return matrix_groups_as_skin_weights(geoset);
+		}
+		return skin_as_node_weights(geoset);
 	}
 
 	MDX& MDX::calculate_extents() {

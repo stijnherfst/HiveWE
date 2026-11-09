@@ -102,10 +102,11 @@ namespace mdx {
 					}
 				}
 
+				// Skin bone indices are positions in matrix_indices, whose entries were checked above.
 				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
 					for (size_t j = 0; j < 4; j++) {
 						// A zero-weight slot is never accumulated, so its index is never dereferenced.
-						if (geoset.skin[i + 4 + j] != 0 && geoset.skin[i + j] >= bones.size()) {
+						if (geoset.skin[i + 4 + j] != 0 && geoset.skin[i + j] >= geoset.matrix_indices.size()) {
 							is_valid = false;
 						}
 					}
@@ -318,18 +319,24 @@ namespace mdx {
 					const size_t offset = v * 8;
 					int weight_sum = 0;
 					for (size_t j = 0; j < 4; j++) {
-						const uint16_t bone = geoset.skin[offset + j];
+						// The skin bone index is a position in matrix_indices, which holds the object id
+						const uint16_t matrix_index = geoset.skin[offset + j];
 						const uint16_t weight = geoset.skin[offset + 4 + j];
 						weight_sum += weight;
 						if (weight == 0) {
 							continue;
 						}
+						if (matrix_index >= geoset.matrix_indices.size()) {
+							error(std::format("Geoset {} vertex {} uses matrix index {} but the geoset has only {}", id, v, matrix_index, geoset.matrix_indices.size()));
+							continue;
+						}
+						const uint32_t bone = geoset.matrix_indices[matrix_index];
 						if (bone >= node_count) {
 							error(std::format("Geoset {} vertex {} is attached to object {} which does not exist", id, v, bone));
-						} else if (!bone_ids.contains(bone)) {
+						} else if (!bone_ids.contains(static_cast<int>(bone))) {
 							severe(std::format("Geoset {} vertex {} is attached to object {} which is not a bone", id, v, bone));
 						} else {
-							used_bones.insert(bone);
+							used_bones.insert(static_cast<int>(bone));
 						}
 					}
 					if (weight_sum == 0) {
@@ -710,6 +717,10 @@ namespace mdx {
 			// And all vertices should refer to bone 0 now
 			for (auto& geoset : geosets) {
 				std::ranges::fill(geoset.matrix_indices, 0);
+				// Skin bone indices point into matrix_indices, so it needs the one entry they use
+				if (!geoset.skin.empty() && geoset.matrix_indices.empty()) {
+					geoset.matrix_indices.push_back(0);
+				}
 				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
 					geoset.skin[i + 0] = 0;
 					geoset.skin[i + 1] = 0;
@@ -719,11 +730,12 @@ namespace mdx {
 			}
 		}
 
-		// The game ignores the bone of a zero-weight slot, which can be out of range, but shaders read all four bones
+		// The game ignores the bone of a zero-weight slot, which can be out of range, but shaders read all four bones.
+		// Skin bone indices are positions in matrix_indices.
 		for (auto& geoset : geosets) {
 			for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
 				for (size_t j = 0; j < 4; j++) {
-					if (geoset.skin[i + 4 + j] == 0 && geoset.skin[i + j] >= bones.size()) {
+					if (geoset.skin[i + 4 + j] == 0 && geoset.skin[i + j] >= geoset.matrix_indices.size()) {
 						geoset.skin[i + j] = 0;
 					}
 				}
