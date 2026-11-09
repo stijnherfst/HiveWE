@@ -843,9 +843,7 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 
 	std::vector<std::vector<glm::u16vec4>> geoset_skins(model->geosets.size());
 	for (size_t g = 0; g < model->geosets.size(); g++) {
-		if (model->geosets[g].skin.empty()) {
-			geoset_skins[g] = mdx::MDX::matrix_groups_as_skin_weights(model->geosets[g]);
-		}
+		geoset_skins[g] = mdx::MDX::node_skin_weights(model->geosets[g]);
 	}
 
 	// Geoset might be hidden
@@ -906,23 +904,16 @@ export void calculate_animated_extents(const std::shared_ptr<mdx::MDX>& model) {
 					}
 
 					const mdx::Geoset& geoset = model->geosets[g];
-					const bool hd = !geoset.skin.empty();
-					const std::vector<glm::u16vec4>& sd_skin = geoset_skins[g];
+					const std::vector<glm::u16vec4>& skin = geoset_skins[g];
 
 					for (size_t v = 0; v < geoset.vertices.size(); v++) {
-						glm::uvec4 indices(0);
-						glm::vec4 weights(0.f);
-						if (hd) {
-							const size_t base = v * 8;
-							for (int j = 0; j < 4; j++) {
-								indices[j] = geoset.skin[base + j];
-								weights[j] = geoset.skin[base + 4 + j] / 255.f;
-							}
-						} else {
-							indices = sd_skin[v * 2];
-							const glm::u16vec4 w = sd_skin[v * 2 + 1];
-							weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
+						if (v * 2 + 1 >= skin.size()) {
+							break;
 						}
+
+						const glm::uvec4 indices = skin[v * 2];
+						const glm::u16vec4 w = skin[v * 2 + 1];
+						const glm::vec4 weights = glm::vec4(w.x, w.y, w.z, w.w) / 255.f;
 
 						glm::mat4 skin_matrix(0.f);
 						for (int j = 0; j < 4; j++) {

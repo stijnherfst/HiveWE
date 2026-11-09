@@ -265,14 +265,11 @@ export class VulkanEditableMesh {
 			if (!geoset.tangents.empty()) {
 				append_bytes(bytes, stream_offsets[3] + base_vertex * strides[3], geoset.tangents.data(), count);
 			}
-			// SD models store matrix groups; they are converted to HD skin weights (at most 4 bones per vertex, like HD)
-			if (geoset.skin.empty()) {
-				const std::vector<glm::u16vec4> skin_weights = mdx::MDX::matrix_groups_as_skin_weights(geoset);
-				append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], skin_weights.data(), count * 2);
-			} else {
-				// A skin may hold fewer vertices than the geoset, which validation only warns about
-				append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], geoset.skin.data(), std::min(geoset.skin.size(), count * 8));
-			}
+			// SD matrix groups become skin weights (at most 4 bones per vertex, like HD), and HD skin indices are
+			// mapped through the matrix indices, so both arrive as 4 node ids then 4 weights per vertex.
+			// A skin may hold fewer vertices than the geoset, which validation only warns about
+			const std::vector<glm::u16vec4> skin_weights = mdx::MDX::node_skin_weights(geoset);
+			append_bytes(bytes, stream_offsets[4] + base_vertex * strides[4], skin_weights.data(), std::min(skin_weights.size(), count * 2));
 			append_bytes(bytes, index_offset + base_index * sizeof(uint16_t), geoset.faces.data(), geoset.faces.size());
 
 			base_vertex += static_cast<uint32_t>(count);
