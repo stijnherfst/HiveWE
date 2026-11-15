@@ -39,13 +39,14 @@ namespace ini {
 				view.remove_prefix(3);
 			}
 
-			std::string_view current_section;
+			// Points into ini_data, which only changes when a section starts
+			hive::unordered_map<std::string, std::vector<std::string>>* current_section_data = nullptr;
 
 			while (!view.empty()) {
-				size_t eol = view.find('\n');
-				if (eol == std::string_view::npos) {
-					eol = view.size() - 1;
-				}
+				const size_t newline = view.find('\n');
+				// The first '\r' or '\n'
+				const size_t line_end = std::min(view.substr(0, newline).find('\r'), newline);
+				const size_t eol = newline == std::string_view::npos ? view.size() - 1 : newline;
 
 				if (view.starts_with("//") || view.starts_with(';') || view.starts_with('\n') || view.starts_with('\r')) {
 					view.remove_prefix(eol + 1);
@@ -53,8 +54,8 @@ namespace ini {
 				}
 
 				if (view.front() == '[') {
-					current_section = view.substr(1, view.find(']') - 1);
-					ini_data.emplace(current_section, hive::unordered_map<std::string, std::vector<std::string>>{});
+					const std::string_view current_section = view.substr(1, view.find(']') - 1);
+					current_section_data = &ini_data.try_emplace(current_section).first->second;
 				} else {
 					const size_t found = view.find_first_of('=');
 					if (found == std::string_view::npos) {
@@ -63,7 +64,7 @@ namespace ini {
 					}
 
 					const std::string_view key = view.substr(0, found);
-					std::string_view value = view.substr(found + 1, view.find_first_of("\r\n") - 1 - found);
+					std::string_view value = view.substr(found + 1, line_end - 1 - found);
 
 					// Strip comments from value
 					if (const size_t comment = value.find("//"); comment != std::string_view::npos) {
@@ -83,16 +84,13 @@ namespace ini {
 						continue;
 					}
 
-					const auto parts = split_string_escaped(value);
-
 					// Sometimes there are duplicate keys and only the first seen value has to be retained.
 					// E.g. the destructable LTt0 in destructableskin.txt has multiple minScale/maxScale
-					if (auto found = ini_data.find(current_section); found != ini_data.end()) {
-						if (!found->second.contains(key)) {
-							found->second[key] = std::move(parts);
-						}
-					} else {
-						ini_data.at(current_section).emplace(key, std::move(parts));
+					if (!current_section_data) {
+						throw std::runtime_error(std::format("Key {} before the first section", key));
+					}
+					if (const auto [found, inserted] = current_section_data->try_emplace(key); inserted) {
+						found->second = split_string_escaped(value);
 					}
 				}
 				view.remove_prefix(eol + 1);

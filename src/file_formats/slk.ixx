@@ -68,6 +68,10 @@ namespace slk {
 			size_t column = 0;
 			size_t row = 0;
 
+			// The cells of a row are usually listed together, so the row of the previous cell is kept around
+			size_t cached_row = std::string_view::npos;
+			hive::unordered_map<std::string, std::string>* cached_row_data = nullptr;
+
 			while (view.size()) {
 				switch (view.front()) {
 					case 'C':
@@ -104,26 +108,25 @@ namespace slk {
 						view.remove_prefix(1);
 
 						{
-							std::string data;
-
-							if (!view.empty() && view.front() == '\"') {
-								data = view.substr(1, view.find_first_of("\r\n") - 1);
-							} else {
-								data = view.substr(0, view.find_first_of("\r\n"));
+							const size_t newline = view.find('\n');
+							std::string_view value = view.substr(0, newline);
+							value = value.substr(0, value.find('\r'));
+							if (!value.empty() && value.front() == '\"') {
+								value.remove_prefix(1);
 							}
-
-							if (!data.empty() && data.back() == '\"') {
-								data.pop_back();
+							if (!value.empty() && value.back() == '\"') {
+								value.remove_suffix(1);
 							}
-
-							if (data == "-" || data == "_") {
-								data = "";
+							if (value == "-" || value == "_") {
+								value = {};
 							}
+							std::string data(value);
 
 							if (column == 0) {
 								// -1 as 0,0 is unitid/doodadid etc.
 								row_headers.emplace(data, row - 1);
 								index_to_row.emplace(row - 1, std::move(data));
+								cached_row = std::string_view::npos;
 							} else if (row == 0) {
 								// If it is a column header, we need to lowercase it as column headers are case-insensitive
 								to_lowercase(data);
@@ -131,10 +134,18 @@ namespace slk {
 								column_headers.emplace(data, column - 1);
 								index_to_column.emplace(column - 1, std::move(data));
 							} else {
-								base_data[index_to_row[row - 1]][index_to_column[column - 1]] = std::move(data);
+								// Only this lookup adds to base_data, so the cached pointer stays valid until it runs again
+								if (row != cached_row) {
+									// Rows tend to have as many cells as the one before, so they are sized for that up front
+									const size_t previous_row_size = cached_row_data ? cached_row_data->size() : 0;
+									cached_row_data = &base_data[index_to_row[row - 1]];
+									cached_row_data->reserve(previous_row_size);
+									cached_row = row;
+								}
+								(*cached_row_data)[index_to_column[column - 1]] = std::move(data);
 							}
 
-							skip_line();
+							view.remove_prefix(newline == std::string_view::npos ? view.size() : newline + 1);
 						}
 						break;
 					case 'F':
