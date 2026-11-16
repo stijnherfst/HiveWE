@@ -383,3 +383,5 @@ void JassEditor::calculate_margin_width() {
 		setMarginWidth(0, QString('0').repeated(new_width));
 	}
 }
+
+#include "moc_jass_editor.cpp"

@@ -629,3 +629,5 @@ void ModelGridWidget::set_categories(const std::bitset<static_cast<size_t>(Model
 		viewport->set_categories(mask);
 	}
 }
+
+#include "moc_model_grid_widget.cpp"

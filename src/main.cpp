@@ -10,8 +10,8 @@
 #include <QStyleFactory>
 #include <QTimer>
 
-#include "main_window/hivewe.h"
 #include "DockManager.h"
+#include "main_window/hivewe.h"
 
 #ifdef WIN32
 // To force HiveWE to run on the discrete GPU if available

@@ -1,3 +1,4 @@
+#include <QTextCursor>
 #include "terrain_palette.h"
 #include "terrain_operators.h"
 
@@ -659,3 +660,5 @@ CliffButton* TerrainPalette::cliff_button(const CliffType* cliff, const TerrainT
 	button->setToolTip(QString::fromStdString(cliff->name));
 	return button;
 }
+
+#include "moc_terrain_palette.cpp"

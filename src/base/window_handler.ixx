@@ -58,6 +58,6 @@ export class WindowHandler : public QObject {
 	}
 };
 
-export inline WindowHandler window_handler;
+export WindowHandler window_handler;
 
 #include "window_handler.moc"

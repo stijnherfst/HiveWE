@@ -1,6 +1,7 @@
-#include "tile_picker.h"
-
+#include <QTextCursor>
 #include <QPushButton>
+
+#include "tile_picker.h"
 
 import std;
 import ResourceManager;
@@ -82,3 +83,5 @@ void TilePicker::completed() {
 	emit tile_chosen(from_tile, to_tile);
 	close();
 }
+
+#include "moc_tile_picker.cpp"

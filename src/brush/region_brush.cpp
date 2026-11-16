@@ -1,6 +1,6 @@
-#include "region_brush.h"
-
 #include <QKeyEvent>
+
+#include "region_brush.h"
 
 import std;
 import WorldUndoManager;
@@ -388,3 +388,5 @@ void RegionBrush::end_action() {
 	}
 	world_undo.add_undo_action(std::move(state_undo));
 }
+
+#include "moc_region_brush.cpp"

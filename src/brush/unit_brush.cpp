@@ -1,6 +1,6 @@
-#include "unit_brush.h"
-
 #include <QKeyEvent>
+
+#include "unit_brush.h"
 
 import std;
 import Hierarchy;

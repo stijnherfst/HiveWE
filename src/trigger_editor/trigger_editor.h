@@ -1,19 +1,17 @@
 #pragma once
 
 #include "ui_trigger_editor.h"
-
 #include <QTreeView>
 #include <QTreeWidget>
 #include <QPlainTextEdit>
 #include <QKeyEvent>
 #include <QElapsedTimer>
-
 #include <vector>
 #include <string>
 #include <unordered_map>
-
 #include "DockManager.h"
 #include "DockAreaWidget.h"
+
 #include "trigger_explorer.h"
 #include "global_search.h"
 

@@ -1,5 +1,3 @@
-#include "icon_view.h"
-
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QListView>
@@ -8,6 +6,8 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QLabel>
+
+#include "icon_view.h"
 
 import std;
 import Hierarchy;
@@ -273,3 +273,5 @@ QString IconView::currentIconPath() {
 void IconView::setCurrentIconPath(QString path) {
 	finalPath->setText(path);
 }
+
+#include "moc_icon_view.cpp"

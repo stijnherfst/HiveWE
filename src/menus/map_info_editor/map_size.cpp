@@ -1,7 +1,7 @@
-#include "map_info_editor.h"
-
 #include <QMessageBox>
 #include <QPainter>
+
+#include "map_info_editor.h"
 
 namespace fs = std::filesystem;
 

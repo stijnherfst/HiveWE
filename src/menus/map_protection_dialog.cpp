@@ -99,3 +99,5 @@ void MapProtectionDialog::save() const {
 	settings.setValue("protection/encryptImports", encryptImports->isChecked());
 	settings.setValue("protection/askEachExport", askEachExport->isChecked());
 }
+
+#include "moc_map_protection_dialog.cpp"

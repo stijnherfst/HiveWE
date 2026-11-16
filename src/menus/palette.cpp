@@ -1,6 +1,6 @@
-#include "palette.h"
-
 #include <QKeyEvent>
+
+#include "palette.h"
 
 Palette::Palette(QWidget* parent, Brush*& active_brush) : QDialog(parent), active_brush(active_brush) {
 }
@@ -33,3 +33,5 @@ void Palette::keyPressEvent(QKeyEvent* event) {
 //		shortcuts.push_back(new QShortcut(sequence, i));
 //	}
 //}
+
+#include "moc_palette.cpp"

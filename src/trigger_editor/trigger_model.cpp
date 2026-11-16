@@ -1,11 +1,11 @@
-#include <trigger_model.h>
-
 #include <QStringList>
 #include <QFileIconProvider>
 #include <QPainter>
 #include <QMessageBox>
 #include <QStack>
 #include <set>
+
+#include <trigger_model.h>
 
 import TextureIcon;
 import Globals;
@@ -445,3 +445,5 @@ int TreeItem::row() const {
 
 	return 0;
 }
+
+#include "moc_trigger_model.cpp"

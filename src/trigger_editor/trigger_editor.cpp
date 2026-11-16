@@ -1,5 +1,3 @@
-#include "trigger_editor.h"
-
 #include <QPlainTextEdit>
 #include <QSettings>
 #include <QSplitter>
@@ -10,10 +8,11 @@
 #include <QPushButton>
 #include <QFileIconProvider>
 #include <QTreeWidget>
-
 #include "HiveWE.h"
 #include "jass_editor.h"
 #include "search_window.h"
+
+#include "trigger_editor.h"
 #include "variable_editor.h"
 #include "trigger_model.h"
 
@@ -485,3 +484,5 @@ void TriggerEditor::save_changes() {
 		save_tab(tab);
 	}
 }
+
+#include "moc_trigger_editor.cpp"

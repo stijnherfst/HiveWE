@@ -1,5 +1,3 @@
-#include "asset_manager.h"
-
 #include <QApplication>
 #include <QSizePolicy>
 #include <QHBoxLayout>
@@ -13,11 +11,12 @@
 #include <QStyle>
 #include <QStyledItemDelegate>
 #include <QVBoxLayout>
-
-#include "model_editor/model_editor.h"
 #include "object_editor/model_grid_widget.h"
 
+#include "asset_manager.h"
+
 import std;
+import "model_editor/model_editor.h";
 import SLK;
 import Map;
 import Globals;
@@ -566,3 +565,5 @@ void AssetManager::show_context_menu(const QPoint& pos) {
 		menu.exec(tree_view->viewport()->mapToGlobal(pos));
 	}
 }
+
+#include "moc_asset_manager.cpp"

@@ -1,6 +1,3 @@
-#include "model_editor.h"
-
-
 #include <QObject>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -10,13 +7,12 @@
 #include <QMessageBox>
 #include <QMenuBar>
 #include <QTextEdit>
-
 #include <DockAreaTitleBar.h>
 #include <DockAreaTabBar.h>
 #include <DockComponentsFactory.h>
-
 #include "model_view.h"
 
+#include "model_editor.h"
 #include "model_editor_viewport.h"
 
 import std;
@@ -213,3 +209,5 @@ std::expected<ads::CDockWidget*, std::string> ModelEditor::open_model(const fs::
 
 	return dock_tab;
 }
+
+#include "moc_model_editor.cpp"

@@ -1,9 +1,9 @@
 #pragma once
 
-import QRibbon;
-
 #include <QObject>
 #include <QToolButton>
+
+import QRibbon;
 
 class MainRibbon : public QRibbon {
 	Q_OBJECT

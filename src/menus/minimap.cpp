@@ -1,6 +1,6 @@
-#include "minimap.h"
-
 #include <QMouseEvent>
+
+#include "minimap.h"
 
 import std;
 
@@ -56,3 +56,5 @@ void Minimap::mouseMoveEvent(QMouseEvent* event) {
 		}
 	}
 }
+
+#include "moc_minimap.cpp"

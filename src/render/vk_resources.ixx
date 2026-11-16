@@ -465,7 +465,7 @@ export class Bindless {
 };
 
 /// Never destroyed, for the same reason as vk_context
-export inline Bindless& bindless = *new Bindless;
+export Bindless& bindless = *new Bindless;
 
 std::vector<uint32_t> load_spirv(const fs::path& path) {
 	std::ifstream file(path, std::ios::binary | std::ios::ate);

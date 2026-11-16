@@ -8,8 +8,9 @@ import Terrain;
 import Regions;
 import "brush/brush.h";
 
-/// So we don't have to pass a global variable around
-export struct WorldEditContext {
+/// So we don't have to pass a global variable around.
+/// Attached to the global module because brush.h, which Terrain includes and so cannot import this module, forward declares it.
+export extern "C++" struct WorldEditContext {
 	Terrain& terrain;
 	Units& units;
 	Doodads& doodads;

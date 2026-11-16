@@ -86,3 +86,5 @@ void SettingsEditor::save() const {
 	settings.setValue("nowfpause", ui.nowfpause->isChecked() ? "True" : "False");
 	settings.setValue("testArgs", ui.testArgs->text());
 }
+
+#include "moc_settings_editor.cpp"

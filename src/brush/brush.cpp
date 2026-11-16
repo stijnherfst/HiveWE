@@ -217,3 +217,5 @@ void Brush::render_selector(BrushDrawList& draw_list) const {
 }
 
 void Brush::render_brush() {}
+
+#include "moc_brush.cpp"

@@ -333,3 +333,5 @@ MainRibbon::MainRibbon(QWidget* parent) : QRibbon(parent) {
 
 MainRibbon::~MainRibbon() {
 }
+
+#include "moc_main_ribbon.cpp"

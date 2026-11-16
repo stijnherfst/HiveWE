@@ -1,16 +1,15 @@
-#include "gameplay_constants_editor.h"
-
-import std;
-import GameplayConstants;
-import TableModel;
-
-#include "single_model.h"
-
 #include <QHeaderView>
 #include <QTableView>
 #include <QSortFilterProxyModel>
 #include <QTimer>
 #include <QVBoxLayout>
+
+#include "gameplay_constants_editor.h"
+#include "single_model.h"
+
+import std;
+import GameplayConstants;
+import TableModel;
 
 GameplayConstantsEditor::GameplayConstantsEditor(QWidget* parent, GameplayConstants& constants, TriggerStrings& trigger_strings) : QDialog(parent) {
 	setAttribute(Qt::WA_DeleteOnClose);
@@ -62,3 +61,5 @@ GameplayConstantsEditor::GameplayConstantsEditor(QWidget* parent, GameplayConsta
 		}
 	});
 }
+
+#include "moc_gameplay_constants_editor.cpp"

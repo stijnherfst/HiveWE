@@ -282,3 +282,5 @@ MapWidget::MapWidget(QWidget* parent) : QWidget(parent) {
 	container->setFocusPolicy(Qt::WheelFocus);
 	layout->addWidget(container);
 }
+
+#include "moc_map_widget.cpp"

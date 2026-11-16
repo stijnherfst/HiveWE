@@ -1,15 +1,14 @@
-#include "unit_palette.h"
-
 #include <QComboBox>
 #include <QLineEdit>
 #include <QListView>
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
 
+#include "unit_palette.h"
+
 //#include "globals.h"
 //#include <map_global.h>
-#include <object_editor.h>
-
+import "object_editor/object_editor.h";
 import std;
 import TableModel;
 import WindowHandler;
@@ -192,3 +191,5 @@ void UnitPalette::update_selection_info() {
 		}
 	}
 }
+
+#include "moc_unit_palette.cpp"

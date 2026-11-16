@@ -1,5 +1,4 @@
 #include <functional>
-
 #include <QStringList>
 #include <QFileIconProvider>
 #include <QPainter>
@@ -8,9 +7,7 @@
 #include <set>
 
 #include "trigger_model.h"
-
 #include "trigger_explorer.h"
-#include "HiveWE.h"
 
 import Triggers;
 import Utilities;
@@ -353,3 +350,5 @@ void TriggerExplorer::deleteSelection() {
 	}
 }
 
+
+#include "moc_trigger_explorer.cpp"

@@ -1,6 +1,4 @@
-﻿#include "doodad_palette.h"
-
-#include <QRadioButton>
+﻿#include <QRadioButton>
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QDoubleValidator>
@@ -24,15 +22,14 @@
 #include <QPushButton>
 #include <QKeySequence>
 #include <QTimer>
-
 #include "brush.h"
-
-#include <object_editor/object_editor.h>
-
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <qurl.h>
 
+#include "doodad_palette.h"
+
+import "object_editor/object_editor.h";
 import std;
 import TableModel;
 import QRibbon;
@@ -711,3 +708,5 @@ void DoodadPalette::set_selection_rotation(float new_rotation) {
 	brush.set_selection_angle(glm::radians(new_rotation));
 	update_selection_info();
 }
+
+#include "moc_doodad_palette.cpp"

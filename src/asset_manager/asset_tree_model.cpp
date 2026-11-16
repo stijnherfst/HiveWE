@@ -715,3 +715,5 @@ const std::optional<AssetTreeModel::ValidationSummary>& AssetTreeModel::resolved
 
 	return caches->validation_cache.emplace(node.path, std::move(summary)).first->second;
 }
+
+#include "moc_asset_tree_model.cpp"

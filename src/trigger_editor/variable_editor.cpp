@@ -10,3 +10,5 @@ VariableEditor::VariableEditor(TriggerVariable& variable) : QWidget() {
 	ui.value->setText(QString::fromStdString(variable.initial_value));
 	connect(ui.array, &QCheckBox::checkStateChanged, ui.array_size, &QSpinBox::setEnabled);
 }
+
+#include "moc_variable_editor.cpp"

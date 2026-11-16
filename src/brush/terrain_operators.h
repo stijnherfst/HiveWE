@@ -4,10 +4,10 @@
 
 #include <glm/glm.hpp>
 
+import Terrain;
+import Rects;
+
 class TerrainBrush;
-class Terrain;
-class TerrainRect;
-class PathingRect;
 struct WorldEditContext;
 
 /// Base class for all terrain operators, such as texture painter, cliff tools etc...

@@ -1,14 +1,13 @@
-#include "global_search.h"
-
-#include "model_editor.h"
-#include "object_editor.h"
-#include "trigger_editor.h"
-
 #include <QLayout>
 #include <QFrame>
 #include <QDialog>
 #include <ui_object_editor.h>
 #include <QPainter>
+
+#include "global_search.h"
+#include "model_editor.h"
+#include "object_editor.h"
+#include "trigger_editor.h"
 
 import std;
 import WindowHandler;
@@ -186,3 +185,5 @@ bool GlobalSearchWidget::eventFilter(QObject *object, QEvent *event) {
 	}
 	return false;
 }
+
+#include "moc_global_search.cpp"

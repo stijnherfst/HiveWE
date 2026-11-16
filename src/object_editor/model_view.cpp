@@ -1,8 +1,5 @@
 #include "model_view.h"
-
-#include "model_editor.h"
 #include "model_grid_widget.h"
-
 #include <QCheckBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -10,6 +7,8 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QVBoxLayout>
+
+#include "model_editor.h"
 
 import std;
 import Hierarchy;
@@ -192,3 +191,5 @@ QString ModelView::current_model_path() {
 void ModelView::set_current_model_path(const QString& path) {
 	finalPath->setText(path);
 }
+
+#include "moc_model_view.cpp"

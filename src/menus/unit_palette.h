@@ -1,10 +1,7 @@
 #pragma once
 
 #include "ui_unit_palette.h"
-#include "unit_brush.h"
-#include "palette.h"
 //#include "UnitSelector.h"
-
 #include <QAbstractProxyModel>
 #include <QSortFilterProxyModel>
 #include <QLineEdit>
@@ -29,8 +26,10 @@
 #include <QScrollArea>
 #include <QPushButton>
 #include <QKeySequence>
-
 #include <string>
+
+#include "unit_brush.h"
+#include "palette.h"
 
 import UnitListModel;
 import UnitSelector;

@@ -357,4 +357,4 @@ export constexpr Hierarchy::FileSource& operator^=(Hierarchy::FileSource& a, Hie
 	return a;
 }
 
-export inline Hierarchy hierarchy;
+export Hierarchy hierarchy;

@@ -1,6 +1,10 @@
-#include "HiveWE.h"
 #define __STORMLIB_NO_STATIC_LINK__
 #include "StormLib.h"
+#include "QMessageBox"
+#include "QProcess"
+#include "QKeySequence"
+#include "QString"
+#include "HiveWE.h"
 
 import std;
 import Hierarchy;
@@ -36,10 +40,6 @@ import "doodad_palette.h";
 import "unit_palette.h";
 import "object_editor/icon_view.h";
 import "trigger_editor.h";
-#include "QMessageBox"
-#include "QProcess"
-#include "QKeySequence"
-#include "QString"
 import "menus/gameplay_constants_editor.h";
 import "asset_manager/asset_manager.h";
 
@@ -863,3 +863,5 @@ void HiveWE::remove_custom_tab() {
 		}
 	}
 }
+
+#include "moc_hivewe.cpp"

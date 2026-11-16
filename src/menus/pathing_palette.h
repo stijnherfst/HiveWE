@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QDialog>
-
 #include "ui_pathing_palette.h"
 
 #include "palette.h"

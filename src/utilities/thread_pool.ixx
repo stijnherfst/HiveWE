@@ -78,4 +78,4 @@ export class ThreadPool {
 	}
 };
 
-export inline ThreadPool thread_pool;
+export ThreadPool thread_pool;

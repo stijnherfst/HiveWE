@@ -1,5 +1,3 @@
-#include "object_editor.h"
-
 #include <QTableView>
 #include <QLineEdit>
 #include <QToolBar>
@@ -16,6 +14,8 @@
 #include <QScrollBar>
 #include <QMenu>
 #include <QMessageBox>
+
+#include "object_editor.h"
 
 import std;
 import UnitSelector;
@@ -599,3 +599,5 @@ void ObjectEditor::select_id(Category category, const std::string& id) const {
 		}
 	}
 }
+
+#include "moc_object_editor.cpp"

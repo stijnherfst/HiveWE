@@ -1,10 +1,10 @@
-#include "scenario_info_editor.h"
-
 #include <QMessageBox>
 #include <QPainter>
 #include <cstddef>
 #include <vector>
 #include <string>
+
+#include "scenario_info_editor.h"
 
 import std;
 import SLK;
@@ -339,3 +339,5 @@ void ScenarioInfoEditor::restorePlayerProperties() {
 		player_rows[i].fixed_start_position->setEnabled(false);
 	}
 }
+
+#include "moc_scenario_info_editor.cpp"

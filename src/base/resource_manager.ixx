@@ -79,4 +79,4 @@ export class ResourceManager {
 	}
 };
 
-export inline ResourceManager resource_manager;
+export ResourceManager resource_manager;

@@ -46,3 +46,5 @@ SearchWindow::SearchWindow(QWidget* parent) : QFrame(parent) {
 	connect(edit, &QLineEdit::textChanged, this, &SearchWindow::text_changed);
 	connect(close_button, &QPushButton::clicked, this, &QWidget::close);
 }
+
+#include "moc_search_window.cpp"

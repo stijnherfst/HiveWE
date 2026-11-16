@@ -1,7 +1,4 @@
-#include "single_model.h"
-
 #include "model_view.h"
-
 #include <QPainter>
 #include <QPlainTextEdit>
 #include <QDialogButtonBox>
@@ -15,6 +12,7 @@
 #include <QHBoxLayout>
 #include <QSortFilterProxyModel>
 
+#include "single_model.h"
 #include "object_editor/icon_view.h"
 
 import std;
@@ -1088,3 +1086,5 @@ QWidget* TableDelegate::create_icon_editor(QWidget* parent) const {
 
 	return editor;
 }
+
+#include "moc_single_model.cpp"

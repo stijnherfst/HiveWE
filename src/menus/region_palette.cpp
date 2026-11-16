@@ -1,7 +1,7 @@
-#include "region_palette.h"
-
 #include <QListWidgetItem>
 #include <QPixmap>
+
+#include "region_palette.h"
 
 import std;
 import SLK;
@@ -245,3 +245,5 @@ void RegionPalette::deactivate(QRibbonTab* tab) {
 		selection_mode->disableShortcuts();
 	}
 }
+
+#include "moc_region_palette.cpp"

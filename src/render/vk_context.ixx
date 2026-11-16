@@ -404,7 +404,7 @@ export class VkContext {
 
 /// Never destroyed, so resources released during static destruction at exit (such as the resource manager's cache)
 /// can still reach it. The OS reclaims the device when the process ends.
-export inline VkContext& vk_context = *new VkContext;
+export VkContext& vk_context = *new VkContext;
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
 	const VkDebugUtilsMessageSeverityFlagBitsEXT severity,

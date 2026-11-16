@@ -1,21 +1,18 @@
 #pragma once
 
 #include <QMainWindow>
-
 #include "ui_object_editor.h"
-
 #include "DockManager.h"
 #include "DockAreaWidget.h"
 #include <QTreeView>
 #include <QSortFilterProxyModel>
 #include <QElapsedTimer>
-
-#include "global_search.h"
-#include "nlohmann/json.hpp"
-
 #include <string>
 #include <memory>
 
+#include "global_search.h"
+
+import <nlohmann/json.hpp>;
 import BaseTreeModel;
 import AbilityTreeModel;
 import DoodadTreeModel;

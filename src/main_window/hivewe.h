@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 #include <QKeyEvent>
 
 #include "ui_HiveWE.h"
-#include "global_search.h"
 
+import "global_search.h";
 import QRibbon;
 import WindowHandler;
 import <glm/glm.hpp>;

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ui_doodad_palette.h"
-
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QCheckBox>
@@ -25,13 +24,11 @@
 #include <QPushButton>
 #include <QKeySequence>
 #include <QTimer>
+#include <QConcatenateTablesProxyModel>
+#include <string>
 
 #include "doodad_brush.h"
 #include "palette.h"
-
-#include <QConcatenateTablesProxyModel>
-
-#include <string>
 
 import QRibbon;
 import AspectRatioPixmapLabel;

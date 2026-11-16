@@ -1,7 +1,7 @@
-﻿#include "doodad_brush.h"
-
-#include <QKeyEvent>
+﻿#include <QKeyEvent>
 #include <volk.h>
+
+#include "doodad_brush.h"
 
 import VkResources;
 import VkTexture;
@@ -718,3 +718,5 @@ void DoodadBrush::unselect_id(const std::string_view id) {
 		set_doodad("ATtr");
 	}
 }
+
+#include "moc_doodad_brush.cpp"

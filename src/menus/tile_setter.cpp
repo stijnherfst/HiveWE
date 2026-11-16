@@ -1,9 +1,10 @@
-#include "tile_setter.h"
-#include "tile_picker.h"
-
+#include <QTextCursor>
 #include <QPushButton>
 #include <QLabel>
 #include <QMessageBox>
+
+#include "tile_setter.h"
+#include "tile_picker.h"
 
 import std;
 import ResourceManager;
@@ -317,3 +318,5 @@ void TileSetter::save_tiles() {
 	terrain.change_tileset(new_terrain_textures, from_to_id, new_tileset, tilesets, info);
 	close();
 }
+
+#include "moc_tile_setter.cpp"

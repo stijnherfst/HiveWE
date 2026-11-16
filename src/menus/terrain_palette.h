@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ui_terrain_palette.h"
-
 #include <QDialog>
 #include <QScrollArea>
 

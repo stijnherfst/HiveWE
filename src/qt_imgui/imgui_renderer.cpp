@@ -455,3 +455,5 @@ ImGuiRenderer* ImGuiRenderer::instance() {
 }
 
 } // namespace QtImGui
+
+#include "moc_imgui_renderer.cpp"
