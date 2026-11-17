@@ -175,12 +175,7 @@ namespace mdx {
 			for (size_t j = 0; j < 4; j++) {
 				const uint16_t index = geoset.skin[i + j];
 				weights[j] = geoset.skin[i + 4 + j];
-				if (index < geoset.matrix_indices.size()) {
-					indices[j] = static_cast<uint16_t>(geoset.matrix_indices[index]);
-				} else {
-					// Nothing to follow, the validator reports these
-					weights[j] = 0;
-				}
+				indices[j] = static_cast<uint16_t>(geoset.matrix_indices[index]);
 			}
 			skin_weights.push_back(indices);
 			skin_weights.push_back(weights);
