@@ -105,8 +105,7 @@ namespace mdx {
 				// Skin bone indices are positions in matrix_indices, whose entries were checked above.
 				for (size_t i = 0; i + 8 <= geoset.skin.size(); i += 8) {
 					for (size_t j = 0; j < 4; j++) {
-						// A zero-weight slot is never accumulated, so its index is never dereferenced.
-						if (geoset.skin[i + 4 + j] != 0 && geoset.skin[i + j] >= geoset.matrix_indices.size()) {
+						if (geoset.skin[i + j] >= geoset.matrix_indices.size()) {
 							is_valid = false;
 						}
 					}
