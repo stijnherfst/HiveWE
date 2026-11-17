@@ -171,7 +171,7 @@ export class SkinnedMesh: public Resource {
 
 		// Buffer Data
 		struct GeosetBuffers {
-			std::vector<glm::u16vec4> skin_weights; // empty = use i.skin directly
+			std::vector<glm::u16vec4> skin_weights; // Per vertex 4 node ids and 4 weights
 			std::vector<glm::uvec2> vertices_snorm;
 			std::vector<uint32_t> uvs_snorm;
 			std::vector<uint32_t> normals_oct_snorm;
@@ -186,9 +186,7 @@ export class SkinnedMesh: public Resource {
 			}
 			GeosetBuffers buf;
 
-			if (i.skin.empty()) {
-				buf.skin_weights = mdx::MDX::matrix_groups_as_skin_weights(i);
-			}
+			buf.skin_weights = mdx::MDX::node_skin_weights(i);
 
 			buf.vertices_snorm.reserve(i.vertices.size());
 			for (const auto& j : i.vertices) {
@@ -238,8 +236,8 @@ export class SkinnedMesh: public Resource {
 			const size_t v_off = vertex_base + local_base_vertex;
 			const size_t i_off = index_base + local_base_index;
 
-			// Skin weights are 4 bone indices then 4 weights, 16 bits each
-			const auto skin = i.skin.empty() ? std::as_bytes(std::span(buf.skin_weights)) : std::as_bytes(std::span(i.skin));
+			// Per vertex 4 node ids then 4 weights, 16 bits each. HD skin indices are mapped through the matrix indices.
+			const auto skin = std::as_bytes(std::span(buf.skin_weights));
 			uploads.push_back({&g.weight_buffer, v_off * 16, skin.first(std::min<size_t>(skin.size(), entry.vertices * 16))});
 			uploads.push_back({&g.vertex_snorm_buffer, v_off * sizeof(glm::uvec2), std::as_bytes(std::span(buf.vertices_snorm))});
 			uploads.push_back({&g.uv_snorm_buffer, v_off * sizeof(uint32_t), std::as_bytes(std::span(buf.uvs_snorm))});

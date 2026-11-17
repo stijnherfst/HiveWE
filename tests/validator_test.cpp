@@ -129,6 +129,7 @@ TEST_CASE("Validator: SD matrix skinning") {
 }
 
 TEST_CASE("Validator: HD skin weights") {
+	// The skin indices 2 and 1 go through the geoset's matrix indices { 0, 1, 5 } to objects 5 and 1.
 	const auto messages = validate_fixture("skin_v900.mdl");
 	CHECK(has_message(messages, mdx::ValidationSeverity::error, "attached to object 5 which does not exist"));
 	CHECK(has_message(messages, mdx::ValidationSeverity::severe, "attached to object 1 which is not a bone"));

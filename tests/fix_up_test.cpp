@@ -258,7 +258,7 @@ TEST_CASE("Validator: a skinning index past the node count fails is_valid") {
 
 	SUBCASE("HD skin index past the node count but carrying no weight") {
 		// The renderer skips a zero-weight slot, so its index is never dereferenced.
-		geoset.matrix_indices = { 0 };
+		geoset.matrix_indices = { 0, 1 };
 		geoset.skin.assign(3 * 8, 0);
 		for (size_t i = 0; i < geoset.skin.size(); i += 8) {
 			geoset.skin[i] = 1;
@@ -268,6 +268,63 @@ TEST_CASE("Validator: a skinning index past the node count fails is_valid") {
 		}
 		CHECK(model.is_valid());
 	}
+
+	SUBCASE("HD skin index inside the node count but past the matrix indices") {
+		// Skin bone indices are positions in matrix_indices, so index 1 needs a second entry there.
+		geoset.matrix_indices = { 0 };
+		geoset.skin.assign(3 * 8, 0);
+		for (size_t i = 0; i < geoset.skin.size(); i += 8) {
+			geoset.skin[i] = 1;
+			geoset.skin[i + 4] = 255;
+		}
+		CHECK(!model.is_valid());
+		CHECK(has_message(model.validate(), mdx::ValidationSeverity::error, "uses matrix index 1"));
+	}
+}
+
+TEST_CASE("HD skin bone indices are positions in the matrix indices") {
+	// Blizzard's HD models show it where MATS is not 0, 1, 2, ...: the "PortalFast" geoset of
+	// Buildings\Demon\DemonGate\DemonGate.mdx (HD) has MATS = { 9 } (object 9 is the bone "PortalFast") and skin index 0.
+	// As an object id, index 0 would be root_bind_jnt instead.
+	mdx::Geoset geoset {};
+	geoset.vertices.assign(2, glm::vec3(0.f));
+	geoset.matrix_indices = { 3, 5 };
+	geoset.skin = {
+		0, 0, 0, 0, 255, 0, 0, 0,
+		1, 0, 0, 0, 128, 127, 0, 0,
+	};
+
+	const std::vector<glm::u16vec4> weights = mdx::MDX::node_skin_weights(geoset);
+
+	REQUIRE(weights.size() == 4);
+	CHECK(weights[0].x == 3);
+	CHECK(weights[1].x == 255);
+	CHECK(weights[2].x == 5);
+	CHECK(weights[2].y == 3);
+	CHECK(weights[3].x == 128);
+	CHECK(weights[3].y == 127);
+}
+
+TEST_CASE("deduplicate_geosets: merged skin indices still point at their own bones") {
+	// The second geoset's matrix indices are appended after the first's, so its skin indices have to
+	// move along with them.
+	mdx::MDX model = model_with_bones({ { 0, -1 }, { 1, 0 }, { 2, 0 } });
+	give_material(model);
+	for (const uint32_t bone : { 1u, 2u }) {
+		auto& geoset = model.geosets.emplace_back();
+		geoset.material_id = 0;
+		geoset.vertices.assign(1, glm::vec3(0.f));
+		geoset.matrix_indices = { bone };
+		geoset.skin = { 0, 0, 0, 0, 255, 0, 0, 0 };
+	}
+
+	model.deduplicate_geosets();
+
+	REQUIRE(model.geosets.size() == 1);
+	const std::vector<glm::u16vec4> weights = mdx::MDX::node_skin_weights(model.geosets[0]);
+	REQUIRE(weights.size() == 4);
+	CHECK(weights[0].x == 1);
+	CHECK(weights[2].x == 2);
 }
 
 TEST_CASE("Validator: a name MDL cannot quote is reported") {
